@@ -73,6 +73,9 @@ PROTEGES_NOMS = {"Scripts/apply_queue.json", "Scripts/descriptions.json", "Scrip
                  "Scripts/chemins.json"}
 # Ecrits par premier_lancement : presumes modifies quand aucune reference n'existe.
 REECRITS_AU_PREMIER_LANCEMENT = {"Scripts/sources_config.json"}
+# Jamais « modifies par l'utilisateur » : un VERSION garde tel quel figerait la version
+# installee et la mise a jour se representerait a chaque lancement.
+TOUJOURS_REMPLACES = {"VERSION", "CHANGELOG.md"}
 # Modules charges par le controle d'apres mise a jour : le coeur du tri et des documents.
 MODULES_CENTRAUX = ("profil", "jutil", "queue_io", "suivi_io", "ats_match", "tri_file",
                     "tailor_application", "job_sources", "mise_a_jour")
@@ -289,6 +292,7 @@ def plan_zip(nouveaux, locaux, reference):
         else:
             ref = reference.get(rel)
             modifie = (h_loc != ref) if ref else (rel in REECRITS_AU_PREMIER_LANCEMENT)
+            modifie = modifie and rel not in TOUJOURS_REMPLACES
             plan["garder" if modifie else "remplacer"].append(rel)
     for rel, ref in sorted(reference.items()):
         if rel in nouveaux or protege(rel) or rel not in locaux:

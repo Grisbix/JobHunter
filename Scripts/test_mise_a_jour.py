@@ -179,6 +179,14 @@ with installation(V12) as d:
     lancer(forcer=True)
     check("--forcer : b.py toujours gardé", lire(d, "Scripts/b.py"), "B = 1  # ma modif\n")
 
+print("── VERSION retouché à la main : remplacé quand même")
+with installation(V12) as d:
+    (d / "VERSION").write_text("1.2.9\n", encoding="utf-8", newline="")
+    servir(ZIPS); maj.controler = lambda: True
+    rc, out = lancer()
+    check("VERSION passée à 1.3.0", maj.version_locale(), "1.3.0")
+    check("pas de VERSION.nouveau", (d / "VERSION.nouveau").exists(), False)
+
 print("── Sans référence (étiquette absente) : ancienne règle")
 with installation(V12) as d:
     (d / "Scripts/sources_config.json").write_text('{"perso": 1}\n', encoding="utf-8", newline="")

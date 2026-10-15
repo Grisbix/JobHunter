@@ -3084,10 +3084,19 @@ class App:
         self._log(f"\n{'='*56}\n▶ TOUT FAIRE — pipeline complet (6 etapes)\n{'='*56}\n")
         threading.Thread(target=self._exec_seq, args=(seq,), daemon=True).start()
 
-    def mettre_a_jour(self):
+    def mettre_a_jour(self, en_attente=False):
         """mise_a_jour.py dans le journal de l'app, puis propose de relancer
-        JobHunter sur la nouvelle version (le code deja charge reste l'ancien)."""
-        if self._occupe(): return
+        JobHunter sur la nouvelle version (le code deja charge reste l'ancien).
+
+        Au demarrage, l'annonce arrive souvent pendant un travail de fond (scan
+        auto, sync docs) : `_occupe()` refusait alors le « Oui » en silence. On
+        attend la fin de ce travail — remplacer les scripts sous un programme qui
+        tourne n'est pas une option."""
+        if (self.proc and self.proc.poll() is None) or getattr(self, "_bg_busy", False):
+            if not en_attente:
+                self._log("\n⏳ Mise à jour : elle démarre dès que le travail en cours est fini.\n")
+            self.root.after(3000, lambda: self.mettre_a_jour(en_attente=True))
+            return
         try:
             import mise_a_jour
             avant = mise_a_jour.version_locale()

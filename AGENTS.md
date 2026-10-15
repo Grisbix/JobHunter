@@ -92,10 +92,10 @@ python test_tri_file.py      #  52 cas — quant, data, outils de dev, doublons,
 python test_site_final.py    #  30 cas — intitulé strict, identité Workday, resondage, coquilles ATS
 python test_metriques_hebdo.py # 26 cas — bilan hebdo : dates du suivi, relances, journaux
 python test_lecteurs_ats.py  #  65 cas — chaque lecteur d'ATS / page carrière (job_sources), refus 403/404
-python test_mise_a_jour.py   #  63 cas — modif. utilisateur gardée, fichier retiré, données, retour arrière
+python test_mise_a_jour.py   #  65 cas — modif. utilisateur gardée, fichier retiré, données, retour arrière
 ```
 
-Ces vingt et un-là tournent **sans réseau** : 1017 cas en moins d'une minute, tous au vert
+Ces vingt et un-là tournent **sans réseau** : 1019 cas en moins d'une minute, tous au vert
 sur le profil d'exemple. Ce sont ceux à passer après une modification.
 
 `test_scoring` génère un cas « sans backspace » **par motif du module** : ajouter un
