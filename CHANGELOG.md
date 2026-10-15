@@ -18,6 +18,9 @@ récente en haut.
 - **Les fichiers retirés du programme sont enlevés** (s'ils n'ont pas été modifiés),
   avec copie dans la sauvegarde.
 - **Nouveaux réglages du profil signalés** après la mise à jour.
+- Un clone git neuf sous Windows ne voit plus les `.bat` comme modifiés (le premier
+  `git pull` échouait).
+- customtkinter 6 accepté (testé : l'application s'ouvre et fonctionne avec la 5 et la 6).
 
 ## 1.2.0 — 2026-10-15
 
