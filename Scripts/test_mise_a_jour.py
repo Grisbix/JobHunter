@@ -68,11 +68,12 @@ CHANGELOG = """# Nouveautés
 
 V12 = {"VERSION": "1.2.0\n", "Scripts/a.py": "A = 1\n", "Scripts/b.py": "B = 1\n",
        "Scripts/vieux.py": "V = 1\n", "Scripts/vieux_modifie.py": "W = 1\n",
-       "Scripts/sources_config.json": "{}\n", "Mon_CV/LISEZ-MOI.txt": "mets ton CV ici\n"}
+       "Scripts/sources_config.json": "{}\n", "Mon_CV/LISEZ-MOI.txt": "mets ton CV ici\n",
+       "Scripts/stable.py": "S = 1\n"}
 V13 = {"VERSION": "1.3.0\n", "Scripts/a.py": "A = 2\n", "Scripts/b.py": "B = 2\n",
        "Scripts/nouveau.py": "N = 1\n", "Scripts/sources_config.json": '{"v": 2}\n',
        "Mon_CV/LISEZ-MOI.txt": "autre texte\n", "CHANGELOG.md": CHANGELOG,
-       "profil/profil.json": '{"pirate": 1}\n'}
+       "profil/profil.json": '{"pirate": 1}\n', "Scripts/stable.py": "S = 1\n"}
 
 
 @contextlib.contextmanager
@@ -150,6 +151,7 @@ with installation(V12) as d:
     (d / "Scripts/b.py").write_text("B = 1  # ma modif\n", encoding="utf-8", newline="")
     (d / "Scripts/vieux_modifie.py").write_text("W = 99\n", encoding="utf-8", newline="")
     (d / "Scripts/a_moi.py").write_text("perso\n", encoding="utf-8", newline="")
+    (d / "Scripts/stable.py").write_text("S = 1  # ma modif\n", encoding="utf-8", newline="")
     (d / "profil/profil.json").parent.mkdir(exist_ok=True)
     (d / "profil/profil.json").write_text('{"moi": 1}\n', encoding="utf-8", newline="")
     servir(ZIPS); maj.controler = lambda: True
@@ -159,6 +161,9 @@ with installation(V12) as d:
     check("fichier modifié GARDÉ (trou de la 1.2.0)", lire(d, "Scripts/b.py"), "B = 1  # ma modif\n")
     check("… nouvelle version posée en .nouveau", lire(d, "Scripts/b.py.nouveau"), "B = 2\n")
     check("fichier ajouté", lire(d, "Scripts/nouveau.py"), "N = 1\n")
+    check("modifié chez moi, inchangé en amont : gardé", lire(d, "Scripts/stable.py"), "S = 1  # ma modif\n")
+    check("… sans .nouveau inutile", (d / "Scripts/stable.py.nouveau").exists(), False)
+    check("… ni signalé", "stable.py" in out, False)
     check("fichier retiré intact → enlevé", lire(d, "Scripts/vieux.py"), None)
     check("… et sauvegardé", any(d.glob("_sauvegarde_maj/*/Scripts/vieux.py")))
     check("fichier retiré mais modifié → gardé", lire(d, "Scripts/vieux_modifie.py"), "W = 99\n")

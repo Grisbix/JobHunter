@@ -9,6 +9,8 @@ récente en haut.
 - L'installeur note l'empreinte des fichiers installés : une installation faite depuis
   le ZIP de `main` (entre deux versions) reconnaît, elle aussi, tes modifications.
 - Dans une copie sans fichier `VERSION`, la mise à jour le dit et ne tente rien.
+- Un fichier que tu as modifié et que la nouvelle version ne change pas n'est plus
+  signalé, et aucun `.nouveau` inutile n'est posé à côté.
 
 ## 1.3.0 — 2026-10-15
 

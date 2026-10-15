@@ -310,6 +310,8 @@ def plan_zip(nouveaux, locaux, reference):
             plan["ajouter"].append(rel)
         elif h_loc == _sha(contenu):
             plan["identiques"].append(rel)
+        elif reference.get(rel) == _sha(contenu):
+            pass        # modifie chez l'utilisateur, inchange en amont : rien a proposer
         else:
             ref = reference.get(rel)
             modifie = (h_loc != ref) if ref else (rel in REECRITS_AU_PREMIER_LANCEMENT)
