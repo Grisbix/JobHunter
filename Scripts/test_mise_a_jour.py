@@ -243,6 +243,34 @@ with installation(V12) as d:
     rc, out = lancer()
     check("la mise à jour se refait après annulation", maj.version_locale(), "1.3.0")
 
+print("── Installé depuis le ZIP de main (≠ étiquette) : l'empreinte de l'installeur fait foi")
+MAIN_ENTRE_DEUX = {**V12, "Scripts/a.py": "A = 1.5\n"}     # main a bouge apres la release 1.2.0
+with installation(MAIN_ENTRE_DEUX) as d:
+    (d / "Scripts/_logs").mkdir()
+    (d / "Scripts/_logs/x.log").write_text("log\n", encoding="utf-8", newline="")
+    check("--initialiser écrit l'empreinte", maj.initialiser())
+    m = json.loads((d / ".maj_manifeste.json").read_text(encoding="utf-8"))
+    check("… des fichiers du programme", m.get("Scripts/a.py"), maj._sha(b"A = 1.5\n"))
+    check("… sans les journaux ni les données", any(k.startswith(("Scripts/_logs", "Mon_CV")) for k in m), False)
+    check("une seconde fois : rien (déjà un manifeste)", maj.initialiser(), False)
+    servir(ZIPS); maj.controler = lambda: True
+    rc, out = lancer()
+    check("a.py (non modifié) remplacé malgré l'écart à l'étiquette", lire(d, "Scripts/a.py"), "A = 2\n")
+    check("pas de .nouveau", (d / "Scripts/a.py.nouveau").exists(), False)
+with installation(V12) as d:
+    (d / ".git").mkdir()
+    check("--initialiser ne fait rien dans un dépôt git", maj.initialiser(), False)
+
+print("── Sans VERSION (copie de développement) : rien n'est tenté")
+with installation({k: v for k, v in V12.items() if k != "VERSION"}) as d:
+    servir({}); maj.controler = lambda: True
+    sys.argv = ["mise_a_jour.py"]
+    with contextlib.redirect_stdout(io.StringIO()) as buf:
+        rc = maj.main()
+    check("code 1", rc, 1)
+    check("message clair", "Pas de fichier VERSION" in buf.getvalue())
+    check("aucun fichier écrit", sorted(p.name for p in d.iterdir()), sorted({"Scripts", "Mon_CV"}))
+
 print("── Vérification seule")
 with installation(V12) as d:
     servir(ZIPS); maj.controler = lambda: True

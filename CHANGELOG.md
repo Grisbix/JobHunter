@@ -4,6 +4,12 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 1.3.1 — 2026-10-15
+
+- L'installeur note l'empreinte des fichiers installés : une installation faite depuis
+  le ZIP de `main` (entre deux versions) reconnaît, elle aussi, tes modifications.
+- Dans une copie sans fichier `VERSION`, la mise à jour le dit et ne tente rien.
+
 ## 1.3.0 — 2026-10-15
 
 - **Mise à jour depuis l'application** : quand une version sort, JobHunter propose de

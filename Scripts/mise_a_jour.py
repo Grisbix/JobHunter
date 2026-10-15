@@ -26,8 +26,8 @@ ignore. Ces fichiers ne sont pas dans le ZIP, et une garde les refuse quand meme
 UN FICHIER DU PROGRAMME QUE TU AS MODIFIE est garde tel quel ; la nouvelle
 version est posee a cote, en `.nouveau`, et le bilan te le signale. « Modifie »
 = different de ce que la version installee contenait : l'empreinte vient du
-manifeste de la derniere mise a jour (`.maj_manifeste.json`) ou, a la premiere,
-du ZIP officiel de ta version (etiquette `v<version>` sur GitHub).
+manifeste (`.maj_manifeste.json`, ecrit par l'installeur puis par chaque mise a
+jour) ou, a defaut, du ZIP officiel de ta version (etiquette `v<version>`).
 
 UN FICHIER RETIRE du programme est enleve s'il n'a pas ete modifie (copie dans
 la sauvegarde), garde sinon. Un fichier que tu as cree n'est jamais touche :
@@ -252,6 +252,27 @@ def fichiers_du_zip(data):
             if rel:
                 out[rel] = z.read(info)
     return out
+
+
+def initialiser():
+    """Empreinte de l'installation telle que dezippee, AVANT que l'utilisateur ne
+    modifie quoi que ce soit (appele par installer.bat / installer.sh).
+
+    Sans elle, la reference est le ZIP de l'etiquette v<version> : exact pour qui a
+    pris une release, faux pour qui a pris le ZIP de main entre deux releases (ses
+    fichiers different de l'etiquette et passeraient pour modifies). Ne fait rien
+    s'il y a deja un manifeste, un depot git ou pas de VERSION."""
+    if MANIFESTE.exists() or (RACINE / ".git").exists() or not (RACINE / "VERSION").exists():
+        return False
+    m = {}
+    for p in RACINE.rglob("*"):
+        rel = p.relative_to(RACINE).as_posix()
+        if (not p.is_file() or protege(rel) or "__pycache__/" in rel or rel.endswith(".nouveau")
+                or rel.startswith((".maj_", "Scripts/_logs/", "Scripts/_sauvegardes/"))):
+            continue
+        m[rel] = _sha(p.read_bytes())
+    MANIFESTE.write_text(json.dumps(m, indent=1, sort_keys=True), encoding="utf-8")
+    return True
 
 
 def reference_installee(version):
@@ -517,7 +538,19 @@ def main():
     ap.add_argument("--forcer", action="store_true", help="réinstaller même à version égale")
     ap.add_argument("--annuler", action="store_true",
                     help="revenir à la version d'avant la dernière mise à jour")
+    ap.add_argument("--initialiser", action="store_true",
+                    help="(installeur) noter l'empreinte des fichiers tels qu'installés")
     args = ap.parse_args()
+    if args.initialiser:
+        if initialiser():
+            print("Empreinte de l'installation enregistrée (.maj_manifeste.json).")
+        return 0
+    if not (RACINE / "VERSION").exists():
+        # Copie de developpement, ou depot qui recoit le moteur par copie : il n'y a
+        # pas de version publiee a comparer, et un `git pull` n'aurait pas de sens.
+        print("Pas de fichier VERSION : ce dossier n'est pas une installation publiée de "
+              "JobHunter (copie de développement ?). Rien à mettre à jour ici.")
+        return 1
     git = (RACINE / ".git").exists() and shutil.which("git")
     if args.annuler:
         return annuler_git() if git else annuler_zip()
