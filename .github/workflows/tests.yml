@@ -51,12 +51,16 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+      # shell: bash = « bash -eo pipefail » : sans pipefail, `| tail -1` rendait le
+      # code de tail et une suite en echec passait au vert.
       - name: Syntaxe des scripts .sh
-        run: for f in *.sh; do bash -n "$f" && echo "$f ok"; done
+        shell: bash
+        run: for f in *.sh; do bash -n "$f"; echo "$f ok"; done
       - name: Compilation de tous les programmes
         run: python -m py_compile JobHunter.pyw Scripts/*.py
-      - name: Logique pure (scoring, sources, zones)
+      - name: Logique pure (scoring, sources, titres, contrats)
         working-directory: Scripts
+        shell: bash
         env:
           PYTHONIOENCODING: utf-8
         run: |
