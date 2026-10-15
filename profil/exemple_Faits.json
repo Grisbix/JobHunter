@@ -1,0 +1,62 @@
+{
+ "_lisez_moi": "Faits VALIDES ajoutes au CV quand une annonce les appelle. Copier ce fichier en CV/Faits.json et l'adapter. Un fait n'est utilise que si valide = true. declencheurs : expressions regulieres cherchees dans l'annonce. op : ajoute_apres (ancre = debut d'un paragraphe du modele de CV, texte = la ligne ajoutee) ou remplace (ancre = texte du modele, texte = son remplacement). allegements : lignes du modele retirees si le CV depasse une page.",
+ "faits": [
+  {
+   "id": "projets_solaires",
+   "valide": true,
+   "priorite": 5,
+   "declencheurs": [
+    "photovolta",
+    "\bsolaire",
+    "\b[ée]olien",
+    "renouvelable"
+   ],
+   "fr": [
+    {
+     "op": "ajoute_apres",
+     "ancre": "Construction de modèles",
+     "texte": "Études de projets photovoltaïques, dont un parc de 20 MW"
+    }
+   ],
+   "en": [
+    {
+     "op": "ajoute_apres",
+     "ancre": "Built valuation models",
+     "texte": "Studies of solar projects, including a 20 MW park"
+    }
+   ]
+  },
+  {
+   "id": "espagnol_avance",
+   "valide": true,
+   "priorite": 3,
+   "declencheurs": [
+    "espagnol",
+    "spanish",
+    "español"
+   ],
+   "fr": [
+    {
+     "op": "remplace",
+     "ancre": "Espagnol (intermédiaire)",
+     "texte": "Espagnol (avancé)"
+    }
+   ],
+   "en": [
+    {
+     "op": "remplace",
+     "ancre": "Spanish (intermediate)",
+     "texte": "Spanish (advanced)"
+    }
+   ]
+  }
+ ],
+ "allegements": {
+  "fr": [
+   "Centres d'intérêt"
+  ],
+  "en": [
+   "Interests"
+  ]
+ }
+}

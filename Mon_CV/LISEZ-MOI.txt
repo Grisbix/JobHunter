@@ -1,0 +1,3 @@
+Depose ici ton CV (.docx de preference, sinon .pdf), un seul fichier.
+Puis double-clique sur lancer.bat a la racine du dossier.
+Ce dossier est ignore par git : ton CV ne sera jamais publie.

@@ -1,0 +1,117 @@
+# ── SECRETS — ne JAMAIS committer ──
+.env
+Scripts/.ats_password
+Scripts/apply_profile.json
+Scripts/mail_config.json
+Scripts/.pw_chrome_profile/
+*cookies*.json
+*google_state*.json
+Scripts/.sf_profiles/
+Scripts/sf_login.png
+Scripts/mail_confirmations.json
+
+# ── poubelle réversible + caches ──
+_CORBEILLE_*/
+__pycache__/
+*.pyc
+node_modules/
+
+# ── artefacts régénérables ──
+# Ou la derniere passe Indeed s'est arretee dans la liste des couples
+# (mot-cle, ville). Etat LOCAL d'une machine : le committer ferait
+# repartir la rotation d'un point qui n'a rien a voir avec la machine.
+Scripts/.indeed_rotation
+Scripts/_dbg.js
+*.log
+Scripts/apply_selection.json
+
+# logs pipeline (regenerables)
+Scripts/_logs/
+
+# exports CSV + etat notifications (regenerables)
+Scripts/_exports/
+Scripts/_notified.json
+
+# offres supprimees (sauvegarde locale, non versionnee)
+Scripts/_supprimees_*.json
+Scripts/_vie_offres.json
+
+# identifiants API France Travail (secret)
+Scripts/francetravail.json
+
+# cles API (secrets)
+Scripts/api_keys.json
+
+Scripts/_workday.json
+Scripts/*.lock
+Scripts/_test_lock.json*
+Scripts/_supprimees_liens_morts_*.json
+Scripts/_encore_vivants.json
+Scripts/_archives/
+Scripts/.pw_chrome_profile/
+Scripts/.pytest_cache/
+
+# etat des verifications LinkedIn + sauvegarde des offres retirees (regenerables)
+Scripts/_linkedin_etat.json
+Scripts/_supprimees_linkedin_*.json
+Scripts/_ats_candidats.json
+apply_queue.json.avant_tri_*
+
+# ── documents generes (deplaces hors de OneDrive) ──
+# 760 Mo de CV et de lettres reconstructibles par regenere_docs.py.
+# Suivis jusqu'au 20/09/2026 ; .git pesait alors 960 Mo a lui seul.
+CV/Par_offre/
+Lettres/Par_offre/
+Scripts/chemins.json
+
+# ── donnees generees : hors git depuis le 23/09/2026 ──
+# Versionnees jusque-la, elles etaient la sauvegarde de fait de la file. Mais
+# chaque commit de donnees se melait au code, et les documents generes suivis
+# jusqu'au 20/09 pesaient 768 Mo d'historique a eux seuls. La sauvegarde est
+# desormais faite par pipeline_quotidien.py dans Scripts/_sauvegardes/<date>/,
+# sept jours glissants. suivi.json RESTE suivi : 2,5 Ko, et la seule donnee
+# qu'aucun scan ne reconstitue.
+Scripts/apply_queue.json
+Scripts/descriptions.json
+Scripts/offres_scan.json
+Scripts/offres_fraiches.json
+Obsidian/veille_jobs_auto.xlsx
+Scripts/_sauvegardes/
+CV/_Archives/
+Lettres/_Archives/
+
+# etat de l audit de disponibilite (local, regenerable)
+Scripts/_audit_dispo.json
+
+# cles API agregateurs (secret)
+Scripts/adzuna.json
+Scripts/jooble.json
+Scripts/_site_final.json
+Scripts/_rejets_tri.json
+
+# ── DONNEES PERSONNELLES de l'utilisateur (version partagee) ──
+# Le depot reste LOCAL ; ces lignes evitent qu'un push accidentel publie un CV.
+profil/profil.json
+profil/*.bak
+CV/
+Lettres/
+Scripts/apply_queue.json
+Scripts/descriptions.json
+Scripts/suivi.json
+Scripts/offres_scan.json
+Scripts/offres_fraiches.json
+Scripts/_sauvegardes/
+Scripts/_rejets_tri.json
+Scripts/_audit_dispo.json
+Scripts/adzuna.json
+Scripts/jooble.json
+
+# CV deposé par l utilisateur
+Mon_CV/*
+!Mon_CV/LISEZ-MOI.txt
+
+# Mise a jour
+.maj_manifeste.json
+_sauvegarde_maj/
+*.nouveau
+.maj_derniere_verif

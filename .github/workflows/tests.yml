@@ -1,0 +1,64 @@
+name: tests
+
+# Les vingt suites sans reseau, plus le mock de navigation, a chaque push.
+# Elles tournent sur le profil d'exemple (_profil_test.py) : aucune donnee
+# personnelle n'est necessaire.
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Dependances
+        run: |
+          python -m pip install -r requirements.txt
+          python -m playwright install chromium
+      - name: Suites sans reseau
+        working-directory: Scripts
+        shell: pwsh
+        env:
+          PYTHONIOENCODING: utf-8
+        run: |
+          $suites = @(
+            "test_sources", "test_patterns", "test_scoring", "test_titres", "test_appel",
+            "test_lettre", "test_contrats", "test_queue_io", "test_liens", "test_suivi",
+            "test_zones", "test_audit_dispo", "test_cv_auto", "test_agregateurs",
+            "test_glassdoor_refus", "test_rejets_tri", "test_tri_file", "test_site_final",
+            "test_metriques_hebdo", "test_lecteurs_ats", "test_web_nav_mock"
+          )
+          $echecs = @()
+          foreach ($s in $suites) {
+            python "$s.py" | Select-Object -Last 1
+            if ($LASTEXITCODE -ne 0) { $echecs += $s }
+          }
+          if ($echecs.Count) { Write-Error "Suites en echec : $($echecs -join ', ')"; exit 1 }
+
+  unix:
+    # Les scripts macOS/Linux et la logique pure, hors Windows.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Syntaxe des scripts .sh
+        run: for f in *.sh; do bash -n "$f" && echo "$f ok"; done
+      - name: Compilation de tous les programmes
+        run: python -m py_compile JobHunter.pyw Scripts/*.py
+      - name: Logique pure (scoring, sources, zones)
+        working-directory: Scripts
+        env:
+          PYTHONIOENCODING: utf-8
+        run: |
+          python -m pip install -r ../requirements.txt
+          for s in test_scoring test_sources test_titres test_contrats; do python "$s.py" | tail -1; done

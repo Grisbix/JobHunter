@@ -1,0 +1,1395 @@
+{
+ "_lisez_moi": "Profil d'EXEMPLE (finance durable, junior). Copier en profil.json puis adapter, ou generer le sien avec premier_lancement.py.",
+ "identite": {
+  "prenom": "Camille",
+  "nom": "Exemple",
+  "email": "camille.exemple@example.com",
+  "telephone": "+33 6 00 00 00 00",
+  "linkedin": "",
+  "ville": "Bordeaux",
+  "genre": "m"
+ },
+ "langues_parlees": ["fr", "en", "de"],
+ "domaines": [
+  {
+   "cle": "ESG_Finance_Durable",
+   "libelle": "ESG",
+   "mots_titre": [
+    "re:\\b(isr|csrd|sri)\\b",
+    "re:(?:sustainable|stewardship|capital\\ naturel|natural\\ capital|finance\\ durable|investissement\\ durable|impact\\ investing|transition\\ finance|climate\\ finance|esg|durable|durabilit|climat|carbon|carbone|decarbon|net\\ zero|transition|green|extra\\-financier|rse|sustainability|sfdr|taxonomie|biodiversité|environnemental|decarbonation|responsable|impact\\ investing|green\\ bond|investissement\\ responsable)"
+   ],
+   "cv": "CV_Prenom_Nom_ESG_Finance_Durable.docx",
+   "cv_en": "",
+   "parcours_fr": "Diplômé d'un Master en Finance (École de commerce), je me suis spécialisé en finance durable : mon mémoire, consacré à la classification SFDR et aux labels européens, m'a conduit à analyser 3 000 fonds. Mon stage d'analyste financier et ESG chez Acme Finance (Lisbonne) m'a ensuite permis de mettre cette spécialisation en pratique : valorisation par DCF, analyse de bilan, labellisation SFDR de fonds.",
+   "parcours_en": "I hold a Master in Finance (École de commerce), with a specialisation in sustainable finance. My thesis, devoted to SFDR classification and European labels, led me to analyse 3,000 funds. My internship as a financial and ESG analyst at Acme Finance (Lisbon) then put that specialisation into practice: valuation work with DCF, balance sheet analysis, SFDR labelling of investment funds.",
+   "accroche_fr": "analyste ESG et finance durable",
+   "accroche_en": "ESG and sustainable finance analyst",
+   "preuve_fr": "Mon mémoire a porté sur la classification SFDR et les labels européens de 3 000 fonds, et j'ai pratiqué la labellisation SFDR chez Acme Finance, à Lisbonne.",
+   "preuve_en": "My thesis covered the SFDR classification and European labels of 3,000 funds, and I worked on SFDR labelling at Acme Finance in Lisbon.",
+   "preuve_detente_fr": "Mon mémoire m'a fait analyser 3 000 fonds sous l'angle SFDR et des labels européens, et j'ai mis les mains dans la labellisation SFDR chez Acme Finance, à Lisbonne."
+  },
+  {
+   "cle": "Data_IA",
+   "libelle": "Data/IA",
+   "mots_titre": [
+    "re:(?:data|datascientist|data\\ scientist|data\\ analyst|data\\ engineer|machine\\ learning|intelligence\\ artificielle|artificial\\ intelligence|python|sql|power\\ bi|bi\\ analyst)"
+   ],
+   "cv": "CV_Prenom_Nom_Data_IA_Climate_Tech.docx",
+   "cv_en": "",
+   "parcours_fr": "Diplômé d'un Master en Finance (École de commerce), j'associe l'analyse financière au traitement de données. Mon mémoire de recherche a porté sur 3 000 fonds, et je construis aujourd'hui des chaînes de données complètes en Python : collecte, modélisation, automatisation par agents. Mon stage d'analyste chez Acme Finance (Lisbonne) m'a donné le contexte métier de ces analyses.",
+   "parcours_en": "I hold a Master in Finance (École de commerce) and combine financial analysis with data work. My research thesis covered 3,000 funds. I now build complete data pipelines in Python: collection, modelling, automation through agents. My analyst internship at Acme Finance (Lisbon) gave me the business context for that analysis.",
+   "accroche_fr": "analyste data et intelligence artificielle",
+   "accroche_en": "data and artificial intelligence analyst",
+   "preuve_fr": "J'ai traité 3 000 fonds pour mon mémoire de recherche, et je construis aujourd'hui des chaînes de données complètes en Python, de la collecte à l'automatisation.",
+   "preuve_en": "I processed 3,000 funds for my research thesis, and I now build complete data pipelines in Python, from collection through to automation.",
+   "preuve_detente_fr": "J'ai traité 3 000 fonds pour mon mémoire, et je construis aujourd'hui des chaînes de données complètes en Python, de la collecte à l'automatisation."
+  },
+  {
+   "cle": "Risk_Quant",
+   "libelle": "Risque",
+   "mots_titre": [
+    "re:(?:risk|risque|quant|quantitative|modelisation|modelling|actuari)"
+   ],
+   "cv": "CV_Prenom_Nom_Risk_Quant_Assurance.docx",
+   "cv_en": "",
+   "parcours_fr": "Diplômé d'un Master en Finance (École de commerce), j'ai un profil quantitatif : mon mémoire de recherche a porté sur le risque et la performance de 3 000 fonds. Je pratique la modélisation en Python comme en Excel. Mon stage d'analyste chez Acme Finance (Lisbonne) m'a confronté à la valorisation par DCF, à l'analyse de bilan, aux projections financières.",
+   "parcours_en": "I hold a Master in Finance (École de commerce) and have a quantitative profile. My research thesis analysed the risk and performance of 3,000 funds. I model in Python as well as in Excel. My analyst internship at Acme Finance (Lisbon) exposed me to valuation work, balance sheet analysis, financial projections.",
+   "accroche_fr": "analyste risques et quantitatif",
+   "accroche_en": "risk and quantitative analyst",
+   "preuve_fr": "Mon mémoire a porté sur l'analyse risque/performance de 3 000 fonds, et je pratique la modélisation aussi bien en Python qu'en Excel.",
+   "preuve_en": "My thesis analysed the risk/performance of 3,000 funds, and I model in Python as well as in Excel.",
+   "preuve_detente_fr": "Mon mémoire portait sur le risque et la performance de 3 000 fonds, et je modélise aussi bien en Python qu'en Excel."
+  },
+  {
+   "cle": "Conseil",
+   "libelle": "Conseil",
+   "mots_titre": [
+    "re:(?:conseil|consultant|consulting|audit|auditeur)"
+   ],
+   "cv": "CV_Prenom_Nom_Conseil_Strategy.docx",
+   "cv_en": "",
+   "parcours_fr": "Diplômé d'un Master en Finance (École de commerce), j'ai appris chez Acme Finance (Lisbonne) à transformer une analyse en recommandation : valorisation d'opérations de private equity, études de marché, présentation au comité d'investissement et aux investisseurs. Mon mémoire, mené sur 3 000 fonds, m'a entraîné à structurer un problème complexe, puis à en tirer des conclusions défendables.",
+   "parcours_en": "I hold a Master in Finance (École de commerce). At Acme Finance (Lisbon) I learned how to turn analysis into recommendation: valuation of private equity transactions, market studies, then presentation to the investment committee and to investors. My thesis, covering 3,000 funds, trained me to structure a complex problem, then to draw defensible conclusions from it.",
+   "accroche_fr": "consultant junior en finance et stratégie",
+   "accroche_en": "junior finance and strategy consultant",
+   "preuve_fr": "Chez Acme Finance, à Lisbonne, j'ai transformé des analyses de valorisation en recommandations présentées au comité d'investissement et aux investisseurs.",
+   "preuve_en": "At Acme Finance in Lisbon I turned valuation work into recommendations presented to the investment committee and to investors.",
+   "preuve_detente_fr": "Chez Acme Finance, à Lisbonne, j'ai appris à transformer une analyse en recommandation, et à la présenter au comité d'investissement comme aux investisseurs."
+  },
+  {
+   "cle": "Finance",
+   "libelle": "Finance",
+   "mots_titre": [],
+   "cv": "CV_Prenom_Nom_Finance_Investissement.docx",
+   "cv_en": "",
+   "parcours_fr": "Diplômé d'un Master en Finance (École de commerce), j'ai exercé comme analyste financier chez Acme Finance (Lisbonne), où j'ai construit des modèles de valorisation par DCF, des projections financières, des analyses de bilan, des études de marché pour des opérations de private equity, puis présenté ces analyses au comité d'investissement. Mon mémoire de recherche, mené sur 3 000 fonds, m'a par ailleurs entraîné au traitement de grands volumes de données financières.",
+   "parcours_en": "I hold a Master in Finance (École de commerce). At Acme Finance (Lisbon) I worked as an analyst, where I built valuation models using DCF, projections, market studies for private equity transactions, then presented those analyses to the investment committee. My research thesis, covering 3,000 funds, also trained me to work with large volumes of data.",
+   "accroche_fr": "analyste financier junior",
+   "accroche_en": "junior financial analyst",
+   "preuve_fr": "Chez Acme Finance, à Lisbonne, j'ai construit des modèles de valorisation par DCF et des projections financières pour des opérations de private equity, puis présenté ces analyses au comité d'investissement.",
+   "preuve_en": "At Acme Finance in Lisbon I built valuation models using DCF and financial projections for private equity transactions, and presented those analyses to the investment committee.",
+   "preuve_detente_fr": "Chez Acme Finance, à Lisbonne, j'ai construit des modèles de valorisation par DCF et des projections financières pour des opérations de private equity, puis je suis allé les défendre devant le comité d'investissement."
+  }
+ ],
+ "competences": {
+  "SFDR (Art. 8/9)": {
+   "synonymes": [
+    "sfdr",
+    "article 8",
+    "article 9",
+    "art. 8",
+    "art. 9",
+    "disclosure"
+   ],
+   "en": "SFDR (Art. 8/9)",
+   "prose_fr": "la classification SFDR",
+   "prose_en": "SFDR classification"
+  },
+  "Taxonomie européenne": {
+   "synonymes": [
+    "taxonomie",
+    "taxonomy"
+   ],
+   "en": "EU taxonomy",
+   "prose_fr": "la taxonomie européenne",
+   "prose_en": "the EU taxonomy"
+  },
+  "Réglementation ESG / CSRD": {
+   "synonymes": [
+    "csrd",
+    "reglementaire",
+    "réglementaire",
+    "regulation",
+    "réglementation",
+    "nfrd"
+   ],
+   "en": "ESG regulation / CSRD",
+   "prose_fr": "la CSRD",
+   "prose_en": "the CSRD"
+  },
+  "Reporting extra-financier": {
+   "synonymes": [
+    "reporting extra",
+    "extra-financ",
+    "reporting esg",
+    "reporting rse",
+    "reporting durabilit"
+   ],
+   "en": "non-financial reporting",
+   "prose_fr": "le reporting extra-financier",
+   "prose_en": "non-financial reporting"
+  },
+  "Notation / scoring ESG": {
+   "synonymes": [
+    "notation esg",
+    "scoring",
+    "rating esg",
+    "note esg",
+    "note extra"
+   ],
+   "en": "ESG ratings and scoring",
+   "prose_fr": "la notation ESG",
+   "prose_en": "ESG scoring"
+  },
+  "Analyse ESG / ISR": {
+   "synonymes": [
+    "analyse esg",
+    "analyste esg",
+    "isr",
+    "investissement responsable",
+    "esg analysis"
+   ],
+   "en": "ESG / SRI analysis",
+   "prose_fr": "l'analyse ESG",
+   "prose_en": "ESG analysis"
+  },
+  "Cadres GRI / TCFD / SASB": {
+   "synonymes": [
+    "gri",
+    "tcfd",
+    "sasb",
+    "cdsb",
+    "cdp"
+   ],
+   "en": "GRI / TCFD / SASB frameworks",
+   "prose_fr": "les référentiels GRI et TCFD",
+   "prose_en": "the GRI and TCFD frameworks"
+  },
+  "Empreinte carbone / climat": {
+   "synonymes": [
+    "carbone",
+    "carbon",
+    "climat",
+    "ges",
+    "scope 1",
+    "scope 2",
+    "scope 3",
+    "trajectoire"
+   ],
+   "en": "carbon and climate footprint",
+   "prose_fr": "l'empreinte carbone",
+   "prose_en": "carbon footprinting"
+  },
+  "PAI (impacts négatifs)": {
+   "synonymes": [
+    "pai",
+    "principal adverse",
+    "impacts negatifs",
+    "impacts négatifs"
+   ],
+   "en": "PAI (principal adverse impacts)",
+   "prose_fr": "les indicateurs PAI",
+   "prose_en": "PAI indicators"
+  },
+  "Due diligence ESG": {
+   "synonymes": [
+    "due diligence",
+    "controverses",
+    "engagement actionnarial",
+    "stewardship"
+   ],
+   "en": "ESG due diligence",
+   "prose_fr": "la due diligence ESG",
+   "prose_en": "ESG due diligence"
+  },
+  "Durabilité / ESG (généraliste)": {
+   "synonymes": [
+    "esg",
+    "rse",
+    "durabilit",
+    "sustainab",
+    "extra-financi",
+    "extra financi",
+    "responsible sourcing",
+    "investissement responsable"
+   ],
+   "en": "Durabilité / ESG (généraliste)",
+   "prose_fr": null,
+   "prose_en": null,
+   "interne": true
+  },
+  "Valorisation financière (DCF)": {
+   "synonymes": [
+    "dcf",
+    "valorisation",
+    "valuation",
+    "multiples",
+    "flux de tresorerie",
+    "cash flow",
+    "ebitda"
+   ],
+   "en": "financial valuation (DCF)",
+   "prose_fr": "la valorisation par DCF",
+   "prose_en": "DCF valuation"
+  },
+  "Analyse financière": {
+   "synonymes": [
+    "analyse financi",
+    "financial analysis",
+    "modelisation",
+    "modélisation",
+    "modeling",
+    "états financiers",
+    "bilan",
+    "compte de résultat"
+   ],
+   "en": "financial analysis",
+   "prose_fr": "l'analyse financière",
+   "prose_en": "financial analysis"
+  },
+  "Modélisation financière": {
+   "synonymes": [
+    "modele financier",
+    "modèle financier",
+    "financial model",
+    "business plan",
+    "prévisionnel",
+    "forecast",
+    "budget"
+   ],
+   "en": "financial modelling",
+   "prose_fr": "la modélisation financière",
+   "prose_en": "financial modelling"
+  },
+  "Analyse sectorielle": {
+   "synonymes": [
+    "sectoriel",
+    "analyse de secteur",
+    "industrie",
+    "filiere",
+    "filière",
+    "benchmark"
+   ],
+   "en": "sector analysis",
+   "prose_fr": "l'analyse sectorielle",
+   "prose_en": "sector analysis"
+  },
+  "M&A / Corporate Finance": {
+   "synonymes": [
+    "m&a",
+    "fusion",
+    "acquisition",
+    "corporate finance",
+    "deal",
+    "transaction",
+    "levée de fonds",
+    "ipo"
+   ],
+   "en": "M&A / corporate finance",
+   "prose_fr": "les opérations de corporate finance",
+   "prose_en": "corporate finance transactions"
+  },
+  "Private Equity / LBO": {
+   "synonymes": [
+    "private equity",
+    "non cote",
+    "non coté",
+    "lbo",
+    "capital investissement",
+    "capital-investissement",
+    "fonds propres",
+    "venture"
+   ],
+   "en": "private equity / LBO",
+   "prose_fr": "le private equity",
+   "prose_en": "private equity"
+  },
+  "Gestion d'actifs": {
+   "synonymes": [
+    "asset management",
+    "gestion d'actifs",
+    "gerant",
+    "gérant",
+    "portefeuille",
+    "portfolio",
+    "fund",
+    "buy-side",
+    "sell-side"
+   ],
+   "en": "asset management",
+   "prose_fr": "la gestion d'actifs",
+   "prose_en": "asset management"
+  },
+  "Trésorerie / financement": {
+   "synonymes": [
+    "tresorerie",
+    "trésorerie",
+    "financement",
+    "dette",
+    "crédit",
+    "cash management"
+   ],
+   "en": "treasury and financing",
+   "prose_fr": "la trésorerie",
+   "prose_en": "treasury"
+  },
+  "Contrôle de gestion": {
+   "synonymes": [
+    "controle de gestion",
+    "contrôle de gestion",
+    "controlling",
+    "fp&a",
+    "reporting financier"
+   ],
+   "en": "management control",
+   "prose_fr": "le contrôle de gestion",
+   "prose_en": "management control"
+  },
+  "Audit / comptabilité": {
+   "synonymes": [
+    "audit",
+    "comptab",
+    "commissariat",
+    "consolidation",
+    "ifrs",
+    "clôture"
+   ],
+   "en": "audit and accounting",
+   "prose_fr": "l'audit",
+   "prose_en": "audit"
+  },
+  "Python / SQL": {
+   "synonymes": [
+    "python",
+    "sql",
+    "pandas",
+    "requête",
+    "base de données",
+    "etl"
+   ],
+   "en": "Python / SQL",
+   "prose_fr": "Python et SQL",
+   "prose_en": "Python and SQL"
+  },
+  "Data analyse / BI": {
+   "synonymes": [
+    "data analyst",
+    "data analysis",
+    "power bi",
+    "dataviz",
+    "data visualization",
+    "analytics",
+    "tableau de bord"
+   ],
+   "en": "data analysis / BI",
+   "prose_fr": "l'analyse de données",
+   "prose_en": "data analysis"
+  },
+  "Machine learning / IA": {
+   "synonymes": [
+    "machine learning",
+    "deep learning",
+    "ia ",
+    "intelligence artificielle",
+    "nlp",
+    "modèle prédictif",
+    "scoring model"
+   ],
+   "en": "machine learning / AI",
+   "prose_fr": "le machine learning",
+   "prose_en": "machine learning"
+  },
+  "Automatisation / scripting": {
+   "synonymes": [
+    "automatisation des",
+    "scripting",
+    "vba macro",
+    "rest api"
+   ],
+   "en": "automation and scripting",
+   "prose_fr": "l'automatisation",
+   "prose_en": "automation"
+  },
+  "IA générative / LLM": {
+   "synonymes": [
+    "llm",
+    "gpt",
+    "claude",
+    "anthropic",
+    "openai",
+    "mistral",
+    "gemini",
+    "genai",
+    "ia génarative",
+    "ia générative",
+    "generative ai",
+    "prompt engineering",
+    "prompting"
+   ],
+   "en": "generative AI / LLMs",
+   "prose_fr": "l'IA générative",
+   "prose_en": "generative AI"
+  },
+  "Agents IA / orchestration": {
+   "synonymes": [
+    "agent ia",
+    "agents ia",
+    "ai agent",
+    "agentic",
+    "langchain",
+    "n8n",
+    "make.com",
+    "zapier",
+    "rag ",
+    "retrieval augmented",
+    "orchestration"
+   ],
+   "en": "AI agents and orchestration",
+   "prose_fr": "les agents IA",
+   "prose_en": "AI agents"
+  },
+  "Dev assisté IA (vibe coding)": {
+   "synonymes": [
+    "vibe coding",
+    "claude code",
+    "cursor",
+    "copilot",
+    "github copilot",
+    "codex",
+    "windsurf"
+   ],
+   "en": "AI-assisted development",
+   "prose_fr": "le développement assisté par IA",
+   "prose_en": "AI-assisted development"
+  },
+  "Git / Docker / CI-CD": {
+   "synonymes": [
+    "git ",
+    "github",
+    "gitlab",
+    "docker",
+    "ci/cd",
+    "cicd",
+    "conteneur",
+    "container",
+    "déploiement cloud",
+    "devops"
+   ],
+   "en": "Git / Docker / CI-CD",
+   "prose_fr": "Git et Docker",
+   "prose_en": "Git and Docker"
+  },
+  "Gestion des risques": {
+   "synonymes": [
+    "risque",
+    "risk",
+    "risk management",
+    "var",
+    "stress test",
+    "market risk",
+    "credit risk"
+   ],
+   "en": "risk management",
+   "prose_fr": "la gestion des risques",
+   "prose_en": "risk management"
+  },
+  "Quantitatif": {
+   "synonymes": [
+    "quantitatif",
+    "quantitative",
+    "quant",
+    "pricing",
+    "dérivés",
+    "derivatives",
+    "monte carlo"
+   ],
+   "en": "quantitative analysis",
+   "prose_fr": "l'analyse quantitative",
+   "prose_en": "quantitative analysis"
+  },
+  "Actuariat / assurance": {
+   "synonymes": [
+    "actuari",
+    "assurance",
+    "solvab",
+    "solvency",
+    "provision",
+    "bâle",
+    "bale",
+    "réassurance"
+   ],
+   "en": "actuarial science and insurance",
+   "prose_fr": "l'actuariat",
+   "prose_en": "actuarial work"
+  },
+  "Conseil / stratégie": {
+   "synonymes": [
+    "conseil",
+    "consulting",
+    "consultant",
+    "strategie",
+    "stratégie",
+    "strategy",
+    "transformation",
+    "advisory"
+   ],
+   "en": "consulting and strategy",
+   "prose_fr": "le conseil",
+   "prose_en": "consulting"
+  },
+  "Gestion de projet": {
+   "synonymes": [
+    "gestion de projet",
+    "project management",
+    "pmo",
+    "chef de projet"
+   ],
+   "en": "project management",
+   "prose_fr": "la gestion de projet",
+   "prose_en": "project management",
+   "technique": false
+  },
+  "Excel avancé / VBA": {
+   "synonymes": [
+    "excel",
+    "vba",
+    "modele excel",
+    "tableur",
+    "macro"
+   ],
+   "en": "advanced Excel / VBA",
+   "prose_fr": "Excel à un niveau avancé",
+   "prose_en": "advanced Excel"
+  },
+  "Anglais courant (TOEIC 920)": {
+   "synonymes": [
+    "anglais",
+    "english",
+    "bilingue",
+    "international",
+    "fluent"
+   ],
+   "en": "fluent English (TOEIC 920)",
+   "prose_fr": null,
+   "prose_en": null,
+   "technique": false
+  },
+  "Allemand (B2)": {
+   "synonymes": [
+    "allemand",
+    "german",
+    "deutsch"
+   ],
+   "en": "German (B2)",
+   "prose_fr": null,
+   "prose_en": null,
+   "technique": false
+  },
+  "Communication / présentation": {
+   "synonymes": [
+    "reporting client",
+    "relation client",
+    "pedagog",
+    "pédagog",
+    "négociation",
+    "présentation client"
+   ],
+   "en": "communication and presentation",
+   "prose_fr": null,
+   "prose_en": null,
+   "technique": false
+  }
+ },
+ "competences_de_base": [
+  "Analyse financière",
+  "Excel avancé / VBA",
+  "Anglais courant (TOEIC 920)"
+ ],
+ "termes": {
+  "excel": [
+   "Excel",
+   "Excel"
+  ],
+  "vba": [
+   "VBA",
+   "VBA"
+  ],
+  "python": [
+   "Python",
+   "Python"
+  ],
+  "sql": [
+   "SQL",
+   "SQL"
+  ],
+  "sap": [
+   "SAP",
+   "SAP"
+  ],
+  "power bi": [
+   "Power BI",
+   "Power BI"
+  ],
+  "git": [
+   "Git",
+   "Git"
+  ],
+  "docker": [
+   "Docker",
+   "Docker"
+  ],
+  "dcf": [
+   "DCF",
+   "DCF"
+  ],
+  "sfdr": [
+   "SFDR",
+   "SFDR"
+  ],
+  "csrd": [
+   "CSRD",
+   "CSRD"
+  ],
+  "esg": [
+   "ESG",
+   "ESG"
+  ],
+  "rse": [
+   "RSE",
+   null
+  ],
+  "isr": [
+   "ISR",
+   null
+  ],
+  "ifrs": [
+   "IFRS",
+   "IFRS"
+  ],
+  "kpi": [
+   "KPI",
+   "KPI"
+  ],
+  "ebitda": [
+   "EBITDA",
+   "EBITDA"
+  ],
+  "lbo": [
+   "LBO",
+   "LBO"
+  ],
+  "m&a": [
+   "M&A",
+   "M&A"
+  ],
+  "gri": [
+   "GRI",
+   "GRI"
+  ],
+  "tcfd": [
+   "TCFD",
+   "TCFD"
+  ],
+  "pai": [
+   "PAI",
+   "PAI"
+  ],
+  "erp": [
+   "ERP",
+   "ERP"
+  ],
+  "llm": [
+   "LLM",
+   "LLM"
+  ],
+  "reporting": [
+   "reporting",
+   "reporting"
+  ],
+  "private equity": [
+   "private equity",
+   "private equity"
+  ],
+  "asset management": [
+   "asset management",
+   "asset management"
+  ],
+  "due diligence": [
+   "due diligence",
+   "due diligence"
+  ],
+  "benchmark": [
+   "benchmark",
+   "benchmarking"
+  ],
+  "scoring": [
+   "scoring",
+   "scoring"
+  ],
+  "machine learning": [
+   "machine learning",
+   "machine learning"
+  ],
+  "cash flow": [
+   "cash flow",
+   "cash flow"
+  ],
+  "stress test": [
+   "stress test",
+   "stress testing"
+  ],
+  "business plan": [
+   "business plan",
+   "business plan"
+  ],
+  "forecast": [
+   "prévisions",
+   "forecasting"
+  ],
+  "controlling": [
+   "contrôle de gestion",
+   "controlling"
+  ],
+  "pricing": [
+   "valorisation",
+   "pricing"
+  ],
+  "portfolio": [
+   "portefeuille",
+   "portfolio"
+  ],
+  "fund": [
+   "fonds",
+   "funds"
+  ],
+  "deal": [
+   "opérations",
+   "deals"
+  ],
+  "cash management": [
+   "gestion de trésorerie",
+   "cash management"
+  ],
+  "financial analysis": [
+   "analyse financière",
+   "financial analysis"
+  ],
+  "financial model": [
+   "modélisation financière",
+   "financial modelling"
+  ],
+  "data analysis": [
+   "analyse de données",
+   "data analysis"
+  ],
+  "risk management": [
+   "gestion des risques",
+   "risk management"
+  ],
+  "corporate finance": [
+   "corporate finance",
+   "corporate finance"
+  ],
+  "budget": [
+   "budget",
+   "budgeting"
+  ],
+  "audit": [
+   "audit",
+   "audit"
+  ],
+  "consolidation": [
+   "consolidation",
+   "consolidation"
+  ],
+  "trésorerie": [
+   "trésorerie",
+   "treasury"
+  ],
+  "financement": [
+   "financement",
+   "financing"
+  ],
+  "risque": [
+   "risque",
+   "risk"
+  ],
+  "valorisation": [
+   "valorisation",
+   "valuation"
+  ],
+  "modélisation": [
+   "modélisation",
+   "modelling"
+  ],
+  "bilan": [
+   "bilan",
+   "balance sheet"
+  ],
+  "portefeuille": [
+   "portefeuille",
+   "portfolio"
+  ],
+  "carbone": [
+   "carbone",
+   "carbon"
+  ],
+  "climat": [
+   "climat",
+   "climate"
+  ],
+  "taxonomie": [
+   "taxonomie",
+   "taxonomy"
+  ],
+  "quantitatif": [
+   "quantitatif",
+   "quantitative"
+  ],
+  "sectoriel": [
+   "analyse sectorielle",
+   "sector analysis"
+  ],
+  "clôture": [
+   "clôture comptable",
+   "month-end closing"
+  ],
+  "contrôle de gestion": [
+   "contrôle de gestion",
+   "management control"
+  ],
+  "gestion d'actifs": [
+   "gestion d'actifs",
+   "asset management"
+  ],
+  "analyse financi": [
+   "analyse financière",
+   "financial analysis"
+  ]
+ },
+ "scoring": {
+  "axes": {
+   "esg": {
+    "poids": 3.0,
+    "competences": [
+     "SFDR (Art. 8/9)",
+     "Taxonomie européenne",
+     "Réglementation ESG / CSRD",
+     "Reporting extra-financier",
+     "Notation / scoring ESG",
+     "Analyse ESG / ISR",
+     "Cadres GRI / TCFD / SASB",
+     "Empreinte carbone / climat",
+     "PAI (impacts négatifs)",
+     "Due diligence ESG",
+     "Durabilité / ESG (généraliste)"
+    ]
+   },
+   "finance": {
+    "poids": 2.0,
+    "competences": [
+     "Valorisation financière (DCF)",
+     "Analyse financière",
+     "Modélisation financière",
+     "Analyse sectorielle",
+     "M&A / Corporate Finance",
+     "Private Equity / LBO",
+     "Gestion d'actifs",
+     "Trésorerie / financement",
+     "Contrôle de gestion",
+     "Audit / comptabilité"
+    ]
+   },
+   "data": {
+    "poids": 1.0,
+    "competences": [
+     "Python / SQL",
+     "Data analyse / BI",
+     "Machine learning / IA",
+     "Automatisation / scripting"
+    ]
+   },
+   "risk": {
+    "poids": 1.0,
+    "competences": [
+     "Gestion des risques",
+     "Quantitatif",
+     "Actuariat / assurance"
+    ]
+   },
+   "conseil": {
+    "poids": 1.0,
+    "competences": [
+     "Conseil / stratégie",
+     "Gestion de projet"
+    ]
+   },
+   "ia": {
+    "poids": 1.5,
+    "competences": [
+     "IA générative / LLM",
+     "Agents IA / orchestration",
+     "Dev assisté IA (vibe coding)",
+     "Git / Docker / CI-CD",
+     "Machine learning / IA"
+    ]
+   }
+  },
+  "axe_coeur": "esg",
+  "axe_complement": "ia",
+  "cible_score": 3.0,
+  "saturation_axe": 3,
+  "plafond_sans_coeur": 6.0,
+  "plafond_complement": 8.0,
+  "densite_coeur_min": 1.0,
+  "densite_coeur_longueur": 800,
+  "intitules_coeur": [
+   "re:\\b(esg|isr|rse|csr|csrd|sfdr|taxonomi\\w*|extra.?financier\\w*|durable\\w*|sustainab\\w*|climat\\w*|carbone?|d[ée]carbonation|green|environnement\\w*|environmental|transition\\s+[ée]nerg[ée]tique|biodiversit[ée]|impact|e&s)\\b"
+  ],
+  "intitules_coeur_forts": [
+   "re:\\b(esg|isr|rse|csr|csrd|sfdr|taxonomi\\w*|extra.?financi\\w*|e&s|pai|finance\\s+durable|sustainable\\s+financ\\w*|sustainable\\s+invest\\w*|investissement\\s+responsable|responsible\\s+invest\\w*|impact\\s+invest\\w*|green\\s+bonds?|climate\\s+financ\\w*|stewardship)\\b"
+  ],
+  "intitules_second": [
+   "re:\\b(analyste\\s+(financier|financi[eè]re|investissement|cr[ée]dit|m&a|fp&a|private\\s+equity|actions|buy.?side|sell.?side|gestion|portefeuille|fusions?)|financial\\s+analyst|investment\\s+analyst|credit\\s+analyst|equity\\s+research|(m&a|fp&a|corporate\\s+finance|private\\s+equity|portfolio|valuation|treasury)\\s+analyst|charg[ée]\\s+d.?(affaires|investissements?)|contr[ôo]leur\\s+de\\s+gestion|financial\\s+controller|business\\s+analyst\\s+financ\\w*)"
+  ],
+  "plafond_second": 8.0,
+  "veto_sigles": [
+   "re:\\b(hse|qhse|qse|qes|qsse|ehs|hsqe|hygi[eè]ne|radioprot\\w*)\\b"
+  ],
+  "veto_si": [
+   "re:\\b(s[ée]curit[ée]|safety)\\b"
+  ],
+  "veto_et": [
+   "re:\\b(sant[ée]|health|environnement\\w*|environmental)\\b"
+  ],
+  "plafond_veto": 6.0,
+  "intitules_techniques": [
+   "re:\\b(?:ing[ée]nieure?s?(?!\\s+financ)|(?<!financial\\s)engineers?|technicien\\w*|technicians?|chantiers?|travaux|maintenance)\\b"
+  ],
+  "intitules_techniques_sauf": [
+   "re:\\b(?:financ\\w*|audit\\w*|analyste?s?|analysts?|invest\\w*|banque|bank\\w*|cr[ée]dit|credit)\\b"
+  ],
+  "intitules_hors_metier": [
+   "re:\\b(?:procurement|purchas\\w*|achats?|acheteu\\w*|einkauf|beschaffung|sourcing|supply\\s+chain|logisti\\w*|b[âa]timents?|(?<!portfolio\\s)construction|professor|professeur\\w*|doctoral|doctorant\\w*|phd|post-?docs?\\w*|research\\s+(?:assistant|associate|fellow|scholar|engineer)|researchers?|chercheu\\w*|(?<!data\\s)(?<!data-)scientists?|scientifique|athlete|gestionnaire\\s+administrati\\w*|assistante?\\s+administrati\\w*)\\b"
+  ]
+ },
+ "niveau": {
+  "mots_junior": [
+   "junior",
+   "graduate",
+   "débutant",
+   "debutant",
+   "jeune diplôm",
+   "alternance",
+   "apprenti",
+   "stage",
+   "stagiaire",
+   "entry level",
+   "0 à 2 ans",
+   "1 à 2 ans"
+  ],
+  "mots_senior": [
+   "senior",
+   "director",
+   "directeur",
+   "manager",
+   "head of",
+   "principal",
+   "vp ",
+   "chef de",
+   "expert confirmé",
+   "expert ",
+   "confirmé",
+   "expérimenté"
+  ],
+  "senior_en_fin": [
+   "re:\\b(lead|head|principal|manager|director)\\b(?!\\s+(generation|gen)\\b)"
+  ],
+  "mots_negatifs": [
+   "commercial",
+   "sales",
+   "vendeur",
+   "comptable",
+   "caissier",
+   "réceptionniste"
+  ],
+  "malus_experience": {
+   "3": 1,
+   "5": 3,
+   "7": 4,
+   "10": 5
+  },
+  "experience_max": 5
+ },
+ "filtre_titre": {
+  "metier": [
+   "re:(esg|financ|durab|sustainab|climat|carbon|d[ée]carbon|green|csrd|sfdr|taxonom|extra-financier|rse|csr\\b|social responsibility|transition|environnement|environmental|hse\\b|qhse|e&s\\b|impact|biodiversit|data|quant|risk|risque|cr[ée]dit|credit|invest|audit|actuar|treasury|tr[ée]sorerie|m&a|portfolio|asset|analyst|analyste|analytic|consultant|conseil|[ée]conom|comptab|controlling|contr[ôo]leur? de gestion)"
+  ],
+  "exclus": [
+   "re:(brand|design(er)?\\b|ux|ui\\b|graphi|marketing|growth|sales|account (executive|manager)|business developer|commercial\\b|talent acquisition|recruiter|recruteur|people ops|office manager|customer (success|care|support)|community manager|copywriter|content (manager|creator)|social media|juriste|legal counsel|avocat|paie\\b|payroll)"
+  ],
+  "exclus_sauf_complement": [
+   "re:(développeur|developer|devops|software engineer|fullstack|full-stack|backend|back-end|frontend|front-end)"
+  ],
+  "complement": [
+   "re:(\\bia\\b|\\ba\\.?i\\.?\\b|intelligence artificielle|\\bllm\\b|\\bgpt\\b|genai|g[ée]n[ée]rativ|prompt|agentic|\\bagents?\\s+(ia|ai)\\b|machine learning|deep learning|\\brag\\b|langchain|copilot|ml ?ops|llm ?ops|vibe cod|data scien|nlp\\b)"
+  ],
+  "lexique_large": [
+   "esg",
+   "finance durable",
+   "durable",
+   "climat",
+   "carbon",
+   "carbone",
+   "decarbon",
+   "net zero",
+   "transition",
+   "energ",
+   "renouvelable",
+   "green",
+   "verte",
+   "vert",
+   "extra-financier",
+   "rse",
+   "responsable",
+   "impact",
+   "durabilité",
+   "sustainability",
+   "sustainable",
+   "sfdr",
+   "article 8",
+   "article 9",
+   "taxonomie",
+   "taxonomy",
+   "biodiversité",
+   "biodiversity",
+   "environnemental",
+   "environmental",
+   "social",
+   "gouvernance",
+   "governance",
+   "climate",
+   "decarbonation",
+   "decarbonisation",
+   "neutralite",
+   "investissement responsable",
+   "impact investing",
+   "green bond",
+   "social bond",
+   "label",
+   "isr",
+   "finance",
+   "banking",
+   "asset management",
+   "asset manager",
+   "gestion d'actifs",
+   "gestion de portefeuille",
+   "portfolio management",
+   "portfolio manager",
+   "analyste financier",
+   "financial analyst",
+   "investment",
+   "investissement",
+   "private equity",
+   "capital investissement",
+   "m&a",
+   "fusions acquisitions",
+   "corporate finance",
+   "banque",
+   "asset manager",
+   "gestionnaire",
+   "analyste",
+   "analyst",
+   "data",
+   "datascientist",
+   "data scientist",
+   "data analyst",
+   "data engineer",
+   "machine learning",
+   "intelligence artificielle",
+   "artificial intelligence",
+   "python",
+   "sql",
+   "power bi",
+   "modelisation",
+   "modelling",
+   "quant",
+   "quantitative",
+   "risk",
+   "risque",
+   "risk analyst",
+   "risk manager",
+   "conseil",
+   "consultant",
+   "consulting",
+   "audit",
+   "auditeur",
+   "csr",
+   "csrd",
+   "hse",
+   "qhse",
+   "e&s",
+   "biodiversit",
+   "durabilit",
+   "environnement",
+   "credit",
+   "crédit",
+   "invest",
+   "actuari",
+   "treasury",
+   "trésorerie",
+   "tresorerie",
+   "portfolio",
+   "asset",
+   "analytic",
+   "économiste",
+   "economiste",
+   "comptab",
+   "controlling",
+   "contrôle de gestion",
+   "controle de gestion",
+   "junior",
+   "stage",
+   "intern",
+   "internship",
+   "alternance",
+   "apprentissage",
+   "apprentice",
+   "apprenti",
+   "vie",
+   "working student",
+   "graduate",
+   "graduate program",
+   "cdi",
+   "cdd",
+   "contrat",
+   "contrat en alternance",
+   "débutant",
+   "debutant",
+   "h/f"
+  ]
+ },
+ "tri": {
+  "retirer_seniors": true,
+  "retirer_etudiants": true,
+  "metiers_exclus": [
+   "administratif",
+   "enseignement",
+   "industrie",
+   "informatique",
+   "ingenierie_data",
+   "juridique",
+   "logistique",
+   "marketing",
+   "quant",
+   "restauration",
+   "rh",
+   "sante",
+   "vente"
+  ],
+  "metiers_durs": [
+   "enseignement",
+   "industrie",
+   "ingenierie_data",
+   "quant",
+   "restauration",
+   "sante"
+  ],
+  "sauvetage": [
+   "re:\\b(?:esg|isr|rse|csr|csrd|sfdr|fp&a|m&a)\\b|\\b(?:taxonomi|extra[\\s-]?financi|durabl|durabilit|sustainab|climat|carbon|d[ée]carbon|environnement|environmental|biodiversit|transition\\s+[ée]nerg|green\\s+(?:finance|bond)|finance\\s+verte|analyste\\s+financi|financial\\s+analyst|financial\\s+control|contr[oô]le\\s+de\\s+gestion|contr[oô]leur\\s+de\\s+gestion|contr[oô]leur\\s+financi|audit|comptab|corporate\\s+finance|private\\s+equity|asset\\s+management|gestion\\s+d'actifs|investment\\s+analyst|analyste\\s+investissement|risk\\s+analyst|analyste\\s+risque|tr[ée]sorerie|treasury)\\w*"
+  ],
+  "outils_max": 4
+ },
+ "zones": {
+  "prioritaires": [
+   "bordeaux",
+   "idf"
+  ],
+  "secondaires": [
+   "paca",
+   "auvergne-rhone-alpes",
+   "occitanie",
+   "corse"
+  ]
+ },
+ "collecte": {
+  "mots_cles": [
+   "analyste esg",
+   "finance durable",
+   "csrd analyste",
+   "sfdr",
+   "analyste risque credit junior",
+   "esg data analyst",
+   "sustainable finance analyst",
+   "green bonds analyst",
+   "analyste extra-financier",
+   "decarbonation analyste",
+   "graduate programme finance",
+   "graduate program esg",
+   "graduate analyst sustainable",
+   "jeune diplome analyste finance"
+  ]
+ },
+ "message": {
+  "diplome_fr": "diplômé d'un Master en Finance (École de commerce)",
+  "diplome_detente_fr": "tout juste diplômé d'un Master en Finance (École de commerce)",
+  "diplome_en": "holder of a Master in Finance (École de commerce)",
+  "langues_fr": "J'ai un anglais courant (TOEIC 920) et de l'aisance en environnement international.",
+  "langues_detente_fr": "J'ai un anglais courant (TOEIC 920), et mon master s'est déroulé entre Lille et Montréal : travailler à l'étranger fait partie de ce que je cherche.",
+  "langues_en": "I am fluent in English (TOEIC 920) and comfortable in an international environment.",
+  "sources": {
+   "acme": {
+    "fr": "Chez Acme Finance, à Lisbonne, j'ai ",
+    "en": "At Acme Finance in Lisbon I "
+   },
+   "memoire": {
+    "fr": "Dans mon mémoire, j'ai ",
+    "en": "In my thesis I "
+   },
+   "perso": {
+    "fr": "",
+    "en": ""
+   }
+  },
+  "faits": {
+   "Contrôle de gestion": {
+    "source": "acme",
+    "fr": "préparé des projections financières et suivi des écarts",
+    "en": "prepared financial forecasts and tracked variances"
+   },
+   "Modélisation financière": {
+    "source": "acme",
+    "fr": "construit des modèles financiers et des projections",
+    "en": "built financial models and projections"
+   },
+   "Valorisation financière (DCF)": {
+    "source": "acme",
+    "fr": "construit des modèles de valorisation par DCF et des analyses de bilan",
+    "en": "built valuation models using DCF and balance sheet analysis"
+   },
+   "Analyse financière": {
+    "source": "acme",
+    "fr": "mené des analyses financières et des projections",
+    "en": "ran financial analyses and projections"
+   },
+   "Analyse sectorielle": {
+    "source": "acme",
+    "fr": "mené des études de marché et sectorielles",
+    "en": "ran market and sector studies"
+   },
+   "M&A / Corporate Finance": {
+    "source": "acme",
+    "fr": "travaillé sur des opérations de private equity",
+    "en": "worked on private equity transactions"
+   },
+   "Reporting extra-financier": {
+    "source": "acme",
+    "fr": "travaillé sur la labellisation SFDR des fonds",
+    "en": "worked on the SFDR labelling of investment funds"
+   },
+   "Conseil / stratégie": {
+    "source": "acme",
+    "fr": "présenté mes analyses au comité d'investissement",
+    "en": "presented my analyses to the investment committee"
+   },
+   "SFDR (Art. 8/9)": {
+    "source": "memoire",
+    "fr": "analysé 3 000 fonds sous l'angle SFDR et des labels européens",
+    "en": "analysed 3,000 funds against SFDR classification and European labels"
+   },
+   "Analyse ESG / ISR": {
+    "source": "memoire",
+    "fr": "analysé 3 000 fonds sous l'angle SFDR et des labels européens",
+    "en": "analysed 3,000 funds against SFDR classification and European labels"
+   },
+   "Gestion des risques": {
+    "source": "memoire",
+    "fr": "étudié le risque et la performance de 3 000 fonds",
+    "en": "studied the risk and performance of 3,000 funds"
+   },
+   "Gestion d'actifs": {
+    "source": "memoire",
+    "fr": "étudié la classification et la performance de 3 000 fonds",
+    "en": "studied the classification and performance of 3,000 funds"
+   },
+   "Data analyse / BI": {
+    "source": "memoire",
+    "fr": "traité et consolidé les données de 3 000 fonds",
+    "en": "processed and consolidated data on 3,000 funds"
+   },
+   "Python / SQL": {
+    "source": "perso",
+    "fr": "je construis des chaînes de données complètes en Python",
+    "en": "I build complete data pipelines in Python"
+   },
+   "Excel avancé / VBA": {
+    "source": "perso",
+    "fr": "je pratique Excel à un niveau avancé, VBA compris",
+    "en": "I use Excel at an advanced level, VBA included"
+   }
+  },
+  "phrase_contexte_fr": {
+   "memoire": "J'ai aussi travaillé sur la labellisation SFDR de fonds chez Acme Finance, à Lisbonne.",
+   "autre": "Mon mémoire a porté sur l'investissement durable : 3 000 fonds analysés sous l'angle SFDR et des labels européens."
+  },
+  "phrase_contexte_en": {
+   "memoire": "I also worked on the SFDR labelling of investment funds at Acme Finance in Lisbon.",
+   "autre": "My thesis covered sustainable investment: 3,000 funds analysed against SFDR classification and European labels."
+  }
+ },
+ "lettre": {
+  "valeurs_entreprises_fr": {
+   "amundi": "votre position de premier gérant d'actifs européen et votre intégration ESG systématique",
+   "mirova": "votre spécialisation dans l'investissement à impact",
+   "sycomore": "votre approche ISR de conviction",
+   "ecofi": "votre gamme de fonds ISR engagés",
+   "bpifrance": "votre rôle de banque publique au service de la transition",
+   "caisse des dep": "votre mandat d'investisseur public de long terme",
+   "covea": "votre gestion de long terme au service de l'assurance",
+   "robeco": "votre expertise pionnière en sustainable investing",
+   "tikehau": "votre engagement sur la transition énergétique via vos fonds dédiés",
+   "axa": "votre intégration du climat au cœur de la gestion d'actifs"
+  },
+  "valeurs_entreprises_en": {},
+  "phrase_profil_fr": "Ma formation correspond à ce que vous recherchez. J'y ajoute une réelle rigueur analytique, une bonne aisance en environnement international, un anglais courant (TOEIC 920) et un allemand B2.",
+  "phrase_profil_en": "My training matches the profile you are looking for. To it I add genuine analytical rigour, ease in an international environment, fluent English (TOEIC 920) and German at B2 level.",
+  "contextes": [
+   {
+    "nom": "agricole",
+    "position": "paragraphe",
+    "mots": [
+     "re:(?:agricol|agricultur|agro[\\s-]*alimentair|agro[\\s-]*[ée]colog|agro[\\s-]*forest|agribusiness|agri[\\s-]*food|agrifood|agritech|agronom|farming|farmland|forest(?:ier|i[èe]r|erie|ry)|sylvicultur|sylvicol|capital[\\s-]*naturel|natural[\\s-]*capital|r[ée]g[ée]n[ée]rat|regenerativ|syst[èe]mes?[\\s-]*alimentair|food[\\s-]*systems?|land[\\s-]*degradation|terres?[\\s-]*agricoles?)"
+    ],
+    "ignorer": [
+     "re:cr[ée]dit[\\s-]*agricole"
+    ],
+    "occurrences_min": 3,
+    "fr": "L'agriculture n'est pas pour moi un terrain neuf. À Lisbonne, mes travaux SFDR et CSRD visaient des fonds agricoles portugais, dont le Atlantic Agri Fund. En parallèle, j'ai cofondé Terres Solidaires, association lilloise qui cultive des terrains agricoles et des jardins partagés. Plusieurs tonnes de légumes vont chaque année à une banque alimentaire, le reste part en circuit court. Nous menons aussi des interventions pédagogiques en mairies et dans les écoles.",
+    "en": "Agriculture is not new ground for me. In Lisbon my SFDR and CSRD work covered Portuguese agricultural funds, among them the Atlantic Agri Fund. Alongside that, I co-founded Terres Solidaires, an association near Lille that farms land and runs community gardens. Several tonnes of vegetables go to a food bank every year, the rest is sold locally. We also run educational sessions in town halls and schools."
+   },
+   {
+    "nom": "durable",
+    "position": "socle",
+    "mots": [
+     "re:\\b(?:transition[\\s-]*[ée]nerg|[ée]nergies?[\\s-]+renouvelabl|renouvelabl|renewable|biomasse|photovolta|solaire|[ée]olien|g[ée]othermi|hydrog[èe]ne|d[ée]carbon|bas[\\s-]carbone|low[\\s-]carbon|net[\\s-]zero|climat(?!isation)|climate|ESG|RSE(?![a-z])|ISR(?![a-z])|SFDR|CSRD|taxonomie|taxonomy|finance[\\s-]durable|sustainab|durabilit|investissement[\\s-]responsable|impact[\\s-]investing|green[\\s-]bond)"
+    ],
+    "sauf_domaines": [
+     "ESG_Finance_Durable"
+    ],
+    "densite_coeur": true,
+    "fr": "Ce travail portait sur l'investissement durable : classification SFDR et labels européens. Je l'ai poursuivi sur la labellisation de fonds.",
+    "en": "That work covered sustainable investment: SFDR classification and European labels. I carried it further on fund labelling."
+   }
+  ]
+ }
+}

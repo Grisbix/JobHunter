@@ -1,0 +1,191 @@
+# -*- coding: utf-8 -*-
+"""catalogue_competences.py — bibliotheque GENERIQUE de competences, tous metiers.
+
+premier_lancement.py y cherche les competences du CV pour construire le profil.
+Chaque entree : famille, synonymes (cherches dans les annonces, minuscules),
+libelle anglais, et la forme qui se dit DANS UNE PHRASE de lettre (avec article).
+
+Ajouter une competence : une ligne ici, puis relancer premier_lancement.py --maj,
+ou l'ajouter directement dans profil/profil.json (section « competences »).
+"""
+
+# famille -> (libelle de famille, mots d'intitule de poste typiques)
+FAMILLES = {
+    "finance": ("Finance", ["financ", "analyste financier", "comptab", "contrôleur", "controleur",
+                            "audit", "trésor", "tresor", "investissement", "banque", "crédit", "fp&a"]),
+    "data": ("Data", ["data", "donnée", "bi ", "business intelligence", "statisti", "analytics"]),
+    "dev": ("Développement", ["développeur", "developpeur", "developer", "software", "ingénieur logiciel",
+                              "devops", "fullstack", "full-stack", "backend", "frontend", "web"]),
+    "marketing": ("Marketing", ["marketing", "communication", "brand", "marque", "digital", "growth",
+                                "contenu", "content", "social media", "seo"]),
+    "commercial": ("Commercial", ["commercial", "sales", "business developer", "account", "vente",
+                                  "ingénieur d'affaires", "key account", "chargé d'affaires"]),
+    "rh": ("RH", ["ressources humaines", "rh", "talent", "recrut", "paie", "hr ", "people"]),
+    "juridique": ("Juridique", ["juriste", "juridique", "legal", "avocat", "compliance", "conformité"]),
+    "projet": ("Gestion de projet", ["chef de projet", "project manager", "pmo", "product owner",
+                                     "product manager", "coordinat"]),
+    "ingenierie": ("Ingénierie", ["ingénieur", "ingenieur", "engineer", "technicien", "méthodes",
+                                  "production", "maintenance", "qualité", "industrialisation"]),
+    "logistique": ("Logistique / achats", ["logisti", "supply chain", "achat", "acheteur", "procurement",
+                                           "approvisionnement", "transport"]),
+    "rse": ("RSE / environnement", ["rse", "esg", "durable", "sustainab", "environnement", "climat",
+                                    "carbone", "énergie", "energie"]),
+    "conseil": ("Conseil", ["consultant", "conseil", "consulting", "stratégie", "strategy"]),
+    "design": ("Design", ["designer", "ux", "ui ", "graphiste", "design"]),
+    "sante": ("Santé", ["infirmi", "médical", "medical", "pharma", "santé", "clinique", "soins"]),
+    "enseignement": ("Enseignement / formation", ["enseignant", "professeur", "formateur", "formation",
+                                                  "pédagog"]),
+}
+
+# libelle -> famille, synonymes, anglais, prose FR, prose EN
+_C = [
+    # finance
+    ("Analyse financière", "finance", ["analyse financi", "financial analysis", "états financiers", "bilan"],
+     "financial analysis", "l'analyse financière", "financial analysis"),
+    ("Modélisation financière", "finance", ["modèle financier", "modele financier", "financial model",
+                                           "business plan", "prévisionnel", "forecast"],
+     "financial modelling", "la modélisation financière", "financial modelling"),
+    ("Valorisation (DCF)", "finance", ["dcf", "valorisation", "valuation", "multiples"],
+     "valuation (DCF)", "la valorisation d'entreprise", "company valuation"),
+    ("Comptabilité", "finance", ["comptab", "accounting", "écritures", "clôture", "ifrs", "consolidation"],
+     "accounting", "la comptabilité", "accounting"),
+    ("Contrôle de gestion", "finance", ["contrôle de gestion", "controle de gestion", "controlling", "fp&a",
+                                       "reporting financier", "budget"],
+     "management control", "le contrôle de gestion", "management control"),
+    ("Audit", "finance", ["audit", "commissariat aux comptes", "contrôle interne"],
+     "audit", "l'audit", "auditing"),
+    ("Trésorerie / financement", "finance", ["trésorerie", "tresorerie", "treasury", "financement", "cash"],
+     "treasury and financing", "la gestion de trésorerie", "treasury management"),
+    ("M&A / Corporate Finance", "finance", ["m&a", "fusion", "acquisition", "corporate finance", "levée de fonds"],
+     "M&A / corporate finance", "les opérations de fusion-acquisition", "M&A transactions"),
+    ("Gestion d'actifs", "finance", ["asset management", "gestion d'actifs", "portefeuille", "portfolio"],
+     "asset management", "la gestion d'actifs", "asset management"),
+    ("Analyse crédit / risques", "finance", ["risque", "risk", "crédit", "credit", "bâle", "solvabilité"],
+     "credit and risk analysis", "l'analyse des risques", "risk analysis"),
+    # data
+    ("Python", "data", ["python", "pandas", "numpy"], "Python", "Python", "Python"),
+    ("SQL / bases de données", "data", ["sql", "base de données", "postgres", "mysql", "oracle"],
+     "SQL / databases", "les bases de données SQL", "SQL databases"),
+    ("Power BI / Tableau", "data", ["power bi", "tableau", "looker", "qlik", "dataviz", "tableau de bord"],
+     "Power BI / Tableau", "la datavisualisation", "data visualisation"),
+    ("Analyse de données", "data", ["data analys", "analyse de données", "analytics", "statisti", "kpi"],
+     "data analysis", "l'analyse de données", "data analysis"),
+    ("Machine learning / IA", "data", ["machine learning", "intelligence artificielle", "deep learning",
+                                      "llm", "nlp", "ia générative", "generative ai"],
+     "machine learning / AI", "le machine learning", "machine learning"),
+    ("Excel avancé", "data", ["excel", "vba", "tableaux croisés", "macro"],
+     "advanced Excel", "Excel à un niveau avancé", "advanced Excel"),
+    # dev
+    ("JavaScript / TypeScript", "dev", ["javascript", "typescript", "react", "angular", "vue.js", "node"],
+     "JavaScript / TypeScript", "le développement JavaScript", "JavaScript development"),
+    ("Java / C#", "dev", ["java ", "spring", "c#", ".net", "kotlin"], "Java / C#",
+     "le développement Java", "Java development"),
+    ("Développement web", "dev", ["html", "css", "php", "développement web", "web development", "api rest"],
+     "web development", "le développement web", "web development"),
+    ("Cloud / DevOps", "dev", ["aws", "azure", "gcp", "docker", "kubernetes", "ci/cd", "devops", "terraform"],
+     "cloud / DevOps", "le cloud et le DevOps", "cloud and DevOps"),
+    ("Git", "dev", ["git ", "github", "gitlab"], "Git", "Git", "Git"),
+    ("Tests / qualité logicielle", "dev", ["tests unitaires", "unit test", "pytest", "selenium", "qa "],
+     "software testing", "les tests logiciels", "software testing"),
+    # marketing
+    ("Marketing digital", "marketing", ["marketing digital", "digital marketing", "acquisition", "sea",
+                                        "google ads", "campagne"],
+     "digital marketing", "le marketing digital", "digital marketing"),
+    ("SEO / contenu", "marketing", ["seo", "référencement", "content", "contenu", "rédaction web"],
+     "SEO and content", "le référencement et le contenu", "SEO and content"),
+    ("Réseaux sociaux", "marketing", ["réseaux sociaux", "social media", "community", "linkedin", "instagram"],
+     "social media", "les réseaux sociaux", "social media"),
+    ("Communication", "marketing", ["communication", "relations presse", "événementiel", "evenementiel"],
+     "communication", "la communication", "communications"),
+    ("Études de marché", "marketing", ["étude de marché", "etude de marche", "market research", "benchmark",
+                                       "veille concurrentielle"],
+     "market research", "les études de marché", "market research"),
+    # commercial
+    ("Prospection / développement commercial", "commercial", ["prospection", "business development",
+                                                               "développement commercial", "lead"],
+     "business development", "la prospection commerciale", "business development"),
+    ("Négociation", "commercial", ["négociation", "negociation", "negotiation"],
+     "negotiation", "la négociation", "negotiation"),
+    ("Relation client / CRM", "commercial", ["relation client", "crm", "salesforce", "hubspot",
+                                             "customer success", "fidélisation"],
+     "customer relationship / CRM", "la relation client", "customer relationships"),
+    # rh
+    ("Recrutement", "rh", ["recrutement", "recruitment", "sourcing", "entretien", "talent acquisition"],
+     "recruitment", "le recrutement", "recruitment"),
+    ("Paie / administration du personnel", "rh", ["paie", "payroll", "administration du personnel", "sirh"],
+     "payroll and HR administration", "la paie", "payroll"),
+    ("Formation / développement RH", "rh", ["plan de formation", "gpec", "développement des compétences",
+                                             "ingénierie de formation", "onboarding"],
+     "training and HR development", "la formation", "training"),
+    ("Droit du travail", "rh", ["droit du travail", "droit social", "relations sociales", "cse"],
+     "employment law", "le droit social", "employment law"),
+    # juridique
+    ("Droit des affaires", "juridique", ["droit des affaires", "droit des sociétés", "corporate law", "contrats"],
+     "business law", "le droit des affaires", "business law"),
+    ("Conformité / compliance", "juridique", ["compliance", "conformité", "rgpd", "gdpr", "lcb-ft", "kyc"],
+     "compliance", "la conformité", "compliance"),
+    # projet
+    ("Gestion de projet", "projet", ["gestion de projet", "project management", "planning", "pmo", "jalons"],
+     "project management", "la gestion de projet", "project management"),
+    ("Méthodes agiles", "projet", ["agile", "scrum", "kanban", "jira", "sprint"],
+     "agile methods", "les méthodes agiles", "agile methods"),
+    ("Product management", "projet", ["product owner", "product manager", "roadmap", "user stories", "backlog"],
+     "product management", "la gestion de produit", "product management"),
+    # ingenierie
+    ("Conception / CAO", "ingenierie", ["cao", "cad", "solidworks", "catia", "autocad", "conception"],
+     "design / CAD", "la conception assistée par ordinateur", "CAD design"),
+    ("Production / industrialisation", "ingenierie", ["production", "industrialisation", "lean", "amélioration continue",
+                                                      "méthodes"],
+     "production / industrialisation", "l'amélioration continue", "continuous improvement"),
+    ("Qualité", "ingenierie", ["qualité", "iso 9001", "quality", "non-conformité", "audit qualité"],
+     "quality management", "la démarche qualité", "quality management"),
+    ("Maintenance", "ingenierie", ["maintenance", "gmao", "électrotechni", "mécanique"],
+     "maintenance", "la maintenance", "maintenance"),
+    # logistique
+    ("Supply chain", "logistique", ["supply chain", "logistique", "stocks", "entrepôt", "flux"],
+     "supply chain", "la supply chain", "supply chain"),
+    ("Achats", "logistique", ["achats", "acheteur", "procurement", "sourcing fournisseurs", "appel d'offres"],
+     "procurement", "les achats", "procurement"),
+    # rse
+    ("RSE / ESG", "rse", ["rse", "esg", "csrd", "développement durable", "sustainability", "extra-financi"],
+     "CSR / ESG", "la RSE", "CSR"),
+    ("Bilan carbone / climat", "rse", ["bilan carbone", "carbone", "carbon", "climat", "scope 3", "ges"],
+     "carbon accounting / climate", "le bilan carbone", "carbon accounting"),
+    ("Environnement / énergie", "rse", ["environnement", "énergie", "energie", "renouvelable", "iso 14001"],
+     "environment / energy", "les questions d'environnement", "environmental issues"),
+    # conseil
+    ("Conseil / stratégie", "conseil", ["conseil", "consulting", "stratégie", "strategy", "transformation"],
+     "consulting / strategy", "le conseil en stratégie", "strategy consulting"),
+    # design
+    ("UX / UI design", "design", ["ux", "ui ", "figma", "maquette", "wireframe", "design thinking"],
+     "UX / UI design", "le design UX", "UX design"),
+    ("Création graphique", "design", ["photoshop", "illustrator", "indesign", "graphisme", "canva"],
+     "graphic design", "la création graphique", "graphic design"),
+    # sante / enseignement
+    ("Soins / santé", "sante", ["soins", "patient", "infirmier", "médical", "clinique"],
+     "healthcare", "le soin", "healthcare"),
+    ("Pédagogie / formation", "enseignement", ["pédagogie", "enseignement", "formateur", "formatrice", "tutorat"],
+     "teaching / training", "la pédagogie", "teaching"),
+]
+
+# Competences transverses : reconnues, mais dans AUCUN axe (elles ne font pas
+# monter le score toutes seules) et jamais citees comme termes techniques.
+_TRANSVERSES = [
+    ("Anglais", ["anglais", "english", "toeic", "toefl", "ielts", "bilingue"], "English"),
+    ("Allemand", ["allemand", "german", "deutsch"], "German"),
+    ("Espagnol", ["espagnol", "spanish", "español"], "Spanish"),
+    ("Italien", ["italien", "italian"], "Italian"),
+    ("Pack Office", ["word", "powerpoint", "pack office", "office 365", "outlook"], "MS Office"),
+    ("Communication orale / présentation", ["présentation", "prise de parole", "pédagog"],
+     "communication and presentation"),
+]
+
+
+def catalogue():
+    """{libelle: {famille, synonymes, en, prose_fr, prose_en, [technique]}}"""
+    out = {}
+    for lab, fam, syn, en, pfr, pen in _C:
+        out[lab] = {"famille": fam, "synonymes": syn, "en": en, "prose_fr": pfr, "prose_en": pen}
+    for lab, syn, en in _TRANSVERSES:
+        out[lab] = {"famille": "", "synonymes": syn, "en": en, "technique": False}
+    return out
