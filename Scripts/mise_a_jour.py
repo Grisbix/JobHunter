@@ -50,7 +50,9 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+# line_buffering : nos lignes s'intercalent dans le bon ordre avec la sortie de git et
+# pip, et s'affichent au fil de l'eau dans le journal de l'application.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 
 RACINE = Path(__file__).resolve().parent.parent
 DEPOT = "Grisbix/JobHunter"
