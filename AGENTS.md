@@ -23,8 +23,11 @@ métier, une ville ou un nom.** Pour changer de cible, on change le profil.
 - Outils à double-clic (racine) : `installer.bat`, `lancer.bat` (CV pris dans `Mon_CV/`), `planifier.bat`
   (tâche planifiée quotidienne), `mettre_a_jour.bat` → `Scripts/mise_a_jour.py` (git pull, ou ZIP
   GitHub fichier par fichier : données jamais touchées, fichier modifié gardé + `.nouveau`,
-  manifeste `.maj_manifeste.json`). **Monter `VERSION` à chaque publication** : c'est elle que
-  la mise à jour compare.
+  fichier retiré enlevé s'il est intact, contrôle de chargement puis retour arrière automatique,
+  `--annuler`). **À chaque publication : monter `VERSION`, ajouter sa section en tête de
+  `CHANGELOG.md`, et créer la release `v<version>`** — l'étiquette sert de référence à la
+  première mise à jour d'une installation par ZIP (sans elle, un fichier modifié par
+  l'utilisateur ne peut pas être reconnu).
 - `langues_parlees` (profil) : annonce rédigée dans une autre langue plafonnée à 2, langue
   exigée à 4 (`ats_match.plafond_langue`).
 - CI : `.github/workflows/tests.yml` passe les suites sans réseau à chaque push.
@@ -89,9 +92,10 @@ python test_tri_file.py      #  52 cas — quant, data, outils de dev, doublons,
 python test_site_final.py    #  30 cas — intitulé strict, identité Workday, resondage, coquilles ATS
 python test_metriques_hebdo.py # 26 cas — bilan hebdo : dates du suivi, relances, journaux
 python test_lecteurs_ats.py  #  65 cas — chaque lecteur d'ATS / page carrière (job_sources), refus 403/404
+python test_mise_a_jour.py   #  63 cas — modif. utilisateur gardée, fichier retiré, données, retour arrière
 ```
 
-Ces vingt-là tournent **sans réseau** : 954 cas en moins d'une minute, tous au vert
+Ces vingt et un-là tournent **sans réseau** : 1017 cas en moins d'une minute, tous au vert
 sur le profil d'exemple. Ce sont ceux à passer après une modification.
 
 `test_scoring` génère un cas « sans backspace » **par motif du module** : ajouter un

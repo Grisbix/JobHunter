@@ -324,6 +324,7 @@ MAINT = [
         ("Fermer Chrome",          [PY, "acces.py", "--close"]),
         ("Tester accès aux sites", [PY, "test_acces_sites.py", "--all", "--limit", "0"]),
         ("Tests live (lent, ouvre un navigateur)", [PY, "test_web_nav.py"]),
+        ("Mettre à jour JobHunter", "maj"),   # "maj" = mise a jour + relance (App.mettre_a_jour)
     ]),
 ]
 
@@ -484,7 +485,8 @@ class App:
             CL(self.maint, text=groupe, bg=SIDE, fg=SIDE_MUT, font=(FONT_UI, 11, "bold"),
                anchor="w").pack(fill="x", padx=16, pady=(12, 2))
             for label, cmd in items:
-                CB(self.maint, text=label, command=lambda c=cmd, l=label: (self._gen_docs() if c is None else self.run_step(c, l)),
+                CB(self.maint, text=label, command=lambda c=cmd, l=label: (self._gen_docs() if c is None else
+                                                  self.mettre_a_jour() if c == "maj" else self.run_step(c, l)),
                           font=(FONT_UI, 12), bg=SIDE, fg=SIDE_MUT, relief="flat",
                           activebackground=SIDE_H, cursor="hand2", pady=3, anchor="w").pack(fill="x", padx=16, pady=2)
         CB(outils, text="Recharger", command=self.load_offers, bg=SIDE, fg=SIDE_MUT,
@@ -3082,6 +3084,37 @@ class App:
         self._log(f"\n{'='*56}\n▶ TOUT FAIRE — pipeline complet (6 etapes)\n{'='*56}\n")
         threading.Thread(target=self._exec_seq, args=(seq,), daemon=True).start()
 
+    def mettre_a_jour(self):
+        """mise_a_jour.py dans le journal de l'app, puis propose de relancer
+        JobHunter sur la nouvelle version (le code deja charge reste l'ancien)."""
+        if self._occupe(): return
+        try:
+            import mise_a_jour
+            avant = mise_a_jour.version_locale()
+        except Exception:
+            mise_a_jour, avant = None, "?"
+        self._log(f"\n{'='*56}\n▶ Mise à jour de JobHunter\n{'='*56}\n")
+
+        def tache():
+            ok = self._exec([PY, "mise_a_jour.py"], "mise à jour")
+            apres = mise_a_jour.version_locale() if mise_a_jour else "?"
+            self.q.put(("maj_fin", (ok, avant, apres)))
+        threading.Thread(target=tache, daemon=True).start()
+
+    def _apres_mise_a_jour(self, ok, avant, apres):
+        if not ok:
+            messagebox.showwarning(
+                "JobHunter — mise à jour", "La mise à jour n'a pas abouti ; le détail est dans "
+                "le journal. Tes données n'ont pas été touchées.", parent=self.root)
+            return
+        if apres == avant:
+            return                      # deja a jour : rien a relancer
+        if messagebox.askyesno("JobHunter — mise à jour",
+                               f"Version {apres} installée. Relancer JobHunter maintenant ?",
+                               parent=self.root):
+            subprocess.Popen([PY, str(ROOT / "JobHunter.pyw")], cwd=str(ROOT))
+            self.root.destroy()
+
     def _exec_seq(self, seq):
         """seq : liste de (libelle, commande). Le libelle sert au log — cmd[-1]
         affichait le dernier ARGUMENT (« 8 », « linkedin »), pas l'etape."""
@@ -3149,6 +3182,7 @@ class App:
                 elif kind == "done_all":
                     self._log("\n✅ TOUT FAIRE terminé.\n"); self.load_offers()
                     self.root.after(1500, self._auto_enrich)
+                elif kind == "maj_fin": self._apres_mise_a_jour(*val)
         except queue.Empty:
             pass
         except Exception as ex:
@@ -3209,23 +3243,28 @@ class App:
         self.run_step([PY, "generate_docs.py", "--top", str(n)],
                       f"CV/lettres — {n} offre(s)")
 
-def _annonce_mise_a_jour(root):
+def _annonce_mise_a_jour(root, app):
     """Au demarrage, en arriere-plan : une version plus recente sur GitHub ?
     Au plus une verification par jour ; hors ligne, rien ne s'affiche."""
+    def proposer(v, installee):
+        if messagebox.askyesno(
+                "JobHunter — mise à jour disponible",
+                f"La version {v} est disponible (installée : {installee}).\n\n"
+                "L'installer maintenant ? Ton profil, ton CV, tes lettres et ton suivi ne "
+                "sont pas touchés, et la version d'avant est sauvegardée.", parent=root):
+            app.mettre_a_jour()
+
     def verifier():
         try:
             import mise_a_jour
             v = mise_a_jour.nouvelle_version()
+            installee = mise_a_jour.version_locale()
         except Exception:
             v = None
         if v:
-            root.after(0, lambda: messagebox.showinfo(
-                "JobHunter — mise à jour disponible",
-                f"La version {v} est disponible (installée : {mise_a_jour.version_locale()}).\n\n"
-                "Ferme JobHunter et double-clique sur mettre_a_jour.bat : ton profil, ton CV, "
-                "tes lettres et ton suivi ne sont pas touchés.", parent=root))
+            root.after(0, lambda: proposer(v, installee))
     threading.Thread(target=verifier, daemon=True).start()
 
 
 if __name__ == "__main__":
-    r = ctk.CTk(); App(r); _annonce_mise_a_jour(r); r.mainloop()
+    r = ctk.CTk(); a = App(r); _annonce_mise_a_jour(r, a); r.mainloop()

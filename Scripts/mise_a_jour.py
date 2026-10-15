@@ -3,13 +3,21 @@
 """mise_a_jour.py — Met JobHunter a jour depuis GitHub, sans toucher a tes donnees.
 
     python Scripts/mise_a_jour.py            # met a jour si une version plus recente existe
-    python Scripts/mise_a_jour.py --verifier # dit seulement s'il y a une mise a jour
+    python Scripts/mise_a_jour.py --verifier # dit s'il y a une mise a jour, et ce qu'elle apporte
     python Scripts/mise_a_jour.py --forcer   # reinstalle meme a version egale
+    python Scripts/mise_a_jour.py --annuler  # revient a la version d'avant la derniere mise a jour
 
 Deux chemins :
   - dossier clone avec git -> `git pull --rebase --autostash` ;
   - dossier dezippe        -> telecharge le ZIP de la branche main et remplace
                               les fichiers du programme, un par un.
+
+Dans les deux cas, la mise a jour :
+  1. affiche les nouveautes (CHANGELOG.md) entre ta version et la nouvelle ;
+  2. installe, puis CONTROLE que le programme se charge (compilation de tous les
+     scripts, import des modules centraux sur le profil d'exemple) ;
+  3. si le controle echoue, revient d'elle-meme a la version d'avant ;
+  4. signale les nouveaux reglages du profil que le tien n'a pas encore.
 
 CE QUI N'EST JAMAIS TOUCHE : ton profil, ton CV (Mon_CV, CV), tes lettres, la
 file d'offres, le suivi des candidatures, les cles d'API — tout ce que git
@@ -17,17 +25,23 @@ ignore. Ces fichiers ne sont pas dans le ZIP, et une garde les refuse quand meme
 
 UN FICHIER DU PROGRAMME QUE TU AS MODIFIE est garde tel quel ; la nouvelle
 version est posee a cote, en `.nouveau`, et le bilan te le signale. « Modifie »
-= different de ce que la derniere mise a jour avait installe (`.maj_manifeste.json`).
-Sans ce manifeste (premiere mise a jour), seuls les fichiers que le premier
-lancement reecrit (`Scripts/sources_config.json`) sont presumes modifies.
+= different de ce que la version installee contenait : l'empreinte vient du
+manifeste de la derniere mise a jour (`.maj_manifeste.json`) ou, a la premiere,
+du ZIP officiel de ta version (etiquette `v<version>` sur GitHub).
 
-Chaque fichier remplace est d'abord copie dans `_sauvegarde_maj/<date>/` :
-la mise a jour se defait en recopiant ce dossier.
+UN FICHIER RETIRE du programme est enleve s'il n'a pas ete modifie (copie dans
+la sauvegarde), garde sinon. Un fichier que tu as cree n'est jamais touche :
+seuls les fichiers d'une version officielle peuvent etre retires.
+
+Chaque fichier remplace ou retire est d'abord copie dans
+`_sauvegarde_maj/<date>/`, avec un journal : `--annuler` s'en sert.
 """
 import argparse
 import hashlib
 import io
 import json
+import os
+import re
 import shutil
 import subprocess
 import sys
@@ -41,16 +55,25 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 RACINE = Path(__file__).resolve().parent.parent
 DEPOT = "Grisbix/JobHunter"
 ZIP_URL = f"https://github.com/{DEPOT}/archive/refs/heads/main.zip"
+TAG_URL = f"https://github.com/{DEPOT}/archive/refs/tags/v{{}}.zip"
+VERSION_URL = f"https://raw.githubusercontent.com/{DEPOT}/main/VERSION"
 MANIFESTE = RACINE / ".maj_manifeste.json"
 SAUVEGARDES = RACINE / "_sauvegarde_maj"
+DERNIERE_VERIF = RACINE / ".maj_derniere_verif"
+GIT_AVANT = RACINE / ".maj_git_avant"
+JOURNAL = "_journal.json"
+EXEMPLE = "profil/exemple_finance_esg.json"
 
 # Donnees de l'utilisateur : jamais ecrites, meme si un ZIP les contenait.
 PROTEGES_PREFIXES = ("profil/profil", "Mon_CV/", "CV/", "Lettres/", "_sauvegarde_maj/", ".git/")
 PROTEGES_NOMS = {"Scripts/apply_queue.json", "Scripts/descriptions.json", "Scripts/suivi.json",
                  "Scripts/adzuna.json", "Scripts/jooble.json", "Scripts/apply_runner_done.json",
                  "Scripts/chemins.json"}
-# Ecrits par premier_lancement : presumes modifies quand il n'y a pas de manifeste.
+# Ecrits par premier_lancement : presumes modifies quand aucune reference n'existe.
 REECRITS_AU_PREMIER_LANCEMENT = {"Scripts/sources_config.json"}
+# Modules charges par le controle d'apres mise a jour : le coeur du tri et des documents.
+MODULES_CENTRAUX = ("profil", "jutil", "queue_io", "suivi_io", "ats_match", "tri_file",
+                    "tailor_application", "job_sources", "mise_a_jour")
 
 
 def _sha(b):
@@ -72,8 +95,10 @@ def _cle_version(v):
     return tuple(int(x) if x.isdigit() else 0 for x in v.strip().split("."))
 
 
-VERSION_URL = f"https://raw.githubusercontent.com/{DEPOT}/main/VERSION"
-DERNIERE_VERIF = RACINE / ".maj_derniere_verif"
+def _get(url, timeout):
+    req = urllib.request.Request(url, headers={"User-Agent": "JobHunter-mise-a-jour"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.read()
 
 
 def nouvelle_version(timeout=5, intervalle_h=24):
@@ -90,19 +115,125 @@ def nouvelle_version(timeout=5, intervalle_h=24):
         if DERNIERE_VERIF.exists() and time.time() - DERNIERE_VERIF.stat().st_mtime < intervalle_h * 3600:
             return None
         DERNIERE_VERIF.write_text(time.strftime("%Y-%m-%d %H:%M"), encoding="utf-8")
-        req = urllib.request.Request(VERSION_URL, headers={"User-Agent": "JobHunter-mise-a-jour"})
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            distante = r.read(64).decode("utf-8").strip()
+        distante = _get(VERSION_URL, timeout)[:64].decode("utf-8").strip()
         return distante if _cle_version(distante) > _cle_version(version_locale()) else None
     except Exception:
         return None
 
 
-def telecharger():
-    print(f"Téléchargement de {ZIP_URL} …")
-    req = urllib.request.Request(ZIP_URL, headers={"User-Agent": "JobHunter-mise-a-jour"})
-    with urllib.request.urlopen(req, timeout=120) as r:
-        return r.read()
+# ── Nouveautes ──────────────────────────────────────────────────────────────
+
+def nouveautes(changelog, depuis, jusqua=None):
+    """Sections « ## x.y.z » du CHANGELOG plus recentes que `depuis` (et au plus
+    `jusqua`), dans l'ordre du fichier (la plus recente d'abord)."""
+    out, garde = [], False
+    for ligne in (changelog or "").splitlines():
+        m = re.match(r"##\s+v?(\d+(?:\.\d+)*)", ligne)
+        if m:
+            v = _cle_version(m.group(1))
+            garde = v > _cle_version(depuis) and (jusqua is None or v <= _cle_version(jusqua))
+        elif ligne.startswith("# "):
+            garde = False
+        if garde:
+            out.append(ligne)
+    return "\n".join(out).strip()
+
+
+def afficher_nouveautes(changelog, depuis, jusqua=None):
+    texte = nouveautes(changelog, depuis, jusqua)
+    if texte:
+        print("\n── Nouveautés ──────────────────────────────────────────")
+        print(texte)
+        print("────────────────────────────────────────────────────────")
+
+
+# ── Profil : nouveaux reglages ──────────────────────────────────────────────
+
+def _cles(d, prefixe=""):
+    """Cles d'un profil, sur deux niveaux (« scoring.plafond_second »)."""
+    out = set()
+    for k, v in (d or {}).items():
+        if k.startswith("_"):
+            continue
+        out.add(prefixe + k)
+        if isinstance(v, dict) and not prefixe:
+            out |= _cles(v, k + ".")
+    return out
+
+
+def reglages_manquants(exemple, profil):
+    """Reglages presents dans le profil d'exemple et absents du tien. Une cle dont
+    le parent manque n'est citee qu'une fois (le parent)."""
+    manque = sorted(_cles(exemple) - _cles(profil))
+    return [k for k in manque if k.split(".")[0] == k or k.split(".")[0] not in manque]
+
+
+def signaler_reglages():
+    p_ex, p_moi = RACINE / EXEMPLE, RACINE / "profil" / "profil.json"
+    if not (p_ex.exists() and p_moi.exists()):
+        return
+    try:
+        manque = reglages_manquants(json.loads(p_ex.read_text(encoding="utf-8")),
+                                    json.loads(p_moi.read_text(encoding="utf-8")))
+    except Exception:
+        return
+    if manque:
+        print("\nNouveaux réglages que ton profil n'a pas encore (la valeur par défaut "
+              "s'applique en attendant) :")
+        for k in manque:
+            print(f"  - {k}")
+        print(f"Pour les régler : demande à Claude « /configurer-profil », ou copie-les "
+              f"depuis {EXEMPLE} dans profil/profil.json.")
+
+
+# ── Controle d'apres mise a jour ────────────────────────────────────────────
+
+def controler():
+    """True si le programme installe se charge. Compile chaque script, puis
+    importe les modules centraux dans un processus neuf, sur le profil d'exemple
+    (le controle ne depend pas de ton profil et ne le lit pas)."""
+    erreurs = []
+    for f in sorted([*(RACINE / "Scripts").glob("*.py"), RACINE / "JobHunter.pyw"]):
+        if not f.exists():
+            continue
+        try:
+            compile(f.read_bytes(), str(f), "exec")
+        except SyntaxError as e:
+            erreurs.append(f"{f.relative_to(RACINE)} : {e.msg} (ligne {e.lineno})")
+    if not erreurs:
+        env = {**os.environ, "PROFIL_JOBHUNTER": str(RACINE / EXEMPLE),
+               "PYTHONIOENCODING": "utf-8", "PYTHONDONTWRITEBYTECODE": "1"}
+        code = "import importlib\nfor m in %r: importlib.import_module(m)" % (MODULES_CENTRAUX,)
+        r = subprocess.run([sys.executable, "-c", code], cwd=RACINE / "Scripts", env=env,
+                           capture_output=True, text=True, encoding="utf-8", errors="replace",
+                           timeout=120)
+        if r.returncode:
+            sortie = (r.stderr or r.stdout or "").strip().splitlines()
+            erreurs.append(sortie[-1] if sortie else f"import : code {r.returncode}")
+    if erreurs:
+        print("\n! Contrôle échoué :")
+        for e in erreurs[:10]:
+            print(f"  - {e}")
+        return False
+    print("\nContrôle : tous les scripts se chargent.")
+    return True
+
+
+def apres(changes_requirements):
+    if changes_requirements:
+        print("\nLes dépendances ont changé : installation…")
+        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-r",
+                        str(RACINE / "requirements.txt")])
+    signaler_reglages()
+    print(f"\nJobHunter est à jour (version {version_locale()}). Relance l'application.")
+    return 0
+
+
+# ── Chemin ZIP ──────────────────────────────────────────────────────────────
+
+def telecharger(url=ZIP_URL, timeout=120):
+    print(f"Téléchargement de {url} …")
+    return _get(url, timeout)
 
 
 def fichiers_du_zip(data):
@@ -118,27 +249,72 @@ def fichiers_du_zip(data):
     return out
 
 
-def par_git(args):
-    print("Dossier git détecté : git pull.")
-    if args.verifier:
-        subprocess.run(["git", "fetch", "--quiet"], cwd=RACINE)
-        r = subprocess.run(["git", "rev-list", "--count", "HEAD..@{u}"], cwd=RACINE,
-                           capture_output=True, text=True)
-        n = (r.stdout or "0").strip()
-        print(f"{n} mise(s) à jour disponible(s)." if n != "0" else "Déjà à jour.")
-        return 0
-    def tete():
-        return subprocess.run(["git", "rev-parse", "HEAD"], cwd=RACINE,
-                              capture_output=True, text=True).stdout.strip()
-    avant = tete()
-    r = subprocess.run(["git", "pull", "--rebase", "--autostash"], cwd=RACINE)
-    if r.returncode:
-        print("\n! git pull a échoué (voir le message ci-dessus). Tes fichiers n'ont pas été "
-              "perdus : `git status` montre où en est le dossier.")
-        return 1
-    changes = subprocess.run(["git", "diff", "--name-only", avant, tete()], cwd=RACINE,
-                             capture_output=True, text=True).stdout.split()
-    return apres(changes_requirements="requirements.txt" in changes)
+def reference_installee(version):
+    """Empreintes des fichiers de la version installee : le manifeste s'il existe,
+    sinon le ZIP officiel de cette version (etiquette GitHub). {} si introuvable :
+    on retombe alors sur l'ancienne regle (rien n'est presume modifie, rien n'est
+    retire)."""
+    if MANIFESTE.exists():
+        try:
+            return json.loads(MANIFESTE.read_text(encoding="utf-8")), "manifeste"
+        except Exception:
+            pass
+    try:
+        data = _get(TAG_URL.format(version), 60)
+        return {rel: _sha(b) for rel, b in fichiers_du_zip(data).items()}, f"v{version}"
+    except Exception:
+        return {}, None
+
+
+def plan_zip(nouveaux, locaux, reference):
+    """Decide fichier par fichier, sans rien ecrire.
+
+    nouveaux  : {rel: contenu} de la nouvelle version
+    locaux    : {rel: empreinte} des fichiers presents sur le disque
+    reference : {rel: empreinte} de la version installee ({} si inconnue)
+    Rend {"remplacer", "ajouter", "garder", "retirer", "garder_retire", "refuser"}."""
+    plan = {k: [] for k in ("remplacer", "ajouter", "garder", "retirer", "garder_retire",
+                            "refuser", "identiques")}
+    for rel, contenu in sorted(nouveaux.items()):
+        if protege(rel):
+            plan["refuser"].append(rel)
+            continue
+        h_loc = locaux.get(rel)
+        if h_loc is None:
+            plan["ajouter"].append(rel)
+        elif h_loc == _sha(contenu):
+            plan["identiques"].append(rel)
+        else:
+            ref = reference.get(rel)
+            modifie = (h_loc != ref) if ref else (rel in REECRITS_AU_PREMIER_LANCEMENT)
+            plan["garder" if modifie else "remplacer"].append(rel)
+    for rel, ref in sorted(reference.items()):
+        if rel in nouveaux or protege(rel) or rel not in locaux:
+            continue
+        plan["retirer" if locaux[rel] == ref else "garder_retire"].append(rel)
+    return plan
+
+
+def _restaurer(sauvegarde, journal):
+    """Defait une mise a jour ZIP d'apres son journal."""
+    for rel in journal.get("remplaces", []) + journal.get("retires", []):
+        src = sauvegarde / rel
+        if src.exists():
+            (RACINE / rel).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, RACINE / rel)
+    installes = journal.get("manifeste_apres", {})
+    for rel in journal.get("ajoutes", []):
+        p = RACINE / rel
+        # un fichier ajoute puis modifie par l'utilisateur reste en place
+        if p.exists() and _sha(p.read_bytes()) == installes.get(rel):
+            p.unlink()
+    avant = journal.get("manifeste_avant")
+    if avant:
+        MANIFESTE.write_text(json.dumps(avant, indent=1, sort_keys=True), encoding="utf-8")
+    elif MANIFESTE.exists():
+        MANIFESTE.unlink()
+    journal["annule"] = time.strftime("%Y-%m-%d %H:%M")
+    (sauvegarde / JOURNAL).write_text(json.dumps(journal, indent=1), encoding="utf-8")
 
 
 def par_zip(args):
@@ -149,86 +325,197 @@ def par_zip(args):
         print(f"! Téléchargement impossible : {type(e).__name__}: {e}")
         return 1
     distante = (nouveaux.get("VERSION") or b"0").decode("utf-8").strip()
+    changelog = (nouveaux.get("CHANGELOG.md") or b"").decode("utf-8", "replace")
     print(f"Version installée : {locale} · version disponible : {distante}")
+    plus_recente = _cle_version(distante) > _cle_version(locale)
     if args.verifier:
-        print("Mise à jour disponible." if _cle_version(distante) > _cle_version(locale)
-              else "Déjà à jour.")
+        print("Mise à jour disponible." if plus_recente else "Déjà à jour.")
+        if plus_recente:
+            afficher_nouveautes(changelog, locale, distante)
         return 0
-    if _cle_version(distante) <= _cle_version(locale) and not args.forcer:
+    if not plus_recente and not args.forcer:
         print("Déjà à jour.")
         return 0
 
-    manifeste = {}
-    if MANIFESTE.exists():
-        try:
-            manifeste = json.loads(MANIFESTE.read_text(encoding="utf-8"))
-        except Exception:
-            manifeste = {}
+    reference, source = reference_installee(locale)
+    if source and source != "manifeste":
+        print(f"Référence de ta version : ZIP officiel {source}.")
+    locaux = {}
+    for rel in set(nouveaux) | set(reference):
+        p = RACINE / rel
+        if p.is_file():
+            locaux[rel] = _sha(p.read_bytes())
+    plan = plan_zip(nouveaux, locaux, reference)
+
+    # Le manifeste d'apres : ce que la nouvelle version a installe. Un fichier garde
+    # (modifie) conserve l'empreinte de reference : il reste « modifie » ensuite.
+    manifeste = dict(reference)
+    for rel in plan["retirer"] + plan["garder_retire"]:
+        manifeste.pop(rel, None)
+    for rel in plan["remplacer"] + plan["ajouter"] + plan["identiques"]:
+        manifeste[rel] = _sha(nouveaux[rel])
+
+    # Journal ecrit AVANT toute ecriture : une panne au milieu (disque plein,
+    # fichier verrouille) se defait comme un controle rate.
     sauvegarde = SAUVEGARDES / time.strftime("%Y-%m-%d_%H%M%S")
-    remplaces, ajoutes, gardes, refuses = [], [], [], []
-    req_change = False
-    nouveau_manifeste = dict(manifeste)
-
-    for rel, contenu in sorted(nouveaux.items()):
-        if protege(rel):
-            refuses.append(rel)
-            continue
-        dest = RACINE / rel
-        h_new = _sha(contenu)
-        if dest.exists():
-            actuel = dest.read_bytes()
-            h_loc = _sha(actuel)
-            if h_loc == h_new:
-                nouveau_manifeste[rel] = h_new
-                continue
-            installe = manifeste.get(rel)
-            modifie = (h_loc != installe) if installe else (rel in REECRITS_AU_PREMIER_LANCEMENT)
-            if modifie:
-                Path(str(dest) + ".nouveau").write_bytes(contenu)
-                gardes.append(rel)
-                continue            # le manifeste garde l'ancienne empreinte : toujours « modifie »
+    sauvegarde.mkdir(parents=True, exist_ok=True)
+    journal = {"avant": locale, "apres": distante, "date": time.strftime("%Y-%m-%d %H:%M"),
+               "remplaces": plan["remplacer"], "ajoutes": plan["ajouter"],
+               "retires": plan["retirer"], "manifeste_avant": reference if source == "manifeste" else {},
+               "manifeste_apres": manifeste}
+    (sauvegarde / JOURNAL).write_text(json.dumps(journal, indent=1), encoding="utf-8")
+    try:
+        for rel in plan["remplacer"] + plan["retirer"]:
             (sauvegarde / rel).parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(dest, sauvegarde / rel)
-            dest.write_bytes(contenu)
-            remplaces.append(rel)
-        else:
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            dest.write_bytes(contenu)
-            ajoutes.append(rel)
-        nouveau_manifeste[rel] = h_new
-        req_change = req_change or rel == "requirements.txt"
+            shutil.copy2(RACINE / rel, sauvegarde / rel)
+        for rel in plan["remplacer"]:
+            (RACINE / rel).write_bytes(nouveaux[rel])
+        for rel in plan["ajouter"]:
+            (RACINE / rel).parent.mkdir(parents=True, exist_ok=True)
+            (RACINE / rel).write_bytes(nouveaux[rel])
+        for rel in plan["garder"]:
+            Path(str(RACINE / rel) + ".nouveau").write_bytes(nouveaux[rel])
+        for rel in plan["retirer"]:
+            (RACINE / rel).unlink()
+    except OSError as e:
+        print(f"\n! Écriture impossible ({type(e).__name__}: {e}). Retour à la version d'avant…")
+        _restaurer(sauvegarde, journal)
+        return 1
+    MANIFESTE.write_text(json.dumps(manifeste, indent=1, sort_keys=True), encoding="utf-8")
 
-    MANIFESTE.write_text(json.dumps(nouveau_manifeste, indent=1, sort_keys=True), encoding="utf-8")
-    print(f"\n{len(remplaces)} fichier(s) mis à jour, {len(ajoutes)} ajouté(s).")
-    if remplaces:
-        print(f"Anciennes versions copiées dans {sauvegarde.relative_to(RACINE)}")
-    if gardes:
+    print(f"\n{len(plan['remplacer'])} fichier(s) mis à jour, {len(plan['ajouter'])} ajouté(s), "
+          f"{len(plan['retirer'])} retiré(s).")
+    print(f"Anciennes versions copiées dans {sauvegarde.relative_to(RACINE)} "
+          f"(--annuler pour revenir en arrière).")
+    if plan["garder"]:
         print("\nFichiers que TU as modifiés, gardés tels quels (la nouvelle version est à côté, "
               "en .nouveau — compare et fusionne si tu veux) :")
-        for rel in gardes:
+        for rel in plan["garder"]:
             print(f"  - {rel}")
-    if refuses:
-        print(f"\n{len(refuses)} fichier(s) de données ignorés (jamais remplacés).")
-    return apres(changes_requirements=req_change)
+    if plan["garder_retire"]:
+        print("\nFichiers retirés du programme mais modifiés chez toi, laissés en place :")
+        for rel in plan["garder_retire"]:
+            print(f"  - {rel}")
+    if plan["refuser"]:
+        print(f"\n{len(plan['refuser'])} fichier(s) de données ignorés (jamais remplacés).")
+
+    if not controler():
+        print("\nRetour automatique à la version d'avant…")
+        _restaurer(sauvegarde, journal)
+        print(f"Version {version_locale()} rétablie. Signale le problème : "
+              f"https://github.com/{DEPOT}/issues")
+        return 1
+    afficher_nouveautes(changelog, locale, distante)
+    return apres(changes_requirements="requirements.txt" in plan["remplacer"] + plan["ajouter"])
 
 
-def apres(changes_requirements):
-    if changes_requirements:
-        print("\nLes dépendances ont changé : installation…")
-        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-r",
-                        str(RACINE / "requirements.txt")])
-    print(f"\nJobHunter est à jour (version {version_locale()}). Relance l'application.")
+def annuler_zip():
+    journaux = sorted(SAUVEGARDES.glob(f"*/{JOURNAL}")) if SAUVEGARDES.exists() else []
+    for j in reversed(journaux):
+        journal = json.loads(j.read_text(encoding="utf-8"))
+        if journal.get("annule"):
+            continue
+        _restaurer(j.parent, journal)
+        print(f"Mise à jour du {journal.get('date')} annulée : retour de "
+              f"{journal.get('apres')} à {journal.get('avant')}.")
+        return 0
+    print("Aucune mise à jour à annuler.")
+    return 1
+
+
+# ── Chemin git ──────────────────────────────────────────────────────────────
+
+def _git(*a, **kw):
+    return subprocess.run(["git", *a], cwd=RACINE, capture_output=True, text=True,
+                          encoding="utf-8", errors="replace", **kw)
+
+
+def _git_fichier(ref, chemin):
+    r = _git("show", f"{ref}:{chemin}")
+    return r.stdout if r.returncode == 0 else ""
+
+
+def par_git(args):
+    print("Dossier git détecté : git pull.")
+    if _git("rev-parse", "--abbrev-ref", "@{u}").returncode:
+        print("! Ce dossier git ne suit aucune branche distante (`git branch -u origin/main` "
+              "pour la rétablir).")
+        return 1
+    if _git("fetch", "--quiet").returncode:
+        print("! git fetch a échoué (hors ligne ?).")
+        return 1
+    locale = version_locale()
+    distante = _git_fichier("@{u}", "VERSION").strip() or locale
+    changelog = _git_fichier("@{u}", "CHANGELOG.md")
+    lie = _git("merge-base", "HEAD", "@{u}").returncode == 0
+    n = _git("rev-list", "--count", "HEAD..@{u}").stdout.strip() or "0"
+    print(f"Version installée : {locale} · version disponible : {distante}")
+
+    if args.verifier:
+        print(f"{n} changement(s) à récupérer." if n != "0" else "Déjà à jour.")
+        if n != "0":
+            afficher_nouveautes(changelog, locale, distante)
+        return 0
+    if not lie:
+        # Historique du depot public reecrit : un pull rejouerait tout en conflit.
+        if not args.forcer:
+            print("\n! L'historique du dépôt GitHub a été réécrit depuis ton installation.\n"
+                  "  Relance avec --forcer : ton dossier passe sur la nouvelle version, tes\n"
+                  "  données (ignorées par git) et tes fichiers modifiés restent en place.")
+            return 1
+        avant = _git("rev-parse", "HEAD").stdout.strip()
+        GIT_AVANT.write_text(avant, encoding="utf-8")
+        r = _git("reset", "--keep", "@{u}")
+    else:
+        if n == "0" and not args.forcer:
+            print("Déjà à jour.")
+            return 0
+        avant = _git("rev-parse", "HEAD").stdout.strip()
+        GIT_AVANT.write_text(avant, encoding="utf-8")
+        r = subprocess.run(["git", "pull", "--rebase", "--autostash"], cwd=RACINE)
+    if r.returncode:
+        GIT_AVANT.unlink(missing_ok=True)      # rien d'installe : rien a annuler
+        print((getattr(r, "stderr", "") or "").strip())
+        print("\n! La mise à jour git a échoué (voir le message ci-dessus). Tes fichiers n'ont "
+              "pas été perdus : `git status` montre où en est le dossier.")
+        return 1
+    if not controler():
+        print("\nRetour automatique à la version d'avant…")
+        _git("reset", "--keep", avant)
+        print(f"Version {version_locale()} rétablie. Signale le problème : "
+              f"https://github.com/{DEPOT}/issues")
+        return 1
+    changes = _git("diff", "--name-only", avant, "HEAD").stdout.split()
+    afficher_nouveautes(changelog, locale, distante)
+    return apres(changes_requirements="requirements.txt" in changes)
+
+
+def annuler_git():
+    if not GIT_AVANT.exists():
+        print("Aucune mise à jour à annuler.")
+        return 1
+    avant = GIT_AVANT.read_text(encoding="utf-8").strip()
+    r = _git("reset", "--keep", avant)
+    if r.returncode:
+        print(f"! Retour impossible : {r.stderr.strip()}")
+        return 1
+    GIT_AVANT.unlink()
+    print(f"Retour à la version {version_locale()} ({avant[:7]}).")
     return 0
 
 
 def main():
     ap = argparse.ArgumentParser(description="Met JobHunter à jour depuis GitHub.")
-    ap.add_argument("--verifier", action="store_true", help="dire seulement s'il y a une mise à jour")
+    ap.add_argument("--verifier", action="store_true",
+                    help="dire s'il y a une mise à jour et ce qu'elle apporte")
     ap.add_argument("--forcer", action="store_true", help="réinstaller même à version égale")
+    ap.add_argument("--annuler", action="store_true",
+                    help="revenir à la version d'avant la dernière mise à jour")
     args = ap.parse_args()
-    if (RACINE / ".git").exists() and shutil.which("git"):
-        return par_git(args)
-    return par_zip(args)
+    git = (RACINE / ".git").exists() and shutil.which("git")
+    if args.annuler:
+        return annuler_git() if git else annuler_zip()
+    return par_git(args) if git else par_zip(args)
 
 
 if __name__ == "__main__":

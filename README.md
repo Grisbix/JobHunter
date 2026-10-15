@@ -54,9 +54,12 @@ Tout tourne sur ton ordinateur. Ton CV et tes candidatures ne quittent pas ta ma
 
 - **`planifier.bat`** — lance la collecte chaque matin à 8 h (`planifier.bat 07:30` pour une autre
   heure, `planifier.bat supprimer` pour l'arrêter). Journaux dans `Scripts\_logs\`.
-- **`mettre_a_jour.bat`** — récupère la dernière version. Ton profil, ton CV, tes lettres et ton
-  suivi ne sont **jamais** touchés ; un fichier du programme que tu as modifié est gardé, la
-  nouvelle version posée à côté en `.nouveau`. Les anciennes versions vont dans `_sauvegarde_maj\`.
+- **`mettre_a_jour.bat`** — récupère la dernière version (l'application te la propose aussi
+  d'elle-même au démarrage, et se relance après). Elle affiche les nouveautés, installe, vérifie
+  que tout se charge et **revient seule à la version d'avant** si ce n'est pas le cas. Ton
+  profil, ton CV, tes lettres et ton suivi ne sont **jamais** touchés ; un fichier du programme
+  que tu as modifié est gardé, la nouvelle version posée à côté en `.nouveau`. Les anciennes
+  versions vont dans `_sauvegarde_maj\` ; `mettre_a_jour.bat --annuler` y revient.
   L'application te prévient elle-même au démarrage quand une nouvelle version sort.
 
 > **Pourquoi un `.docx` ?** Chaque CV envoyé part de ce modèle. Écris `[nom du poste]` dans ton
@@ -113,8 +116,9 @@ compléter. **Il n'invente aucun fait** : ce qui n'est pas dans ton CV, il te le
 | Remplissage semi-automatique d'un formulaire | `python Scripts/apply_runner.py --canal linkedin` (dans un terminal) |
 
 **Chaque matin automatiquement** : `planifier.bat` (voir plus haut).
-**Mettre à jour** : `mettre_a_jour.bat`, ou `python Scripts/mise_a_jour.py --verifier` pour
-seulement savoir s'il y a du nouveau.
+**Mettre à jour** : `mettre_a_jour.bat` (ou le bouton « Mettre à jour JobHunter » de l'app) ;
+`python Scripts/mise_a_jour.py --verifier` pour seulement voir ce qu'apporte la nouvelle version,
+`--annuler` pour revenir à la précédente. Nouveautés de chaque version : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Le profil
 
