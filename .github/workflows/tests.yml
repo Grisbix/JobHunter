@@ -21,6 +21,10 @@ jobs:
         run: |
           python -m pip install -r requirements.txt
           python -m playwright install chromium
+      - name: Banc de non-regression
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python outils/banc.py comparer outils/banc_reference.json
       - name: Suites sans reseau
         working-directory: Scripts
         shell: pwsh
@@ -59,6 +63,12 @@ jobs:
         run: for f in *.sh; do bash -n "$f"; echo "$f ok"; done
       - name: Compilation de tous les programmes
         run: python -m py_compile JobHunter.pyw Scripts/*.py
+      - name: Banc de non-regression (meme reference que sous Windows)
+        env:
+          PYTHONIOENCODING: utf-8
+        run: |
+          python -m pip install -r requirements.txt
+          python outils/banc.py comparer outils/banc_reference.json
       - name: Logique pure (scoring, sources, titres, contrats, mise a jour)
         working-directory: Scripts
         shell: bash
