@@ -10,7 +10,7 @@ Rien ne change dans ce que fait JobHunter. Le code de stockage (la file d'offres
 des candidatures, l'écriture sûre et le verrou entre programmes) part dans un nouveau
 dossier `src/jobhunter/` : première étape du découpage du moteur en paquet. La mise à jour
 ajoute ce dossier ; les anciens noms (`queue_io`, `suivi_io`, `jutil`) restent valables.
-Les tests sont désormais écrits avec pytest (1 153 tests).
+Les tests sont désormais écrits avec pytest (1 155 tests).
 
 ## 1.4.0 — 2026-10-17
 
