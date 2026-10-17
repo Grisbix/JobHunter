@@ -129,3 +129,22 @@ def suivi_temporaire(tmp_path, monkeypatch):
     chemin = tmp_path / "suivi.json"
     monkeypatch.setattr(suivi_io, "CHEMIN", chemin)
     return chemin
+
+
+@pytest.fixture(scope="session")
+def navigateur():
+    """Un seul Chromium (headless) pour toute la session de tests."""
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True)
+        yield b
+        b.close()
+
+
+@pytest.fixture
+def page(navigateur):
+    """Une page neuve par test : aucun etat ne passe d'un test a l'autre."""
+    pg = navigateur.new_page()
+    yield pg
+    pg.close()

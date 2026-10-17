@@ -21,8 +21,6 @@ SCRIPTS = Path(__file__).resolve().parent.parent / "Scripts"
 # Sans reseau, toutes. test_live_nav et test_acces_sites sortent sur le web : exclus.
 SUITES = [
     "test_patterns",
-    "test_web_nav_mock",
-    "test_web_nav",
 ]
 
 
