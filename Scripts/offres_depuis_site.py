@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """offres_depuis_site.py — Retrouve l'annonce sur le site de l'EMPLOYEUR pour les
 offres connues seulement par LinkedIn.
 
@@ -27,10 +26,10 @@ Run :
   python offres_depuis_site.py --fit 8 --limit 50
 """
 
-import sys
-import re
-import json
 import argparse
+import json
+import re
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -39,7 +38,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 
 import queue_io
 from job_sources import rang_source
-from resolve_offer_links import accepte, specificite, PROFIL
+from resolve_offer_links import PROFIL, accepte, specificite
 
 HOMEPAGES = HERE / "homepages.json"
 
@@ -96,7 +95,7 @@ def main():
             print("[DRY] rien n'a ete ecrit.")
         return 0
 
-    from web_nav import get_sync_playwright, find_offer, dismiss_cookies, analyze, goto_careers
+    from web_nav import analyze, dismiss_cookies, find_offer, get_sync_playwright, goto_careers
 
     sp, eng = get_sync_playwright("auto")
     PROFIL.mkdir(parents=True, exist_ok=True)

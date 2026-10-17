@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_relances.py — les brouillons de la semaine sont prêts, rien n'est envoyé.
 
 La tâche Windows `Relances` (lundi) lance `relances.py --brouillons`. Ces cas
@@ -11,6 +10,7 @@ Run : python test_relances.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import sys
 import tempfile
 from pathlib import Path

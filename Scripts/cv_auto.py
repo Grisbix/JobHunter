@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """cv_auto.py — Retouches de CV automatiques, sans LLM, a partir d'une banque de faits.
 
 POURQUOI. Le CV d'une offre sortait du modele tel quel, a l'intitule pres. Une

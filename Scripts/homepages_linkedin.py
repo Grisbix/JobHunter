@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """homepages_linkedin.py — Trouve le site des entreprises dont l'offre n'est
 connue que par LinkedIn.
 
@@ -19,18 +18,18 @@ Run :
   python homepages_linkedin.py --fit 0          # toutes
 """
 
-import sys
-import json
 import argparse
 import concurrent.futures as cf
+import json
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 
-import queue_io
 import enrich_homepages as E
+import queue_io
 from job_sources import rang_source
 
 CACHE = HERE / "homepages.json"

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """suivi_io.py — Le seul chemin d'accès à `suivi.json`.
 
 POURQUOI CE FICHIER EXISTE. `suivi.json` garde les CANDIDATURES : ce à quoi
@@ -36,8 +35,8 @@ donc conservé. Une exception dans la fonction annule l'écriture.
 `charger()` pour la lecture seule.
 """
 
-from contextlib import contextmanager
 import json
+from contextlib import contextmanager
 from pathlib import Path
 
 import jutil

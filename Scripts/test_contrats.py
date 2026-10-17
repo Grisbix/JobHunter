@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_contrats.py — Deduction du type de contrat (job_sources).
 
 Cas tires des VRAIS intitules et descriptions de apply_queue.json.
@@ -12,13 +11,14 @@ Run : python test_contrats.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-from job_sources import contrat_du_titre, contrat_de_la_description
+from job_sources import contrat_de_la_description, contrat_du_titre
 
 PASS = FAIL = 0
 

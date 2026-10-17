@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """ajoute_vie.py — Ajoute une offre V.I.E a la file, avec CV et lettre.
 
 POURQUOI. mon-vie-via est une application monopage : le HTML brut est une
@@ -123,6 +122,7 @@ def completer(a):
     pendant tout ce temps pour rien. On collecte d'abord, on ecrit ensuite.
     """
     import time
+
     import queue_io
 
     q = queue_io.charger()
@@ -263,9 +263,9 @@ def main():
 
     import queue_io
     from ats_match import fit_detail, score_offer
-    from zones import zone_lieu
-    from scrape_jobs import classify_domaine
     from langue import langue_offre
+    from scrape_jobs import classify_domaine
+    from zones import zone_lieu
 
     fit, yrs, fin = fit_detail(f"{poste} {desc}", poste)
     dom = classify_domaine(poste)
@@ -290,10 +290,11 @@ def main():
         print("\n[DRY] rien n'a ete ecrit.")
         return 0
 
-    from tailor_application import tailor_cv, tailor_letter, to_pdf
+    import time
+
     from jutil import url_de
     from rename_docs import new_name
-    import time
+    from tailor_application import tailor_letter, to_pdf
 
     try:
         with queue_io.transaction() as q:

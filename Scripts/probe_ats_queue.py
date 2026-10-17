@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """probe_ats_queue.py — Quelles entreprises de la file exposent un flux ATS lisible ?
 
 POURQUOI. Remonter au site de l'employeur par navigation ne marche pas : mesure
@@ -20,21 +19,21 @@ Run :
   python probe_ats_queue.py --json out.json
 """
 
-import sys
-import re
-import json
 import argparse
-import unicodedata
 import collections
 import concurrent.futures as cf
+import json
+import re
+import sys
+import unicodedata
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 
-import queue_io
 import probe_ats
+import queue_io
 from job_sources import rang_source, title_ok
 
 # Mots qui ne font pas partie du slug d'un ATS.

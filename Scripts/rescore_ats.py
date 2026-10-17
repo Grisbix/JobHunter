@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """rescore_ats.py — Recalcule ats_pct + skills_match DIRECTEMENT sur apply_queue.json
 (sans Excel). Exigences offre = missions + PROFIL requis (+ description si récupérée).
 Couverture = CV variant. Écrit le nouveau % dans la queue.
@@ -7,7 +6,8 @@ Couverture = CV variant. Écrit le nouveau % dans la queue.
 Run : python rescore_ats.py            # tout
       python rescore_ats.py --dry      # montre les changements sans écrire"""
 
-import sys, json, argparse
+import argparse
+import sys
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -37,7 +37,7 @@ def main():
 
 
 def _travail(q, a):
-    from ats_match import score_offer, fit_detail
+    from ats_match import fit_detail, score_offer
 
     try:
         from tailor_application import match_skills

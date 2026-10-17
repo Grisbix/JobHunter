@@ -1,6 +1,7 @@
 """Régressions connexion : faux positifs et redirections, sans site distant."""
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import importlib.util
 import io
 import sys
@@ -10,6 +11,7 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
 import acces
 
 
@@ -17,6 +19,7 @@ class AccesTest(unittest.TestCase):
     def test_chrome_ne_remplace_pas_le_profil_dedie(self):
         import os
         import shutil
+
         import apply_runner
 
         class FinDuTest(Exception):

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """jutil.py — utilitaires partagés : écriture ATOMIQUE, verrou, chemins, texte.
 
 Un crash/kill au milieu d'une écriture ne corrompt jamais apply_queue.json.
@@ -11,10 +10,13 @@ d'un côté et insensible de l'autre, une normalisation d'accents présente ici 
 absente là, deux décodages `file:///` dont l'un oubliait la forme `file://`.
 """
 
-import json, os, re, unicodedata
+import json
+import os
+import re
 import time as _t
+import unicodedata
 from pathlib import Path
-from urllib.parse import unquote, quote
+from urllib.parse import quote, unquote
 
 
 # ── Chemins ↔ URL file:/// ───────────────────────────────────────────────────
@@ -125,8 +127,8 @@ def jwrite(path, obj, _brut=False):
 # la tache planifiee JobSearch_Daily_Scrape lance le meme pipeline a cote.
 #
 # D'ou un verrou porte par un fichier, visible de tous les processus.
-import time as _time
 import atexit as _atexit
+import time as _time
 
 _TENUS = {}
 

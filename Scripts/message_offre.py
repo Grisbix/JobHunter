@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """message_offre.py — Le message COURT que demandent les formulaires.
 
 POURQUOI. Business France, LinkedIn Easy Apply et beaucoup d'ATS demandent,
@@ -24,9 +23,9 @@ Run :
   python message_offre.py --contient Nexans
 """
 
-import sys
 import argparse
 import re
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -74,7 +73,7 @@ def preuve(offre, langue, ton="sobre"):
     Se rabat sur la phrase par domaine quand l'annonce ne demande rien qu'on
     sache illustrer : mieux vaut une phrase generique mais vraie qu'un silence.
     """
-    from tailor_application import match_skills, cv_variant_key
+    from tailor_application import cv_variant_key, match_skills
 
     table = FAITS_EN if langue == "en" else FAITS_FR
     tete = _TETE_EN if langue == "en" else _TETE_FR
@@ -397,8 +396,8 @@ def message(offre, langue=None, ton="sobre"):
 
 def _message(offre, langue=None, ton="sobre"):
     """Le texte a coller dans le formulaire. `ton` : sobre | detente."""
-    from tailor_application import cv_variant_key, titre_poste, minuscule_titre
     from langue import langue_offre
+    from tailor_application import cv_variant_key, minuscule_titre, titre_poste
 
     lg = langue or langue_offre(
         offre.get("poste"), offre.get("description"), offre.get("localisation")

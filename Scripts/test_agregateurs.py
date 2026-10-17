@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_agregateurs.py — sources Adzuna et Jooble, sans reseau.
 
 Couvre : desactivation sans fichier de cle ; lecture des resultats ; filtres
@@ -11,6 +10,7 @@ Run : python test_agregateurs.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import io
 import json
 import sys

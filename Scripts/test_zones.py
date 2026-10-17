@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_zones.py — zones.zone_lieu sur des lieux REELS de la file.
 
 Chaque cas vient d'une offre mal rangee, mesuree le 2026-09-23 : 409 offres
@@ -10,6 +9,7 @@ Run : python test_zones.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import sys
 from pathlib import Path
 
@@ -17,12 +17,22 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from zones import (
-    zone_lieu,
-    PRIORITAIRE as P,
-    SECONDAIRE as S,
     AILLEURS as A,
-    INTERNATIONAL as I,
+)
+from zones import (
     INCONNU as U,
+)
+from zones import (
+    INTERNATIONAL as I,
+)
+from zones import (
+    PRIORITAIRE as P,
+)
+from zones import (
+    SECONDAIRE as S,
+)
+from zones import (
+    zone_lieu,
 )
 
 CAS = [

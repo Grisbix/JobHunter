@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_glassdoor_refus.py — Glassdoor face a un refus d'entree, sans reseau.
 
 Le 2026-10-07 (et le 03), l'etape 1e du pipeline a ete tuee a 40 min : chaque
@@ -14,6 +13,7 @@ Run : python test_glassdoor_refus.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import io
 import sys
 import urllib.error

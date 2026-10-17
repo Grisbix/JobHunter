@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """top_offres.py — Les N offres a traiter MAINTENANT, pas les N meilleurs scores.
 
 Le fit seul ne suffit pas a decider. Une offre a fit 10 est inutile si son lien
@@ -23,10 +22,9 @@ Run :
   python top_offres.py --n 20 --zone prioritaire
 """
 
-import sys
-import re
-import json
 import argparse
+import re
+import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -34,7 +32,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-from job_sources import contrats_exclus, contrat_du_titre, rang_source
+from job_sources import contrat_du_titre, contrats_exclus, rang_source
 
 # Intitule qui parle vraiment du metier vise, et niveau d'entree.
 RX_ESG = re.compile(

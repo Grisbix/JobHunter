@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_titres.py — Nettoyage de l'intitulé de poste (tailor_application.titre_poste).
 
 Cas tirés des VRAIS titres trouvés dans apply_queue.json, pas inventés.
@@ -12,6 +11,7 @@ Run : python test_titres.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import sys
 from pathlib import Path
 

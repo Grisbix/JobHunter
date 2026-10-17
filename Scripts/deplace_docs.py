@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """deplace_docs.py — Sort les documents generes de OneDrive, sans rien casser.
 
 CE QU'IL DEPLACE, et seulement cela :

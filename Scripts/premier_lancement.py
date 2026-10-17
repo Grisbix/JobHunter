@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """premier_lancement.py — cree TON profil a partir de ton CV.
 
     python Scripts/premier_lancement.py chemin/vers/mon_cv.pdf      (ou .docx)
@@ -696,6 +695,7 @@ def main():
     sortie.write_text(json.dumps(profil, ensure_ascii=False, indent=1), encoding="utf-8")
     # Les familles du tri se calculent avec le profil en place (tri_file le lit).
     import os
+
     import profil as _profil
 
     os.environ["PROFIL_JOBHUNTER"] = str(sortie)

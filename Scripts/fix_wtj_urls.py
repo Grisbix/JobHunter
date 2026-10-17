@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """fix_wtj_urls.py — Répare les liens Welcome to the Jungle qui affichent une
 erreur 404 DANS la page (route SPA invalide). Le scraper avait fabriqué des URLs
 `/fr/jobs/search?q=...&refinementList[offices][]=NomEntreprise` — route inexistante
@@ -10,9 +9,11 @@ Garde les pages valides `/fr/companies/<slug>`. Réécrit `/jobs/search` et `/pa
 Run : python fix_wtj_urls.py            # applique
       python fix_wtj_urls.py --dry      # montre sans écrire"""
 
-import sys, json, re, argparse
-from urllib.parse import urlparse, quote
+import argparse
+import re
+import sys
 from pathlib import Path
+from urllib.parse import quote, urlparse
 
 sys.stdout.reconfigure(encoding="utf-8")
 

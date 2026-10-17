@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """linkedin_desc.py — Recupere la DESCRIPTION des offres LinkedIn depuis l'API invite.
 
 POURQUOI. Le fit se calcule sur « intitule + description ». Une offre sans
@@ -22,13 +21,12 @@ Run :
   python linkedin_desc.py                    # toutes les offres concernees
 """
 
-import sys
-import re
-import json
-import html
-import time
 import argparse
 import concurrent.futures as cf
+import html
+import re
+import sys
+import time
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
@@ -37,7 +35,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 QUEUE = HERE / "apply_queue.json"
 
-from linkedin_closed import API, UA, job_id, RX_FERME  # meme endpoint, meme UA
+from linkedin_closed import API, RX_FERME, UA, job_id  # meme endpoint, meme UA
 
 # La description vit dans un bloc `description__text` ; repli sur <section>.
 RX_DESC = [
@@ -144,8 +142,9 @@ def _ecrire(textes, queue_io, attente=180):
     l'instantane et l'ecriture, un scan a pu inserer, supprimer ou reordonner.
     Une offre qui a recu une description entre-temps n'est pas ecrasee. Une
     offre disparue est simplement ignoree."""
-    from ats_match import fit_detail
     import datetime
+
+    from ats_match import fit_detail
 
     ecrites, delta = 0, []
     with queue_io.transaction(attente=attente) as q:

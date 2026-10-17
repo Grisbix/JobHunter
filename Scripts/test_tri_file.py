@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_tri_file.py — Motifs de retrait de tri_file : quant, ingenierie data,
 trop d'outils de developpement (regles de l'utilisateur du 2026-10-05).
 
@@ -9,6 +8,7 @@ Run : python test_tri_file.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import sys
 from pathlib import Path
 

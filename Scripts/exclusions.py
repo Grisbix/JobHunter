@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """exclusions.py — Les offres que l'utilisateur a ecartees, et POURQUOI.
 
 DEUX ROLES, et le second est le plus utile.
@@ -22,11 +21,11 @@ Run :
   python exclusions.py --liste
 """
 
-import sys
-import json
 import argparse
 import collections
 import datetime as _dt
+import json
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent

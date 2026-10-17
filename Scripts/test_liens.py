@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_liens.py — Un lien de remplacement doit mener a L'ANNONCE, pas ailleurs.
 
 Cas reels rencontres en production. Le plus couteux :
@@ -16,13 +15,14 @@ Run : python test_liens.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-from resolve_offer_links import RX_RECHERCHE, RX_OFFRE, accepte, specificite
+from resolve_offer_links import RX_OFFRE, RX_RECHERCHE, accepte, specificite
 
 PASS = FAIL = 0
 

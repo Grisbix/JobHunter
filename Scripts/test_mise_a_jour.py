@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_mise_a_jour.py — La mise a jour ne doit jamais perdre ce que l'utilisateur a fait.
 
 Hors reseau : les ZIP « GitHub » sont fabriques en memoire et servis a la place
@@ -18,6 +17,7 @@ Run : python test_mise_a_jour.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import argparse
 import contextlib
 import io

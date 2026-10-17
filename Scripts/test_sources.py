@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_sources.py — Arbitrage des doublons entre sources (job_sources).
 
 Une meme annonce paraît souvent sur LinkedIn ET sur un vrai site d'emploi.
@@ -11,18 +10,19 @@ Run : python test_sources.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
-import sys
+
 import json
+import sys
 import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-import job_sources as J
-
 # Les fusions de test ne doivent pas lire les rejets reels du tri (rejets_tri.py).
 import tempfile as _tf
+
+import job_sources as J
 
 J.REJETS_TRI = __import__("pathlib").Path(_tf.mkdtemp()) / "rejets.json"
 from job_sources import rang_source

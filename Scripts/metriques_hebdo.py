@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """metriques_hebdo.py — Bilan hebdomadaire de la recherche d'emploi.
 
 POURQUOI CE FICHIER EXISTE. Le bilan du lundi était produit par un script

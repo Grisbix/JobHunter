@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_web_nav_mock.py — Tests avec réseau/Ollama MOCKÉS (login_flow, robust_goto,
 vision_pick, llm_agent). Aucun appel réel : goto via FakePage, Ollama via urlopen patché.
 Lance : python test_web_nav_mock.py"""
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
-import sys, json, io, urllib.request
+
+import json
+import sys
+import urllib.request
 
 sys.stdout.reconfigure(encoding="utf-8")
-import web_nav as w
-
 from playwright.sync_api import sync_playwright
+
+import web_nav as w
 
 PASS = FAIL = 0
 

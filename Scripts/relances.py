@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 relances.py — Genere des mails de relance J+7 / J+10 personnalises par offre.
 
@@ -11,7 +10,10 @@ Run: python relances.py            # toutes les offres 'prio'
      python relances.py --jours 10 # variante J+10 (defaut J+7)
 """
 
-import argparse, json, re, sys
+import argparse
+import json
+import re
+import sys
 from pathlib import Path
 
 try:
@@ -189,6 +191,7 @@ def mark(key):
     l'autre.
     """
     from datetime import date
+
     import suivi_io
 
     def _f(s):

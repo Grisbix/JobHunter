@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """probe_workday.py — Trouve les flux Workday publics des grands groupes.
 
 Pourquoi : les sites carriere de ces groupes (careers.axa.com, allianz.com,
@@ -19,7 +18,10 @@ Run :
   python probe_workday.py --tenants axa,allianz --json out.json
 """
 
-import sys, json, argparse, concurrent.futures as cf
+import argparse
+import concurrent.futures as cf
+import json
+import sys
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)

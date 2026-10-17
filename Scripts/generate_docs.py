@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """generate_docs.py — Génère CV + lettre pour les offres de la QUEUE qui n'en ont pas
 (ou dont les liens sont morts). Remplace l'ancien tailor CLI (qui lisait l'Excel archivé).
 
@@ -7,9 +6,9 @@ Run : python generate_docs.py --top 30        # top fit sans docs
       python generate_docs.py --all           # toutes les offres sans docs
       python generate_docs.py --dry"""
 
-import sys, json, argparse
+import argparse
+import sys
 from pathlib import Path
-from urllib.parse import unquote, quote
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -17,7 +16,8 @@ HERE = Path(__file__).resolve().parent
 QUEUE = HERE / "apply_queue.json"
 
 
-from jutil import chemin_de as _p, url_de as _u  # helpers partages (voir jutil.py)
+from jutil import chemin_de as _p  # helpers partages (voir jutil.py)
+from jutil import url_de as _u
 
 
 def main():
@@ -127,7 +127,9 @@ def main():
         refresh_letters.py ne sait pas reparer le premier cas : il nettoie le texte
         existant, il ne peut pas deviner la lettre manquante d'un mot ampute.
         """
-        import zipfile, html as _html, re as _re
+        import html as _html
+        import re as _re
+        import zipfile
 
         p = _p(x.get("lettre"))
         if p is None:
@@ -167,7 +169,9 @@ def main():
         # On lit le CONTENU, pas l'intitule de l'offre : comparer titre_poste(brut)
         # a brut restait vrai apres regeneration, donc ce selecteur ne convergeait
         # jamais et reproposait sans fin les memes 1012 offres.
-        import zipfile, html as _html, re as _re
+        import html as _html
+        import re as _re
+        import zipfile
 
         d = p.with_suffix(".docx")
         if not d.exists():
@@ -221,7 +225,7 @@ def main():
 
     # Contrats exclus (alternance, stage) : masques dans l'app, donc jamais
     # ouverts. Leur fabriquer un CV et une lettre serait du travail perdu.
-    from job_sources import contrats_exclus, contrat_du_titre
+    from job_sources import contrat_du_titre, contrats_exclus
 
     _EX = contrats_exclus()
 
@@ -254,8 +258,8 @@ def main():
             print(f"  fit={x.get('fit')} {x['entreprise'][:24]} — {x['poste'][:45]}")
         return
 
-    from tailor_application import tailor_letter, to_pdf, cv_une_page
     from langue import langue_offre
+    from tailor_application import cv_une_page, tailor_letter, to_pdf
 
     done = 0
     n_en = 0

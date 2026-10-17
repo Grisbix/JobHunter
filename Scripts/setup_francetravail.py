@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """setup_francetravail.py — Installe et VERIFIE les identifiants de l'API
 France Travail, sans que le secret transite par ailleurs.
 
@@ -17,7 +16,10 @@ Run :
   python setup_francetravail.py --test     # teste les identifiants deja en place
 """
 
-import sys, json, argparse, getpass
+import argparse
+import getpass
+import json
+import sys
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)

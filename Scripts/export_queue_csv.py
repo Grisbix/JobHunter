@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """export_queue_csv.py — Sauvegarde lisible de la queue (CSV Excel-compatible).
 
 apply_queue.json est le SEUL dépôt des offres. S'il est corrompu ou écrasé, il
@@ -16,7 +15,11 @@ Run :
   python export_queue_csv.py --out chemin.csv
 """
 
-import sys, json, csv, argparse, datetime
+import argparse
+import csv
+import datetime
+import json
+import sys
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)

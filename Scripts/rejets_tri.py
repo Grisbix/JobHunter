@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """rejets_tri.py — Les offres que tri_file a retirees, pour que la collecte ne
 les reprenne pas.
 
@@ -19,9 +18,9 @@ ne doit pas rester invisible indefiniment. Une offre encore en ligne un mois plu
 tard repassera le tri avec les regles du jour.
 """
 
+import datetime
 import json
 import os
-import datetime
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent

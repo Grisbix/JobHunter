@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """site_final.py — Retrouver une offre LinkedIn sur le site de l'employeur.
 
 POURQUOI. 7265 offres de la file sur 8805 n'ont qu'un lien LinkedIn (2026-10-05),
@@ -34,24 +33,24 @@ Run :
   python site_final.py --fit 8 --limite 100
 """
 
-import sys
-import re
-import json
-import time
 import argparse
-import datetime
-import unicodedata
 import concurrent.futures as cf
+import datetime
+import json
+import re
+import sys
+import time
+import unicodedata
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 
-import queue_io  # noqa: E402
 import probe_ats  # noqa: E402
+import queue_io  # noqa: E402
 from probe_ats_queue import variantes  # noqa: E402
-from verify_ats_slugs import nom_du_flux, verdict, _cle  # noqa: E402
+from verify_ats_slugs import _cle, nom_du_flux, verdict  # noqa: E402
 
 ETAT = HERE / "_site_final.json"
 RESONDE_JOURS = 30

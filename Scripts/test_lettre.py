@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_lettre.py — Ce que la lettre decide seule (sans reseau).
 
 Quatre choses que `tailor_application` tranche, et qu'aucune autre suite ne
@@ -33,6 +32,7 @@ Run : python test_lettre.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import sys
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -43,11 +43,11 @@ import profil as _profil  # noqa: E402
 _AGRI = next(c for c in _profil.get("lettre.contextes") if c["nom"] == "agricole")
 AGRI_FR, AGRI_EN = _AGRI["fr"], _AGRI["en"]
 from tailor_application import (
-    salutation,
-    contexte_agricole,  # noqa: E402
     _sans_societe,
-    corps_sur_mesure,
     _slug,
+    contexte_agricole,  # noqa: E402
+    corps_sur_mesure,
+    salutation,
 )
 
 PASS = FAIL = 0

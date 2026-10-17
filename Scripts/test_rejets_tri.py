@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_rejets_tri.py — Une offre retiree par le tri ne revient pas a la collecte.
 
 Couvre : memorisation, expiration a 30 jours, date d'origine conservee, et la
@@ -10,17 +9,18 @@ Run : python test_rejets_tri.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
-import sys
-import json
+
 import datetime
+import json
+import sys
 import tempfile
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.argv = ["x"]
-import rejets_tri as R
 import job_sources as J
+import rejets_tri as R
 
 ok = ko = 0
 

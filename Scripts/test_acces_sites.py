@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_acces_sites.py — Mesure QUELS sites de la queue sont ouvrables.
 
 Repond a « lesquels arrives-tu a ouvrir ». Pour chaque domaine distinct, ouvre
@@ -22,7 +21,13 @@ Run :
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
-import sys, json, re, os, argparse, collections
+
+import argparse
+import collections
+import json
+import os
+import re
+import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -89,7 +94,7 @@ def main():
         print("Aucun site cible.")
         return 1
 
-    from web_nav import get_sync_playwright, analyze, dismiss_cookies
+    from web_nav import analyze, dismiss_cookies, get_sync_playwright
 
     sp, eng = get_sync_playwright("auto")
     print(f"moteur={eng} · mode={mode} · {len(lots)} domaine(s)\n")

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_live_nav.py — Test RÉEL (read-only) : navigue de vrais sites carrière,
 lance la reconnaissance (detect_ats, segment_page, cookies, goto_careers, find_offer)
 et rapporte si le programme s'adapte. AUCUN login, AUCUN submit. Headless.
@@ -7,19 +6,22 @@ Run: python test_live_nav.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
-import sys, time
+
+import sys
+import time
 
 sys.stdout.reconfigure(encoding="utf-8")
-import web_nav as w
-
 from playwright.sync_api import sync_playwright
+
+import web_nav as w
 
 ENG = "playwright"
 
 
 def _sample_sites(per_cat=5):
     """Échantillonne des URLs réelles depuis apply_queue.json, N par url_type auto."""
-    import json, collections
+    import collections
+    import json
     from pathlib import Path
 
     q = json.loads((Path(__file__).parent / "apply_queue.json").read_text(encoding="utf-8"))

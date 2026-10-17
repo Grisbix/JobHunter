@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """audit_dispo.py — Verifie que les offres de la file sont encore ouvertes, et
 retire celles qui ne le sont plus.
 
@@ -238,7 +237,9 @@ def _wtj_urls():
     n'y figure plus a ete retiree. Pas de page d'offre visitee, donc pas de
     mur anti-bot."""
     import gzip
+
     import httpx
+
     from job_sources import WTJ_SITEMAP, _get_borne
     from wtj_desc import UA as _WUA
 

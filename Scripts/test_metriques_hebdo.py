@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_metriques_hebdo.py — le bilan du lundi compte ce qui existe vraiment.
 
 L'ancien bilan (script Hermes) lisait des sources disparues et affichait des
@@ -11,6 +10,7 @@ Run : python test_metriques_hebdo.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import sys
 import tempfile
 from datetime import date

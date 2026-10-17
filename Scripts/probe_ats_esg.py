@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """probe_ats_esg.py — Sonde les societes de GESTION et les cabinets ESG.
 
 POURQUOI. Les flux ATS ajoutes depuis la file ont apporte du volume mais pas de
@@ -20,11 +19,10 @@ Run :
   python probe_ats_esg.py --json _ats_esg.json
 """
 
-import sys
-import json
 import argparse
-import collections
 import concurrent.futures as cf
+import json
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -32,8 +30,8 @@ sys.path.insert(0, str(HERE))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 
 import probe_ats
-from probe_ats_queue import variantes, _tous_les_titres
-from job_sources import title_ok, en_france
+from job_sources import title_ok
+from probe_ats_queue import _tous_les_titres, variantes
 
 # Societes de gestion, boutiques AM, notation extra-financiere, acteurs climat.
 # Complete la liste de probe_ats.CANDIDATS avec des noms FR/EU du secteur.

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """verify_ats_slugs.py — Le flux ATS appartient-il VRAIMENT a la societe visee ?
 
 POURQUOI. Un slug se devine a partir du nom : « CIC » -> lever/cic. Mais
@@ -14,13 +13,13 @@ compare a celui de la file. Ne modifie rien.
 Run : python verify_ats_slugs.py [--json _ats_candidats.json]
 """
 
-import sys
-import re
-import json
 import argparse
-import difflib
-import unicodedata
 import concurrent.futures as cf
+import difflib
+import json
+import re
+import sys
+import unicodedata
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -89,6 +88,7 @@ def _cle(s):
 def nom_du_flux(kind, slug):
     """Nom que la societe se donne dans son propre flux, ou "" si illisible."""
     import html as _html
+
     import httpx
 
     try:

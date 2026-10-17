@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """verify_links.py — Detecte les liens qui n'aboutissent plus chez la bonne societe.
 
 Un lien peut etre VIVANT et pourtant trompeur : axa-im.com/about-us/careers
@@ -20,7 +19,9 @@ Run :
   python verify_links.py --limit 50
 """
 
-import sys, json, argparse, concurrent.futures as cf
+import argparse
+import concurrent.futures as cf
+import sys
 from pathlib import Path
 from urllib.parse import urlparse
 

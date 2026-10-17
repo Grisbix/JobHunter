@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """wtj_desc.py — Recupere la DESCRIPTION des offres Welcome to the Jungle.
 
 POURQUOI. J'avais annonce que WTJ etait « illisible, protection anti-bot ».
@@ -23,13 +22,13 @@ Run :
   python wtj_desc.py
 """
 
-import sys
-import re
-import json
-import html
-import time
 import argparse
 import concurrent.futures as cf
+import html
+import json
+import re
+import sys
+import time
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)

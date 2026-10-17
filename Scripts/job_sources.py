@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """job_sources.py — SCAN d'offres élargi + MERGE direct dans apply_queue.json.
 
 Sources (toutes gratuites, sans clé) :
@@ -20,7 +19,13 @@ Usage :
   python job_sources.py --all --dry      # collecte + montre, ne merge pas
 """
 
-import sys, json, re, time, argparse, html, datetime
+import argparse
+import datetime
+import html
+import json
+import re
+import sys
+import time
 from pathlib import Path
 from urllib.parse import quote, unquote, urlparse
 
@@ -34,11 +39,10 @@ QUEUE = HERE / "apply_queue.json"
 FRESH = HERE / "offres_scan.json"
 REJETS_TRI = HERE / "_rejets_tri.json"  # les tests le remplacent
 
-from scrape_jobs import matches_esg_finance, classify_domaine  # filtre + classif partagés
-
 # ── Mots-clés de recherche (LinkedIn, WTJ…) : profil.json, collecte.mots_cles ──
 # sources_config.json (mots-cles edites depuis l'app) les remplace s'il en a.
 import profil as _P
+from scrape_jobs import classify_domaine, matches_esg_finance  # filtre + classif partagés
 
 KEYWORDS = list(_P.get("collecte.mots_cles", []) or [])
 
@@ -1764,7 +1768,9 @@ def linkedin_guest_search(keyword, pages=2, days=7, lieu="France"):
     a l'entree de la file ne servait donc a rien pour cette source : elle ne
     DEMANDAIT que des offres francaises. Un filtre en aval ne peut pas rattraper
     ce qu'une requete en amont n'a jamais demande."""
-    import httpx, html as _html
+    import html as _html
+
+    import httpx
 
     out = []
     for p in range(pages):
@@ -1969,7 +1975,8 @@ def _wtj_fiche(url, client):
     vaut pour l'IP entiere et insister ne sert a rien. Surtout, 202 est un code
     de SUCCES — le confondre avec une page vide ferait passer le mur pour une
     fiche sans description."""
-    from wtj_desc import UA as _WUA, Bloque
+    from wtj_desc import UA as _WUA
+    from wtj_desc import Bloque
 
     try:
         r = _get_borne(client, url, headers=_WUA, timeout=30)
@@ -2019,9 +2026,12 @@ def scan_wtj(pages=2):
     garde ce qui est lu. `pages` est conserve pour la compatibilite des
     appelants et sert de plafond : pages * 5 fiches.
     """
-    import httpx
     import gzip
-    from wtj_desc import Bloque, UA as _WUA
+
+    import httpx
+
+    from wtj_desc import UA as _WUA
+    from wtj_desc import Bloque
 
     _EX = contrats_exclus()
     offers = []
@@ -2738,7 +2748,8 @@ INDEED_REQUETES = 0
 
 def _indeed_cartes(mot, lieu):
     """Lit la page publique ; distingue refus, quota et réponse vide valide."""
-    import urllib.request, urllib.error
+    import urllib.error
+    import urllib.request
     from email.utils import parsedate_to_datetime
 
     global INDEED_REQUETES
@@ -3014,7 +3025,8 @@ APEC_ABANDON = 3
 
 def _apec_page(mot, debut):
     """Une page de resultats APEC. Liste vide en cas de refus."""
-    import urllib.request, urllib.error
+    import urllib.error
+    import urllib.request
 
     corps = json.dumps(
         {
@@ -3226,7 +3238,8 @@ def _gd_url(mot):
 
 def _gd_cartes(mot):
     """Les cartes de la page 1 pour un mot-cle, France entiere."""
-    import urllib.request, urllib.error
+    import urllib.error
+    import urllib.request
 
     url = _gd_url(mot)
     texte = ""
@@ -3378,6 +3391,7 @@ def scan_glassdoor(mots=None, pause=None):
 
 # ═══════════════ MERGE → apply_queue.json (dédup + scoring) ═══════════════
 from jutil import cle as _norm  # meme semantique qu'avant : minuscules + blancs,
+
 # accents CONSERVES (cle de deduplication de la queue)
 
 
@@ -3408,7 +3422,7 @@ _URL_JUNK = {
 def _norm_url(u):
     """Clé de dédup d'URL : hôte sans www, chemin sans / final, params de
     tracking retirés et reste trié. Les vrais identifiants (?jk=, ?id=) restent."""
-    from urllib.parse import urlsplit, parse_qsl, urlencode
+    from urllib.parse import parse_qsl, urlencode, urlsplit
 
     u = (u or "").strip()
     if not u:
@@ -3605,8 +3619,9 @@ def merge_into_queue(fresh, dry=False, attente=180):
     entier sans verrou efface ce qu'un autre programme a ecrit entre-temps.
     On le prend si personne ne le tient, et on ne rend QUE ce qu'on a pris.
     """
+    import jutil
+    import queue_io
     from ats_match import fit_detail, score_offer
-    import queue_io, jutil
 
     a_nous = not dry and not jutil.tenu(QUEUE)
     if a_nous and not jutil.prendre_verrou(QUEUE, attente=attente):
@@ -3986,7 +4001,9 @@ FIR_URL = "https://www.frenchsif.org/isr_esg/emplois-et-stages/"
 
 
 def fetch_fir():
-    import httpx, html as _html
+    import html as _html
+
+    import httpx
 
     try:
         r = _get_borne(httpx, FIR_URL, timeout=25, headers=UA, follow_redirects=True)
@@ -4150,7 +4167,8 @@ def _get_borne(envoi, url, **kw):
 
 def _talent_detail(httpx, url):
     """(titre, entreprise, lieu, date, description) depuis le JSON-LD JobPosting."""
-    import json as _json, html as _html
+    import html as _html
+    import json as _json
 
     try:
         r = _get_borne(httpx, url, headers=UA, follow_redirects=True)
@@ -4186,8 +4204,10 @@ def _talent_detail(httpx, url):
 def fetch_talent(max_days=60, per_kw=20):
     """Offres Talent.com pour chaque mot-cle. max_days ecarte les annonces
     anciennes : le site sert des offres de plus d'un an (vu : datePosted 2025-06)."""
-    import httpx, datetime
+    import datetime
     from urllib.parse import quote as _q
+
+    import httpx
 
     today = datetime.date.today()
     out, seen = [], set()
@@ -4268,7 +4288,9 @@ FT_SEARCH = "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/sea
 
 
 def _ft_token():
-    import httpx, json as _json
+    import json as _json
+
+    import httpx
 
     if not FT_CFG.exists():
         return None

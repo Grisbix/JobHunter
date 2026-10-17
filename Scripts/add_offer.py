@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """add_offer.py — COLLE UN LIEN d'offre → analyse la page (titre, entreprise,
 description), score (fit/ATS), ajoute à apply_queue.json, puis génère CV + lettre.
 
@@ -7,7 +6,10 @@ Run : python add_offer.py --url "https://…"           # analyse + queue + docs
       python add_offer.py --url "https://…" --no-docs # sans CV/lettre
 """
 
-import sys, json, re, time, argparse
+import argparse
+import re
+import sys
+import time
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -29,8 +31,8 @@ _META_JS = r"""
 
 def analyze_url(url):
     """Ouvre la page (headless TURBO) → {titre, entreprise, description}."""
-    from web_nav import get_sync_playwright, robust_goto, dismiss_cookies, block_resources
     from scrape_desc import _DESC_JS, _EXPAND_JS, CAP
+    from web_nav import block_resources, dismiss_cookies, get_sync_playwright, robust_goto
 
     spw, eng = get_sync_playwright("auto")
     out = {"titre": "", "entreprise": "", "description": ""}
@@ -97,8 +99,8 @@ def analyze_url(url):
 
 
 def add_to_queue(url, meta):
+    from job_sources import _mk, merge_into_queue
     from scrape_jobs import classify_domaine
-    from job_sources import merge_into_queue, _mk
 
     o = _mk(
         meta["titre"],
@@ -122,7 +124,7 @@ def make_docs(url):
     x = next((v for v in q if v.get("url") == url), None)
     if not x:
         return "offre introuvable en queue"
-    from tailor_application import tailor_letter, to_pdf, cv_une_page
+    from tailor_application import cv_une_page, tailor_letter, to_pdf
 
     offer = dict(
         company=x["entreprise"],

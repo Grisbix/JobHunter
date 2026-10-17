@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """regenere_docs.py — Refait lettres et CV avec le generateur actuel.
 
 POURQUOI. Les corrections de redaction ne touchent que les lettres ECRITES
@@ -94,8 +93,8 @@ def main():
     a = ap.parse_args()
 
     import queue_io
-    from tailor_application import tailor_letter, tailor_cv, SOFFICE
     from langue import langue_offre
+    from tailor_application import SOFFICE, tailor_cv, tailor_letter
 
     champ = "cv" if a.cv else "lettre"
     faire = tailor_cv if a.cv else tailor_letter
@@ -178,7 +177,7 @@ def main():
         # UNE PAGE, TOUJOURS. Les faits automatiques (cv_auto) ajoutent des
         # lignes ; la conversion par lots ne regarde pas les pages. On reprend
         # un par un ceux qui debordent, avec les allegements de CV/Faits.json.
-        from tailor_application import cv_une_page, _pages_pdf
+        from tailor_application import _pages_pdf, cv_une_page
 
         par_stem = offres_de
         trop = [p for p in faits if _pages_pdf(dossier / (Path(p).stem + ".pdf")) > 1]

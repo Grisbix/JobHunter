@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """recheck_dead.py — Détecte les SOFT-404 rendus en JS (page HTTP 200 mais corps
 « 404 / offre pourvue / expirée / no longer accepting ») que le check statique
 (link_check via requests) rate — anti-bot ou contenu React.
@@ -16,7 +15,11 @@ Run :
   python recheck_dead.py --dry                                 # montre sans écrire
 """
 
-import sys, json, re, argparse, time, datetime
+import argparse
+import datetime
+import re
+import sys
+import time
 from pathlib import Path
 
 # line_buffering : sinon rien ne sort quand la sortie est redirigée (run en fond = aveugle)
@@ -72,7 +75,7 @@ def linkedin_fast(url):
 
 def classify(page, url):
     """Retour (link_status, note). Utilise robust_goto + analyze (détecteur dead partagé)."""
-    from web_nav import robust_goto, analyze, dismiss_cookies
+    from web_nav import analyze, dismiss_cookies, robust_goto
 
     g = robust_goto(page, url, tries=2)
     if not g.get("ok"):

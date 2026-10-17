@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """probe_carrieres.py — Trouve la VRAIE page carrière de chaque site, et son ATS.
 
 POURQUOI. `scrape_jobs.py` devine 14 chemins par domaine (`/careers`, `/jobs`,
@@ -370,6 +369,7 @@ def urls_carriere_sitemap(client, sitemaps):
 def sonde_site(entree, faire_sitemap=True):
     """Les trois passes sur un site. Rend un dict de résultat."""
     import httpx
+
     from scrape_jobs import extract_company_name, robots_autorise
 
     racine = entree["url"]

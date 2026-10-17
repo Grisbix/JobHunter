@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """queue_tools.py — Maintenance de apply_queue.json.
   mark_dead()  : vérifie toutes les URLs (link_check.batch_check) → tag `link_status`
                  sur chaque offre (OK / EXPIREE / ANTI-BOT / MORT) + sidecar link_status.json.
@@ -9,7 +8,8 @@ CLI : python queue_tools.py mark        # marque les URLs mortes
       python queue_tools.py test        # auto-test (fichier temporaire)
 """
 
-import json, sys
+import json
+import sys
 from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parent
@@ -120,7 +120,8 @@ def writeback(old_url, new_url=None, link_status=None, path=QUEUE):
 
 
 def _selftest():
-    import tempfile, os
+    import os
+    import tempfile
 
     tf = os.path.join(tempfile.gettempdir(), "qt_test_queue.json")
     rows = [

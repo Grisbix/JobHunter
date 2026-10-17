@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """queue_io.py — accès unique à apply_queue.json.
 
 POURQUOI CE MODULE. Quatorze programmes écrivent la file, et chacun réimplémentait

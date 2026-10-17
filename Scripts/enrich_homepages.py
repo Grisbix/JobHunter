@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """enrich_homepages.py — Trouve l'URL page d'accueil des entreprises SANS URL offre.
 Devine le domaine depuis le nom (slug + .com/.fr) et VALIDE par HTTP (200, host cohérent).
 Écrit Scripts/homepages.json {entreprise: url}. build_queue l'utilise en fallback
@@ -9,8 +8,13 @@ Run: python enrich_homepages.py        (toutes les entreprises sans URL du queue
      python enrich_homepages.py --force (revalide même celles déjà en cache)
 """
 
-import json, re, sys, unicodedata, concurrent.futures as cf
+import concurrent.futures as cf
+import json
+import re
+import sys
+import unicodedata
 from pathlib import Path
+
 import requests
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -142,7 +146,7 @@ _AGG = re.compile(
 
 def _ddg_results(query):
     """Résultats DuckDuckGo HTML (sans clé API). Retour liste d'URLs."""
-    from urllib.parse import unquote, urlparse, parse_qs
+    from urllib.parse import parse_qs, unquote, urlparse
 
     urls = []
     for ep in ("https://html.duckduckgo.com/html/", "https://lite.duckduckgo.com/lite/"):

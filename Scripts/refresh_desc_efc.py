@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """refresh_desc_efc.py — Relit la description eFC des offres dont le lien a ete
 promu vers eFinancialCareers mais dont le TEXTE est reste celui de LinkedIn.
 
@@ -18,9 +17,9 @@ Run :
   python refresh_desc_efc.py
 """
 
+import argparse
 import sys
 import time
-import argparse
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -45,9 +44,10 @@ def main():
     a = ap.parse_args()
 
     import httpx
+
     import queue_io
-    from job_sources import _efc_fiche, _strip_html, EFC_DELAI
     from ats_match import fit_detail
+    from job_sources import EFC_DELAI, _efc_fiche, _strip_html
 
     if a.dry:
         q = queue_io.charger()

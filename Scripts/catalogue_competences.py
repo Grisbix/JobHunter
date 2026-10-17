@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """catalogue_competences.py — bibliotheque GENERIQUE de competences, tous metiers.
 
 premier_lancement.py y cherche les competences du CV pour construire le profil.

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 site_strategies.py — Stratégies spécifiques par site pour les 62 sites sans compte.
 
@@ -12,13 +11,12 @@ site_strategies.py — Stratégies spécifiques par site pour les 62 sites sans 
 Chaque entrée = {domain: {category, strategy, url_override, js_fix, wait_ms, note}}
 """
 
-from typing import Dict, Any, Optional
-
+from typing import Any
 
 # ──────────────────────────────────────────────────────────────────────────────
 # CATÉGORIE 1 — ESPACE CANDIDAT EXISTANT MAIS BLOQUÉ (11 sites)
 # ──────────────────────────────────────────────────────────────────────────────
-CAT1_BLOCKED: Dict[str, Dict[str, Any]] = {
+CAT1_BLOCKED: dict[str, dict[str, Any]] = {
     # ── PROBLÈME : formulaire alerte email (pas un vrai register) ──
     "jobs.amundi.com": {
         "category": "blocked",
@@ -131,7 +129,7 @@ CAT1_BLOCKED: Dict[str, Dict[str, Any]] = {
 # ──────────────────────────────────────────────────────────────────────────────
 # CATÉGORIE 2 — ATS EXTERNE (5 sites)
 # ──────────────────────────────────────────────────────────────────────────────
-CAT2_ATS: Dict[str, Dict[str, Any]] = {
+CAT2_ATS: dict[str, dict[str, Any]] = {
     "jobs.smartrecruiters.com": {
         "category": "ats_external",
         "subtype": "smartrecruiters",
@@ -188,7 +186,7 @@ CAT2_ATS: Dict[str, Dict[str, Any]] = {
 # ──────────────────────────────────────────────────────────────────────────────
 # CATÉGORIE 3 — SANS ESPACE CANDIDAT (37 sites)
 # ──────────────────────────────────────────────────────────────────────────────
-CAT3_NO_SPACE: Dict[str, Dict[str, Any]] = {
+CAT3_NO_SPACE: dict[str, dict[str, Any]] = {
     "careers.societegenerale.com": {
         "category": "no_space",
         "strategy": "click_offer_then_detect",
@@ -417,7 +415,7 @@ CAT3_NO_SPACE: Dict[str, Dict[str, Any]] = {
 # ──────────────────────────────────────────────────────────────────────────────
 # CATÉGORIE 4 — INACCESSIBLE (9 sites)
 # ──────────────────────────────────────────────────────────────────────────────
-CAT4_DEAD: Dict[str, Dict[str, Any]] = {
+CAT4_DEAD: dict[str, dict[str, Any]] = {
     "rafp.fr": {
         "category": "dead",
         "subtype": "timeout",
@@ -487,14 +485,14 @@ CAT4_DEAD: Dict[str, Dict[str, Any]] = {
 # ──────────────────────────────────────────────────────────────────────────────
 # MAPPING COMPLET : toutes les 62 entrées
 # ──────────────────────────────────────────────────────────────────────────────
-ALL_SITE_STRATEGIES: Dict[str, Dict[str, Any]] = {}
+ALL_SITE_STRATEGIES: dict[str, dict[str, Any]] = {}
 ALL_SITE_STRATEGIES.update(CAT1_BLOCKED)
 ALL_SITE_STRATEGIES.update(CAT2_ATS)
 ALL_SITE_STRATEGIES.update(CAT3_NO_SPACE)
 ALL_SITE_STRATEGIES.update(CAT4_DEAD)
 
 
-def get_strategy(domain: str) -> Optional[Dict[str, Any]]:
+def get_strategy(domain: str) -> dict[str, Any] | None:
     """Retourne la stratégie pour un domaine donné. None si pas trouvé."""
     # Nettoyer le domaine
     clean = domain.lower().strip().replace("https://", "").replace("http://", "").rstrip("/")
@@ -516,7 +514,7 @@ def get_category(domain: str) -> str:
     return "unknown"
 
 
-def get_sites_by_category(category: str) -> Dict[str, Dict[str, Any]]:
+def get_sites_by_category(category: str) -> dict[str, dict[str, Any]]:
     """Retourne tous les sites d'une catégorie donnée."""
     return {k: v for k, v in ALL_SITE_STRATEGIES.items() if v.get("category") == category}
 
@@ -524,7 +522,7 @@ def get_sites_by_category(category: str) -> Dict[str, Dict[str, Any]]:
 # ──────────────────────────────────────────────────────────────────────────────
 # JOB OFFER URLS pour les ATS externes (offres spécifiques à utiliser)
 # ──────────────────────────────────────────────────────────────────────────────
-ATS_JOB_URLS: Dict[str, str] = {
+ATS_JOB_URLS: dict[str, str] = {
     # SmartRecruiters: chercher sur Google "site:jobs.smartrecruiters.com ESG/Finance"
     "smartrecruiters_search": "https://jobs.smartrecruiters.com/",
     # BreezyHR: les pages carrières pointent vers des offres spécifiques

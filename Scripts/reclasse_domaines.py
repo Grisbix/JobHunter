@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """reclasse_domaines.py — Recalcule le `domaine` de chaque offre.
 
 POURQUOI. Le classificateur retombait sur « ESG_Finance_Durable » par DEFAUT :
@@ -22,9 +21,9 @@ Run :
   python reclasse_domaines.py
 """
 
-import sys
 import argparse
 import collections
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent

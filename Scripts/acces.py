@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """acces.py — Gere les ACCES aux sites, SANS jamais stocker de mot de passe.
 
 POURQUOI PAS DE MOTS DE PASSE ICI
@@ -30,7 +29,12 @@ Run :
   python acces.py --set-key francetravail   # saisie masquee d'une cle d'API
 """
 
-import sys, time, json, argparse, getpass, datetime
+import argparse
+import datetime
+import getpass
+import json
+import sys
+import time
 from pathlib import Path
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -291,7 +295,7 @@ def cmd_check(limit_hosts=None):
     c = _load(COMPTES, {})
     hosts = [h for h in SITES_CONNEXION if not limit_hosts or h in limit_hosts]
     try:
-        from web_nav import get_sync_playwright, analyze, dismiss_cookies
+        from web_nav import analyze, dismiss_cookies, get_sync_playwright
 
         sp, eng = get_sync_playwright("auto")
     except Exception as e:

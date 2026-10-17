@@ -1,13 +1,14 @@
 """Contrôles isolés de l'interface : aucun réseau ni écriture métier."""
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import datetime
 import importlib.machinery
 import importlib.util
 import os
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 os.environ["JOBHUNTER_SANS_FOND"] = "1"

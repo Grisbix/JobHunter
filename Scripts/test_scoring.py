@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_scoring.py — le fit, l'expérience requise, et les pièges du scoring.
 
 `ats_match` décide lesquelles des 6300 offres reçoivent un CV et une lettre.
@@ -12,6 +11,7 @@ Run : python test_scoring.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import re
 import sys
 from pathlib import Path
@@ -19,15 +19,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-import jutil
 import ats_match
+import jutil
 from ats_match import (
-    fit_score,
-    experience_years,
+    _ESG_DENSITE_MIN,
+    _ESG_TITLE_RX,
     axis_scores,
     densite_esg,
-    _ESG_TITLE_RX,
-    _ESG_DENSITE_MIN,
+    experience_years,
+    fit_score,
 )
 
 PASS = FAIL = 0

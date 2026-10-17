@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """doublons.py — La meme annonce publiee deux fois sous deux intitules.
 
 POURQUOI. La fusion de job_sources deduplique sur « entreprise|poste » normalise
@@ -57,7 +56,6 @@ _VIDES = {
     "w",
     "e",
     "nb",
-    "d",
     "cdi",
     "cdd",
     "stage",

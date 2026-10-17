@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """refresh_letters.py — Rafraîchit TOUTES les lettres (Lettres/Par_offre) :
   1. DATE : remplace toute date française existante par celle du jour
      (ajoute « Le … » aligné à droite si aucune)
@@ -9,10 +8,12 @@
 
 Idempotent. Run : python refresh_letters.py [--dry] [--no-pdf]"""
 
-import sys, re, json, argparse
-from pathlib import Path
+import argparse
+import re
+import sys
 from datetime import date
-from urllib.parse import unquote
+from pathlib import Path
+
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
@@ -70,7 +71,7 @@ def _set_text(p, txt):
 
 
 # ── Nettoyage du titre de poste dans les lettres DEJA ecrites ────────────────
-from tailor_application import titre_poste, _de  # source unique du nettoyage
+from tailor_application import _de, titre_poste  # source unique du nettoyage
 
 # Les deux formulations produites au fil du temps par le generateur.
 # On capture le titre jusqu'a un ancrage FIXE, pas jusqu'a la fin de ligne :

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_cv_auto.py — CV automatique depuis CV/Faits.json, sans reseau ni LLM.
 
 Couvre : un fait non valide n'est JAMAIS utilise ; les declencheurs ; les faux
@@ -10,14 +9,16 @@ Run : python test_cv_auto.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import sys
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, __import__("os").path.dirname(__file__))
 
+from docx import Document
+
 import cv_auto
 import tailor_application as ta
-from docx import Document
 
 ok = ko = 0
 

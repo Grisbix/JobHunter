@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """fix_letters.py — Réhabilite les lettres existantes (Lettres/Par_offre) :
   1. JUSTIFIE le corps + active la CÉSURE auto (texte justifié sans trous/rivières)
   2. adoucit les formules trop agressives de l'ancien générateur
@@ -7,8 +6,11 @@
 
 Idempotent. Run : python fix_letters.py [--dry] [--no-pdf]"""
 
-import sys, argparse, subprocess
+import argparse
+import subprocess
+import sys
 from pathlib import Path
+
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn

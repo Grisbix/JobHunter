@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """resolve_offer_links.py — Remplace les liens « page carriere » par le lien de
 L'OFFRE elle-meme.
 
@@ -22,7 +21,10 @@ Run :
   python resolve_offer_links.py --headed           # navigateur visible
 """
 
-import sys, json, argparse, os, time, re
+import argparse
+import os
+import re
+import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -218,7 +220,7 @@ def main():
         return 0
     print(f"{len(cibles)} lien(s) a resoudre" + (" — SIMULATION" if a.dry else ""))
 
-    from web_nav import get_sync_playwright, find_offer, dismiss_cookies, analyze, goto_careers
+    from web_nav import analyze, dismiss_cookies, find_offer, get_sync_playwright, goto_careers
 
     sp, eng = get_sync_playwright("auto")
     PROFIL.mkdir(parents=True, exist_ok=True)

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """rename_docs.py — Renomme CV + lettres au format « Prenom_Nom_CV/Lettre_<Poste>_<Entreprise> » (nom lu dans le profil).
 Nom prénom D'ABORD (le recruteur voit ton nom), puis le POSTE NETTOYÉ (sans H/F, durée,
 contrat, parenthèses…), puis l'entreprise courte (anti-collision).
@@ -9,9 +8,10 @@ Source de vérité = apply_queue.json (champs cv/lettre) → renomme docx + PDF 
 
 Run : python rename_docs.py [--dry]"""
 
-import sys, re, json, argparse
+import argparse
+import re
+import sys
 from pathlib import Path
-from urllib.parse import unquote, quote
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -56,7 +56,8 @@ def new_name(kind, poste, entreprise):
     return f"{PREFIXE}_{kind}_{_safe(clean_poste(poste))}_{ent}"
 
 
-from jutil import chemin_de as _path_of, url_de as _url_of  # helpers partages
+from jutil import chemin_de as _path_of  # helpers partages
+from jutil import url_de as _url_of
 
 
 def rename_orphans(dry=False):

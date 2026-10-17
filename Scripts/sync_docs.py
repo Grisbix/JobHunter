@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """sync_docs.py — GENDARME de cohérence CV/lettres. Le .docx est la SOURCE,
 le .pdf est DÉRIVÉ. Quand un docx change quelque part, son pdf (et les liens
 de l'app) suivent.
@@ -15,9 +14,11 @@ Run : python sync_docs.py            # 1+2+3
       python sync_docs.py --format   # 1+2+3+4
       python sync_docs.py --dry      # montre sans toucher"""
 
-import sys, json, argparse, subprocess
+import argparse
+import subprocess
+import sys
 from pathlib import Path
-from urllib.parse import unquote, quote
+from urllib.parse import quote
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -114,7 +115,8 @@ def pass_links(dry=False):
 def pass_format(dry=False):
     """Format homogène des lettres : justifié+césure+formules (fix_letters),
     tirets (fix_dashes), date/ordre/destinataire (refresh_letters)."""
-    import fix_letters, refresh_letters
+    import fix_letters
+    import refresh_letters
 
     try:  # script personnel, absent de la version partagee
         import fix_dashes

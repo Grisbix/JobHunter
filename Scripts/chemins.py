@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """chemins.py — Le seul endroit qui decide ou vivent les documents generes.
 
 ETAT DEPUIS LE 20/09/2026 : tout le projet vit dans C:/Recherche_emploi, hors

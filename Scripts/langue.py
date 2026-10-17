@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """langue.py — L'annonce est-elle en anglais ou en francais ?
 
 POURQUOI. 2492 offres de la file sont a l'etranger et la plupart sont redigees
@@ -21,8 +20,8 @@ Run :
   python langue.py            # repartition de la file
 """
 
-import sys
 import re
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -90,7 +89,7 @@ def langue_offre(titre="", description="", lieu=""):
         # Import differe : `zones` importe `job_sources` pour son detecteur de
         # pays, et ce module-ci est importe tot par les generateurs.
         try:
-            from zones import zone_lieu, INTERNATIONAL, INCONNU
+            from zones import INCONNU, INTERNATIONAL, zone_lieu
 
             z = zone_lieu(L)
         except Exception:
@@ -109,8 +108,9 @@ def langue_offre(titre="", description="", lieu=""):
 
 def main():
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    import queue_io
     import collections
+
+    import queue_io
 
     q = queue_io.charger()
     c = collections.Counter()

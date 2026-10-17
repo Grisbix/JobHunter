@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """zones.py — Ou l'utilisateur veut travailler, et comment le lire dans un lieu.
 
 PREFERENCE DECLAREE (2026-09-08) : Bordeaux et l'Ile-de-France d'abord ; le
@@ -26,10 +25,10 @@ Run :
   python zones.py --ecrire   # inscrit le champ `zone` dans chaque offre
 """
 
-import sys
-import re
 import argparse
 import collections
+import re
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -298,14 +297,12 @@ _PAYS_ETRANGERS = {
     "algerie",
     "liban",
     "jordanie",
-    "bresil",
     "etats-unis",
     "royaume uni",
     "angleterre",
     "ecosse",
     "pays de galles",
     "irlande du nord",
-    "hong kong",
     "taiwan",
     # Pays ou les V.I.E envoient reellement. « POINTE NOIRE (CONGO) » tombait
     # en « reste de la France » : Business France ecrit le pays entre
@@ -314,10 +311,7 @@ _PAYS_ETRANGERS = {
     "gabon",
     "angola",
     "cameroun",
-    "senegal",
     "cote d'ivoire",
-    "maroc",
-    "tunisie",
     "mozambique",
     "namibie",
     "ouganda",
@@ -370,9 +364,7 @@ _PAYS_ETRANGERS = {
     "argentina",
     "bolivia",
     "ecuador",
-    "venezuela",
     "thailand",
-    "vietnam",
     "indonesia",
     "malaysia",
     "south korea",
@@ -386,7 +378,6 @@ _PAYS_ETRANGERS = {
     "lithuania",
     "latvia",
     "estonia",
-    "ukraine",
     "russia",
     "egypt",
     "iraq",
@@ -400,11 +391,9 @@ _PAYS_ETRANGERS = {
     "bosnia and herzegovina",
     "north macedonia",
     "albania",
-    "montenegro",
     "moldova",
     "georgia",
     "armenia",
-    "kazakhstan",
     "uzbekistan",
     "nepal",
     "cambodia",
@@ -423,13 +412,10 @@ _PAYS_ETRANGERS = {
     "iceland",
     "cyprus",
     "malta",
-    "costa rica",
     "dominican republic",
     "puerto rico",
     "jamaica",
     "trinidad",
-    "paraguay",
-    "uruguay",
     "turkiye",
     "suriname",
     "papua new guinea",

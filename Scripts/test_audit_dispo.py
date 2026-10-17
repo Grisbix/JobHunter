@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_audit_dispo.py — audit de disponibilite, sans reseau.
 
 Couvre : la boucle sur limite de debit (429 -> pause -> reprise), l'arret net
@@ -10,6 +9,7 @@ Run : python test_audit_dispo.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import sys
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -227,7 +227,8 @@ ck("linkedin_desc : fiche fermee -> pas de description", t == "")
 ck("linkedin_desc : fiche fermee -> reperee", "42" in ld.FERMEES)
 
 # ── 7. la sauvegarde du jour n'est jamais ecrasee ────────────────────────────
-import tempfile, pathlib
+import pathlib
+import tempfile
 
 sys.argv = ["x"]
 import pipeline_quotidien as pq

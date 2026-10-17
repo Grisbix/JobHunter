@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_appel.py — La formule d'appel nominative du message (sans reseau).
 
 POURQUOI UNE SUITE A PART. Le champ `rh` de la file est SURCHARGE. Mesure du
@@ -17,12 +16,13 @@ Run : python test_appel.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import sys
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, __import__("pathlib").Path(__file__).resolve().parent.as_posix())
 
-from message_offre import appel, _nom_propre, _patronyme  # noqa: E402
+from message_offre import _nom_propre, _patronyme, appel  # noqa: E402
 
 PASS = FAIL = 0
 

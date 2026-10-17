@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """probe_keywords.py — Mesure le RENDEMENT réel de mots-clés de recherche.
 
 Inventer une liste de mots-clés ne dit rien : seul compte ce qu'ils rapportent.
@@ -19,7 +18,10 @@ Run :
   python probe_keywords.py --min-new 3 --config  # ajoute les rentables à la config
 """
 
-import sys, json, argparse, time
+import argparse
+import json
+import sys
+import time
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)

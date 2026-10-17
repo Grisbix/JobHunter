@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """tri_file.py — Separe ce qui colle au profil de ce qui n'y colle pas, et purge.
 
 POURQUOI PAS LE FIT. Le fit mesure la DENSITE DE VOCABULAIRE ESG et finance,
@@ -52,7 +51,6 @@ Run :
 """
 
 import argparse
-import json
 import re
 import shutil
 import sys
@@ -562,7 +560,7 @@ def main():
     if a.garde:
         reste = [o for _, o in garde]
         reste.sort(key=lambda o: -(o.get("fit") or 0))
-        print(f"\n── conservees, du meilleur fit au moins bon ──")
+        print("\n── conservees, du meilleur fit au moins bon ──")
         for o in reste[: a.echantillon]:
             print(
                 f"   fit {o.get('fit'):>2}  {(o.get('entreprise') or '')[:22]:24}"

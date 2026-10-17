@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 ats_match.py — Scoring ATS façon Resume-Matcher (léger, offline).
 
@@ -15,8 +14,10 @@ Run:
     python ats_match.py --n 12
 """
 
-import argparse, csv, re, sys
+import re
+import sys
 from pathlib import Path
+
 from docx import Document
 
 try:
@@ -24,8 +25,8 @@ try:
 except Exception:
     pass
 
-from tailor_application import SKILL_LEX, CV_ATS, CV_VARIANT, cv_variant_key, has_skill
 import profil as _P
+from tailor_application import CV_ATS, CV_VARIANT, SKILL_LEX, cv_variant_key, has_skill
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_CSV = ROOT / "Scripts" / "ats_report.csv"

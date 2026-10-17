@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """JobHunter — application compacte (1 fenêtre : actions + dashboard riche intégré).
 Tkinter (stdlib, aucune install). Double-clic JobHunter.pyw.
 Onglet Dashboard = table filtrable + fiche détail + ÉDITION statut/note/date
@@ -7,14 +6,23 @@ Onglet Dashboard = table filtrable + fiche détail + ÉDITION statut/note/date
 LE dashboard de l'app = source unique d'infos (plus de HTML séparé).
 """
 
-import os, sys, re, threading, subprocess, queue, webbrowser, json, datetime, unicodedata
-from pathlib import Path
-from urllib.parse import urlparse, quote, unquote
+import datetime
+import json
+import os
+import queue
+import re
+import subprocess
+import sys
+import threading
 import tkinter as tk
+import webbrowser
+from pathlib import Path
+from urllib.parse import quote, urlparse
+
 import customtkinter as ctk
 
 ctk.set_appearance_mode("light")
-from tkinter import scrolledtext, ttk, messagebox, simpledialog
+from tkinter import messagebox, scrolledtext, simpledialog, ttk
 
 
 def _racine():
@@ -44,11 +52,11 @@ PROFILE = SCRIPTS / "apply_profile.json"
 # faire. Mieux vaut echouer ici, clairement, qu'a la 3e ouverture d'un document.
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
-from jutil import chemin_de, url_de, existe as _doc_existe, sans_accent
-
 # Sans profil, rien ne peut tourner : on le DIT, au lieu que le .pyw se ferme
 # sans un mot (il n'a pas de console).
 import profil as _profil
+from jutil import chemin_de, sans_accent
+from jutil import existe as _doc_existe
 
 try:
     _profil.charger()
@@ -56,8 +64,8 @@ except _profil.ProfilAbsent as _e:
     # PREMIER LANCEMENT GUIDE : choisir son CV ici, sans terminal. Le profil se
     # cree dans une console (premier_lancement pose ses questions au clavier),
     # puis l'application demarre normalement.
-    from tkinter import filedialog
     import subprocess
+    from tkinter import filedialog
 
     _r = tk.Tk()
     _r.withdraw()
@@ -112,12 +120,14 @@ import chemins
 CV_ATS_DIR = chemins.CV_MODELES  # 5 CV variants (source, dans le depot)
 CV_OFFRE_DIR = chemins.CV_PAR_OFFRE  # CV cibles par offre
 LETTRES_DIR = chemins.LT_PAR_OFFRE  # lettres de motivation (docx+pdf)
-import queue_io  # acces unique a la file : verrou, atomicite, descriptions
-from zones import sous_zone as _sous_zone, libelle_secteur as _libelle_secteur
 import profil as _profil
+import queue_io  # acces unique a la file : verrou, atomicite, descriptions
+from zones import libelle_secteur as _libelle_secteur
+from zones import sous_zone as _sous_zone
 
 _PREFIXE = _profil.prefixe_fichier()
 import functools as _ft
+
 import zones as _zones
 
 # Pays et lieu affiches, memorises par chaine de lieu : le tableau les recalcule
@@ -4094,7 +4104,9 @@ class App:
             st["path"] = path
             if path.suffix.lower() == ".pdf":
                 try:
-                    import base64, fitz
+                    import base64
+
+                    import fitz
 
                     doc = fitz.open(str(path))
                     surface("pdf")
@@ -4417,7 +4429,9 @@ class App:
             doc = state["doc"]
             if not doc:
                 return
-            import base64, fitz
+            import base64
+
+            import fitz
 
             try:
                 cv_canvas.delete("all")

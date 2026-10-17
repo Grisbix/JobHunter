@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """probe_ats.py — Teste des slugs candidats sur les 5 API ATS publiques.
 
 But : trouver quelles sociétés (boutiques AM / ESG françaises) exposent un flux
@@ -15,7 +14,10 @@ Run :
   python probe_ats.py --json out.json
 """
 
-import sys, json, argparse, concurrent.futures as cf
+import argparse
+import concurrent.futures as cf
+import json
+import sys
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)

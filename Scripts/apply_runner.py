@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 apply_runner.py — semi-auto job-application runner.
 
@@ -24,9 +23,11 @@ Per offer, console asks:
     [o] = ré-ouvrir l'URL  [enter] = re-remplir   [q] = quitter (sauvegarde)
 """
 
-import argparse, json, os, time, sys
+import argparse
+import os
+import sys
+import time
 from pathlib import Path
-from urllib.parse import unquote
 
 # Console Windows = cp1252 → les print d'emoji/accents (describe_page, fill…) levaient
 # UnicodeEncodeError et cassaient le remplissage. Force UTF-8 (remplace si impossible).
@@ -54,6 +55,7 @@ PW_USER_DIR = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "apply_ru
 
 # ---- field heuristics: regex (on name+id+placeholder+aria-label+label text) -> profile key ----
 import re
+
 # _norm() vivait ici : table d'accents manuelle et incomplete (ni ë, ni ï, ni ù,
 # ni ü), et surtout appelee NULLE PART. Supprimee. Si un besoin revient :
 # jutil.sans_accent(), qui passe par NFD et n'oublie aucune lettre.
@@ -579,7 +581,7 @@ def main():
                         Path(d["lt"]).name if d["lt"] else "—",
                     )
                     try:
-                        from web_nav import robust_goto, homepage_fallback
+                        from web_nav import homepage_fallback, robust_goto
 
                         g = robust_goto(page, d["url"], tries=3)
                         if not g["ok"]:
@@ -645,14 +647,14 @@ def main():
                     # navigation intelligente + LOOP auto-résolution (self-healing)
                     try:
                         from web_nav import (
-                            dismiss_cookies,
-                            smart_step,
-                            login_flow,
-                            switch_to_register,
-                            goto_careers,
-                            find_offer,
-                            retry,
                             describe_page,
+                            dismiss_cookies,
+                            find_offer,
+                            goto_careers,
+                            login_flow,
+                            retry,
+                            smart_step,
+                            switch_to_register,
                         )
 
                         ck = dismiss_cookies(page)
@@ -792,7 +794,8 @@ def main():
                     # --wizard : formulaire multi-écrans (Workday/iCIMS) -> remplit+Suivant en boucle
                     if getattr(args, "wizard", False):
                         try:
-                            from web_nav import run_wizard, fill_application as _fa
+                            from web_nav import fill_application as _fa
+                            from web_nav import run_wizard
 
                             wz = run_wizard(
                                 page,

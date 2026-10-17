@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_queue_io.py — accès concurrent à la file (queue_io).
 
 Ce module existe pour rendre impossible l'oubli du verrou. Les tests vérifient
@@ -9,17 +8,18 @@ Run : python test_queue_io.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
-import sys
+
 import json
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-import queue_io
 import jutil
+import queue_io
 
 PASS = FAIL = 0
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 web_nav.py — Navigation web intelligente (Playwright).
 Fournit des SCRIPTS JS (évaluables par page.evaluate) :
@@ -1301,8 +1300,8 @@ def fetch_sitemap_careers(page, base_url: str = "") -> list:
     """Récupère /sitemap.xml et en extrait les URLs contenant des patterns
     carrière. Retour liste de {url, label, score}.
     À utiliser quand goto_careers() échoue (no_career_links)."""
-    from urllib.parse import urlparse
     import re as _re
+    from urllib.parse import urlparse
 
     CAREER_URL_RX = _re.compile(
         r"/(career|carri[eè]re|job|emplo|recrut|talent|stellen|karriere|beruf|vacanc|vacature|opening|position|work|apply|join)",
@@ -1326,7 +1325,8 @@ def fetch_sitemap_careers(page, base_url: str = "") -> list:
         ]
     for sitemap_url in sitemap_urls:
         try:
-            import urllib.request, xml.etree.ElementTree as ET
+            import urllib.request
+            import xml.etree.ElementTree as ET
 
             req = urllib.request.Request(sitemap_url, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=15) as resp:
@@ -1588,7 +1588,10 @@ def vision_pick(page, task, model=None, host="http://localhost:11434"):
     """Fallback vision : screenshot -> Ollama lit le bon bouton -> clic DOM.
     Auto-détecte le modèle vision disponible (qwen2.5vl, llava, etc.).
     Silencieux si Ollama absent/modèle absent. Retour {clicked, label, note}."""
-    import base64, json, urllib.request, urllib.error
+    import base64
+    import json
+    import urllib.error
+    import urllib.request
 
     # Auto-détection du modèle vision disponible
     if model is None:
@@ -1640,7 +1643,9 @@ def vision_pick(page, task, model=None, host="http://localhost:11434"):
 def _detect_vision_model(host="http://localhost:11434") -> str | None:
     """Détecte le premier modèle vision disponible via l'API Ollama.
     Ordre de préférence : qwen2.5vl → llava → minicpm-v → bakllava."""
-    import json, urllib.request, urllib.error
+    import json
+    import urllib.error
+    import urllib.request
 
     VISION_KEYWORDS = [
         "qwen2.5vl",
@@ -1673,7 +1678,8 @@ def _detect_vision_model(host="http://localhost:11434") -> str | None:
 
 def _detect_text_model(host="http://localhost:11434"):
     """Détecte un modèle texte Ollama pour le raisonnement (mistral/llama/qwen/phi)."""
-    import json, urllib.request
+    import json
+    import urllib.request
 
     PREF = ["qwen2.5", "llama3", "llama-3", "mistral", "mixtral", "phi", "gemma", "qwen"]
     try:
@@ -1717,7 +1723,9 @@ def llm_agent(page, goal, max_steps=8, model=None, host="http://localhost:11434"
     Actions : click / fill / scroll / done / stop. GARDE-FOUS : refuse submit final
     & captcha (renvoie stop). Dégrade proprement si Ollama absent.
     Retour {ok, steps, log, note}."""
-    import json, urllib.request, re as _re
+    import json
+    import re as _re
+    import urllib.request
 
     model = model or _detect_text_model(host)
     if not model:
@@ -3771,14 +3779,12 @@ class BrowserSession:
 
 # JS snippets importes de site_strategies.py
 from site_strategies import (
-    FIRST_JOB_OFFER_JS,
     ATS_APPLY_REGISTER_DETECT_JS,
+    BPCE_INPUT_JS,
+    BPIFRANCE_DIDOMI_JS,
+    FIRST_JOB_OFFER_JS,
     ROOT_DOMAIN_CHECK_JS,
     SITEMAP_PROBE_JS,
-    BPIFRANCE_DIDOMI_JS,
-    BPCE_INPUT_JS,
-    MEESCHAERT_REGISTER_FALLBACK_JS,
-    get_strategy,
 )
 
 

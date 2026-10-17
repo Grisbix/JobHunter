@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 scrape_jobs.py — Scrape les offres FRAÎCHES des 65 sites carrière d'entreprises ESG/Finance.
 
@@ -15,12 +14,11 @@ Usage:
     python scrape_jobs.py --skip 10               # Sites déjà scrapés, reprendre au 11e
 """
 
-import sys
-import json
-import time
-import re
-import random
 import argparse
+import json
+import random
+import sys
+import time
 from pathlib import Path
 
 # Sortie UTF-8 OBLIGATOIRE : ce programme affiche des emojis. Dans un terminal
@@ -247,8 +245,8 @@ ROBOTS_UA = "JobHunter"
 
 def robots_autorise(url: str) -> bool:
     """Le robots.txt de ce domaine autorise-t-il `url` ? Un cache par hote."""
-    from urllib.parse import urlsplit
     from urllib import robotparser
+    from urllib.parse import urlsplit
 
     try:
         s = urlsplit(url)
@@ -926,7 +924,7 @@ def scrape_all_sites(
                         __import__("jutil").jwrite(output_path, all_offers)
                         print(f"  ✅ {len(offers)} offres ESG/Finance — total: {total_offers}")
                     else:
-                        print(f"  ⚠️ Aucune offre ESG/Finance trouvée")
+                        print("  ⚠️ Aucune offre ESG/Finance trouvée")
                 except Exception as e:
                     print(f"  ❌ Erreur site: {type(e).__name__}: {str(e)[:100]}")
                 # Pause entre les sites
@@ -961,10 +959,10 @@ def scrape_all_sites(
         entreprises[e] = entreprises.get(e, 0) + 1
 
     print("\n" + "=" * 70)
-    print(f"✅ SCRAPING TERMINÉ")
+    print("✅ SCRAPING TERMINÉ")
     print(f"📊 {len(unique_offers)} offres uniques (sur {len(all_offers)} total brut)")
     print(f"🏢 {len(entreprises)} entreprises avec offres")
-    print(f"\n📈 Par domaine:")
+    print("\n📈 Par domaine:")
     for d, c in sorted(domaines.items(), key=lambda x: -x[1]):
         print(f"   {d}: {c}")
     print(f"\n📁 Sauvegardé: {output_path.resolve()}")

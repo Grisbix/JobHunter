@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_suivi.py — une candidature enregistrée ne doit JAMAIS disparaître.
 
 Le suivi (statut, note, date) vit dans suivi.json, indexé par « entreprise|poste ».
@@ -16,16 +15,17 @@ Run : python test_suivi.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
-import sys
+
 import json
+import sys
 import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-import queue_io
 import linkedin_closed as L
+import queue_io
 
 PASS = FAIL = 0
 
@@ -85,8 +85,8 @@ print("\n── C bis. deux écrivains, aucune perte (suivi_io) ──")
 # L'app écrivait `self.suivi`, son instantané mémoire : un clic « postulé »
 # réécrivait TOUT le fichier et effaçait ce que relances.py venait d'y mettre.
 # Reproduit à l'époque : deux relances perdues, sans un mot.
-import suivi_io
 import jutil as _jutil
+import suivi_io
 
 _tmp = Path(tempfile.mkdtemp()) / "suivi.json"
 _jutil.jwrite(

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """linkedin_closed.py — Retire de la queue les offres LinkedIn qui n'acceptent plus de candidature.
 
 LinkedIn renvoie HTTP 200 meme pour une annonce fermee : le code de statut ne dit
@@ -33,13 +32,13 @@ Run :
   python linkedin_closed.py                            # supprime pour de bon
 """
 
-import sys
-import re
-import json
-import time
 import argparse
-import datetime as _dt
 import concurrent.futures as cf
+import datetime as _dt
+import json
+import re
+import sys
+import time
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)

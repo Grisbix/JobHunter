@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_site_final.py — site_final : intitules, identite Workday, resondage.
 
 Sans reseau : les appels Workday et ATS sont remplaces par des doublures.
@@ -8,8 +7,9 @@ Run : python test_site_final.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
-import sys
+
 import datetime
+import sys
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")

@@ -1,9 +1,11 @@
-# -*- coding: utf-8 -*-
 """Vérification d'URLs d'offres (live/dead/soft-404). Module : quick_check/batch_check (queue_tools mark).
 Détecte les SOFT-404 : page renvoie HTTP 200 mais affiche 'offre expirée / poste pourvu / page introuvable'."""
 
-import requests, concurrent.futures as cf, collections, re, sys
-from urllib.parse import urlparse
+import concurrent.futures as cf
+import re
+import sys
+
+import requests
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -108,7 +110,6 @@ def quick_check(url: str, timeout: float = 8.0) -> dict:
 
 def batch_check(urls: list, max_workers: int = 12) -> dict:
     """Vérifie un lot d'URLs en parallèle. Retour {url: result}."""
-    import concurrent.futures as cf
 
     results = {}
     with cf.ThreadPoolExecutor(max_workers=max_workers) as ex:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """redetecte_contrats.py — Relit le contrat de chaque offre depuis sa description.
 
 POURQUOI. Le detecteur ne voyait pas les fiches en TABLEAU (« Type de contrat »
@@ -19,8 +18,8 @@ Run :
   python redetecte_contrats.py
 """
 
-import sys
 import argparse
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent

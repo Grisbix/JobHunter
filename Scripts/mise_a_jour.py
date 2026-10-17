@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """mise_a_jour.py — Met JobHunter a jour depuis GitHub, sans toucher a tes donnees.
 
     python Scripts/mise_a_jour.py            # met a jour si une version plus recente existe

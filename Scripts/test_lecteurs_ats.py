@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_lecteurs_ats.py — lecteurs de pages carriere et d'ATS publics (job_sources).
 
 Sans reseau : _get_borne / _post_borne sont remplaces par une doublure qui rend
@@ -9,9 +8,10 @@ Run : python test_lecteurs_ats.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
-import sys
-import json
+
 import datetime
+import json
+import sys
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")

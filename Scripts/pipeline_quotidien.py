@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """pipeline_quotidien.py — Le scan du matin, en un seul point d'entree.
 
 CE QU'IL REMPLACE, et pourquoi. Trois mecanismes etaient censes alimenter la

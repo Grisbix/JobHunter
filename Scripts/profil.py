@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """profil.py — tout ce qui est PROPRE A LA PERSONNE, lu dans profil/profil.json.
 
 Le moteur (collecte, tri, scoring, CV, lettres) ne connait aucun metier, aucune

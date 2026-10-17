@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """audit_fraicheur.py — Combien d'offres de la file n'existent plus ? Par source.
 
 POURQUOI. « Beaucoup d'offres n'existent plus. » Avant de supprimer quoi que ce
@@ -24,13 +23,12 @@ Run :
   python audit_fraicheur.py --source indeed
 """
 
-import sys
-import re
-import json
-import random
 import argparse
 import collections
 import concurrent.futures as cf
+import random
+import re
+import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -99,7 +97,7 @@ def verdict(url, client):
     # invite, elle, repond et porte le marqueur de fermeture. C'est le meme
     # point d'acces que linkedin_closed.py.
     if "linkedin.com" in url:
-        from linkedin_closed import API, job_id, RX_FERME
+        from linkedin_closed import API, RX_FERME, job_id
 
         jid = job_id(url)
         if not jid:
@@ -153,6 +151,7 @@ def main():
     a = ap.parse_args()
 
     import httpx
+
     import queue_io
 
     q = queue_io.charger(descriptions=False)  # les textes ne servent pas ici

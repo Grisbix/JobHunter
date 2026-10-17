@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_patterns.py — Suite exhaustive PATTERNS (sans réseau) :
 A) reconnaissance signin/signup (FR/EN/DE/ES/IT, 2-étapes, toggles, modals)
 B) recherche d'offres (structures Workday/Greenhouse/Lever/SmartRecruiters/TalentSoft/cartes)
@@ -9,12 +8,15 @@ Run : python test_patterns.py
 """
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
-import sys, os, tempfile
+
+import os
+import sys
+import tempfile
 
 sys.stdout.reconfigure(encoding="utf-8")
-import web_nav as w
-
 from playwright.sync_api import sync_playwright
+
+import web_nav as w
 
 PASS = FAIL = 0
 
@@ -368,7 +370,7 @@ def test_otp(pg):
     # D2. boîtes 1 chiffre
     pg.set_content(
         "<form>"
-        + "".join(f"<input class=d maxlength=1>" for _ in range(6))
+        + "".join("<input class=d maxlength=1>" for _ in range(6))
         + "<button>Valider</button></form>"
     )
     check("otp_present détecte boîtes 1-chiffre", w.otp_present(pg))

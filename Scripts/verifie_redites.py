@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """verifie_redites.py — Cherche les repetitions dans les lettres generees.
 
 POURQUOI. Les defauts de redite se voient a la lecture, jamais a l'ecriture du

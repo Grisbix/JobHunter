@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 tailor_application.py — Adapte CV + lettre a CHAQUE offre.
 
@@ -14,13 +13,12 @@ puis :
 CLI : generate_docs.py (lots depuis la queue) / add_offer.py (1 offre).
 """
 
-import argparse
+import json
 import os
 import re
-import sys
-import json
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 try:
@@ -30,8 +28,8 @@ except Exception:
     pass
 
 from docx import Document
-from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Pt
 
 ROOT = Path(__file__).resolve().parent.parent
 # Les sorties volumineuses vivent la ou chemins.py les place — hors de OneDrive
@@ -403,7 +401,7 @@ def _contexte_applicable(ctx, offer):
         return False
     if ctx.get("densite_coeur"):
         # Import differe : ats_match importe ce module.
-        from ats_match import densite_esg, _ESG_DENSITE_MIN, _ESG_DENSITE_LONG
+        from ats_match import _ESG_DENSITE_LONG, _ESG_DENSITE_MIN, densite_esg
 
         if len(texte) >= _ESG_DENSITE_LONG and densite_esg(texte) < _ESG_DENSITE_MIN:
             return False
@@ -538,7 +536,6 @@ def cv_sur_mesure(offer):
 
     Le modele reste la source : on ne retouche que ce que l'offre demande, et la
     regeneration reprend les retouches au lieu de les ecraser."""
-    import json
     from chemins import CV_SUR_MESURE
 
     if not CV_SUR_MESURE.exists():
@@ -632,7 +629,7 @@ def salutation(offer, langue="fr"):
     comprise. Ce qu'on ajoute ici est propre a la LETTRE : la reprise de
     cloture, que le message n'a pas.
     """
-    from message_offre import appel, nom_dans_offre, _RX_CIVILITE, _RX_SEPARE, GENERIQUES
+    from message_offre import _RX_CIVILITE, _RX_SEPARE, GENERIQUES, appel, nom_dans_offre
 
     rh = (offer.get("rh") or "").strip()
     # Un destinataire que l'annonce ne nomme pas n'est pas nomme (2026-10-07).

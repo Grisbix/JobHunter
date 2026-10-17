@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """notify_matches.py — Alerte Windows quand de NOUVELLES offres à fort fit arrivent.
 
 Sans ça, rien ne prévient : tout est dans l'app, et si l'app est fermée les
@@ -19,7 +18,10 @@ Run :
   python notify_matches.py --reset          # oublie l'historique (tout redevient nouveau)
 """
 
-import sys, json, argparse, subprocess
+import argparse
+import json
+import subprocess
+import sys
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)

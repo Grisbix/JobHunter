@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """test_web_nav.py — Suite de tests synthétiques (sans réseau) pour web_nav.
 Lance : python test_web_nav.py   (Playwright, pages data:// en mémoire).
 Chaque test = page HTML synthétique + assertion. Pas de dépendance pytest."""
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import sys
 
 sys.stdout.reconfigure(encoding="utf-8")
-import web_nav as w
-
 from playwright.sync_api import sync_playwright
+
+import web_nav as w
 
 PASS = FAIL = 0
 
@@ -197,7 +197,8 @@ def run(pg):
     check("retry réussit au 2e essai", rr.get("ok") and st["n"] == 2, st["n"])
 
     # ── fill_application : remplissage universel (tous champs + docs + CGU) ──
-    import tempfile as _tf, os as _os
+    import os as _os
+    import tempfile as _tf
 
     _cv = _os.path.join(_tf.gettempdir(), "CV_fa.pdf")
     open(_cv, "w").close()
@@ -274,7 +275,8 @@ def run(pg):
     check("pick_option accent Française via 'francaise'", w._pick_option(loc, opts, "francaise"))
 
     # ── smart_upload : match CV/lettre par label ──
-    import tempfile, os
+    import os
+    import tempfile
 
     cv = os.path.join(tempfile.gettempdir(), "CV_test.pdf")
     open(cv, "w").close()

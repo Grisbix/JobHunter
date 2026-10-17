@@ -1,15 +1,16 @@
 """Régressions Indeed, sans réseau ni écriture sur les données réelles."""
 
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
+
 import io
 import json
 import sys
 import tempfile
 import unittest
 import urllib.error
-from pathlib import Path
 from contextlib import redirect_stdout
 from email.message import Message
+from pathlib import Path
 from unittest.mock import patch
 
 import job_sources as js

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """scrape_desc.py — Récupère la DESCRIPTION d'une offre depuis sa page web et
 l'enregistre dans apply_queue.json (champ 'description'). Réutilise le moteur
 Playwright standard, sans session personnelle.
@@ -10,7 +9,9 @@ Usage :
 
 Aucun envoi, aucune connexion tapée. Lecture seule de la page → texte."""
 
-import sys, json, argparse, time
+import argparse
+import sys
+import time
 from pathlib import Path
 
 # line_buffering : sinon rien ne sort quand la sortie est redirigée (run en fond = aveugle)
@@ -64,7 +65,7 @@ _DESC_JS = r"""
 
 
 def fetch_one(page, url):
-    from web_nav import robust_goto, dismiss_cookies
+    from web_nav import dismiss_cookies, robust_goto
 
     g = robust_goto(page, url, tries=2)
     if not g.get("ok"):
@@ -125,7 +126,9 @@ def fetch_api(url):
     site = [p for p in avant.split("/") if p][-1:]  # « /en-US/Site » -> Site
     if not site:
         return None
-    import httpx, job_sources
+    import httpx
+
+    import job_sources
 
     d = job_sources._workday_detail(httpx, f"https://{u.netloc}", tenant, site[0], "/job/" + chemin)
     txt = (d.get("description") or "").strip()
