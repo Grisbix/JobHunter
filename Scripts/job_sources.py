@@ -19,9 +19,11 @@ Usage :
   python job_sources.py --wtj            # seulement WTJ (navigateur)
   python job_sources.py --all --dry      # collecte + montre, ne merge pas
 """
+
 import sys, json, re, time, argparse, html, datetime
 from pathlib import Path
 from urllib.parse import quote, unquote, urlparse
+
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 HERE = Path(__file__).resolve().parent
@@ -30,13 +32,14 @@ QUEUE = HERE / "apply_queue.json"
 # scrape_jobs.py : le scan ecrasait la recolte des sites carriere, y
 # compris quand il ne ramenait rien (WTJ bride -> 0 offre -> fichier vide).
 FRESH = HERE / "offres_scan.json"
-REJETS_TRI = HERE / "_rejets_tri.json"   # les tests le remplacent
+REJETS_TRI = HERE / "_rejets_tri.json"  # les tests le remplacent
 
 from scrape_jobs import matches_esg_finance, classify_domaine  # filtre + classif partagés
 
 # ── Mots-clés de recherche (LinkedIn, WTJ…) : profil.json, collecte.mots_cles ──
 # sources_config.json (mots-cles edites depuis l'app) les remplace s'il en a.
 import profil as _P
+
 KEYWORDS = list(_P.get("collecte.mots_cles", []) or [])
 
 # ── Slugs ATS publics (fintech/climate/finance FR-EU). 404 = ignoré silencieusement. ──
@@ -44,24 +47,61 @@ KEYWORDS = list(_P.get("collecte.mots_cles", []) or [])
 # ⚠ Ne PAS ajouter "metron" en greenhouse : homonyme = société de défense US
 # (Reston VA, systèmes autonomes), rien à voir avec l'efficacité énergétique FR.
 ATS_SLUGS = {
-    "greenhouse": ["sweep", "watershed", "vestiairecollective", "backmarket",
-                   "ecovadis", "mirakl", "payfit", "spendesk", "swile", "pigment",
-                   "clarityai",
-                   # Sonde des cabinets du 2026-10-08 : Forvis Mazars Allemagne
-                   # (160 offres), AlixPartners dont Paris (114).
-                   "forvismazars", "alixpartners"],
+    "greenhouse": [
+        "sweep",
+        "watershed",
+        "vestiairecollective",
+        "backmarket",
+        "ecovadis",
+        "mirakl",
+        "payfit",
+        "spendesk",
+        "swile",
+        "pigment",
+        "clarityai",
+        # Sonde des cabinets du 2026-10-08 : Forvis Mazars Allemagne
+        # (160 offres), AlixPartners dont Paris (114).
+        "forvismazars",
+        "alixpartners",
+    ],
     # theodo : retrouve en sondant les societes dont la page carriere renvoie 404.
     # 141 offres, dont des postes IA — l'axe vibe-coding. Le 404 de la vitrine ne
     # disait rien du flux, qui lui repond.
-    "lever": ["greenly", "carbometrix", "sami", "plana", "descartesunderwriting",
-              "shine", "agicap", "pennylane", "qonto", "theodo"],
+    "lever": [
+        "greenly",
+        "carbometrix",
+        "sami",
+        "plana",
+        "descartesunderwriting",
+        "shine",
+        "agicap",
+        "pennylane",
+        "qonto",
+        "theodo",
+    ],
     "ashby": ["pigment", "alan", "swan", "defacto", "hero", "altruistiq", "climatiq"],
     # grantthornton = Grant Thornton France (Neuilly, 60 offres) ; meridiam =
     # leur vrai site carriere ; forvismazars = Irlande ; bakertilly = Pays-Bas.
-    "recruitee": ["carbo", "vertuoza", "greenscope", "sweep", "tikehaucapital",
-                  "grantthornton", "meridiam", "forvismazars", "bakertilly"],
-    "smartrecruiters": ["SycomoreAssetManagement", "BNPParibas", "AXA",
-                        "SocieteGenerale", "Natixis", "Amundi", "rolandberger"],
+    "recruitee": [
+        "carbo",
+        "vertuoza",
+        "greenscope",
+        "sweep",
+        "tikehaucapital",
+        "grantthornton",
+        "meridiam",
+        "forvismazars",
+        "bakertilly",
+    ],
+    "smartrecruiters": [
+        "SycomoreAssetManagement",
+        "BNPParibas",
+        "AXA",
+        "SocieteGenerale",
+        "Natixis",
+        "Amundi",
+        "rolandberger",
+    ],
 }
 
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -74,6 +114,7 @@ UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.3
 # un 404 (slug mort, normal) etait traite comme un 429 (quota, anormal).
 # Indeed et Glassdoor comptaient deja leurs refus ; ces deux sources-la, non.
 import collections as _collections
+
 INCIDENTS = _collections.defaultdict(_collections.Counter)
 
 
@@ -81,13 +122,17 @@ def incidents_resume():
     """Les refus du run, en une ligne par source. Vide si tout s'est bien passe."""
     lignes = []
     for source, par_cause in sorted(INCIDENTS.items()):
-        detail = ", ".join(f"{cause}×{n}" for cause, n in sorted(par_cause.items(),
-                                                                key=lambda kv: -kv[1]))
+        detail = ", ".join(
+            f"{cause}×{n}" for cause, n in sorted(par_cause.items(), key=lambda kv: -kv[1])
+        )
         lignes.append(f"  ⚠ {source} : {detail}")
     return lignes
 
+
 # ── sources éditables depuis l'app (panneau 🌍 Sites d'offres) ──
 SOURCES_CFG = HERE / "sources_config.json"
+
+
 def _load_cfg():
     """sources_config.json — écrase les défauts :
         keywords      [mots-clés]
@@ -99,24 +144,36 @@ def _load_cfg():
     global KEYWORDS, ATS_SLUGS, WORKDAY_FLUX, AUTRES_FLUX
     try:
         cfg = json.loads(SOURCES_CFG.read_text(encoding="utf-8"))
-        if cfg.get("keywords"): KEYWORDS = cfg["keywords"]
-        if "ats_slugs" in cfg: ATS_SLUGS = cfg["ats_slugs"] or {}
-        if "workday_flux" in cfg: WORKDAY_FLUX = [tuple(x) for x in cfg["workday_flux"] or []]
-        if "autres_flux" in cfg: AUTRES_FLUX = [tuple(x) for x in cfg["autres_flux"] or []]
+        if cfg.get("keywords"):
+            KEYWORDS = cfg["keywords"]
+        if "ats_slugs" in cfg:
+            ATS_SLUGS = cfg["ats_slugs"] or {}
+        if "workday_flux" in cfg:
+            WORKDAY_FLUX = [tuple(x) for x in cfg["workday_flux"] or []]
+        if "autres_flux" in cfg:
+            AUTRES_FLUX = [tuple(x) for x in cfg["autres_flux"] or []]
     except Exception:
         pass
 
 
 def _mk(titre, url, entreprise, location="", date="", source="", description=""):
-    return {"titre": titre.strip(), "url": url, "entreprise": entreprise.strip(),
-            "domaine": classify_domaine(titre), "location": location, "date": date,
-            "source": source, "description": description[:30000],
-            "scraped_at": time.strftime("%Y-%m-%d")}
+    return {
+        "titre": titre.strip(),
+        "url": url,
+        "entreprise": entreprise.strip(),
+        "domaine": classify_domaine(titre),
+        "location": location,
+        "date": date,
+        "source": source,
+        "description": description[:30000],
+        "scraped_at": time.strftime("%Y-%m-%d"),
+    }
 
 
 def _strip_html(h):
     """HTML → texte propre (descriptions APIs ATS)."""
     import html as _html
+
     t = _html.unescape(h or "")
     t = re.sub(r"<(script|style)[^>]*>.*?</\1>", " ", t, flags=re.S | re.I)
     t = re.sub(r"<br\s*/?>|</p>|</li>|</div>", "\n", t, flags=re.I)
@@ -146,10 +203,13 @@ _AI_RX = _P.motif(_FT.get("complement"))
 # est fausse. L'intitule, lui, ne ment pas — « Alternance - Data Analyst » EST
 # une alternance. Le titre fait donc foi quand il est explicite.
 _RX_ALT = re.compile(r"\b(alternan[ct]|apprenti|apprentissage|contrat\s+pro)", re.I)
-_RX_STAGE = re.compile(r"\b(stage|stagiaire|internship|intern|working\s+student)\b"
-                       r"|\bwerkstudent", re.I)
+_RX_STAGE = re.compile(
+    r"\b(stage|stagiaire|internship|intern|working\s+student)\b"
+    r"|\bwerkstudent",
+    re.I,
+)
 _RX_VIE_POINTE = re.compile(r"\bv\.i\.[ea]\b", re.I)
-_RX_VIE_MAJ = re.compile(r"\bVIE\b(?=\s*[-–—/:|,(])")   # sans re.I : « vie » est un mot
+_RX_VIE_MAJ = re.compile(r"\bVIE\b(?=\s*[-–—/:|,(])")  # sans re.I : « vie » est un mot
 
 # Garde-fou. Une frontiere de mot s'ecrit \b et se corrompt de deux facons, toutes
 # deux SILENCIEUSES — le motif compile, ne leve rien, et ne matche plus jamais :
@@ -166,6 +226,7 @@ def contrats_exclus():
     pourrait vouloir les revoir un jour. Liste vide = tout est affiche."""
     try:
         import json as _j
+
         return set(_j.loads(SOURCES_CFG.read_text(encoding="utf-8")).get("contrats_exclus") or [])
     except Exception:
         return set()
@@ -184,6 +245,7 @@ def pays_exclus():
     """
     try:
         import json as _j
+
         return list(_j.loads(SOURCES_CFG.read_text(encoding="utf-8")).get("pays_exclus") or [])
     except Exception:
         return []
@@ -195,8 +257,9 @@ def _est_vie(o):
     On regarde la SOURCE et l'URL, pas le nom de l'employeur : « ARCELORMITTAL
     FRANCE » a Bruxelles est un V.I.E, « Mirova » a Paris n'en est pas un.
     """
-    return ("businessfrance" in str(o.get("url") or "").lower()
-            or str(o.get("source") or "").lower().startswith("vie"))
+    return "businessfrance" in str(o.get("url") or "").lower() or str(
+        o.get("source") or ""
+    ).lower().startswith("vie")
 
 
 def _rx_pays_exclus():
@@ -235,25 +298,49 @@ def _rx_pays_exclus():
 _RX_LABEL = re.compile(
     r"type\s+de\s+(?:contrat|recrutement)s?\s*(?:de\s+travail)?\s*(?:[:\-–]|\s)\s*"
     r"|(?:contrat|recrutement)s?\s*(?:de\s+travail)?\s*[:\-–]\s*"
-    r"|poste\s+(?:propos[\u00e9]\s+)?en\s+", re.I)
+    r"|poste\s+(?:propos[\u00e9]\s+)?en\s+",
+    re.I,
+)
 # valeurs acceptees juste apres ce libelle
 _RX_VALEUR = re.compile(
-    r"^\W{0,3}(CDI|CDD|alternance|apprentissage|stage|int[e\u00e9]rim|freelance|V\.?I\.?E|contrat \u00e0 dur\u00e9e (?:in)?d\u00e9termin\u00e9e)", re.I)
+    r"^\W{0,3}(CDI|CDD|alternance|apprentissage|stage|int[e\u00e9]rim|freelance|V\.?I\.?E|contrat \u00e0 dur\u00e9e (?:in)?d\u00e9termin\u00e9e)",
+    re.I,
+)
 
 # Tous les types de contrat, pour reperer les ENUMERATIONS (voir passe 2).
 _RX_TOUS_CONTRATS = re.compile(
     r"\bCDI\b|\bCDD\b|\balternance\b|\bapprentissage\b|\bstages?\b"
-    r"|\bV\.?I\.?E\b|\bint[eé]rim\b|\bfreelance\b", re.I)
+    r"|\bV\.?I\.?E\b|\bint[eé]rim\b|\bfreelance\b",
+    re.I,
+)
 
 # PASSE 2 — mots NON AMBIGUS seulement. « stage », « alternance », « interim »,
 # « prestataire » et « freelance » nus sont ecartes : ils designent aussi bien
 # une phase, une experience passee ou l'activite de l'employeur.
 _DESC_CONTRAT = [
-    ("Alternance", re.compile(r"contrat d[\u2019']apprentissage|contrat de professionnalisation|\ben alternance\s+(?:de|pour|d[\u2019']une dur)", re.I)),
-    ("Stage", re.compile(r"convention de stage|\bstage conventionn|stage de fin d[\u2019']\u00e9tudes|\bstagiaire\b", re.I)),
+    (
+        "Alternance",
+        re.compile(
+            r"contrat d[\u2019']apprentissage|contrat de professionnalisation|\ben alternance\s+(?:de|pour|d[\u2019']une dur)",
+            re.I,
+        ),
+    ),
+    (
+        "Stage",
+        re.compile(
+            r"convention de stage|\bstage conventionn|stage de fin d[\u2019']\u00e9tudes|\bstagiaire\b",
+            re.I,
+        ),
+    ),
     ("V.I.E", re.compile(r"\bV\.I\.[EA]\b|volontariat international en entreprise", re.I)),
     ("CDD", re.compile(r"\bCDD\b|contrat \u00e0 dur\u00e9e d\u00e9termin\u00e9e", re.I)),
-    ("CDI", re.compile(r"\bCDI\b|contrat \u00e0 dur\u00e9e ind\u00e9termin\u00e9e|permanent (?:contract|position)", re.I)),
+    (
+        "CDI",
+        re.compile(
+            r"\bCDI\b|contrat \u00e0 dur\u00e9e ind\u00e9termin\u00e9e|permanent (?:contract|position)",
+            re.I,
+        ),
+    ),
 ]
 
 
@@ -281,10 +368,13 @@ _RX_ETUDIANT = re.compile(
     r"|\bcurrently\s+(?:enrolled|studying|pursuing\s+(?:an?\s+|your\s+)?"
     r"(?:degree|bachelor|master|undergraduate|graduate|studies|MBA|BSc|MSc))"
     r"|\bcurrent(?:ly)?\s+(?:a\s+)?(?:university\s+)?student\b"
-    r"|\b(?:penultimate|final)[- ]year\s+(?:university\s+|undergraduate\s+|master" + _A + r"?s?\s+)?(?:student|undergraduate)"
+    r"|\b(?:penultimate|final)[- ]year\s+(?:university\s+|undergraduate\s+|master"
+    + _A
+    + r"?s?\s+)?(?:student|undergraduate)"
     r"|\bmust\s+be\s+(?:a\s+)?(?:current\s+)?(?:student|enrolled)"
     r"|\benrolled\s+in\s+(?:a|an|your)\s+(?:bachelor|master|degree|university|undergraduate|graduate|study)",
-    re.I)
+    re.I,
+)
 # Une porte ouverte aux diplomes, DANS LA MEME PHRASE, annule la demande.
 _RX_OU_DIPLOME = re.compile(
     r"recent(?:ly)?\s+grad|fresh\s+grad|graduated|already\s+hold|\bor\s+hold|\bhold(?:ing)?\s+or\b"
@@ -296,7 +386,9 @@ _RX_OU_DIPLOME = re.compile(
     r"|(?:degree|education|Bac\s*\+\s*\d)\s*(?:\([^)]{0,20}\)\s*)?\(?\s*or\s+(?:a\s+)?(?:final|current|penultimate)"
     # « diplômé », pas « diplôme » : « en vue de l'obtention du diplôme » est une
     # demande d'etudiant, pas une porte ouverte.
-    r"|jeunes?\s+dipl[ôo]m|\bdipl[ôo]m(?:é|ée|és|ées)(?!\w)|titulaire", re.I)
+    r"|jeunes?\s+dipl[ôo]m|\bdipl[ôo]m(?:é|ée|és|ées)(?!\w)|titulaire",
+    re.I,
+)
 
 
 def demande_etudiant(desc):
@@ -307,7 +399,7 @@ def demande_etudiant(desc):
         # La phrase qui porte la demande : du point precedent au suivant.
         deb = max(t.rfind(".", 0, m.start()), t.rfind("\n", 0, m.start())) + 1
         fins = [i for i in (t.find(".", m.end()), t.find("\n", m.end())) if i >= 0]
-        phrase = t[deb:min(fins) if fins else len(t)]
+        phrase = t[deb : min(fins) if fins else len(t)]
         if not _RX_OU_DIPLOME.search(phrase):
             return True
     return False
@@ -327,16 +419,23 @@ def contrat_de_la_description(desc, defaut=""):
     if demande_etudiant(t):
         return "Stage"
     for m in _RX_LABEL.finditer(t):
-        v = _RX_VALEUR.search(t[m.end():m.end() + 40])
+        v = _RX_VALEUR.search(t[m.end() : m.end() + 40])
         if v:
             mot = v.group(1).lower()
-            if mot.startswith("cdi") or "ind" in mot: return "CDI"
-            if mot.startswith("cdd") or "d\u00e9termin" in mot: return "CDD"
-            if mot.startswith(("altern", "apprent")): return "Alternance"
-            if mot.startswith("stage"): return "Stage"
-            if mot.startswith("int"): return "Interim"
-            if mot.startswith("free"): return "Freelance"
-            if mot.startswith("v"): return "V.I.E"
+            if mot.startswith("cdi") or "ind" in mot:
+                return "CDI"
+            if mot.startswith("cdd") or "d\u00e9termin" in mot:
+                return "CDD"
+            if mot.startswith(("altern", "apprent")):
+                return "Alternance"
+            if mot.startswith("stage"):
+                return "Stage"
+            if mot.startswith("int"):
+                return "Interim"
+            if mot.startswith("free"):
+                return "Freelance"
+            if mot.startswith("v"):
+                return "V.I.E"
     for etiquette, motif in _DESC_CONTRAT:
         m = motif.search(t)
         if not m:
@@ -346,7 +445,7 @@ def contrat_de_la_description(desc, defaut=""):
         # le contrat propose. C'est ce CDD-la qui a fait remonter quatre stages
         # du Credit Agricole en tete de liste. Quand plusieurs types se pressent
         # dans la meme phrase, aucun ne fait foi.
-        autour = t[max(0, m.start() - 90):m.end() + 90]
+        autour = t[max(0, m.start() - 90) : m.end() + 90]
         if len(_RX_TOUS_CONTRATS.findall(autour)) > 1:
             continue
         return etiquette
@@ -359,8 +458,14 @@ def contrat_de_la_description(desc, defaut=""):
 # On ne retient PAS « full-time » / « temps plein » : c'est un rythme de travail,
 # pas un type de contrat — un CDD peut etre a temps plein.
 _TITRE_CONTRAT = [
-    ("CDD", re.compile(r"\bCDD\b|contrat\s+[àa]\s+dur[ée]e\s+d[ée]termin[ée]e|\bfixed[- ]term\b", re.I)),
-    ("CDI", re.compile(r"\bCDI\b|contrat\s+[àa]\s+dur[ée]e\s+ind[ée]termin[ée]e|\bpermanent\b", re.I)),
+    (
+        "CDD",
+        re.compile(r"\bCDD\b|contrat\s+[àa]\s+dur[ée]e\s+d[ée]termin[ée]e|\bfixed[- ]term\b", re.I),
+    ),
+    (
+        "CDI",
+        re.compile(r"\bCDI\b|contrat\s+[àa]\s+dur[ée]e\s+ind[ée]termin[ée]e|\bpermanent\b", re.I),
+    ),
     ("Freelance", re.compile(r"\bfreelance\b", re.I)),
     ("Interim", re.compile(r"\bint[ée]rim\b", re.I)),
 ]
@@ -379,7 +484,7 @@ def contrat_du_titre(titre, source="", defaut=""):
         return "Alternance"
     if _RX_STAGE.search(t):
         return "Stage"
-    if (_RX_VIE_POINTE.search(t) or _RX_VIE_MAJ.search(t) or str(source or "").startswith("vie:")):
+    if _RX_VIE_POINTE.search(t) or _RX_VIE_MAJ.search(t) or str(source or "").startswith("vie:"):
         return "V.I.E"
     for etiquette, motif in _TITRE_CONTRAT:
         if motif.search(t):
@@ -395,9 +500,11 @@ def title_ok(t):
         return False
     if _P.cherche(_AI_RX, t):
         return not _P.cherche(_HARD_NEG_RX, t)
-    return bool(matches_esg_finance(t)
-                and (_DOMAIN_RX is None or _DOMAIN_RX.search(t))
-                and not _P.cherche(_NEG_TITLE_RX, t))
+    return bool(
+        matches_esg_finance(t)
+        and (_DOMAIN_RX is None or _DOMAIN_RX.search(t))
+        and not _P.cherche(_NEG_TITLE_RX, t)
+    )
 
 
 # ═══════════════ 1. ATS APIs (httpx pur, pas de navigateur) — AVEC descriptions ═══════════════
@@ -423,20 +530,42 @@ def _ats_ko(kind, slug, r):
 # recherche (2026-10-08 : Roland Berger « absent », 34 offres sous
 # « rolandberger »). Les slugs absents d'ici gardent `slug.title()`.
 ATS_NOMS = {
-    "backmarket": "Back Market", "clarityai": "Clarity AI", "ecovadis": "EcoVadis",
-    "ibanfirst": "iBanFirst", "payfit": "PayFit", "vestiairecollective": "Vestiaire Collective",
-    "forvismazars": "Forvis Mazars", "alixpartners": "AlixPartners",
-    "descartesunderwriting": "Descartes Underwriting", "sfeir": "SFEIR",
-    "dedale-intelligence": "Dedale Intelligence", "grantthornton": "Grant Thornton",
-    "meridiam": "Meridiam", "bakertilly": "Baker Tilly", "tikehaucapital": "Tikehau Capital",
-    "axa": "AXA", "amundi": "Amundi", "bnpparibas": "BNP Paribas",
-    "societegenerale": "Société Générale", "sycomoreassetmanagement": "Sycomore Asset Management",
-    "jobteaser": "JobTeaser", "rolandberger": "Roland Berger",
-    "southpole": "South Pole", "positiongreen": "Position Green",
-    "cdpworldwide": "CDP", "keplercheuvreux": "Kepler Cheuvreux", "jobs.tennaxia.com": "Tennaxia",
-    "paipartners": "PAI Partners", "8advisory": "Eight Advisory", "eqtpartners": "EQT",
-    "epsa": "EPSA (Ekodev)", "masdar": "Masdar", "repriskag": "RepRisk",
-    "ifrsfoundation": "IFRS Foundation (ISSB)", "oecd": "OCDE (OECD)", "saintgobain": "Saint-Gobain",
+    "backmarket": "Back Market",
+    "clarityai": "Clarity AI",
+    "ecovadis": "EcoVadis",
+    "ibanfirst": "iBanFirst",
+    "payfit": "PayFit",
+    "vestiairecollective": "Vestiaire Collective",
+    "forvismazars": "Forvis Mazars",
+    "alixpartners": "AlixPartners",
+    "descartesunderwriting": "Descartes Underwriting",
+    "sfeir": "SFEIR",
+    "dedale-intelligence": "Dedale Intelligence",
+    "grantthornton": "Grant Thornton",
+    "meridiam": "Meridiam",
+    "bakertilly": "Baker Tilly",
+    "tikehaucapital": "Tikehau Capital",
+    "axa": "AXA",
+    "amundi": "Amundi",
+    "bnpparibas": "BNP Paribas",
+    "societegenerale": "Société Générale",
+    "sycomoreassetmanagement": "Sycomore Asset Management",
+    "jobteaser": "JobTeaser",
+    "rolandberger": "Roland Berger",
+    "southpole": "South Pole",
+    "positiongreen": "Position Green",
+    "cdpworldwide": "CDP",
+    "keplercheuvreux": "Kepler Cheuvreux",
+    "jobs.tennaxia.com": "Tennaxia",
+    "paipartners": "PAI Partners",
+    "8advisory": "Eight Advisory",
+    "eqtpartners": "EQT",
+    "epsa": "EPSA (Ekodev)",
+    "masdar": "Masdar",
+    "repriskag": "RepRisk",
+    "ifrsfoundation": "IFRS Foundation (ISSB)",
+    "oecd": "OCDE (OECD)",
+    "saintgobain": "Saint-Gobain",
 }
 
 
@@ -457,60 +586,125 @@ def _tt(champ, item):
 
 def fetch_ats(kind, slug):
     import httpx
+
     out = []
     try:
         if kind == "greenhouse":
             # ?content=true → description HTML incluse dans la liste
-            r = _get_borne(httpx, f"https://boards-api.greenhouse.io/v1/boards/{slug}/jobs?content=true",
-                          timeout=15, headers=UA)
-            if _ats_ko(kind, slug, r): return []
+            r = _get_borne(
+                httpx,
+                f"https://boards-api.greenhouse.io/v1/boards/{slug}/jobs?content=true",
+                timeout=15,
+                headers=UA,
+            )
+            if _ats_ko(kind, slug, r):
+                return []
             for j in r.json().get("jobs", []):
-                out.append(_mk(j.get("title", ""), j.get("absolute_url", ""), nom_ats(slug),
-                               (j.get("location") or {}).get("name", ""),
-                               j.get("updated_at", "")[:10], f"greenhouse:{slug}",
-                               _strip_html(j.get("content", ""))))
+                out.append(
+                    _mk(
+                        j.get("title", ""),
+                        j.get("absolute_url", ""),
+                        nom_ats(slug),
+                        (j.get("location") or {}).get("name", ""),
+                        j.get("updated_at", "")[:10],
+                        f"greenhouse:{slug}",
+                        _strip_html(j.get("content", "")),
+                    )
+                )
         elif kind == "lever":
-            r = _get_borne(httpx, f"https://api.lever.co/v0/postings/{slug}?mode=json",
-                          timeout=15, headers=UA)
-            if _ats_ko(kind, slug, r): return []
+            r = _get_borne(
+                httpx, f"https://api.lever.co/v0/postings/{slug}?mode=json", timeout=15, headers=UA
+            )
+            if _ats_ko(kind, slug, r):
+                return []
             for j in r.json():
-                out.append(_mk(j.get("text", ""), j.get("hostedUrl", ""), nom_ats(slug),
-                               (j.get("categories") or {}).get("location", ""),
-                               "", f"lever:{slug}",
-                               j.get("descriptionPlain", "") or _strip_html(j.get("description", ""))))
+                out.append(
+                    _mk(
+                        j.get("text", ""),
+                        j.get("hostedUrl", ""),
+                        nom_ats(slug),
+                        (j.get("categories") or {}).get("location", ""),
+                        "",
+                        f"lever:{slug}",
+                        j.get("descriptionPlain", "") or _strip_html(j.get("description", "")),
+                    )
+                )
         elif kind == "ashby":
-            r = _get_borne(httpx, f"https://api.ashbyhq.com/posting-api/job-board/{slug}",
-                          timeout=15, headers=UA)
-            if _ats_ko(kind, slug, r): return []
+            r = _get_borne(
+                httpx,
+                f"https://api.ashbyhq.com/posting-api/job-board/{slug}",
+                timeout=15,
+                headers=UA,
+            )
+            if _ats_ko(kind, slug, r):
+                return []
             for j in r.json().get("jobs", []):
-                out.append(_mk(j.get("title", ""), j.get("jobUrl", ""), nom_ats(slug),
-                               j.get("location", ""), "", f"ashby:{slug}",
-                               _strip_html(j.get("descriptionHtml", ""))))
+                out.append(
+                    _mk(
+                        j.get("title", ""),
+                        j.get("jobUrl", ""),
+                        nom_ats(slug),
+                        j.get("location", ""),
+                        "",
+                        f"ashby:{slug}",
+                        _strip_html(j.get("descriptionHtml", "")),
+                    )
+                )
         elif kind == "recruitee":
-            r = _get_borne(httpx, f"https://{slug}.recruitee.com/api/offers/", timeout=15, headers=UA)
-            if _ats_ko(kind, slug, r): return []
+            r = _get_borne(
+                httpx, f"https://{slug}.recruitee.com/api/offers/", timeout=15, headers=UA
+            )
+            if _ats_ko(kind, slug, r):
+                return []
             for j in r.json().get("offers", []):
-                out.append(_mk(j.get("title", ""), j.get("careers_url", ""), nom_ats(slug),
-                               j.get("location", ""), "", f"recruitee:{slug}",
-                               _strip_html(j.get("description", ""))))
+                out.append(
+                    _mk(
+                        j.get("title", ""),
+                        j.get("careers_url", ""),
+                        nom_ats(slug),
+                        j.get("location", ""),
+                        "",
+                        f"recruitee:{slug}",
+                        _strip_html(j.get("description", "")),
+                    )
+                )
         elif kind == "teamtailor":
             # Un domaine propre (jobs.tennaxia.com) sert le meme flux.
             hote = slug if "." in slug else f"{slug}.teamtailor.com"
             r = _get_borne(httpx, f"https://{hote}/jobs.rss", timeout=15, headers=UA)
-            if _ats_ko(kind, slug, r): return []
+            if _ats_ko(kind, slug, r):
+                return []
             for it in _RX_TT_ITEM.findall(r.text):
                 lieu = ", ".join(x for x in (_tt("tt:city", it), _tt("tt:country", it)) if x)
-                out.append(_mk(_tt("title", it), _tt("link", it), nom_ats(slug), lieu,
-                               "", f"teamtailor:{slug}", _strip_html(_tt("description", it))))
+                out.append(
+                    _mk(
+                        _tt("title", it),
+                        _tt("link", it),
+                        nom_ats(slug),
+                        lieu,
+                        "",
+                        f"teamtailor:{slug}",
+                        _strip_html(_tt("description", it)),
+                    )
+                )
         elif kind == "smartrecruiters":
-            r = _get_borne(httpx, f"https://api.smartrecruiters.com/v1/companies/{slug}/postings?limit=100",
-                          timeout=15, headers=UA)
-            if _ats_ko(kind, slug, r): return []
+            r = _get_borne(
+                httpx,
+                f"https://api.smartrecruiters.com/v1/companies/{slug}/postings?limit=100",
+                timeout=15,
+                headers=UA,
+            )
+            if _ats_ko(kind, slug, r):
+                return []
             for j in r.json().get("content", []):
-                o = _mk(j.get("name", ""),
-                        f"https://jobs.smartrecruiters.com/{slug}/{j.get('id','')}",
-                        nom_ats(slug), (j.get("location") or {}).get("city", ""),
-                        str(j.get("releasedDate", ""))[:10], f"smartrecruiters:{slug}")
+                o = _mk(
+                    j.get("name", ""),
+                    f"https://jobs.smartrecruiters.com/{slug}/{j.get('id', '')}",
+                    nom_ats(slug),
+                    (j.get("location") or {}).get("city", ""),
+                    str(j.get("releasedDate", ""))[:10],
+                    f"smartrecruiters:{slug}",
+                )
                 out.append(o)
         # SmartRecruiters : description via appel détail — seulement pour les titres retenus (peu)
         if kind == "smartrecruiters":
@@ -518,15 +712,22 @@ def fetch_ats(kind, slug):
             for o in kept:
                 try:
                     jid = o["url"].rstrip("/").split("/")[-1]
-                    rd = _get_borne(httpx, f"https://api.smartrecruiters.com/v1/companies/{slug}/postings/{jid}",
-                                   timeout=12, headers=UA)
+                    rd = _get_borne(
+                        httpx,
+                        f"https://api.smartrecruiters.com/v1/companies/{slug}/postings/{jid}",
+                        timeout=12,
+                        headers=UA,
+                    )
                     if rd.status_code == 200:
                         secs = (rd.json().get("jobAd") or {}).get("sections") or {}
-                        o["description"] = _strip_html(" ".join(
-                            str(v.get("text", "")) for v in secs.values() if isinstance(v, dict)))[:30000]
+                        o["description"] = _strip_html(
+                            " ".join(
+                                str(v.get("text", "")) for v in secs.values() if isinstance(v, dict)
+                            )
+                        )[:30000]
                 except Exception:
                     pass
-                time.sleep(0.4)   # appel détail par offre : on ne mitraille pas
+                time.sleep(0.4)  # appel détail par offre : on ne mitraille pas
             # Meme garde que la sortie normale : une offre sans URL n'est pas
             # exploitable, elle ne doit pas entrer par cette branche non plus.
             return [o for o in kept if o["titre"] and o["url"]]
@@ -536,7 +737,7 @@ def fetch_ats(kind, slug):
     return [o for o in out if o["titre"] and o["url"] and title_ok(o["titre"])]
 
 
-ATS_PAUSE = 0.5     # entre deux slugs : 40 appels d'affilee, autant les espacer
+ATS_PAUSE = 0.5  # entre deux slugs : 40 appels d'affilee, autant les espacer
 
 
 def scan_ats():
@@ -571,7 +772,7 @@ AUTRES_FLUX = [
     ("sfrss", "careers.ey.com", "EY"),
     ("sfrss", "jobs.ebrd.com", "BERD (EBRD)"),
     ("sfrss", "careers.capgemini.com", "Capgemini"),
-    ("talentsoft", "jobs.amundi.com", "Amundi"),       # CPR AM compris
+    ("talentsoft", "jobs.amundi.com", "Amundi"),  # CPR AM compris
     ("talentsoft", "jobs.candriam.com", "Candriam"),
     # Phenom (resultats embarques en JSON), iCIMS (liste HTML), Cornerstone
     # (jeton anonyme de la page publique) : ajoutes le 2026-10-08.
@@ -593,8 +794,8 @@ AUTRES_FLUX = [
     ("sitemap", "https://www.kbc.be/jobs/en.sitemap.xml|/jobs/en/vacancies/ID|h1", "KBC"),
     ("sfrss", "jobs.engie.com", "ENGIE"),
     ("sfrss", "jobs.atos.net", "Atos"),
-    ("icims", "careers-msci.icims.com", "MSCI"),      # portail US
-    ("icims", "ukcareers-msci.icims.com", "MSCI"),    # portail Europe
+    ("icims", "careers-msci.icims.com", "MSCI"),  # portail US
+    ("icims", "ukcareers-msci.icims.com", "MSCI"),  # portail Europe
     ("icims", "careers-ricardo.icims.com", "Ricardo"),
     ("sitemap", "https://www.sia-partners.com/sitemap.xml|/en/career/", "Sia Partners"),
     ("sitemap", "https://carbone4.com/jobs-sitemap.xml|/en/jobs/", "Carbone 4"),
@@ -627,20 +828,28 @@ _RX_CDATA = re.compile(r"^<!\[CDATA\[(.*)\]\]>$", re.S)
 _RX_LIEU_FIN = re.compile(r"\s*\(([^()]*)\)\s*$")
 _RX_TS_CAT = re.compile(r"<category>(.*?)</category>", re.S)
 _RX_TS_REF = re.compile(r"^\s*\d{4}-\d+\s+-\s+")
-_RX_AV_TITRE = re.compile(r'<h3 class="article__header__text__title[^"]*">\s*<a (?:class="link" )?href="([^"]+)">\s*([^<]+?)\s*</a>')
+_RX_AV_TITRE = re.compile(
+    r'<h3 class="article__header__text__title[^"]*">\s*<a (?:class="link" )?href="([^"]+)">\s*([^<]+?)\s*</a>'
+)
 _RX_AV_PAYS = re.compile(r'list-item-jobCountry">([^<]+)<')
 _RX_AV_DATE = re.compile(r'list-item-jobCreationDate">(\d{2})-(\d{2})-(\d{4})<')
 # Deux themes TalentBrew : titre dans le <a> (Moody's) ou dans un <h2> a l'interieur (ING).
-_RX_TB_LIEN = re.compile(r'href="(/[a-z-]+/job/[^"]+)"[^>]*data-job-id="\d+"[^>]*>\s*(?:<h2[^>]*>)?\s*([^<]+?)\s*<')
+_RX_TB_LIEN = re.compile(
+    r'href="(/[a-z-]+/job/[^"]+)"[^>]*data-job-id="\d+"[^>]*>\s*(?:<h2[^>]*>)?\s*([^<]+?)\s*<'
+)
 _RX_TB_LIEU = re.compile(r'job-location">([^<]+)<')
-_RX_ADB_LIGNE = re.compile(r'<a href="(https://www\.adb\.org/careers/\d+)">([^<]+?)\s*/\s*\d+</a>(.*?)</tr>', re.S)
+_RX_ADB_LIGNE = re.compile(
+    r'<a href="(https://www\.adb\.org/careers/\d+)">([^<]+?)\s*/\s*\d+</a>(.*?)</tr>', re.S
+)
 _RX_ADB_LIEU = re.compile(r'field-location">\s*([^<]+?)\s*<')
 _RX_ADB_DATE = re.compile(r'field-date-content"><time datetime="(\d{4}-\d{2}-\d{2})')
-_RX_PS_CHAMP = re.compile(r"id='(SCH_JOB_TITLE|HRS_APP_JBSCH_I_HRS_JOB_OPENING_ID|SCH_OPENED|LOCATION)\$(\d+)'\s*>([^<]*)<")
+_RX_PS_CHAMP = re.compile(
+    r"id='(SCH_JOB_TITLE|HRS_APP_JBSCH_I_HRS_JOB_OPENING_ID|SCH_OPENED|LOCATION)\$(\d+)'\s*>([^<]*)<"
+)
 _RX_CSOD_CTX = re.compile(r"csod\.context\s*=\s*(\{.*?\});", re.S)
 _RX_ICIMS_CARTE = re.compile(r'<li class="iCIMS_JobCardItem">(.*?)</li>', re.S)
 _RX_ICIMS_LIEN = re.compile(r'<a href="([^"]+/jobs/\d+/[^"]*)"[^>]*title="\d+ - ([^"]+)"')
-_RX_ICIMS_LIEU = re.compile(r'Job Locations</span>\s*</dt>\s*<dd[^>]*><span\s*>\s*([^<]+)</span>')
+_RX_ICIMS_LIEU = re.compile(r"Job Locations</span>\s*</dt>\s*<dd[^>]*><span\s*>\s*([^<]+)</span>")
 
 
 ICIMS_PAGES = 15
@@ -660,25 +869,53 @@ def _sans_cdata(s):
 
 def fetch_autre(kind, cle, nom):
     import httpx
+
     out = []
     try:
         if kind == "workable":
-            r = _get_borne(httpx, f"https://apply.workable.com/api/v1/widget/accounts/{cle}",
-                           timeout=15, headers=UA)
-            if _ats_ko(kind, cle, r): return []
+            r = _get_borne(
+                httpx,
+                f"https://apply.workable.com/api/v1/widget/accounts/{cle}",
+                timeout=15,
+                headers=UA,
+            )
+            if _ats_ko(kind, cle, r):
+                return []
             for j in r.json().get("jobs", []):
                 lieu = ", ".join(x for x in (j.get("city"), j.get("country")) if x)
-                out.append(_mk(j.get("title", ""), j.get("url", ""), nom, lieu,
-                               j.get("published_on", ""), f"workable:{cle}"))
+                out.append(
+                    _mk(
+                        j.get("title", ""),
+                        j.get("url", ""),
+                        nom,
+                        lieu,
+                        j.get("published_on", ""),
+                        f"workable:{cle}",
+                    )
+                )
         elif kind == "pinpoint":
-            hote = cle if "." in cle else f"{cle}.pinpointhq.com"     # domaine propre accepte
-            r = _get_borne(httpx, f"https://{hote}/postings.json", timeout=15, headers=UA,
-                           follow_redirects=True)
-            if _ats_ko(kind, cle, r): return []
+            hote = cle if "." in cle else f"{cle}.pinpointhq.com"  # domaine propre accepte
+            r = _get_borne(
+                httpx,
+                f"https://{hote}/postings.json",
+                timeout=15,
+                headers=UA,
+                follow_redirects=True,
+            )
+            if _ats_ko(kind, cle, r):
+                return []
             for j in r.json().get("data", []):
-                out.append(_mk(j.get("title", ""), j.get("url", ""), nom,
-                               (j.get("location") or {}).get("name", ""), "", f"pinpoint:{cle}",
-                               _strip_html(j.get("description", ""))))
+                out.append(
+                    _mk(
+                        j.get("title", ""),
+                        j.get("url", ""),
+                        nom,
+                        (j.get("location") or {}).get("name", ""),
+                        "",
+                        f"pinpoint:{cle}",
+                        _strip_html(j.get("description", "")),
+                    )
+                )
         elif kind == "sitemap":
             # Sites maison sans API, mais dont le sitemap liste chaque offre avec
             # sa date (Sia Partners, Carbone 4). Titre tire de l'adresse : leur
@@ -688,17 +925,22 @@ def fetch_autre(kind, cle, nom):
             racine, chemin, *mode = cle.split("|")
             limite = (datetime.date.today() - datetime.timedelta(days=SITEMAP_JOURS)).isoformat()
             r = _get_borne(httpx, racine, timeout=20, headers=UA, follow_redirects=True)
-            if _ats_ko(kind, racine, r): return []
+            if _ats_ko(kind, racine, r):
+                return []
             xml = [r.text]
             for enfant in _RX_SM_INDEX.findall(r.text) if "<sitemapindex" in r.text else []:
-                re_ = _get_borne(httpx, html.unescape(enfant), timeout=20, headers=UA, follow_redirects=True)
-                if re_.status_code == 200: xml.append(re_.text)
+                re_ = _get_borne(
+                    httpx, html.unescape(enfant), timeout=20, headers=UA, follow_redirects=True
+                )
+                if re_.status_code == 200:
+                    xml.append(re_.text)
             vus = set()
             for x in xml:
                 for loc, reste in _RX_SM_URL.findall(x):
                     loc = html.unescape(loc)
                     date = (_RX_SM_DATE.findall(reste) or [""])[0]
-                    if chemin not in loc or loc in vus or (date and date < limite): continue
+                    if chemin not in loc or loc in vus or (date and date < limite):
+                        continue
                     vus.add(loc)
                     # Tout ce qui suit le chemin : « internship-consultant-m/f-january-2027 »
                     # contient un « / ». Le « -0 », « -1 » final est un doublon de slug.
@@ -709,7 +951,8 @@ def fetch_autre(kind, cle, nom):
                     if mode == ["h1"]:
                         p = _get_borne(httpx, loc, timeout=20, headers=UA, follow_redirects=True)
                         h1 = _RX_SM_H1.search(p.text) if p.status_code == 200 else None
-                        if not h1: continue
+                        if not h1:
+                            continue
                         titre = html.unescape(re.sub(r"<[^>]+>", "", h1.group(1))).strip()
                         time.sleep(WORKDAY_PAUSE)
                     out.append(_mk(titre, loc, nom, "", date, f"sitemap:{urlparse(racine).netloc}"))
@@ -718,63 +961,120 @@ def fetch_autre(kind, cle, nom):
             # liste toutes les offres ouvertes, champs indexes par ligne ($0, $1...).
             # Le lien de detail exige la session : il ouvre la liste, puis l'offre.
             base = f"https://{cle}/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL"
-            r = _get_borne(httpx, f"{base}?Page=HRS_APP_SCHJOB_FL&Action=U", timeout=30,
-                           headers=UA, follow_redirects=True)
-            if _ats_ko(kind, cle, r): return []
+            r = _get_borne(
+                httpx,
+                f"{base}?Page=HRS_APP_SCHJOB_FL&Action=U",
+                timeout=30,
+                headers=UA,
+                follow_redirects=True,
+            )
+            if _ats_ko(kind, cle, r):
+                return []
             champs = {}
             for nom_champ, i, val in _RX_PS_CHAMP.findall(r.text):
                 champs.setdefault(i, {})[nom_champ] = html.unescape(val.strip())
             for i in sorted(champs, key=int):
                 c = champs[i]
                 ident = c.get("HRS_APP_JBSCH_I_HRS_JOB_OPENING_ID", "")
-                if not c.get("SCH_JOB_TITLE") or not ident: continue
+                if not c.get("SCH_JOB_TITLE") or not ident:
+                    continue
                 jj, mm, aa = (c.get("SCH_OPENED", "").split("/") + ["", "", ""])[:3]
-                out.append(_mk(c["SCH_JOB_TITLE"], f"{base}?Page=HRS_APP_JBPST_FL&Action=U"
-                               f"&FOCUS=Applicant&SiteId=1&JobOpeningId={ident}&PostingSeq=1",
-                               nom, c.get("LOCATION", ""), f"{aa}-{mm}-{jj}" if aa else "",
-                               f"peoplesoft:{cle.split('/')[0]}"))
+                out.append(
+                    _mk(
+                        c["SCH_JOB_TITLE"],
+                        f"{base}?Page=HRS_APP_JBPST_FL&Action=U"
+                        f"&FOCUS=Applicant&SiteId=1&JobOpeningId={ident}&PostingSeq=1",
+                        nom,
+                        c.get("LOCATION", ""),
+                        f"{aa}-{mm}-{jj}" if aa else "",
+                        f"peoplesoft:{cle.split('/')[0]}",
+                    )
+                )
         elif kind == "gogenerali":
             # Generali (portail italien, sieges et filiales) : l'API de la page
             # repond sans jeton. Les agences (hors perimetre « direzionale ») sont
             # des postes commerciaux, exclus. Fiche : /home/job/{id}/{titre}.
-            r = _get_borne(httpx, f"https://{cle}/rest-api/talent-farm-mediator/get-available-jobs-from-ats"
-                                  f"?fromRecord=0&numRecords=1000&onlyDirectionalPerimeter=true",
-                           timeout=30, headers={**UA, "Accept": "application/json"})
-            if _ats_ko(kind, cle, r): return []
+            r = _get_borne(
+                httpx,
+                f"https://{cle}/rest-api/talent-farm-mediator/get-available-jobs-from-ats"
+                f"?fromRecord=0&numRecords=1000&onlyDirectionalPerimeter=true",
+                timeout=30,
+                headers={**UA, "Accept": "application/json"},
+            )
+            if _ats_ko(kind, cle, r):
+                return []
             for j in (r.json() or {}).get("response") or []:
-                if not j.get("contestId") or j.get("currentStatus") != "PUBLISHED": continue
+                if not j.get("contestId") or j.get("currentStatus") != "PUBLISHED":
+                    continue
                 slug = re.sub(r"[^a-z0-9]+", "-", (j.get("title") or "").lower()).strip("-")
-                desc = _strip_html((j.get("descriptionInternalHTML") or "") + " "
-                                   + (j.get("internalQualificationHTML") or ""))
-                out.append(_mk(j.get("title", ""), f"https://{cle}/home/job/{j['contestId']}/{slug}",
-                               nom, j.get("primaryLocation") or "", (j.get("currentStatusDate") or "")[:10],
-                               f"gogenerali:{cle}", desc))
+                desc = _strip_html(
+                    (j.get("descriptionInternalHTML") or "")
+                    + " "
+                    + (j.get("internalQualificationHTML") or "")
+                )
+                out.append(
+                    _mk(
+                        j.get("title", ""),
+                        f"https://{cle}/home/job/{j['contestId']}/{slug}",
+                        nom,
+                        j.get("primaryLocation") or "",
+                        (j.get("currentStatusDate") or "")[:10],
+                        f"gogenerali:{cle}",
+                        desc,
+                    )
+                )
         elif kind == "adb":
             # Banque asiatique de developpement : tableau HTML de toutes les
             # offres ouvertes, « Intitule / reference » dans le lien.
             r = _get_borne(httpx, f"https://{cle}", timeout=30, headers=UA, follow_redirects=True)
-            if _ats_ko(kind, cle, r): return []
+            if _ats_ko(kind, cle, r):
+                return []
             for url, titre, reste in _RX_ADB_LIGNE.findall(r.text):
                 l, d = _RX_ADB_LIEU.search(reste), _RX_ADB_DATE.search(reste)
-                out.append(_mk(html.unescape(titre), url, nom, html.unescape(l.group(1)) if l else "",
-                               d.group(1) if d else "", "adb:adb.org"))
+                out.append(
+                    _mk(
+                        html.unescape(titre),
+                        url,
+                        nom,
+                        html.unescape(l.group(1)) if l else "",
+                        d.group(1) if d else "",
+                        "adb:adb.org",
+                    )
+                )
         elif kind == "icims":
             # Liste HTML paginee (pr=0, 1, ...), filtree ensuite par title_ok :
             # la recherche par mot-cle de l'iframe ne rend rien sans session.
             vus = set()
             for page in range(ICIMS_PAGES):
-                r = _get_borne(httpx, f"https://{cle}/jobs/search?ss=1&in_iframe=1&pr={page}",
-                               timeout=20, headers=UA, follow_redirects=True)
-                if _ats_ko(kind, cle, r): break
+                r = _get_borne(
+                    httpx,
+                    f"https://{cle}/jobs/search?ss=1&in_iframe=1&pr={page}",
+                    timeout=20,
+                    headers=UA,
+                    follow_redirects=True,
+                )
+                if _ats_ko(kind, cle, r):
+                    break
                 neufs = 0
                 for carte in _RX_ICIMS_CARTE.findall(r.text):
                     m = _RX_ICIMS_LIEN.search(carte)
-                    if not m or m.group(1) in vus: continue
-                    vus.add(m.group(1)); neufs += 1
+                    if not m or m.group(1) in vus:
+                        continue
+                    vus.add(m.group(1))
+                    neufs += 1
                     l = _RX_ICIMS_LIEU.search(carte)
-                    out.append(_mk(html.unescape(m.group(2)), m.group(1).replace("?in_iframe=1", ""),
-                                   nom, html.unescape(l.group(1).strip()) if l else "", "", f"icims:{cle}"))
-                if not neufs: break
+                    out.append(
+                        _mk(
+                            html.unescape(m.group(2)),
+                            m.group(1).replace("?in_iframe=1", ""),
+                            nom,
+                            html.unescape(l.group(1).strip()) if l else "",
+                            "",
+                            f"icims:{cle}",
+                        )
+                    )
+                if not neufs:
+                    break
                 time.sleep(WORKDAY_PAUSE)
         else:
             vus = set()
@@ -782,7 +1082,9 @@ def fetch_autre(kind, cle, nom):
                 for titre, url, lieu, date, desc in _cherche_autre(httpx, kind, cle, mot):
                     if url and url not in vus:
                         vus.add(url)
-                        out.append(_mk(titre, url, nom, lieu, date, f"{kind}:{cle.split('|')[0]}", desc))
+                        out.append(
+                            _mk(titre, url, nom, lieu, date, f"{kind}:{cle.split('|')[0]}", desc)
+                        )
                 time.sleep(WORKDAY_PAUSE)
     except Exception as e:
         INCIDENTS[f"ats:{kind}"][type(e).__name__] += 1
@@ -794,147 +1096,281 @@ def _cherche_autre(httpx, kind, cle, mot):
     """[(titre, url, lieu, date, description)] pour un mot-cle, cote serveur."""
     if kind == "eightfold":
         hote, domaine = cle.split("|")
-        r = _get_borne(httpx, f"https://{hote}/api/apply/v2/jobs?domain={domaine}&start=0&num=50"
-                              f"&query={quote(mot)}", timeout=20, headers=UA)
-        if _ats_ko(kind, hote, r): return []
-        return [(p.get("name", ""), p.get("canonicalPositionUrl", ""), p.get("location", ""), "",
-                 _strip_html(p.get("job_description", "")))
-                for p in r.json().get("positions", [])]
+        r = _get_borne(
+            httpx,
+            f"https://{hote}/api/apply/v2/jobs?domain={domaine}&start=0&num=50&query={quote(mot)}",
+            timeout=20,
+            headers=UA,
+        )
+        if _ats_ko(kind, hote, r):
+            return []
+        return [
+            (
+                p.get("name", ""),
+                p.get("canonicalPositionUrl", ""),
+                p.get("location", ""),
+                "",
+                _strip_html(p.get("job_description", "")),
+            )
+            for p in r.json().get("positions", [])
+        ]
     if kind == "sfrss":
-        r = _get_borne(httpx, f"https://{cle}/services/rss/job/?locale=en_US&keywords={quote(mot)}",
-                       timeout=20, headers=UA)
-        if _ats_ko(kind, cle, r): return []
+        r = _get_borne(
+            httpx,
+            f"https://{cle}/services/rss/job/?locale=en_US&keywords={quote(mot)}",
+            timeout=20,
+            headers=UA,
+        )
+        if _ats_ko(kind, cle, r):
+            return []
         res = []
         for it in _RX_TT_ITEM.findall(r.text):
             titre = _sans_cdata(_tt("title", it))
-            m = _RX_LIEU_FIN.search(titre)     # « Analyst - Paris (Paris, FR) »
+            m = _RX_LIEU_FIN.search(titre)  # « Analyst - Paris (Paris, FR) »
             lieu = m.group(1) if m else ""
             titre = _RX_LIEU_FIN.sub("", titre) if m else titre
-            titre = titre[6:] if titre.startswith("Job | ") else titre    # Belfius
-            res.append((titre, _sans_cdata(_tt("link", it)), lieu, "",
-                        _strip_html(_sans_cdata(_tt("description", it)))))
+            titre = titre[6:] if titre.startswith("Job | ") else titre  # Belfius
+            res.append(
+                (
+                    titre,
+                    _sans_cdata(_tt("link", it)),
+                    lieu,
+                    "",
+                    _strip_html(_sans_cdata(_tt("description", it))),
+                )
+            )
         return res
     if kind == "talentsoft":
         # Sans Rss_Keywords le flux rend les 20 dernieres offres, tous metiers.
-        r = _get_borne(httpx, f"https://{cle}/handlers/offerRss.ashx?LCID=1036&Rss_Keywords={quote(mot)}",
-                       timeout=20, headers=UA)
-        if _ats_ko(kind, cle, r): return []
+        r = _get_borne(
+            httpx,
+            f"https://{cle}/handlers/offerRss.ashx?LCID=1036&Rss_Keywords={quote(mot)}",
+            timeout=20,
+            headers=UA,
+        )
+        if _ats_ko(kind, cle, r):
+            return []
         res = []
         for it in _RX_TT_ITEM.findall(r.text):
             cats = [html.unescape(c.strip()) for c in _RX_TS_CAT.findall(it)]
-            titre = _RX_TS_REF.sub("", _tt("title", it))      # « 2026-116250 - Stage - ... »
-            res.append((titre, _tt("link", it), cats[-1] if len(cats) >= 3 else "", "",
-                        _strip_html(_tt("description", it))))
+            titre = _RX_TS_REF.sub("", _tt("title", it))  # « 2026-116250 - Stage - ... »
+            res.append(
+                (
+                    titre,
+                    _tt("link", it),
+                    cats[-1] if len(cats) >= 3 else "",
+                    "",
+                    _strip_html(_tt("description", it)),
+                )
+            )
         return res
     if kind == "phenom":
         # La page de resultats embarque ses offres en JSON (phApp.ddo), 10 par
         # page. C'est le rendu serveur que tout visiteur recoit.
         res = []
         for depart in (0, 10):
-            r = _get_borne(httpx, f"https://{cle}/search-results?keywords={quote(mot)}&from={depart}",
-                           timeout=20, headers=UA)
-            if _ats_ko(kind, cle, r): break
+            r = _get_borne(
+                httpx,
+                f"https://{cle}/search-results?keywords={quote(mot)}&from={depart}",
+                timeout=20,
+                headers=UA,
+            )
+            if _ats_ko(kind, cle, r):
+                break
             i = r.text.find("phApp.ddo = ")
-            if i < 0: break
+            if i < 0:
+                break
             try:
-                ddo, _ = json.JSONDecoder().raw_decode(r.text[i + 12:])
+                ddo, _ = json.JSONDecoder().raw_decode(r.text[i + 12 :])
                 jobs = ddo["eagerLoadRefineSearch"]["data"]["jobs"]
             except Exception:
                 break
-            res += [(j.get("title", ""), f"https://{cle}/job/{j.get('jobId', '')}",
-                     j.get("cityStateCountry") or j.get("location") or "",
-                     str(j.get("postedDate") or "")[:10], j.get("descriptionTeaser") or "")
-                    for j in jobs if j.get("jobId")]
-            if len(jobs) < 10: break
+            res += [
+                (
+                    j.get("title", ""),
+                    f"https://{cle}/job/{j.get('jobId', '')}",
+                    j.get("cityStateCountry") or j.get("location") or "",
+                    str(j.get("postedDate") or "")[:10],
+                    j.get("descriptionTeaser") or "",
+                )
+                for j in jobs
+                if j.get("jobId")
+            ]
+            if len(jobs) < 10:
+                break
         return res
     if kind == "jibe":
         # Jibe (Google Cloud Talent) : la page carriere appelle /api/jobs, JSON
         # public, description comprise. Schneider Electric (2026-10-08).
-        r = _get_borne(httpx, f"https://{cle}/api/jobs?page=1&keywords={quote(mot)}"
-                              f"&sortBy=relevance&limit=50", timeout=20,
-                       headers={**UA, "Accept": "application/json"}, follow_redirects=True)
-        if _ats_ko(kind, cle, r): return []
+        r = _get_borne(
+            httpx,
+            f"https://{cle}/api/jobs?page=1&keywords={quote(mot)}&sortBy=relevance&limit=50",
+            timeout=20,
+            headers={**UA, "Accept": "application/json"},
+            follow_redirects=True,
+        )
+        if _ats_ko(kind, cle, r):
+            return []
         res = []
         for j in (r.json() or {}).get("jobs") or []:
             d = j.get("data") or {}
-            if not d.get("slug"): continue
-            res.append((d.get("title", ""), f"https://{cle}/jobs/{d['slug']}?lang=en-us",
-                        d.get("location_name") or d.get("country") or "", "",
-                        _strip_html(d.get("description") or "")))
+            if not d.get("slug"):
+                continue
+            res.append(
+                (
+                    d.get("title", ""),
+                    f"https://{cle}/jobs/{d['slug']}?lang=en-us",
+                    d.get("location_name") or d.get("country") or "",
+                    "",
+                    _strip_html(d.get("description") or ""),
+                )
+            )
         return res
     if kind == "talentbrew":
         # Radancy TalentBrew : la page de recherche (mot dans le chemin) est
         # rendue cote serveur. Moody's, ING (2026-10-08). cle = « hote/langue|org ».
         base, org = cle.split("|")
-        r = _get_borne(httpx, f"https://{base}/search-jobs/{quote(mot)}/{org}/1",
-                       timeout=20, headers=UA, follow_redirects=True)
-        if _ats_ko(kind, base, r): return []
+        r = _get_borne(
+            httpx,
+            f"https://{base}/search-jobs/{quote(mot)}/{org}/1",
+            timeout=20,
+            headers=UA,
+            follow_redirects=True,
+        )
+        if _ats_ko(kind, base, r):
+            return []
         hote = base.split("/")[0]
         res, vus = [], set()
         for m in _RX_TB_LIEN.finditer(r.text):
-            if m.group(1) in vus: continue
+            if m.group(1) in vus:
+                continue
             vus.add(m.group(1))
             l = _RX_TB_LIEU.search(r.text, m.end(), m.end() + 1500)
-            res.append((html.unescape(m.group(2).strip()), f"https://{hote}{m.group(1)}",
-                        html.unescape(l.group(1).strip()) if l else "", "", ""))
+            res.append(
+                (
+                    html.unescape(m.group(2).strip()),
+                    f"https://{hote}{m.group(1)}",
+                    html.unescape(l.group(1).strip()) if l else "",
+                    "",
+                    "",
+                )
+            )
         return res
     if kind == "avature":
         # Page de recherche rendue cote serveur, 50 cartes par page.
-        r = _get_borne(httpx, f"https://{cle}/SearchJobs/?listFilterMode=1&jobRecordsPerPage=50"
-                              f"&search={quote(mot)}", timeout=20, headers=UA, follow_redirects=True)
-        if _ats_ko(kind, cle, r): return []
+        r = _get_borne(
+            httpx,
+            f"https://{cle}/SearchJobs/?listFilterMode=1&jobRecordsPerPage=50&search={quote(mot)}",
+            timeout=20,
+            headers=UA,
+            follow_redirects=True,
+        )
+        if _ats_ko(kind, cle, r):
+            return []
         res = []
         for carte in r.text.split('class="article article--result"')[1:]:
             m = _RX_AV_TITRE.search(carte)
-            if not m: continue
+            if not m:
+                continue
             pays = _RX_AV_PAYS.search(carte)
             d = _RX_AV_DATE.search(carte)
-            res.append((html.unescape(m.group(2).strip()), m.group(1),
-                        html.unescape(pays.group(1).strip()) if pays else "",
-                        f"{d.group(3)}-{d.group(2)}-{d.group(1)}" if d else "", ""))
+            res.append(
+                (
+                    html.unescape(m.group(2).strip()),
+                    m.group(1),
+                    html.unescape(pays.group(1).strip()) if pays else "",
+                    f"{d.group(3)}-{d.group(2)}-{d.group(1)}" if d else "",
+                    "",
+                )
+            )
         return res
     if kind == "csod":
         # Cornerstone : la page publique delivre a tout visiteur un jeton
         # anonyme, que son propre script envoie a l'API de recherche.
         hote, site = cle.split("|")
         tenant = hote.split(".")[0]
-        page = _get_borne(httpx, f"https://{hote}/ux/ats/careersite/{site}/home?c={tenant}",
-                          timeout=20, headers=UA)
-        if _ats_ko(kind, hote, page): return []
+        page = _get_borne(
+            httpx,
+            f"https://{hote}/ux/ats/careersite/{site}/home?c={tenant}",
+            timeout=20,
+            headers=UA,
+        )
+        if _ats_ko(kind, hote, page):
+            return []
         m = _RX_CSOD_CTX.search(page.text)
         ctx = json.loads(m.group(1)) if m else {}
         api = ((ctx.get("endpoints") or {}).get("cloud") or "").rstrip("/")
-        if not ctx.get("token") or not api: return []
-        r = _post_borne(httpx, f"{api}/rec-job-search/external/jobs", timeout=20,
-                        headers={**UA, "Authorization": "Bearer " + ctx["token"],
-                                 "Content-Type": "application/json"},
-                        json={"careerSiteId": int(site), "careerSitePageId": int(site),
-                              "pageNumber": 1, "pageSize": 50, "cultureId": 1,
-                              "searchText": mot, "cultureName": "en-US", "states": [],
-                              "countryCodes": [], "cities": [], "placeID": "", "radius": None,
-                              "postingsWithinDays": None, "customFieldCheckboxKeys": [],
-                              "customFieldDropdowns": [], "customFieldRadios": []})
-        if _ats_ko(kind, hote, r): return []
+        if not ctx.get("token") or not api:
+            return []
+        r = _post_borne(
+            httpx,
+            f"{api}/rec-job-search/external/jobs",
+            timeout=20,
+            headers={
+                **UA,
+                "Authorization": "Bearer " + ctx["token"],
+                "Content-Type": "application/json",
+            },
+            json={
+                "careerSiteId": int(site),
+                "careerSitePageId": int(site),
+                "pageNumber": 1,
+                "pageSize": 50,
+                "cultureId": 1,
+                "searchText": mot,
+                "cultureName": "en-US",
+                "states": [],
+                "countryCodes": [],
+                "cities": [],
+                "placeID": "",
+                "radius": None,
+                "postingsWithinDays": None,
+                "customFieldCheckboxKeys": [],
+                "customFieldDropdowns": [],
+                "customFieldRadios": [],
+            },
+        )
+        if _ats_ko(kind, hote, r):
+            return []
         res = []
         for j in ((r.json() or {}).get("data") or {}).get("requisitions") or []:
             loc = (j.get("locations") or [{}])[0]
             lieu = ", ".join(x for x in (loc.get("city"), loc.get("country")) if x)
-            res.append((j.get("displayJobTitle", ""),
-                        f"https://{hote}/ux/ats/careersite/{site}/home/requisition/"
-                        f"{j.get('requisitionId', '')}?c={tenant}",
-                        lieu, "", j.get("externalDescription") or ""))
+            res.append(
+                (
+                    j.get("displayJobTitle", ""),
+                    f"https://{hote}/ux/ats/careersite/{site}/home/requisition/"
+                    f"{j.get('requisitionId', '')}?c={tenant}",
+                    lieu,
+                    "",
+                    j.get("externalDescription") or "",
+                )
+            )
         return res
     if kind == "oracle":
         hote, site = cle.split("|")
-        r = _get_borne(httpx, f"https://{hote}/hcmRestApi/resources/latest/recruitingCEJobRequisitions"
-                              f"?onlyData=true&expand=requisitionList&finder=findReqs;siteNumber={site},"
-                              f"limit=50,keyword={quote(mot)}", timeout=20, headers=UA)
-        if _ats_ko(kind, hote, r): return []
+        r = _get_borne(
+            httpx,
+            f"https://{hote}/hcmRestApi/resources/latest/recruitingCEJobRequisitions"
+            f"?onlyData=true&expand=requisitionList&finder=findReqs;siteNumber={site},"
+            f"limit=50,keyword={quote(mot)}",
+            timeout=20,
+            headers=UA,
+        )
+        if _ats_ko(kind, hote, r):
+            return []
         items = r.json().get("items") or [{}]
-        return [(j.get("Title", ""),
-                 f"https://{hote}/hcmUI/CandidateExperience/en/sites/{site}/job/{j.get('Id', '')}",
-                 j.get("PrimaryLocation", ""), j.get("PostedDate", ""), j.get("ShortDescriptionStr") or "")
-                for j in items[0].get("requisitionList") or [] if j.get("Id")]
+        return [
+            (
+                j.get("Title", ""),
+                f"https://{hote}/hcmUI/CandidateExperience/en/sites/{site}/job/{j.get('Id', '')}",
+                j.get("PrimaryLocation", ""),
+                j.get("PostedDate", ""),
+                j.get("ShortDescriptionStr") or "",
+            )
+            for j in items[0].get("requisitionList") or []
+            if j.get("Id")
+        ]
     return []
 
 
@@ -944,8 +1380,16 @@ def _cherche_autre(httpx, kind, cle, mot):
 # sont la. Recherche plein texte large (22 409 resultats pour « esg »), triee
 # par pertinence : deux pages par mot suffisent, title_ok fait le reste.
 CSP = "https://choisirleservicepublic.gouv.fr"
-CSP_MOTS = ["esg", "finance durable", "analyste financier", "finance climat", "analyste investissement",
-            "risques financiers", "taxonomie", "extra-financier"]
+CSP_MOTS = [
+    "esg",
+    "finance durable",
+    "analyste financier",
+    "finance climat",
+    "analyste investissement",
+    "risques financiers",
+    "taxonomie",
+    "extra-financier",
+]
 # Mesure du 2026-10-08 : 178 offres passent title_ok, dont 36 communes et 31
 # intercommunalites. On ne garde que les employeurs financiers publics, ou un
 # intitule franchement ESG / finance durable quel que soit l'employeur.
@@ -955,39 +1399,63 @@ _RX_CSP_EMPLOYEUR = re.compile(
     r"bpifrance|tr[ée]sor|\bADEME\b|banque des territoires|cour des comptes|"
     r"\bIGF\b|inspection g[ée]n[ée]rale des finances|\bDGFIP\b|finances publiques|"
     r"[ée]conomie,? des finances|\bFRR\b|fonds de r[ée]serve|\bCNP\b|"
-    r"agence des participations|\bAPE\b|\bIEDOM\b|\bIEOM\b", re.I)
+    r"agence des participations|\bAPE\b|\bIEDOM\b|\bIEOM\b",
+    re.I,
+)
 _RX_CSP_INTITULE = re.compile(
     # Pas « climat » seul : plans climat territoriaux, et meme « climat scolaire ».
     r"\bESG\b|\bRSE\b|finance durable|extra-?financ|taxonomie|\bISR\b|"
-    r"analyste financ|analyste investissement|risques? financ|finance climat", re.I)
-_RX_CSP_TITRE = re.compile(r'<h3 class="fr-card__title">\s*<a\s+href="([^"]+)"[^>]*>\s*([^<]+?)\s*</a>')
+    r"analyste financ|analyste investissement|risques? financ|finance climat",
+    re.I,
+)
+_RX_CSP_TITRE = re.compile(
+    r'<h3 class="fr-card__title">\s*<a\s+href="([^"]+)"[^>]*>\s*([^<]+?)\s*</a>'
+)
 _RX_CSP_CHAMP = re.compile(r'<span class="sr-only">([^<]+?) : </span>\s*(.*?)\s*</li>', re.S)
 
 
 def fetch_service_public():
     import httpx
+
     out, vus = [], set()
     try:
         for mot in CSP_MOTS:
             for page in (1, 2):
-                url = f"{CSP}/nos-offres/filtres/mot-cles/{quote(mot)}/" + (f"page/{page}/" if page > 1 else "")
+                url = f"{CSP}/nos-offres/filtres/mot-cles/{quote(mot)}/" + (
+                    f"page/{page}/" if page > 1 else ""
+                )
                 r = _get_borne(httpx, url, timeout=20, headers=UA, follow_redirects=True)
-                if _ats_ko("service_public", mot, r): break
+                if _ats_ko("service_public", mot, r):
+                    break
                 # Une carte contient ses propres <li> : on decoupe sur son
                 # ouverture plutot que de chercher sa fermeture.
                 for carte in r.text.split('<li class="fr-col-12 item">')[1:]:
                     m = _RX_CSP_TITRE.search(carte)
-                    if not m or m.group(1) in vus: continue
+                    if not m or m.group(1) in vus:
+                        continue
                     vus.add(m.group(1))
                     ch = {k.strip(): _texte_brut(v) for k, v in _RX_CSP_CHAMP.findall(carte)}
-                    out.append(_mk(html.unescape(m.group(2)), m.group(1),
-                                   ch.get("Employeur") or "Fonction publique",
-                                   ch.get("Localisation", ""), "", "service_public"))
+                    out.append(
+                        _mk(
+                            html.unescape(m.group(2)),
+                            m.group(1),
+                            ch.get("Employeur") or "Fonction publique",
+                            ch.get("Localisation", ""),
+                            "",
+                            "service_public",
+                        )
+                    )
                 time.sleep(WORKDAY_PAUSE)
     except Exception as e:
         INCIDENTS["service_public"][type(e).__name__] += 1
-    return [o for o in out if o["titre"] and o["url"] and title_ok(o["titre"])
-            and (_RX_CSP_EMPLOYEUR.search(o["entreprise"]) or _RX_CSP_INTITULE.search(o["titre"]))]
+    return [
+        o
+        for o in out
+        if o["titre"]
+        and o["url"]
+        and title_ok(o["titre"])
+        and (_RX_CSP_EMPLOYEUR.search(o["entreprise"]) or _RX_CSP_INTITULE.search(o["titre"]))
+    ]
 
 
 # Impactpool : agregateur des organisations internationales (ONU, OCDE, BEI,
@@ -1004,22 +1472,40 @@ IMPACTPOOL_MOTS = ["sustainable finance", "ESG", "climate finance"]
 IMPACTPOOL_PAUSE = 15
 _RX_IP_CARTE = re.compile(
     r"<div class='job'>.*?<a[^>]*href=\"(/jobs/\d+)\".*?<h3[^>]*>\s*([^<]+?)\s*</h3>"
-    r".*?type='bodyEmphasis'>\s*([^<]+?)\s*<.*?type='bodyEmphasis'>([^<]*)</div>", re.S)
+    r".*?type='bodyEmphasis'>\s*([^<]+?)\s*<.*?type='bodyEmphasis'>([^<]*)</div>",
+    re.S,
+)
 
 
 def fetch_impactpool():
     import httpx
+
     out, vus = [], set()
     try:
         for mot in IMPACTPOOL_MOTS:
-            r = _get_borne(httpx, f"{IMPACTPOOL}/search?q={quote(mot)}", timeout=20, headers=UA,
-                           follow_redirects=True)
-            if _ats_ko("impactpool", mot, r): break          # refus : on s'arrete
+            r = _get_borne(
+                httpx,
+                f"{IMPACTPOOL}/search?q={quote(mot)}",
+                timeout=20,
+                headers=UA,
+                follow_redirects=True,
+            )
+            if _ats_ko("impactpool", mot, r):
+                break  # refus : on s'arrete
             for chemin, titre, org, lieu in _RX_IP_CARTE.findall(r.text):
-                if chemin in vus: continue
+                if chemin in vus:
+                    continue
                 vus.add(chemin)
-                out.append(_mk(html.unescape(titre), IMPACTPOOL + chemin, html.unescape(org),
-                               html.unescape(lieu.strip()), "", "impactpool"))
+                out.append(
+                    _mk(
+                        html.unescape(titre),
+                        IMPACTPOOL + chemin,
+                        html.unescape(org),
+                        html.unescape(lieu.strip()),
+                        "",
+                        "impactpool",
+                    )
+                )
             time.sleep(IMPACTPOOL_PAUSE)
     except Exception as e:
         INCIDENTS["impactpool"][type(e).__name__] += 1
@@ -1062,92 +1548,108 @@ def scan_autres():
 # D'ou la strategie : quelques mots-cles, peu de pages chacun, union et dedup.
 WORKDAY_FLUX = [
     # (tenant, host, site, nom lisible)
-    ("eiffage",      "wd3",   "Eiffage_Careers",       "Eiffage"),
-    ("ardian",       "wd103", "ArdianCareers",         "Ardian"),
-    ("lombardodier", "wd3",   "Lombard_Odier_Careers", "Lombard Odier"),
+    ("eiffage", "wd3", "Eiffage_Careers", "Eiffage"),
+    ("ardian", "wd103", "ArdianCareers", "Ardian"),
+    ("lombardodier", "wd3", "Lombard_Odier_Careers", "Lombard Odier"),
     # PwC, tous pays dont la France (Neuilly) : 3897 offres experimentees et
     # 1359 campus (2026-10-07). Les Big 4 n'arrivaient que par LinkedIn ; le
     # nom de site ne suit aucune forme que site_final sait deviner.
-    ("pwc",          "wd3",   "Global_Experienced_Careers", "PwC"),
-    ("pwc",          "wd3",   "Global_Campus_Careers",      "PwC"),
+    ("pwc", "wd3", "Global_Experienced_Careers", "PwC"),
+    ("pwc", "wd3", "Global_Campus_Careers", "PwC"),
     # Sonde des cabinets du 2026-10-08 (site_final.flux_workday, identite
     # verifiee sur la vitrine). Environ 70 s par flux, lus 4 a la fois
     # (scan_workday). Les flux surtout americains (RSM, Crowe, Vanguard, State
     # Street...) restent a site_final.
-    ("erm",          "wd3",   "erm_Careers",                "ERM"),
-    ("juliusbaer",   "wd3",   "External",                   "Julius Baer"),
-    ("robeco",       "wd3",   "robecoExternalCareers",      "Robeco"),
-    ("morningstar",  "wd5",   "morningstar",                "Morningstar"),
-    ("lseg",         "wd3",   "Careers",                    "LSEG"),
-    ("fticonsulting", "wd108", "fticonsultingCareers",      "FTI Consulting"),
-    ("alantra",      "wd3",   "alantra",                    "Alantra"),
-    ("pjtpartners",  "wd1",   "Careers",                    "PJT Partners"),
-    ("santander",    "wd3",   "santanderCareers",           "Santander"),
-    ("rabobank",     "wd3",   "Jobs",                       "Rabobank"),
-    ("accenture",    "wd103", "accentureCareers",           "Accenture"),
+    ("erm", "wd3", "erm_Careers", "ERM"),
+    ("juliusbaer", "wd3", "External", "Julius Baer"),
+    ("robeco", "wd3", "robecoExternalCareers", "Robeco"),
+    ("morningstar", "wd5", "morningstar", "Morningstar"),
+    ("lseg", "wd3", "Careers", "LSEG"),
+    ("fticonsulting", "wd108", "fticonsultingCareers", "FTI Consulting"),
+    ("alantra", "wd3", "alantra", "Alantra"),
+    ("pjtpartners", "wd1", "Careers", "PJT Partners"),
+    ("santander", "wd3", "santanderCareers", "Santander"),
+    ("rabobank", "wd3", "Jobs", "Rabobank"),
+    ("accenture", "wd103", "accentureCareers", "Accenture"),
     # Sites dont le nom ne se devine pas : testes un a un le 2026-10-08.
     # MMC = Marsh McLennan, donc aussi Oliver Wyman et Mercer.
-    ("blackrock",    "wd1",   "BlackRock_Professional",     "BlackRock"),
-    ("db",           "wd3",   "DBWebsite",                  "Deutsche Bank"),
-    ("barclays",     "wd3",   "External_Career_Site_Barclays", "Barclays"),
-    ("mmc",          "wd1",   "MMC",                        "Marsh McLennan"),
-    ("spgi",         "wd5",   "SPGI_Careers",               "S&P Global"),
-    ("abrdn",        "wd3",   "abrdn",                      "abrdn"),
-    ("citi",         "wd5",   "2",                          "Citi"),
-    ("invesco",      "wd1",   "IVZ",                        "Invesco"),
-    ("pimco",        "wd1",   "pimco-careers",              "PIMCO"),
-    ("ntrs",         "wd1",   "northerntrust",              "Northern Trust"),
+    ("blackrock", "wd1", "BlackRock_Professional", "BlackRock"),
+    ("db", "wd3", "DBWebsite", "Deutsche Bank"),
+    ("barclays", "wd3", "External_Career_Site_Barclays", "Barclays"),
+    ("mmc", "wd1", "MMC", "Marsh McLennan"),
+    ("spgi", "wd5", "SPGI_Careers", "S&P Global"),
+    ("abrdn", "wd3", "abrdn", "abrdn"),
+    ("citi", "wd5", "2", "Citi"),
+    ("invesco", "wd1", "IVZ", "Invesco"),
+    ("pimco", "wd1", "pimco-careers", "PIMCO"),
+    ("ntrs", "wd1", "northerntrust", "Northern Trust"),
     # Trouves par le lien « Carrieres » de leur site (2026-10-08).
-    ("issgovernance", "wd1",  "ISScareers",                 "ISS"),
-    ("rothschildandco", "wd3", "Rothschildandco_Lateral",   "Rothschild & Co"),
-    ("vontobel",     "wd3",   "Vontobel_External_Career",   "Vontobel"),
-    ("cip",          "wd103", "CIP_Careers",                "Copenhagen Infrastructure Partners"),
-    ("aviva",        "wd1",   "Aviva_Investors_External",   "Aviva Investors"),
-    ("mgpru",        "wd3",   "mandgprudential",            "M&G"),
+    ("issgovernance", "wd1", "ISScareers", "ISS"),
+    ("rothschildandco", "wd3", "Rothschildandco_Lateral", "Rothschild & Co"),
+    ("vontobel", "wd3", "Vontobel_External_Career", "Vontobel"),
+    ("cip", "wd103", "CIP_Careers", "Copenhagen Infrastructure Partners"),
+    ("aviva", "wd1", "Aviva_Investors_External", "Aviva Investors"),
+    ("mgpru", "wd3", "mandgprudential", "M&G"),
     # Deloitte France : lien de sa page « rejoindre », trouve par recherche web
     # « Deloitte carriere » — la page d'accueil ne le donnait pas (556 offres).
-    ("fina",         "wd103", "DeloitteRecrute",            "Deloitte"),
+    ("fina", "wd103", "DeloitteRecrute", "Deloitte"),
     # International, sonde du 2026-10-08 (lien « Careers » de ~130 sites) :
     # Asie, Canada. Les flux surtout americains restent a site_final.
-    ("dbs",          "wd3",   "DBS_Careers",                "DBS"),
-    ("aia",          "wd3",   "External",                   "AIA"),
-    ("prudential",   "wd3",   "prudential",                 "Prudential / Eastspring"),
-    ("hkex",         "wd3",   "HKEXCareerPage",             "HKEX"),
-    ("cdpq",         "wd10",  "CDPQ",                       "CDPQ"),
-    ("otppb",        "wd3",   "OntarioTeachers_Careers",    "Ontario Teachers' Pension Plan"),
-    ("investpsp",    "wd3",   "PSP_Careers",                "PSP Investments"),
-    ("bci",          "wd10",  "BCI_Careers",                "BCI"),
-    ("td",           "wd3",   "TD_Bank_Careers",            "TD"),
-    ("desjardins",   "wd10",  "Desjardins",                 "Desjardins"),
+    ("dbs", "wd3", "DBS_Careers", "DBS"),
+    ("aia", "wd3", "External", "AIA"),
+    ("prudential", "wd3", "prudential", "Prudential / Eastspring"),
+    ("hkex", "wd3", "HKEXCareerPage", "HKEX"),
+    ("cdpq", "wd10", "CDPQ", "CDPQ"),
+    ("otppb", "wd3", "OntarioTeachers_Careers", "Ontario Teachers' Pension Plan"),
+    ("investpsp", "wd3", "PSP_Careers", "PSP Investments"),
+    ("bci", "wd10", "BCI_Careers", "BCI"),
+    ("td", "wd3", "TD_Bank_Careers", "TD"),
+    ("desjardins", "wd10", "Desjardins", "Desjardins"),
     # Employeurs a fit >= 8 qui n'arrivaient que par LinkedIn (2026-10-08).
-    ("onepoint",     "wd3",   "OnepointFR",                 "Onepoint"),
-    ("bdf",          "wd103", "recrutement-banque-de-France", "Banque de France"),
-    ("ayvens",       "wd3",   "AyvensCareers",              "Ayvens"),
-    ("airliquidehr", "wd3",   "AirLiquideExternalCareer",   "Air Liquide"),
+    ("onepoint", "wd3", "OnepointFR", "Onepoint"),
+    ("bdf", "wd103", "recrutement-banque-de-France", "Banque de France"),
+    ("ayvens", "wd3", "AyvensCareers", "Ayvens"),
+    ("airliquidehr", "wd3", "AirLiquideExternalCareer", "Air Liquide"),
     # Vitrine en 403, flux Workday public trouve par le nom (2026-10-08).
-    ("brookfield",   "wd5",   "brookfield",                 "Brookfield"),
+    ("brookfield", "wd5", "brookfield", "Brookfield"),
     # Portails « JS seul » : le site vitrine renvoie a ces flux (2026-10-08)
-    ("ocbc",         "wd102", "External",                   "OCBC"),
-    ("bis",          "wd3",   "External",                   "BRI (BIS)"),
+    ("ocbc", "wd102", "External", "OCBC"),
+    ("bis", "wd3", "External", "BRI (BIS)"),
 ]
 # Court a dessein. Les 55 mots-cles de KEYWORDS viseraient LinkedIn, pas un flux
 # d'entreprise ou l'on cherche un METIER dans un catalogue deja restreint.
-WORKDAY_MOTS = ["ESG", "durable", "sustainability", "finance", "analyste",
-                "analyst", "climat", "risque"]
-WORKDAY_PAGES = 2          # pages de 20 par mot-cle
+WORKDAY_MOTS = [
+    "ESG",
+    "durable",
+    "sustainability",
+    "finance",
+    "analyste",
+    "analyst",
+    "climat",
+    "risque",
+]
+WORKDAY_PAGES = 2  # pages de 20 par mot-cle
 WORKDAY_PAUSE = 0.6
-WORKDAY_DETAILS = 25       # fiches detaillees par flux, au plus
-WORKDAY_PARALLELE = 6      # flux lus en meme temps (un tenant = un site) ; 42 flux au 2026-10-08
+WORKDAY_DETAILS = 25  # fiches detaillees par flux, au plus
+WORKDAY_PARALLELE = 6  # flux lus en meme temps (un tenant = un site) ; 42 flux au 2026-10-08
 
 
 def _workday_detail(httpx, base, tenant, site, chemin):
     """La fiche d'une offre : description, date reelle, pays, temps de travail."""
     try:
-        r = _post_borne(httpx, f"{base}/wday/cxs/{tenant}/{site}{chemin}",
-                       timeout=15, headers={**UA, "Accept": "application/json"})
+        r = _post_borne(
+            httpx,
+            f"{base}/wday/cxs/{tenant}/{site}{chemin}",
+            timeout=15,
+            headers={**UA, "Accept": "application/json"},
+        )
         if r.status_code != 200:
-            r = _get_borne(httpx, f"{base}/wday/cxs/{tenant}/{site}{chemin}",
-                          timeout=15, headers={**UA, "Accept": "application/json"})
+            r = _get_borne(
+                httpx,
+                f"{base}/wday/cxs/{tenant}/{site}{chemin}",
+                timeout=15,
+                headers={**UA, "Accept": "application/json"},
+            )
         if r.status_code != 200:
             return {}
         ji = (r.json() or {}).get("jobPostingInfo") or {}
@@ -1168,17 +1670,23 @@ def _workday_detail(httpx, base, tenant, site, chemin):
 def fetch_workday(tenant, host, site, nom):
     """Les offres d'un flux Workday qui passent title_ok, descriptions comprises."""
     import httpx
+
     base = f"https://{tenant}.{host}.myworkdayjobs.com"
     vus, retenues = set(), []
     try:
         for mot in WORKDAY_MOTS:
             for page in range(WORKDAY_PAGES):
-                r = _post_borne(httpx, 
+                r = _post_borne(
+                    httpx,
                     f"{base}/wday/cxs/{tenant}/{site}/jobs",
-                    json={"appliedFacets": {}, "limit": 20,
-                          "offset": page * 20, "searchText": mot},
-                    timeout=20, headers={**UA, "Accept": "application/json",
-                                         "Content-Type": "application/json"})
+                    json={"appliedFacets": {}, "limit": 20, "offset": page * 20, "searchText": mot},
+                    timeout=20,
+                    headers={
+                        **UA,
+                        "Accept": "application/json",
+                        "Content-Type": "application/json",
+                    },
+                )
                 if r.status_code != 200:
                     INCIDENTS[f"workday:{tenant}"][f"HTTP {r.status_code}"] += 1
                     break
@@ -1203,15 +1711,21 @@ def fetch_workday(tenant, host, site, nom):
         # Le PAYS est servi en clair par l'API. C'est plus sur que de deviner
         # depuis un nom de ville, et en_france() sait lire « France ».
         lieu_final = ", ".join(x for x in (d.get("location") or lieu, d.get("pays")) if x)
-        o = _mk(titre, f"{base}/{site}{chemin}", nom, lieu_final,
-                d.get("date", ""), f"workday:{tenant}", d.get("description", ""))
+        o = _mk(
+            titre,
+            f"{base}/{site}{chemin}",
+            nom,
+            lieu_final,
+            d.get("date", ""),
+            f"workday:{tenant}",
+            d.get("description", ""),
+        )
         out.append(o)
         time.sleep(WORKDAY_PAUSE)
     # Les offres sans fiche detaillee entrent quand meme : le titre et le lien
     # suffisent a les faire exister, l'auto-enrichissement fera le reste.
     for titre, chemin, lieu in retenues[WORKDAY_DETAILS:]:
-        out.append(_mk(titre, f"{base}/{site}{chemin}", nom, lieu, "",
-                       f"workday:{tenant}"))
+        out.append(_mk(titre, f"{base}/{site}{chemin}", nom, lieu, "", f"workday:{tenant}"))
     return [o for o in out if o["titre"] and o["url"]]
 
 
@@ -1221,6 +1735,7 @@ def scan_workday():
     vite qu'avant. En serie, 27 flux a ~70 s depassaient le plafond de 30 min
     de la passe 1a (2026-10-08)."""
     import concurrent.futures as cf
+
     offres = []
     with cf.ThreadPoolExecutor(max_workers=WORKDAY_PARALLELE) as ex:
         futs = [(f[0], ex.submit(fetch_workday, *f)) for f in WORKDAY_FLUX]
@@ -1234,9 +1749,11 @@ def scan_workday():
 # ═══════════════ 2. LinkedIn recherche PUBLIQUE (guest, httpx, paginé) ═══════════════
 _LI_CARD = re.compile(
     r'<a[^>]+class="[^"]*base-card__full-link[^"]*"[^>]+href="([^"]+)"[^>]*>.*?'
-    r'<span class="sr-only">\s*(.*?)\s*</span>', re.S)
-_LI_COMP = re.compile(r'base-search-card__subtitle[^>]*>.*?>([^<]+)<', re.S)
-_LI_LOC = re.compile(r'job-search-card__location[^>]*>([^<]+)<', re.S)
+    r'<span class="sr-only">\s*(.*?)\s*</span>',
+    re.S,
+)
+_LI_COMP = re.compile(r"base-search-card__subtitle[^>]*>.*?>([^<]+)<", re.S)
+_LI_LOC = re.compile(r"job-search-card__location[^>]*>([^<]+)<", re.S)
 
 
 def linkedin_guest_search(keyword, pages=2, days=7, lieu="France"):
@@ -1248,13 +1765,16 @@ def linkedin_guest_search(keyword, pages=2, days=7, lieu="France"):
     DEMANDAIT que des offres francaises. Un filtre en aval ne peut pas rattraper
     ce qu'une requete en amont n'a jamais demande."""
     import httpx, html as _html
+
     out = []
     for p in range(pages):
         if _LI["stop"]:
             return out
-        url = ("https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
-               f"?keywords={quote(keyword)}&location={quote(lieu)}"
-               f"&f_TPR=r{days*86400}&start={p*25}")
+        url = (
+            "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
+            f"?keywords={quote(keyword)}&location={quote(lieu)}"
+            f"&f_TPR=r{days * 86400}&start={p * 25}"
+        )
         try:
             r = _get_borne(httpx, url, timeout=15, headers=UA)
             # Une limite de debit s'ATTEND : meme page, apres la pause.
@@ -1288,14 +1808,20 @@ def linkedin_guest_search(keyword, pages=2, days=7, lieu="France"):
                 loc = _LI_LOC.search(b)
                 titre = _html.unescape(mt.group(1)).strip()
                 if title_ok(titre):
-                    out.append(_mk(titre, mu.group(1),
-                                   _html.unescape(comp.group(1)).strip() if comp else "LinkedIn",
-                                   _html.unescape(loc.group(1)).strip() if loc else "",
-                                   "", f"linkedin-search:{keyword}"))
+                    out.append(
+                        _mk(
+                            titre,
+                            mu.group(1),
+                            _html.unescape(comp.group(1)).strip() if comp else "LinkedIn",
+                            _html.unescape(loc.group(1)).strip() if loc else "",
+                            "",
+                            f"linkedin-search:{keyword}",
+                        )
+                    )
         except Exception as e:
             INCIDENTS["linkedin_reseau"][type(e).__name__] += 1
             break
-        _dormir(LI_PAUSE)   # poli : espace les pages
+        _dormir(LI_PAUSE)  # poli : espace les pages
     return out
 
 
@@ -1317,8 +1843,8 @@ LI_PAUSE = 3.0
 LI_ATTENTES = (60, 120, 240)
 LI_DUREE_MAX = 2700
 _LI = {"stop": None, "attendu": 0.0, "suite_429": 0, "debut": 0.0}
-_dormir = time.sleep          # les tests le remplacent
-_horloge = time.monotonic     # idem
+_dormir = time.sleep  # les tests le remplacent
+_horloge = time.monotonic  # idem
 
 
 def _li_ecoule():
@@ -1391,8 +1917,10 @@ def scan_linkedin(pages=2, days=7, lieux=None):
         if len(profondeur) > 1:
             print(f"  ✓ linkedin {lieu} → {n_lieu} offres")
     if _LI["stop"] in ("429", "durée"):
-        print(f"  ⚠ linkedin : durée maximale atteinte ({_li_ecoule():.0f} s, dont "
-              f"{_LI['attendu']:.0f} s d'attente sur 429) — la suite à la prochaine collecte")
+        print(
+            f"  ⚠ linkedin : durée maximale atteinte ({_li_ecoule():.0f} s, dont "
+            f"{_LI['attendu']:.0f} s d'attente sur 429) — la suite à la prochaine collecte"
+        )
     elif _LI["stop"]:
         print(f"  ⚠ linkedin : refus HTTP {_LI['stop']}, collecte LinkedIn arrêtée")
     return offers
@@ -1418,8 +1946,7 @@ def _wtj_429(pg):
     """WTJ nous bride-t-il ? Lisible MEME quand la navigation a echoue : la page
     d'erreur porte « Too Many Requests » alors que robust_goto rend ok=False."""
     try:
-        return "too many requests" in pg.evaluate(
-            "document.body.innerText.slice(0,200)").lower()
+        return "too many requests" in pg.evaluate("document.body.innerText.slice(0,200)").lower()
     except Exception:
         return False
 
@@ -1428,8 +1955,8 @@ WTJ_SITEMAP = "https://www.welcometothejungle.com/sitemaps/index.xml.gz"
 # Mesure : le challenge CloudFront de WTJ tombe apres ~3 minutes (202, 202, 200
 # a 60 s d'intervalle). Attendre rapporte donc quelques fiches de plus par
 # passe ; s'arreter au premier 202 en rendait zero.
-WTJ_REPOS = 200            # secondes d'attente quand le mur tombe
-WTJ_PATIENCE = 2           # nombre maximum d'attentes par passe
+WTJ_REPOS = 200  # secondes d'attente quand le mur tombe
+WTJ_PATIENCE = 2  # nombre maximum d'attentes par passe
 # 2 et non plus 6 (2026-10-02) : six attentes de 200 s faisaient 20 min d'immobilite
 # dans une passe bornee a 60, pour un mur qui retombait aussitot la plupart du temps.
 
@@ -1443,6 +1970,7 @@ def _wtj_fiche(url, client):
     de SUCCES — le confondre avec une page vide ferait passer le mur pour une
     fiche sans description."""
     from wtj_desc import UA as _WUA, Bloque
+
     try:
         r = _get_borne(client, url, headers=_WUA, timeout=30)
     except Exception:
@@ -1452,7 +1980,8 @@ def _wtj_fiche(url, client):
     if r.status_code != 200:
         return None
     for bloc in re.findall(
-            r'<script type="application/ld\+json"[^>]*>(.*?)</script>', r.text, re.S):
+        r'<script type="application/ld\+json"[^>]*>(.*?)</script>', r.text, re.S
+    ):
         try:
             o = json.loads(bloc)
         except Exception:
@@ -1512,8 +2041,7 @@ def scan_wtj(pages=2):
         except Exception as e:
             print(f"  ~ WTJ : sitemap injoignable ({type(e).__name__})")
             return offers
-        fichiers = [l for l in re.findall(r"<loc>([^<]+)</loc>", idx)
-                    if "job-listings" in l]
+        fichiers = [l for l in re.findall(r"<loc>([^<]+)</loc>", idx) if "job-listings" in l]
         if not fichiers:
             print("  ~ WTJ : aucun sitemap d'offres dans l'index")
             return offers
@@ -1538,12 +2066,18 @@ def scan_wtj(pages=2):
         # On ne relit pas ce qui est deja en file : chaque fiche coute une
         # requete sur un debit tres limite.
         import queue_io
-        connues = {_norm_url(x.get("url")) for x in queue_io.charger(QUEUE, descriptions=False)
-                   if x.get("url")}
+
+        connues = {
+            _norm_url(x.get("url"))
+            for x in queue_io.charger(QUEUE, descriptions=False)
+            if x.get("url")
+        }
         neuves = [u for u in cibles if _norm_url(u) not in connues]
         plafond = max(1, pages) * 5
-        print(f"  WTJ : {len(cibles)} offres ESG au sitemap, {len(neuves)} nouvelles "
-              f"— {min(len(neuves), plafond)} lue(s) cette passe (le reste au prochain scan)")
+        print(
+            f"  WTJ : {len(cibles)} offres ESG au sitemap, {len(neuves)} nouvelles "
+            f"— {min(len(neuves), plafond)} lue(s) cette passe (le reste au prochain scan)"
+        )
 
         # PATIENCE. Le mur de WTJ n'est pas definitif : mesure a la seconde, il
         # tombe apres ~3 minutes. S'arreter au premier 202 rendait 0 offre a
@@ -1566,15 +2100,14 @@ def scan_wtj(pages=2):
                         print(f"  ~ {e} — arret WTJ apres {etat['attentes']} attente(s).")
                         return None
                     etat["attentes"] += 1
-                    print(f"  ~ {e} — pause {WTJ_REPOS} s "
-                          f"({etat['attentes']}/{WTJ_PATIENCE})…")
+                    print(f"  ~ {e} — pause {WTJ_REPOS} s ({etat['attentes']}/{WTJ_PATIENCE})…")
                     time.sleep(WTJ_REPOS)
 
         for u in neuves[:plafond]:
             jp = _fiche_patiente(u)
-            if jp is None:            # mur durable : on rend la main
+            if jp is None:  # mur durable : on rend la main
                 break
-            if not jp:                # fiche illisible : on passe a la suivante
+            if not jp:  # fiche illisible : on passe a la suivante
                 continue
             # UNE SEULE REQUETE PAR OFFRE. La description et l'intitule vivent
             # dans le MEME bloc ld+json : les chercher par deux appels separes
@@ -1590,8 +2123,9 @@ def scan_wtj(pages=2):
             if not en_france(lieu):
                 continue
             soc = (jp.get("hiringOrganization") or {}).get("name") or "Welcome to the Jungle"
-            offers.append(_mk(titre, u, soc, lieu, str(jp.get("datePosted") or "")[:10],
-                              "wtj-sitemap", d))
+            offers.append(
+                _mk(titre, u, soc, lieu, str(jp.get("datePosted") or "")[:10], "wtj-sitemap", d)
+            )
     print(f"  \u2713 Welcome to the Jungle \u2192 {len(offers)} offres (avec description)")
     return offers
 
@@ -1611,7 +2145,7 @@ def scan_wtj(pages=2):
 # Chaque fiche porte un <script type="application/ld+json"> de type JobPosting
 # avec intitule, societe, lieu, date et description complete (~10 000 car.).
 EFC_SITEMAP = "https://www.efinancialcareers.fr/sitemap-secure/latestjobs/xml"
-EFC_DELAI = 10          # crawl-delay annonce par robots.txt — ne pas baisser
+EFC_DELAI = 10  # crawl-delay annonce par robots.txt — ne pas baisser
 # LES AUTRES SITES DU MEME EDITEUR (verifie le 2026-09-24) : meme robots.txt,
 # meme sitemap declare, meme crawl-delay 10, meme ld+json. 48 000 offres de
 # plus, dont 93 intitules ESG absents de la file. Seul le .fr etait lu.
@@ -1620,8 +2154,14 @@ EFC_SITES = ("fr", "com", "co.uk", "de", "ch", "nl", "lu", "ie", "sg")
 
 def _efc_sitemap(site):
     return f"https://www.efinancialcareers.{site}/sitemap-secure/latestjobs/xml"
-EFC_UA = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                         "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")}
+
+
+EFC_UA = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+    )
+}
 
 # Les URL ont la forme /emploi-<Pays>-<Ville>-<Titre>.id<N>. La ville peut
 # contenir des tirets (« Levallois-Perret »), donc on ne cherche PAS a la
@@ -1642,13 +2182,17 @@ _RX_EFC_ESG = re.compile(
     r"\bESG\b|\bRSE\b|\bSFDR\b|\bCSRD\b|extra.?financi|durabilit"
     r"|d[ée]veloppement durable|sustainab|climat(?!isation)|carbone|taxonomie"
     r"|impact invest|finance verte|green finance|transition [ée]nerg"
-    r"|stewardship|responsible invest|net.zero|biodiversit", re.I)
+    r"|stewardship|responsible invest|net.zero|biodiversit",
+    re.I,
+)
 
 
 # Programmes jeunes diplomes.
 _RX_EFC_GRAD = re.compile(
     r"\bgraduate\b|jeune[s]? dipl|\bearly career\b|trainee program"
-    r"|young (?:graduate|talent)", re.I)
+    r"|young (?:graduate|talent)",
+    re.I,
+)
 # Le V.I.E se cherche SANS re.I, et c'est indispensable : « vie » insensible a
 # la casse fait entrer toute l'assurance vie, qui pese lourd sur un site
 # finance (« Gestionnaire Assurance Vie », « Middle office Assurance Vie »…).
@@ -1684,13 +2228,17 @@ _RX_EFC_METIER = re.compile(
     r"|gestion de portefeuille|g[eé]rant|risk|risque|cr[eé]dit|credit"
     r"|valoris|valuation|M&A|corporate finance|private equity"
     r"|\bESG\b|\bISR\b|\bRSE\b|extra.?financ|durab|climat(?!isation)|carbon"
-    r"|\bCSRD\b|\bSFDR\b|graduate|jeune dipl|junior|reporting", re.I)
+    r"|\bCSRD\b|\bSFDR\b|graduate|jeune dipl|junior|reporting",
+    re.I,
+)
 
 # Postes hors de portee d'un profil sorti d'ecole. Les ecarter AVANT de payer
 # 10 s de lecture : c'est le tri le moins cher qu'on puisse faire.
 _RX_EFC_SENIOR = re.compile(
     r"senior|directeur|director|head of|responsable|manager|principal"
-    r"|associate director|\bVP\b|expert|chef de", re.I)
+    r"|associate director|\bVP\b|expert|chef de",
+    re.I,
+)
 
 
 def _est_metier(titre):
@@ -1722,7 +2270,8 @@ def _efc_fiche(url, client):
     if r.status_code != 200:
         return None
     for bloc in re.findall(
-            r'<script type="application/ld\+json"[^>]*>(.*?)</script>', r.text, re.S):
+        r'<script type="application/ld\+json"[^>]*>(.*?)</script>', r.text, re.S
+    ):
         try:
             o = json.loads(bloc)
         except Exception:
@@ -1740,8 +2289,9 @@ def _efc_lieu(jp):
     if not isinstance(loc, dict):
         return ""
     ad = loc.get("address") or {}
-    return " ".join(str(ad.get(k) or "") for k in
-                    ("addressLocality", "addressRegion", "addressCountry")).strip()
+    return " ".join(
+        str(ad.get(k) or "") for k in ("addressLocality", "addressRegion", "addressCountry")
+    ).strip()
 
 
 def scan_efc(limit=40, filtre="esg", sites=("fr",)):
@@ -1760,6 +2310,7 @@ def scan_efc(limit=40, filtre="esg", sites=("fr",)):
                    bancaires generiques.
     """
     import httpx
+
     _EX = contrats_exclus()
     offers = []
     with httpx.Client(follow_redirects=True) as client:
@@ -1768,7 +2319,7 @@ def scan_efc(limit=40, filtre="esg", sites=("fr",)):
         toutes, ids = [], set()
         for i, site in enumerate(sites):
             if i:
-                time.sleep(EFC_DELAI)          # crawl-delay, sitemaps compris
+                time.sleep(EFC_DELAI)  # crawl-delay, sitemaps compris
             for url, approx in _efc_urls(client, site):
                 m = _RX_EFC_SLUG.search(url)
                 if m and m.group(2) in ids:
@@ -1796,6 +2347,7 @@ def scan_efc(limit=40, filtre="esg", sites=("fr",)):
         # passe repayait tout le temps de la premiere pour n'apporter que ce que
         # merge_into_queue aurait de toute facon deduplique.
         import queue_io
+
         connues = {_norm_url(x.get("url")) for x in queue_io.charger(QUEUE) if x.get("url")}
         neuves = [u for u in cibles if _norm_url(u) not in connues]
         deja = len(cibles) - len(neuves)
@@ -1811,12 +2363,14 @@ def scan_efc(limit=40, filtre="esg", sites=("fr",)):
                 if lst:
                     alterne.append(lst.pop(0))
         cibles = alterne[:limit]
-        print(f"  eFC : {len(toutes)} offres au sitemap → {len(cibles)} a lire "
-              f"({deja} deja en file) "
-              f"({EFC_DELAI} s entre chaque, {len(cibles) * EFC_DELAI // 60} min)")
+        print(
+            f"  eFC : {len(toutes)} offres au sitemap → {len(cibles)} a lire "
+            f"({deja} deja en file) "
+            f"({EFC_DELAI} s entre chaque, {len(cibles) * EFC_DELAI // 60} min)"
+        )
         for n, url in enumerate(cibles, 1):
             if n > 1:
-                time.sleep(EFC_DELAI)          # crawl-delay: 10
+                time.sleep(EFC_DELAI)  # crawl-delay: 10
             jp = _efc_fiche(url, client)
             if not jp:
                 continue
@@ -1835,8 +2389,17 @@ def scan_efc(limit=40, filtre="esg", sites=("fr",)):
             if not en_france(lieu):
                 continue
             soc = (jp.get("hiringOrganization") or {}).get("name") or "eFinancialCareers"
-            offers.append(_mk(titre, url, soc, lieu, str(jp.get("datePosted") or "")[:10],
-                              "efinancialcareers", _strip_html(str(jp.get("description") or ""))))
+            offers.append(
+                _mk(
+                    titre,
+                    url,
+                    soc,
+                    lieu,
+                    str(jp.get("datePosted") or "")[:10],
+                    "efinancialcareers",
+                    _strip_html(str(jp.get("description") or "")),
+                )
+            )
             if n % 10 == 0:
                 print(f"    … {n}/{len(cibles)} ({len(offers)} retenues)")
     print(f"  ✓ eFinancialCareers → {len(offers)} offres (avec description)")
@@ -1860,22 +2423,51 @@ def scan_efc(limit=40, filtre="esg", sites=("fr",)):
 # le filtre metier d'eFC (analyste, risque, ESG… et pas senior).
 EURES_URL = "https://europa.eu/eures/api/jv-searchengine/public/jv-search/search"
 EURES_FICHE = "https://europa.eu/eures/portal/jv-se/jv-details/{}?lang=en"
-EURES_DELAI = 10        # crawl-delay de europa.eu — ne pas baisser
+EURES_DELAI = 10  # crawl-delay de europa.eu — ne pas baisser
 EURES_MOTS = [
-    "ESG analyst", "sustainable finance", "sustainability analyst",
-    "climate risk analyst", "green bonds", "impact investing",
-    "responsible investment", "graduate programme sustainability",
+    "ESG analyst",
+    "sustainable finance",
+    "sustainability analyst",
+    "climate risk analyst",
+    "green bonds",
+    "impact investing",
+    "responsible investment",
+    "graduate programme sustainability",
 ]
 # Codes pays EURES -> nom anglais, que zones.py reconnait.
 _EURES_PAYS = {
-    "AT": "Austria", "BE": "Belgium", "BG": "Bulgaria", "HR": "Croatia",
-    "CY": "Cyprus", "CZ": "Czech Republic", "DK": "Denmark", "EE": "Estonia",
-    "FI": "Finland", "FR": "France", "DE": "Germany", "GR": "Greece",
-    "EL": "Greece", "HU": "Hungary", "IS": "Iceland", "IE": "Ireland",
-    "IT": "Italy", "LV": "Latvia", "LI": "Liechtenstein", "LT": "Lithuania",
-    "LU": "Luxembourg", "MT": "Malta", "NL": "Netherlands", "NO": "Norway",
-    "PL": "Poland", "PT": "Portugal", "RO": "Romania", "SK": "Slovakia",
-    "SI": "Slovenia", "ES": "Spain", "SE": "Sweden", "CH": "Switzerland",
+    "AT": "Austria",
+    "BE": "Belgium",
+    "BG": "Bulgaria",
+    "HR": "Croatia",
+    "CY": "Cyprus",
+    "CZ": "Czech Republic",
+    "DK": "Denmark",
+    "EE": "Estonia",
+    "FI": "Finland",
+    "FR": "France",
+    "DE": "Germany",
+    "GR": "Greece",
+    "EL": "Greece",
+    "HU": "Hungary",
+    "IS": "Iceland",
+    "IE": "Ireland",
+    "IT": "Italy",
+    "LV": "Latvia",
+    "LI": "Liechtenstein",
+    "LT": "Lithuania",
+    "LU": "Luxembourg",
+    "MT": "Malta",
+    "NL": "Netherlands",
+    "NO": "Norway",
+    "PL": "Poland",
+    "PT": "Portugal",
+    "RO": "Romania",
+    "SK": "Slovakia",
+    "SI": "Slovenia",
+    "ES": "Spain",
+    "SE": "Sweden",
+    "CH": "Switzerland",
 }
 # En allemand, « ESG » est aussi le verre de securite (Einscheiben-
 # Sicherheitsglas) : « Produktionsmitarbeiter ESG-Herstellung » remontait.
@@ -1887,21 +2479,38 @@ _RX_EURES_VERRE = re.compile(r"\bESG-?(?:fertigung|herstellung|glas)|einscheiben
 _RX_EURES_HORS = re.compile(
     r"procurement|einkauf|beschaffung|engineer|ingenieur|vertrieb|\bsales\b"
     r"|leiter|leitung|\blead\b|\bhse\b|\bqhse\b|athlete|bioeng|produktion"
-    r"|circular economy", re.I)
+    r"|circular economy",
+    re.I,
+)
 # Employeur masque par l'annonceur : on ne l'invente pas.
 _RX_EURES_ANONYME = re.compile(
     r"siehe beschreibung|confidential|non renseign|not specified|anonym|see description"
-    r"|voir (?:la )?description|^\W*$", re.I)
+    r"|voir (?:la )?description|^\W*$",
+    re.I,
+)
 
 
 def _eures_corps(mot, page, par_page):
-    return {"resultsPerPage": par_page, "page": page, "sortSearch": "BEST_MATCH",
-            "keywords": [{"keyword": mot, "specificSearchCode": "EVERYWHERE"}],
-            "publicationPeriod": "LAST_WEEK", "occupationUris": [], "skillUris": [],
-            "requiredExperienceCodes": [], "positionScheduleCodes": [], "sectorCodes": [],
-            "educationAndQualificationLevelCodes": [], "positionOfferingCodes": [],
-            "locationCodes": [], "euresFlagCodes": [], "otherBenefitsCodes": [],
-            "requiredLanguages": [], "minNumberPost": None, "sessionId": "jobhunter"}
+    return {
+        "resultsPerPage": par_page,
+        "page": page,
+        "sortSearch": "BEST_MATCH",
+        "keywords": [{"keyword": mot, "specificSearchCode": "EVERYWHERE"}],
+        "publicationPeriod": "LAST_WEEK",
+        "occupationUris": [],
+        "skillUris": [],
+        "requiredExperienceCodes": [],
+        "positionScheduleCodes": [],
+        "sectorCodes": [],
+        "educationAndQualificationLevelCodes": [],
+        "positionOfferingCodes": [],
+        "locationCodes": [],
+        "euresFlagCodes": [],
+        "otherBenefitsCodes": [],
+        "requiredLanguages": [],
+        "minNumberPost": None,
+        "sessionId": "jobhunter",
+    }
 
 
 def _eures_offre(j, _EX):
@@ -1931,26 +2540,42 @@ def _eures_offre(j, _EX):
         date = time.strftime("%Y-%m-%d", time.gmtime(int(j.get("creationDate")) / 1000))
     except Exception:
         pass
-    return _mk(titre, EURES_FICHE.format(j.get("id")), soc, lieu, date, "eures",
-               _strip_html(str(j.get("description") or "")))
+    return _mk(
+        titre,
+        EURES_FICHE.format(j.get("id")),
+        soc,
+        lieu,
+        date,
+        "eures",
+        _strip_html(str(j.get("description") or "")),
+    )
 
 
 def scan_eures(pages=1, par_page=50, mots=None):
     """Offres EURES de la derniere semaine, une page par mot-cle par defaut."""
     import httpx
+
     _EX = contrats_exclus()
     offers, vus = [], set()
     n_req = 0
     with httpx.Client(follow_redirects=True) as client:
-        for mot in (mots or EURES_MOTS):
+        for mot in mots or EURES_MOTS:
             for page in range(1, pages + 1):
                 if n_req:
-                    time.sleep(EURES_DELAI)          # crawl-delay: 10
+                    time.sleep(EURES_DELAI)  # crawl-delay: 10
                 n_req += 1
                 try:
-                    r = _post_borne(client, EURES_URL, json=_eures_corps(mot, page, par_page),
-                                    headers={**UA, "Content-Type": "application/json",
-                                             "Accept": "application/json"}, timeout=40)
+                    r = _post_borne(
+                        client,
+                        EURES_URL,
+                        json=_eures_corps(mot, page, par_page),
+                        headers={
+                            **UA,
+                            "Content-Type": "application/json",
+                            "Accept": "application/json",
+                        },
+                        timeout=40,
+                    )
                 except Exception as e:
                     INCIDENTS["eures"][type(e).__name__] += 1
                     break
@@ -1965,7 +2590,8 @@ def scan_eures(pages=1, par_page=50, mots=None):
                     vus.add(j.get("id"))
                     o = _eures_offre(j, _EX)
                     if o:
-                        offers.append(o); garde += 1
+                        offers.append(o)
+                        garde += 1
                 print(f"    « {mot} » p{page} : {len(jvs)} lues, {garde} retenues")
                 if len(jvs) < par_page:
                     break
@@ -2028,10 +2654,10 @@ INDEED_HOTE = "https://fr.indeed.com"
 # reprend pas les memes mots-cles : elle repart la ou la precedente s'est
 # arretee. 55 mots-cles x 2 villes = 110 couples, soit environ cinq jours pour
 # faire le tour — ce qui convient a des offres qui vivent plusieurs semaines.
-INDEED_PAUSE = 12         # assez pour ne pas peser, inutile d'aller plus lent
-INDEED_BUDGET = 20        # requetes par passe ; au-dela le quota est a sec
-INDEED_ETAT = HERE / ".indeed_rotation"   # ou la passe precedente s'est arretee
-INDEED_REPOS = 45         # repos apres un refus, avant la seule seconde chance
+INDEED_PAUSE = 12  # assez pour ne pas peser, inutile d'aller plus lent
+INDEED_BUDGET = 20  # requetes par passe ; au-dela le quota est a sec
+INDEED_ETAT = HERE / ".indeed_rotation"  # ou la passe precedente s'est arretee
+INDEED_REPOS = 45  # repos apres un refus, avant la seule seconde chance
 # Depuis le 04/10 : refus 403/challenge = arrêt immédiat ; quota 429 = un
 # réessai borné, puis arrêt. Le challenge Cloudflare a été observé en réel.
 # Lieux de recherche : les secteurs prioritaires du profil (zones.py).
@@ -2042,8 +2668,10 @@ INDEED_LIEUX = [s["libelle"] for s in __import__("zones").SECTEURS_PRIORITAIRES]
 #   un UA Chrome          → 200
 # Indeed refuse l'agent par DEFAUT de la bibliotheque, pas les robots : un nom
 # franc suffit. Inutile de se deguiser en navigateur, on ne le fait donc pas.
-INDEED_UA = {"User-Agent": "JobHunter/1.0 (recherche d'emploi personnelle)",
-             "Accept-Language": "fr-FR,fr;q=0.9"}
+INDEED_UA = {
+    "User-Agent": "JobHunter/1.0 (recherche d'emploi personnelle)",
+    "Accept-Language": "fr-FR,fr;q=0.9",
+}
 _RX_INDEED_BLOB = re.compile(r'providerData\["mosaic-provider-jobcards"\]\s*=\s*')
 
 # « Temps plein » et « Temps partiel » sont des temps de travail, pas des
@@ -2051,10 +2679,15 @@ _RX_INDEED_BLOB = re.compile(r'providerData\["mosaic-provider-jobcards"\]\s*=\s*
 # ne servent a rien pour filtrer. Ils sont ignores, et une carte qui ne porte
 # qu'eux repart sans contrat — « non precise » reste une reponse honnete.
 _INDEED_CONTRAT = {
-    "cdi": "CDI", "cdd": "CDD",
-    "stage": "Stage", "alternance": "Alternance", "apprentissage": "Alternance",
-    "freelance": "Freelance", "independant": "Freelance",
-    "interim": "Interim", "temporaire": "Interim",
+    "cdi": "CDI",
+    "cdd": "CDD",
+    "stage": "Stage",
+    "alternance": "Alternance",
+    "apprentissage": "Alternance",
+    "freelance": "Freelance",
+    "independant": "Freelance",
+    "interim": "Interim",
+    "temporaire": "Interim",
 }
 
 
@@ -2092,7 +2725,7 @@ def _json_objet(texte, depart):
         elif c == "}":
             prof -= 1
             if prof == 0:
-                return texte[depart:i + 1]
+                return texte[depart : i + 1]
     return ""
 
 
@@ -2107,6 +2740,7 @@ def _indeed_cartes(mot, lieu):
     """Lit la page publique ; distingue refus, quota et réponse vide valide."""
     import urllib.request, urllib.error
     from email.utils import parsedate_to_datetime
+
     global INDEED_REQUETES
     url = f"{INDEED_HOTE}/jobs?q={quote(mot)}&l={quote(lieu)}"
 
@@ -2118,7 +2752,8 @@ def _indeed_cartes(mot, lieu):
         try:
             INDEED_REQUETES += 1
             with urllib.request.urlopen(
-                    urllib.request.Request(url, headers=INDEED_UA), timeout=25) as f:
+                urllib.request.Request(url, headers=INDEED_UA), timeout=25
+            ) as f:
                 if "secure.indeed.com" in f.geturl():
                     bloque("connexion requise")
                 if f.headers.get("cf-mitigated", "").lower() == "challenge":
@@ -2142,7 +2777,9 @@ def _indeed_cartes(mot, lieu):
                     attente = max(0, int(retry_after))
                 except ValueError:
                     try:
-                        attente = max(0, parsedate_to_datetime(retry_after).timestamp() - time.time())
+                        attente = max(
+                            0, parsedate_to_datetime(retry_after).timestamp() - time.time()
+                        )
                     except (TypeError, ValueError, OverflowError):
                         pass
             # Ne jamais réessayer avant un Retry-After supérieur au budget.
@@ -2171,7 +2808,8 @@ def _indeed_cartes(mot, lieu):
 def _indeed_contrat(job_types):
     """['Temps plein', 'CDI'] → 'CDI'. Rien de reconnu → ''."""
     import unicodedata
-    for t in (job_types or []):
+
+    for t in job_types or []:
         n = unicodedata.normalize("NFD", str(t).lower())
         n = "".join(c for c in n if unicodedata.category(c) != "Mn").strip()
         if n in _INDEED_CONTRAT:
@@ -2190,7 +2828,7 @@ def _indeed_date(ms):
         s = float(ms) / 1000.0
     except Exception:
         return ""
-    if not (946684800 < s < time.time() + 86400):     # entre 2000 et demain
+    if not (946684800 < s < time.time() + 86400):  # entre 2000 et demain
         return ""
     return time.strftime("%Y-%m-%d", time.localtime(s))
 
@@ -2223,10 +2861,14 @@ def scan_indeed(mots=None, lieux=None, pause=None, *, persist=True):
         depart = int(INDEED_ETAT.read_text(encoding="utf-8").strip()) % len(couples)
     except Exception:
         pass
-    tranche = [couples[(depart + i) % len(couples)] for i in range(min(INDEED_BUDGET, len(couples)))]
-    print(f"  Indeed : {len(tranche)} couples sur {len(couples)} "
-          f"(depuis le n° {depart + 1}, {pause} s entre chaque, "
-          f"~{len(tranche) * pause // 60} min)")
+    tranche = [
+        couples[(depart + i) % len(couples)] for i in range(min(INDEED_BUDGET, len(couples)))
+    ]
+    print(
+        f"  Indeed : {len(tranche)} couples sur {len(couples)} "
+        f"(depuis le n° {depart + 1}, {pause} s entre chaque, "
+        f"~{len(tranche) * pause // 60} min)"
+    )
 
     fait = 0
     debut_http = INDEED_REQUETES
@@ -2262,16 +2904,18 @@ def scan_indeed(mots=None, lieux=None, pause=None, *, persist=True):
             ctr = _indeed_contrat(c.get("jobTypes"))
             if (ctr or contrat_du_titre(titre)) in _EX:
                 continue
-            o = _mk(titre,
-                    f"{INDEED_HOTE}/viewjob?jk={jk}",
-                    (c.get("company") or "").strip() or "Indeed",
-                    c.get("formattedLocation") or lieu,
-                    _indeed_date(c.get("pubDate")),
-                    "indeed",
-                    _strip_html(c.get("snippet") or ""))
+            o = _mk(
+                titre,
+                f"{INDEED_HOTE}/viewjob?jk={jk}",
+                (c.get("company") or "").strip() or "Indeed",
+                c.get("formattedLocation") or lieu,
+                _indeed_date(c.get("pubDate")),
+                "indeed",
+                _strip_html(c.get("snippet") or ""),
+            )
             o["contrat"] = ctr
-            o["teletravail"] = ((c.get("remoteWorkModel") or {}).get("text") or "")
-            o["salaire"] = ((c.get("salarySnippet") or {}).get("text") or "")
+            o["teletravail"] = (c.get("remoteWorkModel") or {}).get("text") or ""
+            o["salaire"] = (c.get("salarySnippet") or {}).get("text") or ""
             # Le snippet n'est PAS l'annonce : 160 caracteres contre
             # plusieurs milliers. Sans ce drapeau, la promotion d'URL
             # ecraserait une description complete deja en file par ce
@@ -2292,11 +2936,15 @@ def scan_indeed(mots=None, lieux=None, pause=None, *, persist=True):
         pass
 
     etat = "indisponible" if bloque_raison else "quota atteint" if bride else "terminé"
-    print(f"  Indeed [{etat}] : {len(offers)} offres, {fait} couples, "
-          f"{INDEED_REQUETES - debut_http} tentatives HTTP")
+    print(
+        f"  Indeed [{etat}] : {len(offers)} offres, {fait} couples, "
+        f"{INDEED_REQUETES - debut_http} tentatives HTTP"
+    )
     if bride:
-        print(f"    reprise au couple n° {(depart + fait) % len(couples) + 1} "
-              f"sur {len(couples)} a la prochaine passe")
+        print(
+            f"    reprise au couple n° {(depart + fait) % len(couples) + 1} "
+            f"sur {len(couples)} a la prochaine passe"
+        )
     return offers
 
 
@@ -2335,7 +2983,7 @@ def scan_indeed(mots=None, lieux=None, pause=None, *, persist=True):
 # faite pour etre lue.
 APEC_API = "https://www.apec.fr/cms/webservices/rechercheOffre"
 APEC_FICHE = "https://www.apec.fr/candidat/recherche-emploi.html/emploi/detail-offre/"
-APEC_PAUSE = 2            # aucun crawl-delay annonce ; on reste courtois
+APEC_PAUSE = 2  # aucun crawl-delay annonce ; on reste courtois
 APEC_PAR_PAGE = 50
 
 # LES CODES DE CONTRAT, ETABLIS PAR RECOUPEMENT — pas devines. L'API rend un
@@ -2367,12 +3015,15 @@ APEC_ABANDON = 3
 def _apec_page(mot, debut):
     """Une page de resultats APEC. Liste vide en cas de refus."""
     import urllib.request, urllib.error
-    corps = json.dumps({
-        "motsCles": mot,
-        "pagination": {"range": APEC_PAR_PAGE, "startIndex": debut},
-        "sorts": [{"type": "DATE", "direction": "DESCENDING"}],
-        "activeFiltre": True,
-    }).encode("utf-8")
+
+    corps = json.dumps(
+        {
+            "motsCles": mot,
+            "pagination": {"range": APEC_PAR_PAGE, "startIndex": debut},
+            "sorts": [{"type": "DATE", "direction": "DESCENDING"}],
+            "activeFiltre": True,
+        }
+    ).encode("utf-8")
     tetes = dict(UA)
     tetes["Content-Type"] = "application/json"
     tetes["Accept"] = "application/json"
@@ -2401,13 +3052,17 @@ def scan_apec(mots=None, pages=2):
     mots = mots or KEYWORDS
     _EX = contrats_exclus()
     offers, vus = [], set()
-    print(f"  APEC : {len(mots)} mots-cles x {pages} page(s) de {APEC_PAR_PAGE} "
-          f"({APEC_PAUSE} s entre chaque)")
+    print(
+        f"  APEC : {len(mots)} mots-cles x {pages} page(s) de {APEC_PAR_PAGE} "
+        f"({APEC_PAUSE} s entre chaque)"
+    )
     fait = refus = 0
     for mot in mots:
         if refus >= APEC_ABANDON:
-            print(f"  ⏸ APEC : {refus} refus d'affilee — source fermee pour aujourd'hui, "
-                  f"pas d'insistance")
+            print(
+                f"  ⏸ APEC : {refus} refus d'affilee — source fermee pour aujourd'hui, "
+                f"pas d'insistance"
+            )
             break
         for p in range(pages):
             if fait:
@@ -2434,16 +3089,22 @@ def scan_apec(mots=None, pages=2):
                 # qu'un identifiant de referentiel, et 283 caracteres ne
                 # suffisent pas a trancher — 583 offres sur 654 sortaient en
                 # « non precise » avant que le code ne soit exploite.
-                ctr = (contrat_du_titre(titre)
-                       or contrat_de_la_description(desc, "")
-                       or _APEC_CONTRAT.get(o.get("typeContrat"), ""))
+                ctr = (
+                    contrat_du_titre(titre)
+                    or contrat_de_la_description(desc, "")
+                    or _APEC_CONTRAT.get(o.get("typeContrat"), "")
+                )
                 if ctr in _EX:
                     continue
-                x = _mk(titre, APEC_FICHE + str(num),
-                        (o.get("nomCommercial") or "APEC").strip(),
-                        o.get("lieuTexte") or "",
-                        str(o.get("datePublication") or "")[:10],
-                        "apec", desc)
+                x = _mk(
+                    titre,
+                    APEC_FICHE + str(num),
+                    (o.get("nomCommercial") or "APEC").strip(),
+                    o.get("lieuTexte") or "",
+                    str(o.get("datePublication") or "")[:10],
+                    "apec",
+                    desc,
+                )
                 x["contrat"] = ctr
                 x["salaire"] = (o.get("salaireTexte") or "").strip()
                 # 283 caracteres ne sont pas une annonce : sans ce drapeau, la
@@ -2458,8 +3119,10 @@ def scan_apec(mots=None, pages=2):
             if len(res) < APEC_PAR_PAGE:
                 break
     rares = sum(1 for x in offers if x.get("peu_de_candidats"))
-    print(f"  ✓ APEC → {len(offers)} offres sur {fait} requetes "
-          f"(extrait de 283 car., {rares} a faible candidature)")
+    print(
+        f"  ✓ APEC → {len(offers)} offres sur {fait} requetes "
+        f"(extrait de 283 car., {rares} a faible candidature)"
+    )
     return offers
 
 
@@ -2491,16 +3154,15 @@ GD_HOTE = "https://www.glassdoor.fr"
 GD_PAUSE = 12
 GD_REPOS = 45
 GD_ABANDON = 6
-GD_LOC_FRANCE = 86        # locId du pays ; Glassdoor n'expose les id de VILLE
-                          # que par /ajax/, interdit. On cherche donc France
-                          # entiere et on trie ensuite avec zones.zone_lieu().
+GD_LOC_FRANCE = 86  # locId du pays ; Glassdoor n'expose les id de VILLE
+# que par /ajax/, interdit. On cherche donc France
+# entiere et on trie ensuite avec zones.zone_lieu().
 GD_UA = dict(INDEED_UA)
 
 # Une carte commence a son intitule. Le nom de l'employeur est AVANT dans le
 # HTML, le lieu et le salaire APRES : on decoupe donc sur les intitules et on
 # lit de part et d'autre.
-_RX_GD_TITRE = re.compile(
-    r'<a\b[^>]*data-test="job-title"[^>]*href="([^"]+)"[^>]*>(.*?)</a>', re.S)
+_RX_GD_TITRE = re.compile(r'<a\b[^>]*data-test="job-title"[^>]*href="([^"]+)"[^>]*>(.*?)</a>', re.S)
 _RX_GD_EMPLOYEUR = re.compile(r'compactEmployerName[^"]*"[^>]*>(.*?)</span>', re.S)
 _RX_GD_LIEU = re.compile(r'data-test="emp-location"[^>]*>(.*?)</div>', re.S)
 _RX_GD_SALAIRE = re.compile(r'data-test="detailSalary"[^>]*>(.*?)</div>', re.S)
@@ -2511,6 +3173,7 @@ _RX_GD_EXTRAIT = re.compile(r'jobDescriptionSnippet[^"]*"[^>]*>(.*?)</div>', re.
 def _gd_texte(h):
     """Fragment HTML → texte nu."""
     import html as _h
+
     return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", _h.unescape(h or ""))).strip()
 
 
@@ -2550,23 +3213,28 @@ def _gd_url(mot):
     pire qu'une erreur, c'est une erreur invisible.
     """
     import unicodedata
+
     n = unicodedata.normalize("NFD", mot.lower())
     n = "".join(c for c in n if unicodedata.category(c) != "Mn")
     n = re.sub(r"-{2,}", "-", re.sub(r"[^a-z0-9]+", "-", n)).strip("-")
     debut = len("france-")
-    return (f"{GD_HOTE}/Emploi/france-{n}-emplois"
-            f"-SRCH_IL.0,6_IN{GD_LOC_FRANCE}_KO{debut},{debut + len(n)}.htm")
+    return (
+        f"{GD_HOTE}/Emploi/france-{n}-emplois"
+        f"-SRCH_IL.0,6_IN{GD_LOC_FRANCE}_KO{debut},{debut + len(n)}.htm"
+    )
 
 
 def _gd_cartes(mot):
     """Les cartes de la page 1 pour un mot-cle, France entiere."""
     import urllib.request, urllib.error
+
     url = _gd_url(mot)
     texte = ""
     for essai in (1, 2):
         try:
             with urllib.request.urlopen(
-                    urllib.request.Request(url, headers=GD_UA), timeout=25) as f:
+                urllib.request.Request(url, headers=GD_UA), timeout=25
+            ) as f:
                 texte = _lire_borne(f).decode("utf-8", "replace")
             break
         except urllib.error.HTTPError as e:
@@ -2597,24 +3265,26 @@ def _gd_parse(texte):
     titres = list(_RX_GD_TITRE.finditer(texte))
     cartes = []
     for n, m in enumerate(titres):
-        avant = texte[(titres[n - 1].end() if n else 0):m.start()]
-        apres = texte[m.end():(titres[n + 1].start() if n + 1 < len(titres) else len(texte))]
+        avant = texte[(titres[n - 1].end() if n else 0) : m.start()]
+        apres = texte[m.end() : (titres[n + 1].start() if n + 1 < len(titres) else len(texte))]
         emp = _RX_GD_EMPLOYEUR.findall(avant)
         lieu = _RX_GD_LIEU.search(apres)
         sal = _RX_GD_SALAIRE.search(apres)
         age = _RX_GD_AGE.search(apres)
         ext = _RX_GD_EXTRAIT.search(apres)
-        cartes.append({
-            "url": m.group(1),
-            "titre": _gd_texte(m.group(2)),
-            # Le dernier nom trouve AVANT l'intitule est celui de cette carte :
-            # les precedents appartiennent aux cartes d'avant.
-            "entreprise": _gd_texte(emp[-1]) if emp else "",
-            "lieu": _gd_texte(lieu.group(1)) if lieu else "",
-            "salaire": _gd_texte(sal.group(1)) if sal else "",
-            "age": _gd_texte(age.group(1)) if age else "",
-            "extrait": _gd_texte(ext.group(1)) if ext else "",
-        })
+        cartes.append(
+            {
+                "url": m.group(1),
+                "titre": _gd_texte(m.group(2)),
+                # Le dernier nom trouve AVANT l'intitule est celui de cette carte :
+                # les precedents appartiennent aux cartes d'avant.
+                "entreprise": _gd_texte(emp[-1]) if emp else "",
+                "lieu": _gd_texte(lieu.group(1)) if lieu else "",
+                "salaire": _gd_texte(sal.group(1)) if sal else "",
+                "age": _gd_texte(age.group(1)) if age else "",
+                "extrait": _gd_texte(ext.group(1)) if ext else "",
+            }
+        )
     return cartes
 
 
@@ -2630,8 +3300,10 @@ def scan_glassdoor(mots=None, pause=None):
     _EX = contrats_exclus()
     offers, vus = [], set()
     refus = refuses = 0
-    print(f"  Glassdoor : {len(mots)} mots-cles ({pause} s entre chaque, "
-          f"~{len(mots) * pause // 60} min)")
+    print(
+        f"  Glassdoor : {len(mots)} mots-cles ({pause} s entre chaque, "
+        f"~{len(mots) * pause // 60} min)"
+    )
     for i, mot in enumerate(mots):
         if i:
             time.sleep(pause)
@@ -2646,22 +3318,28 @@ def scan_glassdoor(mots=None, pause=None):
             # que chaque requete de plus prolonge la mise a l'ecart. Le cout
             # d'un 403 fortuit : les mots restants de Glassdoor, pour un jour.
             if e.args and e.args[0] == 403:
-                print(f"  ⏸ Glassdoor : refus d'entree (HTTP 403) — source fermee "
-                      f"pour aujourd'hui, pas d'insistance, {len(offers)} offres "
-                      f"conservees")
+                print(
+                    f"  ⏸ Glassdoor : refus d'entree (HTTP 403) — source fermee "
+                    f"pour aujourd'hui, pas d'insistance, {len(offers)} offres "
+                    f"conservees"
+                )
                 break
             refus += 1
             if refus >= GD_ABANDON:
-                print(f"  ⏸ Glassdoor : {refus} refus d'affilee (HTTP {e}) — passe "
-                      f"arretee, {len(offers)} offres conservees")
+                print(
+                    f"  ⏸ Glassdoor : {refus} refus d'affilee (HTTP {e}) — passe "
+                    f"arretee, {len(offers)} offres conservees"
+                )
                 break
             # Refus EN ALTERNANCE avec des succes : le compteur d'affilee se
             # remettait a zero, et chaque mot payait 45 s de repos. Le
             # 2026-10-07, la passe a ete coupee a 40 min par la minuterie, et WTJ,
             # qui passe apres, n'a rien collecte.
             if refuses >= 2 * GD_ABANDON:
-                print(f"  ⏸ Glassdoor : {refuses} refus sur {i + 1} mots-cles — passe "
-                      f"arretee, {len(offers)} offres conservees")
+                print(
+                    f"  ⏸ Glassdoor : {refuses} refus sur {i + 1} mots-cles — passe "
+                    f"arretee, {len(offers)} offres conservees"
+                )
                 break
             continue
         for c in cartes:
@@ -2678,35 +3356,60 @@ def scan_glassdoor(mots=None, pause=None):
             ctr = contrat_du_titre(titre)
             if ctr in _EX:
                 continue
-            o = _mk(titre, c["url"], c["entreprise"] or "Glassdoor",
-                    c["lieu"], _gd_date(c["age"]), "glassdoor", c["extrait"])
+            o = _mk(
+                titre,
+                c["url"],
+                c["entreprise"] or "Glassdoor",
+                c["lieu"],
+                _gd_date(c["age"]),
+                "glassdoor",
+                c["extrait"],
+            )
             o["contrat"] = ctr
             o["salaire"] = c["salaire"]
             o["desc_partielle"] = True
             offers.append(o)
-    print(f"  ✓ Glassdoor → {len(offers)} offres ({refuses} requetes refusees) — "
-          f"description = extrait, pas de contrat structure")
+    print(
+        f"  ✓ Glassdoor → {len(offers)} offres ({refuses} requetes refusees) — "
+        f"description = extrait, pas de contrat structure"
+    )
     return offers
 
 
 # ═══════════════ MERGE → apply_queue.json (dédup + scoring) ═══════════════
-from jutil import cle as _norm   # meme semantique qu'avant : minuscules + blancs,
-                                # accents CONSERVES (cle de deduplication de la queue)
+from jutil import cle as _norm  # meme semantique qu'avant : minuscules + blancs,
+# accents CONSERVES (cle de deduplication de la queue)
 
 
 # Paramètres de tracking : présents ou non selon d'où vient le lien, ils ne
 # changent PAS l'offre. Sans les retirer, la dédup par URL exacte est inopérante
 # dès qu'on colle un lien LinkedIn (…/jobs/view/123?refId=X&trackingId=Y) déjà
 # présent en queue → doublon.
-_URL_JUNK = {"refid", "trackingid", "trk", "origin", "position", "pagenum",
-             "eblc", "recommended", "src", "source", "savedsearchid",
-             "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"}
+_URL_JUNK = {
+    "refid",
+    "trackingid",
+    "trk",
+    "origin",
+    "position",
+    "pagenum",
+    "eblc",
+    "recommended",
+    "src",
+    "source",
+    "savedsearchid",
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "utm_content",
+    "utm_term",
+}
 
 
 def _norm_url(u):
     """Clé de dédup d'URL : hôte sans www, chemin sans / final, params de
     tracking retirés et reste trié. Les vrais identifiants (?jk=, ?id=) restent."""
     from urllib.parse import urlsplit, parse_qsl, urlencode
+
     u = (u or "").strip()
     if not u:
         return ""
@@ -2717,7 +3420,7 @@ def _norm_url(u):
     host = s.netloc.lower()
     if host.startswith("www."):
         host = host[4:]
-    if host.endswith("linkedin.com"):        # fr./be./lu. linkedin = même site
+    if host.endswith("linkedin.com"):  # fr./be./lu. linkedin = même site
         host = "linkedin.com"
     qs = [(k, v) for k, v in parse_qsl(s.query) if k.lower() not in _URL_JUNK]
     tail = "?" + urlencode(sorted(qs)) if qs else ""
@@ -2730,23 +3433,56 @@ def _norm_url(u):
 # LinkedIn est le PIRE des deux : la page est derriere un mur de connexion, la
 # description est illisible sans compte, et postuler renvoie de toute facon vers
 # le site d'origine. On garde donc l'URL la mieux classee.
-_AGREGATEURS = ("indeed.", "talent.com", "jobijoba", "optioncarriere", "jooble",
-                "neuvoo", "glassdoor", "meteojob", "keljob", "cadremploi")
-_SITES_EMPLOI = ("welcometothejungle", "efinancialcareers", "linkfinance",
-                 "apec.fr", "francetravail", "pole-emploi", "businessfrance",
-                 "hellowork", "monster.")
-_ATS = ("greenhouse.io", "lever.co", "ashbyhq", "recruitee.com", "smartrecruiters",
-        "myworkdayjobs", "workday", "taleo", "successfactors", "teamtailor",
-        "workable.com", "personio", "icims.com", "avature", "flatchr", "softy.pro")
+_AGREGATEURS = (
+    "indeed.",
+    "talent.com",
+    "jobijoba",
+    "optioncarriere",
+    "jooble",
+    "neuvoo",
+    "glassdoor",
+    "meteojob",
+    "keljob",
+    "cadremploi",
+)
+_SITES_EMPLOI = (
+    "welcometothejungle",
+    "efinancialcareers",
+    "linkfinance",
+    "apec.fr",
+    "francetravail",
+    "pole-emploi",
+    "businessfrance",
+    "hellowork",
+    "monster.",
+)
+_ATS = (
+    "greenhouse.io",
+    "lever.co",
+    "ashbyhq",
+    "recruitee.com",
+    "smartrecruiters",
+    "myworkdayjobs",
+    "workday",
+    "taleo",
+    "successfactors",
+    "teamtailor",
+    "workable.com",
+    "personio",
+    "icims.com",
+    "avature",
+    "flatchr",
+    "softy.pro",
+)
 
 
 def rang_source(url):
     """Qualite de la source, du pire au meilleur. Sert a arbitrer les doublons.
 
-      0 LinkedIn      mur de connexion, description illisible, redirige ailleurs
-      1 agregateur    Indeed, Talent, Jobijoba : copie d'une annonce d'ailleurs
-      2 site d'emploi WTJ, APEC, France Travail : annonce de premiere main
-      3 ATS / site entreprise : la source, celle ou la candidature arrive
+    0 LinkedIn      mur de connexion, description illisible, redirige ailleurs
+    1 agregateur    Indeed, Talent, Jobijoba : copie d'une annonce d'ailleurs
+    2 site d'emploi WTJ, APEC, France Travail : annonce de premiere main
+    3 ATS / site entreprise : la source, celle ou la candidature arrive
     """
     u = (url or "").lower()
     if not u:
@@ -2759,7 +3495,7 @@ def rang_source(url):
         return 3
     if any(k in u for k in _SITES_EMPLOI):
         return 2
-    return 3        # domaine d'entreprise : c'est la source
+    return 3  # domaine d'entreprise : c'est la source
 
 
 # ── Filtre geographique ──────────────────────────────────────────────────────
@@ -2785,7 +3521,9 @@ _RX_FR = re.compile(
     # chiffres, ne s'ecrit comme cela qu'en France. La plage monte a 98x :
     # arretee a 976, elle laissait « Noumea - 98 » dehors, la Nouvelle-Caledonie
     # etant 988 — comme Wallis 986 et la Polynesie 987.
-    r"|(?:^|[\s,;-])(?:0[1-9]|[1-8]\d|9[0-5]|2[AB]|9[78]\d?)(?:$|[\s,;-])", re.I)
+    r"|(?:^|[\s,;-])(?:0[1-9]|[1-8]\d|9[0-5]|2[AB]|9[78]\d?)(?:$|[\s,;-])",
+    re.I,
+)
 # Pays explicitement AILLEURS : le lieu est renseigne et ne parle pas de France.
 _RX_ETRANGER = re.compile(
     r"\b(de|be|lu|es|it|uk|gb|us|ca|ch|nl|pl|ro|pt|ie|dk|se|no|fi|at|cz|gr|tr"
@@ -2795,7 +3533,9 @@ _RX_ETRANGER = re.compile(
     r"|luxembourg|espa[ñn]a|madrid|barcelona|italia|milano|roma|london|manchester"
     r"|new york|san francisco|washington|toronto|casablanca|hanoi|cebu|davao"
     r"|philippines|tokyo|singapore|amsterdam|lisboa|warsaw|bucharest|z[üu]rich"
-    r"|geneve|gen[èe]ve|hong kong|cape town|sydney|melbourne", re.I)
+    r"|geneve|gen[èe]ve|hong kong|cape town|sydney|melbourne",
+    re.I,
+)
 
 
 # Etat americain en fin de lieu : « Reston, VA », « Aurora, CO ». Sans ce motif
@@ -2804,7 +3544,8 @@ _RX_ETRANGER = re.compile(
 _RX_ETAT_US = re.compile(
     r",\s*(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|MA|MD|ME|MI"
     r"|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA"
-    r"|VT|WA|WI|WV|WY|DC)\b")
+    r"|VT|WA|WI|WV|WY|DC)\b"
+)
 
 
 # RECHERCHE MONDIALE. Le filtre geographique est un CHOIX, pas une loi : il a
@@ -2866,10 +3607,12 @@ def merge_into_queue(fresh, dry=False, attente=180):
     """
     from ats_match import fit_detail, score_offer
     import queue_io, jutil
+
     a_nous = not dry and not jutil.tenu(QUEUE)
     if a_nous and not jutil.prendre_verrou(QUEUE, attente=attente):
         raise queue_io.VerrouIndisponible(
-            f"{QUEUE.name} est modifié par un autre programme — rien n'a été fusionné.")
+            f"{QUEUE.name} est modifié par un autre programme — rien n'a été fusionné."
+        )
     try:
         return _merge_into_queue(fresh, dry, fit_detail, score_offer, queue_io)
     finally:
@@ -2880,11 +3623,14 @@ def merge_into_queue(fresh, dry=False, attente=180):
 def _merge_into_queue(fresh, dry, fit_detail, score_offer, queue_io):
     # QUEUE explicite : les tests remplacent cette constante par un fichier
     # jetable. Sans elle, charger() lirait la vraie file.
-    q = queue_io.charger(QUEUE)   # descriptions reinjectees depuis descriptions.json
+    q = queue_io.charger(QUEUE)  # descriptions reinjectees depuis descriptions.json
     # PURGE bruit : rows 'Scan' déjà mergées dont le titre échoue le nouveau filtre anti-bruit
     before = len(q)
-    q = [x for x in q if not (str(x.get("statut", "")).startswith("Scan ")
-                              and not title_ok(x.get("poste", "")))]
+    q = [
+        x
+        for x in q
+        if not (str(x.get("statut", "")).startswith("Scan ") and not title_ok(x.get("poste", "")))
+    ]
     purged = before - len(q)
     idx = {_norm(x.get("entreprise", "")) + "|" + _norm(x.get("poste", "")): x for x in q}
     have_url = {_norm_url(x.get("url")) for x in q if x.get("url")}
@@ -2896,11 +3642,13 @@ def _merge_into_queue(fresh, dry, fit_detail, score_offer, queue_io):
     # Offres ECARTEES a la main. Supprimer une offre ne la tue pas : le scan la
     # retrouve a la source et la reajoute le lendemain. Le refus doit tenir.
     import exclusions as _exc
+
     _REFUSEES = _exc.charger()
     # Offres RETIREES PAR LE TRI. Le tri juge sur la description, que la collecte
     # n'a pas encore : sans cette memoire, 1157 offres retirees a midi revenaient
     # le soir comme nouvelles (2026-10-05). Voir rejets_tri.py.
     import rejets_tri as _rej
+
     _REJ_TRI = _rej.charger(REJETS_TRI)
     ecartees = rejetees_tri = 0
     for o in fresh:
@@ -2919,8 +3667,7 @@ def _merge_into_queue(fresh, dry, fit_detail, score_offer, queue_io):
         # ArcelorMittal Bruxelles « Environment & CO2 data » et Bostik Stafford
         # « Sustainability data », toutes deux a fit 10. La Belgique est meme le
         # premier pays V.I.E, avec 32 offres sur 143.
-        if (_RX_PAYS and not _est_vie(o)
-                and _RX_PAYS.search(str(o.get("location") or ""))):
+        if _RX_PAYS and not _est_vie(o) and _RX_PAYS.search(str(o.get("location") or "")):
             pays_ecartes += 1
             continue
         # Meme cle que queue_io.oid : « entreprise|poste », non normalisee.
@@ -2943,8 +3690,11 @@ def _merge_into_queue(fresh, dry, fit_detail, score_offer, queue_io):
                 x["url"] = o["url"]
                 x["source"] = o.get("source", x.get("source", ""))
                 u_ = o["url"].lower()
-                x["canal"] = "manuel" if ("linkedin.com" in u_ or "indeed." in u_
-                                          or "welcometothejungle" in u_) else "auto"
+                x["canal"] = (
+                    "manuel"
+                    if ("linkedin.com" in u_ or "indeed." in u_ or "welcometothejungle" in u_)
+                    else "auto"
+                )
                 x["site_kind"] = "board" if x["canal"] == "manuel" else "entreprise"
                 x["link_status"] = "OK"
                 have_url.add(_norm_url(o["url"]))
@@ -2971,13 +3721,22 @@ def _merge_into_queue(fresh, dry, fit_detail, score_offer, queue_io):
                 if desc:
                     x["description"] = desc
                     x["fit"], x["exp_requise"], x["fit_fin"] = fit_detail(
-                        f"{x.get('poste','')} {desc}", x.get("poste", ""))
+                        f"{x.get('poste', '')} {desc}", x.get("poste", "")
+                    )
             if x is not None and desc and not (x.get("description") or "").strip():
                 x["description"] = desc
-                x["fit"], x["exp_requise"], x["fit_fin"] = fit_detail(f"{x.get('poste','')} {desc}", x.get("poste", ""))
+                x["fit"], x["exp_requise"], x["fit_fin"] = fit_detail(
+                    f"{x.get('poste', '')} {desc}", x.get("poste", "")
+                )
                 try:
-                    x["ats_pct"] = score_offer(dict(role=x.get("poste", ""), missions=desc,
-                                                    profil="", domaine=x.get("domaine", ""))).get("pct")
+                    x["ats_pct"] = score_offer(
+                        dict(
+                            role=x.get("poste", ""),
+                            missions=desc,
+                            profil="",
+                            domaine=x.get("domaine", ""),
+                        )
+                    ).get("pct")
                 except Exception:
                     pass
                 updated += 1
@@ -3009,7 +3768,11 @@ def _merge_into_queue(fresh, dry, fit_detail, score_offer, queue_io):
             continue
         have_url.add(_norm_url(o["url"]))
         u = o["url"].lower()
-        canal = "manuel" if ("linkedin.com" in u or "indeed." in u or "welcometothejungle" in u) else "auto"
+        canal = (
+            "manuel"
+            if ("linkedin.com" in u or "indeed." in u or "welcometothejungle" in u)
+            else "auto"
+        )
         # Contrat exclu : on n'ajoute meme pas. l'utilisateur n'est pas etudiant ;
         # inutile de faire entrer des alternances et des stages pour les
         # masquer ensuite a l'affichage.
@@ -3029,37 +3792,60 @@ def _merge_into_queue(fresh, dry, fit_detail, score_offer, queue_io):
         # scoring sur titre + DESCRIPTION (les APIs ATS la fournissent au scan)
         fit, yrs, fin = fit_detail(f"{o['titre']} {desc}", o["titre"])
         try:
-            ats = score_offer(dict(role=o["titre"], missions=desc, profil="",
-                                   domaine=o["domaine"])).get("pct")
+            ats = score_offer(
+                dict(role=o["titre"], missions=desc, profil="", domaine=o["domaine"])
+            ).get("pct")
         except Exception:
             ats = None
         ligne = {
-            "entreprise": o["entreprise"], "poste": o["titre"], "domaine": o["domaine"],
-            "statut": f"Scan {today}", "url": o["url"], "cv": None, "lettre": None,
-            "rh": None, "cv_variant": None, "url_type": "OFFRE_DIRECTE",
+            "entreprise": o["entreprise"],
+            "poste": o["titre"],
+            "domaine": o["domaine"],
+            "statut": f"Scan {today}",
+            "url": o["url"],
+            "cv": None,
+            "lettre": None,
+            "rh": None,
+            "cv_variant": None,
+            "url_type": "OFFRE_DIRECTE",
             "site_kind": "board" if canal == "manuel" else "entreprise",
-            "fit": fit, "fit_fin": fin, "exp_requise": yrs, "action": "",
+            "fit": fit,
+            "fit_fin": fin,
+            "exp_requise": yrs,
+            "action": "",
             "contrat": _ctr,
             # Lieu de l'INTITULE s'il nomme une ville etrangere (zones.lieu_effectif) :
             # Talent et Glassdoor donnent parfois le siege, « Paris », a un V.I.E New York.
-            "localisation": __import__("zones").lieu_effectif(o.get("location", ""), o.get("titre", "")),
+            "localisation": __import__("zones").lieu_effectif(
+                o.get("location", ""), o.get("titre", "")
+            ),
             # Zone geographique, calculee a l'ajout : sans ca, chaque nouvelle
             # offre arriverait sans zone et la colonne de l'app se remplirait de
             # trous jusqu'au prochain passage de zones.py.
             "zone": __import__("zones").zone_lieu(
-                __import__("zones").lieu_effectif(o.get("location", ""), o.get("titre", ""))),
-            "teletravail": o.get("teletravail", ""), "salaire": o.get("salaire", ""),
-            "profil": "", "pourquoi": "", "process": o.get("date") or today,
+                __import__("zones").lieu_effectif(o.get("location", ""), o.get("titre", ""))
+            ),
+            "teletravail": o.get("teletravail", ""),
+            "salaire": o.get("salaire", ""),
+            "profil": "",
+            "pourquoi": "",
+            "process": o.get("date") or today,
             # `process` melange depuis toujours la date de parution et celle du
             # scan : sur 5911 offres, 2634 portent le meme jour, celui ou on les
             # a vues. Impossible d'y distinguer l'une de l'autre apres coup, on
             # ne va donc pas l'ecraser. La date CERTAINE va dans son propre
             # champ, vide quand la source ne la donne pas.
             "date_publication": o.get("date") or "",
-            "source": o.get("source", ""), "missions": "", "skills_match": 0,
-            "ats_pct": ats, "canal": canal, "is_stage": False,
-            "priorite": "prio" if fit >= 7 else "normal", "link_status": "OK",
-            "description": desc, "vu_le": today,
+            "source": o.get("source", ""),
+            "missions": "",
+            "skills_match": 0,
+            "ats_pct": ats,
+            "canal": canal,
+            "is_stage": False,
+            "priorite": "prio" if fit >= 7 else "normal",
+            "link_status": "OK",
+            "description": desc,
+            "vu_le": today,
         }
         q.append(ligne)
         # INDEXER LA LIGNE, PAS L'OFFRE BRUTE. `idx[key] = o` rangeait le dict
@@ -3073,9 +3859,17 @@ def _merge_into_queue(fresh, dry, fit_detail, score_offer, queue_io):
         added += 1
     if not dry:
         __import__("jutil").jwrite(QUEUE, q)
-    return dict(added=added, updated=updated, promus=promus, purged=purged,
-                hors_zone=hors_zone, ecartees=ecartees, rejetees_tri=rejetees_tri,
-                pays_ecartes=pays_ecartes, total=len(q))
+    return dict(
+        added=added,
+        updated=updated,
+        promus=promus,
+        purged=purged,
+        hors_zone=hors_zone,
+        ecartees=ecartees,
+        rejetees_tri=rejetees_tri,
+        pays_ecartes=pays_ecartes,
+        total=len(q),
+    )
 
 
 # ═══════════════ 4. V.I.E / V.I.A — Business France (civiweb) ═══════════════
@@ -3099,12 +3893,13 @@ def _vie_key():
       - « API_KEY » matche aussi GMAPS_API_KEY (clé Google Maps) → ancrer le nom.
     """
     import httpx
+
     try:
         r = _get_borne(httpx, VIE_SITE, timeout=15, headers=UA, follow_redirects=True)
         m = re.search(r'(?:^|[^_A-Z])API_KEY\s*:\s*"([^"]{20,})"', r.text)
         if m:
             k = m.group(1).encode().decode("unicode_escape")
-            if k.endswith("="):          # la clé civiweb est du base64
+            if k.endswith("="):  # la clé civiweb est du base64
                 return k
     except Exception:
         pass
@@ -3115,18 +3910,22 @@ def fetch_vie(limit=1000):
     """Offres V.I.E/V.I.A. Intérêt pour un profil junior : contrat 12-24 mois,
     indemnité nette, et beaucoup de postes finance/ESG en filiale à l'étranger."""
     import httpx
+
     key = _vie_key()
-    H = {**UA, "Content-Type": "application/json", "Accept": "application/json",
-         "x-api-key": key}
+    H = {**UA, "Content-Type": "application/json", "Accept": "application/json", "x-api-key": key}
     out, skip = [], 0
     while len(out) < limit:
         try:
-            r = _post_borne(httpx, VIE_API, json={"limit": 100, "skip": skip}, timeout=30, headers=H)
+            r = _post_borne(
+                httpx, VIE_API, json={"limit": 100, "skip": skip}, timeout=30, headers=H
+            )
             if r.status_code != 200:
-                print(f"  ✗ VIE http {r.status_code} (clé rotée ? relancer probe)"); break
+                print(f"  ✗ VIE http {r.status_code} (clé rotée ? relancer probe)")
+                break
             d = r.json()
         except Exception as e:
-            print(f"  ✗ VIE {type(e).__name__}"); break
+            print(f"  ✗ VIE {type(e).__name__}")
+            break
         res = d.get("result") or []
         if not res:
             break
@@ -3138,19 +3937,31 @@ def fetch_vie(limit=1000):
             ville = str(x.get("cityName") or "")
             ind = x.get("indemnite") or 0
             dur = x.get("missionDuration") or ""
-            desc = "\n".join(filter(None, [
-                str(x.get("missionDescription") or ""),
-                "PROFIL : " + str(x.get("missionProfile") or ""),
-                f"[{x.get('missionType') or 'VIE'} · {dur} mois · indemnité {int(ind)} EUR/mois]"]))
+            desc = "\n".join(
+                filter(
+                    None,
+                    [
+                        str(x.get("missionDescription") or ""),
+                        "PROFIL : " + str(x.get("missionProfile") or ""),
+                        f"[{x.get('missionType') or 'VIE'} · {dur} mois · indemnité {int(ind)} EUR/mois]",
+                    ],
+                )
+            )
             # Lien PROFOND vers l'offre. `{VIE_SITE}?id=<id>` menait a la page de
             # RECHERCHE generique : le bouton Postuler n'ouvrait pas l'offre.
             # Le site lui-meme pointe vers /offres/<id> (verifie : la page rend
             # bien l'offre et son bouton POSTULER).
-            out.append(_mk(titre, f"{VIE_BASE}/offres/{x.get('id')}",
-                           str(x.get("organizationName") or "").strip() or "VIE",
-                           f"{ville} ({pays})".strip(),
-                           str(x.get("startBroadcastDate") or "")[:10],
-                           f"vie:{x.get('reference') or x.get('id')}", desc))
+            out.append(
+                _mk(
+                    titre,
+                    f"{VIE_BASE}/offres/{x.get('id')}",
+                    str(x.get("organizationName") or "").strip() or "VIE",
+                    f"{ville} ({pays})".strip(),
+                    str(x.get("startBroadcastDate") or "")[:10],
+                    f"vie:{x.get('reference') or x.get('id')}",
+                    desc,
+                )
+            )
         skip += 100
         if skip >= (d.get("count") or 0):
             break
@@ -3176,12 +3987,15 @@ FIR_URL = "https://www.frenchsif.org/isr_esg/emplois-et-stages/"
 
 def fetch_fir():
     import httpx, html as _html
+
     try:
         r = _get_borne(httpx, FIR_URL, timeout=25, headers=UA, follow_redirects=True)
         if r.status_code != 200:
-            print(f"  ✗ FIR http {r.status_code}"); return []
+            print(f"  ✗ FIR http {r.status_code}")
+            return []
     except Exception as e:
-        print(f"  ✗ FIR {type(e).__name__}"); return []
+        print(f"  ✗ FIR {type(e).__name__}")
+        return []
     out = []
     for a in re.split(r'<article class="loop post-', r.text)[1:]:
         mu = re.search(r'href="(https://www\.frenchsif\.org/isr_esg/emploi-stage/[^"]+)"', a)
@@ -3197,8 +4011,17 @@ def fetch_fir():
         txt = re.sub(r"\s+", " ", txt).strip()[:8000]
         if not title_ok(titre):
             continue
-        out.append(_mk(titre, mu.group(1), "FIR (French SIF)",
-                       (loc.group(1).strip() if loc else ""), "", "fir", txt))
+        out.append(
+            _mk(
+                titre,
+                mu.group(1),
+                "FIR (French SIF)",
+                (loc.group(1).strip() if loc else ""),
+                "",
+                "fir",
+                txt,
+            )
+        )
     return out
 
 
@@ -3236,8 +4059,10 @@ def _client_partage():
     global _CLIENT_PARTAGE
     if _CLIENT_PARTAGE is None:
         import httpx as _hx
-        _CLIENT_PARTAGE = _hx.Client(limits=_hx.Limits(max_connections=20,
-                                                       max_keepalive_connections=20))
+
+        _CLIENT_PARTAGE = _hx.Client(
+            limits=_hx.Limits(max_connections=20, max_keepalive_connections=20)
+        )
     return _CLIENT_PARTAGE
 
 
@@ -3255,7 +4080,8 @@ def _req_borne(envoi, methode, url, total=None, max_octets=20_000_000, **kw):
     decompresse le corps, et le laisser annonce gzip ferait decompresser deux
     fois."""
     import httpx as _hx
-    if envoi is _hx:                    # le module : pas de connexion reutilisee
+
+    if envoi is _hx:  # le module : pas de connexion reutilisee
         envoi = _client_partage()
     kw.setdefault("timeout", 20)
     t = kw["timeout"] if isinstance(kw["timeout"], (int, float)) else 20
@@ -3270,10 +4096,14 @@ def _req_borne(envoi, methode, url, total=None, max_octets=20_000_000, **kw):
                 raise _hx.TimeoutException(f"plus de {total:.0f} s pour {url}")
             if taille > max_octets:
                 raise _hx.TimeoutException(f"plus de {max_octets} octets pour {url}")
-        tetes = [(k, v) for k, v in r.headers.multi_items()
-                 if k.lower() not in ("content-encoding", "content-length", "transfer-encoding")]
-        return _hx.Response(r.status_code, headers=tetes, content=b"".join(blocs),
-                            request=r.request)
+        tetes = [
+            (k, v)
+            for k, v in r.headers.multi_items()
+            if k.lower() not in ("content-encoding", "content-length", "transfer-encoding")
+        ]
+        return _hx.Response(
+            r.status_code, headers=tetes, content=b"".join(blocs), request=r.request
+        )
 
 
 def _post_borne(envoi, url, **kw):
@@ -3321,6 +4151,7 @@ def _get_borne(envoi, url, **kw):
 def _talent_detail(httpx, url):
     """(titre, entreprise, lieu, date, description) depuis le JSON-LD JobPosting."""
     import json as _json, html as _html
+
     try:
         r = _get_borne(httpx, url, headers=UA, follow_redirects=True)
         if r.status_code != 200:
@@ -3342,9 +4173,13 @@ def _talent_detail(httpx, url):
                 loc = str(((jl.get("address") or {}).get("addressLocality")) or "")
             desc = re.sub(r"<[^>]+>", " ", str(n.get("description") or ""))
             desc = re.sub(r"\s+", " ", _html.unescape(desc)).strip()
-            return (str(n.get("title") or "").strip(),
-                    str((n.get("hiringOrganization") or {}).get("name") or "").strip(),
-                    loc, str(n.get("datePosted") or "")[:10], desc)
+            return (
+                str(n.get("title") or "").strip(),
+                str((n.get("hiringOrganization") or {}).get("name") or "").strip(),
+                loc,
+                str(n.get("datePosted") or "")[:10],
+                desc,
+            )
     return None
 
 
@@ -3353,6 +4188,7 @@ def fetch_talent(max_days=60, per_kw=20):
     anciennes : le site sert des offres de plus d'un an (vu : datePosted 2025-06)."""
     import httpx, datetime
     from urllib.parse import quote as _q
+
     today = datetime.date.today()
     out, seen = [], set()
     # LES OFFRES DEJA DANS LA FILE NE SONT PAS RECHARGEES. Chaque fiche coute une
@@ -3361,15 +4197,20 @@ def fetch_talent(max_days=60, per_kw=20):
     # deja la ; seule une offre nouvelle merite sa fiche.
     try:
         import queue_io
-        seen = {str(o.get("url") or "") for o in queue_io.charger(descriptions=False)
-                if "talent.com" in str(o.get("url") or "")}
+
+        seen = {
+            str(o.get("url") or "")
+            for o in queue_io.charger(descriptions=False)
+            if "talent.com" in str(o.get("url") or "")
+        }
     except Exception:
         seen = set()
     connues = len(seen)
     for kw in KEYWORDS:
         try:
-            r = _get_borne(httpx, TALENT_SEARCH.format(kw=_q(kw)), headers=UA,
-                           follow_redirects=True)
+            r = _get_borne(
+                httpx, TALENT_SEARCH.format(kw=_q(kw)), headers=UA, follow_redirects=True
+            )
             if r.status_code != 200:
                 continue
         except Exception:
@@ -3420,22 +4261,30 @@ def scan_talent():
 #      (fichier ignore par git : il contient un secret)
 # Sans ce fichier, la source se desactive silencieusement.
 FT_CFG = HERE / "francetravail.json"
-FT_TOKEN_URL = ("https://entreprise.francetravail.fr/connexion/oauth2/access_token"
-                "?realm=%2Fpartenaire")
+FT_TOKEN_URL = (
+    "https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=%2Fpartenaire"
+)
 FT_SEARCH = "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search"
 
 
 def _ft_token():
     import httpx, json as _json
+
     if not FT_CFG.exists():
         return None
     try:
         c = _json.loads(FT_CFG.read_text(encoding="utf-8"))
-        r = _post_borne(httpx, FT_TOKEN_URL, timeout=20, data={
-            "grant_type": "client_credentials",
-            "client_id": c["client_id"],
-            "client_secret": c["client_secret"],
-            "scope": "api_offresdemploiv2 o2dsoffre"})
+        r = _post_borne(
+            httpx,
+            FT_TOKEN_URL,
+            timeout=20,
+            data={
+                "grant_type": "client_credentials",
+                "client_id": c["client_id"],
+                "client_secret": c["client_secret"],
+                "scope": "api_offresdemploiv2 o2dsoffre",
+            },
+        )
         if r.status_code != 200:
             print(f"  ✗ France Travail token http {r.status_code} — verifie les identifiants")
             return None
@@ -3447,6 +4296,7 @@ def _ft_token():
 
 def fetch_france_travail(par_mot=50):
     import httpx
+
     tok = _ft_token()
     if not tok:
         return []
@@ -3454,8 +4304,13 @@ def fetch_france_travail(par_mot=50):
     out, seen = [], set()
     for kw in KEYWORDS:
         try:
-            r = _get_borne(httpx, FT_SEARCH, timeout=25, headers=H,
-                          params={"motsCles": kw, "range": f"0-{par_mot - 1}"})
+            r = _get_borne(
+                httpx,
+                FT_SEARCH,
+                timeout=25,
+                headers=H,
+                params={"motsCles": kw, "range": f"0-{par_mot - 1}"},
+            )
             # 204 = aucun resultat, 206 = resultat partiel (pagination) : les deux OK
             if r.status_code not in (200, 206):
                 continue
@@ -3464,8 +4319,9 @@ def fetch_france_travail(par_mot=50):
             continue
         got = 0
         for j in res:
-            u = ((j.get("origineOffre") or {}).get("urlOrigine")
-                 or f"https://candidat.francetravail.fr/offres/recherche/detail/{j.get('id')}")
+            u = (j.get("origineOffre") or {}).get(
+                "urlOrigine"
+            ) or f"https://candidat.francetravail.fr/offres/recherche/detail/{j.get('id')}"
             if u in seen:
                 continue
             titre = str(j.get("intitule") or "").strip()
@@ -3474,8 +4330,17 @@ def fetch_france_travail(par_mot=50):
             seen.add(u)
             lieu = str((j.get("lieuTravail") or {}).get("libelle") or "")
             desc = str(j.get("description") or "")
-            out.append(_mk(titre, u, str((j.get("entreprise") or {}).get("nom") or "France Travail"),
-                           lieu, str(j.get("dateCreation") or "")[:10], f"francetravail:{kw}", desc))
+            out.append(
+                _mk(
+                    titre,
+                    u,
+                    str((j.get("entreprise") or {}).get("nom") or "France Travail"),
+                    lieu,
+                    str(j.get("dateCreation") or "")[:10],
+                    f"francetravail:{kw}",
+                    desc,
+                )
+            )
             got += 1
         if got:
             print(f"  ✓ france-travail «{kw}» → {got} offres")
@@ -3519,21 +4384,38 @@ ADZUNA_API = "https://api.adzuna.com/v1/api/jobs/{pays}/search/1"
 JOOBLE_API = "https://jooble.org/api/{cle}"
 # Peu de mots, choisis : le quota gratuit d'Adzuna se compte en appels par jour,
 # et un mot-cle x un pays = un appel. 12 + 6 x 7 = 54 appels par passe.
-AGREG_MOTS_FR = ["analyste ESG", "finance durable", "investissement responsable", "ISR",
-                 "analyste financier junior", "analyste crédit", "risque climatique",
-                 "reporting extra-financier", "CSRD", "SFDR", "analyste private equity",
-                 "transition énergétique analyste"]
-AGREG_MOTS_EN = ["ESG analyst", "sustainable finance", "sustainability analyst",
-                 "responsible investment", "climate risk analyst", "graduate finance"]
+AGREG_MOTS_FR = [
+    "analyste ESG",
+    "finance durable",
+    "investissement responsable",
+    "ISR",
+    "analyste financier junior",
+    "analyste crédit",
+    "risque climatique",
+    "reporting extra-financier",
+    "CSRD",
+    "SFDR",
+    "analyste private equity",
+    "transition énergétique analyste",
+]
+AGREG_MOTS_EN = [
+    "ESG analyst",
+    "sustainable finance",
+    "sustainability analyst",
+    "responsible investment",
+    "climate risk analyst",
+    "graduate finance",
+]
 ADZUNA_PAYS = ("gb", "es", "de", "nl", "be", "ch", "it")
 AGREG_PAUSE = 1.0
-AGREG_ABANDON = 3          # refus d'entree d'affilee (cle refusee, blocage)
-AGREG_REPOS_429 = 60       # une limite de debit s'attend ; deux fois au plus
+AGREG_ABANDON = 3  # refus d'entree d'affilee (cle refusee, blocage)
+AGREG_REPOS_429 = 60  # une limite de debit s'attend ; deux fois au plus
 
 
 def _cle(chemin, *champs):
     """Les champs du fichier de cle, ou None. Ne leve jamais, n'affiche rien de la cle."""
     import json as _json
+
     if not chemin.exists():
         return None
     try:
@@ -3566,8 +4448,10 @@ class _Garde:
             INCIDENTS[self.nom][f"HTTP {r.status_code}"] += 1
             self.refus += 1
             if self.refus >= AGREG_ABANDON:
-                print(f"  ⏸ {self.nom} : {self.refus} refus d'affilee (HTTP {r.status_code}) — "
-                      f"cle refusee ou acces bloque, arret de la source")
+                print(
+                    f"  ⏸ {self.nom} : {self.refus} refus d'affilee (HTTP {r.status_code}) — "
+                    f"cle refusee ou acces bloque, arret de la source"
+                )
                 self.fini = True
             return False
         if r.status_code != 200:
@@ -3587,8 +4471,15 @@ def _agreg_offre(titre, url, entreprise, lieu, date, source, extrait, contrat, _
     ctr = contrat_du_titre(titre) or contrat or ""
     if ctr and ctr in _EX:
         return None
-    o = _mk(titre, url, entreprise or source.split(":")[0].title(), lieu or "",
-            str(date or "")[:10], source, _strip_html(extrait or ""))
+    o = _mk(
+        titre,
+        url,
+        entreprise or source.split(":")[0].title(),
+        lieu or "",
+        str(date or "")[:10],
+        source,
+        _strip_html(extrait or ""),
+    )
     o["desc_partielle"] = True
     if ctr:
         o["contrat"] = ctr
@@ -3597,6 +4488,7 @@ def _agreg_offre(titre, url, entreprise, lieu, date, source, extrait, contrat, _
 
 def scan_adzuna():
     import httpx
+
     cle = _cle(ADZUNA_CFG, "app_id", "app_key")
     if not cle:
         print("  · Adzuna ignore (Scripts/adzuna.json absent — voir le commentaire)")
@@ -3604,8 +4496,9 @@ def scan_adzuna():
     app_id, app_key = cle
     _EX = contrats_exclus()
     garde, out, vus = _Garde("adzuna"), [], set()
-    requetes = [("fr", m) for m in AGREG_MOTS_FR] + \
-               [(p, m) for p in ADZUNA_PAYS for m in AGREG_MOTS_EN]
+    requetes = [("fr", m) for m in AGREG_MOTS_FR] + [
+        (p, m) for p in ADZUNA_PAYS for m in AGREG_MOTS_EN
+    ]
     faites = 0
     for pays, mot in requetes:
         if garde.fini:
@@ -3614,10 +4507,20 @@ def scan_adzuna():
             time.sleep(AGREG_PAUSE)
         faites += 1
         try:
-            r = _get_borne(httpx, ADZUNA_API.format(pays=pays), timeout=25, headers=UA,
-                           params={"app_id": app_id, "app_key": app_key, "what": mot,
-                                   "results_per_page": 50, "max_days_old": 30,
-                                   "content-type": "application/json"})
+            r = _get_borne(
+                httpx,
+                ADZUNA_API.format(pays=pays),
+                timeout=25,
+                headers=UA,
+                params={
+                    "app_id": app_id,
+                    "app_key": app_key,
+                    "what": mot,
+                    "results_per_page": 50,
+                    "max_days_old": 30,
+                    "content-type": "application/json",
+                },
+            )
         except Exception as e:
             INCIDENTS["adzuna"][type(e).__name__] += 1
             continue
@@ -3632,10 +4535,17 @@ def scan_adzuna():
             if not u or u in vus:
                 continue
             vus.add(u)
-            o = _agreg_offre(j.get("title"), u, (j.get("company") or {}).get("display_name"),
-                             (j.get("location") or {}).get("display_name"), j.get("created"),
-                             f"adzuna:{pays}", j.get("description"),
-                             _ADZUNA_CONTRAT.get(j.get("contract_type") or ""), _EX)
+            o = _agreg_offre(
+                j.get("title"),
+                u,
+                (j.get("company") or {}).get("display_name"),
+                (j.get("location") or {}).get("display_name"),
+                j.get("created"),
+                f"adzuna:{pays}",
+                j.get("description"),
+                _ADZUNA_CONTRAT.get(j.get("contract_type") or ""),
+                _EX,
+            )
             if o:
                 out.append(o)
     print(f"  ✓ Adzuna → {len(out)} offres sur {faites} requetes (extraits, liens Adzuna)")
@@ -3644,6 +4554,7 @@ def scan_adzuna():
 
 def scan_jooble():
     import httpx
+
     cle = _cle(JOOBLE_CFG, "key")
     if not cle:
         print("  · Jooble ignore (Scripts/jooble.json absent — voir le commentaire)")
@@ -3658,9 +4569,13 @@ def scan_jooble():
             time.sleep(AGREG_PAUSE)
         faites += 1
         try:
-            r = _post_borne(httpx, JOOBLE_API.format(cle=cle[0]), timeout=25,
-                            headers={**UA, "Content-Type": "application/json"},
-                            json={"keywords": mot, "location": "France", "page": "1"})
+            r = _post_borne(
+                httpx,
+                JOOBLE_API.format(cle=cle[0]),
+                timeout=25,
+                headers={**UA, "Content-Type": "application/json"},
+                json={"keywords": mot, "location": "France", "page": "1"},
+            )
         except Exception as e:
             INCIDENTS["jooble"][type(e).__name__] += 1
             continue
@@ -3677,8 +4592,17 @@ def scan_jooble():
             vus.add(u)
             typ = str(j.get("type") or "")
             ctr = "CDI" if "CDI" in typ else "CDD" if "CDD" in typ else ""
-            o = _agreg_offre(j.get("title"), u, j.get("company"), j.get("location"),
-                             j.get("updated"), "jooble", j.get("snippet"), ctr, _EX)
+            o = _agreg_offre(
+                j.get("title"),
+                u,
+                j.get("company"),
+                j.get("location"),
+                j.get("updated"),
+                "jooble",
+                j.get("snippet"),
+                ctr,
+                _EX,
+            )
             if o:
                 out.append(o)
     print(f"  ✓ Jooble → {len(out)} offres sur {faites} requetes (extraits, liens Jooble)")
@@ -3686,55 +4610,100 @@ def scan_jooble():
 
 
 def main():
-    _load_cfg()   # sources éditées depuis l'app
+    _load_cfg()  # sources éditées depuis l'app
     ap = argparse.ArgumentParser()
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--ats", action="store_true")
-    ap.add_argument("--workday", action="store_true",
-                    help="flux Workday publics (Eiffage, Ardian, Lombard Odier)")
+    ap.add_argument(
+        "--workday",
+        action="store_true",
+        help="flux Workday publics (Eiffage, Ardian, Lombard Odier)",
+    )
     ap.add_argument("--linkedin", action="store_true")
     ap.add_argument("--wtj", action="store_true")
     ap.add_argument("--vie", action="store_true")
     ap.add_argument("--fir", action="store_true")
     ap.add_argument("--talent", action="store_true")
-    ap.add_argument("--indeed", action="store_true",
-                    help="Indeed : page 1 des resultats (15 offres par requete)")
-    ap.add_argument("--indeed-lieux", default=",".join(INDEED_LIEUX),
-                    help="villes Indeed, separees par des virgules")
-    ap.add_argument("--glassdoor", action="store_true",
-                    help="Glassdoor : page 1 de la recherche (30 offres par mot-cle)")
-    ap.add_argument("--apec", action="store_true",
-                    help="APEC : API publique, description entiere dans la liste")
+    ap.add_argument(
+        "--indeed",
+        action="store_true",
+        help="Indeed : page 1 des resultats (15 offres par requete)",
+    )
+    ap.add_argument(
+        "--indeed-lieux",
+        default=",".join(INDEED_LIEUX),
+        help="villes Indeed, separees par des virgules",
+    )
+    ap.add_argument(
+        "--glassdoor",
+        action="store_true",
+        help="Glassdoor : page 1 de la recherche (30 offres par mot-cle)",
+    )
+    ap.add_argument(
+        "--apec", action="store_true", help="APEC : API publique, description entiere dans la liste"
+    )
     ap.add_argument("--ft", action="store_true", help="France Travail (API officielle)")
-    ap.add_argument("--adzuna", action="store_true",
-                    help="Adzuna (API officielle, cle dans Scripts/adzuna.json)")
-    ap.add_argument("--jooble", action="store_true",
-                    help="Jooble (API officielle, cle dans Scripts/jooble.json)")
-    ap.add_argument("--efc", action="store_true",
-                    help="eFinancialCareers (sitemap public, crawl-delay 10 s)")
-    ap.add_argument("--efc-graduate", action="store_true",
-                    help="eFC : programmes jeunes diplomes et V.I.E")
-    ap.add_argument("--efc-tout", action="store_true",
-                    help="eFC sans le filtre ESG : ~2400 titres, tres long")
-    ap.add_argument("--efc-metier", action="store_true",
-                    help="eFC : intitules compatibles avec le profil (869 sur 8478)")
-    ap.add_argument("--efc-sites", default="fr",
-                    help="sites eFC a lire : fr, com, co.uk, de, ch, nl, lu, ie, sg "
-                         "(separes par des virgules) ou « monde » pour les neuf")
-    ap.add_argument("--eures", action="store_true",
-                    help="EURES, portail officiel de l'UE (API publique, crawl-delay 10 s)")
-    ap.add_argument("--efc-limite", type=int, default=40,
-                    help="nombre de fiches eFC lues par passe (10 s chacune)")
+    ap.add_argument(
+        "--adzuna",
+        action="store_true",
+        help="Adzuna (API officielle, cle dans Scripts/adzuna.json)",
+    )
+    ap.add_argument(
+        "--jooble",
+        action="store_true",
+        help="Jooble (API officielle, cle dans Scripts/jooble.json)",
+    )
+    ap.add_argument(
+        "--efc", action="store_true", help="eFinancialCareers (sitemap public, crawl-delay 10 s)"
+    )
+    ap.add_argument(
+        "--efc-graduate", action="store_true", help="eFC : programmes jeunes diplomes et V.I.E"
+    )
+    ap.add_argument(
+        "--efc-tout", action="store_true", help="eFC sans le filtre ESG : ~2400 titres, tres long"
+    )
+    ap.add_argument(
+        "--efc-metier",
+        action="store_true",
+        help="eFC : intitules compatibles avec le profil (869 sur 8478)",
+    )
+    ap.add_argument(
+        "--efc-sites",
+        default="fr",
+        help="sites eFC a lire : fr, com, co.uk, de, ch, nl, lu, ie, sg "
+        "(separes par des virgules) ou « monde » pour les neuf",
+    )
+    ap.add_argument(
+        "--eures",
+        action="store_true",
+        help="EURES, portail officiel de l'UE (API publique, crawl-delay 10 s)",
+    )
+    ap.add_argument(
+        "--efc-limite",
+        type=int,
+        default=40,
+        help="nombre de fiches eFC lues par passe (10 s chacune)",
+    )
     ap.add_argument("--pages", type=int, default=2)
-    ap.add_argument("--days", type=int, default=7,
-                    help="fraicheur LinkedIn en jours (31 = rattraper un mois)")
+    ap.add_argument(
+        "--days", type=int, default=7, help="fraicheur LinkedIn en jours (31 = rattraper un mois)"
+    )
     ap.add_argument("--dry", action="store_true")
-    ap.add_argument("--monde", action="store_true",
-                    help="sans effet, c'est le defaut (garde pour compatibilite)")
-    ap.add_argument("--france", action="store_true",
-                    help="ne garder QUE les offres en France (annule le defaut mondial)")
-    ap.add_argument("--fusion-seule", action="store_true",
-                    help="refusionne le dernier scan (offres_scan.json) sans rien collecter")
+    ap.add_argument(
+        "--monde",
+        action="store_true",
+        help="sans effet, c'est le defaut (garde pour compatibilite)",
+    )
+    ap.add_argument(
+        "--france",
+        action="store_true",
+        help="ne garder QUE les offres en France (annule le defaut mondial)",
+    )
+    ap.add_argument(
+        "--fusion-seule",
+        action="store_true",
+        help="refusionne le dernier scan (offres_scan.json) sans rien collecter",
+    )
     a = ap.parse_args()
 
     # DEUX VERROUS, DEUX ROLES. Il n'y en avait qu'un, sur la FILE, pris au
@@ -3754,6 +4723,7 @@ def main():
     # APRES argparse, et pas avant : `--help` et `--dry`, qui n'ecrivent rien,
     # ne doivent rien bloquer.
     import jutil
+
     if not a.dry and not jutil.garder(FRESH):
         return 3
 
@@ -3765,10 +4735,27 @@ def main():
     # --efc et --efc-tout comptent comme une source demandee. Sans eux dans
     # cette liste, `--efc` seul retombait sur a.all = True et relancait TOUT le
     # scan quotidien avant d'arriver a eFC.
-    if not (a.all or a.ats or a.workday or a.linkedin or a.wtj or a.vie or a.fir
-            or a.talent or a.ft or a.efc or a.efc_tout or a.efc_graduate
-            or a.efc_metier or a.indeed or a.glassdoor
-            or a.apec or a.eures or a.adzuna or a.jooble):
+    if not (
+        a.all
+        or a.ats
+        or a.workday
+        or a.linkedin
+        or a.wtj
+        or a.vie
+        or a.fir
+        or a.talent
+        or a.ft
+        or a.efc
+        or a.efc_tout
+        or a.efc_graduate
+        or a.efc_metier
+        or a.indeed
+        or a.glassdoor
+        or a.apec
+        or a.eures
+        or a.adzuna
+        or a.jooble
+    ):
         a.all = True
 
     fresh = []
@@ -3796,8 +4783,9 @@ def main():
         fresh += scan_talent()
     if a.indeed:
         print("── Indeed (page 1 des résultats — voir le commentaire de scan_indeed) ──")
-        fresh += scan_indeed(lieux=[v.strip() for v in a.indeed_lieux.split(",") if v.strip()],
-                             persist=not a.dry)
+        fresh += scan_indeed(
+            lieux=[v.strip() for v in a.indeed_lieux.split(",") if v.strip()], persist=not a.dry
+        )
     if a.all or a.apec:
         print("── APEC (API publique, annonce entière dans la liste) ──")
         fresh += scan_apec()
@@ -3809,13 +4797,24 @@ def main():
     # le reste). Neuf sitemaps + 30 fiches a 10 s font ~6 min. Les filtres
     # larges (--efc-metier, --efc-tout) restent a lancer a part, par passes.
     if a.all or a.efc or a.efc_tout or a.efc_graduate or a.efc_metier:
-        filtre = ("tout" if a.efc_tout else
-                  "graduate" if a.efc_graduate else
-                  "metier" if a.efc_metier else "esg")
-        sites = EFC_SITES if (a.all and not a.efc) or a.efc_sites == "monde" else \
-            tuple(x.strip() for x in a.efc_sites.split(",") if x.strip())
+        filtre = (
+            "tout"
+            if a.efc_tout
+            else "graduate"
+            if a.efc_graduate
+            else "metier"
+            if a.efc_metier
+            else "esg"
+        )
+        sites = (
+            EFC_SITES
+            if (a.all and not a.efc) or a.efc_sites == "monde"
+            else tuple(x.strip() for x in a.efc_sites.split(",") if x.strip())
+        )
         limite = 30 if (a.all and not a.efc) else a.efc_limite
-        print(f"── eFinancialCareers ({filtre}, {len(sites)} site(s), sitemap public, crawl-delay 10 s) ──")
+        print(
+            f"── eFinancialCareers ({filtre}, {len(sites)} site(s), sitemap public, crawl-delay 10 s) ──"
+        )
         fresh += scan_efc(limit=limite, filtre=filtre, sites=sites)
     if a.all or a.eures:
         print("── EURES (portail officiel UE, API publique, crawl-delay 10 s) ──")
@@ -3839,14 +4838,17 @@ def main():
         k = _norm(o["entreprise"]) + "|" + _norm(o["titre"])
         if k in seen:
             continue
-        seen.add(k); uniq.append(o)
+        seen.add(k)
+        uniq.append(o)
     # --dry n'ecrit RIEN, pas meme le scan : il ne tient pas le verrou de
     # offres_scan.json, et l'ecraser pendant qu'un vrai scan le detient ruinait
     # le `--fusion-seule` de ce dernier. Vu le 2026-09-23 sur un --apec --dry.
     if not a.dry:
         FRESH.write_text(json.dumps(uniq, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"\nScan : {len(uniq)} offres uniques"
-          + (" (non ecrit : --dry)" if a.dry else f" (→ {FRESH.name})"))
+    print(
+        f"\nScan : {len(uniq)} offres uniques"
+        + (" (non ecrit : --dry)" if a.dry else f" (→ {FRESH.name})")
+    )
 
     # LES REFUS, AVANT LE BILAN. Sans ca, un scan bride de bout en bout affiche
     # le meme « 0 offres » qu'une journee sans nouveaute, et on relance — ce qui
@@ -3871,23 +4873,27 @@ def _fusionner(uniq, dry):
     l'attente echoue quand meme, rien n'est perdu — le scan est deja dans
     offres_scan.json, et `--fusion-seule` le refusionne sans rien recollecter."""
     import queue_io
+
     try:
         r = merge_into_queue(uniq, dry=dry, attente=1800)
     except queue_io.VerrouIndisponible as e:
         print(f"! {e}")
-        print(f"  Le scan est conserve dans {FRESH.name} : "
-              f"`python job_sources.py --fusion-seule` le fusionnera.")
+        print(
+            f"  Le scan est conserve dans {FRESH.name} : "
+            f"`python job_sources.py --fusion-seule` le fusionnera."
+        )
         return 3
-    print(f"Merge {'[DRY] ' if dry else ''}: +{r['added']} nouvelles, {r['updated']} enrichies (desc), "
-          f"{r['promus']} liens promus (LinkedIn -> vrai site), "
-          f"{r['hors_zone']} hors de France, "
-          f"{r['ecartees']} écartées à la main, {r.get('rejetees_tri', 0)} déjà rejetées par le tri, "
-          f"{r['pays_ecartes']} pays écartés, "
-          f"{r['purged']} bruits purgés — {r['total']} total")
+    print(
+        f"Merge {'[DRY] ' if dry else ''}: +{r['added']} nouvelles, {r['updated']} enrichies (desc), "
+        f"{r['promus']} liens promus (LinkedIn -> vrai site), "
+        f"{r['hors_zone']} hors de France, "
+        f"{r['ecartees']} écartées à la main, {r.get('rejetees_tri', 0)} déjà rejetées par le tri, "
+        f"{r['pays_ecartes']} pays écartés, "
+        f"{r['purged']} bruits purgés — {r['total']} total"
+    )
     if r["added"] and not dry:
         print("→ re-score + descriptions manquantes : automatiques au prochain lancement de l'app.")
     return 0
-
 
 
 # Garde-fou, execute en FIN de module. Il etait place en haut, juste apres les

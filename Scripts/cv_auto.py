@@ -22,6 +22,7 @@ Run :
   python cv_auto.py --essai "texte d'annonce"     # faits retenus pour ce texte
   python cv_auto.py --liste                       # la banque et son etat
 """
+
 import json
 import re
 import sys
@@ -34,6 +35,7 @@ sys.path.insert(0, str(HERE))
 
 def _chemin():
     import chemins
+
     return chemins.ROOT / "CV" / "Faits.json"
 
 
@@ -77,7 +79,7 @@ def retouches(texte, langue="fr", allege=0, b=None):
                 r["ajoute_apres"].append([op["ancre"], op["texte"]])
         if ops:
             r["faits"].append(f["id"])
-    r["supprime"] = list((b.get("allegements") or {}).get(langue, []))[:max(0, allege)]
+    r["supprime"] = list((b.get("allegements") or {}).get(langue, []))[: max(0, allege)]
     return r
 
 
@@ -88,6 +90,7 @@ def nb_allegements(langue="fr", b=None):
 
 def main():
     import argparse
+
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser()
     ap.add_argument("--essai", default="", help="texte d'annonce a tester")
@@ -98,8 +101,10 @@ def main():
     if a.liste or not a.essai:
         for f in b.get("faits", []):
             etat = "valide " if f.get("valide") else "A VALIDER"
-            print(f"  [{etat}] {f['id']:28} prio {f.get('priorite', 0):>2} · "
-                  f"{len(f.get('declencheurs', []))} declencheurs")
+            print(
+                f"  [{etat}] {f['id']:28} prio {f.get('priorite', 0):>2} · "
+                f"{len(f.get('declencheurs', []))} declencheurs"
+            )
         return 0
     r = retouches(a.essai, a.langue)
     print("faits retenus :", r["faits"] or "aucun")

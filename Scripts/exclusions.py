@@ -21,6 +21,7 @@ Run :
   python exclusions.py                 # rapport : ce que la notation rate
   python exclusions.py --liste
 """
+
 import sys
 import json
 import argparse
@@ -54,6 +55,7 @@ def charger():
 
 def est_exclu(offre, table=None):
     import queue_io
+
     return queue_io.oid(offre) in (charger() if table is None else table)
 
 
@@ -66,6 +68,7 @@ def ajouter(offres, motif, note=""):
     """
     import jutil
     import queue_io
+
     t = charger()
     n = 0
     today = _dt.date.today().isoformat()
@@ -73,10 +76,17 @@ def ajouter(offres, motif, note=""):
         k = queue_io.oid(o)
         if k in t:
             continue
-        t[k] = {"motif": motif, "note": note, "date": today,
-                "entreprise": o.get("entreprise", ""), "poste": o.get("poste", ""),
-                "url": o.get("url", ""), "fit": o.get("fit"),
-                "exp_requise": o.get("exp_requise"), "source": o.get("source", "")}
+        t[k] = {
+            "motif": motif,
+            "note": note,
+            "date": today,
+            "entreprise": o.get("entreprise", ""),
+            "poste": o.get("poste", ""),
+            "url": o.get("url", ""),
+            "fit": o.get("fit"),
+            "exp_requise": o.get("exp_requise"),
+            "source": o.get("source", ""),
+        }
         n += 1
     if n:
         jutil.jwrite(FICHIER, t)
@@ -86,6 +96,7 @@ def ajouter(offres, motif, note=""):
 def retirer(cles):
     """Annule des exclusions. Rend le nombre retire."""
     import jutil
+
     t = charger()
     n = 0
     for k in cles:
@@ -113,13 +124,15 @@ def _rapport():
         # Un refus sur une offre a fit eleve est un DESACCORD : le score la
         # recommandait. C'est celui-la qui apprend quelque chose.
         hauts = [f for f in fits if f >= 8]
-        moy = f"{sum(fits)/len(fits):.1f}" if fits else "—"
+        moy = f"{sum(fits) / len(fits):.1f}" if fits else "—"
         print(f"\n  {len(lot):3} × {motif}")
         print(f"       fit moyen {moy} · {len(hauts)} offre(s) etaient a fit >= 8")
         for v in sorted(lot, key=lambda v: -(v.get("fit") or 0))[:4]:
             exp = v.get("exp_requise")
-            print(f"       fit {v.get('fit')} exp {exp}  "
-                  f"{(v.get('entreprise') or '')[:22]:22} {(v.get('poste') or '')[:40]}")
+            print(
+                f"       fit {v.get('fit')} exp {exp}  "
+                f"{(v.get('entreprise') or '')[:22]:22} {(v.get('poste') or '')[:40]}"
+            )
 
     desaccords = [v for v in t.values() if (v.get("fit") or 0) >= 8]
     print(f"\n=== {len(desaccords)} desaccord(s) : le score disait oui, l'utilisateur dit non ===")
@@ -137,8 +150,10 @@ def main():
         t = charger()
         print(f"{len(t)} exclusion(s)")
         for k, v in sorted(t.items(), key=lambda x: -(x[1].get("fit") or 0)):
-            print(f"  fit {v.get('fit')} exp {v.get('exp_requise')} · {v.get('motif')}"
-                  f"{(' — ' + v['note']) if v.get('note') else ''}\n      {k}")
+            print(
+                f"  fit {v.get('fit')} exp {v.get('exp_requise')} · {v.get('motif')}"
+                f"{(' — ' + v['note']) if v.get('note') else ''}\n      {k}"
+            )
         return 0
     return _rapport()
 

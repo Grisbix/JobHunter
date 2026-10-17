@@ -37,6 +37,7 @@ except Exception:
 # ── Lexique LARGE du filtre d'offres : profil.json, filtre_titre.lexique_large ──
 # Liste de sous-chaines. Vide = tout passe ce premier tamis (title_ok resserre).
 import profil as _P
+
 ESG_FINANCE_KEYWORDS = [k.lower() for k in (_P.get("filtre_titre.lexique_large", []) or [])]
 
 DOMAINE_MAP = {
@@ -248,6 +249,7 @@ def robots_autorise(url: str) -> bool:
     """Le robots.txt de ce domaine autorise-t-il `url` ? Un cache par hote."""
     from urllib.parse import urlsplit
     from urllib import robotparser
+
     try:
         s = urlsplit(url)
         hote = f"{s.scheme}://{s.netloc}"
@@ -260,7 +262,7 @@ def robots_autorise(url: str) -> bool:
         try:
             rp.read()
         except Exception:
-            rp = False          # injoignable : on n'y revient pas, et on passe
+            rp = False  # injoignable : on n'y revient pas, et on passe
         _ROBOTS_CACHE[hote] = rp
     if rp is False:
         return True
@@ -346,11 +348,20 @@ def build_job_urls(entry: dict) -> list[str]:
 
     # Générer des chemins carrière courants pour sites corporate
     careers_paths = [
-        "/careers", "/careers/jobs", "/jobs", "/about/careers",
-        "/carrieres", "/carrières", "/nous-rejoindre",
-        "/recrutement", "/offres", "/offres-emploi",
-        "/fr/careers", "/en/careers",
-        "/job-search", "/search/jobs",
+        "/careers",
+        "/careers/jobs",
+        "/jobs",
+        "/about/careers",
+        "/carrieres",
+        "/carrières",
+        "/nous-rejoindre",
+        "/recrutement",
+        "/offres",
+        "/offres-emploi",
+        "/fr/careers",
+        "/en/careers",
+        "/job-search",
+        "/search/jobs",
     ]
 
     # URLs existantes déjà carrière
@@ -504,6 +515,7 @@ def offre_retenue(titre: str) -> bool:
 def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
     """Scrape un site pour en extraire les offres d'emploi."""
     import httpx
+
     site_name = extract_company_name(entry)
     offers = []
     candidate_urls = build_job_urls(entry)
@@ -529,17 +541,23 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                         title = job.get("name", "")
                         job_url = f"https://jobs.smartrecruiters.com/{slug}/{job.get('id', '')}"
                         if title and offre_retenue(title):
-                            offers.append({
-                                "titre": title,
-                                "url": job_url,
-                                "entreprise": company_name,
-                                "domaine": classify_domaine(title),
-                                "location": job.get("location", {}).get("city", ""),
-                                "date": job.get("publicationDate", ""),
-                                "source": entry["url"],
-                                "scraped_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                            })
-                    print(f"  ✓ {len([x for x in data.get('content', []) if offre_retenue(x.get('name',''))])} offres ESG/Finance sur {company_name} (API SmartRecruiters)")
+                            offers.append(
+                                {
+                                    "titre": title,
+                                    "url": job_url,
+                                    "entreprise": company_name,
+                                    "domaine": classify_domaine(title),
+                                    "location": job.get("location", {}).get("city", ""),
+                                    "date": job.get("publicationDate", ""),
+                                    "source": entry["url"],
+                                    "scraped_at": time.strftime(
+                                        "%Y-%m-%dT%H:%M:%SZ", time.gmtime()
+                                    ),
+                                }
+                            )
+                    print(
+                        f"  ✓ {len([x for x in data.get('content', []) if offre_retenue(x.get('name', ''))])} offres ESG/Finance sur {company_name} (API SmartRecruiters)"
+                    )
                 else:
                     print(f"  ~ API SmartRecruiters {slug}: HTTP {resp.status_code}")
             except Exception as e:
@@ -551,12 +569,33 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
     if "welcometothejungle" in domain:
         # WTJ company pages (known ESG/Finance companies)
         wtj_companies = [
-            "axa", "ey", "bnp-paribas", "societe-generale", "credit-agricole",
-            "natixis", "amundi", "caisse-des-depots", "bpce", "banque-populaire",
-            "robeco", "candriam", "allianz", "swiss-life", "pictet",
-            "bpi-france", "eurazeo", "tikehau-capital", "ardian",
-            "oliver-wyman", "bain-and-company", "mckinsey", "bcg",
-            "deloitte", "kpmg", "pwc", "kearney",
+            "axa",
+            "ey",
+            "bnp-paribas",
+            "societe-generale",
+            "credit-agricole",
+            "natixis",
+            "amundi",
+            "caisse-des-depots",
+            "bpce",
+            "banque-populaire",
+            "robeco",
+            "candriam",
+            "allianz",
+            "swiss-life",
+            "pictet",
+            "bpi-france",
+            "eurazeo",
+            "tikehau-capital",
+            "ardian",
+            "oliver-wyman",
+            "bain-and-company",
+            "mckinsey",
+            "bcg",
+            "deloitte",
+            "kpmg",
+            "pwc",
+            "kearney",
         ]
         for slug in wtj_companies:
             company_url = f"https://www.welcometothejungle.com/fr/companies/{slug}/jobs"
@@ -568,6 +607,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                 # Dismiss cookies
                 try:
                     from web_nav import COOKIE_JS
+
                     page.evaluate(COOKIE_JS)
                     time.sleep(0.5)
                 except Exception:
@@ -604,13 +644,18 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                     title = o.get("title", "").strip()
                     lien = o.get("url", "").strip()
                     if title and lien and offre_retenue(title):
-                        offers.append({
-                            "titre": title, "url": lien, "entreprise": slug.replace("-", " ").title(),
-                            "domaine": classify_domaine(title),
-                            "location": o.get("location", ""), "date": o.get("date", ""),
-                            "source": entry["url"],
-                            "scraped_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                        })
+                        offers.append(
+                            {
+                                "titre": title,
+                                "url": lien,
+                                "entreprise": slug.replace("-", " ").title(),
+                                "domaine": classify_domaine(title),
+                                "location": o.get("location", ""),
+                                "date": o.get("date", ""),
+                                "source": entry["url"],
+                                "scraped_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                            }
+                        )
                 offer_count = len(offers) - total_before
                 total_count = len(js_offers)
                 print(f"  ~ {slug}: {total_count} offres, {offer_count} ESG/Finance")
@@ -627,6 +672,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                 time.sleep(2)
                 try:
                     from web_nav import COOKIE_JS
+
                     page.evaluate(COOKIE_JS)
                 except Exception:
                     pass
@@ -636,13 +682,18 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                     title = o.get("title", "").strip()
                     lien = o.get("url", "").strip()
                     if title and lien and offre_retenue(title):
-                        offers.append({
-                            "titre": title, "url": lien, "entreprise": site_name,
-                            "domaine": classify_domaine(title),
-                            "location": o.get("location", ""), "date": o.get("date", ""),
-                            "source": entry["url"],
-                            "scraped_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                        })
+                        offers.append(
+                            {
+                                "titre": title,
+                                "url": lien,
+                                "entreprise": site_name,
+                                "domaine": classify_domaine(title),
+                                "location": o.get("location", ""),
+                                "date": o.get("date", ""),
+                                "source": entry["url"],
+                                "scraped_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                            }
+                        )
                 if offers:
                     print(f"  ✓ {len(offers)} offres ESG/Finance Breezy")
                     break
@@ -661,6 +712,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                     time.sleep(2)
                     try:
                         from web_nav import COOKIE_JS
+
                         page.evaluate(COOKIE_JS)
                     except Exception:
                         pass
@@ -672,13 +724,20 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                         title = o.get("title", "").strip()
                         lien = o.get("url", "").strip()
                         if title and lien and offre_retenue(title):
-                            offers.append({
-                                "titre": title, "url": lien, "entreprise": site_name,
-                                "domaine": classify_domaine(title),
-                                "location": o.get("location", ""), "date": o.get("date", ""),
-                                "source": entry["url"],
-                                "scraped_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                            })
+                            offers.append(
+                                {
+                                    "titre": title,
+                                    "url": lien,
+                                    "entreprise": site_name,
+                                    "domaine": classify_domaine(title),
+                                    "location": o.get("location", ""),
+                                    "date": o.get("date", ""),
+                                    "source": entry["url"],
+                                    "scraped_at": time.strftime(
+                                        "%Y-%m-%dT%H:%M:%SZ", time.gmtime()
+                                    ),
+                                }
+                            )
                     if offers:
                         print(f"  ✓ {len(offers)} offres ESG/Finance TalentSoft")
                         break
@@ -707,6 +766,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
             # Cookie dismiss (via web_nav.COOKIE_JS si dispo)
             try:
                 from web_nav import COOKIE_JS
+
                 page.evaluate(COOKIE_JS)
                 time.sleep(0.5)
             except Exception:
@@ -723,16 +783,18 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                     title = o.get("title", "").strip()
                     lien = o.get("url", "").strip()
                     if title and lien and offre_retenue(title):
-                        offers.append({
-                            "titre": title,
-                            "url": lien,
-                            "entreprise": site_name,
-                            "domaine": classify_domaine(title),
-                            "location": o.get("location", ""),
-                            "date": o.get("date", ""),
-                            "source": entry["url"],
-                            "scraped_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                        })
+                        offers.append(
+                            {
+                                "titre": title,
+                                "url": lien,
+                                "entreprise": site_name,
+                                "domaine": classify_domaine(title),
+                                "location": o.get("location", ""),
+                                "date": o.get("date", ""),
+                                "source": entry["url"],
+                                "scraped_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                            }
+                        )
                 if offers:
                     print(f"  ✓ {len(offers)} offres ESG/Finance trouvées sur {url.split('/')[2]}")
                     break  # Found offers on this URL, stop trying others
@@ -747,29 +809,36 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
     if not offers:
         try:
             from web_nav import goto_careers
+
             page.goto(entry["url"], timeout=timeout_ms, wait_until="domcontentloaded")
             time.sleep(1)
             try:
                 from web_nav import COOKIE_JS
+
                 page.evaluate(COOKIE_JS)
             except Exception:
                 pass
             careers = goto_careers(page)
             if careers.get("clicked"):
-                print(f"  🧭 Carrières trouvées: {careers.get('label','?')}")
+                print(f"  🧭 Carrières trouvées: {careers.get('label', '?')}")
                 time.sleep(2)
                 js_offers = page.evaluate(EXTRACT_OFFERS_JS)
                 for o in js_offers:
                     title = o.get("title", "").strip()
                     lien = o.get("url", "").strip()
                     if title and lien and offre_retenue(title):
-                        offers.append({
-                            "titre": title, "url": lien, "entreprise": site_name,
-                            "domaine": classify_domaine(title),
-                            "location": o.get("location", ""), "date": o.get("date", ""),
-                            "source": entry["url"],
-                            "scraped_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                        })
+                        offers.append(
+                            {
+                                "titre": title,
+                                "url": lien,
+                                "entreprise": site_name,
+                                "domaine": classify_domaine(title),
+                                "location": o.get("location", ""),
+                                "date": o.get("date", ""),
+                                "source": entry["url"],
+                                "scraped_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                            }
+                        )
                 if offers:
                     print(f"  ✓ {len(offers)} offres ESG/Finance (via careers)")
         except Exception as e:
@@ -778,10 +847,15 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
     return offers
 
 
-def scrape_all_sites(domains_file: str, output_file: str,
-                     headless: bool = True, stealth: bool = False,
-                     site_range: tuple = None, skip: int = 0,
-                     max_sites: int = 0):
+def scrape_all_sites(
+    domains_file: str,
+    output_file: str,
+    headless: bool = True,
+    stealth: bool = False,
+    site_range: tuple = None,
+    skip: int = 0,
+    max_sites: int = 0,
+):
     """Scrape tous les sites et sauvegarde les offres fraîches."""
     entries = load_domains(domains_file)
     print(f"📋 {len(entries)} sites chargés depuis {domains_file}")
@@ -813,6 +887,7 @@ def scrape_all_sites(domains_file: str, output_file: str,
     # Playwright standard, navigateur annonce comme automatise : aucun
     # deguisement (moteur furtif, faux user-agent, navigator.webdriver masque).
     from playwright.sync_api import sync_playwright
+
     engine = "playwright"
 
     print(f"🚀 Moteur: {engine} (headless={headless})")
@@ -826,6 +901,7 @@ def scrape_all_sites(domains_file: str, output_file: str,
         # TURBO : bloque images/polices/pubs → scan 2-5× plus rapide (texte suffit)
         try:
             from web_nav import block_resources
+
             block_resources(context, images=False)
         except Exception:
             pass
@@ -834,7 +910,7 @@ def scrape_all_sites(domains_file: str, output_file: str,
         try:
             for i, entry in enumerate(entries):
                 site_name = extract_company_name(entry)
-                print(f"\n[{entry['num']}/{i+1}/{len(entries)}] {site_name} — {entry['url']}")
+                print(f"\n[{entry['num']}/{i + 1}/{len(entries)}] {site_name} — {entry['url']}")
                 if not robots_autorise(entry["url"]):
                     print(f"  🚫 robots.txt interdit le scan de {entry['domain']} — ignoré")
                     continue
@@ -913,11 +989,14 @@ def merger(offres, dry=False):
         print("→ rien à fusionner.")
         return None
     from job_sources import merge_into_queue
+
     r = merge_into_queue(offres, dry=dry)
-    print(f"\n🔗 Merge {'[DRY] ' if dry else ''}: +{r['added']} nouvelles, "
-          f"{r['updated']} enrichies, {r['promus']} liens promus, "
-          f"{r['hors_zone']} hors de France, {r['ecartees']} écartées à la main, "
-          f"{r['purged']} bruits purgés — {r['total']} offres en file")
+    print(
+        f"\n🔗 Merge {'[DRY] ' if dry else ''}: +{r['added']} nouvelles, "
+        f"{r['updated']} enrichies, {r['promus']} liens promus, "
+        f"{r['hors_zone']} hors de France, {r['ecartees']} écartées à la main, "
+        f"{r['purged']} bruits purgés — {r['total']} offres en file"
+    )
     return r
 
 
@@ -925,29 +1004,45 @@ def main():
     parser = argparse.ArgumentParser(
         description="Scrape les offres fraîches des sites carrière ESG/Finance"
     )
-    parser.add_argument("--sites", type=str, default=None,
-                        help="Plage de sites ex: 1-10, 20-30")
-    parser.add_argument("--domains", type=str, default=None,
-                        help="Filtre par nom de domaine (séparé par des virgules)")
-    parser.add_argument("--output", type=str, default="offres_fraiches.json",
-                        help="Fichier de sortie (défaut: offres_fraiches.json)")
-    parser.add_argument("--headless", action="store_true", default=True,
-                        help="Mode headless (pas de fenêtre)")
-    parser.add_argument("--no-headless", action="store_false", dest="headless",
-                        help="Afficher la fenêtre du navigateur")
+    parser.add_argument("--sites", type=str, default=None, help="Plage de sites ex: 1-10, 20-30")
+    parser.add_argument(
+        "--domains",
+        type=str,
+        default=None,
+        help="Filtre par nom de domaine (séparé par des virgules)",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="offres_fraiches.json",
+        help="Fichier de sortie (défaut: offres_fraiches.json)",
+    )
+    parser.add_argument(
+        "--headless", action="store_true", default=True, help="Mode headless (pas de fenêtre)"
+    )
+    parser.add_argument(
+        "--no-headless",
+        action="store_false",
+        dest="headless",
+        help="Afficher la fenêtre du navigateur",
+    )
     # Le mode furtif est retire ; les deux options restent acceptees, sans effet.
     parser.add_argument("--stealth", action="store_true", help="sans effet (retire)")
     parser.add_argument("--no-stealth", action="store_false", dest="stealth", help="sans effet")
-    parser.add_argument("--skip", type=int, default=0,
-                        help="Nombre de sites à sauter (reprise)")
-    parser.add_argument("--max", type=int, default=0,
-                        help="Nombre max de sites à scraper")
-    parser.add_argument("--domains-file", type=str, default=None,
-                        help="Chemin vers unique_domains.txt")
-    parser.add_argument("--no-merge", action="store_false", dest="merge",
-                        help="Scraper sans faire entrer les offres dans la file")
-    parser.add_argument("--dry", action="store_true",
-                        help="Montre ce que le merge ferait, sans écrire la file")
+    parser.add_argument("--skip", type=int, default=0, help="Nombre de sites à sauter (reprise)")
+    parser.add_argument("--max", type=int, default=0, help="Nombre max de sites à scraper")
+    parser.add_argument(
+        "--domains-file", type=str, default=None, help="Chemin vers unique_domains.txt"
+    )
+    parser.add_argument(
+        "--no-merge",
+        action="store_false",
+        dest="merge",
+        help="Scraper sans faire entrer les offres dans la file",
+    )
+    parser.add_argument(
+        "--dry", action="store_true", help="Montre ce que le merge ferait, sans écrire la file"
+    )
     args = parser.parse_args()
 
     # Déterminer le chemin du fichier domaines
@@ -983,8 +1078,11 @@ def main():
     if args.domains:
         filters = [d.strip().lower() for d in args.domains.split(",")]
         entries = load_domains(str(domains_file))
-        entries = [e for e in entries
-                   if any(f in e["domain"].lower() or f in e["url"].lower() for f in filters)]
+        entries = [
+            e
+            for e in entries
+            if any(f in e["domain"].lower() or f in e["url"].lower() for f in filters)
+        ]
         print(f"🔍 Filtre domaines: {args.domains} → {len(entries)} sites")
         if not entries:
             print("❌ Aucun site trouvé")
@@ -992,8 +1090,7 @@ def main():
         # Sauvegarde temporaire pour le scraper
         temp_domains = scripts_dir / "_temp_filtered_domains.txt"
         temp_domains.write_text(
-            "\n".join(f"{e['num']}|{e['url']}" for e in entries),
-            encoding="utf-8"
+            "\n".join(f"{e['num']}|{e['url']}" for e in entries), encoding="utf-8"
         )
         domains_file = temp_domains
 

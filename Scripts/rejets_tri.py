@@ -18,6 +18,7 @@ LE REJET EXPIRE APRES 30 JOURS. Les regles du tri changent ; une offre mal jugee
 ne doit pas rester invisible indefiniment. Une offre encore en ligne un mois plus
 tard repassera le tri avec les regles du jour.
 """
+
 import json
 import os
 import datetime

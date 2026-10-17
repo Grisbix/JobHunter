@@ -20,6 +20,7 @@ NOM DU FICHIER. Surtout pas `queue.py` : `queue` est un module de la bibliothèq
 standard, `Scripts/` est dans sys.path, et JobHunter.pyw fait `import queue`.
 Le masquer casserait l'application.
 """
+
 import json
 import sys
 from contextlib import contextmanager
@@ -95,7 +96,7 @@ def sauver(offres, chemin=None, _avant=None):
     lire, 63 ms jetés à chaque écriture.
     """
     p = Path(chemin or CHEMIN)
-    if p != CHEMIN:                       # fichier de test : pas de separation
+    if p != CHEMIN:  # fichier de test : pas de separation
         jutil.jwrite(p, offres, _brut=True)
         return
 
@@ -124,7 +125,7 @@ def sauver(offres, chemin=None, _avant=None):
     if textes != avant:
         jutil.jwrite(DESCRIPTIONS, textes)
     jutil.jwrite(p, offres, _brut=True)
-    for o in offres:                      # l'appelant garde son objet complet
+    for o in offres:  # l'appelant garde son objet complet
         t = textes.get(oid(o))
         if t:
             o["description"] = t
@@ -155,7 +156,8 @@ def transaction(chemin=None, attente=180, relire=True, descriptions=True):
     p = Path(chemin or CHEMIN)
     if not jutil.prendre_verrou(p, attente=attente):
         raise VerrouIndisponible(
-            f"{p.name} est modifié par un autre programme (attente {attente}s dépassée)")
+            f"{p.name} est modifié par un autre programme (attente {attente}s dépassée)"
+        )
     try:
         # Une seule lecture des descriptions pour toute la transaction : elle
         # sert a les reinjecter en entree, PUIS a savoir en sortie si elles ont

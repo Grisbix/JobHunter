@@ -10,6 +10,7 @@ divergence a déjà produit des bugs réels — une comparaison sensible à la c
 d'un côté et insensible de l'autre, une normalisation d'accents présente ici et
 absente là, deux décodages `file:///` dont l'un oubliait la forme `file://`.
 """
+
 import json, os, re, unicodedata
 import time as _t
 from pathlib import Path
@@ -29,7 +30,7 @@ def chemin_de(u):
     s = str(u)
     for prefixe in ("file:///", "file://"):
         if s.startswith(prefixe):
-            s = s[len(prefixe):]
+            s = s[len(prefixe) :]
             break
     return Path(unquote(s))
 
@@ -44,7 +45,7 @@ def existe(u):
     p = chemin_de(u)
     try:
         return bool(p and p.exists())
-    except OSError:      # chemin invalide pour l'OS (trop long, caracteres interdits)
+    except OSError:  # chemin invalide pour l'OS (trop long, caracteres interdits)
         return False
 
 
@@ -92,9 +93,14 @@ def jwrite(path, obj, _brut=False):
     # l'ecriture. Sans ce drapeau, sa propre ecriture repassait par la garde et
     # se rappelait a l'infini (RecursionError) des que le chemin n'etait pas le
     # fichier canonique — un fichier de test, par exemple.
-    if not _brut and path.name == "apply_queue.json" and isinstance(obj, list) and any(
-            isinstance(x, dict) and (x.get("description") or "").strip() for x in obj):
-        import queue_io           # import tardif : queue_io importe jutil
+    if (
+        not _brut
+        and path.name == "apply_queue.json"
+        and isinstance(obj, list)
+        and any(isinstance(x, dict) and (x.get("description") or "").strip() for x in obj)
+    ):
+        import queue_io  # import tardif : queue_io importe jutil
+
         return queue_io.sauver(obj, path)
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -151,6 +157,7 @@ def _pid_vivant(pid, depuis=None):
         return True
     if os.name == "nt":
         import ctypes
+
         k = ctypes.windll.kernel32
         PROCESS_QUERY_LIMITED_INFORMATION, STILL_ACTIVE = 0x1000, 259
         h = k.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
@@ -164,22 +171,27 @@ def _pid_vivant(pid, depuis=None):
                 return False
             if depuis is not None:
                 cree, fin, noyau, user = (ctypes.c_ulonglong() for _ in range(4))
-                if k.GetProcessTimes(h, ctypes.byref(cree), ctypes.byref(fin),
-                                     ctypes.byref(noyau), ctypes.byref(user)):
+                if k.GetProcessTimes(
+                    h,
+                    ctypes.byref(cree),
+                    ctypes.byref(fin),
+                    ctypes.byref(noyau),
+                    ctypes.byref(user),
+                ):
                     # FILETIME : centaines de ns depuis 1601 -> epoch Unix.
                     ne = cree.value / 1e7 - 11644473600
-                    if ne > float(depuis) + 2:      # 2 s de marge d'horloge
+                    if ne > float(depuis) + 2:  # 2 s de marge d'horloge
                         return False
             return True
         finally:
             k.CloseHandle(h)
     try:
-        os.kill(pid, 0)          # signal 0 : ne tue pas, teste l'existence
+        os.kill(pid, 0)  # signal 0 : ne tue pas, teste l'existence
         return True
     except ProcessLookupError:
         return False
     except PermissionError:
-        return True              # existe mais pas a nous
+        return True  # existe mais pas a nous
     except OSError:
         return True
 
@@ -210,7 +222,7 @@ def prendre_verrou(path, attente=180, perime=1800, bavard=True):
         try:
             age = _time.time() - v.stat().st_mtime
         except FileNotFoundError:
-            continue                      # libere entre-temps : on retente
+            continue  # libere entre-temps : on retente
         try:
             champs = v.read_text(encoding="utf-8").split()
             tenu_par = champs[0]
@@ -225,8 +237,10 @@ def prendre_verrou(path, attente=180, perime=1800, bavard=True):
         if tenu_par and not _pid_vivant(tenu_par, pose):
             if bavard:
                 print(f"! verrou {v.name} laisse par le PID {tenu_par}, mort — je le casse")
-            try: v.unlink()
-            except FileNotFoundError: pass
+            try:
+                v.unlink()
+            except FileNotFoundError:
+                pass
             continue
         # L'EXPIRATION NE S'APPLIQUE QU'A UN VERROU SANS PROPRIETAIRE VIVANT.
         # Le 2026-09-22, `linkedin_desc` lisait 6438 descriptions en trois heures
@@ -241,18 +255,26 @@ def prendre_verrou(path, attente=180, perime=1800, bavard=True):
         # qui tient le verrou.
         if age > perime and not tenu_par:
             if bavard:
-                print(f"! verrou {v.name} abandonne depuis {int(age)}s, sans proprietaire — je le casse")
-            try: v.unlink()
-            except FileNotFoundError: pass
+                print(
+                    f"! verrou {v.name} abandonne depuis {int(age)}s, sans proprietaire — je le casse"
+                )
+            try:
+                v.unlink()
+            except FileNotFoundError:
+                pass
             continue
         if age > perime and bavard and not prevenu:
-            print(f"! verrou {v.name} tenu depuis {int(age)}s par le PID {tenu_par}, "
-                  f"toujours vivant — j'attends au lieu de casser")
+            print(
+                f"! verrou {v.name} tenu depuis {int(age)}s par le PID {tenu_par}, "
+                f"toujours vivant — j'attends au lieu de casser"
+            )
         if _time.time() >= fin:
             return False
         if bavard and not prevenu:
-            try: qui = v.read_text(encoding="utf-8").split()[0]
-            except Exception: qui = "?"
+            try:
+                qui = v.read_text(encoding="utf-8").split()[0]
+            except Exception:
+                qui = "?"
             print(f"… {v.name} tenu par le PID {qui} — j'attends (max {attente}s)")
             prevenu = True
         _time.sleep(1)
@@ -281,6 +303,7 @@ def verifier_motifs(espace, minimum=1):
     le controle rassurerait sans rien verifier — on prefere qu'il crie.
     """
     import re as _re
+
     vus = 0
     for nom, val in list(espace.items()):
         if not isinstance(val, _re.Pattern) or not isinstance(val.pattern, str):
@@ -307,8 +330,10 @@ def tenu(path):
 def rendre_verrou(path):
     v = _fverrou(path)
     if _TENUS.pop(str(v), None):
-        try: v.unlink()
-        except FileNotFoundError: pass
+        try:
+            v.unlink()
+        except FileNotFoundError:
+            pass
 
 
 def garder(path, attente=180):
@@ -319,8 +344,10 @@ def garder(path, attente=180):
     deja sur le fichier : l'appelant doit alors s'arreter, pas ecraser.
     """
     if not prendre_verrou(path, attente=attente):
-        print(f"✗ {Path(path).name} est deja en cours de modification par un autre"
-              f" programme. Rien n'a ete touche — relance quand il aura fini.")
+        print(
+            f"✗ {Path(path).name} est deja en cours de modification par un autre"
+            f" programme. Rien n'a ete touche — relance quand il aura fini."
+        )
         return False
     _atexit.register(rendre_verrou, path)
     return True

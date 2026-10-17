@@ -35,6 +35,7 @@ donc conservé. Une exception dans la fonction annule l'écriture.
 
 `charger()` pour la lecture seule.
 """
+
 from contextlib import contextmanager
 import json
 from pathlib import Path
@@ -71,11 +72,12 @@ def transaction(chemin=None, attente=30):
     a_nous = not jutil.tenu(p)
     if a_nous and not jutil.prendre_verrou(p, attente=attente):
         raise VerrouIndisponible(
-            f"{p.name} est modifié par un autre programme (attente {attente}s dépassée)")
+            f"{p.name} est modifié par un autre programme (attente {attente}s dépassée)"
+        )
     try:
         suivi = charger(p)
         yield suivi
-        jutil.jwrite(p, suivi)     # atteint seulement si le bloc n'a pas levé
+        jutil.jwrite(p, suivi)  # atteint seulement si le bloc n'a pas levé
     finally:
         if a_nous:
             jutil.rendre_verrou(p)
@@ -95,16 +97,19 @@ def poser(oid, rec, chemin=None, attente=30):
     entière, et l'utilisateur croit l'app plantée. Mieux vaut rendre la main
     vite et afficher « réessaie ».
     """
+
     def _f(s):
         if rec:
             s[oid] = rec
         else:
             s.pop(oid, None)
+
     return modifier(_f, chemin, attente=attente)
 
 
 if __name__ == "__main__":
     import sys
+
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     s = charger()
     print(f"{len(s)} candidature(s) dans {CHEMIN.name}")

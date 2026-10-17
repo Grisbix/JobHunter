@@ -13,6 +13,7 @@ compare a celui de la file. Ne modifie rien.
 
 Run : python verify_ats_slugs.py [--json _ats_candidats.json]
 """
+
 import sys
 import re
 import json
@@ -36,7 +37,9 @@ UA = probe_ats.UA
 # validait tout. On lit donc le titre de la page du portail.
 IDENTITE = {
     "greenhouse": lambda s: f"https://boards-api.greenhouse.io/v1/boards/{s}",
-    "smartrecruiters": lambda s: f"https://api.smartrecruiters.com/v1/companies/{s}/postings?limit=1",
+    "smartrecruiters": lambda s: (
+        f"https://api.smartrecruiters.com/v1/companies/{s}/postings?limit=1"
+    ),
     "recruitee": lambda s: f"https://{s}.recruitee.com/api/offers/",
     "ashby": lambda s: f"https://jobs.ashbyhq.com/{s}",
     "lever": lambda s: f"https://jobs.lever.co/{s}",
@@ -51,10 +54,34 @@ def _sans_accent(s):
 
 def _cle(s):
     """Nom reduit a ses lettres significatives, pour comparer « Sia » et « Sia Partners »."""
-    BRUIT = {"group", "groupe", "france", "sa", "sas", "the", "and", "co", "company",
-             "consulting", "conseil", "partners", "international", "inc", "ltd", "en",
-             "jobs", "job", "careers", "career", "emploi", "emplois", "recrutement",
-             "limited", "sarl", "sasu"}
+    BRUIT = {
+        "group",
+        "groupe",
+        "france",
+        "sa",
+        "sas",
+        "the",
+        "and",
+        "co",
+        "company",
+        "consulting",
+        "conseil",
+        "partners",
+        "international",
+        "inc",
+        "ltd",
+        "en",
+        "jobs",
+        "job",
+        "careers",
+        "career",
+        "emploi",
+        "emplois",
+        "recrutement",
+        "limited",
+        "sarl",
+        "sasu",
+    }
     mots = [m for m in re.split(r"[^a-z0-9]+", _sans_accent(s)) if m and m not in BRUIT]
     return " ".join(mots)
 
@@ -63,6 +90,7 @@ def nom_du_flux(kind, slug):
     """Nom que la societe se donne dans son propre flux, ou "" si illisible."""
     import html as _html
     import httpx
+
     try:
         r = httpx.get(IDENTITE[kind](slug), timeout=20, headers=UA, follow_redirects=True)
         if r.status_code != 200:
@@ -78,8 +106,9 @@ def nom_du_flux(kind, slug):
         titre = _html.unescape(re.sub(r"\s+", " ", m.group(1))).strip()
         # On retire l'habillage pour ne garder que le nom de la societe.
         titre = re.sub(r"^(jobs? at|careers? at|emplois? chez)\s+", "", titre, flags=re.I)
-        titre = re.split(r"\s*[|–—-]\s*(jobs?|careers?|emplois?|recrutement)\b",
-                         titre, flags=re.I)[0]
+        titre = re.split(r"\s*[|–—-]\s*(jobs?|careers?|emplois?|recrutement)\b", titre, flags=re.I)[
+            0
+        ]
         return titre.strip()
 
     try:
@@ -91,7 +120,7 @@ def nom_du_flux(kind, slug):
             return d.get("name") or ""
         if kind == "smartrecruiters":
             # Le nom vit dans les POSTINGS : content[0].company.name.
-            c = (d.get("content") or [])
+            c = d.get("content") or []
             return ((c[0].get("company") or {}).get("name") or "") if c else ""
         if kind == "recruitee":
             offres = d.get("offers") or []
@@ -112,7 +141,7 @@ def verdict(attendu, trouve):
     """
     a, t = _cle(attendu), _cle(trouve)
     if not t:
-        return "A VERIFIER", 0.0         # identite illisible : ne pas ajouter a l'aveugle
+        return "A VERIFIER", 0.0  # identite illisible : ne pas ajouter a l'aveugle
     ma, mt = set(a.split()), set(t.split())
     communs = ma & mt
     ratio = difflib.SequenceMatcher(None, a, t).ratio()
@@ -159,11 +188,15 @@ def main():
 
     for v in ("CONFIRME", "A VERIFIER", "HOMONYME"):
         lot = groupes[v]
-        print(f"=== {v} : {len(lot)} flux, "
-              f"{sum(len(r['pertinents']) for r in lot)} offres pertinentes ===")
+        print(
+            f"=== {v} : {len(lot)} flux, "
+            f"{sum(len(r['pertinents']) for r in lot)} offres pertinentes ==="
+        )
         for r in lot:
-            print(f"  {len(r['pertinents']):4} · {r['ats']:16} {r['slug']:20} "
-                  f"file={r['entreprise'][:24]:26} flux={r['identite'][:26]}")
+            print(
+                f"  {len(r['pertinents']):4} · {r['ats']:16} {r['slug']:20} "
+                f"file={r['entreprise'][:24]:26} flux={r['identite'][:26]}"
+            )
             if v == "A VERIFIER":
                 # Les intitules et leur langue tranchent souvent : un poste a
                 # Tokyo sous le sigle « CIC » n'est pas la banque francaise.

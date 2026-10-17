@@ -23,6 +23,7 @@ Per offer, console asks:
     [s] = marqué ENVOYÉ   [k] = SAUTÉ   [r] = re-remplir (après navigation manuelle)
     [o] = ré-ouvrir l'URL  [enter] = re-remplir   [q] = quitter (sauvegarde)
 """
+
 import argparse, json, os, time, sys
 from pathlib import Path
 from urllib.parse import unquote
@@ -35,11 +36,14 @@ try:
 except Exception:
     pass
 
+
 def _unquote_path(u):
     """file:///…/Soci%C3%A9tal.pdf -> chemin disque décodé (accents). '' si vide."""
     from jutil import chemin_de
+
     p = chemin_de(u)
     return str(p) if p else ""
+
 
 ROOT = Path(__file__).resolve().parent.parent
 # Profil de formulaire : profil/profil.json (identite + section « formulaire »),
@@ -56,7 +60,10 @@ import re
 
 # ordre = priorité (spécifique avant générique). Chaque clé existe dans apply_profile.json.
 FIELD_MAP = [
-    (r"(e-?mail|courriel|identifiant|username|login)", "email"),   # TalentSoft/ASP.NET: "Identifiant"
+    (
+        r"(e-?mail|courriel|identifiant|username|login)",
+        "email",
+    ),  # TalentSoft/ASP.NET: "Identifiant"
     (r"(first.?name|pr[eé]nom|given.?name|vorname)", "prenom"),
     (r"(last.?name|surname|family.?name|nom de famille|nachname)", "nom"),
     (r"(date.?de.?naissance|birth|naissance|geburt|d\.?o\.?b)", "date_naissance"),
@@ -69,15 +76,27 @@ FIELD_MAP = [
     (r"(zip|postal|code postal|\bcp\b|plz)", "cp"),
     (r"(country|pays|land)", "pays"),
     (r"(address|adresse|rue|street|stra[sß]e)", "adresse"),
-    (r"(disponibilit|availability|date de d[eé]but|start date|preavis|pr[eé]avis)", "disponibilite"),
+    (
+        r"(disponibilit|availability|date de d[eé]but|start date|preavis|pr[eé]avis)",
+        "disponibilite",
+    ),
     (r"(salaire|salary|r[eé]mun[eé]ration|pr[eé]tention|expected|gehalt)", "salaire_souhaite"),
     (r"(mobilit|mobility|relocation|d[eé]m[eé]nag)", "mobilite"),
     (r"(permis|driver|driving licen|f[üu]hrerschein)", "permis"),
-    (r"(niveau.?(d')?[eé]tude|degree|dipl[oô]me|education level|study level|abschluss)", "niveau_etudes"),
-    (r"(poste actuel|dernier poste|current (position|job|role)|current employer|employeur actuel)", "dernier_poste"),
+    (
+        r"(niveau.?(d')?[eé]tude|degree|dipl[oô]me|education level|study level|abschluss)",
+        "niveau_etudes",
+    ),
+    (
+        r"(poste actuel|dernier poste|current (position|job|role)|current employer|employeur actuel)",
+        "dernier_poste",
+    ),
     (r"(langue|language|sprach)", "langues"),
     (r"(comp[eé]tence|skills|comp[eé]tences cl[eé])", "competences"),
-    (r"(full.?name|nom complet|votre nom|\bname\b|vollst[aä]ndiger name)", "full"),  # générique en dernier
+    (
+        r"(full.?name|nom complet|votre nom|\bname\b|vollst[aä]ndiger name)",
+        "full",
+    ),  # générique en dernier
 ]
 COVER_RE = r"(message|motivation|lettre|cover|pourquoi|presentation|about you|commentaire|tell us|parlez|why|motiv)"
 
@@ -107,11 +126,13 @@ AUTOFILL_JS = r"""
 }
 """
 
+
 def autofill(page):
     metas = page.evaluate(AUTOFILL_JS)
     filled = 0
     for m in metas:
-        key = m["key"]; val = None
+        key = m["key"]
+        val = None
         if m["tag"] == "TEXTAREA" and re.search(COVER_RE, key):
             val = PROFILE.get("message")
         else:
@@ -119,7 +140,8 @@ def autofill(page):
                 continue
             for rx, pk in FIELD_MAP:
                 if re.search(rx, key):
-                    val = PROFILE.get(pk); break
+                    val = PROFILE.get(pk)
+                    break
         if not val:
             continue
         try:
@@ -133,9 +155,10 @@ def autofill(page):
             filled += 1
         except Exception:
             pass
-    filled += fill_selects_radios(page)   # civilité, pays, niveau via <select>/radio
+    filled += fill_selects_radios(page)  # civilité, pays, niveau via <select>/radio
     filled += fill_passwords(page)
     return filled
+
 
 def _select_match(loc, val):
     """Sélectionne dans un <select> l'option qui matche `val` (par label puis value)."""
@@ -153,6 +176,7 @@ def _select_match(loc, val):
     except Exception:
         pass
     return False
+
 
 def fill_selects_radios(page):
     """Remplit civilité (M./Monsieur) via <select> ou radio, et pays=France si <select> vide.
@@ -188,6 +212,7 @@ def fill_selects_radios(page):
         pass
     return n
 
+
 def fill_passwords(page):
     """Ne remplit RIEN. Regle du projet : aucun mot de passe n'est manipule par
     les programmes. Les champs mot de passe restent pour l'utilisateur."""
@@ -202,12 +227,14 @@ def fill_passwords(page):
             el = inputs.nth(i)
             try:
                 if not (el.input_value(timeout=1000) or "").strip():
-                    el.fill(pw, timeout=2000); n += 1
+                    el.fill(pw, timeout=2000)
+                    n += 1
             except Exception:
                 pass
     except Exception:
         pass
     return n
+
 
 def upload_files(page, cv, letter):
     done = []
@@ -224,11 +251,13 @@ def upload_files(page, cv, letter):
         pass
     return done
 
+
 # words that OPEN an application form (safe to click) vs SUBMIT (never click)
 OPEN_RX = r"(postuler|candidater|je postule|déposer ma candidature|apply now|apply|i'?m interested|postule)"
 SUBMIT_RX = r"(envoyer|soumettre|submit|valider|confirmer|envoyer ma candidature|send application|créer le compte|create account|s'inscrire maintenant)"
 # controls that OPEN a signup form (safe to click) — not the final create-account submit
 REGISTER_RX = r"(créer un compte|creer un compte|s'inscrire|sign ?up|register|créer mon espace|nouveau compte|create an account|inscription)"
+
 
 def try_click_register(page):
     """Click a 'create account / register' control to open the signup form. Never the final submit."""
@@ -256,6 +285,7 @@ def try_click_register(page):
         pass
     return ""
 
+
 def try_open_form(page):
     """Click an 'apply/postuler' control to reach the form. Never clicks a submit button."""
     js = r"""
@@ -282,6 +312,7 @@ def try_open_form(page):
     except Exception:
         pass
     return ""
+
 
 def highlight_submit(page):
     """Outline the submit button red + scroll to it. Does NOT click."""
@@ -316,6 +347,7 @@ def highlight_submit(page):
     except Exception:
         return ""
 
+
 def accept_consent(page):
     """Coche les cases de consentement OBLIGATOIRES (CGU, conditions, politique de confidentialité,
     traitement des données) nécessaires pour créer un compte / postuler. Ne coche PAS les opt-ins
@@ -345,30 +377,65 @@ def accept_consent(page):
     except Exception:
         return 0
 
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--canal", default=None, choices=["auto", "manuel", "linkedin", "all"],
-                    help="auto=portails directs (défaut), manuel=linkedin/indeed, linkedin=Easy Apply semi-auto (session réutilisée, stop Envoyer), all=tout.")
+    ap.add_argument(
+        "--canal",
+        default=None,
+        choices=["auto", "manuel", "linkedin", "all"],
+        help="auto=portails directs (défaut), manuel=linkedin/indeed, linkedin=Easy Apply semi-auto (session réutilisée, stop Envoyer), all=tout.",
+    )
     ap.add_argument("--start", type=int, default=1, help="skip to Nth offer")
-    ap.add_argument("--selection", default=None,
-                    help="chemin JSON [{entreprise,poste},...] : ne postule QUE ces offres (coche depuis l'app). Prioritaire sur --canal.")
-    ap.add_argument("--no-turbo", action="store_true",
-                    help="désactive le blocage images/polices/pubs (TURBO actif par défaut).")
-    ap.add_argument("--images", action="store_true",
-                    help="TURBO mais garde les images (utile si un site casse sans images).")
-    ap.add_argument("--auto", action="store_true",
-                    help="enchaîne : ouvre le form, autofill, surligne Envoyer, stop. Tu cliques Envoyer + Entrée.")
-    ap.add_argument("--chrome", action="store_true",
-                    help="Réutilise le profil dédié partagé avec acces.py, sans recopier ni effacer les sessions.")
-    ap.add_argument("--no-input", action="store_true", help="Pas de prompt après autofill — observe Chrome 30s")
-    ap.add_argument("--fast", action="store_true",
-                    help="Batch ÉCLAIR : pauses réduites + prompt 1-touche (Entrée=envoyé+suivant). Toi = juste Entrée par offre.")
-    ap.add_argument("--auth", default="auto", choices=["auto", "register", "login"],
-                    help="Sur écran login : auto=tente inscription puis login, register=force inscription, login=force connexion (compte existant).")
-    ap.add_argument("--wizard", action="store_true",
-                    help="Formulaires MULTI-ÉCRANS (Workday/iCIMS) : remplit+Suivant en boucle jusqu'au submit final (que tu cliques).")
-    ap.add_argument("--agent", action="store_true",
-                    help="Agent LLM (Ollama) en dernier recours si bloqué : lit la page, décide l'action. Nécessite un modèle Ollama.")
+    ap.add_argument(
+        "--selection",
+        default=None,
+        help="chemin JSON [{entreprise,poste},...] : ne postule QUE ces offres (coche depuis l'app). Prioritaire sur --canal.",
+    )
+    ap.add_argument(
+        "--no-turbo",
+        action="store_true",
+        help="désactive le blocage images/polices/pubs (TURBO actif par défaut).",
+    )
+    ap.add_argument(
+        "--images",
+        action="store_true",
+        help="TURBO mais garde les images (utile si un site casse sans images).",
+    )
+    ap.add_argument(
+        "--auto",
+        action="store_true",
+        help="enchaîne : ouvre le form, autofill, surligne Envoyer, stop. Tu cliques Envoyer + Entrée.",
+    )
+    ap.add_argument(
+        "--chrome",
+        action="store_true",
+        help="Réutilise le profil dédié partagé avec acces.py, sans recopier ni effacer les sessions.",
+    )
+    ap.add_argument(
+        "--no-input", action="store_true", help="Pas de prompt après autofill — observe Chrome 30s"
+    )
+    ap.add_argument(
+        "--fast",
+        action="store_true",
+        help="Batch ÉCLAIR : pauses réduites + prompt 1-touche (Entrée=envoyé+suivant). Toi = juste Entrée par offre.",
+    )
+    ap.add_argument(
+        "--auth",
+        default="auto",
+        choices=["auto", "register", "login"],
+        help="Sur écran login : auto=tente inscription puis login, register=force inscription, login=force connexion (compte existant).",
+    )
+    ap.add_argument(
+        "--wizard",
+        action="store_true",
+        help="Formulaires MULTI-ÉCRANS (Workday/iCIMS) : remplit+Suivant en boucle jusqu'au submit final (que tu cliques).",
+    )
+    ap.add_argument(
+        "--agent",
+        action="store_true",
+        help="Agent LLM (Ollama) en dernier recours si bloqué : lit la page, décide l'action. Nécessite un modèle Ollama.",
+    )
     args = ap.parse_args()
 
     # L'application passe --chrome après une connexion via acces.py. Ce profil
@@ -378,12 +445,13 @@ def main():
 
     # --- source : apply_queue.json UNIQUEMENT (Excel supprimé du pipeline) ---
     if not (args.selection or args.canal):
-        args.canal = "auto"   # défaut : offres directes (l'Excel n'existe plus)
+        args.canal = "auto"  # défaut : offres directes (l'Excel n'existe plus)
         print("(pas de --canal/--selection → défaut : --canal auto)")
     queues = []
     QUEUE_DONE = Path(__file__).resolve().parent / "apply_runner_done.json"
     queue_done = {}
     import json as _json
+
     qf = Path(__file__).resolve().parent / "apply_queue.json"
     q = _json.load(open(qf, encoding="utf-8"))
     if QUEUE_DONE.exists():
@@ -393,10 +461,11 @@ def main():
     if args.selection:
         try:
             _sel = _json.load(open(args.selection, encoding="utf-8"))
-            sel_keys = {f"{s.get('entreprise','')}|{s.get('poste','')}" for s in _sel}
+            sel_keys = {f"{s.get('entreprise', '')}|{s.get('poste', '')}" for s in _sel}
             print(f"Sélection : {len(sel_keys)} offre(s) cochée(s) depuis l'app.")
         except Exception as e:
-            print(f"! lecture --selection KO: {e}"); return
+            print(f"! lecture --selection KO: {e}")
+            return
     rows = []
     li_mode = args.canal == "linkedin"
     for x in q:
@@ -413,13 +482,29 @@ def main():
                     continue
             elif args.canal != "all" and x.get("canal") != args.canal:
                 continue
-        rows.append(dict(r=None, comp=x["entreprise"], role=x["poste"],
-                         url=x.get("url") or "",
-                         cv=_unquote_path(x.get("cv")),
-                         lt=_unquote_path(x.get("lettre")),
-                         status=queue_done.get(key, "")))
-    rows.sort(key=lambda d: -next((y.get("skills_match", 0) for y in q
-               if y["entreprise"] == d["comp"] and y["poste"] == d["role"]), 0))
+        rows.append(
+            dict(
+                r=None,
+                comp=x["entreprise"],
+                role=x["poste"],
+                url=x.get("url") or "",
+                cv=_unquote_path(x.get("cv")),
+                lt=_unquote_path(x.get("lettre")),
+                status=queue_done.get(key, ""),
+            )
+        )
+    rows.sort(
+        key=lambda d: (
+            -next(
+                (
+                    y.get("skills_match", 0)
+                    for y in q
+                    if y["entreprise"] == d["comp"] and y["poste"] == d["role"]
+                ),
+                0,
+            )
+        )
+    )
     queues.append((f"queue:{args.selection and 'selection' or args.canal}", None, rows, None))
 
     def mark(ws, d, ix, val):
@@ -436,7 +521,7 @@ def main():
         __import__("jutil").jwrite(QUEUE_DONE, queue_done)
 
     total = sum(len(r) for _, _, r, _ in queues)
-    print(f"Offres chargées: {total}  (feuilles: {', '.join(s for s,_,_,_ in queues)})")
+    print(f"Offres chargées: {total}  (feuilles: {', '.join(s for s, _, _, _ in queues)})")
     print("Profil:", PROFILE["full"], "|", PROFILE["email"])
     print("AUCUN envoi auto. Tu vérifies + cliques Envoyer toi-même.\n")
 
@@ -446,19 +531,28 @@ def main():
     udir = str(PW_USER_DIR)
     print(f"Profil persistant dédié: {udir} (connecte-toi 1 fois, à la main, ça reste)")
     from playwright.sync_api import sync_playwright
+
     with sync_playwright() as p:
         try:
             ctx = p.chromium.launch_persistent_context(
-                user_data_dir=udir, channel="chrome", headless=False,
-                args=launch_args, no_viewport=True)
+                user_data_dir=udir,
+                channel="chrome",
+                headless=False,
+                args=launch_args,
+                no_viewport=True,
+            )
             # TURBO (défaut) : bloque images/polices/media/pubs → pages 2-5× plus vite.
             # --images pour tout recharger si un site casse. --no-turbo pour désactiver.
             if not getattr(args, "no_turbo", False):
                 try:
                     from web_nav import block_resources
+
                     block_resources(ctx, images=getattr(args, "images", False))
-                    print("🚀 TURBO : images/polices/pubs bloquées (plus rapide). --no-turbo pour désactiver.")
-                except Exception: pass
+                    print(
+                        "🚀 TURBO : images/polices/pubs bloquées (plus rapide). --no-turbo pour désactiver."
+                    )
+                except Exception:
+                    pass
         except Exception as e:
             print(f"\n! Échec lancement Chrome: {type(e).__name__}: {e}")
             return
@@ -478,10 +572,15 @@ def main():
                     print("=" * 70)
                     print(f"[{seen}/{total}] {d['comp']} — {d['role']}")
                     print("  URL :", d["url"])
-                    print("  CV  :", Path(d["cv"]).name if d["cv"] else "—",
-                          "| Lettre:", Path(d["lt"]).name if d["lt"] else "—")
+                    print(
+                        "  CV  :",
+                        Path(d["cv"]).name if d["cv"] else "—",
+                        "| Lettre:",
+                        Path(d["lt"]).name if d["lt"] else "—",
+                    )
                     try:
                         from web_nav import robust_goto, homepage_fallback
+
                         g = robust_goto(page, d["url"], tries=3)
                         if not g["ok"]:
                             print("  ! navigation:", g["note"])
@@ -489,95 +588,162 @@ def main():
                             hf = homepage_fallback(page, d["comp"], d.get("role", ""))
                             try:
                                 from queue_tools import writeback
-                                if hf.get("ok"): writeback(d["url"], hf.get("homepage"), "HOMEPAGE_FALLBACK")
-                                else: writeback(d["url"], link_status="MORT")
-                            except Exception: pass
+
+                                if hf.get("ok"):
+                                    writeback(d["url"], hf.get("homepage"), "HOMEPAGE_FALLBACK")
+                                else:
+                                    writeback(d["url"], link_status="MORT")
+                            except Exception:
+                                pass
                             if hf.get("ok"):
-                                print(f"  🏠 fallback: {hf['homepage']} → carrières={hf.get('careers')} → {hf.get('kind','?')}")
+                                print(
+                                    f"  🏠 fallback: {hf['homepage']} → carrières={hf.get('careers')} → {hf.get('kind', '?')}"
+                                )
                             else:
-                                print(f"  ✗ fallback homepage: {hf.get('note','?')}")
+                                print(f"  ✗ fallback homepage: {hf.get('note', '?')}")
                     except Exception as e:
-                        try: page.goto(d["url"], timeout=45000, wait_until="domcontentloaded")
-                        except Exception: print("  ! navigation:", type(e).__name__)
+                        try:
+                            page.goto(d["url"], timeout=45000, wait_until="domcontentloaded")
+                        except Exception:
+                            print("  ! navigation:", type(e).__name__)
                     _fast = getattr(args, "fast", False)
                     time.sleep(0.5 if _fast else 1.5)
                     # ── LinkedIn Easy Apply SEMI-AUTO : session réutilisée, remplit, STOP avant Envoyer ──
                     if "linkedin.com" in (d.get("url") or ""):
                         try:
                             from web_nav import dismiss_cookies, linkedin_easy_apply
+
                             dismiss_cookies(page)
-                            la = linkedin_easy_apply(page, PROFILE, cv=d["cv"], letter=d["lt"], fast=_fast)
-                            print(f"  🔗 LinkedIn: {la.get('kind')} — {la.get('note','')}"
-                                  + (f" ({la.get('screens')} écran(s))" if la.get("screens") else ""))
+                            la = linkedin_easy_apply(
+                                page, PROFILE, cv=d["cv"], letter=d["lt"], fast=_fast
+                            )
+                            print(
+                                f"  🔗 LinkedIn: {la.get('kind')} — {la.get('note', '')}"
+                                + (f" ({la.get('screens')} écran(s))" if la.get("screens") else "")
+                            )
                             if la.get("kind") == "need_login":
-                                print("     ⚠️  connecte-toi à LinkedIn dans la fenêtre, puis relance sur cette offre (--start).")
-                                mark(ws, d, ix, "LOGIN LinkedIn"); continue
+                                print(
+                                    "     ⚠️  connecte-toi à LinkedIn dans la fenêtre, puis relance sur cette offre (--start)."
+                                )
+                                mark(ws, d, ix, "LOGIN LinkedIn")
+                                continue
                             if la.get("kind") == "ready_to_submit":
-                                print(f"     ⬛ ENVOYER surligné rouge: «{la.get('submit_label','')}» — clique TOI-MÊME.")
-                                mark(ws, d, ix, "À VÉRIFIER LinkedIn"); time.sleep(0.5 if _fast else 3); continue
+                                print(
+                                    f"     ⬛ ENVOYER surligné rouge: «{la.get('submit_label', '')}» — clique TOI-MÊME."
+                                )
+                                mark(ws, d, ix, "À VÉRIFIER LinkedIn")
+                                time.sleep(0.5 if _fast else 3)
+                                continue
                             if la.get("kind") == "external":
                                 # candidature externe : laisse le pipeline générique gérer (ATS derrière)
                                 pass
                             else:
-                                mark(ws, d, ix, "LinkedIn " + str(la.get("kind"))); continue
+                                mark(ws, d, ix, "LinkedIn " + str(la.get("kind")))
+                                continue
                         except Exception as e:
                             print("  ! linkedin:", type(e).__name__)
                     # navigation intelligente + LOOP auto-résolution (self-healing)
                     try:
-                        from web_nav import dismiss_cookies, smart_step, login_flow, switch_to_register, goto_careers, find_offer, retry, describe_page
-                        ck = dismiss_cookies(page); time.sleep(0.3 if _fast else 1)
+                        from web_nav import (
+                            dismiss_cookies,
+                            smart_step,
+                            login_flow,
+                            switch_to_register,
+                            goto_careers,
+                            find_offer,
+                            retry,
+                            describe_page,
+                        )
+
+                        ck = dismiss_cookies(page)
+                        time.sleep(0.3 if _fast else 1)
                         if ck.get("done") not in ("none", "err"):
                             print(f"  🍪 cookies: {ck.get('done')}")
                         # reconnaissance COMPLÈTE de la page (sautée en --fast pour la vitesse)
                         if not _fast:
-                            try: print("  🗺️ " + describe_page(page).replace("\n", "\n  "))
-                            except Exception: pass
+                            try:
+                                print("  🗺️ " + describe_page(page).replace("\n", "\n  "))
+                            except Exception:
+                                pass
                         # tâche visée selon l'intention : postuler (ouvre form), gère register si détecté
                         r = smart_step(page, task="apply", max_tries=5)
                         # page morte (404 ATS / offre pourvue) → PIPELINE DE BASE homepage→carrières
                         if r["status"] == "stuck" and r.get("kind") == "dead":
                             from web_nav import homepage_fallback
+
                             hf = homepage_fallback(page, d["comp"], d.get("role", ""))
                             if hf.get("ok"):
-                                print(f"  🏠 offre morte → fallback: {hf['homepage']} → {hf.get('kind','?')}")
+                                print(
+                                    f"  🏠 offre morte → fallback: {hf['homepage']} → {hf.get('kind', '?')}"
+                                )
                                 try:
                                     from queue_tools import writeback
+
                                     writeback(d["url"], hf.get("homepage"), "HOMEPAGE_FALLBACK")
-                                except Exception: pass
+                                except Exception:
+                                    pass
                                 r = smart_step(page, task="apply", max_tries=4)
                         # homepage corporate -> section Carrières/Nous rejoindre avant offre/login
                         if r["status"] == "stuck" and r["kind"] in ("other", "offer_list"):
-                            gc = retry(page, lambda: goto_careers(page), lambda x: x.get("clicked"), 3)
+                            gc = retry(
+                                page, lambda: goto_careers(page), lambda x: x.get("clicked"), 3
+                            )
                             if gc.get("clicked"):
-                                print(f"  🧭 carrières: '{gc.get('label','')}' → {gc.get('kind','?')} (essai {gc.get('tries',1)})")
+                                print(
+                                    f"  🧭 carrières: '{gc.get('label', '')}' → {gc.get('kind', '?')} (essai {gc.get('tries', 1)})"
+                                )
                                 dismiss_cookies(page)
                                 r = smart_step(page, task="apply", max_tries=4)
                         # recherche d'offre UNIFIÉE : ATS + recherche mot-clé + drill (pattern ATS)
-                        if r["status"] == "stuck" and r["kind"] in ("offer_list", "apply_cta", "other"):
+                        if r["status"] == "stuck" and r["kind"] in (
+                            "offer_list",
+                            "apply_cta",
+                            "other",
+                        ):
                             fo = find_offer(page, d.get("role", ""))
-                            print(f"  🔎 find_offer [{fo.get('ats','?')}] via {fo.get('via','?')} → {fo.get('kind','?')}")
+                            print(
+                                f"  🔎 find_offer [{fo.get('ats', '?')}] via {fo.get('via', '?')} → {fo.get('kind', '?')}"
+                            )
                             if fo.get("reached"):
                                 r = smart_step(page, task="apply", max_tries=3)
                         # dernier recours : agent LLM (lit la page, décide) — si --agent + Ollama
                         if getattr(args, "agent", False) and r["status"] == "stuck":
                             from web_nav import llm_agent
-                            ag = llm_agent(page, "atteindre le formulaire de candidature et le remplir",
-                                           max_steps=6, profile=PROFILE)
-                            print(f"  🤖 agent LLM: {ag.get('note','?')} ({ag.get('steps',0)} étapes)")
+
+                            ag = llm_agent(
+                                page,
+                                "atteindre le formulaire de candidature et le remplir",
+                                max_steps=6,
+                                profile=PROFILE,
+                            )
+                            print(
+                                f"  🤖 agent LLM: {ag.get('note', '?')} ({ag.get('steps', 0)} étapes)"
+                            )
                             if ag.get("ok"):
                                 r = smart_step(page, task="apply", max_tries=2)
                         if r["status"] == "blocked":
-                            print(f"  ⚠️  {r['kind'].upper()} détecté — À TOI (je ne contourne pas). Résous puis [r].")
+                            print(
+                                f"  ⚠️  {r['kind'].upper()} détecté — À TOI (je ne contourne pas). Résous puis [r]."
+                            )
                         elif r["status"] == "ok":
                             print(f"  ✅ nav: {r['kind']} ({r['note']})")
                             if r["kind"] == "login":
                                 # #auth : postuler = souvent PAS de compte -> tente bascule création
                                 auth = getattr(args, "auth", "auto")
                                 switched = False
-                                if False:   # creation de compte : jamais automatique (regle du projet)
-                                    sw = retry(page, lambda: switch_to_register(page), lambda x: x.get("switched"), 3)
+                                if (
+                                    False
+                                ):  # creation de compte : jamais automatique (regle du projet)
+                                    sw = retry(
+                                        page,
+                                        lambda: switch_to_register(page),
+                                        lambda x: x.get("switched"),
+                                        3,
+                                    )
                                     if sw.get("switched") and sw.get("kind") == "register":
-                                        print(f"     ➡️  bascule INSCRIPTION : '{sw.get('label','')}' → email+mdp+confirm+CGU auto, captcha=toi")
+                                        print(
+                                            f"     ➡️  bascule INSCRIPTION : '{sw.get('label', '')}' → email+mdp+confirm+CGU auto, captcha=toi"
+                                        )
                                         switched = True
                                 if not switched and auth != "register":
                                     # Connexion : l'email seulement, le mot de passe reste a l'utilisateur.
@@ -594,22 +760,31 @@ def main():
                     # #6 attendre les inputs rendus tard (React/Vue : Wizbii, Meeschaert)
                     try:
                         from web_nav import wait_for_form
+
                         ni = wait_for_form(page, min_inputs=1, timeout_ms=7000)
                         if ni == 0:
-                            print("  ⏳ aucun champ visible (form dynamique non rendu) — vérifie à la main")
-                    except Exception: pass
+                            print(
+                                "  ⏳ aucun champ visible (form dynamique non rendu) — vérifie à la main"
+                            )
+                    except Exception:
+                        pass
                     # REMPLISSAGE UNIVERSEL : tous les champs + selects + radios + CGU + tous les docs
                     try:
                         from web_nav import fill_application
+
                         fa = fill_application(page, PROFILE, cv=d["cv"], letter=d["lt"])
                         f, up, cons = fa["filled"], fa["docs"], fa["consent"]
-                        print(f"  📝 couverture {fa['cover_pct']}% ({f}/{fa['total']} champs) | 📎 {up or 'aucun fichier'}"
-                              + (f" | ☑️ CGU {cons}" if cons else "")
-                              + (f" | ⚠️ non-mappés: {fa['unmatched']}" if fa.get("unmatched") else ""))
+                        print(
+                            f"  📝 couverture {fa['cover_pct']}% ({f}/{fa['total']} champs) | 📎 {up or 'aucun fichier'}"
+                            + (f" | ☑️ CGU {cons}" if cons else "")
+                            + (f" | ⚠️ non-mappés: {fa['unmatched']}" if fa.get("unmatched") else "")
+                        )
                     except Exception as e:
                         print("  ! fill:", type(e).__name__)
                         try:
-                            f = autofill(page); up = upload_files(page, d["cv"], d["lt"]); cons = accept_consent(page)
+                            f = autofill(page)
+                            up = upload_files(page, d["cv"], d["lt"])
+                            cons = accept_consent(page)
                         except Exception as e2:
                             print(f"  ! autofill: {type(e2).__name__} — skip offre")
                             mark(ws, d, ix, "SKIP AUTOFILL")
@@ -618,14 +793,25 @@ def main():
                     if getattr(args, "wizard", False):
                         try:
                             from web_nav import run_wizard, fill_application as _fa
-                            wz = run_wizard(page, fill_fn=lambda pg: _fa(pg, PROFILE, cv=d["cv"], letter=d["lt"])["filled"], max_screens=6)
-                            print(f"  🧩 wizard: {wz.get('screens',0)} écran(s), stop={wz.get('stopped','?')}")
+
+                            wz = run_wizard(
+                                page,
+                                fill_fn=lambda pg: _fa(pg, PROFILE, cv=d["cv"], letter=d["lt"])[
+                                    "filled"
+                                ],
+                                max_screens=6,
+                            )
+                            print(
+                                f"  🧩 wizard: {wz.get('screens', 0)} écran(s), stop={wz.get('stopped', '?')}"
+                            )
                         except Exception as e:
                             print("  ! wizard:", type(e).__name__)
                     if args.auto:
                         sub = highlight_submit(page)
-                        print(f"  ⬛ bouton à cliquer surligné rouge: «{sub or 'non trouvé — clique manuellement'}»")
-                    if getattr(args, 'no_input', False):
+                        print(
+                            f"  ⬛ bouton à cliquer surligné rouge: «{sub or 'non trouvé — clique manuellement'}»"
+                        )
+                    if getattr(args, "no_input", False):
                         print("  ⏳ Chrome reste ouvert 30s — vérifie et clique Envoyer")
                         time.sleep(30)
                         mark(ws, d, ix, "À VÉRIFIER")
@@ -634,16 +820,22 @@ def main():
                     # saisir. Aucun programme ne lit sa boite mail (regle du projet).
                     try:
                         from web_nav import otp_present as _otp_present
+
                         if _otp_present(page):
-                            print("  📨 page de code email (OTP) détectée — saisis le code reçu par mail, puis continue")
-                    except Exception: pass
+                            print(
+                                "  📨 page de code email (OTP) détectée — saisis le code reçu par mail, puis continue"
+                            )
+                    except Exception:
+                        pass
                     while True:
                         if getattr(args, "fast", False):
                             prompt = f"  ⚡[{seen}/{total}] {d['comp'][:24]} → clique ENVOYER puis [Entrée]=✅suivant  [k]saut [q]quit > "
                         elif args.auto:
                             prompt = "  → vérifie, clique ENVOYER sur le site, puis [Entrée]=envoyé  [k]sauté  [r]re-remplir  [q]quitter > "
                         else:
-                            prompt = "  [s]envoyé [k]sauté [r]re-remplir [o]ouvrir-url [q]quitter > "
+                            prompt = (
+                                "  [s]envoyé [k]sauté [r]re-remplir [o]ouvrir-url [q]quitter > "
+                            )
                         cmd = input(prompt).strip().lower()
                         if args.auto and cmd == "":
                             cmd = "s"
@@ -654,28 +846,36 @@ def main():
                             f = autofill(page)
                             try:
                                 from web_nav import smart_upload as _su
+
                                 up = _su(page, d["cv"], d["lt"])
                             except Exception:
                                 up = upload_files(page, d["cv"], d["lt"])
                             print(f"  re-fill: {f} champs | upload: {up}")
                         elif cmd == "o":
-                            page.goto(d["url"], timeout=45000); time.sleep(1.5)
+                            page.goto(d["url"], timeout=45000)
+                            time.sleep(1.5)
                         elif cmd == "q":
                             print("Sauvegardé. Reprends avec --start", seen)
-                            ctx.close(); return
+                            ctx.close()
+                            return
                 except Exception as _e:
                     print(f"  ! ERREUR offre: {type(_e).__name__}: {str(_e)[:80]} — skip")
-                    try: mark(ws, d, ix, "ERREUR SKIP")
-                    except Exception: pass
+                    try:
+                        mark(ws, d, ix, "ERREUR SKIP")
+                    except Exception:
+                        pass
                     continue
         print("\nFini. Toutes les offres parcourues.")
         # NE PAS fermer Chrome tant que tu n'as pas validé/cliqué Envoyer. Attend un Entrée explicite.
         try:
-            input("\n✅ Chrome reste OUVERT. Vérifie et clique ENVOYER sur chaque onglet.\n"
-                  "   Quand tu as fini → [Entrée] pour fermer Chrome > ")
+            input(
+                "\n✅ Chrome reste OUVERT. Vérifie et clique ENVOYER sur chaque onglet.\n"
+                "   Quand tu as fini → [Entrée] pour fermer Chrome > "
+            )
         except Exception:
-            time.sleep(120)   # pas de clavier (stdin fermé) → garde ouvert 2 min
+            time.sleep(120)  # pas de clavier (stdin fermé) → garde ouvert 2 min
         ctx.close()
+
 
 if __name__ == "__main__":
     main()

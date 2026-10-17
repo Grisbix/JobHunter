@@ -32,6 +32,7 @@ Run :
   python linkedin_closed.py --workers 1 --pause 20     # passe lente
   python linkedin_closed.py                            # supprime pour de bon
 """
+
 import sys
 import re
 import json
@@ -46,9 +47,11 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 HERE = Path(__file__).resolve().parent
 QUEUE = HERE / "apply_queue.json"
 API = "https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{}"
-UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                    "(KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-      "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8"}
+UA = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+    "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
+}
 
 # L'identifiant est le dernier nombre long de /jobs/view/<slug>-<id>
 RX_ID = re.compile(r"/jobs/view/(?:[^/?#]*?-)?(\d{6,})")
@@ -63,7 +66,9 @@ RX_FERME = re.compile(
     r"|ne sont plus accept[ée]e?s?"
     r"|n[e']accepte plus de candidature"
     r"|ne recrute plus"
-    r"|cette offre n[e']est plus", re.I)
+    r"|cette offre n[e']est plus",
+    re.I,
+)
 
 # Variante « mur de connexion » servie apres quelques dizaines de requetes invite.
 # Elle est identique pour une offre ouverte et une offre fermee : illisible.
@@ -87,7 +92,7 @@ def etat(jid, client, essais=2):
         except Exception:
             time.sleep(1.5 * (n + 1))
             continue
-        if r.status_code == 429:            # LinkedIn nous freine : on ralentit
+        if r.status_code == 429:  # LinkedIn nous freine : on ralentit
             time.sleep(5 * (n + 1))
             continue
         if r.status_code == 404:
@@ -98,7 +103,7 @@ def etat(jid, client, essais=2):
             time.sleep(1.0)
             continue
         h = r.text
-        if len(h) < 200:                    # reponse tronquee : on ne conclut pas
+        if len(h) < 200:  # reponse tronquee : on ne conclut pas
             return INCONNU
         if RX_FERME.search(h):
             return FERME
@@ -112,8 +117,8 @@ def etat(jid, client, essais=2):
     return INCONNU
 
 
-ETAT = HERE / "_linkedin_etat.json"       # memoire des verifications (non versionne)
-SUIVI = HERE / "suivi.json"               # candidatures : statut, note, date
+ETAT = HERE / "_linkedin_etat.json"  # memoire des verifications (non versionne)
+SUIVI = HERE / "suivi.json"  # candidatures : statut, note, date
 
 
 def _oid_offre(offre):
@@ -152,15 +157,28 @@ def main():
     ap.add_argument("--dry", action="store_true", help="compte sans rien supprimer")
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--limit", type=int, default=0, help="n'examiner que les N premieres")
-    ap.add_argument("--pause", type=float, default=0.0,
-                    help="secondes entre deux requetes (contourne la limitation invite)")
-    ap.add_argument("--jours", type=int, default=7,
-                    help="reutilise une verification concluante de moins de N jours")
-    ap.add_argument("--abandon", type=int, default=40,
-                    help="arrete apres N indeterminees d'affilee : LinkedIn nous a coupes")
+    ap.add_argument(
+        "--pause",
+        type=float,
+        default=0.0,
+        help="secondes entre deux requetes (contourne la limitation invite)",
+    )
+    ap.add_argument(
+        "--jours",
+        type=int,
+        default=7,
+        help="reutilise une verification concluante de moins de N jours",
+    )
+    ap.add_argument(
+        "--abandon",
+        type=int,
+        default=40,
+        help="arrete apres N indeterminees d'affilee : LinkedIn nous a coupes",
+    )
     a = ap.parse_args()
 
     import httpx
+
     # En --dry on n'ecrit pas la queue : prendre le verrou d'ecriture ferait
     # attendre 3 min derriere une generation de documents, pour rien. Les
     # ecritures etant atomiques (tmp + replace), la lecture reste coherente.
@@ -187,8 +205,10 @@ def main():
             a_faire.append((i, jid))
     if a.limit:
         a_faire = a_faire[: a.limit]
-    print(f"{len(cibles)} offre(s) LinkedIn — {len(res)} deja connues, "
-          f"{len(a_faire)} a verifier ({a.workers} en parallele, pause {a.pause}s)")
+    print(
+        f"{len(cibles)} offre(s) LinkedIn — {len(res)} deja connues, "
+        f"{len(a_faire)} a verifier ({a.workers} en parallele, pause {a.pause}s)"
+    )
 
     coupe = 0
     with httpx.Client(follow_redirects=True) as client:
@@ -200,8 +220,10 @@ def main():
                 memo[jid] = {"etat": v, "date": str(_dt.date.today())}
                 coupe = coupe + 1 if v == INCONNU else 0
                 if coupe >= a.abandon:
-                    print(f"  ! {coupe} indeterminees d'affilee — LinkedIn a coupe l'acces "
-                          f"invite. Arret a {n}/{len(a_faire)}, relance plus tard.")
+                    print(
+                        f"  ! {coupe} indeterminees d'affilee — LinkedIn a coupe l'acces "
+                        f"invite. Arret a {n}/{len(a_faire)}, relance plus tard."
+                    )
                     break
                 if n % 50 == 0:
                     print(f"  … {n}/{len(a_faire)}")
@@ -254,10 +276,11 @@ def main():
 
     perdus = {i for i in fermes}
     sauv = HERE / f"_supprimees_linkedin_{_dt.date.today()}.json"
-    sauv.write_text(json.dumps([q[i] for i in sorted(perdus)], ensure_ascii=False, indent=1),
-                    encoding="utf-8")
+    sauv.write_text(
+        json.dumps([q[i] for i in sorted(perdus)], ensure_ascii=False, indent=1), encoding="utf-8"
+    )
     neuf = [o for i, o in enumerate(q) if i not in perdus]
-    __import__("jutil").jwrite(QUEUE, neuf)   # ecriture atomique (tmp + replace)
+    __import__("jutil").jwrite(QUEUE, neuf)  # ecriture atomique (tmp + replace)
     print(f"\n{len(perdus)} offre(s) retiree(s). Sauvegarde : {sauv.name}")
     print(f"Queue : {len(q)} -> {len(neuf)}")
     return 0

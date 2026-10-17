@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """Vérification d'URLs d'offres (live/dead/soft-404). Module : quick_check/batch_check (queue_tools mark).
 Détecte les SOFT-404 : page renvoie HTTP 200 mais affiche 'offre expirée / poste pourvu / page introuvable'."""
+
 import requests, concurrent.futures as cf, collections, re, sys
 from urllib.parse import urlparse
+
 sys.stdout.reconfigure(encoding="utf-8")
 
 # Phrases "offre morte" malgré HTTP 200 (FR/EN/DE) — soft 404 / expirée / pourvue
@@ -19,12 +21,17 @@ SOFT_DEAD_RX = re.compile(
     r"|job (not found|expired|closed|no longer available)|vacancy (closed|expired|filled)"
     r"|offre d'emploi introuvable|aucune offre|oops|page indisponible"
     r"|diese stelle (ist nicht|existiert nicht)|nicht mehr verf[üu]gbar|stellenangebot.*(abgelaufen|nicht gefunden))",
-    re.I)
+    re.I,
+)
 
-UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"}
+UA = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+}
+
 
 def is_live(st):
     return isinstance(st, int) and st < 400
+
 
 def check(u):
     """Retour (url, status, soft) : status HTTP ou nom d'exception ;
@@ -49,6 +56,7 @@ def check(u):
 # ── Intégration pipeline : check rapide d'une URL (HTTP HEAD) ──────────
 # Appelable depuis batch_comptes.py / run_pipeline.py avant goto.
 
+
 def quick_check(url: str, timeout: float = 8.0) -> dict:
     """Vérifie rapidement si une URL semble vivante (HEAD + fallback GET).
     Retour {live: bool, status, soft_dead: str|None, note: str}.
@@ -72,7 +80,12 @@ def quick_check(url: str, timeout: float = 8.0) -> dict:
     if status == 404 or status == 410:
         return {"live": False, "status": status, "soft_dead": None, "note": f"HTTP {status}"}
     if status in (429, 403):
-        return {"live": True, "status": status, "soft_dead": None, "note": "anti-bot (probablement vivant)"}
+        return {
+            "live": True,
+            "status": status,
+            "soft_dead": None,
+            "note": "anti-bot (probablement vivant)",
+        }
 
     # Soft-404 check sur le body (seulement si 200-299)
     soft = None
@@ -96,6 +109,7 @@ def quick_check(url: str, timeout: float = 8.0) -> dict:
 def batch_check(urls: list, max_workers: int = 12) -> dict:
     """Vérifie un lot d'URLs en parallèle. Retour {url: result}."""
     import concurrent.futures as cf
+
     results = {}
     with cf.ThreadPoolExecutor(max_workers=max_workers) as ex:
         futures = {ex.submit(quick_check, u): u for u in urls}

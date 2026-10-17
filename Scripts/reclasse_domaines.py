@@ -21,6 +21,7 @@ Run :
   python reclasse_domaines.py --dry
   python reclasse_domaines.py
 """
+
 import sys
 import argparse
 import collections
@@ -39,6 +40,7 @@ def main():
     a = ap.parse_args()
 
     import queue_io
+
     if a.dry:
         q = queue_io.charger(descriptions=False)
         chg = [(o, classify_domaine(o.get("poste") or "")) for o in q]
@@ -49,8 +51,10 @@ def main():
             print(f"  {n:5}  {av:22} -> {ap_}")
         print("\nExemples a fit >= 8 :")
         for o, d in sorted(chg, key=lambda x: -(x[0].get("fit") or 0))[:10]:
-            print(f"  fit {o.get('fit')}  {(o.get('domaine') or ''):22} -> {d:22} "
-                  f"{(o.get('poste') or '')[:40]}")
+            print(
+                f"  fit {o.get('fit')}  {(o.get('domaine') or ''):22} -> {d:22} "
+                f"{(o.get('poste') or '')[:40]}"
+            )
         print("\n[DRY] rien n'a ete ecrit.")
         return 0
 
@@ -63,8 +67,10 @@ def main():
                     o["domaine"] = d
                     n += 1
             print(f"{n} domaine(s) corrige(s).")
-            print("Les CV et lettres deja generes gardent l'ancienne variante "
-                  "jusqu'a leur prochaine regeneration.")
+            print(
+                "Les CV et lettres deja generes gardent l'ancienne variante "
+                "jusqu'a leur prochaine regeneration."
+            )
     except queue_io.VerrouIndisponible as e:
         print(f"! {e}")
         return 3

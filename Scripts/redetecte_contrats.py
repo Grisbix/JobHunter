@@ -18,6 +18,7 @@ Run :
   python redetecte_contrats.py --dry
   python redetecte_contrats.py
 """
+
 import sys
 import argparse
 from pathlib import Path
@@ -43,6 +44,7 @@ def main():
     a = ap.parse_args()
 
     import queue_io
+
     if a.dry:
         q = queue_io.charger()
         chg = []
@@ -52,13 +54,16 @@ def main():
                 chg.append((o, c))
         print(f"{len(chg)} offre(s) changeraient de contrat\n")
         import collections
+
         cpt = collections.Counter((o.get("contrat") or "vide", c) for o, c in chg)
         for (avant, apres), n in cpt.most_common(12):
             print(f"  {n:5}  {avant:12} -> {apres}")
         print("\nExemples a fit >= 8 :")
         for o, c in sorted(chg, key=lambda x: -(x[0].get("fit") or 0))[:12]:
-            print(f"  fit {o.get('fit')}  {(o.get('contrat') or 'vide'):10} -> {c:11} "
-                  f"{(o.get('entreprise') or '')[:22]:22} {(o.get('poste') or '')[:38]}")
+            print(
+                f"  fit {o.get('fit')}  {(o.get('contrat') or 'vide'):10} -> {c:11} "
+                f"{(o.get('entreprise') or '')[:22]:22} {(o.get('poste') or '')[:38]}"
+            )
         print("\n[DRY] rien n'a ete ecrit.")
         return 0
 

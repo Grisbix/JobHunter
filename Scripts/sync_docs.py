@@ -14,9 +14,11 @@ Passes (défaut = toutes sauf --format) :
 Run : python sync_docs.py            # 1+2+3
       python sync_docs.py --format   # 1+2+3+4
       python sync_docs.py --dry      # montre sans toucher"""
+
 import sys, json, argparse, subprocess
 from pathlib import Path
 from urllib.parse import unquote, quote
+
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 HERE = Path(__file__).resolve().parent
@@ -24,20 +26,31 @@ ROOT = HERE.parent
 QUEUE = HERE / "apply_queue.json"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import chemins
+
 DIRS = [chemins.CV_PAR_OFFRE, chemins.LT_PAR_OFFRE]
 LT_DIR = chemins.LT_PAR_OFFRE
-SOFFICE = next((s for s in (r"C:\Program Files\LibreOffice\program\soffice.exe",
-                            r"C:\Program Files (x86)\LibreOffice\program\soffice.exe")
-                if Path(s).exists()), None)
+SOFFICE = next(
+    (
+        s
+        for s in (
+            r"C:\Program Files\LibreOffice\program\soffice.exe",
+            r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
+        )
+        if Path(s).exists()
+    ),
+    None,
+)
 
 
 def to_pdf(docx):
     if not SOFFICE:
         return False
     try:
-        r = subprocess.run([SOFFICE, "--headless", "--convert-to", "pdf",
-                            "--outdir", str(docx.parent), str(docx)],
-                           capture_output=True, timeout=90)
+        r = subprocess.run(
+            [SOFFICE, "--headless", "--convert-to", "pdf", "--outdir", str(docx.parent), str(docx)],
+            capture_output=True,
+            timeout=90,
+        )
         return r.returncode == 0
     except Exception:
         return False
@@ -85,7 +98,8 @@ def pass_links(dry=False):
             for ext in (p.suffix, ".pdf", ".docx"):
                 c = d / (p.stem + ext)
                 if c.exists():
-                    cand = c; break
+                    cand = c
+                    break
             if cand is not None:
                 if not dry:
                     x[key] = "file:///" + quote(str(cand).replace("\\", "/"), safe="/:")
@@ -101,7 +115,8 @@ def pass_format(dry=False):
     """Format homogène des lettres : justifié+césure+formules (fix_letters),
     tirets (fix_dashes), date/ordre/destinataire (refresh_letters)."""
     import fix_letters, refresh_letters
-    try:                  # script personnel, absent de la version partagee
+
+    try:  # script personnel, absent de la version partagee
         import fix_dashes
     except ImportError:
         fix_dashes = None
@@ -119,7 +134,7 @@ def pass_format(dry=False):
             continue
         n += bool(c)
         if (i + 1) % 300 == 0:
-            print(f"  … format {i+1}/{len(docs)}")
+            print(f"  … format {i + 1}/{len(docs)}")
     return n
 
 
@@ -127,7 +142,7 @@ def main():
     # Verrou inter-processus : ce programme reecrit la queue ENTIERE. Si un
     # autre le fait en meme temps (tache planifiee vs app), le dernier qui
     # ecrit efface le travail de l'autre.
-    if not __import__('jutil').garder(QUEUE):
+    if not __import__("jutil").garder(QUEUE):
         return 3
     ap = argparse.ArgumentParser()
     ap.add_argument("--format", action="store_true", help="homogénéise aussi le format des lettres")
@@ -141,8 +156,11 @@ def main():
     fixed, broken = pass_links(dry=a.dry)
     print(f"{tag}pdf créés: {made} · pdf resynchronisés: {regen} · pdf orphelins: {orphans}")
     print(f"{tag}liens queue réparés: {fixed} · liens toujours cassés: {broken}")
-    print("✅ docx = source, pdf = dérivé — tout est aligné." if not (regen or made or fixed) or not a.dry
-          else "")
+    print(
+        "✅ docx = source, pdf = dérivé — tout est aligné."
+        if not (regen or made or fixed) or not a.dry
+        else ""
+    )
 
 
 if __name__ == "__main__":

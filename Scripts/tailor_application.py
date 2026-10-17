@@ -13,6 +13,7 @@ puis :
 
 CLI : generate_docs.py (lots depuis la queue) / add_offer.py (1 offre).
 """
+
 import argparse
 import os
 import re
@@ -35,13 +36,15 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 ROOT = Path(__file__).resolve().parent.parent
 # Les sorties volumineuses vivent la ou chemins.py les place — hors de OneDrive
 # quand Scripts/chemins.json le dit. Les MODELES, eux, restent dans le depot.
-sys.path.insert(0, str(ROOT / "Scripts"))   # importable depuis n'importe ou
+sys.path.insert(0, str(ROOT / "Scripts"))  # importable depuis n'importe ou
 import chemins
+
 CV_ATS = chemins.CV_MODELES
 CV_OUT, LT_OUT = chemins.preparer()
 
 # ---- Profil candidat : tout vient de profil/profil.json (voir profil.py) ----
 import profil as _P
+
 _ID = _P.identite()
 PROFILE = dict(nom=_ID["nom"], ville=_ID["ville"], email=_ID["email"], tel=_ID["tel"])
 
@@ -78,17 +81,76 @@ COMPANY_VALUE = dict(_P.get("lettre.valeurs_entreprises_fr", {}) or {})
 # residuels. La regle generale est qu'un intitule francais est un NOM COMMUN
 # (« contrôleur de gestion », pas « Contrôleur de Gestion »), mais les annonces
 # capitalisent chaque mot a l'anglaise et on recopiait tel quel.
-_PROPRES = {"france", "paris", "europe", "afrique", "asie", "amerique", "amérique",
-            "allemagne", "espagne", "italie", "belgique", "suisse", "luxembourg",
-            "benelux", "emea", "monde"}
+_PROPRES = {
+    "france",
+    "paris",
+    "europe",
+    "afrique",
+    "asie",
+    "amerique",
+    "amérique",
+    "allemagne",
+    "espagne",
+    "italie",
+    "belgique",
+    "suisse",
+    "luxembourg",
+    "benelux",
+    "emea",
+    "monde",
+}
 
 # Les sigles qui gardent leurs capitales meme dans un intitule hurle. Liste
 # EXPLICITE : aucune regle de longueur ne separe « ESG » de « DES ».
-_SIGLES = {"ESG", "RSE", "ISR", "SFDR", "CSRD", "CSDDD", "GRI", "TCFD", "SASB",
-           "PAI", "DCF", "LBO", "M&A", "IFRS", "EBITDA", "KPI", "ERP", "SAP",
-           "IT", "SI", "DSI", "BI", "SQL", "VBA", "IA", "AI", "ML", "LLM",
-           "RH", "QHSE", "HSE", "RGPD", "AMF", "ACPR", "BFR", "FP&A", "PME",
-           "ETI", "ONG", "SRI", "UX", "UI", "API", "CRM", "PMO", "MOA", "MOE"}
+_SIGLES = {
+    "ESG",
+    "RSE",
+    "ISR",
+    "SFDR",
+    "CSRD",
+    "CSDDD",
+    "GRI",
+    "TCFD",
+    "SASB",
+    "PAI",
+    "DCF",
+    "LBO",
+    "M&A",
+    "IFRS",
+    "EBITDA",
+    "KPI",
+    "ERP",
+    "SAP",
+    "IT",
+    "SI",
+    "DSI",
+    "BI",
+    "SQL",
+    "VBA",
+    "IA",
+    "AI",
+    "ML",
+    "LLM",
+    "RH",
+    "QHSE",
+    "HSE",
+    "RGPD",
+    "AMF",
+    "ACPR",
+    "BFR",
+    "FP&A",
+    "PME",
+    "ETI",
+    "ONG",
+    "SRI",
+    "UX",
+    "UI",
+    "API",
+    "CRM",
+    "PMO",
+    "MOA",
+    "MOE",
+}
 
 
 def minuscule_titre(t):
@@ -123,7 +185,7 @@ def minuscule_titre(t):
         elif crie:
             sortie.append(m if nu.upper() in _SIGLES else m.lower())
         elif nu.upper() == nu and any(c.isalpha() for c in nu):
-            sortie.append(m)                     # sigle : RSE, M&A, IT, SAP
+            sortie.append(m)  # sigle : RSE, M&A, IT, SAP
         else:
             sortie.append(m.lower())
     return " ".join(sortie)
@@ -161,14 +223,22 @@ RX_GENRE_COLLE = re.compile(r"\s*[(\[]?\s*\b(?:HF|FH|MW|FM|MF)\b\s*[)\]]?\s*$", 
 RX_CONTRAT = re.compile(
     r"\b(CDI|CDD|VIE|V\.I\.E|int[ée]rim|freelance|temps\s+plein|temps\s+partiel|"
     r"full[\s-]?time|part[\s-]?time|permanent|remote|t[ée]l[ée]travail|hybride|"
-    r"\d+\s*mois|\d+\s*months|\d+\s*ans)\b", re.I)
-RX_BRUIT = re.compile(r"\b(nouveau|new|urgent|poste\s+\d+|r[ée]f\.?\s*\S+|"
-                      r"job\s*id\s*:?\s*\d+|\d{3,}\s*days?)\b", re.I)
+    r"\d+\s*mois|\d+\s*months|\d+\s*ans)\b",
+    re.I,
+)
+RX_BRUIT = re.compile(
+    r"\b(nouveau|new|urgent|poste\s+\d+|r[ée]f\.?\s*\S+|"
+    r"job\s*id\s*:?\s*\d+|\d{3,}\s*days?)\b",
+    re.I,
+)
 # « #00137324 » : aucun caractère de mot devant le #, donc un \b devant ne matcherait JAMAIS
 RX_REF = re.compile(r"#\s*\d+")
 RX_LIEU_FIN = re.compile(r"[\s,(-]+[A-ZÀ-Ý][\wÀ-ÿ'-]*\s*\(?\d{5}\)?\s*\)?\s*$")
-RX_ADRESSE = re.compile(r"\b\d{1,4}\s+(rue|avenue|boulevard|impasse|chemin|place)\b"
-                        r"|\b\d{5}\s+[A-ZÀ-Ý]", re.I)
+RX_ADRESSE = re.compile(
+    r"\b\d{1,4}\s+(rue|avenue|boulevard|impasse|chemin|place)\b"
+    r"|\b\d{5}\s+[A-ZÀ-Ý]",
+    re.I,
+)
 
 for _n, _rx in list(globals().items()):
     # Un « \b » mangé par un heredoc devient \x08 : le motif ne matche plus jamais,
@@ -214,6 +284,7 @@ def titre_poste(t, maxlen=80):
         t = coupe.strip(" -,.;:|")
     return t
 
+
 def _citable(t, langue):
     """Ce passage peut-il etre CITE dans une lettre ecrite en `langue` ?
 
@@ -231,6 +302,7 @@ def _citable(t, langue):
         return False
     try:
         from langue import langue_offre
+
         # langue_offre exige 120 caracteres pour se prononcer ; en dessous il
         # repond « fr » par defaut, ce qui ferait taire toute citation courte
         # dans une lettre anglaise. On ne tranche donc que sur un texte assez
@@ -318,16 +390,21 @@ def _contexte_applicable(ctx, offer):
 
     def net(t):
         return ign.sub(" ", t or "") if ign else (t or "")
+
     role = net(str(offer.get("role") or ""))
     if rx.search(role):
         return True
-    texte = net(" ".join(str(offer.get(k) or "") for k in
-                         ("company", "role", "offer_text", "missions", "profil")))
+    texte = net(
+        " ".join(
+            str(offer.get(k) or "") for k in ("company", "role", "offer_text", "missions", "profil")
+        )
+    )
     if len(rx.findall(texte)) < int(ctx.get("occurrences_min") or 1):
         return False
     if ctx.get("densite_coeur"):
         # Import differe : ats_match importe ce module.
         from ats_match import densite_esg, _ESG_DENSITE_MIN, _ESG_DENSITE_LONG
+
         if len(texte) >= _ESG_DENSITE_LONG and densite_esg(texte) < _ESG_DENSITE_MIN:
             return False
     return True
@@ -392,7 +469,7 @@ def _reprise(civs, langue):
         return "Madame, Monsieur" if langue != "en" else "Sir or Madam"
     fem = [c in _CIV_FEM for c in connus]
     if langue == "en":
-        return "Sir or Madam"          # l'anglais ferme sur « Yours sincerely »
+        return "Sir or Madam"  # l'anglais ferme sur « Yours sincerely »
     if all(fem):
         return "Madame" if len(connus) == 1 else "Mesdames"
     if not any(fem):
@@ -432,6 +509,7 @@ def corps_sur_mesure(offer):
     casse, chercher a l'identique ne donnerait qu'un faux negatif silencieux.
     """
     from chemins import LT_SUR_MESURE
+
     if not LT_SUR_MESURE.exists():
         return []
     # Le nom cible passe par _slug EN ENTIER, comme celui du fichier. Assembler
@@ -462,6 +540,7 @@ def cv_sur_mesure(offer):
     regeneration reprend les retouches au lieu de les ecraser."""
     import json
     from chemins import CV_SUR_MESURE
+
     if not CV_SUR_MESURE.exists():
         return None
     vise = _slug(f"{offer.get('company')}__{offer.get('role')}")
@@ -480,6 +559,7 @@ def appliquer_cv_sur_mesure(doc, retouches):
     SIGNALEE, jamais ignoree : le modele a pu changer, et une retouche qui ne
     s'applique plus enverrait le CV generique sans un mot."""
     import copy
+
     manquees = []
     for ancien, nouveau in retouches.get("remplace", []):
         fait = False
@@ -504,6 +584,7 @@ def appliquer_cv_sur_mesure(doc, retouches):
         el = copy.deepcopy(p._p)
         p._p.addnext(el)
         from docx.text.paragraph import Paragraph
+
         neuf = Paragraph(el, p._parent)
         for r in neuf.runs:
             r.text = ""
@@ -552,6 +633,7 @@ def salutation(offer, langue="fr"):
     cloture, que le message n'a pas.
     """
     from message_offre import appel, nom_dans_offre, _RX_CIVILITE, _RX_SEPARE, GENERIQUES
+
     rh = (offer.get("rh") or "").strip()
     # Un destinataire que l'annonce ne nomme pas n'est pas nomme (2026-10-07).
     if offer.get("offer_text") is not None:
@@ -568,10 +650,11 @@ def salutation(offer, langue="fr"):
     civs = []
     for x in morceaux:
         if appel({"rh": x}, langue) in GENERIQUES and len(morceaux) > 1:
-            continue                       # morceau ecarte par `appel`
+            continue  # morceau ecarte par `appel`
         g = _RX_CIVILITE.match(x)
         civs.append(g.group(1).lower() if g else "")
     return texte, _reprise(civs, langue), True
+
 
 # Libelles de competences en ANGLAIS. La lettre anglaise les cite en toutes
 # lettres ; les laisser en francais trahit la generation automatique plus
@@ -594,8 +677,10 @@ def skills_en(labels):
     global _SKILL_EN_NORM
     if _SKILL_EN_NORM is None:
         from jutil import sans_accent
+
         _SKILL_EN_NORM = {sans_accent(k).lower(): v for k, v in SKILL_EN.items()}
     from jutil import sans_accent
+
     return [_SKILL_EN_NORM.get(sans_accent(x).lower(), x) for x in labels]
 
 
@@ -617,16 +702,17 @@ COMPANY_VALUE_EN = dict(_P.get("lettre.valeurs_entreprises_en", {}) or {})
 # 'pai' « PAIement », 'var' « VARiable ». Ici l'enjeu dépasse le scoring : ces
 # libellés sont IMPRIMÉS sur le CV envoyé au recruteur.
 _SHORT = 4
-_RX_SKILL = {lab: [re.compile(r"\b" + re.escape(n.strip()) + r"\b")
-                   for n in ns if len(n.strip()) <= _SHORT]
-             for lab, ns in SKILL_LEX.items()}
-_SUB_SKILL = {lab: [n for n in ns if len(n.strip()) > _SHORT]
-              for lab, ns in SKILL_LEX.items()}
+_RX_SKILL = {
+    lab: [re.compile(r"\b" + re.escape(n.strip()) + r"\b") for n in ns if len(n.strip()) <= _SHORT]
+    for lab, ns in SKILL_LEX.items()
+}
+_SUB_SKILL = {lab: [n for n in ns if len(n.strip()) > _SHORT] for lab, ns in SKILL_LEX.items()}
+
 
 def has_skill(label, t):
     """Le libellé est-il présent dans le texte (déjà en minuscules) ?"""
-    return (any(n in t for n in _SUB_SKILL[label])
-            or any(r.search(t) for r in _RX_SKILL[label]))
+    return any(n in t for n in _SUB_SKILL[label]) or any(r.search(t) for r in _RX_SKILL[label])
+
 
 # Libelles qui servent au SCORING mais ne s'ecrivent pas dans une lettre : ce
 # sont des noms de categorie internes, pas des competences. « Durabilité / ESG
@@ -722,8 +808,18 @@ _NON_TECHNIQUE = {lab for lab, v in _COMP.items() if v.get("technique") is False
 # technique dans une lettre anglaise a TotalEnergies, ou l'annonce disait
 # seulement « provide assurance ». Un mot francais trouve dans un texte anglais
 # ne prouve rien.
-_FAUX_AMIS_EN = {"assurance", "avocat", "location", "actuel", "formation",
-                 "experience", "notice", "large", "librairie", "cave"}
+_FAUX_AMIS_EN = {
+    "assurance",
+    "avocat",
+    "location",
+    "actuel",
+    "formation",
+    "experience",
+    "notice",
+    "large",
+    "librairie",
+    "cave",
+}
 
 # COMMENT CHAQUE TERME S'ECRIT DANS LA LANGUE DE LA LETTRE.
 #
@@ -787,10 +883,11 @@ def match_skills(offer_text, max_n=8):
             hits.append(label)
     # socle neutre (pas de biais ESG) si offre pauvre en texte
     if len(hits) < 3:
-        for base in (_P.get("competences_de_base", []) or []):
+        for base in _P.get("competences_de_base", []) or []:
             if base not in hits:
                 hits.append(base)
     return hits[:max_n]
+
 
 # ---- CV : injecte titre + ligne competences ciblees ----
 def tailor_cv(offer, nom=None, langue="fr", allege=0, auto=True):
@@ -810,8 +907,10 @@ def tailor_cv(offer, nom=None, langue="fr", allege=0, auto=True):
     if langue == "en" and CV_VARIANT_EN.get(key) and (CV_ATS / CV_VARIANT_EN[key]).exists():
         src = CV_ATS / CV_VARIANT_EN[key]
     if not src.is_file():
-        print(f"  ! CV variante absente: {src.name or key} (profil.json, domaines[].cv)"); return None
+        print(f"  ! CV variante absente: {src.name or key} (profil.json, domaines[].cv)")
+        return None
     from rename_docs import new_name
+
     if src.suffix.lower() == ".pdf":
         # CV fourni en PDF seulement : il part tel quel, sans adaptation.
         # Un modele .docx permet d'y inserer l'intitule du poste.
@@ -881,8 +980,12 @@ def tailor_cv(offer, nom=None, langue="fr", allege=0, auto=True):
             print(f"  ! CV sur mesure : texte introuvable dans le modele : « {m[:60]} »")
     elif auto:
         import cv_auto
-        r = cv_auto.retouches(offer.get("offer_text") or offer.get("role") or "",
-                              langue if langue == "en" else "fr", allege)
+
+        r = cv_auto.retouches(
+            offer.get("offer_text") or offer.get("role") or "",
+            langue if langue == "en" else "fr",
+            allege,
+        )
         # Ancres manquees : NORMAL ici. Chaque variante de CV n'a pas les memes
         # lignes, et un fait vise parfois une seule d'entre elles.
         appliquer_cv_sur_mesure(doc, r)
@@ -891,18 +994,21 @@ def tailor_cv(offer, nom=None, langue="fr", allege=0, auto=True):
     #    trahissait un CV auto-généré auprès des recruteurs. Les skills servent toujours
     #    au scoring (fit/ATS) et à la LETTRE, mais ne sont plus injectés dans le CV.
 
-    from rename_docs import new_name   # Prenom_Nom_CV_<Poste court>_<Entreprise>
+    from rename_docs import new_name  # Prenom_Nom_CV_<Poste court>_<Entreprise>
+
     out = CV_OUT / ((nom or new_name("CV", role, offer["company"])) + ".docx")
     doc.save(str(out))
     return out
 
+
 def _pages_pdf(pdf):
     try:
         import fitz
+
         with fitz.open(str(pdf)) as d:
             return d.page_count
     except Exception:
-        return 1          # illisible : on ne boucle pas pour rien
+        return 1  # illisible : on ne boucle pas pour rien
 
 
 def cv_une_page(offer, nom=None, langue="fr"):
@@ -914,6 +1020,7 @@ def cv_une_page(offer, nom=None, langue="fr"):
     mieux qu'un CV adapte de deux. Un CV/Sur_mesure n'est jamais allege : il a
     ete relu, sa page aussi."""
     import cv_auto
+
     lg = langue if langue == "en" else "fr"
     essais = [(k, True) for k in range(cv_auto.nb_allegements(lg) + 1)] + [(0, False)]
     if cv_sur_mesure(offer):
@@ -933,6 +1040,7 @@ def _enable_hyphenation(doc):
     """Active la césure automatique Word → un texte justifié sans « trous » (rivières)."""
     try:
         from docx.oxml.ns import qn
+
         s = doc.settings.element
         if s.find(qn("w:autoHyphenation")) is None:
             el = s.makeelement(qn("w:autoHyphenation"), {qn("w:val"): "true"})
@@ -951,7 +1059,8 @@ def tailor_letter(offer, nom=None, langue="fr"):
     « Je vous prie d'agreer… » n'a pas d'equivalent litteral et devient
     « Yours faithfully », qui est la forme attendue quand le destinataire est
     inconnu (« Dear Sir or Madam »)."""
-    company = offer["company"]; role = (offer["role"] or "ce poste").strip()
+    company = offer["company"]
+    role = (offer["role"] or "ce poste").strip()
     skills = match_skills(offer["offer_text"])
     missions = (offer["missions"] or "").strip()
     profil = (offer["profil"] or "").strip()
@@ -962,34 +1071,76 @@ def tailor_letter(offer, nom=None, langue="fr"):
     _corps = corps_sur_mesure(offer)
 
     doc = Document()
-    style = doc.styles["Normal"]; style.font.name = "Calibri"; style.font.size = Pt(11)
-    _enable_hyphenation(doc)   # césure auto : justifié SANS trous (rivières)
+    style = doc.styles["Normal"]
+    style.font.name = "Calibri"
+    style.font.size = Pt(11)
+    _enable_hyphenation(doc)  # césure auto : justifié SANS trous (rivières)
 
     def para(txt, align=WD_ALIGN_PARAGRAPH.JUSTIFY, space=6, bold=False):
-        p = doc.add_paragraph(); p.alignment = align
-        r = p.add_run(txt); r.bold = bold
+        p = doc.add_paragraph()
+        p.alignment = align
+        r = p.add_run(txt)
+        r.bold = bold
         p.paragraph_format.space_after = Pt(space)
         return p
 
     # en-tete expediteur
-    for line in [PROFILE["nom"], PROFILE["email"], PROFILE["tel"]]:   # pas d'adresse/ville (vie privee)
+    for line in [
+        PROFILE["nom"],
+        PROFILE["email"],
+        PROFILE["tel"],
+    ]:  # pas d'adresse/ville (vie privee)
         para(line, WD_ALIGN_PARAGRAPH.LEFT, 0)
     para("")
     # date du jour a droite ; PAS de bloc destinataire : nom du recruteur inconnu
     # -> on ne met pas le nom de l'entreprise (demande l'utilisateur 2026-07-12)
     from datetime import date as _d
-    _MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet",
-             "août", "septembre", "octobre", "novembre", "décembre"]
-    _MONTHS = ["January", "February", "March", "April", "May", "June", "July",
-               "August", "September", "October", "November", "December"]
+
+    _MOIS = [
+        "janvier",
+        "février",
+        "mars",
+        "avril",
+        "mai",
+        "juin",
+        "juillet",
+        "août",
+        "septembre",
+        "octobre",
+        "novembre",
+        "décembre",
+    ]
+    _MONTHS = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ]
     _t = _d.today()
-    para(f"{_MONTHS[_t.month - 1]} {_t.day}, {_t.year}" if langue == "en"
-         else f"Le {_t.day} {_MOIS[_t.month - 1]} {_t.year}",
-         WD_ALIGN_PARAGRAPH.RIGHT, 12)
+    para(
+        f"{_MONTHS[_t.month - 1]} {_t.day}, {_t.year}"
+        if langue == "en"
+        else f"Le {_t.day} {_MOIS[_t.month - 1]} {_t.year}",
+        WD_ALIGN_PARAGRAPH.RIGHT,
+        12,
+    )
     if langue == "en":
         _titre_en = titre_poste(_sans_societe(role, company))
-        para(f"Subject: Application for the position of {_titre_en}" if _titre_en
-             else "Subject: Speculative application", space=12, bold=True)
+        para(
+            f"Subject: Application for the position of {_titre_en}"
+            if _titre_en
+            else "Subject: Speculative application",
+            space=12,
+            bold=True,
+        )
         para(_appel)
         # LE CORPS ECRIT A LA MAIN court-circuite le gabarit. Ce qui l'entoure
         # reste genere : c'est lui qui sait nommer deux destinataires et
@@ -1000,6 +1151,7 @@ def tailor_letter(offer, nom=None, langue="fr"):
             para("Yours sincerely," if _nomme else "Yours faithfully,", space=12)
             para(PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
             from rename_docs import new_name
+
             out_sm = LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
             doc.save(str(out_sm))
             return out_sm
@@ -1044,18 +1196,25 @@ def tailor_letter(offer, nom=None, langue="fr"):
             # une phrase et devient une liste de mots-cles.
             prose_en = competences_en_prose(skills, "en", 4)
             if prose_en:
-                techs_en = [m for m in mots_techniques(
-                                f"{offer.get('missions','')} {offer.get('profil','')} "
-                                f"{offer.get('offer_text','')}", 12, "en")
-                            if m.lower() not in prose_en.lower()][:4]
+                techs_en = [
+                    m
+                    for m in mots_techniques(
+                        f"{offer.get('missions', '')} {offer.get('profil', '')} "
+                        f"{offer.get('offer_text', '')}",
+                        12,
+                        "en",
+                    )
+                    if m.lower() not in prose_en.lower()
+                ][:4]
                 ph = f"Along the way I became familiar with {prose_en}."
                 if len(techs_en) >= 2:
-                    ph += (" I also work with what your advertisement describes: "
-                           + ", ".join(techs_en) + ".")
-                para(ph + " These are foundations I would be glad to deepen "
-                          "within your teams.")
-        if (_citable(profil, "en")
-                and profil.lower() not in ("non précisé", "à compléter", "nan")):
+                    ph += (
+                        " I also work with what your advertisement describes: "
+                        + ", ".join(techs_en)
+                        + "."
+                    )
+                para(ph + " These are foundations I would be glad to deepen within your teams.")
+        if _citable(profil, "en") and profil.lower() not in ("non précisé", "à compléter", "nan"):
             # Le point-virgule anglais n'etait pas mieux que le francais.
             _pp_en = _P.get("lettre.phrase_profil_en", "") or ""
             if _pp_en:
@@ -1063,14 +1222,17 @@ def tailor_letter(offer, nom=None, langue="fr"):
         # « I would be VERY glad to discuss IN PERSON what I COULD bring […] at
         # your convenience » : trois attenuations dans une phrase. On demande
         # un entretien, on ne s'excuse pas de le demander.
-        para("I would welcome the opportunity to discuss this role with you and am "
-             "available for an interview at your convenience.")
+        para(
+            "I would welcome the opportunity to discuss this role with you and am "
+            "available for an interview at your convenience."
+        )
         # « Yours faithfully » est la formule attendue quand le destinataire est
         # inconnu ; « Yours sincerely » suppose qu'on l'a nomme. La lettre sait
         # desormais lequel des deux cas s'applique.
         para("Yours sincerely," if _nomme else "Yours faithfully,", space=12)
         para(PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
         from rename_docs import new_name
+
         out_en = LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
         doc.save(str(out_en))
         return out_en
@@ -1079,18 +1241,26 @@ def tailor_letter(offer, nom=None, langue="fr"):
     # capitalisent a l'anglaise — « Contrôleur de Gestion Financier » — et on
     # le recopiait tel quel dans l'objet.
     _titre = minuscule_titre(titre_poste(_sans_societe(role, company)))
-    para(f"Objet : Candidature au poste {_de(_titre)}" if _titre else "Objet : Candidature spontanée",
-         space=12, bold=True)
+    para(
+        f"Objet : Candidature au poste {_de(_titre)}"
+        if _titre
+        else "Objet : Candidature spontanée",
+        space=12,
+        bold=True,
+    )
     para(_appel)
 
     # LE CORPS ECRIT A LA MAIN, meme regle qu'en anglais.
     if _corps:
         for _bloc in _corps:
             para(_bloc)
-        para(f"Je vous prie d'agréer, {_reprise_civ}, l'expression de mes "
-             "salutations distinguées.", space=12)
+        para(
+            f"Je vous prie d'agréer, {_reprise_civ}, l'expression de mes salutations distinguées.",
+            space=12,
+        )
         para(PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
         from rename_docs import new_name
+
         out_sm = LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
         doc.save(str(out_sm))
         return out_sm
@@ -1147,7 +1317,7 @@ def tailor_letter(offer, nom=None, langue="fr"):
     _dur = "" if _agri else contexte_durable(offer, "fr")
     if _dur:
         socle_txt += " " + _dur
-    if socle_txt.strip():          # parcours vide dans le profil : pas de paragraphe creux
+    if socle_txt.strip():  # parcours vide dans le profil : pas de paragraphe creux
         para(socle_txt)
     if _agri:
         para(_agri)
@@ -1168,19 +1338,28 @@ def tailor_letter(offer, nom=None, langue="fr"):
             # forecast et le reporting » demanderait de deviner le genre de
             # chacun. C'est aussi la forme que lit un ATS, qui cherche les mots
             # de l'annonce et non nos libelles maison.
-            techs = [m for m in mots_techniques(
-                        f"{offer.get('missions','')} {offer.get('profil','')} "
-                        f"{offer.get('offer_text','')}", 12, "fr")
-                     if m.lower() not in prose.lower()][:4]
+            techs = [
+                m
+                for m in mots_techniques(
+                    f"{offer.get('missions', '')} {offer.get('profil', '')} "
+                    f"{offer.get('offer_text', '')}",
+                    12,
+                    "fr",
+                )
+                if m.lower() not in prose.lower()
+            ][:4]
             phrase = f"Au fil de ce parcours, je me suis {_P.accord('familiarisé', 'familiarisée')} avec {prose}."
             if len(techs) >= 2:
-                phrase += " Je pratique aussi ce que décrit votre annonce : " + ", ".join(techs) + "."
-            para(phrase + f" Ce sont des acquis que je serais {_P.accord('heureux', 'heureuse')} "
-                          "d'approfondir au sein de vos équipes.")
+                phrase += (
+                    " Je pratique aussi ce que décrit votre annonce : " + ", ".join(techs) + "."
+                )
+            para(
+                phrase + f" Ce sont des acquis que je serais {_P.accord('heureux', 'heureuse')} "
+                "d'approfondir au sein de vos équipes."
+            )
     # Le profil non plus n'est plus cite : meme copier-coller tronque, suivi
     # d'un point-virgule que personne n'ecrit dans une lettre.
-    if (_citable(profil, "fr")
-            and profil.lower() not in ("non précisé", "à compléter", "nan")):
+    if _citable(profil, "fr") and profil.lower() not in ("non précisé", "à compléter", "nan"):
         _pp = _P.get("lettre.phrase_profil_fr", "") or ""
         if _pp:
             para(_pp)
@@ -1196,18 +1375,23 @@ def tailor_letter(offer, nom=None, langue="fr"):
     # LA REPRISE DOIT REPONDRE A L'APPEL. Ecrire « Monsieur Mac Arthur, » en
     # tete et « agréer, Madame, Monsieur » en pied est la faute classique des
     # lettres a trous : la cloture trahit le gabarit que l'ouverture cachait.
-    para(f"Je vous prie d'agréer, {_reprise_civ}, l'expression de mes "
-         "salutations distinguées.", space=12)
+    para(
+        f"Je vous prie d'agréer, {_reprise_civ}, l'expression de mes salutations distinguées.",
+        space=12,
+    )
     para(PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
 
-    from rename_docs import new_name   # Prenom_Nom_Lettre_<Poste court>_<Entreprise>
+    from rename_docs import new_name  # Prenom_Nom_Lettre_<Poste court>_<Entreprise>
+
     out = LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
     doc.save(str(out))
     return out
 
+
 # ---- mode LLM : Claude API (si clé) OU Ollama local (gratuit) ----
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.1:8b")
+
 
 def _llm_prompt(offer):
     return (
@@ -1220,20 +1404,27 @@ def _llm_prompt(offer):
         "de politesse (déjà gérés ailleurs). Uniquement les 3 paragraphes du corps."
     )
 
+
 def _ollama_generate(prompt):
     """Appelle Ollama local (gratuit). Retourne le texte ou None si indispo."""
     import json as _json
     import urllib.request
-    body = _json.dumps({"model": OLLAMA_MODEL, "prompt": prompt, "stream": False,
-                        "options": {"temperature": 0.4}}).encode()
+
+    body = _json.dumps(
+        {"model": OLLAMA_MODEL, "prompt": prompt, "stream": False, "options": {"temperature": 0.4}}
+    ).encode()
     try:
-        req = urllib.request.Request(f"{OLLAMA_URL}/api/generate", data=body,
-                                     headers={"Content-Type": "application/json"})
+        req = urllib.request.Request(
+            f"{OLLAMA_URL}/api/generate", data=body, headers={"Content-Type": "application/json"}
+        )
         with urllib.request.urlopen(req, timeout=120) as r:
             return _json.loads(r.read()).get("response", "").strip()
     except Exception as e:
-        print(f"  ! Ollama indispo ({type(e).__name__}) — lance `ollama serve` + `ollama pull {OLLAMA_MODEL}`")
+        print(
+            f"  ! Ollama indispo ({type(e).__name__}) — lance `ollama serve` + `ollama pull {OLLAMA_MODEL}`"
+        )
         return None
+
 
 def llm_rewrite(offer, cv_docx, letter_docx):
     prompt = _llm_prompt(offer)
@@ -1243,9 +1434,12 @@ def llm_rewrite(offer, cv_docx, letter_docx):
     if key:
         try:
             import anthropic
+
             msg = anthropic.Anthropic(api_key=key).messages.create(
-                model="claude-sonnet-5", max_tokens=700,
-                messages=[{"role": "user", "content": prompt}])
+                model="claude-sonnet-5",
+                max_tokens=700,
+                messages=[{"role": "user", "content": prompt}],
+            )
             body = msg.content[0].text.strip()
             print("  ✎ Claude API")
         except Exception as e:
@@ -1259,36 +1453,59 @@ def llm_rewrite(offer, cv_docx, letter_docx):
         return False
     # reconstruit la lettre avec le corps LLM
     doc = Document()
-    doc.styles["Normal"].font.name = "Calibri"; doc.styles["Normal"].font.size = Pt(11)
-    for line in [PROFILE["nom"], PROFILE["email"], PROFILE["tel"], ""]:   # pas d'adresse/ville
+    doc.styles["Normal"].font.name = "Calibri"
+    doc.styles["Normal"].font.size = Pt(11)
+    for line in [PROFILE["nom"], PROFILE["email"], PROFILE["tel"], ""]:  # pas d'adresse/ville
         doc.add_paragraph(line)
     # même nettoyage + élision que tailor_letter : ce chemin LLM écrivait le titre brut
     _t = titre_poste(offer.get("role") or "")
-    doc.add_paragraph(f"Objet : Candidature au poste {_de(_t)}" if _t
-                      else "Objet : Candidature spontanée").runs[0].bold = True
+    doc.add_paragraph(
+        f"Objet : Candidature au poste {_de(_t)}" if _t else "Objet : Candidature spontanée"
+    ).runs[0].bold = True
     doc.add_paragraph("Madame, Monsieur,")
     for para in body.split("\n\n"):
-        p = doc.add_paragraph(para.strip()); p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        p = doc.add_paragraph(para.strip())
+        p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     doc.add_paragraph("Je vous prie d'agréer, Madame, Monsieur, mes salutations distinguées.")
     doc.add_paragraph(PROFILE["nom"])
     doc.save(str(letter_docx))
     return True
 
+
 # ---- PDF via LibreOffice ----
-SOFFICE = [r"C:\Program Files\LibreOffice\program\soffice.exe",
-           r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"]
+SOFFICE = [
+    r"C:\Program Files\LibreOffice\program\soffice.exe",
+    r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
+]
+
+
 def to_pdf(docx_path):
     exe = next((s for s in SOFFICE if Path(s).exists()), None)
     if not exe:
         return None
     try:
-        subprocess.run([exe, "--headless", "--convert-to", "pdf", "--outdir",
-                        str(docx_path.parent), str(docx_path)],
-                       check=True, capture_output=True, timeout=90)
+        subprocess.run(
+            [
+                exe,
+                "--headless",
+                "--convert-to",
+                "pdf",
+                "--outdir",
+                str(docx_path.parent),
+                str(docx_path),
+            ],
+            check=True,
+            capture_output=True,
+            timeout=90,
+        )
         return docx_path.with_suffix(".pdf")
     except Exception as e:
-        print(f"  ! PDF échec: {e}"); return None
+        print(f"  ! PDF échec: {e}")
+        return None
+
 
 # ---- lecture Excel ----
 if __name__ == "__main__":
-    print("Module de fonctions (tailor_cv/tailor_letter/to_pdf). CLI : generate_docs.py / add_offer.py")
+    print(
+        "Module de fonctions (tailor_cv/tailor_letter/to_pdf). CLI : generate_docs.py / add_offer.py"
+    )

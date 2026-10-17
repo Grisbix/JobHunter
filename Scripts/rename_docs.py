@@ -8,21 +8,25 @@ Source de vérité = apply_queue.json (champs cv/lettre) → renomme docx + PDF 
 + MET À JOUR les liens file:/// dans la queue. Idempotent.
 
 Run : python rename_docs.py [--dry]"""
+
 import sys, re, json, argparse
 from pathlib import Path
 from urllib.parse import unquote, quote
+
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import chemins
+
 QUEUE = HERE / "apply_queue.json"
 
 NOISE = re.compile(
     r"(?i)\b(h/f|f/h|h-f|f-h|hf|fh|m/f|f/m|w/m/d|f/m/x|f/m/d|m/w/d|x/f/h"
     r"|cdi|cdd|stage|alternance|apprentissage|internship|intern|vie\b"
     r"|junior|senior|d[ée]butant|confirm[ée]|\d+\s*(mois|ans?)|temps (plein|partiel)"
-    r"|paris|lyon|bordeaux|lille|nantes|toulouse|marseille|france|remote|t[ée]l[ée]travail)\b")
+    r"|paris|lyon|bordeaux|lille|nantes|toulouse|marseille|france|remote|t[ée]l[ée]travail)\b"
+)
 
 
 def clean_poste(p, maxlen=48):
@@ -43,7 +47,8 @@ def _safe(s, maxlen=40):
 
 
 import profil as _P
-PREFIXE = _P.prefixe_fichier()      # « Prenom_Nom », lu dans le profil
+
+PREFIXE = _P.prefixe_fichier()  # « Prenom_Nom », lu dans le profil
 
 
 def new_name(kind, poste, entreprise):
@@ -51,7 +56,7 @@ def new_name(kind, poste, entreprise):
     return f"{PREFIXE}_{kind}_{_safe(clean_poste(poste))}_{ent}"
 
 
-from jutil import chemin_de as _path_of, url_de as _url_of   # helpers partages
+from jutil import chemin_de as _path_of, url_de as _url_of  # helpers partages
 
 
 def rename_orphans(dry=False):
@@ -74,7 +79,8 @@ def rename_orphans(dry=False):
             base = f"{PREFIXE}_{kind}_{_safe(stem, 70)}"
             cand, i = base, 2
             while (d / f"{cand}{f.suffix}").exists():
-                cand = f"{base}_{i}"; i += 1
+                cand = f"{base}_{i}"
+                i += 1
             if not dry:
                 try:
                     f.rename(d / f"{cand}{f.suffix}")
@@ -93,7 +99,7 @@ def main():
     # Verrou inter-processus : ce programme reecrit la queue ENTIERE. Si un
     # autre le fait en meme temps (tache planifiee vs app), le dernier qui
     # ecrit efface le travail de l'autre.
-    if not __import__('jutil').garder(QUEUE):
+    if not __import__("jutil").garder(QUEUE):
         return 3
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true")
@@ -109,11 +115,13 @@ def main():
             tw = t.with_suffix(".pdf")
             if t == old:
                 return t
-            busy = t.exists() or (suffix.lower() == ".docx" and tw.exists()
-                                  and tw != old.with_suffix(".pdf"))
+            busy = t.exists() or (
+                suffix.lower() == ".docx" and tw.exists() and tw != old.with_suffix(".pdf")
+            )
             if not busy:
                 return t
-            cand = f"{base}_{i}"; i += 1
+            cand = f"{base}_{i}"
+            i += 1
 
     for x in q:
         for key, kind in (("cv", "CV"), ("lettre", "Lettre")):
@@ -121,10 +129,10 @@ def main():
             if old is None:
                 continue
             if old.name.startswith(f"{PREFIXE}_CV_ESG") or "Modèles" in str(old):
-                continue   # CV ATS génériques : on ne touche pas
+                continue  # CV ATS génériques : on ne touche pas
             base = new_name(kind, x.get("poste", ""), x.get("entreprise", ""))
             if old.stem == base or old.stem.startswith(base + "_"):
-                continue   # déjà renommé
+                continue  # déjà renommé
             if not old.exists():
                 # crash précédent : fichier déjà renommé mais lien pas mis à jour
                 for candp in sorted(old.parent.glob(base + "*" + old.suffix)):
@@ -142,7 +150,8 @@ def main():
                 try:
                     old.rename(newp)
                 except FileExistsError:
-                    miss += 1; continue
+                    miss += 1
+                    continue
                 tw_old, tw_new = old.with_suffix(".pdf"), newp.with_suffix(".pdf")
                 if old.suffix.lower() == ".docx" and tw_old.exists() and not tw_new.exists():
                     tw_old.rename(tw_new)
@@ -152,7 +161,9 @@ def main():
             __import__("jutil").jwrite(QUEUE, q)  # checkpoint
     if not a.dry:
         __import__("jutil").jwrite(QUEUE, q)
-    print(f"{'[DRY] ' if a.dry else ''}{ren} fichiers renommés · {upd} liens réalignés · {miss} introuvables")
+    print(
+        f"{'[DRY] ' if a.dry else ''}{ren} fichiers renommés · {upd} liens réalignés · {miss} introuvables"
+    )
     rename_orphans(dry=a.dry)
 
 
@@ -161,12 +172,19 @@ if __name__ == "__main__":
         cases = [
             ("Analyste ESG / Investment (H/F) - CDI - Paris", "Analyste ESG"),
             ("Stage – Analyste Corporate Coverage – 6 mois – H/F", "Analyste Corporate Coverage"),
-            ("Chargé d'Affaires Evaluation des Risques Sanitaires et Environnementaux H/F",
-             "Chargé dAffaires Evaluation des Risques Sani"),
+            (
+                "Chargé d'Affaires Evaluation des Risques Sanitaires et Environnementaux H/F",
+                "Chargé dAffaires Evaluation des Risques Sani",
+            ),
             ("Data Analyst - F/H/X", "Data Analyst"),
         ]
         for src, _ in cases:
             print(f"  {src[:55]!r:58} -> {clean_poste(src)!r}")
-        print("name:", new_name("CV", "Analyste ESG / Investment (H/F) - CDI - Paris", "AXA Investment Managers"))
+        print(
+            "name:",
+            new_name(
+                "CV", "Analyste ESG / Investment (H/F) - CDI - Paris", "AXA Investment Managers"
+            ),
+        )
     else:
         sys.exit(main())

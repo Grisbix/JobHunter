@@ -21,6 +21,7 @@ Run :
   python linkedin_desc.py --limit 100
   python linkedin_desc.py                    # toutes les offres concernees
 """
+
 import sys
 import re
 import json
@@ -36,7 +37,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 QUEUE = HERE / "apply_queue.json"
 
-from linkedin_closed import API, UA, job_id, RX_FERME   # meme endpoint, meme UA
+from linkedin_closed import API, UA, job_id, RX_FERME  # meme endpoint, meme UA
 
 # La description vit dans un bloc `description__text` ; repli sur <section>.
 RX_DESC = [
@@ -110,6 +111,7 @@ def main():
     a = ap.parse_args()
 
     import queue_io
+
     cibles = _cibles(queue_io.charger(), a.limit)
     print(f"{len(cibles)} offre(s) LinkedIn sans description")
     if a.dry:
@@ -144,6 +146,7 @@ def _ecrire(textes, queue_io, attente=180):
     offre disparue est simplement ignoree."""
     from ats_match import fit_detail
     import datetime
+
     ecrites, delta = 0, []
     with queue_io.transaction(attente=attente) as q:
         for o in q:
@@ -163,16 +166,26 @@ def _ecrire(textes, queue_io, attente=180):
             avant = o.get("fit")
             o["description"] = t
             # re-score OBLIGATOIRE : sans lui l'offre garde le fit calcule sans description
-            o["fit"], o["exp_requise"], o["fit_fin"] = fit_detail(f"{o.get('poste','')} {t}", o.get("poste", ""))
+            o["fit"], o["exp_requise"], o["fit_fin"] = fit_detail(
+                f"{o.get('poste', '')} {t}", o.get("poste", "")
+            )
             ecrites += 1
             if isinstance(avant, int) and o["fit"] > avant:
-                delta.append((o["fit"] - avant, avant, o["fit"],
-                              (o.get("entreprise") or "")[:24], (o.get("poste") or "")[:40]))
+                delta.append(
+                    (
+                        o["fit"] - avant,
+                        avant,
+                        o["fit"],
+                        (o.get("entreprise") or "")[:24],
+                        (o.get("poste") or "")[:40],
+                    )
+                )
     return ecrites, delta
 
 
 def _travail(cibles, a, queue_io):
     import httpx
+
     ecrites, delta = 0, []
     # Textes lus mais pas encore poses. Si la file est occupee au moment
     # d'ecrire un lot, ils attendent le suivant au lieu d'etre perdus.
@@ -180,7 +193,7 @@ def _travail(cibles, a, queue_io):
     faits = 0
     with httpx.Client(follow_redirects=True) as client:
         for debut in range(0, len(cibles), a.lot):
-            lot = cibles[debut:debut + a.lot]
+            lot = cibles[debut : debut + a.lot]
             with cf.ThreadPoolExecutor(max_workers=a.workers) as ex:
                 futs = {ex.submit(description, jid, client): jid for jid in lot}
                 for f in cf.as_completed(futs):
@@ -211,18 +224,21 @@ def _travail(cibles, a, queue_io):
             print("  relancer le programme les relira.")
             return 3
     remontes = len(delta)
-    print(f"\n{ecrites} description(s) recuperee(s) sur {len(cibles)} — {remontes} offres remontent en fit")
+    print(
+        f"\n{ecrites} description(s) recuperee(s) sur {len(cibles)} — {remontes} offres remontent en fit"
+    )
     if FERMEES:
         print(f"  {len(FERMEES)} offre(s) fermee(s) reperee(s) au passage — marquees EXPIREE")
     # Un echec n'est pas un verdict : dire combien de fois LinkedIn nous a
     # brides evite de conclure « ces annonces n'ont pas de description ».
     if BRIDAGES["n"]:
-        print(f"   ({BRIDAGES['n']} bridage(s) 429 rencontre(s) — relancer "
-              f"ramassera le reste)")
+        print(f"   ({BRIDAGES['n']} bridage(s) 429 rencontre(s) — relancer ramassera le reste)")
     manquantes = len(cibles) - ecrites
     if manquantes:
-        print(f"   {manquantes} offre(s) restent sans description : relancer "
-              f"le programme, il ne reprend que celles-la.")
+        print(
+            f"   {manquantes} offre(s) restent sans description : relancer "
+            f"le programme, il ne reprend que celles-la."
+        )
     for d, av, ap_, e, p in sorted(delta, reverse=True)[:10]:
         print(f"   +{d}  fit {av} -> {ap_}  {e:26} {p}")
     return 0

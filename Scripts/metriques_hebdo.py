@@ -21,6 +21,7 @@ sont comptées à part plutôt que devinées.
 
 Run : python metriques_hebdo.py [--jours 7]
 """
+
 import argparse
 import re
 import sys
@@ -63,9 +64,16 @@ def bilan_suivi(suivi, aujourdhui, jours=7):
     """Compte les candidatures. `suivi` est le dict de suivi_io.charger()."""
     debut = aujourdhui - timedelta(days=jours)
     debut_30 = aujourdhui - timedelta(days=30)
-    b = {"statuts": {}, "envoyees_periode": 0, "reponses_30j": 0,
-         "en_attente": 0, "a_relancer": [], "sans_date": 0,
-         "envoyees_total": 0, "reponses_total": 0}
+    b = {
+        "statuts": {},
+        "envoyees_periode": 0,
+        "reponses_30j": 0,
+        "en_attente": 0,
+        "a_relancer": [],
+        "sans_date": 0,
+        "envoyees_total": 0,
+        "reponses_total": 0,
+    }
     for oid, rec in suivi.items():
         rec = rec or {}
         s = str(rec.get("s") or "").strip().lower()
@@ -87,8 +95,7 @@ def bilan_suivi(suivi, aujourdhui, jours=7):
         if d and (aujourdhui - d).days >= RELANCE_JOURS:
             b["a_relancer"].append((oid, (aujourdhui - d).days))
     b["a_relancer"].sort(key=lambda t: -t[1])
-    b["taux_reponse"] = (b["reponses_total"] / b["envoyees_total"]
-                         if b["envoyees_total"] else None)
+    b["taux_reponse"] = b["reponses_total"] / b["envoyees_total"] if b["envoyees_total"] else None
     return b
 
 
@@ -106,10 +113,12 @@ def bilan_pipeline(dossier, aujourdhui, jours=7):
             continue
         texte = f.read_text(encoding="utf-8", errors="replace")
         par_jour[d] = par_jour.get(d, 0) + sum(int(n) for n in _MERGE.findall(texte))
-    manquants = [debut + timedelta(days=i) for i in range(1, jours + 1)
-                 if debut + timedelta(days=i) not in par_jour]
-    return {"par_jour": par_jour, "total": sum(par_jour.values()),
-            "jours_sans_run": manquants}
+    manquants = [
+        debut + timedelta(days=i)
+        for i in range(1, jours + 1)
+        if debut + timedelta(days=i) not in par_jour
+    ]
+    return {"par_jour": par_jour, "total": sum(par_jour.values()), "jours_sans_run": manquants}
 
 
 def rapport(bs, bp, aujourdhui, jours=7):
@@ -120,10 +129,14 @@ def rapport(bs, bp, aujourdhui, jours=7):
     if bs["taux_reponse"] is None:
         l.append("Taux de réponse cumulé : — (aucune candidature envoyée)")
     else:
-        l.append(f"Taux de réponse cumulé : {bs['taux_reponse']:.0%} "
-                 f"({bs['reponses_total']}/{bs['envoyees_total']})")
+        l.append(
+            f"Taux de réponse cumulé : {bs['taux_reponse']:.0%} "
+            f"({bs['reponses_total']}/{bs['envoyees_total']})"
+        )
     if bs["sans_date"]:
-        l.append(f"⚠ {bs['sans_date']} candidature(s) sans date exploitable, hors des comptes datés")
+        l.append(
+            f"⚠ {bs['sans_date']} candidature(s) sans date exploitable, hors des comptes datés"
+        )
     l.append("")
     l.append(f"## À relancer (≥ {RELANCE_JOURS} jours) : {len(bs['a_relancer'])}")
     for oid, age in bs["a_relancer"][:15]:
@@ -139,8 +152,10 @@ def rapport(bs, bp, aujourdhui, jours=7):
     for d, n in sorted(bp["par_jour"].items()):
         l.append(f"- {d.isoformat()} : +{n}")
     if bp["jours_sans_run"]:
-        l.append("⚠ Pas de journal du pipeline : "
-                 + ", ".join(d.isoformat() for d in bp["jours_sans_run"]))
+        l.append(
+            "⚠ Pas de journal du pipeline : "
+            + ", ".join(d.isoformat() for d in bp["jours_sans_run"])
+        )
     return "\n".join(l)
 
 
@@ -150,8 +165,14 @@ def main():
     ap.add_argument("--jours", type=int, default=7)
     a = ap.parse_args()
     auj = date.today()
-    print(rapport(bilan_suivi(suivi_io.charger(), auj, a.jours),
-                  bilan_pipeline(LOGS, auj, a.jours), auj, a.jours))
+    print(
+        rapport(
+            bilan_suivi(suivi_io.charger(), auj, a.jours),
+            bilan_pipeline(LOGS, auj, a.jours),
+            auj,
+            a.jours,
+        )
+    )
 
 
 if __name__ == "__main__":

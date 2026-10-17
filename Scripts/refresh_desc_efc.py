@@ -17,6 +17,7 @@ Run :
   python refresh_desc_efc.py --dry
   python refresh_desc_efc.py
 """
+
 import sys
 import time
 import argparse
@@ -53,8 +54,10 @@ def main():
         cibles = [o for o in q if _a_reprendre(o)]
         print(f"{len(cibles)} offre(s) eFC decrite(s) par une autre source")
         for o in cibles:
-            print(f"  fit {o.get('fit')} exp {o.get('exp_requise')}  "
-                  f"{(o.get('entreprise') or '')[:24]:24} {(o.get('poste') or '')[:44]}")
+            print(
+                f"  fit {o.get('fit')} exp {o.get('exp_requise')}  "
+                f"{(o.get('entreprise') or '')[:24]:24} {(o.get('poste') or '')[:44]}"
+            )
         print("[DRY] rien n'a ete ecrit.")
         return 0
 
@@ -66,7 +69,7 @@ def main():
             with httpx.Client(follow_redirects=True) as client:
                 for i, o in enumerate(cibles):
                     if i:
-                        time.sleep(EFC_DELAI)      # crawl-delay: 10
+                        time.sleep(EFC_DELAI)  # crawl-delay: 10
                     jp = _efc_fiche(o["url"], client)
                     if not jp:
                         print(f"  ~ illisible : {(o.get('poste') or '')[:44]}")
@@ -77,10 +80,13 @@ def main():
                     av_f, av_e = o.get("fit"), o.get("exp_requise")
                     o["description"] = t
                     o["fit"], o["exp_requise"], o["fit_fin"] = fit_detail(
-                        f"{o.get('poste','')} {t}", o.get("poste", ""))
+                        f"{o.get('poste', '')} {t}", o.get("poste", "")
+                    )
                     n += 1
-                    print(f"  fit {av_f} -> {o['fit']} · exp {av_e} -> {o['exp_requise']}  "
-                          f"{(o.get('entreprise') or '')[:22]:22} {(o.get('poste') or '')[:40]}")
+                    print(
+                        f"  fit {av_f} -> {o['fit']} · exp {av_e} -> {o['exp_requise']}  "
+                        f"{(o.get('entreprise') or '')[:22]:22} {(o.get('poste') or '')[:40]}"
+                    )
             print(f"\n{n} description(s) reprise(s) depuis eFinancialCareers.")
     except queue_io.VerrouIndisponible as e:
         print(f"! {e}")

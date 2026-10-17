@@ -50,6 +50,7 @@ Run :
   python tri_file.py --garde         # + echantillon de ce qui est CONSERVE
   python tri_file.py --supprime      # ecrit, apres sauvegarde horodatee
 """
+
 import argparse
 import json
 import re
@@ -74,7 +75,9 @@ SUIVI = HERE / "suivi.json"
 _RX_SENIOR_DUR = re.compile(
     r"\b(?:senior|sr|confirm[ée]{1,2}s?|exp[ée]riment[ée]{1,2}s?"
     r"|director|directeur|directrice|head\s+of|vice[\s-]?pr[ée]sident"
-    r"|vp|chief|principal|partner|associ[ée]\s+g[ée]rant)\b", re.I)
+    r"|vp|chief|principal|partner|associ[ée]\s+g[ée]rant)\b",
+    re.I,
+)
 
 # MOU : le mot dit souvent la seniorite, mais pas toujours. Neutralise quand
 # l'intitule porte par ailleurs une marque de debutant — « Management Trainee »
@@ -86,7 +89,9 @@ _RX_SENIOR_DUR = re.compile(
 #   « expert » : « expert comptable » part de toute facon par le motif metier.
 _RX_SENIOR_MOU = re.compile(
     r"\b(?:manager|managing|lead(?!\s+(?:generation|gen)\b)|responsable"
-    r"|expert[e]?s?|chef\s+de|g[ée]rant[e]?|superviseur)\b", re.I)
+    r"|expert[e]?s?|chef\s+de|g[ée]rant[e]?|superviseur)\b",
+    re.I,
+)
 
 # « RESPONSABLE » EST DEUX MOTS. Le nom designe un chef de service — « Responsable
 # Tresorerie », a jeter. L'adjectif qualifie une demarche — « Conseiller en
@@ -105,12 +110,15 @@ _RX_RESP_ADJ = re.compile(
     r"\b(?:[eé]pargnes?|investissements?|financements?|finance|placements?|gestion"
     r"|achats?|approvisionnements?|consommation|croissance|entreprises?|num[eé]rique"
     r"|innovation|cha[iî]ne|tourisme|voyages?|marketing|communication)"
-    r"\s+responsables?", re.I)
+    r"\s+responsables?",
+    re.I,
+)
 
 
 def _sans_resp_adjectif(titre):
     """Le titre prive de ses « responsable » adjectifs, pour le test de seniorite."""
     return _RX_RESP_ADJ.sub(" ", titre or "")
+
 
 # Marques de debutant. Neutralisent la liste MOU, jamais la liste DUR.
 #
@@ -124,7 +132,9 @@ _RX_JUNIOR = re.compile(
     r"\b(?:jr|intern|stage|entry[\s-]level|v\.?i\.?e)\b"
     r"|\b(?:junior|graduate|trainee|stagiaire|internship"
     r"|alternan|apprenti|d[ée]butant|jeunes?\s+dipl[oô]m"
-    r"|young\s+(?:graduate|talent|professional)|assistant)\w*", re.I)
+    r"|young\s+(?:graduate|talent|professional)|assistant)\w*",
+    re.I,
+)
 
 # ── 2. METIERS HORS PROFIL ──────────────────────────────────────────────────
 # Un dictionnaire motif -> famille, pour pouvoir dire POURQUOI une offre part
@@ -139,13 +149,13 @@ _METIERS = {
     # que le metier reste du calcul quantitatif ou de la tuyauterie de donnees.
     # D'ou leur place dans _METIERS_DURS. « quantity » (surveyor) et
     # « quantification » ne sont pas pris : seules les formes du metier.
-    "quant": re.compile(
-        r"\b(?:quants?|quantitati(?:ve|ves|f|fs)|structur(?:er|eur)s?)\b", re.I),
+    "quant": re.compile(r"\b(?:quants?|quantitati(?:ve|ves|f|fs)|structur(?:er|eur)s?)\b", re.I),
     "ingenierie_data": re.compile(
         r"\b(?:data\s+engineer(?:ing|s)?|big\s+data\s+engineer|analytics\s+engineer"
         r"|data\s+platform\s+engineer|ing[ée]nieure?\s+(?:data|donn[ée]es|big\s+data)"
-        r"|ingenier[oa]\s+de\s+datos|engenheir[oa]\s+de\s+dados)\b", re.I),
-
+        r"|ingenier[oa]\s+de\s+datos|engenheir[oa]\s+de\s+dados)\b",
+        re.I,
+    ),
     # Ingenierie logicielle et infrastructure. L'ANALYSE data reste (voir plus
     # bas _RX_DATA_GARDE) ; c'est le metier de DEVELOPPEUR qui part.
     "informatique": re.compile(
@@ -164,8 +174,9 @@ _METIERS = {
         r"|technicien\s+(?:informatique|support|helpdesk)|support\s+technique"
         r"|scrum\s+master|product\s+owner|tech\s+lead"
         r"|sap\b|salesforce|servicenow|sharepoint|oracle\s+erp"
-        r"|webmaster|int[ée]grateur\s+web|ui\s?/?\s?ux|designer)\b", re.I),
-
+        r"|webmaster|int[ée]grateur\s+web|ui\s?/?\s?ux|designer)\b",
+        re.I,
+    ),
     # Vente. « commercial » seul est trop large — « banque commerciale »,
     # « immobilier commercial », « credit commercial » sont de la finance. On
     # ne prend donc QUE les formes ou il designe la personne.
@@ -188,28 +199,33 @@ _METIERS = {
         r"|sales\b|vendeur|vendeuse|t[ée]l[ée]vente"
         r"|account\s+(?:manager|executive)|key\s+account|caissier|caissi[eè]re"
         r"|h[oô]te\s+de\s+caisse|conseiller\s+de\s+vente|retail\s+advisor"
-        r"|courtier)\b", re.I),
-
+        r"|courtier)\b",
+        re.I,
+    ),
     "marketing": re.compile(
         r"\b(?:marketing|community\s+manager|social\s+media|seo\b|sea\b|growth\s+hack"
         r"|brand\s+(?:manager|content)|content\s+(?:manager|writer)|r[ée]dacteur"
-        r"|graphiste|infographiste|motion\s+design)\b", re.I),
-
+        r"|graphiste|infographiste|motion\s+design)\b",
+        re.I,
+    ),
     "rh": re.compile(
         r"\b(?:ressources\s+humaines|rh\b|human\s+resources|hr\b|recruteur|recruteuse"
         r"|recruiter|recrutement|talent\s+acquisition|gestionnaire\s+de\s+paie"
-        r"|payroll|charg[ée]\s*\(?e?\)?\s*de\s+formation|people\s+partner)\b", re.I),
-
+        r"|payroll|charg[ée]\s*\(?e?\)?\s*de\s+formation|people\s+partner)\b",
+        re.I,
+    ),
     "juridique": re.compile(
         r"\b(?:juriste|avocat[e]?|legal\s+counsel|paralegal|notaire|greffier"
-        r"|huissier|contract\s+manager)\b", re.I),
-
+        r"|huissier|contract\s+manager)\b",
+        re.I,
+    ),
     "sante": re.compile(
         r"\b(?:infirmi[eè]r[e]?|m[ée]decin|pharmacien[ne]?|aide[\s-]soignant[e]?"
         r"|kin[ée]sith[ée]rapeute|dentiste|sage[\s-]femme|auxiliaire\s+de\s+(?:vie|pu[ée]ri)"
         r"|ergoth[ée]rapeute|psychologue|v[ée]t[ée]rinaire|nurse|physician"
-        r"|clinical\s+(?:research|trial)|pharmacovigilance)\b", re.I),
-
+        r"|clinical\s+(?:research|trial)|pharmacovigilance)\b",
+        re.I,
+    ),
     "industrie": re.compile(
         r"\b(?:op[ée]rateur\s+de\s+production|agent\s+de\s+production|ouvrier"
         r"|m[ée]canicien[ne]?|[ée]lectricien[ne]?|soudeur|chaudronnier|usineur"
@@ -220,14 +236,16 @@ _METIERS = {
         r"|plombier|ma[çc]on|peintre|menuisier|couvreur|carrossier"
         r"|dessinateur|projeteur|ing[ée]nieur\s+(?:m[ée]canique|proc[ée]d[ée]|mat[ée]riaux|structure|civil|calcul)"
         r"|pilote\s+de\s+ligne|steward|h[oô]tesse\s+de\s+l'air|personnel\s+navigant"
-        r"|technicien\s+a[ée]ronautique|m[ée]canicien\s+avion)\b", re.I),
-
+        r"|technicien\s+a[ée]ronautique|m[ée]canicien\s+avion)\b",
+        re.I,
+    ),
     "restauration": re.compile(
         r"\b(?:serveur|serveuse|cuisinier|cuisini[eè]re|commis\s+de\s+cuisine"
         r"|chef\s+de\s+(?:rang|partie)|boulanger|p[aâ]tissier|boucher|barman|barista"
         r"|[ée]quipier|employ[ée]\s+(?:polyvalent|de\s+restauration)|plongeur"
-        r"|r[ée]ceptionniste|femme\s+de\s+chambre|gouvernant[e]?)\b", re.I),
-
+        r"|r[ée]ceptionniste|femme\s+de\s+chambre|gouvernant[e]?)\b",
+        re.I,
+    ),
     # SEULEMENT les titres academiques, et ils ne sont PAS rattrapables : un
     # post-doctorat « AI for Sustainable Energy » coche tous les mots-cles ESG
     # et reste inaccessible a un BBA. « formateur », « animateur » et
@@ -238,18 +256,22 @@ _METIERS = {
         r"\b(?:professeur|enseignant[e]?|instituteur|ma[iî]tre\s+de\s+conf[ée]rence"
         r"|teacher|lecturer|post[\s-]?doc|post[\s-]?doctora\w*|doctorant[e]?"
         r"|phd\s+(?:student|candidate)|th[eè]se\s+(?:cifre|de\s+doctorat)"
-        r"|offre\s+de\s+th[eè]se)\b", re.I),
-
+        r"|offre\s+de\s+th[eè]se)\b",
+        re.I,
+    ),
     "administratif": re.compile(
         r"\b(?:secr[ée]taire|standardiste|assistant[e]?\s+(?:administratif|administrative|de\s+direction)"
         r"|agent\s+administratif|op[ée]rateur\s+de\s+saisie|archiviste"
         r"|charg[ée]\s*\(?e?\)?\s*de\s+client[eè]le|service\s+client|customer\s+(?:service|success|support)"
-        r"|t[ée]l[ée]conseiller|h[oô]te\s+d'accueil)\b", re.I),
-
+        r"|t[ée]l[ée]conseiller|h[oô]te\s+d'accueil)\b",
+        re.I,
+    ),
     "logistique": re.compile(
         r"\b(?:supply\s+chain|logisti(?:que|cs)|approvisionn|transit|douane"
         r"|ordonnancement|planificateur\s+(?:industriel|de\s+production)"
-        r"|acheteur|acheteuse|buyer|procurement|category\s+manager)\b", re.I),
+        r"|acheteur|acheteuse|buyer|procurement|category\s+manager)\b",
+        re.I,
+    ),
 }
 
 # ── CE QUI RESTE MALGRE UN MOTIF METIER ─────────────────────────────────────
@@ -271,6 +293,7 @@ _METIERS = {
 #   — « Trainee Sustainability & Strategic Regulatory » chez PwC et « Working
 #   Student Sustainable Procurement » chez Sika.
 import profil as _P
+
 _TRI = _P.get("tri", {}) or {}
 # Mots de la CIBLE qui sauvent un intitule d'une famille ecartee (profil,
 # tri.sauvetage) : « Sustainable Procurement » reste pour un profil durable.
@@ -285,7 +308,7 @@ _RX_SAUVETAGE = _P.motif(_TRI.get("sauvetage"))
 _METIERS_DURS = set(_TRI.get("metiers_durs", []) or [])
 # Familles RETIREES pour ce profil (tri.metiers_exclus) ; le catalogue
 # _METIERS ci-dessus reste la bibliotheque. Absent du profil = toutes.
-_METIERS_CATALOGUE = dict(_METIERS)      # toutes les familles connues
+_METIERS_CATALOGUE = dict(_METIERS)  # toutes les familles connues
 _EXCLUS = _TRI.get("metiers_exclus")
 if _EXCLUS is not None:
     _METIERS = {k: v for k, v in _METIERS.items() if k in set(_EXCLUS)}
@@ -305,53 +328,87 @@ if _EXCLUS is not None:
 # Postgres, CI/CD et le cloud). Seuil 3 en prenait 313, dont de vrais postes
 # d'analyse qui citent un cloud et deux bases.
 _OUTILS = {
-    "spark": r"\b(?:py)?spark\b", "hadoop": r"\bhadoop\b", "kafka": r"\bkafka\b",
-    "airflow": r"\bairflow\b", "dbt": r"\bdbt\b", "databricks": r"\bdatabricks\b",
-    "snowflake": r"\bsnowflake\b", "kubernetes": r"\bkubernetes\b|\bk8s\b",
-    "terraform": r"\bterraform\b", "cicd": r"\bci\s*/\s*cd\b", "jenkins": r"\bjenkins\b",
-    "scala": r"\bscala\b", "java": r"\bjava\b(?!\s*script)",
-    "csharp": r"\bc#", "golang": r"\bgolang\b", "rust": r"\brust\b",
-    "typescript": r"\btypescript\b", "javascript": r"\bjavascript\b",
-    "react": r"\breact(?:\.js|js)?\b", "node": r"\bnode\.?js\b", "fastapi": r"\bfastapi\b",
-    "django": r"\bdjango\b", "flask": r"\bflask\b", "tensorflow": r"\btensorflow\b",
-    "pytorch": r"\bpytorch\b", "keras": r"\bkeras\b", "mlflow": r"\bmlflow\b",
-    "kubeflow": r"\bkubeflow\b", "langchain": r"\blangchain\b",
-    "huggingface": r"\bhugging\s*face\b", "cloud": r"\baws\b|\bgcp\b|google\s+cloud|\bazure\b",
-    "sagemaker": r"\bsagemaker\b", "bigquery": r"\bbigquery\b", "redshift": r"\bredshift\b",
-    "postgres": r"\bpostgre(?:s|sql)\b", "mongodb": r"\bmongo(?:db)?\b", "nosql": r"\bnosql\b",
-    "elastic": r"\belasticsearch\b", "linux": r"\blinux\b",
-    "microservices": r"\bmicro-?services\b", "graphql": r"\bgraphql\b",
-    "matlab": r"\bmatlab\b", "kdb": r"\bkdb\b",
+    "spark": r"\b(?:py)?spark\b",
+    "hadoop": r"\bhadoop\b",
+    "kafka": r"\bkafka\b",
+    "airflow": r"\bairflow\b",
+    "dbt": r"\bdbt\b",
+    "databricks": r"\bdatabricks\b",
+    "snowflake": r"\bsnowflake\b",
+    "kubernetes": r"\bkubernetes\b|\bk8s\b",
+    "terraform": r"\bterraform\b",
+    "cicd": r"\bci\s*/\s*cd\b",
+    "jenkins": r"\bjenkins\b",
+    "scala": r"\bscala\b",
+    "java": r"\bjava\b(?!\s*script)",
+    "csharp": r"\bc#",
+    "golang": r"\bgolang\b",
+    "rust": r"\brust\b",
+    "typescript": r"\btypescript\b",
+    "javascript": r"\bjavascript\b",
+    "react": r"\breact(?:\.js|js)?\b",
+    "node": r"\bnode\.?js\b",
+    "fastapi": r"\bfastapi\b",
+    "django": r"\bdjango\b",
+    "flask": r"\bflask\b",
+    "tensorflow": r"\btensorflow\b",
+    "pytorch": r"\bpytorch\b",
+    "keras": r"\bkeras\b",
+    "mlflow": r"\bmlflow\b",
+    "kubeflow": r"\bkubeflow\b",
+    "langchain": r"\blangchain\b",
+    "huggingface": r"\bhugging\s*face\b",
+    "cloud": r"\baws\b|\bgcp\b|google\s+cloud|\bazure\b",
+    "sagemaker": r"\bsagemaker\b",
+    "bigquery": r"\bbigquery\b",
+    "redshift": r"\bredshift\b",
+    "postgres": r"\bpostgre(?:s|sql)\b",
+    "mongodb": r"\bmongo(?:db)?\b",
+    "nosql": r"\bnosql\b",
+    "elastic": r"\belasticsearch\b",
+    "linux": r"\blinux\b",
+    "microservices": r"\bmicro-?services\b",
+    "graphql": r"\bgraphql\b",
+    "matlab": r"\bmatlab\b",
+    "kdb": r"\bkdb\b",
     # LE LANGAGE C (l'utilisateur, 2026-10-05 : « juste C et d'autres termes techniques
     # pour le code »). La lettre seule ne suffit pas : \bC\b matche « C'est »,
     # « catégorie C », « Pôle C ». On ne le reconnait qu'annonce comme langage
     # (« langage C ») ou dans une liste de langages (« Python, C », « C/C++ »).
     # C et C++ ne font qu'UNE famille : « C/C++ » est une competence, pas deux.
     "c": r"\bc\+\+"
-         r"|\b(?:langage|language|programming\s+in|programmation\s+en)\s+C\b(?![+#'’])"
-         r"|\b(?:python|java|rust|fortran|go|matlab|julia|c\+\+|c#)\s*[,/]\s*C\b(?![+#'’])"
-         r"|\bC\s*[,/]\s*(?:c\+\+|c#|python|java|rust|fortran|assemb)",
-    "fortran": r"\bfortran\b", "assembleur": r"\bassembl(?:eur|y\s+language|er)\b",
+    r"|\b(?:langage|language|programming\s+in|programmation\s+en)\s+C\b(?![+#'’])"
+    r"|\b(?:python|java|rust|fortran|go|matlab|julia|c\+\+|c#)\s*[,/]\s*C\b(?![+#'’])"
+    r"|\bC\s*[,/]\s*(?:c\+\+|c#|python|java|rust|fortran|assemb)",
+    "fortran": r"\bfortran\b",
+    "assembleur": r"\bassembl(?:eur|y\s+language|er)\b",
     "embarque": r"\b(?:embedded\s+(?:software|systems?|c)|logiciel\s+embarqu|syst[eè]mes?\s+embarqu|firmware|rtos)\b",
-    "hdl": r"\b(?:vhdl|verilog|fpga)\b", "perl": r"\bperl\b", "php": r"\bphp\b",
+    "hdl": r"\b(?:vhdl|verilog|fpga)\b",
+    "perl": r"\bperl\b",
+    "php": r"\bphp\b",
     # SWIFT est d'abord le reseau de paiement en finance : le langage ne compte
     # qu'a cote de Kotlin, iOS ou Objective-C.
     "ruby": r"\bruby\b",
     "swift": r"\bswiftui\b|\bswift\s*(?:,|/|et|and|ou|or)\s*(?:kotlin|objective|ios)"
-             r"|\b(?:kotlin|ios|objective-c)\s*(?:,|/|et|and|ou|or)\s*swift\b",
-    "kotlin": r"\bkotlin\b", "dotnet": r"(?<!\w)\.net\b|\bdotnet\b|\basp\.net\b",
-    "spring": r"\bspring\s+(?:boot|framework)\b", "angular": r"\bangular(?:js)?\b",
-    "vue": r"\bvue\.?js\b", "ansible": r"\bansible\b", "openshift": r"\bopenshift\b",
+    r"|\b(?:kotlin|ios|objective-c)\s*(?:,|/|et|and|ou|or)\s*swift\b",
+    "kotlin": r"\bkotlin\b",
+    "dotnet": r"(?<!\w)\.net\b|\bdotnet\b|\basp\.net\b",
+    "spring": r"\bspring\s+(?:boot|framework)\b",
+    "angular": r"\bangular(?:js)?\b",
+    "vue": r"\bvue\.?js\b",
+    "ansible": r"\bansible\b",
+    "openshift": r"\bopenshift\b",
     "shell": r"\b(?:bash|shell\s+script\w*|powershell)\b",
 }
 _RX_OUTILS = {k: re.compile(v, re.I) for k, v in _OUTILS.items()}
-OUTILS_MAX = int(_TRI.get("outils_max", 4) or 0)     # 0 = pas de limite
+OUTILS_MAX = int(_TRI.get("outils_max", 4) or 0)  # 0 = pas de limite
 
 
 def outils_techniques(desc):
     """Familles d'outils d'ingenieur citees dans la description."""
     t = str(desc or "")
     return {k for k, rx in _RX_OUTILS.items() if rx.search(t)}
+
 
 # ── 3. EXPERIENCE ───────────────────────────────────────────────────────────
 # Cinq ans. En dessous, une candidature junior se defend ; au-dessus, l'annonce
@@ -378,16 +435,21 @@ LIENS_MORTS = {"MORT", "EXPIREE", "FERMEE"}
 # Le suivi les protege toujours (une candidature y est notee meme sans lien).
 _RX_PORTAIL = re.compile(
     r"^/?(?:[a-z]{2}(?:-[a-z]{2})?/)?(?:home|accueil|careers?|carrieres?(?:/recrutement)?"
-    r"|jobs?|emplois?|offres?|recrutement|join-us|why-join-us|nous-rejoindre)?/?$", re.I)
+    r"|jobs?|emplois?|offres?|recrutement|join-us|why-join-us|nous-rejoindre)?/?$",
+    re.I,
+)
 _RX_PAGE_RECHERCHE = re.compile(
     r"indeed\.[a-z.]+/q-|indeed\.[a-z.]+/jobs\?|linkedin\.com/jobs/[a-z0-9-]+-emplois"
     r"|linkedin\.com/jobs/search|linkedin\.com/search/|glassdoor\.[a-z.]+/emploi/.*srch"
-    r"|welcometothejungle\.com/[a-z]{2}/jobs(?:\?|$)|/jobs/search", re.I)
+    r"|welcometothejungle\.com/[a-z]{2}/jobs(?:\?|$)|/jobs/search",
+    re.I,
+)
 
 
 def pas_une_offre(o):
     """Motif si la ligne ne mene a aucune annonce precise, sinon None."""
     from urllib.parse import urlsplit
+
     u = (o.get("url") or "").strip()
     if not u.startswith("http"):
         return "pas_une_offre:sans_lien"
@@ -432,13 +494,17 @@ def motif(o, proteges):
     # student » (l'utilisateur, 2026-10-07). Le contrat venu de l'intitule (V.I.E)
     # passait avant la description, l'offre restait a fit 10.
     from job_sources import demande_etudiant
+
     if _ETUDIANT and demande_etudiant(o.get("description")):
         return "etudiant"
 
     if _SENIORITE and _RX_SENIOR_DUR.search(titre):
         return "seniorite"
-    if (_SENIORITE and _RX_SENIOR_MOU.search(_sans_resp_adjectif(titre))
-            and not _RX_JUNIOR.search(titre)):
+    if (
+        _SENIORITE
+        and _RX_SENIOR_MOU.search(_sans_resp_adjectif(titre))
+        and not _RX_JUNIOR.search(titre)
+    ):
         return "seniorite"
 
     sauve = _P.cherche(_RX_SAUVETAGE, titre)
@@ -458,7 +524,7 @@ def main():
     ap.add_argument("--echantillon", type=int, default=20)
     a = ap.parse_args()
 
-    q = __import__("queue_io").charger(QUEUE)   # descriptions : outils_techniques les lit
+    q = __import__("queue_io").charger(QUEUE)  # descriptions : outils_techniques les lit
     proteges = set(__import__("suivi_io").charger(SUIVI)) if SUIVI.exists() else set()
 
     garde, jette = [], []
@@ -469,11 +535,13 @@ def main():
     # deux langues (doublons.py). Apres les motifs, pour ne garder que des
     # offres qui survivent de toute facon.
     import doublons
+
     dbl = doublons.doublons([o for _, o in garde], proteges)
     jette += [("doublon", o) for _, o in garde if _oid(o) in dbl]
     garde = [(m, o) for m, o in garde if _oid(o) not in dbl]
 
     import collections
+
     cnt = collections.Counter(m for m, _ in jette)
     print(f"file : {len(q)} offres")
     print(f"  conservees : {len(garde)}")
@@ -485,21 +553,27 @@ def main():
         for m in [x for x, _ in cnt.most_common()]:
             lot = [o for mm, o in jette if mm == m]
             print(f"\n── {m} ({len(lot)}) ──")
-            for o in lot[:a.echantillon]:
-                print(f"   fit {o.get('fit'):>2} exp {str(o.get('exp_requise')):>2}  "
-                      f"{(o.get('entreprise') or '')[:22]:24}{(o.get('poste') or '')[:58]}")
+            for o in lot[: a.echantillon]:
+                print(
+                    f"   fit {o.get('fit'):>2} exp {str(o.get('exp_requise')):>2}  "
+                    f"{(o.get('entreprise') or '')[:22]:24}{(o.get('poste') or '')[:58]}"
+                )
 
     if a.garde:
         reste = [o for _, o in garde]
         reste.sort(key=lambda o: -(o.get("fit") or 0))
         print(f"\n── conservees, du meilleur fit au moins bon ──")
-        for o in reste[:a.echantillon]:
-            print(f"   fit {o.get('fit'):>2}  {(o.get('entreprise') or '')[:22]:24}"
-                  f"{(o.get('poste') or '')[:58]}")
+        for o in reste[: a.echantillon]:
+            print(
+                f"   fit {o.get('fit'):>2}  {(o.get('entreprise') or '')[:22]:24}"
+                f"{(o.get('poste') or '')[:58]}"
+            )
         print("   ...")
-        for o in reste[-a.echantillon:]:
-            print(f"   fit {o.get('fit'):>2}  {(o.get('entreprise') or '')[:22]:24}"
-                  f"{(o.get('poste') or '')[:58]}")
+        for o in reste[-a.echantillon :]:
+            print(
+                f"   fit {o.get('fit'):>2}  {(o.get('entreprise') or '')[:22]:24}"
+                f"{(o.get('poste') or '')[:58]}"
+            )
 
     if not a.supprime:
         print("\n[INSPECTION] rien n'a ete ecrit. --supprime pour purger.")
@@ -518,6 +592,7 @@ def main():
             pass
 
     import queue_io
+
     # LE MOTIF EST RECALCULE ICI, dans le verrou, sur la file RELUE. Les objets
     # de l'inspection viennent d'une autre lecture : leur identite Python ne dit
     # rien de ceux-ci, et un `id(o)` d'un lot ne retrouverait rien dans l'autre.
@@ -550,6 +625,7 @@ def main():
     print(f"file purgee : {avant} → {restant} offres ({avant - restant} supprimees)")
     # La collecte ne doit pas les reprendre demain : voir rejets_tri.py.
     import rejets_tri
+
     n = rejets_tri.ajouter(retires)
     print(f"rejets memorises : {n} (la collecte les ignore {rejets_tri.DUREE_JOURS} jours)")
     return 0

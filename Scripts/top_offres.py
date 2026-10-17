@@ -22,6 +22,7 @@ Run :
   python top_offres.py
   python top_offres.py --n 20 --zone prioritaire
 """
+
 import sys
 import re
 import json
@@ -36,25 +37,56 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 from job_sources import contrats_exclus, contrat_du_titre, rang_source
 
 # Intitule qui parle vraiment du metier vise, et niveau d'entree.
-RX_ESG = re.compile(r"\bESG\b|\bISR\b|\bRSE\b|\bSFDR\b|\bCSRD\b|extra.?financi"
-                    r"|durab|sustainab|climat(?!is)|carbone|taxonomie|impact"
-                    r"|transition [ée]nerg|green", re.I)
-RX_JUNIOR = re.compile(r"junior|d[ée]butant|jeune dipl|graduate|analyste|analyst"
-                       r"|charg[ée]", re.I)
+RX_ESG = re.compile(
+    r"\bESG\b|\bISR\b|\bRSE\b|\bSFDR\b|\bCSRD\b|extra.?financi"
+    r"|durab|sustainab|climat(?!is)|carbone|taxonomie|impact"
+    r"|transition [ée]nerg|green",
+    re.I,
+)
+RX_JUNIOR = re.compile(
+    r"junior|d[ée]butant|jeune dipl|graduate|analyste|analyst"
+    r"|charg[ée]",
+    re.I,
+)
 
 # Derniers segments qui designent une rubrique, donc une liste de postes.
-_RUBRIQUES = {"careers", "career", "carrieres", "recrutement", "recruitment",
-              "jobs", "job", "offres", "emplois", "emploi", "nous-rejoindre",
-              "join-us", "home", "fr-fr"}
+_RUBRIQUES = {
+    "careers",
+    "career",
+    "carrieres",
+    "recrutement",
+    "recruitment",
+    "jobs",
+    "job",
+    "offres",
+    "emplois",
+    "emploi",
+    "nous-rejoindre",
+    "join-us",
+    "home",
+    "fr-fr",
+}
 _RX_RECHERCHE = re.compile(r"(^|&)(query|q|k|keywords?|search|recherche)=", re.I)
 
 # L'employeur est le SITE lui-meme : la ligne n'est pas une annonce mais une
 # page de listing curee a la main (« LinkedIn Jobs FR — Analyste ESG / Finance
 # France », lien /jobs/analyste-esg-emplois). Le chemin a deux segments la
 # faisait passer pour une annonce.
-_BOARDS = ("linkedin", "welcome to the jungle", "indeed", "talent.com",
-           "glassdoor", "jobijoba", "hellowork", "monster", "apec",
-           "efinancialcareers", "wizbii", "meteojob", "cadremploi")
+_BOARDS = (
+    "linkedin",
+    "welcome to the jungle",
+    "indeed",
+    "talent.com",
+    "glassdoor",
+    "jobijoba",
+    "hellowork",
+    "monster",
+    "apec",
+    "efinancialcareers",
+    "wizbii",
+    "meteojob",
+    "cadremploi",
+)
 
 
 def lien_direct(url):
@@ -66,7 +98,7 @@ def lien_direct(url):
     if _RX_RECHERCHE.search(d.query or ""):
         return False
     seg = [c for c in (d.path or "").split("/") if c]
-    if not seg:                       # racine du domaine = page d'accueil
+    if not seg:  # racine du domaine = page d'accueil
         return False
     if seg[-1].lower().strip("-_") in _RUBRIQUES:
         return False
@@ -82,6 +114,7 @@ def main():
     a = ap.parse_args()
 
     import queue_io
+
     q = queue_io.charger()
     try:
         suivi = __import__("suivi_io").charger(HERE / "suivi.json")
@@ -89,23 +122,35 @@ def main():
         suivi = {}
     try:
         import exclusions
+
         exc = exclusions.charger()
     except Exception:
         exc = {}
     _EX = contrats_exclus()
     zones_ok = {a.zone} if a.zone else {"prioritaire", "secondaire"}
 
-    rejets = {"zone": 0, "experience": 0, "contrat": 0, "deja": 0,
-              "lien": 0, "docs": 0, "sans description": 0, "fit": 0}
+    rejets = {
+        "zone": 0,
+        "experience": 0,
+        "contrat": 0,
+        "deja": 0,
+        "lien": 0,
+        "docs": 0,
+        "sans description": 0,
+        "fit": 0,
+    }
     gardees = []
     for o in q:
         if o.get("zone") not in zones_ok:
-            rejets["zone"] += 1; continue
+            rejets["zone"] += 1
+            continue
         if (o.get("exp_requise") or 0) > 3:
-            rejets["experience"] += 1; continue
+            rejets["experience"] += 1
+            continue
         c = (o.get("contrat") or "").strip()
         if c in _EX or contrat_du_titre(o.get("poste") or "") in _EX:
-            rejets["contrat"] += 1; continue
+            rejets["contrat"] += 1
+            continue
         cle = f"{o.get('entreprise', '')}|{o.get('poste', '')}"
         # Le statut « mauvaise » est le jugement de l'utilisateur sur l'offre. Sans ce
         # test, une offre qu'il vient d'ecarter dans l'app reviendrait en tete
@@ -114,19 +159,23 @@ def main():
             rejets["jugee mauvaise"] = rejets.get("jugee mauvaise", 0) + 1
             continue
         if cle in suivi or cle in exc:
-            rejets["deja"] += 1; continue
+            rejets["deja"] += 1
+            continue
         if not lien_direct(o.get("url")):
-            rejets["lien"] += 1; continue
+            rejets["lien"] += 1
+            continue
         if any(b in (o.get("entreprise") or "").lower() for b in _BOARDS):
-            rejets["employeur = site d'offres"] = rejets.get(
-                "employeur = site d'offres", 0) + 1
+            rejets["employeur = site d'offres"] = rejets.get("employeur = site d'offres", 0) + 1
             continue
         if not (o.get("cv") and o.get("lettre")):
-            rejets["docs"] += 1; continue
+            rejets["docs"] += 1
+            continue
         if not (o.get("description") or "").strip():
-            rejets["sans description"] += 1; continue
+            rejets["sans description"] += 1
+            continue
         if (o.get("fit") or 0) < a.fit_min:
-            rejets["fit"] += 1; continue
+            rejets["fit"] += 1
+            continue
         gardees.append(o)
 
     # DEDUPLICATION. La meme annonce revient sous plusieurs raisons sociales
@@ -142,14 +191,14 @@ def main():
 
     def note(o):
         t = o.get("poste") or ""
-        s = (o.get("fit_fin") or o.get("fit") or 0) * 10    # fit_fin : decimal, departage
+        s = (o.get("fit_fin") or o.get("fit") or 0) * 10  # fit_fin : decimal, departage
         if RX_ESG.search(t):
-            s += 30          # ESG dans l'INTITULE, pas seulement dans le texte
+            s += 30  # ESG dans l'INTITULE, pas seulement dans le texte
         if RX_JUNIOR.search(t):
             s += 12
         if o.get("zone") == "prioritaire":
             s += 8
-        s += rang_source(o.get("url")) * 2      # lien employeur > agregateur
+        s += rang_source(o.get("url")) * 2  # lien employeur > agregateur
         # Le PREMIER secteur prioritaire du profil passe devant les autres.
         _sz = __import__("zones").sous_zone(o.get("localisation") or "")
         if _sz and _sz == (__import__("zones").SECTEURS_PRIORITAIRES or [{}])[0].get("cle"):
@@ -157,12 +206,13 @@ def main():
         return s
 
     uniques.sort(key=lambda o: -note(o))
-    print(f"{len(q)} offres → {len(gardees)} actionnables → {len(uniques)} apres "
-          f"dedoublonnage\n")
+    print(f"{len(q)} offres → {len(gardees)} actionnables → {len(uniques)} apres dedoublonnage\n")
     print("écartées : " + " · ".join(f"{v} {k}" for k, v in rejets.items() if v) + "\n")
     for i, o in enumerate(uniques[: a.n], 1):
-        print(f"{i:2}. {(o.get('entreprise') or '')[:34]}  —  fit {o.get('fit')}"
-              f"{' · ' + str(o['exp_requise']) + ' ans demandés' if o.get('exp_requise') else ''}")
+        print(
+            f"{i:2}. {(o.get('entreprise') or '')[:34]}  —  fit {o.get('fit')}"
+            f"{' · ' + str(o['exp_requise']) + ' ans demandés' if o.get('exp_requise') else ''}"
+        )
         print(f"    {(o.get('poste') or '')[:72]}")
         print(f"    {(o.get('localisation') or '')[:36]} · {o.get('contrat') or 'non précisé'}")
         print(f"    {o.get('url')}")

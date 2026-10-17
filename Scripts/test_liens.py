@@ -14,6 +14,7 @@ LinkedIn qui, lui, menait a l'offre precise. Deux trous a la fois :
 
 Run : python test_liens.py
 """
+
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
 import sys
 from pathlib import Path
@@ -43,7 +44,7 @@ def verdict(url):
 
 print("\n── A. pages de résultats / recherche : rejetées ──")
 for u in [
-    "https://www.deloitte.com/fr/fr/careers/content/job/results.htm",   # le cas reel
+    "https://www.deloitte.com/fr/fr/careers/content/job/results.htm",  # le cas reel
     "https://www.deloitte.com/fr/fr/careers/content/job/results",
     "https://x.com/jobs/search",
     "https://x.com/carriere/recherche/",
@@ -71,22 +72,38 @@ check("/jobs/candidature (mot simple)", verdict("https://x.com/jobs/candidature"
 check("/offres/spontanee", verdict("https://x.com/offres/spontanee"), "REJET")
 
 print("\n── D. accepte() : garde-fous de fond ──")
-ok, why = accepte("https://axa-im.com", "https://group.bnpparibas/jobs/analyste-esg-123",
-                  "Analyste ESG", "analyste esg")
+ok, why = accepte(
+    "https://axa-im.com",
+    "https://group.bnpparibas/jobs/analyste-esg-123",
+    "Analyste ESG",
+    "analyste esg",
+)
 check("saut vers une AUTRE societe refusé", ok, False)
-ok, why = accepte("https://x.com", "https://x.com/jobs/analyste-esg-h-f-9912",
-                  "Analyste ESG", "Analyste ESG chez X")
+ok, why = accepte(
+    "https://x.com",
+    "https://x.com/jobs/analyste-esg-h-f-9912",
+    "Analyste ESG",
+    "Analyste ESG chez X",
+)
 check("même société + titre présent accepté", ok, True)
-ok, why = accepte("https://x.com", "https://x.com/jobs/comptable-paie-4471",
-                  "Analyste ESG Climat", "Comptable paie")
+ok, why = accepte(
+    "https://x.com",
+    "https://x.com/jobs/comptable-paie-4471",
+    "Analyste ESG Climat",
+    "Comptable paie",
+)
 check("autre offre que celle attendue refusée", ok, False)
-ok, why = accepte("https://x.com", "https://boards.greenhouse.io/x/jobs/771122",
-                  "Analyste ESG", "Analyste ESG")
+ok, why = accepte(
+    "https://x.com", "https://boards.greenhouse.io/x/jobs/771122", "Analyste ESG", "Analyste ESG"
+)
 check("ATS connu accepté malgré le changement de domaine", ok, True)
 
 print("\n── E. spécificité ──")
-check("une annonce est plus spécifique qu'une home",
-      specificite("https://x.com/jobs/analyste-esg-1234") > specificite("https://x.com"), True)
+check(
+    "une annonce est plus spécifique qu'une home",
+    specificite("https://x.com/jobs/analyste-esg-1234") > specificite("https://x.com"),
+    True,
+)
 
 print(f"\n=== BILAN : {PASS} ✅  /  {FAIL} ❌  ({PASS}/{PASS + FAIL}) ===")
 if __name__ == "__main__":

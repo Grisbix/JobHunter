@@ -22,6 +22,7 @@ Run :
   python wtj_desc.py --limit 20
   python wtj_desc.py
 """
+
 import sys
 import re
 import json
@@ -37,8 +38,13 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 QUEUE = HERE / "apply_queue.json"
 
-UA = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                     "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")}
+UA = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+    )
+}
+
 
 class Bloque(Exception):
     """WTJ a bascule l'IP en challenge anti-bot. On s'arrete, on ne contourne pas."""
@@ -104,10 +110,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--limit", type=int, default=0)
-    ap.add_argument("--workers", type=int, default=2)   # WTJ bride vite
+    ap.add_argument("--workers", type=int, default=2)  # WTJ bride vite
     a = ap.parse_args()
 
     import queue_io
+
     if a.dry:
         return _travail(queue_io.charger(), a, ecrire=False)
     try:
@@ -120,8 +127,12 @@ def main():
 
 def _travail(q, a, ecrire):
     import httpx
-    cibles = [i for i, o in enumerate(q)
-              if _cible(o.get("url") or "") and not (o.get("description") or "").strip()]
+
+    cibles = [
+        i
+        for i, o in enumerate(q)
+        if _cible(o.get("url") or "") and not (o.get("description") or "").strip()
+    ]
     if a.limit:
         cibles = cibles[: a.limit]
     print(f"{len(cibles)} fiche(s) WTJ sans description")
@@ -132,6 +143,7 @@ def _travail(q, a, ecrire):
         return 0
 
     from ats_match import fit_detail
+
     textes = {}
     with httpx.Client(follow_redirects=True) as client:
         with cf.ThreadPoolExecutor(max_workers=a.workers) as ex:
@@ -142,8 +154,10 @@ def _travail(q, a, ecrire):
                 except Bloque as e:
                     # Inutile de continuer : le challenge vaut pour l'IP entiere.
                     # Les descriptions deja lues sont conservees et ecrites.
-                    print(f"  ~ {e} — arret. Les {len(textes)} fiches deja lues "
-                          f"sont conservees ; reessaie plus tard.")
+                    print(
+                        f"  ~ {e} — arret. Les {len(textes)} fiches deja lues "
+                        f"sont conservees ; reessaie plus tard."
+                    )
                     for autre in futs:
                         autre.cancel()
                     break
@@ -158,14 +172,25 @@ def _travail(q, a, ecrire):
         o = q[i]
         avant = o.get("fit")
         o["description"] = t
-        o["fit"], o["exp_requise"], o["fit_fin"] = fit_detail(f"{o.get('poste','')} {t}", o.get("poste", ""))
+        o["fit"], o["exp_requise"], o["fit_fin"] = fit_detail(
+            f"{o.get('poste', '')} {t}", o.get("poste", "")
+        )
         ecrites += 1
         if isinstance(avant, int) and o["fit"] > avant:
             remontes += 1
-            delta.append((o["fit"] - avant, avant, o["fit"],
-                          (o.get("entreprise") or "")[:24], (o.get("poste") or "")[:40]))
-    print(f"\n{ecrites} description(s) recuperee(s) sur {len(cibles)} — "
-          f"{remontes} offres remontent en fit")
+            delta.append(
+                (
+                    o["fit"] - avant,
+                    avant,
+                    o["fit"],
+                    (o.get("entreprise") or "")[:24],
+                    (o.get("poste") or "")[:40],
+                )
+            )
+    print(
+        f"\n{ecrites} description(s) recuperee(s) sur {len(cibles)} — "
+        f"{remontes} offres remontent en fit"
+    )
     for d, av, ap_, e, p in sorted(delta, reverse=True)[:10]:
         print(f"   +{d}  fit {av} -> {ap_}  {e:26} {p}")
     return 0

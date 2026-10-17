@@ -20,6 +20,7 @@ Run :
   python test_acces_sites.py --all --limit 0 # tout, sans plafond
   python test_acces_sites.py --json out.json
 """
+
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
 import sys, json, re, os, argparse, collections
 from pathlib import Path
@@ -31,10 +32,27 @@ HERE = Path(__file__).resolve().parent
 QUEUE = HERE / "apply_queue.json"
 PROFIL = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "apply_runner_chrome"
 
-BOARDS = ("linkedin", "indeed", "welcometothejungle", "talent.com", "glassdoor",
-          "lever.co", "ashbyhq", "greenhouse", "smartrecruiters", "recruitee",
-          "wizbii", "businessfrance", "frenchsif", "apec", "hellowork", "monster",
-          "jobteaser", "efinancialcareers", "meteojob")
+BOARDS = (
+    "linkedin",
+    "indeed",
+    "welcometothejungle",
+    "talent.com",
+    "glassdoor",
+    "lever.co",
+    "ashbyhq",
+    "greenhouse",
+    "smartrecruiters",
+    "recruitee",
+    "wizbii",
+    "businessfrance",
+    "frenchsif",
+    "apec",
+    "hellowork",
+    "monster",
+    "jobteaser",
+    "efinancialcareers",
+    "meteojob",
+)
 # URL d'OFFRE : on veut la page d'accueil/carriere du domaine, pas une annonce
 _OFFRE_RX = re.compile(r"/jobs?/view|[?&]jk=|/o/|/job-offers?/|/offres/\d+", re.I)
 
@@ -68,9 +86,11 @@ def main():
 
     lots = cibles(mode, a.limit)
     if not lots:
-        print("Aucun site cible."); return 1
+        print("Aucun site cible.")
+        return 1
 
     from web_nav import get_sync_playwright, analyze, dismiss_cookies
+
     sp, eng = get_sync_playwright("auto")
     print(f"moteur={eng} · mode={mode} · {len(lots)} domaine(s)\n")
     print(f"{'SITE':<34}{'ETAT':<12}{'COOKIES':<18}KIND")
@@ -78,11 +98,16 @@ def main():
     res, stats, ck_stats = [], collections.Counter(), collections.Counter()
     PROFIL.mkdir(parents=True, exist_ok=True)
     with sp() as p:
+
         def lance():
             c = p.chromium.launch_persistent_context(
-                user_data_dir=str(PROFIL), channel="chrome", headless=True,
+                user_data_dir=str(PROFIL),
+                channel="chrome",
+                headless=True,
                 args=["--no-first-run", "--no-default-browser-check"],
-                no_viewport=True, timeout=90000)
+                no_viewport=True,
+                timeout=90000,
+            )
             return c, (c.pages[0] if c.pages else c.new_page())
 
         ctx, page = lance()
@@ -94,32 +119,45 @@ def main():
                 page.wait_for_timeout(600)
                 x = analyze(page)
                 kind = str(x.get("kind") or "?")
-                etat = ("BLOQUE" if (x.get("blocked") or x.get("captcha"))
-                        else "MUR LOGIN" if kind == "login" else "OK")
+                etat = (
+                    "BLOQUE"
+                    if (x.get("blocked") or x.get("captcha"))
+                    else "MUR LOGIN"
+                    if kind == "login"
+                    else "OK"
+                )
             except Exception as e:
                 etat, kind = "ERREUR", type(e).__name__
                 # Navigateur mort : sans relance, TOUT le reste du lot defile en
                 # erreur (28 sites sur 106 lors du premier passage, dont des sites
                 # dont on savait qu'ils repondaient).
                 if "Closed" in kind or "Closed" in str(e) or "crash" in str(e).lower():
-                    try: ctx.close()
-                    except Exception: pass
+                    try:
+                        ctx.close()
+                    except Exception:
+                        pass
                     try:
                         ctx, page = lance()
                         kind += " (navigateur relance)"
                     except Exception:
-                        print("  ✖ relance impossible — arret"); break
+                        print("  ✖ relance impossible — arret")
+                        break
             # Onglet recycle : evite la derive memoire sur les longs lots.
             if (i + 1) % 30 == 0:
                 try:
-                    vieux = page; page = ctx.new_page(); vieux.close()
-                except Exception: pass
+                    vieux = page
+                    page = ctx.new_page()
+                    vieux.close()
+                except Exception:
+                    pass
             stats[etat] += 1
             ck_stats[str(ck.get("done"))] += 1
             res.append({"site": h, "url": u, "etat": etat, "cookies": ck.get("done"), "kind": kind})
             print(f"  {h[:32]:<34}{etat:<12}{str(ck.get('done'))[:16]:<18}{kind}")
-        try: ctx.close()
-        except Exception: pass
+        try:
+            ctx.close()
+        except Exception:
+            pass
 
     tot = len(res)
     print(f"\nBILAN : {dict(stats)}   ({100 * stats['OK'] // max(1, tot)} % ouvrables)")

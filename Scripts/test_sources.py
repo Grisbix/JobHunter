@@ -9,6 +9,7 @@ vue gagnait, au hasard de l'ordre des scans.
 
 Run : python test_sources.py
 """
+
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
 import sys
 import json
@@ -19,9 +20,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 import job_sources as J
+
 # Les fusions de test ne doivent pas lire les rejets reels du tri (rejets_tri.py).
 import tempfile as _tf
-J.REJETS_TRI = __import__('pathlib').Path(_tf.mkdtemp()) / 'rejets.json'
+
+J.REJETS_TRI = __import__("pathlib").Path(_tf.mkdtemp()) / "rejets.json"
 from job_sources import rang_source
 
 PASS = FAIL = 0
@@ -67,17 +70,26 @@ check("ATS bat WTJ", rang_source(ats) > rang_source(wtj), True)
 print("\n── C. promotion réelle dans merge_into_queue ──")
 # queue jetable : on ne touche pas apply_queue.json
 tmp = Path(tempfile.mkdtemp()) / "q.json"
-depart = [{
-    "entreprise": "Oderis Consulting", "poste": "Consultant(e) Junior ESG",
-    "domaine": "ESG_Finance_Durable", "statut": "Scan 2026-09-03", "url": li,
-    "canal": "manuel", "site_kind": "board", "fit": 8, "description": "",
-}]
+depart = [
+    {
+        "entreprise": "Oderis Consulting",
+        "poste": "Consultant(e) Junior ESG",
+        "domaine": "ESG_Finance_Durable",
+        "statut": "Scan 2026-09-03",
+        "url": li,
+        "canal": "manuel",
+        "site_kind": "board",
+        "fit": 8,
+        "description": "",
+    }
+]
 tmp.write_text(json.dumps(depart, ensure_ascii=False), encoding="utf-8")
 _vrai = J.QUEUE
 J.QUEUE = tmp
 try:
-    entrant = [J._mk("Consultant(e) Junior ESG", wtj, "Oderis Consulting",
-                     source="welcometothejungle.com")]
+    entrant = [
+        J._mk("Consultant(e) Junior ESG", wtj, "Oderis Consulting", source="welcometothejungle.com")
+    ]
     r = J.merge_into_queue(entrant, dry=False)
     apres = json.loads(tmp.read_text(encoding="utf-8"))
     check("aucun doublon ajouté", len(apres), 1)
@@ -86,15 +98,15 @@ try:
     check("canal repassé en manuel (board)", apres[0]["canal"], "manuel")
 
     # sens inverse : LinkedIn ne doit JAMAIS ecraser une meilleure source
-    r2 = J.merge_into_queue([J._mk("Consultant(e) Junior ESG", li, "Oderis Consulting")],
-                            dry=False)
+    r2 = J.merge_into_queue([J._mk("Consultant(e) Junior ESG", li, "Oderis Consulting")], dry=False)
     apres2 = json.loads(tmp.read_text(encoding="utf-8"))
     check("LinkedIn ne rétrograde pas le lien", apres2[0]["url"], wtj)
     check("aucune promotion à contresens", r2["promus"], 0)
 
     # un ATS doit encore battre WTJ
-    r3 = J.merge_into_queue([J._mk("Consultant(e) Junior ESG", ats, "Oderis Consulting")],
-                            dry=False)
+    r3 = J.merge_into_queue(
+        [J._mk("Consultant(e) Junior ESG", ats, "Oderis Consulting")], dry=False
+    )
     apres3 = json.loads(tmp.read_text(encoding="utf-8"))
     check("l'ATS promeut par-dessus WTJ", apres3[0]["url"], ats)
     check("canal repassé en auto (entreprise)", apres3[0]["canal"], "auto")
@@ -115,8 +127,14 @@ J.QUEUE = tmp2
 try:
     lot = [
         J._mk("Analyste ESG", li, "Amundi", "Paris, France", source="linkedin-search"),
-        J._mk("Analyste ESG", ats, "Amundi", "Paris, France", source="greenhouse:amundi",
-              description="Analyse extra-financière, SFDR, taxonomie. Bac+5 finance durable."),
+        J._mk(
+            "Analyste ESG",
+            ats,
+            "Amundi",
+            "Paris, France",
+            source="greenhouse:amundi",
+            description="Analyse extra-financière, SFDR, taxonomie. Bac+5 finance durable.",
+        ),
     ]
     r4 = J.merge_into_queue(lot, dry=False)
     apres4 = json.loads(tmp2.read_text(encoding="utf-8"))
@@ -141,39 +159,89 @@ print("\n── C ter. les deux listes de mots-clés ne divergent pas ──")
 # RECHERCHE, mais pas dans le lexique : on demandait ces offres à LinkedIn
 # avant de les jeter à l'arrivée.
 from scrape_jobs import matches_esg_finance, offre_retenue
-for mot in ["esg", "csr", "csrd", "sfdr", "taxonomie", "hse", "qhse", "e&s",
-            "extra-financier", "rse", "biodiversit", "impact", "transition",
-            "environnement", "environmental", "durabilit", "decarbonation",
-            "climat", "carbon", "green", "quant", "risk", "risque", "credit",
-            "invest", "audit", "actuari", "treasury", "tresorerie", "m&a",
-            "portfolio", "asset", "analyste", "analytic", "consultant",
-            "conseil", "economiste", "comptab", "controlling"]:
+
+for mot in [
+    "esg",
+    "csr",
+    "csrd",
+    "sfdr",
+    "taxonomie",
+    "hse",
+    "qhse",
+    "e&s",
+    "extra-financier",
+    "rse",
+    "biodiversit",
+    "impact",
+    "transition",
+    "environnement",
+    "environmental",
+    "durabilit",
+    "decarbonation",
+    "climat",
+    "carbon",
+    "green",
+    "quant",
+    "risk",
+    "risque",
+    "credit",
+    "invest",
+    "audit",
+    "actuari",
+    "treasury",
+    "tresorerie",
+    "m&a",
+    "portfolio",
+    "asset",
+    "analyste",
+    "analytic",
+    "consultant",
+    "conseil",
+    "economiste",
+    "comptab",
+    "controlling",
+]:
     check(f"« {mot} » passe le lexique large", matches_esg_finance(mot), True)
 
 print("\n── C quater. le filtre d'entrée de scrape_jobs ──")
 # « h/f » est dans le lexique large, et presque toute annonce française le
 # porte : matches_esg_finance seul acceptait boucher, plombier et serveur.
-for titre in ["Plombier chauffagiste H/F", "Serveur en restauration H/F",
-              "Chef de rayon boucherie H/F", "Assistant RH (H/F)",
-              "Commercial sédentaire H/F", "Backend Developer H/F",
-              "Talent Acquisition Manager", "Designer UX Senior"]:
+for titre in [
+    "Plombier chauffagiste H/F",
+    "Serveur en restauration H/F",
+    "Chef de rayon boucherie H/F",
+    "Assistant RH (H/F)",
+    "Commercial sédentaire H/F",
+    "Backend Developer H/F",
+    "Talent Acquisition Manager",
+    "Designer UX Senior",
+]:
     check(f"refusé : {titre}", offre_retenue(titre), False)
-for titre in ["Analyste ESG junior H/F", "Sustainable Finance Analyst",
-              "CSRD Reporting Manager", "Graduate Programme Finance",
-              "Contrôleur de gestion H/F", "Chargé de mission environnement",
-              "VIE Transition Énergétique Corporate", "AI Software Engineer"]:
+for titre in [
+    "Analyste ESG junior H/F",
+    "Sustainable Finance Analyst",
+    "CSRD Reporting Manager",
+    "Graduate Programme Finance",
+    "Contrôleur de gestion H/F",
+    "Chargé de mission environnement",
+    "VIE Transition Énergétique Corporate",
+    "AI Software Engineer",
+]:
     check(f"retenu  : {titre}", offre_retenue(titre), True)
 
 print("\n── C quinquies. le garde-fou \\b couvre TOUS les motifs ──")
 # Il ne regardait que le préfixe `_RX_` et laissait passer _DOMAIN_RX,
 # _HARD_NEG_RX, _AI_RX… soit exactement les motifs de title_ok.
 import re as _re
+
 _motifs = [n for n, v in vars(J).items() if isinstance(v, _re.Pattern)]
 check("au moins 25 motifs compilés", len(_motifs) >= 25, True)
 for _nom in ("_DOMAIN_RX", "_HARD_NEG_RX", "_AI_RX", "_NEG_TITLE_RX", "_RX_ALT"):
     _avant = getattr(J, _nom)
-    for _corrompu, _quoi in ((_re.compile("(\x08ia\x08)"), "backspace"),
-                             (_re.compile("(" + chr(92) * 2 + "bia)"), "antislash")):
+    for _corrompu, _quoi in (
+        (_re.compile("(\x08ia\x08)"), "backspace"),
+        (_re.compile("(" + chr(92) * 2 + "bia)"), "antislash"),
+    ):
         setattr(J, _nom, _corrompu)
         try:
             J._verifier_motifs()
@@ -183,16 +251,23 @@ for _nom in ("_DOMAIN_RX", "_HARD_NEG_RX", "_AI_RX", "_NEG_TITLE_RX", "_RX_ALT")
         finally:
             setattr(J, _nom, _avant)
         check(f"{_nom} : {_quoi} détecté", _vu, True)
-J._verifier_motifs()   # l'état réel du module doit rester sain
+J._verifier_motifs()  # l'état réel du module doit rester sain
 
 print("\n── D. par défaut, le monde entier entre ──")
 from job_sources import en_france
+
 # l'utilisateur a tranché : les offres hors de France sont voulues. `MONDE` vaut donc
 # True par défaut, et `en_france` laisse tout passer — le filtre ne sert plus
 # qu'à `--france`.
 check("MONDE actif par défaut", J.MONDE, True)
-for lieu in ["Singapore, Singapore", "Dublin, Leinster, Ireland", "London",
-             "Luxembourg", "Bruxelles", "Zurich"]:
+for lieu in [
+    "Singapore, Singapore",
+    "Dublin, Leinster, Ireland",
+    "London",
+    "Luxembourg",
+    "Bruxelles",
+    "Zurich",
+]:
     check(f"{lieu} entre", en_france(lieu), True)
 
 print("\n── E. avec --france, le filtre trie toujours juste ──")
@@ -203,11 +278,29 @@ print("\n── E. avec --france, le filtre trie toujours juste ──")
 _monde = J.MONDE
 J.MONDE = False
 try:
-    for lieu in ["Paris", "Bordeaux", "", "Remote", "All France (remote)", "fr",
-                 "PARIS 08, Île-de-France, France", "Strasbourg", "33", "Sud-Ouest"]:
+    for lieu in [
+        "Paris",
+        "Bordeaux",
+        "",
+        "Remote",
+        "All France (remote)",
+        "fr",
+        "PARIS 08, Île-de-France, France",
+        "Strasbourg",
+        "33",
+        "Sud-Ouest",
+    ]:
         check(f"{lieu or '(vide)'} → France", en_france(lieu), True)
-    for lieu in ["Berlin", "Dublin, Leinster, Ireland", "Hanoi", "Tokyo, JP", "London",
-                 "Frankfurt am Main, Hessen, Deutschland", "de", "Casablanca"]:
+    for lieu in [
+        "Berlin",
+        "Dublin, Leinster, Ireland",
+        "Hanoi",
+        "Tokyo, JP",
+        "London",
+        "Frankfurt am Main, Hessen, Deutschland",
+        "de",
+        "Casablanca",
+    ]:
         check(f"{lieu} → ailleurs", en_france(lieu), False)
     # Ces quatre-là passaient à tort : aucun code d'État américain n'était listé,
     # et un lieu non reconnu était accepté par défaut.

@@ -39,6 +39,7 @@ Run :
   python audit_dispo.py --supprime --age-max 60
   python audit_dispo.py --rapport          # bilan de l'etat, sans reseau
 """
+
 import argparse
 import collections
 import datetime
@@ -55,8 +56,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-import queue_io   # noqa: E402
-import suivi_io   # noqa: E402
+import queue_io  # noqa: E402
+import suivi_io  # noqa: E402
 
 ETAT = HERE / "_audit_dispo.json"
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -73,14 +74,16 @@ _RX_MORT = re.compile(
     r"|offre (?:n'est plus|n’est plus) (?:disponible|en ligne|active)"
     r"|annonce (?:a expiré|n'est plus|n’est plus)"
     r"|offre (?:a expiré|est expirée|a été pourvue)"
-    r"|position has been filled|job is no longer|cette offre n.est plus", re.I)
+    r"|position has been filled|job is no longer|cette offre n.est plus",
+    re.I,
+)
 
 # Une page carrieres generique dit souvent « no longer available » quelque
 # part : le texte ne vaut que si l'URL designe une offre precise.
 _RX_URL_GENERIQUE = re.compile(r"^https?://[^/]+/?(?:[a-z]{2}(?:-[a-z]{2})?/?)?$", re.I)
 
-REFUS_DEBIT = {429}                 # limite de debit : on attend et on reprend
-REFUS_ENTREE = {401, 403, 999}      # anti-bot : on ne boucle pas
+REFUS_DEBIT = {429}  # limite de debit : on attend et on reprend
+REFUS_ENTREE = {401, 403, 999}  # anti-bot : on ne boucle pas
 
 
 def _date_collecte(o):
@@ -119,9 +122,11 @@ def controle_autre(url):
     # Client partage de job_sources : une connexion TLS par hote, pas par
     # requete (~3 s epargnees a chaque appel, voir _client_partage).
     import job_sources
+
     try:
-        r = job_sources._get_borne(job_sources._client_partage(), url, timeout=20,
-                                   headers=UA, follow_redirects=True)
+        r = job_sources._get_borne(
+            job_sources._client_partage(), url, timeout=20, headers=UA, follow_redirects=True
+        )
     except Exception as e:
         return None, type(e).__name__
     if r.status_code in (404, 410):
@@ -138,6 +143,7 @@ def controle_autre(url):
 
 def verifier(cibles, etat, pauses_max, aujourd_hui):
     import httpx
+
     li = [o for o in cibles if _RX_LI_ID.search(o["url"])]
     autres = [o for o in cibles if not _RX_LI_ID.search(o["url"])]
     print(f"{len(li)} LinkedIn, {len(autres)} autres sites a controler")
@@ -166,18 +172,22 @@ def verifier(cibles, etat, pauses_max, aujourd_hui):
             continue
         if r.status_code in REFUS_DEBIT:
             refus += 1
-            if refus < 3:                       # un 429 isole : courte pause
+            if refus < 3:  # un 429 isole : courte pause
                 time.sleep(30)
                 continue
             if pauses >= pauses_max:
-                print(f"  ⏸ LinkedIn limite toujours apres {pauses} pause(s) — "
-                      f"arret a {i}/{len(li)}, la prochaine relance reprendra ici")
+                print(
+                    f"  ⏸ LinkedIn limite toujours apres {pauses} pause(s) — "
+                    f"arret a {i}/{len(li)}, la prochaine relance reprendra ici"
+                )
                 break
             pauses += 1
             s = _attente(r, pauses)
             sauver_etat(etat)
-            print(f"  ⏸ LinkedIn : limite de debit (429) a {i}/{len(li)} — "
-                  f"pause {pauses}/{pauses_max} de {s // 60} min, puis reprise")
+            print(
+                f"  ⏸ LinkedIn : limite de debit (429) a {i}/{len(li)} — "
+                f"pause {pauses}/{pauses_max} de {s // 60} min, puis reprise"
+            )
             time.sleep(s)
             refus = 0
             continue
@@ -188,7 +198,11 @@ def verifier(cibles, etat, pauses_max, aujourd_hui):
         if r.status_code == 404:
             st, note = "FERMEE", "guest 404"
         elif r.status_code == 200 and len(r.text) >= 400:
-            st, note = ("FERMEE", "no longer accepting") if _RX_LI_FERME.search(r.text) else ("OK", "ouverte")
+            st, note = (
+                ("FERMEE", "no longer accepting")
+                if _RX_LI_FERME.search(r.text)
+                else ("OK", "ouverte")
+            )
         else:
             st, note = None, f"HTTP {r.status_code}"
         etat[oid] = [st, note, o["url"], aujourd_hui]
@@ -210,8 +224,10 @@ def verifier(cibles, etat, pauses_max, aujourd_hui):
 # l'API de recherche APEC, le sitemap WTJ, la recherche Glassdoor. Ce qui a
 # servi a les trouver sert a les retrouver.
 
+
 def _domaine(url):
     from urllib.parse import urlparse
+
     return urlparse(str(url or "")).netloc.lower().replace("www.", "")
 
 
@@ -241,8 +257,10 @@ def _wtj_urls():
             idx = lire(client, WTJ_SITEMAP)
             for f in re.findall(r"<loc>([^<]+)</loc>", idx):
                 if "job-listings" in f:
-                    urls.update(u.rstrip("/").lower() for u in
-                                re.findall(r"<loc>([^<]+)</loc>", lire(client, f)))
+                    urls.update(
+                        u.rstrip("/").lower()
+                        for u in re.findall(r"<loc>([^<]+)</loc>", lire(client, f))
+                    )
     except Exception as e:
         print(f"  ~ WTJ : sitemap illisible ({type(e).__name__})")
         return None
@@ -264,11 +282,12 @@ APEC_PAR_PASSE = 150
 def par_la_source(q, etat, aujourd_hui, limite):
     """Tranche les invérifiables APEC et WTJ par leur canal de collecte."""
     import job_sources
+
     a_voir = []
     for o in q:
         v = etat.get(queue_io.oid(o))
         if not v or v[0] is not None:
-            continue                       # deja tranchee, ou jamais vue
+            continue  # deja tranchee, ou jamais vue
         if len(v) > 3 and str(v[1]).startswith("source") and v[3] >= limite:
             continue
         a_voir.append(o)
@@ -360,8 +379,9 @@ def motif(o, etat, suivi, seuil, absente=None):
 def supprimer(etat, age_max, aujourd_hui, copier=True, absente_jours=30):
     seuil = ""
     if age_max:
-        seuil = (datetime.date.fromisoformat(aujourd_hui)
-                 - datetime.timedelta(days=age_max)).isoformat()
+        seuil = (
+            datetime.date.fromisoformat(aujourd_hui) - datetime.timedelta(days=age_max)
+        ).isoformat()
     # Dans le pipeline, la sauvegarde du jour existe deja (prise avant toute
     # etape) : une seconde copie compterait dans ses sept jours glissants.
     copie = None
@@ -382,8 +402,7 @@ def supprimer(etat, age_max, aujourd_hui, copier=True, absente_jours=30):
             for o in q:
                 if str(o.get("vu_le") or "") >= recent:
                     canal_vivant[_domaine(o.get("url"))] = True
-            absente = ((j - datetime.timedelta(days=absente_jours)).isoformat(),
-                       canal_vivant)
+            absente = ((j - datetime.timedelta(days=absente_jours)).isoformat(), canal_vivant)
         avant, garde = len(q), []
         for o in q:
             m = motif(o, etat, suivi, seuil, absente)
@@ -395,8 +414,10 @@ def supprimer(etat, age_max, aujourd_hui, copier=True, absente_jours=30):
                 o["link_status"], o["ls_check"] = "OK", v[3]
             garde.append(o)
         q[:] = garde
-    print(f"file {avant} -> {len(garde)} : {avant - len(garde)} retirees"
-          + (f" (copie : {copie.relative_to(HERE)})" if copie else ""))
+    print(
+        f"file {avant} -> {len(garde)} : {avant - len(garde)} retirees"
+        + (f" (copie : {copie.relative_to(HERE)})" if copie else "")
+    )
     for m, n in motifs.most_common():
         print(f"  {n:5}  {m}")
 
@@ -423,12 +444,14 @@ def choisir_cibles(q, etat, suivi, j, frais=0):
     # heures dans une etape bornee a 45 min. Chaque offre recoit un decalage
     # fixe de 0 a 2 jours, tire de son identite (stable d'un jour a l'autre).
     import zlib
+
     def limite_pour(o):
         if frais:
             return jours(frais)
         d = _date_collecte(o)
         base = 10 if d and d >= jours(14) else 5
         return jours(base + zlib.crc32(queue_io.oid(o).encode()) % 3)
+
     revue_recente = jours(2)
     # Un site qui a refuse l'entree (APEC derriere DataDome, Glassdoor, Indeed)
     # refusera encore demain : le redemander chaque jour ne prouve rien et
@@ -468,20 +491,42 @@ def rapport(etat):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--supprime", action="store_true", help="retire les offres fermees")
-    ap.add_argument("--age-max", type=int, default=0,
-                    help="retire aussi les invérifiables collectees il y a plus de N jours")
-    ap.add_argument("--frais", type=int, default=0,
-                    help="intervalle fixe de recontrole en jours (0 = selon l'age de l'offre)")
-    ap.add_argument("--pauses", type=int, default=4,
-                    help="nombre max de pauses sur limite de debit avant de rendre la main")
+    ap.add_argument(
+        "--age-max",
+        type=int,
+        default=0,
+        help="retire aussi les invérifiables collectees il y a plus de N jours",
+    )
+    ap.add_argument(
+        "--frais",
+        type=int,
+        default=0,
+        help="intervalle fixe de recontrole en jours (0 = selon l'age de l'offre)",
+    )
+    ap.add_argument(
+        "--pauses",
+        type=int,
+        default=4,
+        help="nombre max de pauses sur limite de debit avant de rendre la main",
+    )
     ap.add_argument("--rapport", action="store_true", help="bilan de l'etat, sans reseau")
-    ap.add_argument("--sans-copie", action="store_true",
-                    help="pas de copie avant suppression (le pipeline a deja la sienne)")
+    ap.add_argument(
+        "--sans-copie",
+        action="store_true",
+        help="pas de copie avant suppression (le pipeline a deja la sienne)",
+    )
     ap.add_argument("--limite", type=int, default=0, help="plafond d'offres a controler (essai)")
-    ap.add_argument("--absente", type=int, default=30,
-                    help="retire une invérifiable que sa source ne sert plus depuis N jours (0 = non)")
-    ap.add_argument("--sans-source", action="store_true",
-                    help="ne pas retrouver les invérifiables par leur canal (APEC, WTJ)")
+    ap.add_argument(
+        "--absente",
+        type=int,
+        default=30,
+        help="retire une invérifiable que sa source ne sert plus depuis N jours (0 = non)",
+    )
+    ap.add_argument(
+        "--sans-source",
+        action="store_true",
+        help="ne pas retrouver les invérifiables par leur canal (APEC, WTJ)",
+    )
     a = ap.parse_args()
 
     etat = charger_etat()
@@ -494,14 +539,13 @@ def main():
     cibles = choisir_cibles(q, etat, suivi, datetime.date.today(), a.frais)
     limite = (datetime.date.today() - datetime.timedelta(days=a.frais or 5)).isoformat()
     if a.limite:
-        cibles = cibles[:a.limite]
+        cibles = cibles[: a.limite]
     complet = verifier(cibles, etat, a.pauses, aujourd_hui)
     if not a.sans_source:
         par_la_source(q, etat, aujourd_hui, limite)
     rapport(etat)
     if a.supprime:
-        supprimer(etat, a.age_max, aujourd_hui, copier=not a.sans_copie,
-                  absente_jours=a.absente)
+        supprimer(etat, a.age_max, aujourd_hui, copier=not a.sans_copie, absente_jours=a.absente)
     return 0 if complet else 4
 
 

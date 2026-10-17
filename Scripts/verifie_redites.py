@@ -26,6 +26,7 @@ Run :
   python verifie_redites.py --toutes
   python verifie_redites.py --fichier "Lettres/Par_offre/xxx.docx"
 """
+
 import argparse
 import collections
 import html
@@ -39,15 +40,42 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 sys.path.insert(0, str(HERE))
 import chemins
+
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 # Mots vides et formules de politesse : leur repetition ne dit rien.
 _BANALS = {
-    "votre", "notre", "leurs", "comme", "depuis", "serais", "heureux", "sein",
-    "equipes", "équipes", "parcours", "monsieur", "madame",
-    "salutations", "distinguees", "distinguées", "expression",
-    "disposition", "entretien", "poste", "annonce", "vous", "avec", "dans",
-    "pour", "mais", "plus", "cette", "sont", "suis", "elles",
+    "votre",
+    "notre",
+    "leurs",
+    "comme",
+    "depuis",
+    "serais",
+    "heureux",
+    "sein",
+    "equipes",
+    "équipes",
+    "parcours",
+    "monsieur",
+    "madame",
+    "salutations",
+    "distinguees",
+    "distinguées",
+    "expression",
+    "disposition",
+    "entretien",
+    "poste",
+    "annonce",
+    "vous",
+    "avec",
+    "dans",
+    "pour",
+    "mais",
+    "plus",
+    "cette",
+    "sont",
+    "suis",
+    "elles",
 } | {m.lower() for m in __import__("profil").identite()["nom"].split()}
 
 
@@ -68,8 +96,7 @@ def texte(chemin):
 #
 # On reconnait donc une LIGNE COURTE finissant par une virgule, ce qu'aucune
 # ligne d'en-tete ne fait et ce que toute formule d'appel fait.
-_RX_APPEL = re.compile(
-    r"^(?:Madame|Monsieur|Mesdames|Messieurs|Bonjour|Dear)\b.{0,60},$")
+_RX_APPEL = re.compile(r"^(?:Madame|Monsieur|Mesdames|Messieurs|Bonjour|Dear)\b.{0,60},$")
 
 
 def corps(t):
@@ -77,7 +104,7 @@ def corps(t):
     lignes = [l for l in t.split("\n") if l.strip()]
     for i, l in enumerate(lignes):
         if _RX_APPEL.match(l.strip()):
-            return "\n".join(lignes[i + 1:])
+            return "\n".join(lignes[i + 1 :])
     return "\n".join(lignes)
 
 
@@ -104,8 +131,7 @@ def defauts(t):
     # financière » compte pour un seul element et la repetition passe.
     for ph in re.split(r"(?<=[.!?])\s+", c):
         elems = [e.strip() for e in re.split(r",|\bet\b|\band\b", ph) if e.strip()]
-        fins = [e.rsplit(" ", 1)[-1].lower().strip(".:;") for e in elems
-                if len(e.split()) >= 2]
+        fins = [e.rsplit(" ", 1)[-1].lower().strip(".:;") for e in elems if len(e.split()) >= 2]
         for mot, n in collections.Counter(fins).items():
             if n >= 2 and len(mot) >= 5 and mot not in _BANALS:
                 trouves.append(f"« {mot} » finit {n} elements : {ph[:78]}…")
@@ -131,13 +157,11 @@ def main():
     a = ap.parse_args()
 
     if a.fichier:
-        cibles = [Path(a.fichier) if Path(a.fichier).is_absolute()
-                  else ROOT / a.fichier]
+        cibles = [Path(a.fichier) if Path(a.fichier).is_absolute() else ROOT / a.fichier]
     else:
         toutes = sorted(chemins.LT_PAR_OFFRE.glob("*.docx"))
         toutes = [p for p in toutes if not p.name.startswith("~$")]
-        cibles = toutes if a.toutes else random.sample(
-            toutes, min(a.echantillon, len(toutes)))
+        cibles = toutes if a.toutes else random.sample(toutes, min(a.echantillon, len(toutes)))
 
     print(f"{len(cibles)} lettre(s) examinee(s)\n")
     compte = collections.Counter()

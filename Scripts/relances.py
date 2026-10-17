@@ -10,6 +10,7 @@ Run: python relances.py            # toutes les offres 'prio'
      python relances.py --company Amundi
      python relances.py --jours 10 # variante J+10 (defaut J+7)
 """
+
 import argparse, json, re, sys
 from pathlib import Path
 
@@ -24,12 +25,16 @@ OUT = ROOT / "Lettres" / "Relances"
 OUT.mkdir(parents=True, exist_ok=True)
 
 import profil as _P
+
 NOM = _P.identite()["nom"]
 # Accords et resume du profil : « — diplome, stage… — » vient de message.diplome_fr.
 _DIPLOME = (_P.get("message.diplome_fr", "") or "").strip()
-_ACCORDS = {"motive": _P.accord("motivé", "motivée"), "ravi": _P.accord("ravi", "ravie"),
-            "heureux": _P.accord("heureux", "heureuse"),
-            "resume": f" — {_DIPLOME} —" if _DIPLOME else ""}
+_ACCORDS = {
+    "motive": _P.accord("motivé", "motivée"),
+    "ravi": _P.accord("ravi", "ravie"),
+    "heureux": _P.accord("heureux", "heureuse"),
+    "resume": f" — {_DIPLOME} —" if _DIPLOME else "",
+}
 _CONTACT = " · ".join(v for v in (_P.identite()["email"], _P.identite()["tel"]) if v)
 SIGNATURE = f"{NOM}\n{_CONTACT}" if _CONTACT else NOM
 
@@ -61,9 +66,11 @@ Bien cordialement,
 {sign}
 """
 
+
 def de(mot):
     mot = (mot or "ce poste").strip()
     return ("d'" + mot) if mot[:1].lower() in "aàâäeéèêëiîïoôöuùûüyh" else ("de " + mot)
+
 
 SUIVI = ROOT / "Scripts" / "suivi.json"
 RELANCE_STATUTS = ("postulé", "relancé")
@@ -77,6 +84,7 @@ def a_relancer(days=10):
     """Candidatures « postulé/relancé » depuis ≥ days jours (suivi.json).
     Retour [(offre, statut, date, âge_jours)] du plus vieux au plus récent."""
     from datetime import date, datetime
+
     q = json.load(open(Q, encoding="utf-8"))
     try:
         s = __import__("suivi_io").charger(SUIVI)
@@ -100,7 +108,9 @@ def a_relancer(days=10):
 
 
 def chemin_brouillon(o, j, dossier=None):
-    safe = re.sub(r"[^\w\-]", "_", f"{o['entreprise']}_{o['poste'] or 'le poste proposé'}")[:60].strip("_")
+    safe = re.sub(r"[^\w\-]", "_", f"{o['entreprise']}_{o['poste'] or 'le poste proposé'}")[
+        :60
+    ].strip("_")
     return Path(dossier or OUT) / f"Relance_J{j}_{safe}.txt"
 
 
@@ -119,15 +129,20 @@ def make_draft(key, j=7, open_mailto=True):
     q = json.load(open(Q, encoding="utf-8"))
     o = next((x for x in q if _oid(x) == key), None)
     if o is None:
-        print(f"offre introuvable : {key}"); return False
+        print(f"offre introuvable : {key}")
+        return False
     f = ecrire_brouillon(o, j)
     txt = f.read_text(encoding="utf-8")
     print(f"📝 brouillon : {f}")
     if open_mailto:
         from urllib.parse import quote
+
         sujet, corps = txt.split("\n", 1)
         import webbrowser
-        webbrowser.open(f"mailto:?subject={quote(sujet.replace('Objet : ', ''))}&body={quote(corps.strip())}")
+
+        webbrowser.open(
+            f"mailto:?subject={quote(sujet.replace('Objet : ', ''))}&body={quote(corps.strip())}"
+        )
         print("📧 client mail ouvert (destinataire à compléter) — TU envoies.")
     return True
 
@@ -142,13 +157,18 @@ def preparer_brouillons(lst, dossier=None):
     n'est pas réécrit, pour ne pas écraser une version retouchée à la main.
     """
     from datetime import date
+
     l = [f"# Relances à envoyer — {date.today().isoformat()}", ""]
     if not lst:
         l.append("Rien à relancer : aucune candidature sans réponse depuis assez longtemps.")
         return "\n".join(l)
-    l += [f"**{len(lst)} candidature(s)** sans réponse. Brouillons dans `Lettres/Relances/` : "
-          "**rien n'est envoyé**, le destinataire est à compléter.", "",
-          "| Âge | Entreprise | Poste | Modèle | Brouillon |", "|---|---|---|---|---|"]
+    l += [
+        f"**{len(lst)} candidature(s)** sans réponse. Brouillons dans `Lettres/Relances/` : "
+        "**rien n'est envoyé**, le destinataire est à compléter.",
+        "",
+        "| Âge | Entreprise | Poste | Modèle | Brouillon |",
+        "|---|---|---|---|---|",
+    ]
     for o, st, d, age in lst:
         j = 10 if st == "relancé" else 7
         f = chemin_brouillon(o, j, dossier)
@@ -156,7 +176,7 @@ def preparer_brouillons(lst, dossier=None):
         if etat == "nouveau":
             ecrire_brouillon(o, j, dossier)
         l.append(f"| {age} j | {o['entreprise']} | {o['poste']} | J+{j} | `{f.name}` ({etat}) |")
-    l += ["", "Après envoi : `python Scripts/relances.py --mark \"Entreprise|Poste\"`."]
+    l += ["", 'Après envoi : `python Scripts/relances.py --mark "Entreprise|Poste"`.']
     return "\n".join(l)
 
 
@@ -176,6 +196,7 @@ def mark(key):
         rec["s"] = "relancé"
         rec["d"] = date.today().isoformat()
         s[key] = rec
+
     try:
         suivi_io.modifier(_f, SUIVI)
     except suivi_io.VerrouIndisponible:
@@ -192,17 +213,23 @@ def main():
     ap.add_argument("--draft", help='"Entreprise|Poste" → brouillon .txt + mailto (TU envoies)')
     ap.add_argument("--mark", help='"Entreprise|Poste" → statut relancé (date du jour)')
     ap.add_argument("--company", help="mode legacy : brouillons pour une entreprise")
-    ap.add_argument("--brouillons", action="store_true",
-                    help="brouillons .txt de toutes les relances dues + bilan Markdown (n'ouvre et n'envoie rien)")
+    ap.add_argument(
+        "--brouillons",
+        action="store_true",
+        help="brouillons .txt de toutes les relances dues + bilan Markdown (n'ouvre et n'envoie rien)",
+    )
     a = ap.parse_args()
 
     if a.brouillons:
-        print(preparer_brouillons(a_relancer(a.days))); return
+        print(preparer_brouillons(a_relancer(a.days)))
+        return
     if a.draft:
-        make_draft(a.draft, j=a.jours); return
+        make_draft(a.draft, j=a.jours)
+        return
     if a.mark:
-        mark(a.mark); return
-    if a.company:   # legacy
+        mark(a.mark)
+        return
+    if a.company:  # legacy
         q = json.load(open(Q, encoding="utf-8"))
         for x in [x for x in q if a.company.lower() in (x["entreprise"] or "").lower()]:
             make_draft(_oid(x), j=a.jours, open_mailto=False)
@@ -210,7 +237,8 @@ def main():
     # défaut : liste ce qui est À RELANCER d'après le suivi
     lst = a_relancer(a.days)
     if not lst:
-        print(f"Rien à relancer (aucune candidature « postulé » depuis ≥ {a.days} j)."); return
+        print(f"Rien à relancer (aucune candidature « postulé » depuis ≥ {a.days} j).")
+        return
     print(f"🔔 {len(lst)} candidature(s) à relancer (≥ {a.days} j) :")
     for o, st, d, age in lst:
         print(f"  {age:3} j  [{st}] {o['entreprise'][:28]} — {o['poste'][:45]}")

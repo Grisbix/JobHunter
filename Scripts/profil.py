@@ -15,6 +15,7 @@ Les listes de MOTS acceptent deux formes :
                            (« analyste » trouve aussi « analystes »)
   "re:taxonomi\\w*"        une expression reguliere, pour les cas fins
 """
+
 import json
 import os
 import re
@@ -36,7 +37,8 @@ def charger():
     if not FICHIER.exists():
         raise ProfilAbsent(
             f"Profil introuvable : {FICHIER}\n"
-            "Lance d'abord : python Scripts/premier_lancement.py <ton_cv.pdf|docx>")
+            "Lance d'abord : python Scripts/premier_lancement.py <ton_cv.pdf|docx>"
+        )
     with open(FICHIER, encoding="utf-8") as f:
         p = json.load(f)
     return p
@@ -62,7 +64,7 @@ def identite():
         "tel": i.get("telephone", ""),
         "linkedin": i.get("linkedin", ""),
         "ville": i.get("ville", ""),
-        "genre": (i.get("genre") or "m").lower()[:1],     # accords de la lettre
+        "genre": (i.get("genre") or "m").lower()[:1],  # accords de la lettre
     }
 
 
@@ -70,6 +72,7 @@ def prefixe_fichier():
     """« Prenom_Nom » pour nommer les documents generes."""
     nom = identite()["nom"]
     import unicodedata
+
     s = unicodedata.normalize("NFKD", nom).encode("ascii", "ignore").decode()
     return re.sub(r"[^A-Za-z0-9]+", "_", s).strip("_") or "Candidat"
 
@@ -83,7 +86,7 @@ def accord(masculin, feminin):
 def _fragment(mot, entier):
     mot = str(mot)
     if mot.startswith("re:"):
-        return "(?:" + mot[3:] + ")"          # regex : prise TELLE QUELLE
+        return "(?:" + mot[3:] + ")"  # regex : prise TELLE QUELLE
     # Mot : borne GAUCHE (« rse » ne doit pas trouver « diveRSE »), pas de borne
     # droite sauf `entier` — « analyste » doit trouver « analystes ».
     corps = re.escape(mot.strip()).replace(r"\ ", r"\s+")
@@ -125,29 +128,114 @@ def domaine_par_cle(cle):
 # ── Formulaires de candidature (apply_runner, web_nav) ──────────────────────
 # Noms de champs rencontres sur les sites carriere, par cle du profil. Generiques.
 ALIAS_CHAMPS = {
-    "prenom": ["prenom", "first_name", "firstname", "givenname", "given_name", "first-name",
-               "prenom_candidat", "txtprenom"],
-    "nom": ["nom", "last_name", "lastname", "surname", "familyname", "family_name", "last-name",
-            "nom de famille", "nom_candidat", "txtnom"],
-    "email": ["email", "e-mail", "courriel", "mail", "e_mail", "identifiant", "username", "login",
-              "email_address", "user_email", "txtemail", "candidate_email"],
-    "tel": ["tel", "telephone", "phone", "portable", "mobile", "numero", "phone_number", "txttel",
-            "telephone_portable", "mobile_phone", "cell_phone"],
+    "prenom": [
+        "prenom",
+        "first_name",
+        "firstname",
+        "givenname",
+        "given_name",
+        "first-name",
+        "prenom_candidat",
+        "txtprenom",
+    ],
+    "nom": [
+        "nom",
+        "last_name",
+        "lastname",
+        "surname",
+        "familyname",
+        "family_name",
+        "last-name",
+        "nom de famille",
+        "nom_candidat",
+        "txtnom",
+    ],
+    "email": [
+        "email",
+        "e-mail",
+        "courriel",
+        "mail",
+        "e_mail",
+        "identifiant",
+        "username",
+        "login",
+        "email_address",
+        "user_email",
+        "txtemail",
+        "candidate_email",
+    ],
+    "tel": [
+        "tel",
+        "telephone",
+        "phone",
+        "portable",
+        "mobile",
+        "numero",
+        "phone_number",
+        "txttel",
+        "telephone_portable",
+        "mobile_phone",
+        "cell_phone",
+    ],
     "linkedin": ["linkedin", "linkedin_url", "linkedin_profile", "url_linkedin"],
     "ville": ["ville", "city", "localite", "commune", "town", "municipality"],
     "cp": ["cp", "codepostal", "code_postal", "zip", "zipcode", "postal_code", "zip_code"],
     "pays": ["pays", "country", "nationalite"],
     "adresse": ["adresse", "address", "postal_address", "rue"],
-    "disponibilite": ["disponibilite", "availability", "start_date", "date_debut", "available_from",
-                      "starting_date", "notice_period", "preavis"],
-    "salaire_souhaite": ["salaire", "salary", "pretentions", "remuneration", "expected_salary",
-                         "salary_expectation", "wage", "desired_salary", "annual_salary"],
-    "message": ["message", "motivation", "cover_letter", "lettre", "cover", "about_you", "commentaire",
-                "additional_info", "notes", "pourquoi", "presentation"],
+    "disponibilite": [
+        "disponibilite",
+        "availability",
+        "start_date",
+        "date_debut",
+        "available_from",
+        "starting_date",
+        "notice_period",
+        "preavis",
+    ],
+    "salaire_souhaite": [
+        "salaire",
+        "salary",
+        "pretentions",
+        "remuneration",
+        "expected_salary",
+        "salary_expectation",
+        "wage",
+        "desired_salary",
+        "annual_salary",
+    ],
+    "message": [
+        "message",
+        "motivation",
+        "cover_letter",
+        "lettre",
+        "cover",
+        "about_you",
+        "commentaire",
+        "additional_info",
+        "notes",
+        "pourquoi",
+        "presentation",
+    ],
 }
-_CHAMPS_FORMULAIRE = ("tel_local", "cp", "pays", "adresse", "disponibilite", "salaire_souhaite",
-                      "mobilite", "permis", "nationalite", "date_naissance", "site_web", "github",
-                      "niveau_etudes", "dernier_poste", "langues", "competences", "message")
+_CHAMPS_FORMULAIRE = (
+    "tel_local",
+    "cp",
+    "pays",
+    "adresse",
+    "disponibilite",
+    "salaire_souhaite",
+    "mobilite",
+    "permis",
+    "nationalite",
+    "date_naissance",
+    "site_web",
+    "github",
+    "niveau_etudes",
+    "dernier_poste",
+    "langues",
+    "competences",
+    "message",
+)
 
 
 def formulaire():
@@ -157,9 +245,15 @@ def formulaire():
     i = get("identite", {}) or {}
     f = get("formulaire", {}) or {}
     ident = identite()
-    out = {"full": ident["nom"], "prenom": i.get("prenom", ""), "nom": i.get("nom", ""),
-           "email": ident["email"], "tel": ident["tel"], "linkedin": ident["linkedin"],
-           "ville": ident["ville"]}
+    out = {
+        "full": ident["nom"],
+        "prenom": i.get("prenom", ""),
+        "nom": i.get("nom", ""),
+        "email": ident["email"],
+        "tel": ident["tel"],
+        "linkedin": ident["linkedin"],
+        "ville": ident["ville"],
+    }
     for k in _CHAMPS_FORMULAIRE:
         out[k] = f.get(k, "")
     out["field_aliases"] = {**ALIAS_CHAMPS, **(f.get("field_aliases") or {})}
@@ -175,6 +269,8 @@ if __name__ == "__main__":
         print(e)
         sys.exit(1)
     print(f"Profil : {FICHIER}")
-    print(f"  {identite()['nom']} · {len(domaines())} domaine(s) · "
-          f"{len(get('competences', {}) or {})} competence(s) · "
-          f"{len(get('collecte.mots_cles', []) or [])} mot(s)-cle(s) de collecte")
+    print(
+        f"  {identite()['nom']} · {len(domaines())} domaine(s) · "
+        f"{len(get('competences', {}) or {})} competence(s) · "
+        f"{len(get('collecte.mots_cles', []) or [])} mot(s)-cle(s) de collecte"
+    )

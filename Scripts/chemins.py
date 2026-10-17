@@ -27,6 +27,7 @@ modeles. Modeles, Relances et Messages sont des ENTREES ecrites a la main,
 
     from chemins import CV_PAR_OFFRE, LT_PAR_OFFRE
 """
+
 import json
 from pathlib import Path
 
@@ -91,19 +92,24 @@ def preparer():
     return CV_PAR_OFFRE, LT_PAR_OFFRE
 
 
-def deplace(): # pragma: no cover - outil d'administration, voir deplace_docs.py
+def deplace():  # pragma: no cover - outil d'administration, voir deplace_docs.py
     raise NotImplementedError("le deplacement se fait par deplace_docs.py")
 
 
 if __name__ == "__main__":
     import sys
+
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     etat = f"chemins.json → {BASE}" if CONFIG.exists() else "defaut : la racine du projet"
     print(f"source du reglage : {etat}")
-    for nom, p in (("CV/Par_offre", CV_PAR_OFFRE), ("Lettres/Par_offre", LT_PAR_OFFRE),
-                   ("CV/Modeles", CV_MODELES), ("Lettres/Relances", LT_RELANCES),
-                   ("Lettres/Messages", LT_MESSAGES),
-                   ("Lettres/Sur_mesure", LT_SUR_MESURE),
-                   ("CV/Sur_mesure", CV_SUR_MESURE)):
+    for nom, p in (
+        ("CV/Par_offre", CV_PAR_OFFRE),
+        ("Lettres/Par_offre", LT_PAR_OFFRE),
+        ("CV/Modeles", CV_MODELES),
+        ("Lettres/Relances", LT_RELANCES),
+        ("Lettres/Messages", LT_MESSAGES),
+        ("Lettres/Sur_mesure", LT_SUR_MESURE),
+        ("CV/Sur_mesure", CV_SUR_MESURE),
+    ):
         n = len(list(p.glob("*"))) if p.exists() else 0
         print(f"  {nom:20} {'✓' if p.exists() else '✗'} {n:6} fichiers  {p}")

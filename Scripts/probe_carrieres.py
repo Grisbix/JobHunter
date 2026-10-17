@@ -32,6 +32,7 @@ Run :
   python probe_carrieres.py --domaines axa,bpce      # filtre
   python probe_carrieres.py --sans-sitemap           # passes 1 et 3 seulement
 """
+
 import argparse
 import concurrent.futures as cf
 import json
@@ -45,33 +46,94 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8"}
+UA = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
+}
 
 # ── Les mots qui désignent une section carrière ──────────────────────────────
 # Servent DEUX fois : sur le texte visible d'un lien, et sur son href. Un site
 # dit « Nous rejoindre » et pointe `/recrutement` ; un autre dit « Careers » et
 # pointe `/en/about-us/join`. Il faut les deux angles pour ne pas rater.
 MOTS_TEXTE = [
-    "recrutement", "recrute", "carriere", "carrière", "carrieres", "carrières",
-    "career", "careers", "emploi", "emplois", "offre d'emploi", "offres d'emploi",
-    "nous rejoindre", "rejoignez-nous", "rejoignez nous", "rejoindre",
-    "travailler chez", "travailler avec", "postuler", "candidature", "candidatures",
-    "talent", "talents", "job", "jobs", "join us", "join our", "work with us",
-    "work for us", "working at", "life at", "vacancies", "vacancy",
-    "opportunities", "opportunités", "opportunites", "hiring", "recruitment",
-    "nos metiers", "nos métiers", "espace candidat",
+    "recrutement",
+    "recrute",
+    "carriere",
+    "carrière",
+    "carrieres",
+    "carrières",
+    "career",
+    "careers",
+    "emploi",
+    "emplois",
+    "offre d'emploi",
+    "offres d'emploi",
+    "nous rejoindre",
+    "rejoignez-nous",
+    "rejoignez nous",
+    "rejoindre",
+    "travailler chez",
+    "travailler avec",
+    "postuler",
+    "candidature",
+    "candidatures",
+    "talent",
+    "talents",
+    "job",
+    "jobs",
+    "join us",
+    "join our",
+    "work with us",
+    "work for us",
+    "working at",
+    "life at",
+    "vacancies",
+    "vacancy",
+    "opportunities",
+    "opportunités",
+    "opportunites",
+    "hiring",
+    "recruitment",
+    "nos metiers",
+    "nos métiers",
+    "espace candidat",
 ]
 # Sur le href, on ne veut QUE des segments de chemin : « career » comme
 # sous-chaîne libre matcherait « /careful-investing ». On borne par / - _ . ou fin.
 MOTS_HREF = [
-    "recrutement", "recrute", "carriere", "carrieres", "career", "careers",
-    "emploi", "emplois", "offres-emploi", "nous-rejoindre", "rejoignez-nous",
-    "rejoindre", "travailler", "postuler", "candidat", "talent", "talents",
-    "job", "jobs", "join-us", "joinus", "join", "work-with-us", "workwithus",
-    "life-at", "lifeat", "vacancies", "opportunities", "hiring", "recruitment",
-    "espace-candidat", "nos-metiers",
+    "recrutement",
+    "recrute",
+    "carriere",
+    "carrieres",
+    "career",
+    "careers",
+    "emploi",
+    "emplois",
+    "offres-emploi",
+    "nous-rejoindre",
+    "rejoignez-nous",
+    "rejoindre",
+    "travailler",
+    "postuler",
+    "candidat",
+    "talent",
+    "talents",
+    "job",
+    "jobs",
+    "join-us",
+    "joinus",
+    "join",
+    "work-with-us",
+    "workwithus",
+    "life-at",
+    "lifeat",
+    "vacancies",
+    "opportunities",
+    "hiring",
+    "recruitment",
+    "espace-candidat",
+    "nos-metiers",
 ]
 # SUR DES MOTS ENTIERS. En sous-chaîne libre, « job » matche « Jobijoba » et
 # « Jobijoba au service des entreprises » désignait magnet.work comme le
@@ -82,24 +144,59 @@ RX_TEXTE = re.compile(r"\b(?:" + "|".join(re.escape(m) for m in MOTS_TEXTE) + r"
 _SEP = r"[/\-_.?=&]"
 RX_HREF = re.compile(
     r"(?:^|" + _SEP + r")(" + "|".join(re.escape(m) for m in MOTS_HREF) + r")(?:" + _SEP + r"|$)",
-    re.I)
+    re.I,
+)
 
 # ── Les chemins devinés, PASSE 3 ─────────────────────────────────────────────
 # Beaucoup plus large que les 14 de scrape_jobs, et avec les préfixes de langue
 # qui manquaient (`/fr/`, `/fr-fr/`, `/en/`).
 CHEMINS = [
-    "/recrutement", "/recrutements", "/carriere", "/carrieres", "/carrières",
-    "/career", "/careers", "/emploi", "/emplois", "/offres", "/offres-emploi",
-    "/nos-offres", "/nous-rejoindre", "/rejoignez-nous", "/rejoindre",
-    "/travailler-chez-nous", "/talents", "/talent", "/jobs", "/job",
-    "/join-us", "/work-with-us", "/vacancies", "/opportunities",
-    "/espace-candidat", "/nos-metiers", "/postuler",
-    "/about/careers", "/about-us/careers", "/company/careers", "/group/careers",
-    "/a-propos/carrieres", "/notre-groupe/carrieres",
-    "/fr/carrieres", "/fr/recrutement", "/fr/emploi", "/fr/nous-rejoindre",
-    "/fr-fr/careers", "/fr-fr/carrieres",
-    "/en/careers", "/en/jobs", "/en/join-us",
-    "/careers/jobs", "/careers/search", "/search/jobs", "/job-search",
+    "/recrutement",
+    "/recrutements",
+    "/carriere",
+    "/carrieres",
+    "/carrières",
+    "/career",
+    "/careers",
+    "/emploi",
+    "/emplois",
+    "/offres",
+    "/offres-emploi",
+    "/nos-offres",
+    "/nous-rejoindre",
+    "/rejoignez-nous",
+    "/rejoindre",
+    "/travailler-chez-nous",
+    "/talents",
+    "/talent",
+    "/jobs",
+    "/job",
+    "/join-us",
+    "/work-with-us",
+    "/vacancies",
+    "/opportunities",
+    "/espace-candidat",
+    "/nos-metiers",
+    "/postuler",
+    "/about/careers",
+    "/about-us/careers",
+    "/company/careers",
+    "/group/careers",
+    "/a-propos/carrieres",
+    "/notre-groupe/carrieres",
+    "/fr/carrieres",
+    "/fr/recrutement",
+    "/fr/emploi",
+    "/fr/nous-rejoindre",
+    "/fr-fr/careers",
+    "/fr-fr/carrieres",
+    "/en/careers",
+    "/en/jobs",
+    "/en/join-us",
+    "/careers/jobs",
+    "/careers/search",
+    "/search/jobs",
+    "/job-search",
 ]
 
 # ── Les ATS, et pourquoi on les cherche ──────────────────────────────────────
@@ -147,9 +244,20 @@ RX_BALISE = re.compile(r"<[^>]+>")
 # Réseaux sociaux et agrégateurs : « eFinancialCareers sur Twitter » porte
 # « career » dans son libellé et menait tout droit à twitter.com. Ce ne sont
 # jamais les offres de la société, c'est sa communication.
-HOTES_IGNORES = ("twitter.com", "x.com", "facebook.com", "instagram.com",
-                 "youtube.com", "linkedin.com", "tiktok.com", "pinterest.",
-                 "wechat", "weibo.", "t.me", "whatsapp.")
+HOTES_IGNORES = (
+    "twitter.com",
+    "x.com",
+    "facebook.com",
+    "instagram.com",
+    "youtube.com",
+    "linkedin.com",
+    "tiktok.com",
+    "pinterest.",
+    "wechat",
+    "weibo.",
+    "t.me",
+    "whatsapp.",
+)
 
 # Un libellé de navigation est COURT : « Carrières », « Nous rejoindre ».
 # Au-delà, on lit du corps de page — « Diversité, équité et inclusion La
@@ -263,12 +371,20 @@ def sonde_site(entree, faire_sitemap=True):
     """Les trois passes sur un site. Rend un dict de résultat."""
     import httpx
     from scrape_jobs import extract_company_name, robots_autorise
+
     racine = entree["url"]
     res = {
-        "num": entree["num"], "entreprise": extract_company_name(entree),
-        "domaine": entree["domain"], "racine": racine,
-        "carriere": "", "via": "", "libelle": "", "ats": "",
-        "ats_urls": [], "candidats": [], "note": "",
+        "num": entree["num"],
+        "entreprise": extract_company_name(entree),
+        "domaine": entree["domain"],
+        "racine": racine,
+        "carriere": "",
+        "via": "",
+        "libelle": "",
+        "ats": "",
+        "ats_urls": [],
+        "candidats": [],
+        "note": "",
     }
     with httpx.Client(headers=UA, follow_redirects=True) as client:
         # ── passe 1 : la page d'accueil dit où elle recrute ──
@@ -279,8 +395,9 @@ def sonde_site(entree, faire_sitemap=True):
         if r.status_code >= 400:
             res["note"] = f"HTTP {r.status_code}"
         arrivee = str(r.url)
-        if urlsplit(arrivee).netloc.lower().lstrip("www.") != \
-                urlsplit(racine).netloc.lower().lstrip("www."):
+        if urlsplit(arrivee).netloc.lower().lstrip("www.") != urlsplit(
+            racine
+        ).netloc.lower().lstrip("www."):
             res["note"] = (res["note"] + " ; " if res["note"] else "") + f"redirige → {arrivee}"
 
         html = r.text or "" if r.status_code < 400 else ""
@@ -361,6 +478,7 @@ def main():
     a = ap.parse_args()
 
     from scrape_jobs import load_domains
+
     entrees = load_domains(str(HERE / "unique_domains.txt"))
     if a.domaines:
         f = [x.strip().lower() for x in a.domaines.split(",") if x.strip()]
@@ -394,14 +512,18 @@ def main():
     for r in sans:
         print(f"  #{r['num']:2d} {r['entreprise']:24s} {r['note']}")
 
-    print(f"\n{'='*70}")
-    print(f"ATS identifié {len(avec_ats)}/{len(res)} · page seule {len(avec_page)} · rien {len(sans)}")
+    print(f"\n{'=' * 70}")
+    print(
+        f"ATS identifié {len(avec_ats)}/{len(res)} · page seule {len(avec_page)} · rien {len(sans)}"
+    )
     compte = {}
     for r in avec_ats:
         compte[r["ats"]] = compte.get(r["ats"], 0) + 1
     if compte:
-        print("Par ATS : " + ", ".join(f"{k} ×{v}" for k, v in
-                                       sorted(compte.items(), key=lambda kv: -kv[1])))
+        print(
+            "Par ATS : "
+            + ", ".join(f"{k} ×{v}" for k, v in sorted(compte.items(), key=lambda kv: -kv[1]))
+        )
     if a.json:
         print(f"→ {a.json}")
     return 0

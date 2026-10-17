@@ -33,6 +33,7 @@ Run :
   python site_final.py                     # fit >= 9
   python site_final.py --fit 8 --limite 100
 """
+
 import sys
 import re
 import json
@@ -47,10 +48,10 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 
-import queue_io            # noqa: E402
-import probe_ats           # noqa: E402
-from probe_ats_queue import variantes          # noqa: E402
-from verify_ats_slugs import nom_du_flux, verdict, _cle   # noqa: E402
+import queue_io  # noqa: E402
+import probe_ats  # noqa: E402
+from probe_ats_queue import variantes  # noqa: E402
+from verify_ats_slugs import nom_du_flux, verdict, _cle  # noqa: E402
 
 ETAT = HERE / "_site_final.json"
 RESONDE_JOURS = 30
@@ -58,15 +59,45 @@ RESONDE_JOURS = 30
 UA = probe_ats.UA
 
 # Mentions qui n'appartiennent pas a l'intitule : genre, contrat, lieu.
-_RX_GENRE = re.compile(r"[(\[]?\s*\b(?:h\s*/\s*f|f\s*/\s*h|m\s*/\s*f(?:\s*/\s*[dx])?|"
-                       r"f\s*/\s*m(?:\s*/\s*[dx])?|w\s*/\s*m(?:\s*/\s*[dx])?|"
-                       r"m\s*/\s*w(?:\s*/\s*d)?|all\s+genders?|d\s*/\s*f\s*/\s*m)\b\s*[)\]]?", re.I)
-_RX_BRUIT = re.compile(r"\b(?:cdi|cdd|stage|internship|alternance|vie|v\.i\.e|"
-                       r"paris|la\s+d[ée]fense|lyon|france|remote|hybrid|hybride)\b", re.I)
+_RX_GENRE = re.compile(
+    r"[(\[]?\s*\b(?:h\s*/\s*f|f\s*/\s*h|m\s*/\s*f(?:\s*/\s*[dx])?|"
+    r"f\s*/\s*m(?:\s*/\s*[dx])?|w\s*/\s*m(?:\s*/\s*[dx])?|"
+    r"m\s*/\s*w(?:\s*/\s*d)?|all\s+genders?|d\s*/\s*f\s*/\s*m)\b\s*[)\]]?",
+    re.I,
+)
+_RX_BRUIT = re.compile(
+    r"\b(?:cdi|cdd|stage|internship|alternance|vie|v\.i\.e|"
+    r"paris|la\s+d[ée]fense|lyon|france|remote|hybrid|hybride)\b",
+    re.I,
+)
 
 
-_VIDES = {"de", "du", "des", "d", "la", "le", "les", "l", "en", "et", "a", "au", "aux",
-          "and", "of", "the", "for", "in", "h", "f", "m", "x", "w", "e"}
+_VIDES = {
+    "de",
+    "du",
+    "des",
+    "d",
+    "la",
+    "le",
+    "les",
+    "l",
+    "en",
+    "et",
+    "a",
+    "au",
+    "aux",
+    "and",
+    "of",
+    "the",
+    "for",
+    "in",
+    "h",
+    "f",
+    "m",
+    "x",
+    "w",
+    "e",
+}
 
 
 def _sans_accent(s):
@@ -95,11 +126,13 @@ def meme_titre(a, b):
 def lire_flux(kind, slug, requete=""):
     """[(titre, url, lieu)] d'un flux, ou None si illisible."""
     import httpx
+
     if kind == "workday":
         return lire_workday(slug, requete)
     url = probe_ats.APIS[kind](slug)
     if kind == "smartrecruiters" and requete:
         from urllib.parse import quote
+
         url += "&q=" + quote(requete)
     try:
         r = httpx.get(url, timeout=20, headers=UA, follow_redirects=True)
@@ -112,12 +145,22 @@ def lire_flux(kind, slug, requete=""):
     try:
         if kind == "greenhouse":
             for j in d.get("jobs", []):
-                out.append((j.get("title", ""), j.get("absolute_url", ""),
-                            (j.get("location") or {}).get("name", "")))
+                out.append(
+                    (
+                        j.get("title", ""),
+                        j.get("absolute_url", ""),
+                        (j.get("location") or {}).get("name", ""),
+                    )
+                )
         elif kind == "lever":
             for j in d:
-                out.append((j.get("text", ""), j.get("hostedUrl", ""),
-                            (j.get("categories") or {}).get("location", "")))
+                out.append(
+                    (
+                        j.get("text", ""),
+                        j.get("hostedUrl", ""),
+                        (j.get("categories") or {}).get("location", ""),
+                    )
+                )
         elif kind == "ashby":
             for j in d.get("jobs", []):
                 out.append((j.get("title", ""), j.get("jobUrl", ""), j.get("location", "")))
@@ -127,9 +170,13 @@ def lire_flux(kind, slug, requete=""):
         elif kind == "smartrecruiters":
             for j in d.get("content", []):
                 jid = j.get("id") or ""
-                out.append((j.get("name", ""),
-                            f"https://jobs.smartrecruiters.com/{slug}/{jid}" if jid else "",
-                            (j.get("location") or {}).get("city", "")))
+                out.append(
+                    (
+                        j.get("name", ""),
+                        f"https://jobs.smartrecruiters.com/{slug}/{jid}" if jid else "",
+                        (j.get("location") or {}).get("city", ""),
+                    )
+                )
     except Exception:
         return None
     return [x for x in out if x[0] and x[1]]
@@ -146,22 +193,47 @@ def lire_flux(kind, slug, requete=""):
 #   - la fiche d'une offre donne `hiringOrganization.name`, le nom de
 #     l'employeur : c'est la preuve d'identite, en plus du tenant.
 WD_HOTES = ["wd1", "wd3", "wd5", "wd10", "wd12", "wd103", "wd105", "wd108", "wd501"]
-_WD_SUFFIXES = ["Careers", "_Careers", "_External", "External", "_External_Careers",
-                "ExternalCareers", "_Careers_External", "", "Jobs", "_Jobs"]
-_WD_GENERIQUES = ["External", "Careers", "External_Careers", "ExternalCareers",
-                  "ExternalCareerSite", "External_Career_Site", "Global", "Jobs",
-                  "Search", "Experienced", "Professional", "GlobalCareers", "CareerSite"]
+_WD_SUFFIXES = [
+    "Careers",
+    "_Careers",
+    "_External",
+    "External",
+    "_External_Careers",
+    "ExternalCareers",
+    "_Careers_External",
+    "",
+    "Jobs",
+    "_Jobs",
+]
+_WD_GENERIQUES = [
+    "External",
+    "Careers",
+    "External_Careers",
+    "ExternalCareers",
+    "ExternalCareerSite",
+    "External_Career_Site",
+    "Global",
+    "Jobs",
+    "Search",
+    "Experienced",
+    "Professional",
+    "GlobalCareers",
+    "CareerSite",
+]
 _WD_JSON = {**UA, "Accept": "application/json", "Content-Type": "application/json"}
 
 
 def _wd_jobs(tenant, hote, site, texte="", limite=20):
     """Reponse brute de la recherche Workday, ou None si le reseau echoue."""
     import httpx
+
     try:
-        return httpx.post(f"https://{tenant}.{hote}.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs",
-                          json={"appliedFacets": {}, "limit": limite, "offset": 0,
-                                "searchText": texte},
-                          timeout=15, headers=_WD_JSON)
+        return httpx.post(
+            f"https://{tenant}.{hote}.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs",
+            json={"appliedFacets": {}, "limit": limite, "offset": 0, "searchText": texte},
+            timeout=15,
+            headers=_WD_JSON,
+        )
     except Exception:
         return None
 
@@ -175,6 +247,7 @@ def _wd_vitrine(tenant, hote, site):
     """Texte que le site Workday montre de son employeur : le bandeau « About
     us » et le nom servi par sa premiere offre. "" si illisible."""
     import httpx
+
     base = f"https://{tenant}.{hote}.myworkdayjobs.com/wday/cxs/{tenant}/{site}"
     morceaux = []
     try:
@@ -211,8 +284,10 @@ def meme_employeur(entreprise, tenant, vitrine):
     Pas `hiringOrganization` seul : il porte l'entite juridique, et Accenture
     y repond « 8140 ASOL - Gurugram Non STPI Company » (2026-10-07)."""
     mots = mots_du_tenant(entreprise, tenant)
-    return bool(mots) and re.search(r"\b" + r"\W+".join(map(re.escape, mots)) + r"\b",
-                                    vitrine) is not None
+    return (
+        bool(mots)
+        and re.search(r"\b" + r"\W+".join(map(re.escape, mots)) + r"\b", vitrine) is not None
+    )
 
 
 def flux_workday(entreprise):
@@ -224,7 +299,9 @@ def flux_workday(entreprise):
             if not tenant_workday(t, h):
                 continue
             # « Lombard_Odier_Careers » : les mots du nom, joints par « _ ».
-            bases = list(dict.fromkeys([t, "_".join(m.capitalize() for m in mots_du_tenant(entreprise, t))]))
+            bases = list(
+                dict.fromkeys([t, "_".join(m.capitalize() for m in mots_du_tenant(entreprise, t))])
+            )
             for site in [b + s for b in bases if b for s in _WD_SUFFIXES] + _WD_GENERIQUES:
                 r = _wd_jobs(t, h, site, limite=1)
                 try:
@@ -237,7 +314,7 @@ def flux_workday(entreprise):
                     break
                 if meme_employeur(entreprise, t, _wd_vitrine(t, h, site)):
                     return [["workday", f"{t}.{h}/{site}"]]
-                break       # le site existe mais ne nomme pas l'entreprise
+                break  # le site existe mais ne nomme pas l'entreprise
     return []
 
 
@@ -249,9 +326,11 @@ def lire_workday(slug, requete):
     if r is None or r.status_code != 200:
         return None
     base = f"https://{tenant}.{hote}.myworkdayjobs.com/{site}"
-    return [(j.get("title", ""), base + j["externalPath"], j.get("locationsText", ""))
-            for j in (r.json() or {}).get("jobPostings") or []
-            if j.get("title") and j.get("externalPath")]
+    return [
+        (j.get("title", ""), base + j["externalPath"], j.get("locationsText", ""))
+        for j in (r.json() or {}).get("jobPostings") or []
+        if j.get("title") and j.get("externalPath")
+    ]
 
 
 def coquille(postes):
@@ -268,14 +347,18 @@ def coquille(postes):
 # Sonde des cabinets du 2026-10-08 : lever:oliverwyman et ashby:andera sont des
 # start-up de San Francisco ; workday simon = Simon Property Group (centres
 # commerciaux), pas Simon-Kucher — le tenant ne prenait que le premier mot.
-FAUX_FLUX = {("ashby", "hatch"), ("lever", "oliverwyman"), ("ashby", "andera"),
-             ("workday", "simon.wd1/simon")}
+FAUX_FLUX = {
+    ("ashby", "hatch"),
+    ("lever", "oliverwyman"),
+    ("ashby", "andera"),
+    ("workday", "simon.wd1/simon"),
+}
 
 
 def flux_de(entreprise, connus):
     """Flux ATS CONFIRMES pour cette entreprise : [[kind, slug], ...]."""
     trouves = []
-    connus = [(k, s) for k, s in connus if k != "workday"]   # traites par sonder()
+    connus = [(k, s) for k, s in connus if k != "workday"]  # traites par sonder()
     candidats = list(connus) or [(k, s) for s in variantes(entreprise) for k in probe_ats.APIS]
     for kind, slug in candidats:
         if (kind, slug) in FAUX_FLUX:
@@ -291,6 +374,7 @@ def flux_de(entreprise, connus):
 def flux_connus():
     """Flux deja declares dans job_sources, indexes par nom de societe reduit."""
     from job_sources import ATS_SLUGS, WORKDAY_FLUX
+
     idx = {}
     for kind, slugs in ATS_SLUGS.items():
         for s in slugs:
@@ -323,7 +407,8 @@ def a_resonder(x, jour):
     ats = not any(k != "workday" for k, _ in fl) and _age(x.get("date"), jour) >= RESONDE_JOURS
     # `wd_date` absente : entree d'avant Workday (2026-10-07), jamais sondee.
     wd = not any(k == "workday" for k, _ in fl) and (
-        "wd_date" not in x or _age(x["wd_date"], jour) >= RESONDE_JOURS)
+        "wd_date" not in x or _age(x["wd_date"], jour) >= RESONDE_JOURS
+    )
     return ats, wd
 
 
@@ -332,8 +417,14 @@ def sonder(e, x, connus, jour):
     ats, wd = a_resonder(x, jour)
     x = dict(x or {})
     ancien = x.get("flux") or []
-    fl_ats = [f for f in flux_de(e, connus) if f[0] != "workday"] if ats         else [f for f in ancien if f[0] != "workday"]
-    fl_wd = [f for f in ancien if f[0] == "workday"] or         [["workday", s] for k, s in connus if k == "workday"]
+    fl_ats = (
+        [f for f in flux_de(e, connus) if f[0] != "workday"]
+        if ats
+        else [f for f in ancien if f[0] != "workday"]
+    )
+    fl_wd = [f for f in ancien if f[0] == "workday"] or [
+        ["workday", s] for k, s in connus if k == "workday"
+    ]
     if wd and not fl_wd:
         fl_wd = flux_workday(e)
     if ats:
@@ -354,37 +445,47 @@ def main():
     a = ap.parse_args()
 
     q = queue_io.charger(descriptions=False)
-    cibles = [o for o in q if "linkedin.com" in str(o.get("url") or "").lower()
-              and (o.get("fit") or 0) >= a.fit and (o.get("entreprise") or "").strip()]
+    cibles = [
+        o
+        for o in q
+        if "linkedin.com" in str(o.get("url") or "").lower()
+        and (o.get("fit") or 0) >= a.fit
+        and (o.get("entreprise") or "").strip()
+    ]
     par_ent = {}
     for o in cibles:
         par_ent.setdefault(o["entreprise"].strip(), []).append(o)
     ents = sorted(par_ent, key=lambda e: -len(par_ent[e]))
     if a.limite:
-        ents = ents[:a.limite]
+        ents = ents[: a.limite]
 
     etat = charger_etat()
     jour = datetime.date.today()
     connus = flux_connus()
+
     # Un flux Workday ajoute a la main (job_sources.WORKDAY_FLUX) entre aussi
     # dans une entreprise deja sondee, sans attendre ses 30 jours.
     def _cure_manquant(e):
         fl = (etat.get(e) or {}).get("flux") or []
         return any(k == "workday" and [k, s] not in fl for k, s in connus.get(_cle(e), []))
+
     a_sonder = [e for e in ents if any(a_resonder(etat.get(e), jour)) or _cure_manquant(e)]
-    print(f"{len(cibles)} offre(s) LinkedIn a fit >= {a.fit} · {len(ents)} entreprise(s) · "
-          f"{len(a_sonder)} a sonder")
+    print(
+        f"{len(cibles)} offre(s) LinkedIn a fit >= {a.fit} · {len(ents)} entreprise(s) · "
+        f"{len(a_sonder)} a sonder"
+    )
 
     t0 = time.time()
     with cf.ThreadPoolExecutor(max_workers=a.workers) as ex:
-        futs = {ex.submit(sonder, e, etat.get(e), connus.get(_cle(e), []), jour): e
-                for e in a_sonder}
+        futs = {
+            ex.submit(sonder, e, etat.get(e), connus.get(_cle(e), []), jour): e for e in a_sonder
+        }
         for n, f in enumerate(cf.as_completed(futs), 1):
             e = futs[f]
             try:
                 etat[e] = f.result()
             except Exception:
-                pass        # resonde au prochain passage
+                pass  # resonde au prochain passage
             if n % 25 == 0:
                 # Ecrit en cours de route : le pipeline peut couper l'etape.
                 ETAT.write_text(json.dumps(etat, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -403,7 +504,9 @@ def main():
                 cherche = kind in ("smartrecruiters", "workday")
                 cle = (kind, slug, o["poste"] if cherche else "")
                 if cle not in cache:
-                    cache[cle] = lire_flux(kind, slug, titre_cle(o["poste"]) if cherche else "") or []
+                    cache[cle] = (
+                        lire_flux(kind, slug, titre_cle(o["poste"]) if cherche else "") or []
+                    )
                 hit = next((x for x in cache[cle] if meme_titre(o["poste"], x[0])), None)
                 if hit:
                     trouvees[queue_io.oid(o)] = (hit[1], f"{kind}:{slug}")

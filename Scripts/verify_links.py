@@ -19,6 +19,7 @@ Run :
   python verify_links.py --fix           # met a jour les URL redirigees
   python verify_links.py --limit 50
 """
+
 import sys, json, argparse, concurrent.futures as cf
 from pathlib import Path
 from urllib.parse import urlparse
@@ -29,12 +30,38 @@ HERE = Path(__file__).resolve().parent
 QUEUE = HERE / "apply_queue.json"
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
-BOARDS = ("linkedin", "indeed", "welcometothejungle", "talent.com", "glassdoor", "wizbii",
-          "businessfrance", "apec.fr", "hellowork", "monster", "jobteaser", "meteojob",
-          "efinancialcareers", "linkfinance", "jobijoba", "engagement-jeunes", "frenchsif",
-          "lever.co", "greenhouse.io", "ashbyhq", "recruitee", "smartrecruiters",
-          "myworkdayjobs", "talent-soft", "icims", "taleo", "successfactors",
-          "teamtailor", "workable", "missionhandicap")
+BOARDS = (
+    "linkedin",
+    "indeed",
+    "welcometothejungle",
+    "talent.com",
+    "glassdoor",
+    "wizbii",
+    "businessfrance",
+    "apec.fr",
+    "hellowork",
+    "monster",
+    "jobteaser",
+    "meteojob",
+    "efinancialcareers",
+    "linkfinance",
+    "jobijoba",
+    "engagement-jeunes",
+    "frenchsif",
+    "lever.co",
+    "greenhouse.io",
+    "ashbyhq",
+    "recruitee",
+    "smartrecruiters",
+    "myworkdayjobs",
+    "talent-soft",
+    "icims",
+    "taleo",
+    "successfactors",
+    "teamtailor",
+    "workable",
+    "missionhandicap",
+)
 
 
 def racine(host):
@@ -48,6 +75,7 @@ def racine(host):
 
 def suivre(o):
     import httpx
+
     u = str(o.get("url") or "")
     try:
         r = httpx.get(u, timeout=20, headers=UA, follow_redirects=True)
@@ -65,14 +93,17 @@ def main():
     ap.add_argument("--workers", type=int, default=8)
     a = ap.parse_args()
 
-    if a.fix and not __import__("jutil").garder(QUEUE):   # TODO queue_io
+    if a.fix and not __import__("jutil").garder(QUEUE):  # TODO queue_io
         return 3
     q = __import__("queue_io").charger(QUEUE, descriptions=False)
-    cibles = [o for o in q
-              if str(o.get("url") or "").startswith("http")
-              and not any(b in urlparse(o["url"]).netloc.lower() for b in BOARDS)]
+    cibles = [
+        o
+        for o in q
+        if str(o.get("url") or "").startswith("http")
+        and not any(b in urlparse(o["url"]).netloc.lower() for b in BOARDS)
+    ]
     if a.limit:
-        cibles = cibles[:a.limit]
+        cibles = cibles[: a.limit]
     print(f"{len(cibles)} lien(s) hors job boards a suivre\n")
 
     change = mort = 0
@@ -84,16 +115,20 @@ def main():
                 continue
             if chg:
                 change += 1
-                print(f"  REDIRIGE {str(o.get('entreprise'))[:24]:<26}"
-                      f"{racine(urlparse(o['url']).netloc):<26} -> {racine(urlparse(fin).netloc)}")
+                print(
+                    f"  REDIRIGE {str(o.get('entreprise'))[:24]:<26}"
+                    f"{racine(urlparse(o['url']).netloc):<26} -> {racine(urlparse(fin).netloc)}"
+                )
                 if a.fix:
                     o.setdefault("url_avant_redir", o["url"])
                     o["url"] = fin
 
     if a.fix:
         __import__("jutil").jwrite(QUEUE, q)
-    print(f"\nBILAN : {change} lien(s) changeant de domaine · {mort} injoignable(s)"
-          + ("  — queue mise a jour" if a.fix else "  (rapport seul, --fix pour corriger)"))
+    print(
+        f"\nBILAN : {change} lien(s) changeant de domaine · {mort} injoignable(s)"
+        + ("  — queue mise a jour" if a.fix else "  (rapport seul, --fix pour corriger)")
+    )
     return 0
 
 

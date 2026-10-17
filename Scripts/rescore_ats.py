@@ -6,8 +6,10 @@ Couverture = CV variant. Écrit le nouveau % dans la queue.
 
 Run : python rescore_ats.py            # tout
       python rescore_ats.py --dry      # montre les changements sans écrire"""
+
 import sys, json, argparse
 from pathlib import Path
+
 sys.stdout.reconfigure(encoding="utf-8")
 
 HERE = Path(__file__).resolve().parent
@@ -20,7 +22,8 @@ def main():
     a = ap.parse_args()
 
     import queue_io
-    if a.dry:                      # aucune ecriture : ni verrou, ni relecture
+
+    if a.dry:  # aucune ecriture : ni verrou, ni relecture
         _travail(queue_io.charger(), a)
         return 0
     try:
@@ -35,6 +38,7 @@ def main():
 
 def _travail(q, a):
     from ats_match import score_offer, fit_detail
+
     try:
         from tailor_application import match_skills
     except Exception:
@@ -47,8 +51,9 @@ def _travail(q, a):
         full = " ".join(str(x.get(k) or "") for k in ("poste", "missions", "profil", "description"))
         miss = " ".join(str(x.get(k) or "") for k in ("missions", "description"))
         prof = str(x.get("profil") or "")
-        r = score_offer(dict(role=x.get("poste", ""), missions=miss,
-                             profil=prof, domaine=x.get("domaine", "")))
+        r = score_offer(
+            dict(role=x.get("poste", ""), missions=miss, profil=prof, domaine=x.get("domaine", ""))
+        )
         old = x.get("ats_pct")
         new = r.get("pct")
         if new != old:
@@ -65,11 +70,12 @@ def _travail(q, a):
         if not a.dry:
             x["fit"] = newfit
             x["fit_fin"] = fin
-            x["exp_requise"] = yrs        # années d'expérience exigées (0 = non précisé)
+            x["exp_requise"] = yrs  # années d'expérience exigées (0 = non précisé)
         if match_skills and not a.dry:
             try:
-                x["skills_match"] = len(match_skills(
-                    f"{x.get('poste','')} {x.get('domaine','')} {miss} {prof}"))
+                x["skills_match"] = len(
+                    match_skills(f"{x.get('poste', '')} {x.get('domaine', '')} {miss} {prof}")
+                )
             except Exception:
                 pass
         b = "—" if new is None else f"{(new // 20) * 20}-{(new // 20) * 20 + 19}"

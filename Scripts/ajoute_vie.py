@@ -23,6 +23,7 @@ Run :
   python ajoute_vie.py https://mon-vie-via.businessfrance.fr/offres/245612
   python ajoute_vie.py 245612 --dry
 """
+
 import argparse
 import collections
 import json
@@ -42,9 +43,10 @@ SITE = "https://mon-vie-via.businessfrance.fr/offres/{}"
 
 def fiche(id_):
     import job_sources as J
-    r = urllib.request.Request(API.format(id_),
-                               headers={"x-api-key": J._vie_key(),
-                                        "Accept": "application/json"})
+
+    r = urllib.request.Request(
+        API.format(id_), headers={"x-api-key": J._vie_key(), "Accept": "application/json"}
+    )
     with urllib.request.urlopen(r, timeout=25) as f:
         return json.loads(f.read().decode("utf-8", "replace"))
 
@@ -72,6 +74,7 @@ def construire(d, id_):
 def expire_le(d):
     """La date de fin de diffusion : publication + duree, en jours."""
     import datetime
+
     try:
         d0 = datetime.date.fromisoformat(str(d.get("startBroadcastDate"))[:10])
         return (d0 + datetime.timedelta(days=int(d.get("durationBroadcast") or 30))).isoformat()
@@ -102,8 +105,11 @@ def _incompletes(q):
         m = _RX_ID_VIE.search(o.get("url") or "")
         if not m:
             continue
-        manque = [k for k in ("salaire", "rh", "rh_email", "description", "missions")
-                  if not str(o.get(k) or "").strip()]
+        manque = [
+            k
+            for k in ("salaire", "rh", "rh_email", "description", "missions")
+            if not str(o.get(k) or "").strip()
+        ]
         if manque:
             out.append((m.group(1), o, manque))
     return out
@@ -122,7 +128,7 @@ def completer(a):
     q = queue_io.charger()
     lot = _incompletes(q)
     if a.limite:
-        lot = lot[:a.limite]
+        lot = lot[: a.limite]
     print(f"{len(lot)} V.I.E a completer (sur {len(q)} offres en file)")
     if not lot:
         return 0
@@ -155,8 +161,7 @@ def completer(a):
             print(f"  {i}/{len(lot)} lues — {len(morts)} retirees, {erreurs} en erreur")
         time.sleep(a.pause)
 
-    print(f"\n{len(recolte)} fiches recuperees, {len(morts)} annonces retirees, "
-          f"{erreurs} erreurs")
+    print(f"\n{len(recolte)} fiches recuperees, {len(morts)} annonces retirees, {erreurs} erreurs")
 
     # UN ECHEC TOTAL N'EST PAS « tout a expire ». Si pas une seule fiche ne
     # revient, la cause probable est la cle, le reseau ou l'API — pas une file
@@ -193,7 +198,8 @@ def completer(a):
                 # c'est l'interlocuteur direct : une relance y arrive, la ou
                 # un formulaire n'accuse jamais reception.
                 "rh_email": d.get("contactEmail") or "",
-                "missions": missions, "profil": profil,
+                "missions": missions,
+                "profil": profil,
                 "date_publication": str(d.get("startBroadcastDate"))[:10],
                 "teletravail": "oui" if d.get("teleworkingAvailable") else "non",
             }
@@ -227,13 +233,16 @@ def completer(a):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("offre", nargs="?", default="",
-                    help="identifiant ou URL mon-vie-via")
-    ap.add_argument("--completer", action="store_true",
-                    help="balaie la file et complete toutes les V.I.E incompletes")
+    ap.add_argument("offre", nargs="?", default="", help="identifiant ou URL mon-vie-via")
+    ap.add_argument(
+        "--completer",
+        action="store_true",
+        help="balaie la file et complete toutes les V.I.E incompletes",
+    )
     ap.add_argument("--limite", type=int, default=0, help="avec --completer")
-    ap.add_argument("--pause", type=float, default=0.5,
-                    help="secondes entre deux appels a l'API (defaut 0,5)")
+    ap.add_argument(
+        "--pause", type=float, default=0.5, help="secondes entre deux appels a l'API (defaut 0,5)"
+    )
     ap.add_argument("--dry", action="store_true")
     a = ap.parse_args()
 
@@ -262,16 +271,19 @@ def main():
     dom = classify_domaine(poste)
     lg = langue_offre(poste, desc, lieu)
     try:
-        ats = score_offer(dict(role=poste, missions=missions, profil=profil,
-                               domaine=dom)).get("pct")
+        ats = score_offer(dict(role=poste, missions=missions, profil=profil, domaine=dom)).get(
+            "pct"
+        )
     except Exception:
         ats = None
 
     print(f"{societe} — {poste}")
     print(f"  {lieu} | zone {zone_lieu(lieu)} | langue {lg}")
     print(f"  fit {fit}, experience demandee {yrs} an(s), domaine {dom}, ATS {ats}")
-    print(f"  {d.get('indemnite', 0):.2f} EUR/mois, {d.get('missionDuration')} mois, "
-          f"depart {str(d.get('missionStartDate'))[:10]}")
+    print(
+        f"  {d.get('indemnite', 0):.2f} EUR/mois, {d.get('missionDuration')} mois, "
+        f"depart {str(d.get('missionStartDate'))[:10]}"
+    )
     print(f"  publiee le {str(d.get('startBroadcastDate'))[:10]}, expire le {expire_le(d)}")
     print(f"  {d.get('viewCounter')} vue(s), {d.get('candidateCounter')} candidat(s)")
     if a.dry:
@@ -286,8 +298,7 @@ def main():
     try:
         with queue_io.transaction() as q:
             cle = f"{societe}|{poste}"
-            deja = next((o for o in q
-                         if f"{o.get('entreprise')}|{o.get('poste')}" == cle), None)
+            deja = next((o for o in q if f"{o.get('entreprise')}|{o.get('poste')}" == cle), None)
             if deja is not None:
                 # DEJA EN FILE NE VEUT PAS DIRE DEJA COMPLETE. Le scan quotidien
                 # (job_sources --vie) ne lit que la LISTE : il rend l'intitule,
@@ -304,42 +315,73 @@ def main():
                 # texte entier.
                 neuf = {
                     "salaire": f"{d.get('indemnite', 0):.2f} EUR / mois",
-                    "missions": missions, "profil": profil,
-                    "contrat": "V.I.E", "localisation": lieu,
-                    "zone": zone_lieu(lieu), "exp_requise": yrs,
+                    "missions": missions,
+                    "profil": profil,
+                    "contrat": "V.I.E",
+                    "localisation": lieu,
+                    "zone": zone_lieu(lieu),
+                    "exp_requise": yrs,
                     "date_publication": str(d.get("startBroadcastDate"))[:10],
-                    "ats_pct": ats, "url": url, "url_type": "OFFRE_DIRECTE",
+                    "ats_pct": ats,
+                    "url": url,
+                    "url_type": "OFFRE_DIRECTE",
                     "teletravail": "oui" if d.get("teleworkingAvailable") else "non",
                     "rh": d.get("contactName") or None,
                 }
-                rempli = [k for k, v in neuf.items()
-                          if v not in (None, "", 0) and not str(deja.get(k) or "").strip()]
+                rempli = [
+                    k
+                    for k, v in neuf.items()
+                    if v not in (None, "", 0) and not str(deja.get(k) or "").strip()
+                ]
                 for k in rempli:
                     deja[k] = neuf[k]
                 if len(desc) > len(deja.get("description") or ""):
                     deja["description"] = desc
                     rempli.append("description")
-                print("\ndeja en file — " +
-                      (f"{len(rempli)} champ(s) completes : {', '.join(rempli)}"
-                       if rempli else "rien a completer"))
+                print(
+                    "\ndeja en file — "
+                    + (
+                        f"{len(rempli)} champ(s) completes : {', '.join(rempli)}"
+                        if rempli
+                        else "rien a completer"
+                    )
+                )
                 o = deja
             else:
                 o = {
-                    "entreprise": societe, "poste": poste, "domaine": dom,
-                    "statut": f"Ajout manuel {time.strftime('%Y-%m-%d')}", "url": url,
-                    "cv": None, "lettre": None, "rh": d.get("contactName") or None,
-                    "cv_variant": None, "url_type": "OFFRE_DIRECTE", "site_kind": "board",
-                    "fit": fit, "fit_fin": fin, "exp_requise": yrs, "action": "", "contrat": "V.I.E",
-                    "localisation": lieu, "zone": zone_lieu(lieu),
+                    "entreprise": societe,
+                    "poste": poste,
+                    "domaine": dom,
+                    "statut": f"Ajout manuel {time.strftime('%Y-%m-%d')}",
+                    "url": url,
+                    "cv": None,
+                    "lettre": None,
+                    "rh": d.get("contactName") or None,
+                    "cv_variant": None,
+                    "url_type": "OFFRE_DIRECTE",
+                    "site_kind": "board",
+                    "fit": fit,
+                    "fit_fin": fin,
+                    "exp_requise": yrs,
+                    "action": "",
+                    "contrat": "V.I.E",
+                    "localisation": lieu,
+                    "zone": zone_lieu(lieu),
                     "teletravail": "oui" if d.get("teleworkingAvailable") else "non",
                     "salaire": f"{d.get('indemnite', 0):.2f} EUR / mois",
-                    "profil": profil, "pourquoi": "",
+                    "profil": profil,
+                    "pourquoi": "",
                     "process": str(d.get("startBroadcastDate"))[:10],
                     "date_publication": str(d.get("startBroadcastDate"))[:10],
-                    "source": "vie-api", "missions": missions, "skills_match": 0,
-                    "ats_pct": ats, "canal": "manuel", "is_stage": False,
+                    "source": "vie-api",
+                    "missions": missions,
+                    "skills_match": 0,
+                    "ats_pct": ats,
+                    "canal": "manuel",
+                    "is_stage": False,
                     "priorite": "prio" if fit >= 7 else "normal",
-                    "link_status": "OK", "description": desc,
+                    "link_status": "OK",
+                    "description": desc,
                 }
                 q.append(o)
 
@@ -348,10 +390,18 @@ def main():
             # document peut-etre deja relu, voire deja envoye. On ne produit
             # que ce qui manque, ou ce dont le fichier a disparu.
             from jutil import chemin_de  # noqa: E402  (apres le verrou)
-            off = dict(company=societe, role=poste, offer_text=f"{poste} {desc}",
-                       missions=missions[:400], profil=profil[:300], domaine=dom,
-                       rh=o.get("rh"))
+
+            off = dict(
+                company=societe,
+                role=poste,
+                offer_text=f"{poste} {desc}",
+                missions=missions[:400],
+                profil=profil[:300],
+                domaine=dom,
+                rh=o.get("rh"),
+            )
             from tailor_application import cv_une_page
+
             for quoi, champ in (("CV", "cv"), ("Lettre", "lettre")):
                 ancien = chemin_de(o.get(champ))
                 if ancien is not None and ancien.exists():

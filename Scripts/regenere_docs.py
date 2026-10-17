@@ -26,6 +26,7 @@ Run :
   python regenere_docs.py --cv              # CV
   python regenere_docs.py --cv --sans-pdf   # .docx seuls, PDF plus tard
 """
+
 import argparse
 import subprocess
 import sys
@@ -39,8 +40,8 @@ sys.path.insert(0, str(HERE))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 import chemins
-SORTIE = {"lettre": chemins.LT_PAR_OFFRE,
-          "cv": chemins.CV_PAR_OFFRE}
+
+SORTIE = {"lettre": chemins.LT_PAR_OFFRE, "cv": chemins.CV_PAR_OFFRE}
 
 # LibreOffice converti en LOT. Une conversion a la fois coute 1,2 s dont
 # l'essentiel est le demarrage du programme : 3336 lettres feraient plus d'une
@@ -68,12 +69,15 @@ def convertir(fichiers, exe, dossier):
     """Les .docx -> .pdf, par lots. Rend le nombre de PDF produits."""
     faits = 0
     for i in range(0, len(fichiers), LOT_PDF):
-        lot = fichiers[i:i + LOT_PDF]
+        lot = fichiers[i : i + LOT_PDF]
         try:
-            subprocess.run([exe, "--headless", "--convert-to", "pdf",
-                            "--outdir", str(dossier)] + [str(f) for f in lot],
-                           check=True, capture_output=True,
-                           timeout=60 + 8 * len(lot))
+            subprocess.run(
+                [exe, "--headless", "--convert-to", "pdf", "--outdir", str(dossier)]
+                + [str(f) for f in lot],
+                check=True,
+                capture_output=True,
+                timeout=60 + 8 * len(lot),
+            )
             faits += sum(1 for f in lot if f.with_suffix(".pdf").exists())
         except Exception as e:
             print(f"  ! lot PDF {i // LOT_PDF + 1} : {type(e).__name__}")
@@ -86,8 +90,7 @@ def main():
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--limite", type=int)
     ap.add_argument("--sans-pdf", action="store_true")
-    ap.add_argument("--cv", action="store_true",
-                    help="refaire les CV au lieu des lettres")
+    ap.add_argument("--cv", action="store_true", help="refaire les CV au lieu des lettres")
     a = ap.parse_args()
 
     import queue_io
@@ -102,28 +105,34 @@ def main():
     cibles = [(o, stem_de(o.get(champ))) for o in q if (o.get(champ) or "").strip()]
     cibles = [(o, s) for o, s in cibles if s]
     if a.limite:
-        cibles = cibles[:a.limite]
+        cibles = cibles[: a.limite]
 
     print(f"{len(cibles)} {'CV' if a.cv else 'lettre(s)'} a refaire")
     if a.dry:
         for o, s in cibles[:8]:
-            lg = langue_offre(o.get("poste") or "", o.get("description") or "",
-                          o.get("localisation") or "")
+            lg = langue_offre(
+                o.get("poste") or "", o.get("description") or "", o.get("localisation") or ""
+            )
             print(f"  [{lg}] {s[:78]}")
         print("\n[DRY] rien n'a ete ecrit.")
         return 0
 
     t0 = time.time()
     faits, rates = [], 0
-    offres_de = {}          # stem -> offre, pour reprendre un CV qui deborde
+    offres_de = {}  # stem -> offre, pour reprendre un CV qui deborde
     for n, (o, stem) in enumerate(cibles, 1):
-        off = dict(company=o.get("entreprise") or "", role=o.get("poste") or "",
-                   offer_text=f"{o.get('poste','')} {o.get('description','')}",
-                   missions=(o.get("missions") or "")[:400],
-                   profil=(o.get("profil") or "")[:300],
-                   domaine=o.get("domaine"), rh=o.get("rh"))
-        lg = langue_offre(o.get("poste") or "", o.get("description") or "",
-                          o.get("localisation") or "")
+        off = dict(
+            company=o.get("entreprise") or "",
+            role=o.get("poste") or "",
+            offer_text=f"{o.get('poste', '')} {o.get('description', '')}",
+            missions=(o.get("missions") or "")[:400],
+            profil=(o.get("profil") or "")[:300],
+            domaine=o.get("domaine"),
+            rh=o.get("rh"),
+        )
+        lg = langue_offre(
+            o.get("poste") or "", o.get("description") or "", o.get("localisation") or ""
+        )
         # REPRISES. OneDrive tient les fichiers qu'il vient de synchroniser, et
         # l'ecriture echoue alors en « OSError: [Errno 22] Invalid argument »
         # sur un chemin pourtant valide. Une passe juste apres une autre en a
@@ -170,6 +179,7 @@ def main():
         # lignes ; la conversion par lots ne regarde pas les pages. On reprend
         # un par un ceux qui debordent, avec les allegements de CV/Faits.json.
         from tailor_application import cv_une_page, _pages_pdf
+
         par_stem = offres_de
         trop = [p for p in faits if _pages_pdf(dossier / (Path(p).stem + ".pdf")) > 1]
         print(f"{len(trop)} CV sur plus d'une page, repris un par un")
@@ -177,11 +187,16 @@ def main():
             o = par_stem.get(Path(p).stem)
             if o is None:
                 continue
-            off = dict(company=o.get("entreprise") or "", role=o.get("poste") or "",
-                       offer_text=f"{o.get('poste','')} {o.get('description','')}",
-                       domaine=o.get("domaine"), rh=o.get("rh"))
-            lg = langue_offre(o.get("poste") or "", o.get("description") or "",
-                              o.get("localisation") or "")
+            off = dict(
+                company=o.get("entreprise") or "",
+                role=o.get("poste") or "",
+                offer_text=f"{o.get('poste', '')} {o.get('description', '')}",
+                domaine=o.get("domaine"),
+                rh=o.get("rh"),
+            )
+            lg = langue_offre(
+                o.get("poste") or "", o.get("description") or "", o.get("localisation") or ""
+            )
             cv_une_page(off, nom=Path(p).stem, langue=lg)
     return 0
 

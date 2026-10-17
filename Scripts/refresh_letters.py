@@ -8,25 +8,43 @@
      (« <Entreprise> » + « À l'attention du service Recrutement »)
 
 Idempotent. Run : python refresh_letters.py [--dry] [--no-pdf]"""
+
 import sys, re, json, argparse
 from pathlib import Path
 from datetime import date
 from urllib.parse import unquote
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import chemins
+
 LT_DIR = chemins.LT_PAR_OFFRE
 QUEUE = Path(__file__).resolve().parent / "apply_queue.json"
 
-MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet",
-        "août", "septembre", "octobre", "novembre", "décembre"]
+MOIS = [
+    "janvier",
+    "février",
+    "mars",
+    "avril",
+    "mai",
+    "juin",
+    "juillet",
+    "août",
+    "septembre",
+    "octobre",
+    "novembre",
+    "décembre",
+]
 TODAY = f"Le {date.today().day} {MOIS[date.today().month - 1]} {date.today().year}"
-DATE_RX = re.compile(r"^\s*(le\s+)?\d{1,2}(er)?\s+(janvier|f[ée]vrier|mars|avril|mai|juin|juillet"
-                     r"|ao[ûu]t|septembre|octobre|novembre|d[ée]cembre)\s+\d{4}\s*[.,]?\s*$", re.I)
+DATE_RX = re.compile(
+    r"^\s*(le\s+)?\d{1,2}(er)?\s+(janvier|f[ée]vrier|mars|avril|mai|juin|juillet"
+    r"|ao[ûu]t|septembre|octobre|novembre|d[ée]cembre)\s+\d{4}\s*[.,]?\s*$",
+    re.I,
+)
 ATTN_RX = re.compile(r"^\s*(à\s+l'attention|a\s+l'attention|attn)", re.I)
 
 
@@ -46,12 +64,13 @@ def _entreprises_by_letter():
 
 
 def _set_text(p, txt):
-    for r in p.runs: r.text = ""
+    for r in p.runs:
+        r.text = ""
     (p.runs[0] if p.runs else p.add_run("")).text = txt
 
 
 # ── Nettoyage du titre de poste dans les lettres DEJA ecrites ────────────────
-from tailor_application import titre_poste, _de   # source unique du nettoyage
+from tailor_application import titre_poste, _de  # source unique du nettoyage
 
 # Les deux formulations produites au fil du temps par le generateur.
 # On capture le titre jusqu'a un ancrage FIXE, pas jusqu'a la fin de ligne :
@@ -98,18 +117,33 @@ def fix_doc(path, ent="", dry=False):
         # ancien format : date noyée dans l'en-tête multiligne → remplace dans le texte
         if DATE_RX.match(p.text.strip()):
             if p.text.strip() != TODAY:
-                _set_text(p, TODAY); p.alignment = WD_ALIGN_PARAGRAPH.RIGHT; changed = True
-            has_date = True; break
-        m = re.search(r"\d{1,2}(er)?\s+(janvier|f[ée]vrier|mars|avril|mai|juin|juillet"
-                      r"|ao[ûu]t|septembre|octobre|novembre|d[ée]cembre)\s+\d{4}", p.text, re.I)
+                _set_text(p, TODAY)
+                p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                changed = True
+            has_date = True
+            break
+        m = re.search(
+            r"\d{1,2}(er)?\s+(janvier|f[ée]vrier|mars|avril|mai|juin|juillet"
+            r"|ao[ûu]t|septembre|octobre|novembre|d[ée]cembre)\s+\d{4}",
+            p.text,
+            re.I,
+        )
         if m and len(p.text) < 200:
-            new = p.text[:m.start()] + TODAY.replace("Le ", "") + p.text[m.end():]
+            new = p.text[: m.start()] + TODAY.replace("Le ", "") + p.text[m.end() :]
             if new != p.text:
-                _set_text(p, new); changed = True
-            has_date = True; break
+                _set_text(p, new)
+                changed = True
+            has_date = True
+            break
     if not has_date:
-        anchor = next((p for p in paras[:14]
-                       if p.text.strip().lower().startswith(("objet", "madame, monsieur"))), None)
+        anchor = next(
+            (
+                p
+                for p in paras[:14]
+                if p.text.strip().lower().startswith(("objet", "madame, monsieur"))
+            ),
+            None,
+        )
         if anchor is not None and not dry:
             np = anchor.insert_paragraph_before(TODAY)
             np.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -142,17 +176,20 @@ def fix_doc(path, ent="", dry=False):
     # 3) ORDRE : Objet AVANT Madame, Monsieur
     paras = doc.paragraphs
     obj = next((p for p in paras[:14] if p.text.strip().lower().startswith("objet")), None)
-    sal = next((p for p in paras[:14] if p.text.strip().lower().startswith("madame, monsieur")), None)
+    sal = next(
+        (p for p in paras[:14] if p.text.strip().lower().startswith("madame, monsieur")), None
+    )
     if obj is not None and sal is not None:
-        oi = paras.index(obj); si = paras.index(sal)
-        if si < oi:   # salutation avant l'objet → déplace l'objet juste avant
+        oi = paras.index(obj)
+        si = paras.index(sal)
+        if si < oi:  # salutation avant l'objet → déplace l'objet juste avant
             sal._element.addprevious(obj._element)
             changed = True
 
     if changed and not dry:
         try:
             doc.save(str(path))
-        except OSError:   # fichier verrouillé (OneDrive) → on saute, relançable
+        except OSError:  # fichier verrouillé (OneDrive) → on saute, relançable
             return False
     return changed
 
@@ -161,7 +198,7 @@ def main():
     # Verrou inter-processus : ce programme reecrit la queue ENTIERE. Si un
     # autre le fait en meme temps (tache planifiee vs app), le dernier qui
     # ecrit efface le travail de l'autre.
-    if not __import__('jutil').garder(QUEUE):
+    if not __import__("jutil").garder(QUEUE):
         return 3
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true")
@@ -174,30 +211,47 @@ def main():
     for i, f in enumerate(docs):
         n += bool(fix_doc(f, ents.get(f.stem, ""), dry=a.dry))
         if (i + 1) % 300 == 0:
-            print(f"  … {i+1}")
+            print(f"  … {i + 1}")
     print(f"{'[DRY] ' if a.dry else ''}{n} lettres mises à jour (date/ordre/destinataire)")
     if a.dry or a.no_pdf:
         return
     # PDF périmés (mtime) régénérés
     import subprocess
-    exe = next((s for s in (r"C:\Program Files\LibreOffice\program\soffice.exe",
-                            r"C:\Program Files (x86)\LibreOffice\program\soffice.exe")
-                if Path(s).exists()), None)
-    todo = [f for f in docs if f.with_suffix(".pdf").exists()
-            and f.with_suffix(".pdf").stat().st_mtime < f.stat().st_mtime]
+
+    exe = next(
+        (
+            s
+            for s in (
+                r"C:\Program Files\LibreOffice\program\soffice.exe",
+                r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
+            )
+            if Path(s).exists()
+        ),
+        None,
+    )
+    todo = [
+        f
+        for f in docs
+        if f.with_suffix(".pdf").exists()
+        and f.with_suffix(".pdf").stat().st_mtime < f.stat().st_mtime
+    ]
     if not exe:
-        print(f"! LibreOffice absent — {len(todo)} PDF non resynchronisés"); return
+        print(f"! LibreOffice absent — {len(todo)} PDF non resynchronisés")
+        return
     print(f"Resynchronisation de {len(todo)} PDF…")
     ok = 0
     for i, f in enumerate(todo):
         try:
-            r = subprocess.run([exe, "--headless", "--convert-to", "pdf",
-                                "--outdir", str(LT_DIR), str(f)], capture_output=True, timeout=90)
-            ok += (r.returncode == 0)
+            r = subprocess.run(
+                [exe, "--headless", "--convert-to", "pdf", "--outdir", str(LT_DIR), str(f)],
+                capture_output=True,
+                timeout=90,
+            )
+            ok += r.returncode == 0
         except Exception:
             pass
         if (i + 1) % 100 == 0:
-            print(f"  … {i+1}/{len(todo)}")
+            print(f"  … {i + 1}/{len(todo)}")
     print(f"PDF resynchronisés : {ok}/{len(todo)}")
 
 

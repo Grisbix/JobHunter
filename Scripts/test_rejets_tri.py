@@ -8,6 +8,7 @@ offre deja en file. Sans reseau, sur fichiers jetables.
 
 Run : python test_rejets_tri.py
 """
+
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
 import sys
 import json
@@ -42,30 +43,56 @@ print("\n── A. memoire ──")
 R.ajouter({"Acme|Senior ESG Manager": "seniorite"}, f, j0)
 check("rejet memorise", "Acme|Senior ESG Manager" in R.charger(f, j0), True)
 check("motif garde", R.charger(f, j0)["Acme|Senior ESG Manager"]["m"], "seniorite")
-check("encore valable a J+29", "Acme|Senior ESG Manager" in R.charger(f, j0 + datetime.timedelta(29)), True)
-check("expire a J+30", "Acme|Senior ESG Manager" in R.charger(f, j0 + datetime.timedelta(30)), False)
+check(
+    "encore valable a J+29",
+    "Acme|Senior ESG Manager" in R.charger(f, j0 + datetime.timedelta(29)),
+    True,
+)
+check(
+    "expire a J+30", "Acme|Senior ESG Manager" in R.charger(f, j0 + datetime.timedelta(30)), False
+)
 R.ajouter({"Acme|Senior ESG Manager": "experience"}, f, j0 + datetime.timedelta(10))
-check("re-rejet : date d'origine conservee",
-      R.charger(f, j0 + datetime.timedelta(10))["Acme|Senior ESG Manager"]["d"], j0.isoformat())
+check(
+    "re-rejet : date d'origine conservee",
+    R.charger(f, j0 + datetime.timedelta(10))["Acme|Senior ESG Manager"]["d"],
+    j0.isoformat(),
+)
 R.ajouter({"B|X": "experience"}, f, j0 + datetime.timedelta(31))
-check("les expires sont purges a l'ecriture",
-      sorted(json.loads(f.read_text(encoding="utf-8"))), ["B|X"])
+check(
+    "les expires sont purges a l'ecriture",
+    sorted(json.loads(f.read_text(encoding="utf-8"))),
+    ["B|X"],
+)
 check("fichier absent : aucun rejet", R.charger(tmpd / "absent.json"), {})
 
 print("\n── B. la collecte ignore une offre rejetee ──")
 q = tmpd / "q.json"
-q.write_text(json.dumps([{
-    "entreprise": "Mirova", "poste": "Analyste ESG", "statut": "Scan 2026-10-01",
-    "url": "https://www.linkedin.com/jobs/view/1", "fit": 9, "description": "",
-}], ensure_ascii=False), encoding="utf-8")
+q.write_text(
+    json.dumps(
+        [
+            {
+                "entreprise": "Mirova",
+                "poste": "Analyste ESG",
+                "statut": "Scan 2026-10-01",
+                "url": "https://www.linkedin.com/jobs/view/1",
+                "fit": 9,
+                "description": "",
+            }
+        ],
+        ensure_ascii=False,
+    ),
+    encoding="utf-8",
+)
 rej = tmpd / "rej_merge.json"
 R.ajouter({"Deloitte|Senior Manager ESG": "seniorite", "Mirova|Analyste ESG": "experience"}, rej)
 _q, _r = J.QUEUE, J.REJETS_TRI
 J.QUEUE, J.REJETS_TRI = q, rej
 try:
-    entrant = [J._mk("Senior Manager ESG", "https://www.linkedin.com/jobs/view/2", "Deloitte"),
-               J._mk("Analyste ESG", "https://www.linkedin.com/jobs/view/1", "Mirova"),
-               J._mk("Chargé de mission ESG", "https://www.linkedin.com/jobs/view/3", "Bpifrance")]
+    entrant = [
+        J._mk("Senior Manager ESG", "https://www.linkedin.com/jobs/view/2", "Deloitte"),
+        J._mk("Analyste ESG", "https://www.linkedin.com/jobs/view/1", "Mirova"),
+        J._mk("Chargé de mission ESG", "https://www.linkedin.com/jobs/view/3", "Bpifrance"),
+    ]
     r = J.merge_into_queue(entrant, dry=False)
     apres = {f"{o['entreprise']}|{o['poste']}" for o in json.loads(q.read_text(encoding="utf-8"))}
     check("offre rejetee non reprise", "Deloitte|Senior Manager ESG" in apres, False)

@@ -18,29 +18,73 @@ Run :
   python probe_workday.py
   python probe_workday.py --tenants axa,allianz --json out.json
 """
+
 import sys, json, argparse, concurrent.futures as cf
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 
-UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      "Accept": "application/json", "Content-Type": "application/json"}
+UA = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+}
 
 # Groupes dont la page carriere est bloquee par anti-bot (test_acces_sites.py)
-TENANTS = ["axa", "axaim", "axa-im", "axaxl", "allianz", "allianzgi", "allianzse",
-           "bnpparibas", "bnp", "bpifrance", "swissre", "swisslife", "juliusbaer",
-           "lombardodier", "cushwake", "cushmanwakefield", "greenly", "sweep",
-           "amundi", "natixis", "societegenerale", "creditagricole", "schroders",
-           "abrdn", "robeco", "generali", "zurich", "aviva", "legalandgeneral"]
+TENANTS = [
+    "axa",
+    "axaim",
+    "axa-im",
+    "axaxl",
+    "allianz",
+    "allianzgi",
+    "allianzse",
+    "bnpparibas",
+    "bnp",
+    "bpifrance",
+    "swissre",
+    "swisslife",
+    "juliusbaer",
+    "lombardodier",
+    "cushwake",
+    "cushmanwakefield",
+    "greenly",
+    "sweep",
+    "amundi",
+    "natixis",
+    "societegenerale",
+    "creditagricole",
+    "schroders",
+    "abrdn",
+    "robeco",
+    "generali",
+    "zurich",
+    "aviva",
+    "legalandgeneral",
+]
 HOSTS = ["wd1", "wd2", "wd3", "wd5", "wd12", "wd103"]
 # Workday n'impose aucune convention pour le nom du site : on tente les formes vues
-SITES = ["careers", "Careers", "External", "external", "ExternalCareerSite",
-         "External_Career_Site", "Global", "global", "jobs", "Jobs",
-         "GlobalCareers", "CareerSite", "Professional", "Experienced"]
+SITES = [
+    "careers",
+    "Careers",
+    "External",
+    "external",
+    "ExternalCareerSite",
+    "External_Career_Site",
+    "Global",
+    "global",
+    "jobs",
+    "Jobs",
+    "GlobalCareers",
+    "CareerSite",
+    "Professional",
+    "Experienced",
+]
 
 
 def tenant_vivant(tenant, host):
     import httpx
+
     url = f"https://{tenant}.{host}.myworkdayjobs.com/"
     try:
         r = httpx.get(url, timeout=10, headers=UA, follow_redirects=True)
@@ -51,10 +95,16 @@ def tenant_vivant(tenant, host):
 
 def probe_site(tenant, host, site):
     import httpx
+
     url = f"https://{tenant}.{host}.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs"
     try:
-        r = httpx.post(url, timeout=12, headers=UA, follow_redirects=True,
-                       json={"appliedFacets": {}, "limit": 20, "offset": 0, "searchText": ""})
+        r = httpx.post(
+            url,
+            timeout=12,
+            headers=UA,
+            follow_redirects=True,
+            json={"appliedFacets": {}, "limit": 20, "offset": 0, "searchText": ""},
+        )
         if r.status_code != 200:
             return None
         d = r.json()
@@ -63,9 +113,14 @@ def probe_site(tenant, host, site):
     n = int(d.get("total") or 0)
     if n <= 0:
         return None
-    return {"tenant": tenant, "host": host, "site": site, "n": n,
-            "url": url,
-            "titres": [p.get("title", "") for p in (d.get("jobPostings") or [])[:3]]}
+    return {
+        "tenant": tenant,
+        "host": host,
+        "site": site,
+        "n": n,
+        "url": url,
+        "titres": [p.get("title", "") for p in (d.get("jobPostings") or [])[:3]],
+    }
 
 
 def main():
@@ -87,15 +142,19 @@ def main():
                 print(f"  · tenant trouve : {r[0]}.{r[1]}")
 
     combos = [(t, h, s) for (t, h) in vivants for s in SITES]
-    print(f"\nEtape 2 : {len(vivants)} tenant(s) x {len(SITES)} noms de site = {len(combos)} requetes…")
+    print(
+        f"\nEtape 2 : {len(vivants)} tenant(s) x {len(SITES)} noms de site = {len(combos)} requetes…"
+    )
 
     found = []
     with cf.ThreadPoolExecutor(max_workers=a.workers) as ex:
         for r in ex.map(lambda c: probe_site(*c), combos):
             if r:
                 found.append(r)
-                print(f"  OK {r['tenant']}.{r['host']}/{r['site']:<22} {r['n']:>5} offres | "
-                      + " / ".join(t[:34] for t in r["titres"][:2]))
+                print(
+                    f"  OK {r['tenant']}.{r['host']}/{r['site']:<22} {r['n']:>5} offres | "
+                    + " / ".join(t[:34] for t in r["titres"][:2])
+                )
 
     found.sort(key=lambda r: -r["n"])
     print(f"\n=== {len(found)} flux Workday actifs ===")

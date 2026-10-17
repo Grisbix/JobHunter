@@ -14,6 +14,7 @@ Run :
   python probe_ats.py --slugs dnca,comgest   # teste des slugs precis
   python probe_ats.py --json out.json
 """
+
 import sys, json, argparse, concurrent.futures as cf
 from pathlib import Path
 
@@ -26,43 +27,118 @@ UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.3
 # aucune convention (tiret, casse, nom court…), donc on tente plusieurs formes.
 CANDIDATS = [
     # ── Sociétés de gestion / AM françaises ──
-    "lazard", "lazardfreresgestion", "lfde", "lafinancieredelechiquier",
-    "amiralgestion", "amiral", "comgest", "carmignac", "dnca", "dncafinance",
-    "tocqueville", "tocquevillefinance", "edmonddrothschild", "edram",
-    "rothschildandco", "rothschildandcogroup", "arbevel", "financierearbevel",
-    "montpensier", "montpensierfinance", "moneta", "monetaam", "trusteam",
-    "sanso", "sansois", "inocap", "inocapgestion", "groupamaam", "groupama",
-    "ofiinvest", "ofi", "creditmutuelam", "palatineam", "vegaim",
-    "erasmusgestion", "clartan", "eiffelinvestmentgroup", "eiffel",
-    "rgreeninvest", "rgreen", "demeter", "demeterpartners", "apicil",
-    "federalfinance", "lbpam", "swisslifeam", "candriam", "pictet",
-    "tikehaucapital", "tikehau", "meeschaert", "sycomore",
+    "lazard",
+    "lazardfreresgestion",
+    "lfde",
+    "lafinancieredelechiquier",
+    "amiralgestion",
+    "amiral",
+    "comgest",
+    "carmignac",
+    "dnca",
+    "dncafinance",
+    "tocqueville",
+    "tocquevillefinance",
+    "edmonddrothschild",
+    "edram",
+    "rothschildandco",
+    "rothschildandcogroup",
+    "arbevel",
+    "financierearbevel",
+    "montpensier",
+    "montpensierfinance",
+    "moneta",
+    "monetaam",
+    "trusteam",
+    "sanso",
+    "sansois",
+    "inocap",
+    "inocapgestion",
+    "groupamaam",
+    "groupama",
+    "ofiinvest",
+    "ofi",
+    "creditmutuelam",
+    "palatineam",
+    "vegaim",
+    "erasmusgestion",
+    "clartan",
+    "eiffelinvestmentgroup",
+    "eiffel",
+    "rgreeninvest",
+    "rgreen",
+    "demeter",
+    "demeterpartners",
+    "apicil",
+    "federalfinance",
+    "lbpam",
+    "swisslifeam",
+    "candriam",
+    "pictet",
+    "tikehaucapital",
+    "tikehau",
+    "meeschaert",
+    "sycomore",
     # ── ESG / climat : data, notation, conseil ──
-    "ethifinance", "carbone4", "carbon4finance", "icare", "icareconsult",
-    "quantis", "axylia", "novethic", "deepki", "ecoact", "tennaxia",
-    "impakanalytics", "impak", "sopht", "metron", "greenomy", "briink",
-    "matter", "clarity-ai", "clarityai", "esgbook", "sustainalytics",
-    "worldfavor", "position-green", "positiongreen", "coolset", "plana",
-    "climatiq", "altruistiq", "emitwise", "normative", "greenly", "sweep",
+    "ethifinance",
+    "carbone4",
+    "carbon4finance",
+    "icare",
+    "icareconsult",
+    "quantis",
+    "axylia",
+    "novethic",
+    "deepki",
+    "ecoact",
+    "tennaxia",
+    "impakanalytics",
+    "impak",
+    "sopht",
+    "metron",
+    "greenomy",
+    "briink",
+    "matter",
+    "clarity-ai",
+    "clarityai",
+    "esgbook",
+    "sustainalytics",
+    "worldfavor",
+    "position-green",
+    "positiongreen",
+    "coolset",
+    "plana",
+    "climatiq",
+    "altruistiq",
+    "emitwise",
+    "normative",
+    "greenly",
+    "sweep",
 ]
 
 APIS = {
-    "greenhouse":      lambda s: f"https://boards-api.greenhouse.io/v1/boards/{s}/jobs?content=true",
-    "lever":           lambda s: f"https://api.lever.co/v0/postings/{s}?mode=json",
-    "ashby":           lambda s: f"https://api.ashbyhq.com/posting-api/job-board/{s}",
-    "recruitee":       lambda s: f"https://{s}.recruitee.com/api/offers/",
-    "smartrecruiters": lambda s: f"https://api.smartrecruiters.com/v1/companies/{s}/postings?limit=100",
+    "greenhouse": lambda s: f"https://boards-api.greenhouse.io/v1/boards/{s}/jobs?content=true",
+    "lever": lambda s: f"https://api.lever.co/v0/postings/{s}?mode=json",
+    "ashby": lambda s: f"https://api.ashbyhq.com/posting-api/job-board/{s}",
+    "recruitee": lambda s: f"https://{s}.recruitee.com/api/offers/",
+    "smartrecruiters": lambda s: (
+        f"https://api.smartrecruiters.com/v1/companies/{s}/postings?limit=100"
+    ),
 }
 
 
 def count_jobs(kind, data):
     """Nb d'offres selon la forme de réponse propre à chaque ATS."""
     try:
-        if kind == "greenhouse":      return len(data.get("jobs", []))
-        if kind == "lever":           return len(data) if isinstance(data, list) else 0
-        if kind == "ashby":           return len(data.get("jobs", []))
-        if kind == "recruitee":       return len(data.get("offers", []))
-        if kind == "smartrecruiters": return int(data.get("totalFound") or len(data.get("content", [])))
+        if kind == "greenhouse":
+            return len(data.get("jobs", []))
+        if kind == "lever":
+            return len(data) if isinstance(data, list) else 0
+        if kind == "ashby":
+            return len(data.get("jobs", []))
+        if kind == "recruitee":
+            return len(data.get("offers", []))
+        if kind == "smartrecruiters":
+            return int(data.get("totalFound") or len(data.get("content", [])))
     except Exception:
         pass
     return 0
@@ -70,11 +146,16 @@ def count_jobs(kind, data):
 
 def titles(kind, data, n=3):
     try:
-        if kind == "greenhouse":      return [j.get("title", "") for j in data.get("jobs", [])[:n]]
-        if kind == "lever":           return [j.get("text", "") for j in data[:n]]
-        if kind == "ashby":           return [j.get("title", "") for j in data.get("jobs", [])[:n]]
-        if kind == "recruitee":       return [j.get("title", "") for j in data.get("offers", [])[:n]]
-        if kind == "smartrecruiters": return [j.get("name", "") for j in data.get("content", [])[:n]]
+        if kind == "greenhouse":
+            return [j.get("title", "") for j in data.get("jobs", [])[:n]]
+        if kind == "lever":
+            return [j.get("text", "") for j in data[:n]]
+        if kind == "ashby":
+            return [j.get("title", "") for j in data.get("jobs", [])[:n]]
+        if kind == "recruitee":
+            return [j.get("title", "") for j in data.get("offers", [])[:n]]
+        if kind == "smartrecruiters":
+            return [j.get("name", "") for j in data.get("content", [])[:n]]
     except Exception:
         pass
     return []
@@ -82,6 +163,7 @@ def titles(kind, data, n=3):
 
 def probe(kind, slug):
     import httpx
+
     try:
         r = httpx.get(APIS[kind](slug), timeout=12, headers=UA, follow_redirects=True)
         if r.status_code != 200:
@@ -111,8 +193,10 @@ def main():
         for r in ex.map(lambda t: probe(*t), jobs):
             if r:
                 found.append(r)
-                print(f"  ✅ {r['ats']:<16} {r['slug']:<24} {r['n']:>3} offres | "
-                      + " / ".join(t[:34] for t in r['titres'][:2]))
+                print(
+                    f"  ✅ {r['ats']:<16} {r['slug']:<24} {r['n']:>3} offres | "
+                    + " / ".join(t[:34] for t in r["titres"][:2])
+                )
 
     found.sort(key=lambda r: -r["n"])
     print(f"\n=== {len(found)} flux ATS actifs sur {len(slugs)} slugs testés ===")

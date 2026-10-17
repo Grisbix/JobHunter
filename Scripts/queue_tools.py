@@ -8,6 +8,7 @@ Appelé par apply_runner (write-back après homepage_fallback) et le bouton JobH
 CLI : python queue_tools.py mark        # marque les URLs mortes
       python queue_tools.py test        # auto-test (fichier temporaire)
 """
+
 import json, sys
 from pathlib import Path
 
@@ -20,6 +21,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 def load(path=QUEUE):
     return json.loads(Path(path).read_text(encoding="utf-8"))
+
 
 def save(rows, path=QUEUE):
     Path(path).write_text(json.dumps(rows, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -38,6 +40,7 @@ def _tag(res):
 
 _HARD_HOSTS = ("linkedin.", "indeed.", "glassdoor.")  # anti-bot systématique : inutile de scanner
 
+
 def mark_dead(path=QUEUE, verbose=True, _checker=None, skip_hard=True):
     """Vérifie chaque URL http unique de la queue, écrit `link_status` sur chaque offre.
     skip_hard=True : LinkedIn/Indeed/Glassdoor tagués ANTI-BOT sans HTTP (scan inutile, ban).
@@ -45,13 +48,18 @@ def mark_dead(path=QUEUE, verbose=True, _checker=None, skip_hard=True):
     Retour {total, checked, skipped_hard, counts:{tag:n}}."""
     rows = load(path)
     all_urls = {r["url"] for r in rows if str(r.get("url") or "").startswith("http")}
-    def _hard(u): return skip_hard and any(h in u.lower() for h in _HARD_HOSTS)
+
+    def _hard(u):
+        return skip_hard and any(h in u.lower() for h in _HARD_HOSTS)
+
     urls = sorted(u for u in all_urls if not _hard(u))
     hard = sorted(u for u in all_urls if _hard(u))
     if _checker is None:
         from link_check import batch_check as _checker
     if verbose:
-        print(f"Scan {len(urls)} URLs (carrière/ATS/homepage) · {len(hard)} LinkedIn/Indeed sautées (anti-bot)…")
+        print(
+            f"Scan {len(urls)} URLs (carrière/ATS/homepage) · {len(hard)} LinkedIn/Indeed sautées (anti-bot)…"
+        )
     res = _checker(urls) if urls else {}
     tags = {u: _tag(res.get(u, {"live": False, "status": 0})) for u in urls}
     for u in hard:
@@ -65,8 +73,9 @@ def mark_dead(path=QUEUE, verbose=True, _checker=None, skip_hard=True):
     save(rows, path)
     # sidecar (survit à un rebuild : référence/inspection)
     try:
-        Path(SIDECAR if path == QUEUE else Path(path).with_name("link_status.json")) \
-            .write_text(json.dumps(tags, ensure_ascii=False, indent=1), encoding="utf-8")
+        Path(SIDECAR if path == QUEUE else Path(path).with_name("link_status.json")).write_text(
+            json.dumps(tags, ensure_ascii=False, indent=1), encoding="utf-8"
+        )
     except Exception:
         pass
     if verbose:
@@ -112,6 +121,7 @@ def writeback(old_url, new_url=None, link_status=None, path=QUEUE):
 
 def _selftest():
     import tempfile, os
+
     tf = os.path.join(tempfile.gettempdir(), "qt_test_queue.json")
     rows = [
         {"entreprise": "A", "poste": "x", "url": "https://live.test/1"},
@@ -128,10 +138,12 @@ def _selftest():
     r = mark_dead(tf, verbose=False, _checker=lambda urls: fake)
     got = {x["entreprise"]: x.get("link_status") for x in load(tf)}
     P = F = 0
+
     def ck(n, c):
         nonlocal P, F
         (P := P + 1) if c else (F := F + 1)
         print(("  OK " if c else "  KO ") + n)
+
     ck("live→OK", got["A"] == "OK")
     ck("404→MORT", got["B"] == "MORT")
     ck("soft-404→EXPIREE", got["C"] == "EXPIREE")
@@ -152,7 +164,7 @@ if __name__ == "__main__":
         sys.exit(0 if _selftest() else 1)
     elif cmd == "mark":
         mark_dead()
-    elif cmd == "prune":            # mark_dead puis supprime les MORT
+    elif cmd == "prune":  # mark_dead puis supprime les MORT
         mark_dead()
         prune()
     else:

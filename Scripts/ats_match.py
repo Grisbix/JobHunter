@@ -14,6 +14,7 @@ Run:
     python ats_match.py --all --min 0          # rapport complet -> ats_report.csv
     python ats_match.py --n 12
 """
+
 import argparse, csv, re, sys
 from pathlib import Path
 from docx import Document
@@ -23,12 +24,12 @@ try:
 except Exception:
     pass
 
-from tailor_application import (SKILL_LEX, CV_ATS, CV_VARIANT, cv_variant_key,
-                                has_skill)
+from tailor_application import SKILL_LEX, CV_ATS, CV_VARIANT, cv_variant_key, has_skill
 import profil as _P
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_CSV = ROOT / "Scripts" / "ats_report.csv"
+
 
 def cv_text(variant_key):
     """Texte concaténé du CV variant (lower)."""
@@ -41,11 +42,15 @@ def cv_text(variant_key):
     except Exception:
         return ""
 
+
 _cv_cache = {}
+
+
 def cv_text_cached(k):
     if k not in _cv_cache:
         _cv_cache[k] = cv_text(k)
     return _cv_cache[k]
+
 
 def skills_in(text):
     """Set des libellés SKILL_LEX présents dans le texte.
@@ -55,9 +60,9 @@ def skills_in(text):
     t = (text or "").lower()
     return {label for label in SKILL_LEX if has_skill(label, t)}
 
+
 # ── Détecteur d'expérience requise ──
-_EXP_NUM = re.compile(
-    r"(\d{1,2})\s*(?:\+|ans?|an\b|années?|years?|yrs?)\+?", re.I)
+_EXP_NUM = re.compile(r"(\d{1,2})\s*(?:\+|ans?|an\b|années?|years?|yrs?)\+?", re.I)
 _EXP_CTX = re.compile(r"(exp[ée]rien|experien|ann[ée]es?\s+d|years?\s+of|d['e]\s*exp)", re.I)
 # Niveau vise : profil.json, section « niveau ». Cherches dans l'INTITULE seul
 # (voir fit_detail) ; « lead » n'y est pas en sous-chaine — il attrape « Lead
@@ -66,6 +71,7 @@ JUNIOR = tuple(_P.get("niveau.mots_junior", []) or [])
 SENIOR = tuple(_P.get("niveau.mots_senior", []) or [])
 _RX_SENIOR_FIN = _P.motif(_P.get("niveau.senior_en_fin", []))
 NEG = tuple(_P.get("niveau.mots_negatifs", []) or [])
+
 
 def experience_years(text):
     """Années d'expérience EXIGÉES détectées (0 si aucune). Prend le max des nombres
@@ -82,10 +88,25 @@ def experience_years(text):
     inaperçue. CNP « EXPERT INVESTISSEMENT RESPONSABLE » sortait ainsi à fit 10
     avec exp_requise = 0 alors que l'annonce demande plus de dix ans."""
     t = re.sub(r"\s+", " ", (text or "")).lower()
-    if any(k in t for k in ("alternance", "alternant", "apprenti", "stage", "stagiaire",
-                            "internship", "intern ", "working student", "jeune diplôm",
-                            "débutant", "debutant", "entry level", "graduate program")):
-        return 0                       # offre junior : un '10 ans' isolé = bruit
+    if any(
+        k in t
+        for k in (
+            "alternance",
+            "alternant",
+            "apprenti",
+            "stage",
+            "stagiaire",
+            "internship",
+            "intern ",
+            "working student",
+            "jeune diplôm",
+            "débutant",
+            "debutant",
+            "entry level",
+            "graduate program",
+        )
+    ):
+        return 0  # offre junior : un '10 ans' isolé = bruit
     yrs = 0
     for m in _EXP_NUM.finditer(t):
         a, b = m.start(), m.end()
@@ -97,12 +118,13 @@ def experience_years(text):
         # ressortait à exp_requise = 0. À DROITE on reste serré : « 5 ans »
         # suivi trente caractères plus loin d'un « expérience » appartenant à
         # la phrase suivante ne dit rien de ce nombre-là.
-        ctx = t[max(0, a - 70):min(len(t), b + 28)]
+        ctx = t[max(0, a - 70) : min(len(t), b + 28)]
         if _EXP_CTX.search(ctx):
             n = int(m.group(1))
-            if 1 <= n <= 15:           # exp réaliste ; >15 = âge/ancienneté → ignoré
+            if 1 <= n <= 15:  # exp réaliste ; >15 = âge/ancienneté → ignoré
                 yrs = max(yrs, n)
     return yrs
+
 
 # ── Scoring VECTORIEL : axes ponderes, au lieu de « +1 par competence » ──
 # L'ancien fit = 2 + len(skills_in) saturait : « Assistant administratif » matchait
@@ -158,13 +180,16 @@ def _titre_hors_cible(role):
     tech = _c(_RX_TECHNIQUE_TITRE, role) and not _c(_RX_TITRE_FINANCE, role)
     return bool(tech or _c(_RX_HORS_METIER, role))
 
+
 # ── Anti-boilerplate ─────────────────────────────────────────────────────────
 # Une description d'entreprise de 8000 caracteres qui dit UNE fois chacun de
 # trois mots de la cible sature l'axe : c'est du discours d'employeur, pas le
 # poste. La DENSITE (marqueurs de l'intitule coeur pour 1000 caracteres) separe
 # les deux ; en dessous du seuil, l'axe coeur est attenue au prorata.
-_ESG_DENSITE_MIN = float(_SC.get("densite_coeur_min", 1.0))      # marqueurs pour 1000 caracteres
-_ESG_DENSITE_LONG = int(_SC.get("densite_coeur_longueur", 800))     # en deca, le texte est trop court pour qu'une densite veuille dire quelque chose
+_ESG_DENSITE_MIN = float(_SC.get("densite_coeur_min", 1.0))  # marqueurs pour 1000 caracteres
+_ESG_DENSITE_LONG = int(
+    _SC.get("densite_coeur_longueur", 800)
+)  # en deca, le texte est trop court pour qu'une densite veuille dire quelque chose
 
 
 def densite_esg(text):
@@ -192,11 +217,13 @@ def axis_scores(text):
             out[COEUR] *= d / _ESG_DENSITE_MIN
     return out
 
+
 _NIV = _P.get("niveau", {}) or {}
 _BONUS_JUNIOR = float(_NIV.get("bonus_junior", 1.0))
 _MALUS_SENIOR = float(_NIV.get("malus_senior", 2.0))
-_MALUS_EXP = sorted(((int(k), float(v)) for k, v in
-                     (_NIV.get("malus_experience") or {}).items()), reverse=True)
+_MALUS_EXP = sorted(
+    ((int(k), float(v)) for k, v in (_NIV.get("malus_experience") or {}).items()), reverse=True
+)
 
 
 def _malus_experience(yrs):
@@ -224,12 +251,48 @@ LANGUES_PARLEES = set(_P.get("langues_parlees", ["fr", "en"]) or ["fr", "en"])
 # quelques mots d'annonce sans equivalent ailleurs. Les mots communs a deux
 # langues (« de », « en », « die ») sont evites.
 _MOTS_OUTILS = {
-    "fr": {"le", "la", "les", "des", "du", "et", "pour", "vous", "nous", "avec", "dans", "une", "sur"},
+    "fr": {
+        "le",
+        "la",
+        "les",
+        "des",
+        "du",
+        "et",
+        "pour",
+        "vous",
+        "nous",
+        "avec",
+        "dans",
+        "une",
+        "sur",
+    },
     "en": {"the", "and", "you", "with", "our", "for", "will", "are", "your", "this", "that", "of"},
     "de": {"und", "der", "wir", "sie", "mit", "für", "ist", "das", "eine", "auf", "zu", "ihre"},
-    "nl": {"het", "een", "wij", "jij", "jouw", "voor", "zijn", "bij", "ons", "onze", "wordt", "naar", "ook",
-           "deze", "dit", "wat", "ervaring", "kennis", "functie", "solliciteren", "vacature",
-           "werkzaamheden", "beheer"},
+    "nl": {
+        "het",
+        "een",
+        "wij",
+        "jij",
+        "jouw",
+        "voor",
+        "zijn",
+        "bij",
+        "ons",
+        "onze",
+        "wordt",
+        "naar",
+        "ook",
+        "deze",
+        "dit",
+        "wat",
+        "ervaring",
+        "kennis",
+        "functie",
+        "solliciteren",
+        "vacature",
+        "werkzaamheden",
+        "beheer",
+    },
     "es": {"los", "las", "para", "con", "una", "del", "por", "nuestro", "nuestra", "usted", "y"},
     "it": {"il", "della", "delle", "per", "con", "gli", "nostro", "nostra", "sono", "nel"},
     "pt": {"os", "para", "com", "uma", "nosso", "nossa", "você", "não", "pelo", "pela"},
@@ -295,43 +358,64 @@ def langue_redaction(t):
     return ordre[0]
 
 
-_LANGUES_ETRANGERES = "(?:" + "|".join(
-    v for k, v in _NOMS_LANGUES.items() if k not in LANGUES_PARLEES) + ")"
-_PARLEES = "(?:" + "|".join(
-    v for k, v in _NOMS_LANGUES.items() if k in LANGUES_PARLEES) + ")"
+_LANGUES_ETRANGERES = (
+    "(?:" + "|".join(v for k, v in _NOMS_LANGUES.items() if k not in LANGUES_PARLEES) + ")"
+)
+_PARLEES = "(?:" + "|".join(v for k, v in _NOMS_LANGUES.items() if k in LANGUES_PARLEES) + ")"
 # Le nom de langue designe un marche ou une entite, pas une competence :
 # « strong presence in Chinese markets », « Dutch GAAP », « Italian clients ».
-_PAS_UNE_LANGUE = (r"(?![\s-]+(?:markets?|clients?|customers?|compan\w*|business\w*|teams?"
-                   r"|entit\w*|subsidiar\w*|operations?|government|law|gaap|regulat\w*"
-                   r"|portfolio|assets?|real\s+estate|banks?|offices?|sites?)\b)")
+_PAS_UNE_LANGUE = (
+    r"(?![\s-]+(?:markets?|clients?|customers?|compan\w*|business\w*|teams?"
+    r"|entit\w*|subsidiar\w*|operations?|government|law|gaap|regulat\w*"
+    r"|portfolio|assets?|real\s+estate|banks?|offices?|sites?)\b)"
+)
 # « Fluent in English and Dutch », « maitrise du neerlandais ». Seuls des mots
 # qui parlent de LANGUE introduisent : « strong », « excellent » precedaient
 # aussi bien un marche.
 _RX_LANGUE_AVANT = re.compile(
     r"\b(?:fluen(?:t|cy)|native|mother\s+tongue|proficien\w*|business[- ]level"
     r"|courant|ma[iî]trise|bilingue?|bilingual|vloeiend)\W+(?:\w+\W+){0,4}?"
-    + _LANGUES_ETRANGERES + r"\b" + _PAS_UNE_LANGUE, re.I)
+    + _LANGUES_ETRANGERES
+    + r"\b"
+    + _PAS_UNE_LANGUE,
+    re.I,
+)
 # « Dutch is required », « Dutch speaking », « Nederlands vereist », « neerlandais exige »
 _RX_LANGUE_APRES = re.compile(
-    r"\b" + _LANGUES_ETRANGERES + _PAS_UNE_LANGUE
+    r"\b"
+    + _LANGUES_ETRANGERES
+    + _PAS_UNE_LANGUE
     + r"\W+(?:\w+\W+){0,3}?(?:required|mandatory|essential|must|speak(?:ing|er)s?|native"
     r"|fluent|fluency|language|skills|proficiency|vereist|noodzakelijk|verplicht"
     r"|exig[ée]e?|obligatoire|indispensable|requis[e]?|courant)\b",
-    re.I)
+    re.I,
+)
 # Une annonce « neerlandophone » exige le neerlandais.
 _RX_NEERLANDOPHONE = re.compile(r"\bnederlandstalig\w*|\bnederlandse\s+taal\b", re.I)
 # Ce qui suit la langue et la rend facultative.
 _RX_FACULTATIF = re.compile(
     r"^\W*(?:\w+\W+){0,4}?(?:a\s+|an\s+)?(?:plus|asset|advantage|bonus|nice[- ]to[- ]have"
-    r"|prefer\w*|desirable|beneficial|atout|souhait\w*|appr[ée]ci\w*|pluspunt|voordeel)\b", re.I)
+    r"|prefer\w*|desirable|beneficial|atout|souhait\w*|appr[ée]ci\w*|pluspunt|voordeel)\b",
+    re.I,
+)
 # Ce qui PRECEDE la langue et la rend facultative : « preferable in Dutch too ».
 _RX_FACULTATIF_AVANT = re.compile(
-    r"\b(?:prefer\w*|ideally|id[ée]alement|optional\w*|souhait\w*|bonus|plus)\W+(?:\w+\W+){0,2}$", re.I)
+    r"\b(?:prefer\w*|ideally|id[ée]alement|optional\w*|souhait\w*|bonus|plus)\W+(?:\w+\W+){0,2}$",
+    re.I,
+)
 # Une alternative avec une langue parlee n'exige rien : « Dutch and/or French ».
 _RX_ALTERNATIVE = re.compile(
-    r"(?:" + _PARLEES + r"\s*(?:and\s*/\s*or|et\s*/\s*ou|or|ou|of)\s+" + _LANGUES_ETRANGERES
-    + r"|" + _LANGUES_ETRANGERES + r"\s*(?:and\s*/\s*or|et\s*/\s*ou|or|ou|of)\s+" + _PARLEES + r")\b",
-    re.I)
+    r"(?:"
+    + _PARLEES
+    + r"\s*(?:and\s*/\s*or|et\s*/\s*ou|or|ou|of)\s+"
+    + _LANGUES_ETRANGERES
+    + r"|"
+    + _LANGUES_ETRANGERES
+    + r"\s*(?:and\s*/\s*or|et\s*/\s*ou|or|ou|of)\s+"
+    + _PARLEES
+    + r")\b",
+    re.I,
+)
 _RX_NOM_LANGUE = re.compile(r"\b" + _LANGUES_ETRANGERES + r"\b", re.I)
 
 
@@ -345,11 +429,11 @@ def langue_exigee(t):
             nom = _RX_NOM_LANGUE.search(m.group(0))
             debut = nom.start() + m.start() if nom else m.start()
             fin = nom.end() + m.start() if nom else m.end()
-            if _RX_FACULTATIF.search(t[fin:fin + 60]):
+            if _RX_FACULTATIF.search(t[fin : fin + 60]):
                 continue
-            if _RX_FACULTATIF_AVANT.search(t[max(0, debut - 40):debut]):
+            if _RX_FACULTATIF_AVANT.search(t[max(0, debut - 40) : debut]):
                 continue
-            if _RX_ALTERNATIVE.search(t[max(0, debut - 30):fin + 30]):
+            if _RX_ALTERNATIVE.search(t[max(0, debut - 30) : fin + 30]):
                 continue
             return (nom.group(0) if nom else m.group(0)).lower()
     return ""
@@ -388,7 +472,7 @@ def fit_detail(text, title=""):
     role = (title or text or "").lower()
     sc = axis_scores(t)
     raw = sum(sc[a] * POIDS[a] for a in AXES)
-    fit = 1 + 9 * min(1.0, raw / _TARGET)          # 1..10, pas de magic number empilé
+    fit = 1 + 9 * min(1.0, raw / _TARGET)  # 1..10, pas de magic number empilé
     # PLAFOND PAR PRIORITE DE PROFIL. Sans lui, finance + risk + conseil suffisent
     # a atteindre _TARGET sans le moindre signal ESG : 251 offres sortaient a
     # fit >= 8 avec l'axe ESG a ZERO, et le TOP 25 ne contenait plus que 3
@@ -400,13 +484,13 @@ def fit_detail(text, title=""):
     # capte au detour d'une longue description (esg=0.33) suffisait a contourner
     # un plafond binaire, et « ANALYSTE M&A » restait a 10.
     #   esg 0.00 -> 6   esg 0.33 -> 7.3   esg 0.67 -> 8.7   esg 1.00 -> 10
-    coeur = sc.get(COEUR, 0.0) if COEUR else 1.0     # sans axe coeur : pas de plafond
+    coeur = sc.get(COEUR, 0.0) if COEUR else 1.0  # sans axe coeur : pas de plafond
     compl = sc.get(COMPLEMENT, 0.0) if COMPLEMENT else 0.0
     cap = _PLAFOND_SANS_COEUR + (10.0 - _PLAFOND_SANS_COEUR) * coeur
     if coeur == 0 and compl >= 0.5:
-        cap = _PLAFOND_COMPLEMENT          # cible secondaire
+        cap = _PLAFOND_COMPLEMENT  # cible secondaire
     if _c(_TITRE_FINANCE, role):
-        cap = max(cap, _PLAFOND_SECOND + (10.0 - _PLAFOND_SECOND) * coeur)   # metier vise en second
+        cap = max(cap, _PLAFOND_SECOND + (10.0 - _PLAFOND_SECOND) * coeur)  # metier vise en second
     # Un intitule explicitement ESG leve le plafond : le titre dit ce QU'EST le
     # poste, la description ne fait que mentionner des sujets.
     fort = _c(_ESG_TITRE_FORT, role)
@@ -434,9 +518,12 @@ def fit_detail(text, title=""):
     # dans toute la description : un « ... ouvert aux alternants » en pied
     # d'annonce donnait +1 a un poste qui n'a rien de junior. C'est exactement
     # le faux positif deja corrige pour les deux autres listes, laisse ici.
-    if any(k in role for k in JUNIOR): fit += _BONUS_JUNIOR
-    if any(k in role for k in SENIOR) or _c(_RX_SENIOR_FIN, role): fit -= _MALUS_SENIOR
-    if any(k in role for k in NEG):    fit -= 2
+    if any(k in role for k in JUNIOR):
+        fit += _BONUS_JUNIOR
+    if any(k in role for k in SENIOR) or _c(_RX_SENIOR_FIN, role):
+        fit -= _MALUS_SENIOR
+    if any(k in role for k in NEG):
+        fit -= 2
     # La langue en dernier : aucun intitule ni bonus ne rend lisible une
     # annonce dans une langue que l'utilisateur ne parle pas.
     cap = min(cap, plafond_langue(text or "")[0])
@@ -462,8 +549,14 @@ def _departage(t, role, fit, entier, yrs):
     lourds = sorted(AXES, key=lambda a: -POIDS.get(a, 0))[:2]
     n = sum(1 for axe in lourds for l in AXES[axe] if l in got)
     pos = max(0.0, min(1.0, fit - (entier - 0.5)))
-    return (0.30 * titre + 0.20 * d / (d + 2.0) + 0.25 * n / (n + 8.0)
-            + 0.15 * pos + 0.10 * (1.0 - min(yrs, 5) / 5.0))
+    return (
+        0.30 * titre
+        + 0.20 * d / (d + 2.0)
+        + 0.25 * n / (n + 8.0)
+        + 0.15 * pos
+        + 0.10 * (1.0 - min(yrs, 5) / 5.0)
+    )
+
 
 def score_offer(offer):
     required = skills_in(f"{offer['role']} {offer['missions']} {offer['profil']}")
@@ -471,10 +564,11 @@ def score_offer(offer):
         # rien de détecté -> neutre
         return dict(required=set(), covered=set(), missing=set(), pct=None)
     cv = cv_text_cached(cv_variant_key(offer["domaine"]))
-    covered = {s for s in required if has_skill(s, cv)}   # même matcher (mot entier)
+    covered = {s for s in required if has_skill(s, cv)}  # même matcher (mot entier)
     missing = required - covered
     pct = round(100 * len(covered) / len(required))
     return dict(required=required, covered=covered, missing=missing, pct=pct)
+
 
 # Garde-fou, en FIN de module : globals() doit etre complet pour tout voir.
 # Il manquait ici, et c'est precisement ici qu'un motif etait corrompu —

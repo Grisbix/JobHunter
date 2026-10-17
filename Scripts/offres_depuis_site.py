@@ -26,6 +26,7 @@ Run :
   python offres_depuis_site.py --dry --fit 8
   python offres_depuis_site.py --fit 8 --limit 50
 """
+
 import sys
 import re
 import json
@@ -49,8 +50,11 @@ def main():
     ap.add_argument("--fit", type=int, default=8)
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--headed", action="store_true")
-    ap.add_argument("--une-par-entreprise", action="store_true",
-                    help="une seule offre par societe : echantillon representatif")
+    ap.add_argument(
+        "--une-par-entreprise",
+        action="store_true",
+        help="une seule offre par societe : echantillon representatif",
+    )
     ap.add_argument("--every", type=int, default=10, help="point de reprise tous les N")
     a = ap.parse_args()
 
@@ -60,10 +64,13 @@ def main():
         homes = {}
 
     q = queue_io.charger(descriptions=False)
-    cibles = [o for o in q
-              if rang_source(o.get("url")) == 0
-              and (o.get("fit") or 0) >= a.fit
-              and (o.get("entreprise") or "").strip() in homes]
+    cibles = [
+        o
+        for o in q
+        if rang_source(o.get("url")) == 0
+        and (o.get("fit") or 0) >= a.fit
+        and (o.get("entreprise") or "").strip() in homes
+    ]
     if a.une_par_entreprise:
         # Un echantillon domine par une seule societe ne mesure que celle-la :
         # 7 des 12 premieres cibles etaient Deloitte.
@@ -71,14 +78,17 @@ def main():
         for o in cibles:
             e = (o.get("entreprise") or "").strip()
             if e not in vues:
-                vues.add(e); uniq.append(o)
+                vues.add(e)
+                uniq.append(o)
         cibles = uniq
     if a.limit:
         cibles = cibles[: a.limit]
 
     total_li = sum(1 for o in q if rang_source(o.get("url")) == 0 and (o.get("fit") or 0) >= a.fit)
-    print(f"{total_li} offre(s) LinkedIn a fit >= {a.fit} — "
-          f"{len(cibles)} avec un site d'entreprise connu")
+    print(
+        f"{total_li} offre(s) LinkedIn a fit >= {a.fit} — "
+        f"{len(cibles)} avec un site d'entreprise connu"
+    )
     if a.dry or not cibles:
         for o in cibles[:10]:
             print(f"  {o['entreprise'][:26]:28} {homes[o['entreprise'].strip()][:44]}")
@@ -86,18 +96,23 @@ def main():
             print("[DRY] rien n'a ete ecrit.")
         return 0
 
-    from web_nav import (get_sync_playwright, find_offer, dismiss_cookies, analyze,
-                         goto_careers)
+    from web_nav import get_sync_playwright, find_offer, dismiss_cookies, analyze, goto_careers
+
     sp, eng = get_sync_playwright("auto")
     PROFIL.mkdir(parents=True, exist_ok=True)
     resolus = captcha = echecs = 0
 
     with sp() as p:
+
         def lance():
             c = p.chromium.launch_persistent_context(
-                user_data_dir=str(PROFIL), channel="chrome", headless=not a.headed,
+                user_data_dir=str(PROFIL),
+                channel="chrome",
+                headless=not a.headed,
                 args=["--no-first-run", "--no-default-browser-check"],
-                no_viewport=True, timeout=90000)
+                no_viewport=True,
+                timeout=90000,
+            )
             c.set_default_timeout(12000)
             c.set_default_navigation_timeout(25000)
             return c, (c.pages[0] if c.pages else c.new_page())
@@ -117,24 +132,30 @@ def main():
                         captcha += 1
                         print(f"  [{i}/{len(cibles)}] BLOQUE   {ent[:26]:28}{depart[:40]}")
                         continue
-                    goto_careers(page)          # on part d'une home : viser les carrieres
+                    goto_careers(page)  # on part d'une home : viser les carrieres
                     dismiss_cookies(page)
                     find_offer(page, role_hint=role, max_tries=1)
                     arrivee = page.url
                 except Exception as e:
                     arrivee, note = depart, type(e).__name__
                     if "Closed" in note or "crash" in str(e).lower():
-                        try: ctx.close()
-                        except Exception: pass
                         try:
-                            ctx, page = lance(); note += " (navigateur relance)"
+                            ctx.close()
                         except Exception:
-                            print("  ✖ relance impossible — arret"); break
+                            pass
+                        try:
+                            ctx, page = lance()
+                            note += " (navigateur relance)"
+                        except Exception:
+                            print("  ✖ relance impossible — arret")
+                            break
 
                 ok, pourquoi = False, note or "aucune offre atteinte"
                 if arrivee != depart and specificite(arrivee) > specificite(depart):
-                    try: texte = page.inner_text("body")[:20000]
-                    except Exception: texte = ""
+                    try:
+                        texte = page.inner_text("body")[:20000]
+                    except Exception:
+                        texte = ""
                     ok, pourquoi = accepte(depart, arrivee, role, texte)
 
                 # LE LIEN RETENU DOIT ETRE VIVANT, ET PARLER DU BON POSTE.
@@ -147,8 +168,7 @@ def main():
                 if ok:
                     titre_page = ""
                     try:
-                        rep = page.goto(arrivee, timeout=20000,
-                                        wait_until="domcontentloaded")
+                        rep = page.goto(arrivee, timeout=20000, wait_until="domcontentloaded")
                         if rep is not None and rep.status >= 400:
                             ok, pourquoi = False, f"lien mort (http {rep.status})"
                         else:
@@ -181,12 +201,16 @@ def main():
                     _ecrire(q)
                     print(f"      … point de reprise ({resolus} resolus)")
         finally:
-            try: ctx.close()
-            except Exception: pass
+            try:
+                ctx.close()
+            except Exception:
+                pass
 
     _ecrire(q)
-    print(f"\n{resolus} annonce(s) directe(s) · {echecs} sans resultat · "
-          f"{captcha} page(s) protegee(s)")
+    print(
+        f"\n{resolus} annonce(s) directe(s) · {echecs} sans resultat · "
+        f"{captcha} page(s) protegee(s)"
+    )
     return 0
 
 

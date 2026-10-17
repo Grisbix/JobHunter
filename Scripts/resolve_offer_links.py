@@ -21,6 +21,7 @@ Run :
   python resolve_offer_links.py --limit 20
   python resolve_offer_links.py --headed           # navigateur visible
 """
+
 import sys, json, argparse, os, time, re
 from pathlib import Path
 from urllib.parse import urlparse
@@ -34,9 +35,23 @@ PROFIL = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "apply_runner_
 # Meme regle que l'app (JobHunter._marque_lien) : un lien d'offre porte toujours
 # un identifiant, et ne se termine jamais par un mot de rubrique.
 PAS_DIRECT = {"HOMEPAGE", "CAREERS_PORTAL", "OTHER", "RECHERCHE", "BOARD_SEARCH"}
-RUBRIQUES = {"careers", "career", "carrieres", "carrières", "recrutement",
-             "recruitment", "jobs", "job", "offres", "emplois", "emploi",
-             "vacancies", "opportunities", "nous-rejoindre", "join-us"}
+RUBRIQUES = {
+    "careers",
+    "career",
+    "carrieres",
+    "carrières",
+    "recrutement",
+    "recruitment",
+    "jobs",
+    "job",
+    "offres",
+    "emplois",
+    "emploi",
+    "vacancies",
+    "opportunities",
+    "nous-rejoindre",
+    "join-us",
+}
 
 
 def specificite(u):
@@ -46,19 +61,37 @@ def specificite(u):
 
 
 # Hotes d'ATS : un lien vers eux reste legitime meme si le domaine change.
-ATS_HOTES = ("lever.co", "greenhouse.io", "ashbyhq.com", "recruitee.com",
-             "smartrecruiters.com", "myworkdayjobs.com", "talent-soft.com",
-             "talentsoft.com", "icims.com", "taleo.net", "successfactors",
-             "teamtailor.com", "welcometothejungle.com", "workable.com",
-             "personio.de", "softgarden.io", "flatchr.io", "jobaffinity.fr")
+ATS_HOTES = (
+    "lever.co",
+    "greenhouse.io",
+    "ashbyhq.com",
+    "recruitee.com",
+    "smartrecruiters.com",
+    "myworkdayjobs.com",
+    "talent-soft.com",
+    "talentsoft.com",
+    "icims.com",
+    "taleo.net",
+    "successfactors",
+    "teamtailor.com",
+    "welcometothejungle.com",
+    "workable.com",
+    "personio.de",
+    "softgarden.io",
+    "flatchr.io",
+    "jobaffinity.fr",
+)
 # Motifs de page de RECHERCHE : elles paraissent precises (elles ont une
 # requete) alors qu'elles n'ouvrent aucune offre.
 # (\.\w+)? : l'extension comptait. « /job/results.htm » echappait a ce motif
 # faute du point, et etait pris pour une annonce — le lien LinkedIn DIRECT se
 # faisait remplacer par une page de resultats de recherche.
-RX_RECHERCHE = re.compile(r"[?&](q|s|search|keyword|query|search_keyword)=|"
-                          r"/(catalogsearch|search|recherche|results?|listing|liste)"
-                          r"(\.\w+)?(/|$|\?)", re.I)
+RX_RECHERCHE = re.compile(
+    r"[?&](q|s|search|keyword|query|search_keyword)=|"
+    r"/(catalogsearch|search|recherche|results?|listing|liste)"
+    r"(\.\w+)?(/|$|\?)",
+    re.I,
+)
 # Un lien d'offre porte un identifiant : un nombre long, ou un segment de slug
 # assez long apres /job|/offre|/poste.
 # Le slug d'une annonce porte un chiffre ou des tirets : « analyste-esg-h-f-12345 ».
@@ -73,7 +106,8 @@ RX_OFFRE = re.compile(
     r"|/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
     # Recruitee : /o/<slug-de-l-offre>
     r"|/o/[a-z0-9][a-z0-9-]{7,}",
-    re.I)
+    re.I,
+)
 
 
 def racine(host):
@@ -129,7 +163,9 @@ def accepte(depart, arrivee, titre, texte):
 # Page qui LISTE les offres de la societe : pas l'annonce, mais un clic au lieu
 # d'un site entier a explorer.
 RX_BOARD = re.compile(r"^jobs\.|^careers\.|^recrutement\.|^emploi\.", re.I)
-RX_CHEMIN_BOARD = re.compile(r"/(jobs?|careers?|carrieres|recrutement|offres|emplois|nous-rejoindre)(/|$)", re.I)
+RX_CHEMIN_BOARD = re.compile(
+    r"/(jobs?|careers?|carrieres|recrutement|offres|emplois|nous-rejoindre)(/|$)", re.I
+)
 
 
 def est_board(depart, arrivee):
@@ -140,13 +176,13 @@ def est_board(depart, arrivee):
     if RX_RECHERCHE.search(arrivee):
         return False
     chemin = urlparse(arrivee).path
-    seg = [c for c in chemin.split('/') if c]
+    seg = [c for c in chemin.split("/") if c]
     if RX_CHEMIN_BOARD.search(chemin):
         return True
     # Un hote de recrutement ne suffit pas : recrutement.<x>/le-groupe/
     # nos-entreprises/... est une page corporate, pas un tableau d'offres.
     # On ne l'accepte que si le chemin reste court, donc proche de la racine.
-    return bool(RX_BOARD.search(ha.replace('www.', ''))) and len(seg) <= 1
+    return bool(RX_BOARD.search(ha.replace("www.", ""))) and len(seg) <= 1
 
 
 def generique(o):
@@ -176,22 +212,29 @@ def main():
     q = __import__("queue_io").charger(QUEUE, descriptions=False)
     cibles = [o for o in q if generique(o)]
     if a.limit:
-        cibles = cibles[:a.limit]
+        cibles = cibles[: a.limit]
     if not cibles:
-        print("Aucun lien generique a resoudre."); return 0
+        print("Aucun lien generique a resoudre.")
+        return 0
     print(f"{len(cibles)} lien(s) a resoudre" + (" — SIMULATION" if a.dry else ""))
 
     from web_nav import get_sync_playwright, find_offer, dismiss_cookies, analyze, goto_careers
+
     sp, eng = get_sync_playwright("auto")
     PROFIL.mkdir(parents=True, exist_ok=True)
     resolus = captcha = echecs = boards = 0
 
     with sp() as p:
+
         def lance():
             c = p.chromium.launch_persistent_context(
-                user_data_dir=str(PROFIL), channel="chrome", headless=not a.headed,
+                user_data_dir=str(PROFIL),
+                channel="chrome",
+                headless=not a.headed,
                 args=["--no-first-run", "--no-default-browser-check"],
-                no_viewport=True, timeout=90000)
+                no_viewport=True,
+                timeout=90000,
+            )
             c.set_default_timeout(12000)
             c.set_default_navigation_timeout(25000)
             return c, (c.pages[0] if c.pages else c.new_page())
@@ -222,17 +265,23 @@ def main():
             except Exception as e:
                 arrivee, note = depart, type(e).__name__
                 if "Closed" in note or "crash" in str(e).lower():
-                    try: ctx.close()
-                    except Exception: pass
                     try:
-                        ctx, page = lance(); note += " (navigateur relance)"
+                        ctx.close()
                     except Exception:
-                        print("  ✖ relance impossible — arret"); break
+                        pass
+                    try:
+                        ctx, page = lance()
+                        note += " (navigateur relance)"
+                    except Exception:
+                        print("  ✖ relance impossible — arret")
+                        break
 
             ok, pourquoi = False, note or "aucune offre atteinte"
             if arrivee != depart and specificite(arrivee) > specificite(depart):
-                try: texte = page.inner_text("body")[:20000]
-                except Exception: texte = ""
+                try:
+                    texte = page.inner_text("body")[:20000]
+                except Exception:
+                    texte = ""
                 ok, pourquoi = accepte(depart, arrivee, role, texte)
             if ok:
                 resolus += 1
@@ -261,16 +310,22 @@ def main():
                 print(f"      … point de reprise ({resolus} resolus)")
             if i % 25 == 0:
                 try:
-                    vieux = page; page = ctx.new_page(); vieux.close()
+                    vieux = page
+                    page = ctx.new_page()
+                    vieux.close()
                 except Exception:
                     pass
-        try: ctx.close()
-        except Exception: pass
+        try:
+            ctx.close()
+        except Exception:
+            pass
 
     if not a.dry:
         __import__("jutil").jwrite(QUEUE, q)
-    print(f"\nBILAN : {resolus} offre(s) precise(s) · {boards} tableau(x) d'offres"
-          f" · {echecs} inchange(s) · {captcha} bloque(s), non contournes")
+    print(
+        f"\nBILAN : {resolus} offre(s) precise(s) · {boards} tableau(x) d'offres"
+        f" · {echecs} inchange(s) · {captcha} bloque(s), non contournes"
+    )
     return 0
 
 

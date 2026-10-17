@@ -9,6 +9,7 @@ dont le message contient l'URL.
 
 Run : python test_agregateurs.py
 """
+
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
 import io
 import json
@@ -59,6 +60,7 @@ def rejouer(reponses):
         if isinstance(x, Exception):
             raise x
         return x
+
     js._get_borne = appel
     js._post_borne = appel
     return vus
@@ -86,26 +88,45 @@ js.ADZUNA_CFG.write_text(json.dumps({"app_id": "ID", "app_key": CLE}), encoding=
 js.JOOBLE_CFG.write_text(json.dumps({"key": CLE}), encoding="utf-8")
 
 # ── 2. Adzuna : lecture et filtres ───────────────────────────────────────────
-page = {"results": [
-    {"title": "ESG Analyst", "redirect_url": "https://www.adzuna.fr/land/ad/1",
-     "company": {"display_name": "Mirova"}, "location": {"display_name": "Paris"},
-     "created": "2026-10-01T08:00:00Z", "description": "<b>SFDR</b> reporting",
-     "contract_type": "permanent"},
-    {"title": "Stage analyste ESG", "redirect_url": "https://www.adzuna.fr/land/ad/2",
-     "company": {"display_name": "X"}, "location": {}},
-    {"title": "Chauffeur livreur", "redirect_url": "https://www.adzuna.fr/land/ad/3",
-     "company": {"display_name": "Y"}, "location": {}},
-]}
+page = {
+    "results": [
+        {
+            "title": "ESG Analyst",
+            "redirect_url": "https://www.adzuna.fr/land/ad/1",
+            "company": {"display_name": "Mirova"},
+            "location": {"display_name": "Paris"},
+            "created": "2026-10-01T08:00:00Z",
+            "description": "<b>SFDR</b> reporting",
+            "contract_type": "permanent",
+        },
+        {
+            "title": "Stage analyste ESG",
+            "redirect_url": "https://www.adzuna.fr/land/ad/2",
+            "company": {"display_name": "X"},
+            "location": {},
+        },
+        {
+            "title": "Chauffeur livreur",
+            "redirect_url": "https://www.adzuna.fr/land/ad/3",
+            "company": {"display_name": "Y"},
+            "location": {},
+        },
+    ]
+}
 appels = rejouer([R(200, page)])
 res, sortie = capture(js.scan_adzuna)
 ck("Adzuna : offre ESG lue", len(res) == 1 and res[0]["titre"] == "ESG Analyst")
 ck("Adzuna : stage ecarte, hors metier ecarte", len(res) == 1)
 ck("Adzuna : contrat permanent -> CDI", res and res[0].get("contrat") == "CDI")
-ck("Adzuna : extrait marque partiel, HTML retire",
-   res and res[0].get("desc_partielle") and "<b>" not in res[0]["description"])
+ck(
+    "Adzuna : extrait marque partiel, HTML retire",
+    res and res[0].get("desc_partielle") and "<b>" not in res[0]["description"],
+)
 ck("Adzuna : date courte", res and res[0]["date"] == "2026-10-01")
-ck("Adzuna : France puis 7 pays",
-   len(appels) == len(js.AGREG_MOTS_FR) + len(js.ADZUNA_PAYS) * len(js.AGREG_MOTS_EN))
+ck(
+    "Adzuna : France puis 7 pays",
+    len(appels) == len(js.AGREG_MOTS_FR) + len(js.ADZUNA_PAYS) * len(js.AGREG_MOTS_EN),
+)
 ck("Adzuna : la cle part en parametre, pas dans la sortie", CLE not in sortie)
 
 # ── 3. refus d'entree : arret au 3e ──────────────────────────────────────────
@@ -126,19 +147,33 @@ ck("Adzuna 429 persistant : arret de la source", "limite de debit persistante" i
 appels = rejouer([RuntimeError(f"echec sur https://api.adzuna.com/?app_key={CLE}")] * 80)
 res, sortie = capture(js.scan_adzuna)
 ck("exception contenant l'URL : cle absente de la sortie", CLE not in sortie)
-ck("exception : comptee dans INCIDENTS par son type",
-   js.INCIDENTS["adzuna"].get("RuntimeError", 0) > 0)
+ck(
+    "exception : comptee dans INCIDENTS par son type",
+    js.INCIDENTS["adzuna"].get("RuntimeError", 0) > 0,
+)
 
 # ── 6. Jooble ────────────────────────────────────────────────────────────────
-pj = {"jobs": [{"title": "Analyste crédit junior", "link": "https://jooble.org/desc/9",
-                "company": "BNP", "location": "Paris", "snippet": "crédit corporate",
-                "type": "CDI", "updated": "2026-09-30T00:00:00"}]}
+pj = {
+    "jobs": [
+        {
+            "title": "Analyste crédit junior",
+            "link": "https://jooble.org/desc/9",
+            "company": "BNP",
+            "location": "Paris",
+            "snippet": "crédit corporate",
+            "type": "CDI",
+            "updated": "2026-09-30T00:00:00",
+        }
+    ]
+}
 appels = rejouer([R(200, pj)])
 res, sortie = capture(js.scan_jooble)
 ck("Jooble : offre lue", len(res) == 1 and res[0]["entreprise"] == "BNP")
 ck("Jooble : type CDI repris", res and res[0].get("contrat") == "CDI")
-ck("Jooble : POST avec mots-cles et France",
-   appels and appels[0][1].get("json", {}).get("location") == "France")
+ck(
+    "Jooble : POST avec mots-cles et France",
+    appels and appels[0][1].get("json", {}).get("location") == "France",
+)
 ck("Jooble : cle absente de la sortie", CLE not in sortie)
 
 print(f"\n=== BILAN : {ok} ✅  /  {ko} ❌  ({ok}/{ok + ko}) ===")

@@ -8,27 +8,62 @@ Devine le domaine depuis le nom (slug + .com/.fr) et VALIDE par HTTP (200, host 
 Run: python enrich_homepages.py        (toutes les entreprises sans URL du queue)
      python enrich_homepages.py --force (revalide même celles déjà en cache)
 """
+
 import json, re, sys, unicodedata, concurrent.futures as cf
 from pathlib import Path
 import requests
+
 sys.stdout.reconfigure(encoding="utf-8")
 
 SCRIPTS = Path(__file__).resolve().parent
 QUEUE = SCRIPTS / "apply_queue.json"
 CACHE = SCRIPTS / "homepages.json"
-UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"}
+UA = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+}
 
 # tokens juridiques/génériques à retirer du slug
-STOP = {"sa", "sas", "sarl", "sasu", "eurl", "gie", "group", "groupe", "holding",
-        "solutions", "solution", "services", "service", "france", "international",
-        "the", "and", "co", "compagnie", "cie", "se", "ag", "gmbh", "ltd", "llc",
-        "partners", "capital", "management", "asset", "investment", "investments"}
+STOP = {
+    "sa",
+    "sas",
+    "sarl",
+    "sasu",
+    "eurl",
+    "gie",
+    "group",
+    "groupe",
+    "holding",
+    "solutions",
+    "solution",
+    "services",
+    "service",
+    "france",
+    "international",
+    "the",
+    "and",
+    "co",
+    "compagnie",
+    "cie",
+    "se",
+    "ag",
+    "gmbh",
+    "ltd",
+    "llc",
+    "partners",
+    "capital",
+    "management",
+    "asset",
+    "investment",
+    "investments",
+}
+
 
 def _ascii(s):
     """Volontairement PLUS agressif que jutil.sans_accent : ici on fabrique des
     slugs de nom de domaine, donc tout caractere non-ASCII doit DISPARAITRE, pas
     seulement perdre son accent. Ce n'est pas un doublon a factoriser."""
     return unicodedata.normalize("NFD", s or "").encode("ascii", "ignore").decode()
+
 
 def slugs(name):
     """Génère des variantes de slug depuis le nom d'entreprise."""
@@ -48,6 +83,7 @@ def slugs(name):
             out.append(s)
     return out
 
+
 def candidates(name):
     urls = []
     for s in slugs(name):
@@ -58,8 +94,10 @@ def candidates(name):
     seen, out = set(), []
     for u in urls:
         if u not in seen:
-            seen.add(u); out.append(u)
+            seen.add(u)
+            out.append(u)
     return out[:12]
+
 
 def valid(url, name):
     """URL valide si : répond (<400) ET host recoupe le nom ET la page montre un
@@ -70,11 +108,16 @@ def valid(url, name):
         if r.status_code >= 400:
             return None
         host = _ascii(r.url).lower()
-        toks = [t for t in re.sub(r"[^a-z0-9 ]", " ", _ascii(name).lower()).split()
-                if len(t) > 3 and t not in STOP]
+        toks = [
+            t
+            for t in re.sub(r"[^a-z0-9 ]", " ", _ascii(name).lower()).split()
+            if len(t) > 3 and t not in STOP
+        ]
         host_match = any(t in host for t in toks) if toks else False
         if not host_match:
-            first = re.sub(r"[^a-z0-9]", "", _ascii(name).lower().split()[0]) if name.split() else ""
+            first = (
+                re.sub(r"[^a-z0-9]", "", _ascii(name).lower().split()[0]) if name.split() else ""
+            )
             host_match = bool(first and len(first) >= 3 and first in host)
         if not host_match:
             return None
@@ -85,16 +128,22 @@ def valid(url, name):
     except Exception:
         return None
 
+
 # agrégateurs / annuaires à ignorer dans les résultats de recherche (pas la homepage)
-_AGG = re.compile(r"(linkedin|wikipedia|societe\.com|pappers|verif\.com|infogreffe|"
-                  r"facebook|twitter|x\.com|instagram|youtube|indeed|glassdoor|"
-                  r"welcometothejungle|hellowork|figaro|bfmtv|lesechos|usinenouvelle|"
-                  r"bloomberg|zoominfo|dnb\.com|manageo|kompass|europages|score3|"
-                  r"bodacc|journal-officiel|google\.|bing\.|duckduckgo)", re.I)
+_AGG = re.compile(
+    r"(linkedin|wikipedia|societe\.com|pappers|verif\.com|infogreffe|"
+    r"facebook|twitter|x\.com|instagram|youtube|indeed|glassdoor|"
+    r"welcometothejungle|hellowork|figaro|bfmtv|lesechos|usinenouvelle|"
+    r"bloomberg|zoominfo|dnb\.com|manageo|kompass|europages|score3|"
+    r"bodacc|journal-officiel|google\.|bing\.|duckduckgo)",
+    re.I,
+)
+
 
 def _ddg_results(query):
     """Résultats DuckDuckGo HTML (sans clé API). Retour liste d'URLs."""
     from urllib.parse import unquote, urlparse, parse_qs
+
     urls = []
     for ep in ("https://html.duckduckgo.com/html/", "https://lite.duckduckgo.com/lite/"):
         try:
@@ -103,7 +152,7 @@ def _ddg_results(query):
                 continue
             for m in re.findall(r'href="(https?://[^"]+)"', r.text):
                 u = m
-                if "duckduckgo.com/l/?uddg=" in u:      # lien redirect DDG -> extrait la vraie URL
+                if "duckduckgo.com/l/?uddg=" in u:  # lien redirect DDG -> extrait la vraie URL
                     qs = parse_qs(urlparse(u).query)
                     if "uddg" in qs:
                         u = unquote(qs["uddg"][0])
@@ -115,13 +164,17 @@ def _ddg_results(query):
             continue
     return urls
 
+
 def search_homepage(name):
     """Recherche moteur : 1er résultat non-agrégateur dont le host recoupe le nom."""
-    toks = [t for t in re.sub(r"[^a-z0-9 ]", " ", _ascii(name).lower()).split()
-            if len(t) > 2 and t not in STOP]
+    toks = [
+        t
+        for t in re.sub(r"[^a-z0-9 ]", " ", _ascii(name).lower()).split()
+        if len(t) > 2 and t not in STOP
+    ]
     for q in (f"{name} site officiel", f"{name} recrutement carrières", f'"{name}" entreprise'):
         for u in _ddg_results(q)[:8]:
-            got = valid(u, name)          # revalide (HTTP + host-match)
+            got = valid(u, name)  # revalide (HTTP + host-match)
             if got:
                 return got
         # fallback souple : accepte le 1er résultat propre même sans host-match strict
@@ -137,6 +190,7 @@ def search_homepage(name):
                 continue
     return None
 
+
 def resolve(name):
     # 1) devinette de domaine (rapide)
     for u in candidates(name):
@@ -147,11 +201,12 @@ def resolve(name):
     got = search_homepage(name)
     return name, got
 
+
 def main():
     # Verrou inter-processus : ce programme reecrit la queue ENTIERE. Si un
     # autre le fait en meme temps (tache planifiee vs app), le dernier qui
     # ecrit efface le travail de l'autre.
-    if not __import__('jutil').garder(QUEUE):
+    if not __import__("jutil").garder(QUEUE):
         return 3
     force = "--force" in sys.argv
     cache = json.loads(CACHE.read_text(encoding="utf-8")) if CACHE.exists() else {}
@@ -182,7 +237,10 @@ def main():
                 print(f"  ❌ {name[:35]:35} → introuvable")
     CACHE.write_text(json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8")
     tot = sum(1 for v in cache.values() if v)
-    print(f"\n{found}/{len(need)} trouvées cette passe · cache total {tot} homepages · → {CACHE.name}")
+    print(
+        f"\n{found}/{len(need)} trouvées cette passe · cache total {tot} homepages · → {CACHE.name}"
+    )
+
 
 if __name__ == "__main__":
     sys.exit(main())

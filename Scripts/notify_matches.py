@@ -18,6 +18,7 @@ Run :
   python notify_matches.py --dry            # montre sans notifier ni marquer
   python notify_matches.py --reset          # oublie l'historique (tout redevient nouveau)
 """
+
 import sys, json, argparse, subprocess
 from pathlib import Path
 
@@ -48,12 +49,25 @@ def toast(title, body):
     script PowerShell exposerait à l'injection via un titre d'offre contenant
     des guillemets ou $( )."""
     import os
+
     env = dict(os.environ, JH_TITLE=title, JH_BODY=body, JH_APPID=_APPID)
     try:
-        r = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive",
-                            "-ExecutionPolicy", "Bypass", "-Command", _PS],
-                           capture_output=True, text=True, timeout=30, env=env,
-                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        r = subprocess.run(
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-NonInteractive",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                _PS,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=env,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
         if r.returncode != 0:
             print(f"  ! toast échoué : {(r.stderr or '').strip()[:120]}")
             return False
@@ -64,7 +78,7 @@ def toast(title, body):
 
 
 def key_of(o):
-    return f"{o.get('entreprise','')}|{o.get('poste','')}"
+    return f"{o.get('entreprise', '')}|{o.get('poste', '')}"
 
 
 def main():
@@ -77,10 +91,12 @@ def main():
     if a.reset:
         if SEEN.exists():
             SEEN.unlink()
-        print("historique de notification remis à zéro"); return 0
+        print("historique de notification remis à zéro")
+        return 0
 
     if not QUEUE.exists():
-        print("! apply_queue.json introuvable"); return 1
+        print("! apply_queue.json introuvable")
+        return 1
     q = __import__("queue_io").charger(QUEUE, descriptions=False)
 
     seen = set()
@@ -88,13 +104,18 @@ def main():
         try:
             seen = set(json.loads(SEEN.read_text(encoding="utf-8")))
         except Exception:
-            pass    # historique illisible : on repart de zéro plutôt que de planter
+            pass  # historique illisible : on repart de zéro plutôt que de planter
 
-    hits = [o for o in q
-            if (o.get("fit") or 0) >= a.min_fit
-            and str(o.get("link_status") or "").upper() not in ("MORT", "EXPIREE")
-            and key_of(o) not in seen]
-    hits.sort(key=lambda o: (-(o.get("fit") or 0), -(o.get("fit_fin") or 0), -(o.get("ats_pct") or 0)))
+    hits = [
+        o
+        for o in q
+        if (o.get("fit") or 0) >= a.min_fit
+        and str(o.get("link_status") or "").upper() not in ("MORT", "EXPIREE")
+        and key_of(o) not in seen
+    ]
+    hits.sort(
+        key=lambda o: (-(o.get("fit") or 0), -(o.get("fit_fin") or 0), -(o.get("ats_pct") or 0))
+    )
 
     if not hits:
         print(f"aucune NOUVELLE offre fit >= {a.min_fit} (déjà notifiées : {len(seen)})")
@@ -102,25 +123,30 @@ def main():
 
     top = hits[0]
     titre = f"{len(hits)} nouvelle(s) offre(s) fit >= {a.min_fit}"
-    corps = f"{top.get('entreprise','')} — {str(top.get('poste',''))[:60]}"
+    corps = f"{top.get('entreprise', '')} — {str(top.get('poste', ''))[:60]}"
     if len(hits) > 1:
-        corps += f"  (+{len(hits)-1} autre(s))"
+        corps += f"  (+{len(hits) - 1} autre(s))"
 
     print(f"=== {titre} ===")
     for o in hits[:10]:
-        print(f"  {o.get('fit')}/10  {str(o.get('entreprise',''))[:26]:<26} {str(o.get('poste',''))[:44]}")
+        print(
+            f"  {o.get('fit')}/10  {str(o.get('entreprise', ''))[:26]:<26} {str(o.get('poste', ''))[:44]}"
+        )
     if len(hits) > 10:
-        print(f"  … +{len(hits)-10}")
+        print(f"  … +{len(hits) - 10}")
 
     if a.dry:
-        print("[dry] pas de notification, historique inchangé"); return 0
+        print("[dry] pas de notification, historique inchangé")
+        return 0
 
     ok = toast(titre, corps)
     # On marque même si le toast a échoué : sinon chaque run réessaie tout le lot
     # et le jour où le toast remarche tu reçois 200 alertes d'un coup.
     seen |= {key_of(o) for o in hits}
     __import__("jutil").jwrite(SEEN, sorted(seen))
-    print(f"{'notifié' if ok else 'non notifié (toast KO)'} — {len(hits)} marquée(s), historique {len(seen)}")
+    print(
+        f"{'notifié' if ok else 'non notifié (toast KO)'} — {len(hits)} marquée(s), historique {len(seen)}"
+    )
     return 0
 
 

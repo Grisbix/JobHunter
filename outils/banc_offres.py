@@ -6,6 +6,7 @@ metier, seniorite, etudiant, outils techniques, langue de redaction et langue
 exigee, zones et pays, contrats. Aucune donnee reelle : les societes sont
 inventees et les textes ecrits pour l'occasion.
 """
+
 import itertools
 
 INTITULES = [
@@ -96,30 +97,48 @@ DESCRIPTIONS = [
 ]
 
 LIEUX = [
-    "Paris, Île-de-France, France", "Lyon, Auvergne-Rhône-Alpes, France",
-    "Bordeaux, Nouvelle-Aquitaine, France", "Genève, Suisse", "Luxembourg",
-    "Amsterdam, North Holland, Netherlands", "London, England, United Kingdom",
-    "Berlin, Germany", "Singapore", "France (Remote)", "Marseille (13)",
-    "Bruxelles, Belgique", "",
+    "Paris, Île-de-France, France",
+    "Lyon, Auvergne-Rhône-Alpes, France",
+    "Bordeaux, Nouvelle-Aquitaine, France",
+    "Genève, Suisse",
+    "Luxembourg",
+    "Amsterdam, North Holland, Netherlands",
+    "London, England, United Kingdom",
+    "Berlin, Germany",
+    "Singapore",
+    "France (Remote)",
+    "Marseille (13)",
+    "Bruxelles, Belgique",
+    "",
 ]
 
-SOCIETES = ["Gestion Fictive", "Fictive Capital", "Fictive Bank", "Groupe Fictif",
-            "Banque Imaginaire", "Conseil Exemple", "Asset Démo", "Énergie Témoin"]
+SOCIETES = [
+    "Gestion Fictive",
+    "Fictive Capital",
+    "Fictive Bank",
+    "Groupe Fictif",
+    "Banque Imaginaire",
+    "Conseil Exemple",
+    "Asset Démo",
+    "Énergie Témoin",
+]
 
 
 def offres():
     """Liste deterministe d'offres au format de la file (apply_queue.json)."""
     out = []
     for i, (titre, desc) in enumerate(itertools.product(INTITULES, DESCRIPTIONS)):
-        out.append({
-            "entreprise": SOCIETES[i % len(SOCIETES)],
-            "poste": titre,
-            "description": desc,
-            "localisation": LIEUX[i % len(LIEUX)],
-            "url": f"https://exemple.org/offres/{i}",
-            "missions": desc[:200] if i % 3 == 0 else "",
-            "profil": "",
-            "rh": "Madame Exemple" if i % 17 == 0 else "",
-            "statut": "Scan 2026-10-17",
-        })
+        out.append(
+            {
+                "entreprise": SOCIETES[i % len(SOCIETES)],
+                "poste": titre,
+                "description": desc,
+                "localisation": LIEUX[i % len(LIEUX)],
+                "url": f"https://exemple.org/offres/{i}",
+                "missions": desc[:200] if i % 3 == 0 else "",
+                "profil": "",
+                "rh": "Madame Exemple" if i % 17 == 0 else "",
+                "statut": "Scan 2026-10-17",
+            }
+        )
     return out

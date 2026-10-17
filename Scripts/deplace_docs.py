@@ -41,6 +41,7 @@ Run :
   python deplace_docs.py --executer --vers "D:/Recherche_emploi_documents"
   python deplace_docs.py --retour             # revient dans OneDrive
 """
+
 import argparse
 import json
 import os
@@ -57,13 +58,17 @@ import chemins
 import jutil
 
 # Les deux seuls dossiers concernes, sous la forme (relatif, cle de la file).
-LOTS = [(Path("CV") / "Par_offre", "cv"),
-        (Path("Lettres") / "Par_offre", "lettre")]
+LOTS = [(Path("CV") / "Par_offre", "cv"), (Path("Lettres") / "Par_offre", "lettre")]
 
-IGNORE = ["", "# ── documents generes (deplaces hors de OneDrive) ──",
-          "# 760 Mo de CV et de lettres reconstructibles par regenere_docs.py.",
-          "# Suivis jusqu'au 20/09/2026 ; .git pesait alors 960 Mo a lui seul.",
-          "CV/Par_offre/", "Lettres/Par_offre/", "Scripts/chemins.json"]
+IGNORE = [
+    "",
+    "# ── documents generes (deplaces hors de OneDrive) ──",
+    "# 760 Mo de CV et de lettres reconstructibles par regenere_docs.py.",
+    "# Suivis jusqu'au 20/09/2026 ; .git pesait alors 960 Mo a lui seul.",
+    "CV/Par_offre/",
+    "Lettres/Par_offre/",
+    "Scripts/chemins.json",
+]
 
 
 def _taille(d):
@@ -84,8 +89,14 @@ def _mo(o):
 
 def git(*args):
     import subprocess
-    r = subprocess.run(["git", "-C", str(ROOT)] + list(args),
-                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+
+    r = subprocess.run(
+        ["git", "-C", str(ROOT)] + list(args),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
     return r.returncode, (r.stdout or "") + (r.stderr or "")
 
 
@@ -117,7 +128,7 @@ def bouger(src, dst):
         print(f"! {dst} existe deja — rien n'est deplace.")
         return False
     try:
-        os.rename(src, dst)                 # meme volume : instantane
+        os.rename(src, dst)  # meme volume : instantane
         print(f"  renomme : {src.name} → {dst}")
         return True
     except OSError as e:
@@ -148,6 +159,7 @@ def bouger(src, dst):
 def reecrire_liens(base_avant, base_apres):
     """Rebase les file:/// de la file. Rend le nombre de liens changes."""
     import queue_io
+
     a, b = str(base_avant).lower(), None
     n = 0
     with queue_io.transaction(descriptions=False) as file:
@@ -158,7 +170,9 @@ def reecrire_liens(base_avant, base_apres):
                     continue
                 s = str(p)
                 if s.lower().startswith(a):
-                    o[cle] = jutil.url_de(base_apres / Path(s[len(str(base_avant)):].lstrip("\\/")))
+                    o[cle] = jutil.url_de(
+                        base_apres / Path(s[len(str(base_avant)) :].lstrip("\\/"))
+                    )
                     n += 1
     return n
 
@@ -180,8 +194,11 @@ def main():
         n, o = _taille(depart / rel)
         total += o
         print(f"  {str(rel):22} {n:6} fichiers  {_mo(o):>8}   {depart / rel}")
-    print(f"\n  libere de OneDrive : {_mo(total)}" if not a.retour
-          else f"\n  remis dans OneDrive : {_mo(total)}")
+    print(
+        f"\n  libere de OneDrive : {_mo(total)}"
+        if not a.retour
+        else f"\n  remis dans OneDrive : {_mo(total)}"
+    )
 
     if not a.executer:
         print("\n[INSPECTION] rien n'a ete ecrit. --executer pour deplacer.")
@@ -206,8 +223,10 @@ def main():
         print("  chemins.json supprime — retour au defaut OneDrive")
     else:
         chemins.CONFIG.write_text(
-            json.dumps({"documents": str(arrivee).replace("\\", "/")},
-                       ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            json.dumps({"documents": str(arrivee).replace("\\", "/")}, ensure_ascii=False, indent=2)
+            + "\n",
+            encoding="utf-8",
+        )
         print(f"  chemins.json ecrit → {arrivee}")
 
     n = reecrire_liens(depart, arrivee)

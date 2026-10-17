@@ -6,49 +6,67 @@
 Run : python generate_docs.py --top 30        # top fit sans docs
       python generate_docs.py --all           # toutes les offres sans docs
       python generate_docs.py --dry"""
+
 import sys, json, argparse
 from pathlib import Path
 from urllib.parse import unquote, quote
+
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 HERE = Path(__file__).resolve().parent
 QUEUE = HERE / "apply_queue.json"
 
 
-from jutil import chemin_de as _p, url_de as _u   # helpers partages (voir jutil.py)
+from jutil import chemin_de as _p, url_de as _u  # helpers partages (voir jutil.py)
 
 
 def main():
     # Verrou inter-processus : ce programme reecrit la queue ENTIERE. Si un
     # autre le fait en meme temps (tache planifiee vs app), le dernier qui
     # ecrit efface le travail de l'autre.
-    if not __import__('jutil').garder(QUEUE):
+    if not __import__("jutil").garder(QUEUE):
         return 3
     ap = argparse.ArgumentParser()
     ap.add_argument("--top", type=int, default=30, help="N offres max (tri fit desc)")
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--dry", action="store_true")
-    ap.add_argument("--sans-source", action="store_true",
-                    help="regenere les lettres dont le PDF n'a plus de .docx : "
-                         "refresh_letters.py ne peut pas les corriger sur place")
-    ap.add_argument("--objet", action="store_true",
-                    help="refait les lettres dont l'objet ne correspond plus a "
-                         "l'intitule de l'offre (ancienne troncature, ou fichier ecrase)")
-    ap.add_argument("--collisions", action="store_true",
-                    help="refait les documents dont le nom a ete ecrase par une "
-                         "autre offre (contenu parlant d'un autre poste)")
-    ap.add_argument("--url", default="",
-                    help="refait CV et lettre de l'offre dont l'URL contient ce texte "
-                         "(apres une retouche dans CV/Sur_mesure ou Lettres/Sur_mesure)")
-    ap.add_argument("--cv-generique", action="store_true",
-                    help="remplace les CV pointant sur un gabarit partage (CV/Modeles) "
-                         "par un CV adapte a l'offre")
+    ap.add_argument(
+        "--sans-source",
+        action="store_true",
+        help="regenere les lettres dont le PDF n'a plus de .docx : "
+        "refresh_letters.py ne peut pas les corriger sur place",
+    )
+    ap.add_argument(
+        "--objet",
+        action="store_true",
+        help="refait les lettres dont l'objet ne correspond plus a "
+        "l'intitule de l'offre (ancienne troncature, ou fichier ecrase)",
+    )
+    ap.add_argument(
+        "--collisions",
+        action="store_true",
+        help="refait les documents dont le nom a ete ecrase par une "
+        "autre offre (contenu parlant d'un autre poste)",
+    )
+    ap.add_argument(
+        "--url",
+        default="",
+        help="refait CV et lettre de l'offre dont l'URL contient ce texte "
+        "(apres une retouche dans CV/Sur_mesure ou Lettres/Sur_mesure)",
+    )
+    ap.add_argument(
+        "--cv-generique",
+        action="store_true",
+        help="remplace les CV pointant sur un gabarit partage (CV/Modeles) "
+        "par un CV adapte a l'offre",
+    )
     a = ap.parse_args()
 
     import queue_io
+
     # QUEUE explicite : les tests remplacent cette constante par un fichier
     # jetable. Sans elle, charger() lirait la vraie file.
-    q = queue_io.charger(QUEUE)   # descriptions reinjectees depuis descriptions.json
+    q = queue_io.charger(QUEUE)  # descriptions reinjectees depuis descriptions.json
 
     from rename_docs import new_name
 
@@ -96,7 +114,8 @@ def main():
     _RX_XML_T = __import__("re").compile(r"<w:t[^>]*>([^<]*)</w:t>")
     _RX_OBJET = __import__("re").compile(
         r"Objet\s*:\s*Candidature au poste (?:de |d')(.{0,200}?)(?:Madame|Monsieur|$)",
-        __import__("re").S)
+        __import__("re").S,
+    )
 
     def _objet_perime(x):
         """L'objet ECRIT dans la lettre ne correspond pas a l'intitule de l'offre.
@@ -109,6 +128,7 @@ def main():
         existant, il ne peut pas deviner la lettre manquante d'un mot ampute.
         """
         import zipfile, html as _html, re as _re
+
         p = _p(x.get("lettre"))
         if p is None:
             return False
@@ -117,14 +137,18 @@ def main():
             return False
         try:
             with zipfile.ZipFile(d) as z:
-                t = _html.unescape("".join(
-                    _RX_XML_T.findall(z.read("word/document.xml").decode("utf-8", "replace"))))
+                t = _html.unescape(
+                    "".join(
+                        _RX_XML_T.findall(z.read("word/document.xml").decode("utf-8", "replace"))
+                    )
+                )
         except Exception:
             return False
         m = _RX_OBJET.search(t)
         if not m:
             return False
         from tailor_application import titre_poste
+
         lu = _re.sub(r"\s+", " ", m.group(1)).strip()
         return lu != titre_poste(x.get("poste") or "")
 
@@ -144,13 +168,17 @@ def main():
         # a brut restait vrai apres regeneration, donc ce selecteur ne convergeait
         # jamais et reproposait sans fin les memes 1012 offres.
         import zipfile, html as _html, re as _re
+
         d = p.with_suffix(".docx")
         if not d.exists():
             return False
         try:
             with zipfile.ZipFile(d) as z:
-                t = _html.unescape("".join(
-                    _RX_XML_T.findall(z.read("word/document.xml").decode("utf-8", "replace"))))
+                t = _html.unescape(
+                    "".join(
+                        _RX_XML_T.findall(z.read("word/document.xml").decode("utf-8", "replace"))
+                    )
+                )
         except Exception:
             return False
         # Le point de FIN de phrase est suivi d'un blanc. Sans cette condition, la
@@ -161,6 +189,7 @@ def main():
         if not m:
             return False
         from tailor_application import titre_poste
+
         lu = _re.sub(r"\s+", " ", m.group(1)).strip()
         att = titre_poste(x.get("poste") or "")
         # Tolerance au PREFIXE : la capture s'arrete au premier point suivi d'un
@@ -178,8 +207,9 @@ def main():
         depuis la queue le remet d'aplomb.
         """
         p = _p(x.get("lettre"))
-        return bool(p and p.suffix.lower() == ".pdf" and p.exists()
-                    and not p.with_suffix(".docx").exists())
+        return bool(
+            p and p.suffix.lower() == ".pdf" and p.exists() and not p.with_suffix(".docx").exists()
+        )
 
     # cibles : cv OU lettre absent / lien mort
     def needs(x):
@@ -188,9 +218,11 @@ def main():
             if p is None or not p.exists():
                 return True
         return False
+
     # Contrats exclus (alternance, stage) : masques dans l'app, donc jamais
     # ouverts. Leur fabriquer un CV et une lettre serait du travail perdu.
     from job_sources import contrats_exclus, contrat_du_titre
+
     _EX = contrats_exclus()
 
     def _visible(x):
@@ -199,12 +231,18 @@ def main():
             return False
         return contrat_du_titre(x.get("poste") or "") not in _EX
 
-    if a.sans_source:    selecteur = _sans_source
-    elif a.url:          selecteur = lambda x: a.url in str(x.get("url") or "")
-    elif a.cv_generique: selecteur = _cv_generique
-    elif a.collisions:   selecteur = _collision
-    elif a.objet:        selecteur = _objet_perime
-    else:                selecteur = needs
+    if a.sans_source:
+        selecteur = _sans_source
+    elif a.url:
+        selecteur = lambda x: a.url in str(x.get("url") or "")
+    elif a.cv_generique:
+        selecteur = _cv_generique
+    elif a.collisions:
+        selecteur = _collision
+    elif a.objet:
+        selecteur = _objet_perime
+    else:
+        selecteur = needs
     todo = [x for x in q if _visible(x) and selecteur(x)]
     # fit_fin (2026-10-09) departage les ex aequo d'un meme fit entier.
     todo.sort(key=lambda x: (-(int(x.get("fit") or 0)), -(x.get("fit_fin") or 0)))
@@ -218,6 +256,7 @@ def main():
 
     from tailor_application import tailor_letter, to_pdf, cv_une_page
     from langue import langue_offre
+
     done = 0
     n_en = 0
     for i, x in enumerate(todo):
@@ -226,7 +265,7 @@ def main():
         # luxembourgeoise peut etre en francais. 1525 offres de la file sont en
         # anglais, dont 388 en Ile-de-France.
         lg = langue_offre(x.get("poste"), x.get("description"), x.get("localisation"))
-        n_en += (lg == "en")
+        n_en += lg == "en"
         # MISSIONS : le champ dédié SEULEMENT, jamais la description brute.
         # La lettre cite ce texte entre parenthèses — « Les missions que vous
         # décrivez (…) font écho à ces expériences ». Or les 400 premiers
@@ -235,31 +274,48 @@ def main():
         # to shape your future with confidence… », c'est-à-dire le slogan
         # d'EY renvoyé à EY, et coupé en plein mot (« a better wor »).
         # Sans vraies missions, la phrase est simplement omise.
-        offer = dict(company=x["entreprise"], role=x["poste"],
-                     offer_text=f"{x['poste']} {x.get('description','')}",
-                     missions=(x.get("missions") or "")[:400],
-                     profil=(x.get("profil") or "")[:300], domaine=x.get("domaine", ""),
-                     # Le destinataire, quand l'annonce le nomme. tailor_letter
-                     # ouvre alors sur « Monsieur X, » au lieu de la generique.
-                     rh=x.get("rh"))
+        offer = dict(
+            company=x["entreprise"],
+            role=x["poste"],
+            offer_text=f"{x['poste']} {x.get('description', '')}",
+            missions=(x.get("missions") or "")[:400],
+            profil=(x.get("profil") or "")[:300],
+            domaine=x.get("domaine", ""),
+            # Le destinataire, quand l'annonce le nomme. tailor_letter
+            # ouvre alors sur « Monsieur X, » au lieu de la generique.
+            rh=x.get("rh"),
+        )
         try:
             # en mode --cv-generique le CV existe mais c'est un gabarit : on le REMPLACE
-            if a.url or a.cv_generique or a.collisions or _p(x.get("cv")) is None or not _p(x["cv"]).exists():
+            if (
+                a.url
+                or a.cv_generique
+                or a.collisions
+                or _p(x.get("cv")) is None
+                or not _p(x["cv"]).exists()
+            ):
                 cv, pdf = cv_une_page(offer, nom=noms_cv.get(id(x)), langue=lg)
                 if cv:
                     x["cv"] = _u(pdf or cv)
             # en mode --sans-source le PDF existe : on le REMPLACE (objet perime)
-            if a.url or a.sans_source or a.collisions or a.objet or _p(x.get("lettre")) is None or not _p(x["lettre"]).exists():
+            if (
+                a.url
+                or a.sans_source
+                or a.collisions
+                or a.objet
+                or _p(x.get("lettre")) is None
+                or not _p(x["lettre"]).exists()
+            ):
                 lt = tailor_letter(offer, nom=noms_lt.get(id(x)), langue=lg)
                 if lt:
                     pdf = to_pdf(lt)
                     x["lettre"] = _u(pdf or lt)
             done += 1
-            print(f"  ✅ [{i+1}/{len(todo)}] {x['entreprise'][:28]} — {x['poste'][:40]}")
+            print(f"  ✅ [{i + 1}/{len(todo)}] {x['entreprise'][:28]} — {x['poste'][:40]}")
         except Exception as e:
             print(f"  ! {x['entreprise'][:28]}: {type(e).__name__}")
         if (i + 1) % 10 == 0:
-            __import__("jutil").jwrite(QUEUE, q)   # checkpoint
+            __import__("jutil").jwrite(QUEUE, q)  # checkpoint
     __import__("jutil").jwrite(QUEUE, q)
     print(f"\n{done}/{len(todo)} offres équipées (CV+lettre générés, liens à jour).")
     if n_en:

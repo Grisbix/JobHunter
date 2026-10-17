@@ -9,6 +9,7 @@ modèle (J+7 la première fois, J+10 après une relance), aucun brouillon retouc
 
 Run : python test_relances.py
 """
+
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
 import sys
 import tempfile
@@ -42,9 +43,14 @@ with tempfile.TemporaryDirectory() as t:
     fa, fb = R.chemin_brouillon(A, 7, t), R.chemin_brouillon(B, 10, t)
     check("première relance : modèle J+7", fa.exists(), True)
     check("déjà relancée : modèle J+10", fb.exists(), True)
-    check("pas de J+7 pour une candidature déjà relancée", R.chemin_brouillon(B, 7, t).exists(), False)
-    check("le brouillon nomme l'entreprise et le poste",
-          "Analyste ESG chez Amundi" in fa.read_text(encoding="utf-8"), True)
+    check(
+        "pas de J+7 pour une candidature déjà relancée", R.chemin_brouillon(B, 7, t).exists(), False
+    )
+    check(
+        "le brouillon nomme l'entreprise et le poste",
+        "Analyste ESG chez Amundi" in fa.read_text(encoding="utf-8"),
+        True,
+    )
     check("J+10 = dernière relance", "dernière relance" in fb.read_text(encoding="utf-8"), True)
 
     print("\n── B. un brouillon retouché n'est pas écrasé ──")
@@ -57,7 +63,9 @@ print("\n── C. bilan ──")
 check("dit que rien n'est envoyé", "rien n'est envoyé" in bilan, True)
 check("compte les relances", "**2 candidature(s)**" in bilan, True)
 check("donne la commande de marquage", "--mark" in bilan, True)
-check("liste vide : message clair", "Rien à relancer" in R.preparer_brouillons([], dossier="."), True)
+check(
+    "liste vide : message clair", "Rien à relancer" in R.preparer_brouillons([], dossier="."), True
+)
 
 print(f"\n=== BILAN : {PASS} ✅  /  {FAIL} ❌  ({PASS}/{PASS + FAIL}) ===")
 sys.exit(1 if FAIL else 0)

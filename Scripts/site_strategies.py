@@ -29,7 +29,6 @@ CAT1_BLOCKED: Dict[str, Dict[str, Any]] = {
         "wait_ms": 0,
         "note": "Create candidate area = email alert form. ANALYZE must detect single email+no password = newsletter, not register.",
     },
-
     # ── PROBLÈME : Cloudflare + CAPTCHA login ──
     "group.pictet": {
         "category": "blocked",
@@ -40,24 +39,22 @@ CAT1_BLOCKED: Dict[str, Dict[str, Any]] = {
         "wait_ms": 0,
         "note": "Cloudflare anti-bot + CAPTCHA. Impossible en automatique. Requiert intervention humaine.",
     },
-
     # ── PROBLÈME : formulaire React ne charge pas (cookies Didomi bloquent JS) ──
     "talents.bpifrance.fr": {
         "category": "blocked",
         "subtype": "didomi_react_block",
         "strategy": "didomi_reject_then_wait",
         "url_override": "https://talents.bpifrance.fr/connexion-compte-candidatures/",
-        "js_fix": "BPIFRANCE_DIDOMI_JS",   # Fermer Didomi + attendre 10s pour React
-        "wait_ms": 12000,                    # React hydration peut prendre 8-12s
+        "js_fix": "BPIFRANCE_DIDOMI_JS",  # Fermer Didomi + attendre 10s pour React
+        "wait_ms": 12000,  # React hydration peut prendre 8-12s
         "note": "Didomi bloque le chargement React. Fermer Didomi + wait long (>10s) pour hydratation.",
     },
-
     # ── PROBLÈME : inputs non-standards (noms différents de email/password) ──
     "labanquepostale.fr": {
         "category": "blocked",
         "subtype": "nonstandard_inputs",
         "strategy": "extended_input_detect",
-        "js_fix": "BPCE_INPUT_JS",          # Scanner les vrais noms d'inputs
+        "js_fix": "BPCE_INPUT_JS",  # Scanner les vrais noms d'inputs
         "wait_ms": 3000,
         "note": "Page 'Accès à vos comptes'. Inputs nommés différemment. Scanner les names réels.",
     },
@@ -69,7 +66,6 @@ CAT1_BLOCKED: Dict[str, Dict[str, Any]] = {
         "wait_ms": 3000,
         "note": "Même problème que BanquePostale — groupe BPCE.",
     },
-
     # ── PROBLÈME : anti-bot extrême (patchright timeout) ──
     "recrutement.bpce.fr": {
         "category": "blocked",
@@ -80,7 +76,6 @@ CAT1_BLOCKED: Dict[str, Dict[str, Any]] = {
         "wait_ms": 0,
         "note": "Anti-bot extrême — même patchright timeout. Requiert intervention humaine.",
     },
-
     # ── PROBLÈME : CAPTCHA login ──
     "recrutement.natixis.com": {
         "category": "blocked",
@@ -91,7 +86,6 @@ CAT1_BLOCKED: Dict[str, Dict[str, Any]] = {
         "wait_ms": 0,
         "note": "Login CAPTCHA. Requiert intervention humaine.",
     },
-
     # ── PROBLÈME : inputs nommés différemment ──
     "engagement-jeunes.com": {
         "category": "blocked",
@@ -101,7 +95,6 @@ CAT1_BLOCKED: Dict[str, Dict[str, Any]] = {
         "wait_ms": 3000,
         "note": "Register email=False car inputs nommés différemment. Scanner les noms réels.",
     },
-
     # ── PROBLÈME : login employés uniquement (popin fonctionne mais pas de register) ──
     "meeschaert.com": {
         "category": "blocked",
@@ -112,7 +105,6 @@ CAT1_BLOCKED: Dict[str, Dict[str, Any]] = {
         "wait_ms": 3000,
         "note": "Login employés via popin OK. Pas de register visible. Chercher endpoint register caché ou candidature spontanée.",
     },
-
     # ── PROBLÈME : login investisseurs uniquement ──
     "kkr.com": {
         "category": "blocked",
@@ -123,7 +115,6 @@ CAT1_BLOCKED: Dict[str, Dict[str, Any]] = {
         "wait_ms": 0,
         "note": "Login investisseurs uniquement. Pas d'espace candidat. Postuler directement sur les offres.",
     },
-
     # ── PROBLÈME : login clients (MyLO, LO Gate) ──
     "lombardodier.com": {
         "category": "blocked",
@@ -800,11 +791,21 @@ SITEMAP_PROBE_JS = r"""
 
 # Exports pour import
 __all__ = [
-    'ALL_SITE_STRATEGIES', 'get_strategy', 'get_category', 'get_sites_by_category',
-    'CAT1_BLOCKED', 'CAT2_ATS', 'CAT3_NO_SPACE', 'CAT4_DEAD',
-    'ATS_JOB_URLS',
-    'BPIFRANCE_DIDOMI_JS', 'BPCE_INPUT_JS', 'ENGAGEMENT_JEUNES_JS',
-    'MEESCHAERT_REGISTER_FALLBACK_JS',
-    'FIRST_JOB_OFFER_JS', 'ATS_APPLY_REGISTER_DETECT_JS',
-    'ROOT_DOMAIN_CHECK_JS', 'SITEMAP_PROBE_JS',
+    "ALL_SITE_STRATEGIES",
+    "get_strategy",
+    "get_category",
+    "get_sites_by_category",
+    "CAT1_BLOCKED",
+    "CAT2_ATS",
+    "CAT3_NO_SPACE",
+    "CAT4_DEAD",
+    "ATS_JOB_URLS",
+    "BPIFRANCE_DIDOMI_JS",
+    "BPCE_INPUT_JS",
+    "ENGAGEMENT_JEUNES_JS",
+    "MEESCHAERT_REGISTER_FALLBACK_JS",
+    "FIRST_JOB_OFFER_JS",
+    "ATS_APPLY_REGISTER_DETECT_JS",
+    "ROOT_DOMAIN_CHECK_JS",
+    "SITEMAP_PROBE_JS",
 ]

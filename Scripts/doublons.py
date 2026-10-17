@@ -24,16 +24,48 @@ On garde UNE offre par groupe : celle du suivi d'abord (jamais retiree), puis
 la meilleure source (site employeur > LinkedIn), puis le francais ou l'anglais
 (langues de l'utilisateur), puis le meilleur fit, puis la description la plus longue.
 """
+
 import re
 import unicodedata
 
 JACCARD_MIN = 0.6
 JETONS_MIN = 5
 
-_VIDES = {"de", "du", "des", "d", "la", "le", "les", "l", "en", "et", "a", "au", "aux",
-          "and", "of", "the", "for", "in", "h", "f", "m", "x", "w", "e", "nb", "d",
-          "cdi", "cdd", "stage", "internship"}
-_RX_GENRE = re.compile(r"[(\[]?\s*\b(?:[hfmwxd]|nb|a)(?:\s*[/|.-]\s*(?:[hfmwxd]|nb|div))+\b\s*[)\]]?", re.I)
+_VIDES = {
+    "de",
+    "du",
+    "des",
+    "d",
+    "la",
+    "le",
+    "les",
+    "l",
+    "en",
+    "et",
+    "a",
+    "au",
+    "aux",
+    "and",
+    "of",
+    "the",
+    "for",
+    "in",
+    "h",
+    "f",
+    "m",
+    "x",
+    "w",
+    "e",
+    "nb",
+    "d",
+    "cdi",
+    "cdd",
+    "stage",
+    "internship",
+}
+_RX_GENRE = re.compile(
+    r"[(\[]?\s*\b(?:[hfmwxd]|nb|a)(?:\s*[/|.-]\s*(?:[hfmwxd]|nb|div))+\b\s*[)\]]?", re.I
+)
 _RX_JETON = re.compile(r"\b(?:[A-Z][A-Z0-9&]{1,}[a-z]*|\d+[\d.,%]*)\b")
 _MOTS_LANGUE = {
     "fr": (" les ", " des ", " vous ", " et ", " pour "),
@@ -91,11 +123,13 @@ def jetons(o):
 
 
 def _rang(o, proteges, rang_source):
-    return ((o.get("_oid") in proteges),
-            rang_source(o.get("url")),
-            langue(o) in ("fr", "en"),
-            o.get("fit") or 0,
-            len(o.get("description") or ""))
+    return (
+        (o.get("_oid") in proteges),
+        rang_source(o.get("url")),
+        langue(o) in ("fr", "en"),
+        o.get("fit") or 0,
+        len(o.get("description") or ""),
+    )
 
 
 def doublons(file, proteges=frozenset(), rang_source=None, oid=None):
@@ -135,7 +169,7 @@ def doublons(file, proteges=frozenset(), rang_source=None, oid=None):
             for i in range(len(lot)):
                 a = lot[i]
                 va, ta = ville(a), mots_titre(a.get("poste"))
-                for b in lot[i + 1:]:
+                for b in lot[i + 1 :]:
                     vb = ville(b)
                     if not va or va != vb:
                         continue

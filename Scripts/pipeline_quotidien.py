@@ -57,6 +57,7 @@ Run :
   python pipeline_quotidien.py --docs 50
   python pipeline_quotidien.py --sans-docs
 """
+
 import argparse
 import os
 import re
@@ -71,8 +72,10 @@ def _racine():
     """La racine du projet, par MARQUEUR. Jamais un chemin en dur : les
     dossiers ont bouge quatre fois les 20-21/09/2026 et tout ce qui codait
     une racine est mort en silence. JOB_SEARCH_ROOT surcharge."""
-    for cand in (os.environ.get("JOB_SEARCH_ROOT", ""),
-                 *[str(p) for p in Path(__file__).resolve().parents]):
+    for cand in (
+        os.environ.get("JOB_SEARCH_ROOT", ""),
+        *[str(p) for p in Path(__file__).resolve().parents],
+    ):
         if cand and (Path(cand) / "Scripts" / "apply_queue.json").exists():
             return Path(cand)
     return Path(__file__).resolve().parent.parent
@@ -85,8 +88,10 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 
 # Lecteurs de sites carriere qui ne rapportent que le titre : leur page d'offre
 # est publique, scrape_desc la lit. Liste fermee — une source anti-bot n'y entre pas.
-DESC_SOURCES_PUBLIQUES = ("sitemap,talentbrew,avature,oracle,adb,icims,peoplesoft,"
-                          "service_public,eightfold,workable,gogenerali,sfrss,phenom,csod")
+DESC_SOURCES_PUBLIQUES = (
+    "sitemap,talentbrew,avature,oracle,adb,icims,peoplesoft,"
+    "service_public,eightfold,workable,gogenerali,sfrss,phenom,csod"
+)
 
 # Ce qu'on releve dans la sortie de chaque etape pour savoir si elle a produit
 # quelque chose. Un motif qui ne matche pas n'est pas une erreur : il rend None,
@@ -138,6 +143,7 @@ def sauvegarder(garder=7):
     Il est pris avant la collecte : si une etape abime la file, l'etat d'avant
     existe. Sept jours glissants, ~35 Mo chacun. Rend le dossier, ou None."""
     import shutil
+
     base = SCRIPTS / "_sauvegardes"
     cible = base / time.strftime("%Y-%m-%d")
     try:
@@ -176,12 +182,19 @@ def etape(nom, args, cle, timeout=5400):
     debut = time.time()
     print(f"\n{'─' * 62}\n▶ {nom}\n  {' '.join(args)}")
     env = dict(os.environ, PYTHONUNBUFFERED="1", PYTHONIOENCODING="utf-8")
-    p = subprocess.Popen([sys.executable, *args], cwd=str(SCRIPTS),
-                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                         text=True, encoding="utf-8", errors="replace", env=env,
-                         # Un run planifie n'a pas de console : sans ceci, Popen
-                         # meurt sur « [WinError 6] Descripteur non valide ».
-                         stdin=subprocess.DEVNULL)
+    p = subprocess.Popen(
+        [sys.executable, *args],
+        cwd=str(SCRIPTS),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+        # Un run planifie n'a pas de console : sans ceci, Popen
+        # meurt sur « [WinError 6] Descripteur non valide ».
+        stdin=subprocess.DEVNULL,
+    )
     tue = threading.Event()
 
     def _stop():
@@ -191,8 +204,11 @@ def etape(nom, args, cle, timeout=5400):
         # (navigateur) gardaient la sortie ouverte et la lecture ci-dessous
         # attendait leur fin. taskkill /T emporte les descendants.
         if os.name == "nt":
-            subprocess.run(["taskkill", "/PID", str(p.pid), "/T", "/F"],
-                           capture_output=True, stdin=subprocess.DEVNULL)
+            subprocess.run(
+                ["taskkill", "/PID", str(p.pid), "/T", "/F"],
+                capture_output=True,
+                stdin=subprocess.DEVNULL,
+            )
         p.kill()
 
     minuterie = threading.Timer(timeout, _stop)
@@ -214,15 +230,16 @@ def etape(nom, args, cle, timeout=5400):
     mins = (time.time() - debut) / 60
     if tue.is_set():
         print(f"  ! arretee apres {timeout // 60} min (duree maximale depassee)")
-    print(f"  ⏱ {mins:.1f} min · code {p.returncode} · "
-          f"{'compteur ' + str(n) if n is not None else 'sans compteur'}")
+    print(
+        f"  ⏱ {mins:.1f} min · code {p.returncode} · "
+        f"{'compteur ' + str(n) if n is not None else 'sans compteur'}"
+    )
     return p.returncode, n, sortie
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--docs", type=int, default=30,
-                    help="nombre de dossiers a generer (0 = aucun)")
+    ap.add_argument("--docs", type=int, default=30, help="nombre de dossiers a generer (0 = aucun)")
     ap.add_argument("--sans-docs", action="store_true")
     ap.add_argument("--sans-vie", action="store_true")
     ap.add_argument("--sans-desc", action="store_true")
@@ -234,8 +251,9 @@ def main():
     # bloquer une machine pour l'apres-midi. Ce mode traverse les TROIS etapes
     # sur un echantillon — une seule source, dix V.I.E, trois dossiers — et
     # rend le meme rapport. Il sert a valider le cablage, pas a remplir la file.
-    ap.add_argument("--rapide", action="store_true",
-                    help="essai de bout en bout sur un echantillon (~5 min)")
+    ap.add_argument(
+        "--rapide", action="store_true", help="essai de bout en bout sur un echantillon (~5 min)"
+    )
     a = ap.parse_args()
 
     journaux = SCRIPTS / "_logs"
@@ -282,18 +300,25 @@ def main():
         # LinkedIn a desormais sa passe ; les sources sures (APEC, France
         # Travail) passent avant celles qui refusent (Indeed, Glassdoor, WTJ).
         collectes = [
-            ("1a/5 Collecte — ATS, Workday, V.I.E, FIR",
-             ["--ats", "--workday", "--vie", "--fir"], 1800),
-            ("1b/5 Collecte — LinkedIn",
-             ["--linkedin"], 3600),
-            ("1c/5 Collecte — eFinancialCareers x9, EURES",
-             ["--efc", "--efc-sites", "monde", "--efc-limite", "30", "--eures"], 1800),
+            (
+                "1a/5 Collecte — ATS, Workday, V.I.E, FIR",
+                ["--ats", "--workday", "--vie", "--fir"],
+                1800,
+            ),
+            ("1b/5 Collecte — LinkedIn", ["--linkedin"], 3600),
+            (
+                "1c/5 Collecte — eFinancialCareers x9, EURES",
+                ["--efc", "--efc-sites", "monde", "--efc-limite", "30", "--eures"],
+                1800,
+            ),
             # Talent et Indeed retires le 2026-10-03 (0 offre, 403 depuis le
             # 24/09) ; Adzuna et Jooble, API officielles, couvrent leur vivier.
-            ("1d/5 Collecte — APEC, France Travail, Adzuna, Jooble",
-             ["--apec", "--ft", "--adzuna", "--jooble"], 2700),
-            ("1e/5 Collecte — Glassdoor, WTJ",
-             ["--glassdoor", "--wtj"], 2400),
+            (
+                "1d/5 Collecte — APEC, France Travail, Adzuna, Jooble",
+                ["--apec", "--ft", "--adzuna", "--jooble"],
+                2700,
+            ),
+            ("1e/5 Collecte — Glassdoor, WTJ", ["--glassdoor", "--wtj"], 2400),
         ]
     ajoutees = 0
     for nom, drapeaux, duree in collectes:
@@ -330,13 +355,20 @@ def main():
         # lecteurs qui ne rapportent que le titre, par leur page publique. Liste
         # FERMEE de sources : jamais Glassdoor ni Indeed, qui refusent les robots.
         lim = ["--limit", "10"] if a.rapide else []
-        code, n, _ = etape("3b/5 Descriptions Workday (API)",
-                           ["scrape_desc.py", "--all", "--api-seul"] + (lim or ["--limit", "800"]),
-                           "desc_ats", timeout=1800)
+        code, n, _ = etape(
+            "3b/5 Descriptions Workday (API)",
+            ["scrape_desc.py", "--all", "--api-seul"] + (lim or ["--limit", "800"]),
+            "desc_ats",
+            timeout=1800,
+        )
         bilan.append(("desc. workday", code, n))
-        code, n, _ = etape("3c/5 Descriptions sites carriere",
-                           ["scrape_desc.py", "--all", "--source", DESC_SOURCES_PUBLIQUES]
-                           + (lim or ["--limit", "200"]), "desc_ats", timeout=2400)
+        code, n, _ = etape(
+            "3c/5 Descriptions sites carriere",
+            ["scrape_desc.py", "--all", "--source", DESC_SOURCES_PUBLIQUES]
+            + (lim or ["--limit", "200"]),
+            "desc_ats",
+            timeout=2400,
+        )
         bilan.append(("desc. sites carriere", code, n))
 
     if not a.sans_tri:
@@ -357,10 +389,10 @@ def main():
         dispo = ["audit_dispo.py", "--pauses", "1"]
         # 900 controles au plus (~40 min a 2,6 s), les meilleures offres d'abord :
         # le reste passe le lendemain, plutot que d'etre coupe par la minuterie.
-        dispo += ["--limite", "20"] if a.rapide else ["--supprime", "--sans-copie",
-                                                       "--limite", "900"]
-        code, n, _ = etape("4b/5 Disponibilite — offres fermees", dispo, "dispo",
-                           timeout=45 * 60)
+        dispo += (
+            ["--limite", "20"] if a.rapide else ["--supprime", "--sans-copie", "--limite", "900"]
+        )
+        code, n, _ = etape("4b/5 Disponibilite — offres fermees", dispo, "dispo", timeout=45 * 60)
         if code == 4:
             alertes.append("audit de disponibilite incomplet (limite de debit) — reprise demain")
             code = 0
@@ -374,14 +406,16 @@ def main():
     # coupe par la minuterie, il reprend le lendemain ou il en etait.
     if not a.sans_site:
         site = ["site_final.py", "--fit", "8"] + (["--limite", "10", "--dry"] if a.rapide else [])
-        code, n, _ = etape("4c/5 Site employeur — ATS publics, Workday", site, "site",
-                           timeout=40 * 60)
+        code, n, _ = etape(
+            "4c/5 Site employeur — ATS publics, Workday", site, "site", timeout=40 * 60
+        )
         bilan.append(("site final", code, n))
 
     if not a.sans_docs and a.docs:
         n_docs = 3 if a.rapide else a.docs
-        code, n, _ = etape("5/5  Dossiers — CV et lettres",
-                           ["generate_docs.py", "--top", str(n_docs)], "docs")
+        code, n, _ = etape(
+            "5/5  Dossiers — CV et lettres", ["generate_docs.py", "--top", str(n_docs)], "docs"
+        )
         bilan.append(("dossiers", code, n))
 
     print(f"\n{'═' * 62}\nBILAN")
@@ -391,6 +425,7 @@ def main():
 
     try:
         import queue_io
+
         q = queue_io.charger(descriptions=False)
         fit9 = sum(1 for o in q if (o.get("fit") or 0) >= 9)
         print(f"\n  file : {len(q)} offres · {fit9} a fit >= 9")

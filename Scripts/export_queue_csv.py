@@ -15,6 +15,7 @@ Run :
   python export_queue_csv.py --keep 8        # ne garde que les 8 plus récents
   python export_queue_csv.py --out chemin.csv
 """
+
 import sys, json, csv, argparse, datetime
 from pathlib import Path
 
@@ -26,13 +27,27 @@ EXPORTS = HERE / "_exports"
 
 # (clé queue, entête CSV) — colonnes utiles à la relecture humaine
 COLS = [
-    ("entreprise", "Entreprise"), ("poste", "Poste"), ("domaine", "Domaine"),
-    ("fit", "Fit"), ("ats_pct", "ATS%"), ("exp_requise", "Exp. exigée"),
-    ("contrat", "Contrat"), ("localisation", "Lieu"), ("teletravail", "Télétravail"),
-    ("salaire", "Salaire"), ("priorite", "Priorité"), ("canal", "Canal"),
-    ("url_type", "Type lien"), ("link_status", "État lien"), ("ls_check", "Vérifié le"),
-    ("process", "Date offre"), ("source", "Source"), ("statut", "Statut scan"),
-    ("cv", "CV"), ("lettre", "Lettre"), ("url", "Lien"),
+    ("entreprise", "Entreprise"),
+    ("poste", "Poste"),
+    ("domaine", "Domaine"),
+    ("fit", "Fit"),
+    ("ats_pct", "ATS%"),
+    ("exp_requise", "Exp. exigée"),
+    ("contrat", "Contrat"),
+    ("localisation", "Lieu"),
+    ("teletravail", "Télétravail"),
+    ("salaire", "Salaire"),
+    ("priorite", "Priorité"),
+    ("canal", "Canal"),
+    ("url_type", "Type lien"),
+    ("link_status", "État lien"),
+    ("ls_check", "Vérifié le"),
+    ("process", "Date offre"),
+    ("source", "Source"),
+    ("statut", "Statut scan"),
+    ("cv", "CV"),
+    ("lettre", "Lettre"),
+    ("url", "Lien"),
 ]
 
 
@@ -44,7 +59,7 @@ def rows(q, suivi):
             if isinstance(v, (dict, list)):
                 v = json.dumps(v, ensure_ascii=False)
             r[label] = "" if v is None else str(v)
-        key = f"{o.get('entreprise','')}|{o.get('poste','')}"
+        key = f"{o.get('entreprise', '')}|{o.get('poste', '')}"
         s = suivi.get(key) or {}
         r["Suivi statut"] = str(s.get("statut") or "")
         r["Suivi note"] = str(s.get("note") or "")
@@ -59,7 +74,8 @@ def main():
     a = ap.parse_args()
 
     if not QUEUE.exists():
-        print("! apply_queue.json introuvable"); return 1
+        print("! apply_queue.json introuvable")
+        return 1
     q = __import__("queue_io").charger(QUEUE, descriptions=False)
 
     suivi = {}
@@ -81,14 +97,16 @@ def main():
         w.writeheader()
         n = 0
         for r in rows(q, suivi):
-            w.writerow(r); n += 1
+            w.writerow(r)
+            n += 1
     tmp.replace(out)
     print(f"=== {n} offres -> {out} ({out.stat().st_size // 1024} Ko) ===")
 
     if a.keep > 0:
         olds = sorted(EXPORTS.glob("queue_*.csv"), key=lambda p: p.stat().st_mtime, reverse=True)
-        for p in olds[a.keep:]:
-            p.unlink(); print(f"  rotation : {p.name} supprimé")
+        for p in olds[a.keep :]:
+            p.unlink()
+            print(f"  rotation : {p.name} supprimé")
     return 0
 
 

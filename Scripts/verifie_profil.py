@@ -8,6 +8,7 @@ attribue, et note 1-10 calculee sur l'intitule seul (une vraie offre est notee a
 description, donc souvent plus haut). Sert a regler profil/profil.json : un metier vise
 doit passer avec une note correcte, un metier hors cible doit etre ecarte ou noter bas.
 """
+
 import sys
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")

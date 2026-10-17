@@ -130,28 +130,30 @@ ANALYZE_JS = r"""
 # Section "carrières / nous rejoindre" à atteindre depuis la home avant login/offre (FR/EN/DE/NL/IT/ES).
 # v5.1 : mots-clés étendus — graduate, apprenticeship, RH, our people, culture, etc.
 # v5.1 : negative lookahead global SUPPRIMÉ (faux négatifs). Exclusions faites dans _DEEP_CAREER_SCAN_JS.
-CAREERS_RX = (r"(carri[eè]res?|nous rejoindre|rejoign(ez|dre)( ?-? ?nous| l'?[eé]quipe)?"
-              r"|recrutement|recrute(ons?|ments?)?|recruiting|nos offres|offres? d'?emploi"
-              r"|espace (candidat|recrutement|carri[eè]re)"
-              r"|travailler (avec|chez|pour) nous|travailler ensemble|talents?|emplois?"
-              r"|careers?|join (us|our team|the team)|work (with|for|at) us|working (here|at)"
-              r"|jobs?|vacan(cy|cies)|openings?|opportunit(y|ies)|we'?re hiring|life at"
-              r"|karriere|stellen(angebote)?|mitarbeiter werden|beruf"
-              r"|talent community|talent network|talent acquisition|candidate portal|career portal"
-              r"|job alerts?|talent (pool|pipeline)"
-              r"|candidature spontan[eé]e|spontaneous application|unsolicited application"
-              r"|open positions?|job opportunities?|current openings?"
-              r"|werken bij|vacatures?|lavora con noi|posizioni aperte|trabaja con nosotros"
-              r"|emplois? et carri[eè]res?|d[eé]couvr(ez|ir) nos (offres|m[eé]tiers|postes)"
-              r"|postuler|candidater|apply|d[eé]poser (votre |ma |une )?candidature"
-              r"|nos m[eé]tiers|notre [eé]quipe|rejoins?-nous"
-              r"|graduate|graduates?|early careers?|early talent|students?|apprentice|internship"
-              r"|apprentissage|alternance|stag(es?|iaires?)"
-              r"|ressources humaines|RH|human resources?|people (and|&) culture"
-              r"|our (people|team|culture)|why work|come (work|join) (with )?us"
-              r"|make (a difference|an impact)|grow with us|employer branding|employeur"
-              r"|bist du dabei|werde teil|aventure humaine"
-              r"|job offers?|job openings?|find (a |your )?job|search jobs?|view (all |our )?jobs?)")
+CAREERS_RX = (
+    r"(carri[eè]res?|nous rejoindre|rejoign(ez|dre)( ?-? ?nous| l'?[eé]quipe)?"
+    r"|recrutement|recrute(ons?|ments?)?|recruiting|nos offres|offres? d'?emploi"
+    r"|espace (candidat|recrutement|carri[eè]re)"
+    r"|travailler (avec|chez|pour) nous|travailler ensemble|talents?|emplois?"
+    r"|careers?|join (us|our team|the team)|work (with|for|at) us|working (here|at)"
+    r"|jobs?|vacan(cy|cies)|openings?|opportunit(y|ies)|we'?re hiring|life at"
+    r"|karriere|stellen(angebote)?|mitarbeiter werden|beruf"
+    r"|talent community|talent network|talent acquisition|candidate portal|career portal"
+    r"|job alerts?|talent (pool|pipeline)"
+    r"|candidature spontan[eé]e|spontaneous application|unsolicited application"
+    r"|open positions?|job opportunities?|current openings?"
+    r"|werken bij|vacatures?|lavora con noi|posizioni aperte|trabaja con nosotros"
+    r"|emplois? et carri[eè]res?|d[eé]couvr(ez|ir) nos (offres|m[eé]tiers|postes)"
+    r"|postuler|candidater|apply|d[eé]poser (votre |ma |une )?candidature"
+    r"|nos m[eé]tiers|notre [eé]quipe|rejoins?-nous"
+    r"|graduate|graduates?|early careers?|early talent|students?|apprentice|internship"
+    r"|apprentissage|alternance|stag(es?|iaires?)"
+    r"|ressources humaines|RH|human resources?|people (and|&) culture"
+    r"|our (people|team|culture)|why work|come (work|join) (with )?us"
+    r"|make (a difference|an impact)|grow with us|employer branding|employeur"
+    r"|bist du dabei|werde teil|aventure humaine"
+    r"|job offers?|job openings?|find (a |your )?job|search jobs?|view (all |our )?jobs?)"
+)
 
 # JS partagé : collecte tous les cliquables EN PERÇANT le shadow DOM (web components).
 _DEEP_CLICKABLE = r"""
@@ -163,20 +165,23 @@ _DEEP_CLICKABLE = r"""
   const _vis=el=>{const r=el.getBoundingClientRect();return r.width>0&&r.height>0;};
 """
 
+
 def pick_js(task: str) -> str:
     RX = {
         "register": r"(cr[eé][eé]?z? (un |mon |votre )?compte|nouveau compte|ouvrir un compte|s'?inscri(re|vez)|inscri(ption|vez)|s'?enregistr(er|ez)|enregistr(er|ez)|register|registrieren|konto erstellen|sign ?up|signup|create (an |your )?account|(cr[eé]e\w*|ouvrir) (un |mon |votre )?espace( candidat)?|cr[eé][eé]?z? mon profil|je m'?inscris|rejoign(ez|dre)|join us|devenir membre|pas (encore )?de compte|no account|don'?t have an account|nouvel utilisateur|new user)",
-        "login":    r"(se connecter|connexion|log ?in|sign ?in|j'?ai deja un compte|identifiez-vous|connectez-vous|acceder a mon compte|mon (espace|compte)( candidat| personnel)?|espace (candidat|personnel|client)|anmeld(en|ung)|einloggen|accedi|iniciar sesi[oó]n)",
-        "apply":    r"(postuler|postulez|candidater|je postule|je candidate|deposer (une |votre |ma )?candidature|postuler a (cette |l'?)offre|repondre a (cette |l'?)offre|rejoindre (l'?equipe|notre equipe)|apply now|apply for( this)?( job| role| position)?|apply|i'?m interested|commencer|demarrer|get started|start|continuer ma candidature)",
-        "careers":  CAREERS_RX,
+        "login": r"(se connecter|connexion|log ?in|sign ?in|j'?ai deja un compte|identifiez-vous|connectez-vous|acceder a mon compte|mon (espace|compte)( candidat| personnel)?|espace (candidat|personnel|client)|anmeld(en|ung)|einloggen|accedi|iniciar sesi[oó]n)",
+        "apply": r"(postuler|postulez|candidater|je postule|je candidate|deposer (une |votre |ma )?candidature|postuler a (cette |l'?)offre|repondre a (cette |l'?)offre|rejoindre (l'?equipe|notre equipe)|apply now|apply for( this)?( job| role| position)?|apply|i'?m interested|commencer|demarrer|get started|start|continuer ma candidature)",
+        "careers": CAREERS_RX,
     }
     NEVER = r"(envoyer ma candidature|soumettre ma candidature|submit application|confirmer et envoyer|valider (et )?envoyer|envoyer definitivement)"
     want = RX.get(task, RX["apply"])
     # CAREERS_RX chevauche register (join us/rejoindre) ET apply (postuler/candidater/apply).
     # Pas de pénalité croisée avec careers : sinon boutons Postuler/Inscription pénalisés.
     skip = {task}
-    if task == "careers": skip.update(("register", "apply", "login"))
-    if task in ("register", "apply", "login"): skip.add("careers")
+    if task == "careers":
+        skip.update(("register", "apply", "login"))
+    if task in ("register", "apply", "login"):
+        skip.add("careers")
     others = "|".join(v for k, v in RX.items() if k not in skip)
     return r"""
     (() => {
@@ -214,8 +219,10 @@ def pick_js(task: str) -> str:
 
 
 def dismiss_cookies(page):
-    try: return page.evaluate(COOKIE_JS)
-    except Exception: return {"done": "err"}
+    try:
+        return page.evaluate(COOKIE_JS)
+    except Exception:
+        return {"done": "err"}
 
 
 _OVERLAY_JS = r"""
@@ -248,16 +255,22 @@ _OVERLAY_JS = r"""
 }
 """
 
+
 def dismiss_overlays(page):
     """Ferme les widgets chat (Intercom/Drift/Zendesk/Crisp…) et modales non-essentielles
     qui interceptent les clics. NE touche PAS aux bannières cookies/formulaires d'offre/auth."""
-    try: return page.evaluate(_OVERLAY_JS)
-    except Exception: return {"closed": 0, "kinds": []}
+    try:
+        return page.evaluate(_OVERLAY_JS)
+    except Exception:
+        return {"closed": 0, "kinds": []}
 
 
 def analyze(page):
-    try: return page.evaluate(ANALYZE_JS)
-    except Exception: return {"kind": "other", "captcha": False, "blocked": False}
+    try:
+        return page.evaluate(ANALYZE_JS)
+    except Exception:
+        return {"kind": "other", "captcha": False, "blocked": False}
+
 
 # #6 Wizbii/Meeschaert : form register détecté mais inputs rendus tard (React/Vue).
 _COUNT_VISIBLE_INPUTS_JS = r"""
@@ -271,12 +284,14 @@ _COUNT_VISIBLE_INPUTS_JS = r"""
 }
 """
 
+
 def wait_for_form(page, min_inputs=1, timeout_ms=7000, timeout=None):
     """Attend que les champs de saisie apparaissent (formulaire chargé
     dynamiquement). Retour nb d'inputs visibles (0 = jamais rendu)."""
     if timeout is not None:
         timeout_ms = timeout
     import time as _t
+
     deadline = _t.time() + timeout_ms / 1000.0
     n = 0
     while _t.time() < deadline:
@@ -286,9 +301,12 @@ def wait_for_form(page, min_inputs=1, timeout_ms=7000, timeout=None):
             n = 0
         if n >= min_inputs:
             return n
-        try: page.wait_for_timeout(500)
-        except Exception: break
+        try:
+            page.wait_for_timeout(500)
+        except Exception:
+            break
     return n
+
 
 def click_for_task(page, task):
     try:
@@ -297,8 +315,10 @@ def click_for_task(page, task):
             page.locator('[data-wn-pick="1"]').first.click(timeout=4000)
             page.wait_for_timeout(1500)
             return r.get("label")
-    except Exception: pass
+    except Exception:
+        pass
     return None
+
 
 # ── Wizbii 2-step : clic "Continuer avec email" avant que le form n'apparaisse ──
 _WIZBII_EMAIL_BTN_JS = r"""
@@ -403,6 +423,7 @@ _PORTAL_LOGIN_JS = r"""
 }
 """
 
+
 def click_portal_login(page):
     """Page portail (UBS, etc.) : liste de liens vers différents espaces login.
     Clique le premier lien de connexion pertinent. Retour True si cliqué."""
@@ -415,6 +436,7 @@ def click_portal_login(page):
     except Exception:
         pass
     return False
+
 
 # Marque les déclencheurs de menu (aria-haspopup, caret, items de nav) pour hover.
 _HOVERTRIG_JS = r"""
@@ -469,6 +491,7 @@ _HAMBURGER_JS = r"""
 }
 """
 
+
 def expand_hamburger_menu(page):
     """Détecte et clique l'icône hamburger (☰) pour révéler la navigation
     cachée. À appeler AVANT tout scan de liens carrière/login.
@@ -489,12 +512,15 @@ def expand_hamburger_menu(page):
         pass
     if not clicked:
         try:
-            page.evaluate("""const el=document.querySelector('[data-wn-hamburger=\"1\"]'); if(el){el.click();el.dispatchEvent(new MouseEvent('click',{bubbles:true}));}""")
+            page.evaluate(
+                """const el=document.querySelector('[data-wn-hamburger=\"1\"]'); if(el){el.click();el.dispatchEvent(new MouseEvent('click',{bubbles:true}));}"""
+            )
             page.wait_for_timeout(800)
             clicked = True
         except Exception:
             pass
     return {"expanded": clicked, "label": r.get("label", ""), "selector": r.get("selector", "")}
+
 
 def hover_menus(page):
     """Survole les déclencheurs de menu (dérouler panneau/sous-menu) pour révéler
@@ -513,6 +539,7 @@ def hover_menus(page):
             pass
     return hovered
 
+
 def _unstick(page, i):
     """Action de « déblocage » escaladante entre 2 essais d'un finder qui a raté :
     cookies → scroll → attente → hover sous-menus → reload. Idempotent, silencieux."""
@@ -520,7 +547,8 @@ def _unstick(page, i):
         if i <= 0:
             dismiss_cookies(page)
         elif i == 1:
-            page.mouse.wheel(0, 900); page.wait_for_timeout(700)
+            page.mouse.wheel(0, 900)
+            page.wait_for_timeout(700)
         elif i == 2:
             page.wait_for_timeout(2200)
         elif i == 3:
@@ -528,11 +556,13 @@ def _unstick(page, i):
         else:
             try:
                 page.reload(timeout=30000, wait_until="domcontentloaded")
-                page.wait_for_timeout(1800); dismiss_cookies(page)
+                page.wait_for_timeout(1800)
+                dismiss_cookies(page)
             except Exception:
                 pass
     except Exception:
         pass
+
 
 def retry(page, fn, is_ok, max_tries=3):
     """Relance `fn()` tant que `is_ok(result)` est faux, en appliquant _unstick
@@ -546,14 +576,27 @@ def retry(page, fn, is_ok, max_tries=3):
             result = None
         if result and is_ok(result):
             if i:  # marque le nb d'essais si dispo
-                try: result["tries"] = i + 1
-                except Exception: pass
+                try:
+                    result["tries"] = i + 1
+                except Exception:
+                    pass
             return result
         _unstick(page, i)
     return result if result is not None else {}
 
+
 def smart_step(page, task, target_kinds=("apply_form", "register", "login"), max_tries=6):
-    strategies = ["cookies", "click", "careers", "hover", "portal", "scroll", "wait", "iframe", "reload"]
+    strategies = [
+        "cookies",
+        "click",
+        "careers",
+        "hover",
+        "portal",
+        "scroll",
+        "wait",
+        "iframe",
+        "reload",
+    ]
     rate_hits = 0
     for attempt in range(max_tries):
         info = analyze(page)
@@ -564,34 +607,40 @@ def smart_step(page, task, target_kinds=("apply_form", "register", "login"), max
         # rate-limit / anti-bot soft = backoff exponentiel + reload AVANT de rendre la main
         if info.get("blocked"):
             if info.get("rateLimited") and rate_hits < 3:
-                wait = min(2 ** rate_hits * 4000, 30000)  # 4s,8s,16s
+                wait = min(2**rate_hits * 4000, 30000)  # 4s,8s,16s
                 rate_hits += 1
                 try:
                     page.wait_for_timeout(wait)
                     page.reload(timeout=30000, wait_until="domcontentloaded")
                     page.wait_for_timeout(1500)
-                except Exception: pass
+                except Exception:
+                    pass
                 continue
             return {"status": "blocked", "kind": kind, "note": "anti-bot — humain requis"}
         if kind in target_kinds:
-            return {"status": "ok", "kind": kind, "note": "atteint a l'essai %d" % (attempt+1)}
+            return {"status": "ok", "kind": kind, "note": "atteint a l'essai %d" % (attempt + 1)}
         # apply_cta : bouton Apply/Candidater visible mais pas de form encore → cliquer
         if kind == "apply_cta":
             lbl = click_for_task(page, task)
-            if not lbl:                       # fallback: essayer register/login
+            if not lbl:  # fallback: essayer register/login
                 lbl = click_for_task(page, "register") or click_for_task(page, "login")
             if lbl:
-                try: page.wait_for_load_state('domcontentloaded', timeout=4000)
-                except Exception: pass
+                try:
+                    page.wait_for_load_state("domcontentloaded", timeout=4000)
+                except Exception:
+                    pass
                 page.wait_for_timeout(1500)
                 continue  # re-analyse après clic
         strat = strategies[attempt % len(strategies)]
         try:
-            if strat == "cookies": dismiss_cookies(page); dismiss_overlays(page)
+            if strat == "cookies":
+                dismiss_cookies(page)
+                dismiss_overlays(page)
             elif strat == "click":
-                dismiss_overlays(page)   # écarte widgets chat qui interceptent le clic
+                dismiss_overlays(page)  # écarte widgets chat qui interceptent le clic
                 lbl = click_for_task(page, task)
-                if lbl: page.wait_for_timeout(1200)
+                if lbl:
+                    page.wait_for_timeout(1200)
             elif strat == "careers":
                 # home corporate -> section Carrières/Nous rejoindre/Careers avant login/offre
                 # v5.1: expand hamburger + hover_menus AVANT le scan carrière
@@ -600,11 +649,13 @@ def smart_step(page, task, target_kinds=("apply_form", "register", "login"), max
                 hover_menus(page)
                 page.wait_for_timeout(500)
                 gc = goto_careers(page)
-                if gc.get("clicked"): page.wait_for_timeout(1000)
+                if gc.get("clicked"):
+                    page.wait_for_timeout(1000)
             elif strat == "hover":
-                if hover_menus(page):          # dérouler sous-menu puis re-cliquer
+                if hover_menus(page):  # dérouler sous-menu puis re-cliquer
                     lbl = click_for_task(page, task)
-                    if lbl: page.wait_for_timeout(1200)
+                    if lbl:
+                        page.wait_for_timeout(1200)
             elif strat == "portal":
                 # UBS / portails multi-liens : clic lien login → form login
                 if click_portal_login(page):
@@ -612,35 +663,55 @@ def smart_step(page, task, target_kinds=("apply_form", "register", "login"), max
                     # re-analyse après clic portal
                     info2 = analyze(page)
                     if info2.get("kind") in target_kinds:
-                        return {"status": "ok", "kind": info2["kind"],
-                                "note": "portal link clicked → %s" % info2["kind"]}
-            elif strat == "scroll": page.mouse.wheel(0, 1200)
-            elif strat == "wait": page.wait_for_timeout(2500)
+                        return {
+                            "status": "ok",
+                            "kind": info2["kind"],
+                            "note": "portal link clicked → %s" % info2["kind"],
+                        }
+            elif strat == "scroll":
+                page.mouse.wheel(0, 1200)
+            elif strat == "wait":
+                page.wait_for_timeout(2500)
             elif strat == "iframe":
                 for fr in page.frames:
                     try:
                         fi = fr.evaluate(ANALYZE_JS)
                         if fi.get("kind") in target_kinds:
-                            return {"status": "ok", "kind": fi["kind"], "note": "form dans une iframe", "frame": fr.url}
-                    except Exception: pass
+                            return {
+                                "status": "ok",
+                                "kind": fi["kind"],
+                                "note": "form dans une iframe",
+                                "frame": fr.url,
+                            }
+                    except Exception:
+                        pass
             elif strat == "reload":
                 page.reload(timeout=30000, wait_until="domcontentloaded")
                 page.wait_for_timeout(2000)
-        except Exception: pass
+        except Exception:
+            pass
     # dernier recours : vision LLM (Ollama llava) — "voit" le bon bouton
     v = vision_pick(page, task)
     if v.get("clicked"):
         page.wait_for_timeout(1500)
         info = analyze(page)
         if info.get("kind") in target_kinds:
-            return {"status": "ok", "kind": info["kind"], "note": "vision LLM: '%s'" % v.get("label", "")}
-    return {"status": "stuck", "kind": analyze(page).get("kind", "other"),
-            "note": "objectif non atteint apres %d essais — verifie a la main" % max_tries}
+            return {
+                "status": "ok",
+                "kind": info["kind"],
+                "note": "vision LLM: '%s'" % v.get("label", ""),
+            }
+    return {
+        "status": "stuck",
+        "kind": analyze(page).get("kind", "other"),
+        "note": "objectif non atteint apres %d essais — verifie a la main" % max_tries,
+    }
 
 
 # ── #9 DRILL : page carrière (liste d'offres) -> entrer dans la bonne offre ───
 def _drill_js(role_hint: str, job_rx: str = "") -> str:
     import json as _j
+
     hint = _j.dumps((role_hint or "").lower())
     # pattern liens d'offre : celui de l'ATS détecté, sinon générique
     jrx = _j.dumps(job_rx or r"/(jobs?|offre|emploi|career|poste|vacan|position|stelle|opening)s?/")
@@ -671,6 +742,7 @@ def _drill_js(role_hint: str, job_rx: str = "") -> str:
     })(%s, %s)
     """ % (hint, jrx)
 
+
 # Champ recherche d'offres sur page carrière : tape le rôle -> fait surgir l'offre.
 _SEARCH_JS = r"""
 () => {
@@ -693,6 +765,7 @@ _SEARCH_JS = r"""
   return {found:false};
 }
 """
+
 
 def search_careers(page, query):
     """Tape le rôle dans le champ recherche d'offres de la page carrière puis
@@ -717,7 +790,8 @@ def search_careers(page, query):
     except Exception:
         # fallback : requestSubmit du form contenant le champ
         try:
-            react_submit(page); page.wait_for_timeout(2000)
+            react_submit(page)
+            page.wait_for_timeout(2000)
             return {"searched": True, "ph": r.get("ph", ""), "q": str(query)[:60]}
         except Exception:
             return {"searched": False, "ph": r.get("ph", "")}
@@ -1008,8 +1082,10 @@ def goto_careers(page):
             try:
                 page.goto(best_sm["url"], timeout=30000, wait_until="domcontentloaded")
                 page.wait_for_timeout(3500)
-                try: page.wait_for_load_state('domcontentloaded', timeout=5000)
-                except Exception: pass
+                try:
+                    page.wait_for_load_state("domcontentloaded", timeout=5000)
+                except Exception:
+                    pass
                 kind = analyze(page).get("kind", "other")
                 return {
                     "clicked": True,
@@ -1022,7 +1098,11 @@ def goto_careers(page):
                 }
             except Exception:
                 pass
-        return {"clicked": False, "reason": "no_career_links", "top5": r.get("top5", []) if r else []}
+        return {
+            "clicked": False,
+            "reason": "no_career_links",
+            "top5": r.get("top5", []) if r else [],
+        }
 
     label = r.get("label", "")
     href = r.get("href", "")
@@ -1035,18 +1115,24 @@ def goto_careers(page):
         try:
             page.locator('[data-wn-dcareer="1"]').first.click(timeout=4000)
             page.wait_for_timeout(3500)
-            try: page.wait_for_load_state('domcontentloaded', timeout=5000)
-            except Exception: pass
+            try:
+                page.wait_for_load_state("domcontentloaded", timeout=5000)
+            except Exception:
+                pass
             clicked = True
         except Exception:
             pass
     # Strategy 2: JS click via evaluate (bypasses Playwright actionability checks)
     if not clicked:
         try:
-            page.evaluate("""const el = document.querySelector('[data-wn-dcareer="1"]'); if(el) { el.click(); return true; } return false;""")
+            page.evaluate(
+                """const el = document.querySelector('[data-wn-dcareer="1"]'); if(el) { el.click(); return true; } return false;"""
+            )
             page.wait_for_timeout(3500)
-            try: page.wait_for_load_state('domcontentloaded', timeout=5000)
-            except Exception: pass
+            try:
+                page.wait_for_load_state("domcontentloaded", timeout=5000)
+            except Exception:
+                pass
             clicked = True
         except Exception:
             pass
@@ -1062,8 +1148,10 @@ def goto_careers(page):
               return false;
             """)
             page.wait_for_timeout(3500)
-            try: page.wait_for_load_state('domcontentloaded', timeout=5000)
-            except Exception: pass
+            try:
+                page.wait_for_load_state("domcontentloaded", timeout=5000)
+            except Exception:
+                pass
             clicked = True
         except Exception:
             pass
@@ -1079,8 +1167,10 @@ def goto_careers(page):
               return false;
             """)
             page.wait_for_timeout(3500)
-            try: page.wait_for_load_state('domcontentloaded', timeout=5000)
-            except Exception: pass
+            try:
+                page.wait_for_load_state("domcontentloaded", timeout=5000)
+            except Exception:
+                pass
             clicked = True
         except Exception:
             pass
@@ -1089,7 +1179,11 @@ def goto_careers(page):
         try:
             # resolve relative URLs
             base = page.evaluate("() => window.location.origin")
-            full_url = href if href.startswith("http") else (base + (href if href.startswith("/") else "/" + href))
+            full_url = (
+                href
+                if href.startswith("http")
+                else (base + (href if href.startswith("/") else "/" + href))
+            )
             page.goto(full_url, timeout=30000, wait_until="domcontentloaded")
             page.wait_for_timeout(3500)
             clicked = True
@@ -1097,8 +1191,13 @@ def goto_careers(page):
             pass
 
     if not clicked:
-        return {"clicked": False, "label": label, "reason": "click_failed_5_strategies",
-                "href": href, "is_js_only": is_js_only}
+        return {
+            "clicked": False,
+            "label": label,
+            "reason": "click_failed_5_strategies",
+            "href": href,
+            "is_js_only": is_js_only,
+        }
 
     kind = analyze(page).get("kind", "other")
     return {
@@ -1196,6 +1295,7 @@ _CAREERS_AUTH_JS = r"""
 })()
 """
 
+
 # ── FALLBACK SITEMAP.XML : dernier recours quand aucun lien carrière trouvé ──
 def fetch_sitemap_careers(page, base_url: str = "") -> list:
     """Récupère /sitemap.xml et en extrait les URLs contenant des patterns
@@ -1203,9 +1303,10 @@ def fetch_sitemap_careers(page, base_url: str = "") -> list:
     À utiliser quand goto_careers() échoue (no_career_links)."""
     from urllib.parse import urlparse
     import re as _re
+
     CAREER_URL_RX = _re.compile(
-        r'/(career|carri[eè]re|job|emplo|recrut|talent|stellen|karriere|beruf|vacanc|vacature|opening|position|work|apply|join)',
-        _re.IGNORECASE
+        r"/(career|carri[eè]re|job|emplo|recrut|talent|stellen|karriere|beruf|vacanc|vacature|opening|position|work|apply|join)",
+        _re.IGNORECASE,
     )
     results = []
     sitemap_urls = []
@@ -1218,33 +1319,46 @@ def fetch_sitemap_careers(page, base_url: str = "") -> list:
         except Exception:
             origin = ""
     if origin:
-        sitemap_urls = [f"{origin}/sitemap.xml", f"{origin}/sitemap_index.xml", f"{origin}/wp-sitemap.xml"]
+        sitemap_urls = [
+            f"{origin}/sitemap.xml",
+            f"{origin}/sitemap_index.xml",
+            f"{origin}/wp-sitemap.xml",
+        ]
     for sitemap_url in sitemap_urls:
         try:
             import urllib.request, xml.etree.ElementTree as ET
+
             req = urllib.request.Request(sitemap_url, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=15) as resp:
                 data = resp.read()
             # Try XML parse
             try:
                 root = ET.fromstring(data)
-                ns = {'ns': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
-                urls = root.findall('.//ns:loc', ns) or root.findall('.//{http://www.sitemaps.org/schemas/sitemap/0.9}loc')
+                ns = {"ns": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+                urls = root.findall(".//ns:loc", ns) or root.findall(
+                    ".//{http://www.sitemaps.org/schemas/sitemap/0.9}loc"
+                )
                 for loc in urls:
-                    url_text = (loc.text or '').strip()
+                    url_text = (loc.text or "").strip()
                     if url_text and CAREER_URL_RX.search(url_text):
                         # Extraire label du dernier segment
-                        path = urlparse(url_text).path.rstrip('/')
-                        label = path.rsplit('/', 1)[-1].replace('-', ' ').replace('_', ' ')
-                        results.append({"url": url_text, "label": label, "score": 2, "source": "sitemap"})
+                        path = urlparse(url_text).path.rstrip("/")
+                        label = path.rsplit("/", 1)[-1].replace("-", " ").replace("_", " ")
+                        results.append(
+                            {"url": url_text, "label": label, "score": 2, "source": "sitemap"}
+                        )
             except Exception:
                 # Fallback: regex brut sur le XML
-                for match in _re.finditer(r'<loc>([^<]+)</loc>', data.decode('utf-8', errors='ignore')):
+                for match in _re.finditer(
+                    r"<loc>([^<]+)</loc>", data.decode("utf-8", errors="ignore")
+                ):
                     url_text = match.group(1).strip()
                     if CAREER_URL_RX.search(url_text):
-                        path = urlparse(url_text).path.rstrip('/')
-                        label = path.rsplit('/', 1)[-1].replace('-', ' ').replace('_', ' ')
-                        results.append({"url": url_text, "label": label, "score": 2, "source": "sitemap_regex"})
+                        path = urlparse(url_text).path.rstrip("/")
+                        label = path.rsplit("/", 1)[-1].replace("-", " ").replace("_", " ")
+                        results.append(
+                            {"url": url_text, "label": label, "score": 2, "source": "sitemap_regex"}
+                        )
             if results:
                 break
         except Exception:
@@ -1284,15 +1398,22 @@ def find_offer(page, role_hint="", max_tries=3):
     try:
         page.wait_for_load_state("networkidle", timeout=6000)
     except Exception:
-        try: page.wait_for_timeout(2000)
-        except Exception: pass
+        try:
+            page.wait_for_timeout(2000)
+        except Exception:
+            pass
     ats = detect_ats(page)
     last = {}
     for attempt in range(max(1, max_tries)):
         info = analyze(page)
         if info.get("kind") in TARGET:
-            return {"reached": True, "kind": info["kind"], "ats": ats.get("name"),
-                    "via": "direct" if attempt == 0 else "retry", "tries": attempt + 1}
+            return {
+                "reached": True,
+                "kind": info["kind"],
+                "ats": ats.get("name"),
+                "via": "direct" if attempt == 0 else "retry",
+                "tries": attempt + 1,
+            }
         via = []
         # 1) recherche par mot-clé (champ recherche d'offres)
         sc = search_careers(page, role_hint)
@@ -1300,27 +1421,41 @@ def find_offer(page, role_hint="", max_tries=3):
             via.append("search")
             info = analyze(page)
             if info.get("kind") in TARGET:
-                return {"reached": True, "kind": info["kind"], "ats": ats.get("name"),
-                        "via": "+".join(via), "tries": attempt + 1}
+                return {
+                    "reached": True,
+                    "kind": info["kind"],
+                    "ats": ats.get("name"),
+                    "via": "+".join(via),
+                    "tries": attempt + 1,
+                }
         # 2) entrer dans une offre de la liste (pattern ATS si connu, sinon générique)
         dr = drill_to_offer(page, role_hint, ats.get("jobLinkRx", ""))
         if not dr.get("clicked") and ats.get("name") != "generic":
-            dr = drill_to_offer(page, role_hint, "")   # fallback pattern générique
+            dr = drill_to_offer(page, role_hint, "")  # fallback pattern générique
         if dr.get("clicked"):
             via.append("drill")
             dismiss_cookies(page)
             info = analyze(page)
         # 3) perdu (0 offre, rien cliqué) → saute vers la section Carrières puis re-tente
-        if not via and info.get("kind") in ("other", "newsletter_form") and info.get("nOffers", 0) < 3:
+        if (
+            not via
+            and info.get("kind") in ("other", "newsletter_form")
+            and info.get("nOffers", 0) < 3
+        ):
             gc = goto_careers(page)
             if gc.get("clicked"):
                 via.append("careers")
                 dismiss_cookies(page)
-                ats = detect_ats(page)   # l'ATS peut changer après le saut
+                ats = detect_ats(page)  # l'ATS peut changer après le saut
                 info = analyze(page)
                 if info.get("kind") in TARGET:
-                    return {"reached": True, "kind": info["kind"], "ats": ats.get("name"),
-                            "via": "+".join(via), "tries": attempt + 1}
+                    return {
+                        "reached": True,
+                        "kind": info["kind"],
+                        "ats": ats.get("name"),
+                        "via": "+".join(via),
+                        "tries": attempt + 1,
+                    }
                 sc2 = search_careers(page, role_hint)
                 if sc2.get("searched"):
                     via.append("search")
@@ -1329,12 +1464,17 @@ def find_offer(page, role_hint="", max_tries=3):
                     via.append("drill")
                     dismiss_cookies(page)
                 info = analyze(page)
-        last = {"reached": info.get("kind") in TARGET, "kind": info.get("kind"),
-                "ats": ats.get("name"), "via": "+".join(via) or "none",
-                "label": dr.get("label", ""), "tries": attempt + 1}
+        last = {
+            "reached": info.get("kind") in TARGET,
+            "kind": info.get("kind"),
+            "ats": ats.get("name"),
+            "via": "+".join(via) or "none",
+            "label": dr.get("label", ""),
+            "tries": attempt + 1,
+        }
         if last["reached"]:
             return last
-        _unstick(page, attempt)   # déblocage avant le prochain essai
+        _unstick(page, attempt)  # déblocage avant le prochain essai
     return last
 
 
@@ -1358,6 +1498,7 @@ _WIZARD_NEXT_JS = r"""
 }
 """
 
+
 def run_wizard(page, fill_fn=None, max_screens=6):
     """#3 Parcourt un formulaire de candidature MULTI-ÉCRANS (Workday/iCIMS/SmartRecruiters).
     Boucle : remplit l'écran (fill_fn) + coche CGU + clique "Suivant/Continuer"
@@ -1372,19 +1513,30 @@ def run_wizard(page, fill_fn=None, max_screens=6):
         dismiss_cookies(page)
         wait_for_form(page, min_inputs=1, timeout_ms=4000)
         if fill_fn:
-            try: filled_total += int(fill_fn(page) or 0)
-            except Exception: pass
-        try: accept_consent(page)
-        except Exception: pass
-        try: nav = page.evaluate(_WIZARD_NEXT_JS)
-        except Exception: nav = {"next": "", "final": False}
+            try:
+                filled_total += int(fill_fn(page) or 0)
+            except Exception:
+                pass
+        try:
+            accept_consent(page)
+        except Exception:
+            pass
+        try:
+            nav = page.evaluate(_WIZARD_NEXT_JS)
+        except Exception:
+            nav = {"next": "", "final": False}
         # seul le submit final présent -> stop (l'humain clique Envoyer)
         if not nav.get("next"):
-            return {"screens": screens, "filled_total": filled_total,
-                    "stopped": "final_submit" if nav.get("final") else "no_next"}
+            return {
+                "screens": screens,
+                "filled_total": filled_total,
+                "stopped": "final_submit" if nav.get("final") else "no_next",
+            }
         cur = None
-        try: cur = page.url
-        except Exception: pass
+        try:
+            cur = page.url
+        except Exception:
+            pass
         try:
             human_click(page, '[data-wn-wnext="1"]')
             page.wait_for_timeout(_rnd.randint(1200, 2200))
@@ -1395,22 +1547,26 @@ def run_wizard(page, fill_fn=None, max_screens=6):
             if cur and page.url == cur and cur in seen_urls:
                 return {"screens": screens, "filled_total": filled_total, "stopped": "no_progress"}
             seen_urls.append(cur)
-        except Exception: pass
+        except Exception:
+            pass
     return {"screens": screens, "filled_total": filled_total, "stopped": "max_screens"}
 
 
 # ── FALLBACK VISION (Ollama llava) : screenshot -> label bouton -> clic ────────
 # Couvre canvas / DOM exotique / label hors-regex. Local, gratuit, offline.
 _VISION_TASK_FR = {
-    "apply":    "postuler à l'offre (bouton Postuler / Candidater)",
+    "apply": "postuler à l'offre (bouton Postuler / Candidater)",
     "register": "créer un compte / s'inscrire",
-    "login":    "se connecter (login)",
+    "login": "se connecter (login)",
 }
+
 
 def _click_by_text_js(label: str) -> str:
     import json as _j
+
     lab = _j.dumps(label.strip().lower())
-    return r"""
+    return (
+        r"""
     ((LAB) => {
       const _deep=(root,acc)=>{root.querySelectorAll('a,button,[role=button],input[type=button],input[type=submit],[onclick]').forEach(e=>acc.push(e));root.querySelectorAll('*').forEach(e=>{if(e.shadowRoot)_deep(e.shadowRoot,acc);});return acc;};
       const els=_deep(document,[]).filter(el=>{const r=el.getBoundingClientRect();return r.width>0&&r.height>0;});
@@ -1423,34 +1579,47 @@ def _click_by_text_js(label: str) -> str:
       if(best){ best.setAttribute('data-wn-vpick','1'); best.scrollIntoView({block:'center'}); return {found:true,label:(best.innerText||best.value||'').trim().slice(0,50)}; }
       return {found:false};
     })(%s)
-    """ % lab
+    """
+        % lab
+    )
+
 
 def vision_pick(page, task, model=None, host="http://localhost:11434"):
     """Fallback vision : screenshot -> Ollama lit le bon bouton -> clic DOM.
     Auto-détecte le modèle vision disponible (qwen2.5vl, llava, etc.).
     Silencieux si Ollama absent/modèle absent. Retour {clicked, label, note}."""
     import base64, json, urllib.request, urllib.error
-    
+
     # Auto-détection du modèle vision disponible
     if model is None:
         model = _detect_vision_model(host)
         if model is None:
             return {"clicked": False, "note": "aucun modèle vision Ollama trouvé"}
-    
+
     try:
         png = page.screenshot(type="png")
     except Exception as e:
         return {"clicked": False, "note": "screenshot KO: %s" % type(e).__name__}
     b64 = base64.b64encode(png).decode()
     goal = _VISION_TASK_FR.get(task, _VISION_TASK_FR["apply"])
-    prompt = ("Capture d'une page web. Tâche: %s. "
-              "Réponds UNIQUEMENT le texte visible EXACT du seul bouton/lien à cliquer. "
-              "Pas d'explication. Si aucun, réponds NONE." % goal)
-    body = json.dumps({"model": model, "prompt": prompt, "images": [b64],
-                       "stream": False, "options": {"temperature": 0}}).encode()
+    prompt = (
+        "Capture d'une page web. Tâche: %s. "
+        "Réponds UNIQUEMENT le texte visible EXACT du seul bouton/lien à cliquer. "
+        "Pas d'explication. Si aucun, réponds NONE." % goal
+    )
+    body = json.dumps(
+        {
+            "model": model,
+            "prompt": prompt,
+            "images": [b64],
+            "stream": False,
+            "options": {"temperature": 0},
+        }
+    ).encode()
     try:
-        req = urllib.request.Request(host + "/api/generate", data=body,
-                                     headers={"Content-Type": "application/json"})
+        req = urllib.request.Request(
+            host + "/api/generate", data=body, headers={"Content-Type": "application/json"}
+        )
         with urllib.request.urlopen(req, timeout=120) as resp:
             out = json.loads(resp.read().decode())
         label = (out.get("response") or "").strip().strip('"').splitlines()[0][:60]
@@ -1472,8 +1641,17 @@ def _detect_vision_model(host="http://localhost:11434") -> str | None:
     """Détecte le premier modèle vision disponible via l'API Ollama.
     Ordre de préférence : qwen2.5vl → llava → minicpm-v → bakllava."""
     import json, urllib.request, urllib.error
-    VISION_KEYWORDS = ["qwen2.5vl", "qwen2-vl", "llava", "minicpm-v", "bakllava",
-                       "llama3.2-vision", "llama-3.2-vision", "moondream"]
+
+    VISION_KEYWORDS = [
+        "qwen2.5vl",
+        "qwen2-vl",
+        "llava",
+        "minicpm-v",
+        "bakllava",
+        "llama3.2-vision",
+        "llama-3.2-vision",
+        "moondream",
+    ]
     try:
         req = urllib.request.Request(host + "/api/tags")
         with urllib.request.urlopen(req, timeout=5) as resp:
@@ -1496,6 +1674,7 @@ def _detect_vision_model(host="http://localhost:11434") -> str | None:
 def _detect_text_model(host="http://localhost:11434"):
     """Détecte un modèle texte Ollama pour le raisonnement (mistral/llama/qwen/phi)."""
     import json, urllib.request
+
     PREF = ["qwen2.5", "llama3", "llama-3", "mistral", "mixtral", "phi", "gemma", "qwen"]
     try:
         req = urllib.request.Request(host + "/api/tags")
@@ -1531,6 +1710,7 @@ _AGENT_DOM_JS = r"""
 }
 """
 
+
 def llm_agent(page, goal, max_steps=8, model=None, host="http://localhost:11434", profile=None):
     """#1 Agent plan-act : à chaque étape lit le DOM (digest), demande au LLM local
     (Ollama) l'action à faire pour atteindre `goal`, l'exécute, recommence.
@@ -1538,11 +1718,20 @@ def llm_agent(page, goal, max_steps=8, model=None, host="http://localhost:11434"
     & captcha (renvoie stop). Dégrade proprement si Ollama absent.
     Retour {ok, steps, log, note}."""
     import json, urllib.request, re as _re
+
     model = model or _detect_text_model(host)
     if not model:
-        return {"ok": False, "steps": 0, "log": [], "note": "ollama absent — pull un modèle (mistral/qwen)"}
+        return {
+            "ok": False,
+            "steps": 0,
+            "log": [],
+            "note": "ollama absent — pull un modèle (mistral/qwen)",
+        }
     prof = profile or {}
-    NEVER = _re.compile(r"(envoyer ma candidature|soumettre|submit application|confirmer et envoyer|valider et envoyer|finaliser.*candidature|envoyer definitivement)", _re.I)
+    NEVER = _re.compile(
+        r"(envoyer ma candidature|soumettre|submit application|confirmer et envoyer|valider et envoyer|finaliser.*candidature|envoyer definitivement)",
+        _re.I,
+    )
     log = []
     for step in range(max(1, max_steps)):
         info = analyze(page)
@@ -1558,34 +1747,56 @@ def llm_agent(page, goal, max_steps=8, model=None, host="http://localhost:11434"
             "Page: %s | %s\n"
             "BOUTONS/LIENS (id:texte): %s\n"
             "CHAMPS (id:type:label:rempli): %s\n"
-            "Réponds UNIQUEMENT en JSON: {\"action\":\"click|fill|scroll|done|stop\",\"id\":<int|null>,"
-            "\"value\":<str|null>,\"why\":<str>}.\n"
+            'Réponds UNIQUEMENT en JSON: {"action":"click|fill|scroll|done|stop","id":<int|null>,'
+            '"value":<str|null>,"why":<str>}.\n'
             "Règles: NE clique JAMAIS un bouton d'envoi/soumission FINAL de candidature. "
             "Si captcha/blocage -> action stop. Si but atteint (formulaire prêt) -> action done. "
             "Pour remplir un champ -> action fill avec id + value."
-        ) % (goal,
-             json.dumps({k: prof.get(k) for k in ("full", "email", "tel", "prenom", "nom") if prof.get(k)}, ensure_ascii=False),
-             dom.get("title", ""), dom.get("url", "")[:80],
-             json.dumps(dom.get("clickables", []), ensure_ascii=False)[:1500],
-             json.dumps(dom.get("inputs", []), ensure_ascii=False)[:1200])
-        body = json.dumps({"model": model, "prompt": prompt, "stream": False,
-                           "format": "json", "options": {"temperature": 0}}).encode()
+        ) % (
+            goal,
+            json.dumps(
+                {k: prof.get(k) for k in ("full", "email", "tel", "prenom", "nom") if prof.get(k)},
+                ensure_ascii=False,
+            ),
+            dom.get("title", ""),
+            dom.get("url", "")[:80],
+            json.dumps(dom.get("clickables", []), ensure_ascii=False)[:1500],
+            json.dumps(dom.get("inputs", []), ensure_ascii=False)[:1200],
+        )
+        body = json.dumps(
+            {
+                "model": model,
+                "prompt": prompt,
+                "stream": False,
+                "format": "json",
+                "options": {"temperature": 0},
+            }
+        ).encode()
         try:
-            req = urllib.request.Request(host + "/api/generate", data=body,
-                                         headers={"Content-Type": "application/json"})
+            req = urllib.request.Request(
+                host + "/api/generate", data=body, headers={"Content-Type": "application/json"}
+            )
             with urllib.request.urlopen(req, timeout=90) as resp:
                 out = json.loads(resp.read().decode())
             act = json.loads(out.get("response") or "{}")
         except Exception as e:
             return {"ok": False, "steps": step, "log": log, "note": "llm KO: %s" % type(e).__name__}
         a = (act.get("action") or "").lower()
-        log.append({"step": step + 1, "action": a, "id": act.get("id"), "why": (act.get("why") or "")[:60]})
+        log.append(
+            {"step": step + 1, "action": a, "id": act.get("id"), "why": (act.get("why") or "")[:60]}
+        )
         if a == "done":
             return {"ok": True, "steps": step + 1, "log": log, "note": "but atteint"}
         if a == "stop":
-            return {"ok": False, "steps": step + 1, "log": log, "note": "agent stop: %s" % (act.get("why") or "")[:60]}
+            return {
+                "ok": False,
+                "steps": step + 1,
+                "log": log,
+                "note": "agent stop: %s" % (act.get("why") or "")[:60],
+            }
         if a == "scroll":
-            human_scroll(page, 2); continue
+            human_scroll(page, 2)
+            continue
         idx = act.get("id")
         if idx is None:
             continue
@@ -1597,8 +1808,14 @@ def llm_agent(page, goal, max_steps=8, model=None, host="http://localhost:11434"
             except Exception:
                 txt = ""
             if NEVER.search(txt or ""):
-                return {"ok": False, "steps": step + 1, "log": log, "note": "refus clic submit final: %s" % txt[:40]}
-            human_click(page, sel); page.wait_for_timeout(_rnd.randint(1000, 2000))
+                return {
+                    "ok": False,
+                    "steps": step + 1,
+                    "log": log,
+                    "note": "refus clic submit final: %s" % txt[:40],
+                }
+            human_click(page, sel)
+            page.wait_for_timeout(_rnd.randint(1000, 2000))
         elif a == "fill":
             val = act.get("value") or ""
             human_type(page, sel, val)
@@ -1668,6 +1885,7 @@ _REQSUBMIT_JS = r"""
 }
 """
 
+
 def react_submit(page):
     """Soumission native HTML (form.requestSubmit) quand le clic bouton est avalé
     par React/SPA. Retour True si un form a été soumis."""
@@ -1676,6 +1894,7 @@ def react_submit(page):
     except Exception:
         return False
 
+
 def login_flow(page, email, pwd, max_steps=3):
     """Login multi-étapes (SmartRecruiters : email→continue→password→login).
     Remplit les champs vides + clique continue/login à chaque étape.
@@ -1683,6 +1902,7 @@ def login_flow(page, email, pwd, max_steps=3):
     Le mot de passe n'est JAMAIS tape : regle du projet, quel que soit pwd."""
     pwd = ""
     import json as _json
+
     steps = []
     for _ in range(max_steps):
         try:
@@ -1693,8 +1913,10 @@ def login_flow(page, email, pwd, max_steps=3):
         submitted_pwd = bool(r.get("pwd"))
         if r.get("btn"):
             url_before = None
-            try: url_before = page.url
-            except Exception: pass
+            try:
+                url_before = page.url
+            except Exception:
+                pass
             try:
                 page.locator('[data-wn-next="1"]').first.click(timeout=4000)
                 page.wait_for_timeout(2000)
@@ -1709,7 +1931,7 @@ def login_flow(page, email, pwd, max_steps=3):
                         page.wait_for_timeout(2000)
             except Exception:
                 pass
-        if submitted_pwd:               # password soumis -> login envoyé, stop
+        if submitted_pwd:  # password soumis -> login envoyé, stop
             break
         if not r.get("email") and not r.get("btn"):
             break
@@ -1742,6 +1964,7 @@ _SWITCH_REG_JS = r"""
   return {found:false};
 }
 """
+
 
 def switch_to_register(page):
     """Bascule d'un écran login vers l'écran création de compte (toggle/onglet).
@@ -1781,6 +2004,7 @@ _FILEINPUT_JS = r"""
 
 # ── AUTO-APPLY : remplissage automatique de formulaire de candidature ────────
 
+
 def accept_consent(page):
     """Coche les cases de consentement OBLIGATOIRES (CGU, conditions, politique de confidentialité,
     traitement des données) nécessaires pour postuler. Ne coche PAS les opt-ins
@@ -1809,6 +2033,7 @@ def accept_consent(page):
         return page.evaluate(js)
     except Exception:
         return 0
+
 
 # JS : reconnait la PLATEFORME/ATS (URL host + signatures DOM) et renvoie
 # {name, jobLinkRx (regex liens d'offre), searchSel (champ recherche), note}.
@@ -1856,6 +2081,7 @@ _ATS_DETECT_JS = r"""
   return {name, jobLinkRx, searchSel};
 })()
 """
+
 
 def detect_ats(page):
     """Reconnait la plateforme/ATS du site d'entreprise (Workday, iCIMS, TalentSoft,
@@ -1950,6 +2176,7 @@ _SEGMENT_JS = r"""
 })()
 """
 
+
 def segment_page(page):
     """RECONNAISSANCE COMPLÈTE : mappe toutes les parties de la page —
     régions (header/nav/main/footer/aside/iframes), overlays (cookie/captcha/chat/
@@ -1959,7 +2186,15 @@ def segment_page(page):
     try:
         return page.evaluate(_SEGMENT_JS)
     except Exception as e:
-        return {"error": type(e).__name__, "regions": {}, "overlays": {}, "byRole": {}, "buttons": [], "forms": []}
+        return {
+            "error": type(e).__name__,
+            "regions": {},
+            "overlays": {},
+            "byRole": {},
+            "buttons": [],
+            "forms": [],
+        }
+
 
 def plan_action(page, goal="apply"):
     """CERVEAU déterministe : lit la carte complète (segment_page) et renvoie la
@@ -1977,27 +2212,53 @@ def plan_action(page, goal="apply"):
     roles = s.get("byRole", {})
     if goal == "apply":
         if "apply" in purposes:
-            return {"action": "ready", "role": "apply_form", "reason": "formulaire de candidature présent", "seg": s}
+            return {
+                "action": "ready",
+                "role": "apply_form",
+                "reason": "formulaire de candidature présent",
+                "seg": s,
+            }
         if s.get("offers", 0) >= 1:
-            return {"action": "drill", "role": "offer_list", "reason": "%d offre(s) — entrer" % s["offers"], "seg": s}
+            return {
+                "action": "drill",
+                "role": "offer_list",
+                "reason": "%d offre(s) — entrer" % s["offers"],
+                "seg": s,
+            }
         if roles.get("apply"):
             return {"action": "click", "role": "apply", "reason": "bouton Postuler", "seg": s}
         if roles.get("search"):
-            return {"action": "search", "role": "search", "reason": "champ recherche d'offres", "seg": s}
+            return {
+                "action": "search",
+                "role": "search",
+                "reason": "champ recherche d'offres",
+                "seg": s,
+            }
         if roles.get("careers"):
             return {"action": "careers", "role": "careers", "reason": "lien Carrières", "seg": s}
         if "register" in purposes:
-            return {"action": "register", "role": "register", "reason": "formulaire inscription", "seg": s}
+            return {
+                "action": "register",
+                "role": "register",
+                "reason": "formulaire inscription",
+                "seg": s,
+            }
         if "login" in purposes:
             return {"action": "auth", "role": "login", "reason": "formulaire login", "seg": s}
     else:  # goal register/login
         if goal in purposes:
-            return {"action": "ready", "role": goal + "_form", "reason": "formulaire %s présent" % goal, "seg": s}
+            return {
+                "action": "ready",
+                "role": goal + "_form",
+                "reason": "formulaire %s présent" % goal,
+                "seg": s,
+            }
         if roles.get(goal):
             return {"action": "click", "role": goal, "reason": "bouton %s" % goal, "seg": s}
         if roles.get("careers"):
             return {"action": "careers", "role": "careers", "reason": "lien Carrières", "seg": s}
     return {"action": "none", "role": "other", "reason": "rien de concluant", "seg": s}
+
 
 def describe_page(page):
     """Résumé lisible du segment (debug/log) : régions + overlays + rôles + forms."""
@@ -2006,11 +2267,23 @@ def describe_page(page):
         return "segment KO: %s" % s["error"]
     reg = [k for k, v in s.get("regions", {}).items() if v is True]
     ov = [k for k, v in s.get("overlays", {}).items() if v]
-    roles = ", ".join("%s×%d" % (k, v) for k, v in sorted(s.get("byRole", {}).items(), key=lambda x: -x[1]))
+    roles = ", ".join(
+        "%s×%d" % (k, v) for k, v in sorted(s.get("byRole", {}).items(), key=lambda x: -x[1])
+    )
     forms = ", ".join("%s(%d champs)" % (f["purpose"], f["nInputs"]) for f in s.get("forms", []))
-    return ("PAGE '%s'\n  régions: %s | iframes: %d\n  overlays: %s\n  boutons par rôle: %s\n  forms: %s\n  offres: %d"
-            % (s.get("title", "")[:50], "+".join(reg) or "—", len(s.get("regions", {}).get("iframes", [])),
-               "+".join(ov) or "aucun", roles or "—", forms or "aucun", s.get("offers", 0)))
+    return (
+        "PAGE '%s'\n  régions: %s | iframes: %d\n  overlays: %s\n  boutons par rôle: %s\n  forms: %s\n  offres: %d"
+        % (
+            s.get("title", "")[:50],
+            "+".join(reg) or "—",
+            len(s.get("regions", {}).get("iframes", [])),
+            "+".join(ov) or "aucun",
+            roles or "—",
+            forms or "aucun",
+            s.get("offers", 0),
+        )
+    )
+
 
 # JS : scanne TOUS les champs du formulaire (input, textarea, select) avec leur contexte
 _SCAN_FORM_FIELDS_JS = r"""
@@ -2074,6 +2347,7 @@ _SCAN_FORM_FIELDS_JS = r"""
 _OPEN_RX = r"(postuler|postulez|candidater|je postule|je candidate|d[eé]poser (une |votre |ma )?candidature|apply now|apply for( this)?|apply|i'?m interested)"
 _SUBMIT_RX = r"(envoyer ma candidature|soumettre|submit application|submit your application|confirmer et envoyer|valider (et )?envoyer|finaliser (ma |la )?candidature|envoyer definitivement)"
 
+
 def try_open_form(page):
     """Clique un bouton 'Postuler/Apply' pour ouvrir le formulaire. JAMAIS un submit final.
     Retour label cliqué ou ''. (Défini dans web_nav pour apply_to_offer — était absent → NameError)."""
@@ -2099,6 +2373,7 @@ def try_open_form(page):
     except Exception:
         pass
     return ""
+
 
 def highlight_submit(page):
     """Surligne le bouton d'envoi final en ROUGE + scroll. Ne clique PAS (l'humain clique).
@@ -2142,9 +2417,13 @@ def linkedin_ready(page):
 
 
 # Bouton envoi FINAL LinkedIn — JAMAIS cliqué par le bot (l'humain clique)
-_LI_SUBMIT_RX = r"(envoyer la candidature|soumettre la candidature|submit application|envoyer ma candidature)"
+_LI_SUBMIT_RX = (
+    r"(envoyer la candidature|soumettre la candidature|submit application|envoyer ma candidature)"
+)
 # Boutons d'avancement dans le wizard Easy Apply — cliqués auto
-_LI_NEXT_RX = r"(suivant|continuer vers|next|passer en revue|vérifier|review|continue to next|étape suivante)"
+_LI_NEXT_RX = (
+    r"(suivant|continuer vers|next|passer en revue|vérifier|review|continue to next|étape suivante)"
+)
 
 
 def linkedin_easy_apply(page, profile, cv=None, letter=None, fast=False, max_screens=8):
@@ -2154,10 +2433,15 @@ def linkedin_easy_apply(page, profile, cv=None, letter=None, fast=False, max_scr
       3. avance via Suivant/Vérifier — s'ARRÊTE avant « Envoyer la candidature » (surligné, l'humain clique)
     Aucun mdp tapé, aucun envoi auto. Retour dict {ok, kind, screens, note, submit_label}."""
     import time as _t
+
     st = linkedin_ready(page)
     if st == "out":
-        return {"ok": False, "kind": "need_login", "screens": 0,
-                "note": "session LinkedIn déconnectée — connecte-toi à la main puis relance"}
+        return {
+            "ok": False,
+            "kind": "need_login",
+            "screens": 0,
+            "note": "session LinkedIn déconnectée — connecte-toi à la main puis relance",
+        }
 
     # 1. bouton Easy Apply vs Apply externe
     open_js = r"""
@@ -2178,11 +2462,19 @@ def linkedin_easy_apply(page, profile, cv=None, letter=None, fast=False, max_scr
     except Exception as e:
         return {"ok": False, "kind": "err", "screens": 0, "note": type(e).__name__}
     if kind == "external":
-        return {"ok": False, "kind": "external", "screens": 0,
-                "note": "candidature EXTERNE (redirige hors LinkedIn) — pipeline générique"}
+        return {
+            "ok": False,
+            "kind": "external",
+            "screens": 0,
+            "note": "candidature EXTERNE (redirige hors LinkedIn) — pipeline générique",
+        }
     if kind == "none":
-        return {"ok": False, "kind": "no_button", "screens": 0,
-                "note": "aucun bouton Easy Apply (offre expirée/déjà postulée ?)"}
+        return {
+            "ok": False,
+            "kind": "no_button",
+            "screens": 0,
+            "note": "aucun bouton Easy Apply (offre expirée/déjà postulée ?)",
+        }
     _t.sleep(0.6 if fast else 1.5)
 
     # 2-3. boucle écrans modale : remplir + avancer, STOP avant submit
@@ -2202,12 +2494,18 @@ def linkedin_easy_apply(page, profile, cv=None, letter=None, fast=False, max_scr
                     "(rx)=>{const s=new RegExp(rx,'i');for(const b of document.querySelectorAll('button,[role=button]')){"
                     "const t=(b.innerText||b.getAttribute('aria-label')||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');"
                     "if(s.test(t)){b.style.outline='4px solid red';b.scrollIntoView({block:'center'});return t.trim().slice(0,50);}}return '';}",
-                    _LI_SUBMIT_RX)
+                    _LI_SUBMIT_RX,
+                )
             except Exception:
                 sub = ""
         if sub:
-            return {"ok": True, "kind": "ready_to_submit", "screens": screens,
-                    "submit_label": sub, "note": "form rempli — clique ENVOYER toi-même (surligné rouge)"}
+            return {
+                "ok": True,
+                "kind": "ready_to_submit",
+                "screens": screens,
+                "submit_label": sub,
+                "note": "form rempli — clique ENVOYER toi-même (surligné rouge)",
+            }
         # sinon avancer : Suivant/Vérifier
         adv = r"""
         (rx) => {
@@ -2223,12 +2521,20 @@ def linkedin_easy_apply(page, profile, cv=None, letter=None, fast=False, max_scr
         except Exception:
             nxt = ""
         if not nxt:
-            return {"ok": False, "kind": "stuck", "screens": screens,
-                    "note": "ni Suivant ni Envoyer trouvé — termine à la main"}
+            return {
+                "ok": False,
+                "kind": "stuck",
+                "screens": screens,
+                "note": "ni Suivant ni Envoyer trouvé — termine à la main",
+            }
         screens += 1
         _t.sleep(0.5 if fast else 1.2)
-    return {"ok": False, "kind": "max_screens", "screens": screens,
-            "note": f"arrêt après {max_screens} écrans — termine à la main"}
+    return {
+        "ok": False,
+        "kind": "max_screens",
+        "screens": screens,
+        "note": f"arrêt après {max_screens} écrans — termine à la main",
+    }
 
 
 def _handle_smartrecruiters_iframe(page):
@@ -2259,21 +2565,21 @@ def _handle_smartrecruiters_iframe(page):
     APPLY_SELECTORS = [
         "button[data-apply-button]",
         "button.sr-apply-button",
-        "[data-qa=\"apply-button\"]",
+        '[data-qa="apply-button"]',
         "a[data-apply-button]",
-        "button:has-text(\"Apply\")",
-        "button:has-text(\"Postuler\")",
-        "button:has-text(\"Candidater\")",
-        "button:has-text(\"Candidature\")",
-        "a:has-text(\"Apply\")",
-        "a:has-text(\"Postuler\")",
-        "a:has-text(\"Candidater\")",
-        "[class*=\"apply-button\"]",
-        "[class*=\"postuler\"]",
-        "[class*=\"candidater\"]",
+        'button:has-text("Apply")',
+        'button:has-text("Postuler")',
+        'button:has-text("Candidater")',
+        'button:has-text("Candidature")',
+        'a:has-text("Apply")',
+        'a:has-text("Postuler")',
+        'a:has-text("Candidater")',
+        '[class*="apply-button"]',
+        '[class*="postuler"]',
+        '[class*="candidater"]',
         # Generic fallback — any visible "postuler/apply" button
-        "button:has-text(\"postuler\"):not(:has-text(\"envoyer\"))",
-        "button:has-text(\"apply\"):not(:has-text(\"submit\"))",
+        'button:has-text("postuler"):not(:has-text("envoyer"))',
+        'button:has-text("apply"):not(:has-text("submit"))',
     ]
 
     clicked = False
@@ -2344,6 +2650,7 @@ def apply_to_offer(page, offer_url, profile, cv_path=None, lettre_path=None, sub
     import re as _re
     import time as _time
     from pathlib import Path as _P
+
     result = {
         "success": False,
         "filled_count": 0,
@@ -2357,8 +2664,10 @@ def apply_to_offer(page, offer_url, profile, cv_path=None, lettre_path=None, sub
     }
 
     ROOT = _P(__file__).resolve().parent.parent  # Scripts -> Root
+
     def _resolve_path(p):
-        if not p: return None
+        if not p:
+            return None
         pp = _P(p)
         if pp.is_absolute() and pp.exists():
             return str(pp)
@@ -2391,7 +2700,7 @@ def apply_to_offer(page, offer_url, profile, cv_path=None, lettre_path=None, sub
     try:
         r = robust_goto(page, offer_url, tries=3)
         if not r["ok"]:
-            result["errors"].append(f"Navigation échouée: {r.get('note','?')}")
+            result["errors"].append(f"Navigation échouée: {r.get('note', '?')}")
             return result
         result["steps"].append("navigated")
     except Exception as e:
@@ -2443,7 +2752,7 @@ def apply_to_offer(page, offer_url, profile, cv_path=None, lettre_path=None, sub
             result["steps"].append(f"smart_step:{r['kind']}")
             break
         elif r["status"] == "blocked":
-            result["errors"].append(f"Blocked: {r.get('note','')}")
+            result["errors"].append(f"Blocked: {r.get('note', '')}")
             return result
         page.wait_for_timeout(1000)
 
@@ -2489,7 +2798,10 @@ def apply_to_offer(page, offer_url, profile, cv_path=None, lettre_path=None, sub
 
         # Special cases: detect motivation/message fields
         if not val and f["tag"] == "TEXTAREA":
-            if _re.search(r"(message|motivation|cover|lettre|pourquoi|presentation|about|commentaire|additional)", ctx):
+            if _re.search(
+                r"(message|motivation|cover|lettre|pourquoi|presentation|about|commentaire|additional)",
+                ctx,
+            ):
                 val = profile.get("message", "")
         if not val and f["tag"] == "SELECT":
             # Match dropdown context with profile keys
@@ -2673,13 +2985,16 @@ def smart_upload(page, cv, letter):
     """Upload CV + lettre en matchant chaque input[type=file] par label (cv/lettre).
     Inputs cachés gérés (set_input_files marche même non visible)."""
     from pathlib import Path as _P
+
     done = []
     try:
         metas = page.evaluate(_FILEINPUT_JS)
     except Exception:
         metas = []
-    files = {"cv": cv if cv and _P(cv).exists() else None,
-             "letter": letter if letter and _P(letter).exists() else None}
+    files = {
+        "cv": cv if cv and _P(cv).exists() else None,
+        "letter": letter if letter and _P(letter).exists() else None,
+    }
     used = set()
     # 1) match par label
     for m in metas:
@@ -2687,7 +3002,8 @@ def smart_upload(page, cv, letter):
         if f and m["kind"] not in used:
             try:
                 page.locator(f'[data-wn-file="{m["i"]}"]').set_input_files(f, timeout=3000)
-                done.append(f"{m['kind']}:{_P(f).name}"); used.add(m["kind"])
+                done.append(f"{m['kind']}:{_P(f).name}")
+                used.add(m["kind"])
             except Exception:
                 pass
     # 2) fallback : inputs restants -> cv puis letter dans l'ordre d'apparition
@@ -2698,7 +3014,9 @@ def smart_upload(page, cv, letter):
         k = order[0]
         try:
             page.locator(f'[data-wn-file="{m["i"]}"]').set_input_files(files[k], timeout=2500)
-            done.append(f"{k}:{_P(files[k]).name}"); used.add(k); order.pop(0)
+            done.append(f"{k}:{_P(files[k]).name}")
+            used.add(k)
+            order.pop(0)
         except Exception:
             pass
     return done
@@ -2750,24 +3068,44 @@ _PROFILE_LEX = [
     (r"(city|ville|localit|commune|stadt|citt)", "ville"),
     (r"(country|pays|land|nation)", "pays"),
     (r"(adresse|address|rue|street|stra[sß]e|via\b|voie)", "adresse"),
-    (r"(disponibilit|availability|date.*(d[eé]but|entr[eé]e)|start date|preavis|pr[eé]avis|notice)", "disponibilite"),
-    (r"(salaire|salary|r[eé]mun[eé]ration|pr[eé]tention|expected.*(salary|comp)|gehalt|package)", "salaire_souhaite"),
+    (
+        r"(disponibilit|availability|date.*(d[eé]but|entr[eé]e)|start date|preavis|pr[eé]avis|notice)",
+        "disponibilite",
+    ),
+    (
+        r"(salaire|salary|r[eé]mun[eé]ration|pr[eé]tention|expected.*(salary|comp)|gehalt|package)",
+        "salaire_souhaite",
+    ),
     (r"(mobilit|mobility|relocation|d[eé]m[eé]nag|willing to move)", "mobilite"),
     (r"(permis|driver|driving licen|f[üu]hrerschein)", "permis"),
-    (r"(niveau.?(d')?[eé]tude|degree|dipl[oô]me|education level|study level|abschluss|qualification)", "niveau_etudes"),
-    (r"(poste actuel|dernier poste|current (position|job|role|title)|current employer|employeur actuel|titre du poste)", "dernier_poste"),
+    (
+        r"(niveau.?(d')?[eé]tude|degree|dipl[oô]me|education level|study level|abschluss|qualification)",
+        "niveau_etudes",
+    ),
+    (
+        r"(poste actuel|dernier poste|current (position|job|role|title)|current employer|employeur actuel|titre du poste)",
+        "dernier_poste",
+    ),
     (r"(langue|language|sprach|lingua)", "langues"),
     (r"(comp[eé]tence|skills|comp[eé]tences cl[eé]|kenntnisse)", "competences"),
-    (r"(message|motivation|lettre|cover|pourquoi|presentation|about you|tell us|parlez|why|motiv|commentaire|comment)", "message"),
-    (r"(full.?name|nom complet|votre nom|\bname\b|vollst[aä]ndiger name)", "full"),  # générique en dernier
+    (
+        r"(message|motivation|lettre|cover|pourquoi|presentation|about you|tell us|parlez|why|motiv|commentaire|comment)",
+        "message",
+    ),
+    (
+        r"(full.?name|nom complet|votre nom|\bname\b|vollst[aä]ndiger name)",
+        "full",
+    ),  # générique en dernier
 ]
 import re as _re_lex
+
 
 def _match_profile_key(key):
     for rx, pk in _PROFILE_LEX:
         if _re_lex.search(rx, key):
             return pk
     return None
+
 
 _CONSENT_DIALOG_JS = r"""
 () => {
@@ -2787,10 +3125,13 @@ _CONSENT_DIALOG_JS = r"""
 }
 """
 
+
 def accept_consent_dialog(page):
     """Clique Proceed/Continuer d'un dialogue de consentement obligatoire (≠ submit, ≠ Decline)."""
-    try: return page.evaluate(_CONSENT_DIALOG_JS)
-    except Exception: return {"clicked": ""}
+    try:
+        return page.evaluate(_CONSENT_DIALOG_JS)
+    except Exception:
+        return {"clicked": ""}
 
 
 def _best_form_target(page):
@@ -2810,7 +3151,7 @@ def _best_form_target(page):
         if fr is main:
             continue
         try:
-            if fr.is_detached():   # frame mort (page changée) → jamais cible
+            if fr.is_detached():  # frame mort (page changée) → jamais cible
                 continue
         except Exception:
             continue
@@ -2818,7 +3159,7 @@ def _best_form_target(page):
             n = fr.evaluate(_COUNT_VISIBLE_INPUTS_JS)
         except Exception:
             continue
-        if n > best_n + 1:   # marge : ne bascule pas pour 1 champ isolé
+        if n > best_n + 1:  # marge : ne bascule pas pour 1 champ isolé
             best, best_n = fr, n
     return best
 
@@ -2830,16 +3171,26 @@ def fill_application(page, profile, cv=None, letter=None, docs=None):
     Cherche le form dans les iframes (SmartRecruiters/Taleo) si la page est vide.
     Retour {total, filled, uploaded, consent, cover_pct, unmatched:[…]}."""
     from pathlib import Path as _P
-    page = _best_form_target(page)   # bascule sur l'iframe du form si besoin
+
+    page = _best_form_target(page)  # bascule sur l'iframe du form si besoin
     try:
         fields = page.evaluate(_FILL_SCAN_JS)
     except Exception:
-        return {"total": 0, "filled": 0, "uploaded": 0, "consent": 0, "cover_pct": 0, "unmatched": []}
-    filled = 0; unmatched = []
+        return {
+            "total": 0,
+            "filled": 0,
+            "uploaded": 0,
+            "consent": 0,
+            "cover_pct": 0,
+            "unmatched": [],
+        }
+    filled = 0
+    unmatched = []
     text_fields = [f for f in fields if f["type"] not in ("radio", "checkbox", "file")]
     for f in text_fields:
         if f["filled"]:
-            filled += 1; continue           # déjà rempli
+            filled += 1
+            continue  # déjà rempli
         pk = _match_profile_key(f["key"])
         val = profile.get(pk) if pk else None
         if not val:
@@ -2852,37 +3203,67 @@ def fill_application(page, profile, cv=None, letter=None, docs=None):
                 if _pick_option(loc, f.get("options", []), str(val)):
                     filled += 1
             else:
-                loc.fill(str(val), timeout=2500); filled += 1
+                loc.fill(str(val), timeout=2500)
+                filled += 1
         except Exception:
             pass
     # SELECT sans valeur profil : civilité -> Monsieur, pays -> France
     for f in [x for x in fields if x["tag"] == "SELECT" and not x["filled"]]:
         if _re_lex.search(r"(civilit|title|anrede)", f["key"]):
-            if _pick_option(page.locator(f'[data-wn-fa="{f["i"]}"]').first, f.get("options", []),
-                            "monsieur", extra=("m.", "mr", "male", "herr")): filled += 1
+            if _pick_option(
+                page.locator(f'[data-wn-fa="{f["i"]}"]').first,
+                f.get("options", []),
+                "monsieur",
+                extra=("m.", "mr", "male", "herr"),
+            ):
+                filled += 1
         elif _re_lex.search(r"(pays|country|land)", f["key"]):
-            if _pick_option(page.locator(f'[data-wn-fa="{f["i"]}"]').first, f.get("options", []),
-                            "france", extra=("fr",)): filled += 1
+            if _pick_option(
+                page.locator(f'[data-wn-fa="{f["i"]}"]').first,
+                f.get("options", []),
+                "france",
+                extra=("fr",),
+            ):
+                filled += 1
     # RADIO civilité (Monsieur / M.)
     radios = [f for f in fields if f["type"] == "radio"]
-    if radios and not any(f.get("checked") for f in radios if _re_lex.search(r"civilit|monsieur|male|masculin", f.get("rvalue", ""))):
+    if radios and not any(
+        f.get("checked")
+        for f in radios
+        if _re_lex.search(r"civilit|monsieur|male|masculin", f.get("rvalue", ""))
+    ):
         for f in radios:
             rv = f.get("rvalue", "")
-            if _re_lex.search(r"(civilit|monsieur|\bm\.?\b|\bmr\b|male|masculin|herr)", rv) and not _re_lex.search(r"(madame|mme|female|frau)", rv):
-                try: page.locator(f'[data-wn-fa="{f["i"]}"]').first.check(timeout=1500); filled += 1; break
-                except Exception: pass
+            if _re_lex.search(
+                r"(civilit|monsieur|\bm\.?\b|\bmr\b|male|masculin|herr)", rv
+            ) and not _re_lex.search(r"(madame|mme|female|frau)", rv):
+                try:
+                    page.locator(f'[data-wn-fa="{f["i"]}"]').first.check(timeout=1500)
+                    filled += 1
+                    break
+                except Exception:
+                    pass
     # CHECKBOX consentement obligatoire (CGU/RGPD) — pas marketing
     consent = 0
     for f in [x for x in fields if x["type"] == "checkbox" and not x.get("checked")]:
-        if _re_lex.search(r"(cgu|cgv|condition|politique|traitement.*donn|j'?ai lu|termes|terms|privacy|consent|rgpd|mentions|accept)", f["key"]) \
-           and not _re_lex.search(r"(newsletter|marketing|commercial|actualit|offres|promo|partenaires)", f["key"]):
-            try: page.locator(f'[data-wn-fa="{f["i"]}"]').first.check(timeout=1500); consent += 1
-            except Exception: pass
+        if _re_lex.search(
+            r"(cgu|cgv|condition|politique|traitement.*donn|j'?ai lu|termes|terms|privacy|consent|rgpd|mentions|accept)",
+            f["key"],
+        ) and not _re_lex.search(
+            r"(newsletter|marketing|commercial|actualit|offres|promo|partenaires)", f["key"]
+        ):
+            try:
+                page.locator(f'[data-wn-fa="{f["i"]}"]').first.check(timeout=1500)
+                consent += 1
+            except Exception:
+                pass
     # bug7 : après cochage CGU, un dialogue de consentement (Proceed/Continuer) peut s'ouvrir
     # (SuccessFactors #dataPrivacyId). Cliquer Proceed = valider la case obligatoire, PAS soumettre.
     if consent:
-        try: page.evaluate(_CONSENT_DIALOG_JS)
-        except Exception: pass
+        try:
+            page.evaluate(_CONSENT_DIALOG_JS)
+        except Exception:
+            pass
     # UPLOAD tous documents : CV + lettre par label + docs extra
     uploaded = smart_upload(page, cv, letter)
     if docs:  # docs = liste de chemins additionnels -> file inputs restants
@@ -2890,22 +3271,41 @@ def fill_application(page, profile, cv=None, letter=None, docs=None):
             metas = page.evaluate(_FILEINPUT_JS)
             free = [m for m in metas]
             for path in docs:
-                if not (path and _P(path).exists()): continue
+                if not (path and _P(path).exists()):
+                    continue
                 for m in free:
                     try:
-                        page.locator(f'[data-wn-file="{m["i"]}"]').set_input_files(path, timeout=2500)
-                        uploaded.append("doc:" + _P(path).name); free.remove(m); break
-                    except Exception: pass
-        except Exception: pass
+                        page.locator(f'[data-wn-file="{m["i"]}"]').set_input_files(
+                            path, timeout=2500
+                        )
+                        uploaded.append("doc:" + _P(path).name)
+                        free.remove(m)
+                        break
+                    except Exception:
+                        pass
+        except Exception:
+            pass
     total = len([f for f in fields if f["vis"] and f["type"] not in ("radio", "checkbox")])
     cover = round(100 * filled / total) if total else 0
-    return {"total": total, "filled": filled, "uploaded": len(uploaded),
-            "docs": uploaded, "consent": consent, "cover_pct": cover, "unmatched": unmatched[:8]}
+    return {
+        "total": total,
+        "filled": filled,
+        "uploaded": len(uploaded),
+        "docs": uploaded,
+        "consent": consent,
+        "cover_pct": cover,
+        "unmatched": unmatched[:8],
+    }
+
 
 def _fold(s):
     """minuscule + sans accents (Française→francaise) pour matcher les <option>."""
     import unicodedata as _ud
-    return "".join(c for c in _ud.normalize("NFD", str(s).lower()) if _ud.category(c) != "Mn").strip()
+
+    return "".join(
+        c for c in _ud.normalize("NFD", str(s).lower()) if _ud.category(c) != "Mn"
+    ).strip()
+
 
 def _pick_option(loc, options, val, extra=()):
     """Sélectionne l'option d'un <select> matchant val (label/valeur), + variantes extra.
@@ -2913,11 +3313,14 @@ def _pick_option(loc, options, val, extra=()):
     cands = [_fold(val)] + [_fold(e) for e in extra]
     try:
         for i, o in enumerate(options):
-            t = _fold(o.get("t") or ""); ov = _fold(o.get("v") or "")
-            if not t and not ov: continue
+            t = _fold(o.get("t") or "")
+            ov = _fold(o.get("v") or "")
+            if not t and not ov:
+                continue
             for c in cands:
                 if c and (c in t or t in c or c == ov or (len(c) >= 4 and ov and ov == c[:2])):
-                    loc.select_option(index=i, timeout=2000); return True
+                    loc.select_option(index=i, timeout=2000)
+                    return True
     except Exception:
         pass
     return False
@@ -2931,10 +3334,14 @@ def _pick_option(loc, options, val, extra=()):
 
 import random as _rnd
 
+
 def human_pause(page, lo=350, hi=1100):
     """Pause fixe (moyenne de lo et hi), pour ne pas marteler le site."""
-    try: page.wait_for_timeout((lo + hi) // 2)
-    except Exception: pass
+    try:
+        page.wait_for_timeout((lo + hi) // 2)
+    except Exception:
+        pass
+
 
 def human_type(page, selector, text, click_first=True):
     """Remplit le champ. Retour True si champ trouve."""
@@ -2947,6 +3354,7 @@ def human_type(page, selector, text, click_first=True):
     except Exception:
         return False
 
+
 def human_click(page, selector, steps=None, timeout=4000):
     """Clique l'element. Retour True si clique."""
     try:
@@ -2955,30 +3363,41 @@ def human_click(page, selector, steps=None, timeout=4000):
     except Exception:
         return False
 
+
 def human_scroll(page, steps=None):
     """Fait defiler la page de quelques ecrans."""
     for _ in range(steps or 3):
         try:
-            page.mouse.wheel(0, 500); human_pause(page, 250, 800)
-        except Exception: break
+            page.mouse.wheel(0, 500)
+            human_pause(page, 250, 800)
+        except Exception:
+            break
+
 
 import re as _re_block
+
 # domaines pubs/analytics/tags : inutiles pour postuler, ralentissent → bloqués
 _AD_RX = _re_block.compile(
     r"(doubleclick|googlesyndication|google-analytics|googletagmanager|/gtag/|/gtm\.js"
     r"|facebook\.net|connect\.facebook|hotjar|mouseflow|fullstory|segment\.(io|com)"
-    r"|criteo|taboola|outbrain|adservice|adsystem|/pixel|/beacon|cdn\.cookielaw|onetrust)", _re_block.I)
+    r"|criteo|taboola|outbrain|adservice|adsystem|/pixel|/beacon|cdn\.cookielaw|onetrust)",
+    _re_block.I,
+)
 
 # captcha/anti-bot : JAMAIS bloqué (l'humain doit VOIR la grille d'images pour résoudre)
 _CAPTCHA_OK_RX = _re_block.compile(
     r"(recaptcha|gstatic\.com/recaptcha|hcaptcha|turnstile|challenges\.cloudflare"
-    r"|arkoselabs|funcaptcha|geo\.captcha|captcha-delivery)", _re_block.I)
+    r"|arkoselabs|funcaptcha|geo\.captcha|captcha-delivery)",
+    _re_block.I,
+)
+
 
 def block_resources(ctx, images=False):
     """TURBO : abandonne les requêtes lourdes/inutiles (media, fonts, pubs, analytics ;
     images aussi si images=False). Accélère 2-5× le chargement. CSS gardé (layout/clics).
     Les ressources CAPTCHA passent toujours (sinon grille invisible = insoluble)."""
     heavy = {"media", "font"} | (set() if images else {"image"})
+
     def _route(route):
         try:
             rq = route.request
@@ -2988,10 +3407,15 @@ def block_resources(ctx, images=False):
                 return route.abort()
             return route.continue_()
         except Exception:
-            try: return route.continue_()
-            except Exception: pass
-    try: ctx.route("**/*", _route)
-    except Exception: pass
+            try:
+                return route.continue_()
+            except Exception:
+                pass
+
+    try:
+        ctx.route("**/*", _route)
+    except Exception:
+        pass
 
 
 def robust_goto(page, url, tries=3, wait_until="domcontentloaded"):
@@ -3002,19 +3426,21 @@ def robust_goto(page, url, tries=3, wait_until="domcontentloaded"):
         try:
             resp = page.goto(url, timeout=45000, wait_until=wait_until)
             # iCIMS + SPAs: client-side redirect can destroy context — settle wait
-            try: page.wait_for_load_state('domcontentloaded', timeout=2500)
-            except Exception: pass
+            try:
+                page.wait_for_load_state("domcontentloaded", timeout=2500)
+            except Exception:
+                pass
             page.wait_for_timeout(_rnd.randint(300, 700))
             code = resp.status if resp else 0
             if code and (code == 429 or code >= 500):
                 last = f"HTTP {code}"
-                page.wait_for_timeout(min(2 ** i * 3000, 20000)); continue
+                page.wait_for_timeout(min(2**i * 3000, 20000))
+                continue
             return {"ok": True, "status": code, "note": "ok"}
         except Exception as e:
             last = str(e).splitlines()[0][:120]
-            page.wait_for_timeout(min(2 ** i * 2500, 15000))
+            page.wait_for_timeout(min(2**i * 2500, 15000))
     return {"ok": False, "status": 0, "note": last or "goto échoué"}
-
 
 
 # ── OTP / code email (SEMI-AUTO : colle le code, surligne Verify, l'humain clique) ──
@@ -3076,22 +3502,33 @@ _OTP_VERIFY_JS = r"""
 }
 """
 
+
 def otp_present(page):
     """True si la page attend un code OTP (champ code / boîtes 1-chiffre / texte)."""
-    try: return bool(page.evaluate(_OTP_DETECT_JS).get("otp"))
-    except Exception: return False
+    try:
+        return bool(page.evaluate(_OTP_DETECT_JS).get("otp"))
+    except Exception:
+        return False
+
 
 def paste_otp(page, code):
     """Colle le code OTP dans le(s) champ(s). NE soumet PAS. Retour {filled, mode}."""
-    if not code: return {"filled": 0, "mode": "no_code"}
-    try: return page.evaluate(_OTP_FILL_JS, str(code).strip())
-    except Exception as e: return {"filled": 0, "mode": "err:" + type(e).__name__}
+    if not code:
+        return {"filled": 0, "mode": "no_code"}
+    try:
+        return page.evaluate(_OTP_FILL_JS, str(code).strip())
+    except Exception as e:
+        return {"filled": 0, "mode": "err:" + type(e).__name__}
+
 
 def highlight_otp_verify(page):
     """Surligne en ROUGE le bouton Vérifier/Valider (data-wn-otp=verify). NE clique PAS.
     Retour le libellé du bouton, ou '' si introuvable."""
-    try: return page.evaluate(_OTP_VERIFY_JS)
-    except Exception: return ""
+    try:
+        return page.evaluate(_OTP_VERIFY_JS)
+    except Exception:
+        return ""
+
 
 def otp_flow(page, code):
     """SEMI-AUTO : colle le code + surligne le bouton de validation. L'HUMAIN clique.
@@ -3100,10 +3537,22 @@ def otp_flow(page, code):
     v = highlight_otp_verify(page) if r.get("filled") else ""
     return {"pasted": r.get("filled", 0), "mode": r.get("mode"), "verify": v}
 
+
 # Annuaires et agregateurs : jamais le site d'une societe.
-_ANNUAIRES = ("annuaire-entreprises", "societe.com", "pappers", "verif.com",
-              "infogreffe", "manageo", "kompass", "bilansgratuits",
-              "linkedin.com", "wikipedia.org", "glassdoor", "indeed.com")
+_ANNUAIRES = (
+    "annuaire-entreprises",
+    "societe.com",
+    "pappers",
+    "verif.com",
+    "infogreffe",
+    "manageo",
+    "kompass",
+    "bilansgratuits",
+    "linkedin.com",
+    "wikipedia.org",
+    "glassdoor",
+    "indeed.com",
+)
 
 
 def homepage_fallback(page, entreprise, role="", homepage=None):
@@ -3113,16 +3562,19 @@ def homepage_fallback(page, entreprise, role="", homepage=None):
     Retour {ok, homepage, careers, kind, via, note}."""
     import json as _json
     from pathlib import Path as _P
+
     hp = homepage
     if not hp:  # 1) cache
         try:
-            hp = _json.loads((_P(__file__).parent / "homepages.json")
-                             .read_text(encoding="utf-8")).get(entreprise)
+            hp = _json.loads(
+                (_P(__file__).parent / "homepages.json").read_text(encoding="utf-8")
+            ).get(entreprise)
         except Exception:
             hp = None
     if not hp:  # 2) résolution à la volée (devine domaine + valide HTTP)
         try:
             from enrich_homepages import resolve as _resolve
+
             hp = _resolve(entreprise)
             if isinstance(hp, tuple):  # resolve() retourne (nom, url)
                 hp = hp[1]
@@ -3156,11 +3608,19 @@ def homepage_fallback(page, entreprise, role="", homepage=None):
     if gc.get("clicked"):
         dismiss_cookies(page)
     fo = find_offer(page, role, max_tries=2)
-    good = fo.get("reached") or gc.get("clicked") or \
-        fo.get("kind") in ("offer_list", "apply_cta", "apply_form", "register", "login")
-    return {"ok": bool(good), "homepage": hp,
-            "careers": bool(gc.get("clicked")), "kind": fo.get("kind"),
-            "via": fo.get("via"), "note": "fallback"}
+    good = (
+        fo.get("reached")
+        or gc.get("clicked")
+        or fo.get("kind") in ("offer_list", "apply_cta", "apply_form", "register", "login")
+    )
+    return {
+        "ok": bool(good),
+        "homepage": hp,
+        "careers": bool(gc.get("clicked")),
+        "kind": fo.get("kind"),
+        "via": fo.get("via"),
+        "note": "fallback",
+    }
 
 
 def apply_stealth(context_or_page):
@@ -3175,31 +3635,37 @@ def apply_stealth(context_or_page):
 # d'etre est d'echapper a la detection des robots. Le parametre engine est
 # garde pour compatibilite et ignore.
 
+
 def available_engines():
     """Moteurs installes : Playwright seul."""
     try:
         import playwright.sync_api  # noqa: F401
+
         return ["playwright"]
     except Exception:
         return []
 
+
 def get_sync_playwright(engine="auto"):
     """Retourne (sync_playwright, "playwright"), quel que soit engine."""
     from playwright.sync_api import sync_playwright
+
     return sync_playwright, "playwright"
 
 
 # ── BROWSER ROBUSTNESS : crash recovery + auto-relaunch ──────────────────
 
+
 class BrowserSession:
     """Gère le cycle de vie du navigateur avec recovery automatique.
-    
+
     Usage:
         bs = BrowserSession()
         page = bs.start()
         # ... si crash ...
         page = bs.recover()  # relance navigateur + contexte + page fluo
     """
+
     def __init__(self, headless: bool = False, engine: str = "playwright"):
         self.headless = headless
         self.engine = engine
@@ -3219,9 +3685,11 @@ class BrowserSession:
         self._playwright = SyncPlaywright().start()
         self._browser = self._playwright.chromium.launch(
             headless=self.headless,
-            args=["--disable-dev-shm-usage",
-                  "--no-first-run",
-                  "--disable-gpu" if self.headless else ""],
+            args=[
+                "--disable-dev-shm-usage",
+                "--no-first-run",
+                "--disable-gpu" if self.headless else "",
+            ],
         )
         self._context = self._browser.new_context(
             viewport={"width": 1366, "height": 768},
@@ -3235,6 +3703,7 @@ class BrowserSession:
     def recover(self):
         """Relance navigateur après crash (même context, nouvelle page). Retour page."""
         import time as _t
+
         _t.sleep(1)
         try:
             if self._page and not self._page.is_closed():
@@ -3263,11 +3732,13 @@ class BrowserSession:
     def is_alive(self) -> bool:
         """Vérifie si le navigateur est toujours connecté."""
         try:
-            return (self._browser is not None
-                    and self._browser.is_connected()
-                    and self._page is not None
-                    and not self._page.is_closed()
-                    and not self._page.evaluate("() => true").get("_bogus") == 1)
+            return (
+                self._browser is not None
+                and self._browser.is_connected()
+                and self._page is not None
+                and not self._page.is_closed()
+                and not self._page.evaluate("() => true").get("_bogus") == 1
+            )
         except Exception:
             return False
 
@@ -3300,9 +3771,12 @@ class BrowserSession:
 
 # JS snippets importes de site_strategies.py
 from site_strategies import (
-    FIRST_JOB_OFFER_JS, ATS_APPLY_REGISTER_DETECT_JS,
-    ROOT_DOMAIN_CHECK_JS, SITEMAP_PROBE_JS,
-    BPIFRANCE_DIDOMI_JS, BPCE_INPUT_JS,
+    FIRST_JOB_OFFER_JS,
+    ATS_APPLY_REGISTER_DETECT_JS,
+    ROOT_DOMAIN_CHECK_JS,
+    SITEMAP_PROBE_JS,
+    BPIFRANCE_DIDOMI_JS,
+    BPCE_INPUT_JS,
     MEESCHAERT_REGISTER_FALLBACK_JS,
     get_strategy,
 )
@@ -3355,7 +3829,13 @@ def check_root_domain(page):
     try:
         return page.evaluate(ROOT_DOMAIN_CHECK_JS)
     except Exception:
-        return {"title": "", "hasCareerLinks": False, "careerLinks": [], "url": "", "status": "error"}
+        return {
+            "title": "",
+            "hasCareerLinks": False,
+            "careerLinks": [],
+            "url": "",
+            "status": "error",
+        }
 
 
 def didomi_reject_and_wait(page, wait_ms=12000):
@@ -3376,5 +3856,3 @@ def scan_nonstandard_inputs(page):
         return page.evaluate(BPCE_INPUT_JS)
     except Exception:
         return {"found": 0, "inputs": []}
-
-

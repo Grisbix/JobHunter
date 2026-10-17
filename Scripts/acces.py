@@ -29,6 +29,7 @@ Run :
   python acces.py --set-id linkedin.com --email moi@x.fr
   python acces.py --set-key francetravail   # saisie masquee d'une cle d'API
 """
+
 import sys, time, json, argparse, getpass, datetime
 from pathlib import Path
 
@@ -37,13 +38,14 @@ if hasattr(sys.stdout, "reconfigure"):
 
 HERE = Path(__file__).resolve().parent
 COMPTES = HERE / "comptes.json"
-KEYS = HERE / "api_keys.json"          # gitignore : contient des secrets
+KEYS = HERE / "api_keys.json"  # gitignore : contient des secrets
 
 # MEME profil que apply_runner : les sessions ouvertes ici sont celles que les
 # scripts retrouveront. Pointer sur la racine « User Data » de Chrome ne marche
 # PAS — Chrome relance une autre instance et lache Playwright (TargetClosedError).
 # Un profil dedie evite aussi d'avoir a fermer le Chrome de tous les jours.
 import os as _os
+
 PROFIL = Path(_os.environ.get("LOCALAPPDATA", str(Path.home()))) / "apply_runner_chrome"
 
 # Sites ou une session connectee change ce qu'on peut faire.
@@ -75,8 +77,10 @@ def cmd_list():
     print(f"{'SITE':<34}{'IDENTIFIANT':<26}{'SESSION':<12}VERIFIE")
     for host, login in SITES_CONNEXION.items():
         e = c.get(host) or {}
-        print(f"  {host:<32}{str(e.get('identifiant') or '—')[:24]:<26}"
-              f"{str(e.get('session') or '?'):<12}{str(e.get('session_verif') or '—')}")
+        print(
+            f"  {host:<32}{str(e.get('identifiant') or '—')[:24]:<26}"
+            f"{str(e.get('session') or '?'):<12}{str(e.get('session_verif') or '—')}"
+        )
     print(f"\nCLES D'API ({KEYS.name}) — valeurs jamais affichees :")
     if not k:
         print("  (aucune)")
@@ -99,12 +103,16 @@ def _procs_profil():
     onglets et ses formulaires en cours. Jamais.
     """
     import subprocess
-    ps = ("Get-CimInstance Win32_Process | Where-Object { "
-          "$_.Name -eq 'chrome.exe' -and $_.CommandLine -like '*apply_runner_chrome*' } | "
-          "ForEach-Object { [string]$_.ProcessId + ' ' + [string]$_.ParentProcessId }")
+
+    ps = (
+        "Get-CimInstance Win32_Process | Where-Object { "
+        "$_.Name -eq 'chrome.exe' -and $_.CommandLine -like '*apply_runner_chrome*' } | "
+        "ForEach-Object { [string]$_.ProcessId + ' ' + [string]$_.ParentProcessId }"
+    )
     try:
-        r = subprocess.run(['powershell', '-NoProfile', '-Command', ps],
-                           capture_output=True, text=True, timeout=30)
+        r = subprocess.run(
+            ["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True, timeout=30
+        )
     except Exception:
         return []
     out = []
@@ -143,38 +151,43 @@ def cmd_close(force=False):
     et uniquement sur --force.
     """
     import subprocess
+
     pids = _pids_profil()
     if not pids:
-        print('✓ aucun Chrome sur le profil dedie — rien a fermer')
+        print("✓ aucun Chrome sur le profil dedie — rien a fermer")
         return 0
     racines = _racines_profil() or pids
-    print(f'→ {len(pids)} processus sur le profil dedie ({len(racines)} racine(s)) : fermeture normale')
+    print(
+        f"→ {len(pids)} processus sur le profil dedie ({len(racines)} racine(s)) : fermeture normale"
+    )
     for pid in racines:
         try:
-            subprocess.run(['taskkill', '/PID', str(pid), '/T'],
-                           capture_output=True, timeout=15)
+            subprocess.run(["taskkill", "/PID", str(pid), "/T"], capture_output=True, timeout=15)
         except Exception:
             pass
     for _ in range(10):
         time.sleep(1)
         if not _pids_profil():
-            print('✓ profil libere (fermeture propre)')
+            print("✓ profil libere (fermeture propre)")
             return 0
     restants = _pids_profil()
     if not force:
-        print(f'⚠ {len(restants)} processus resistent. Relance avec --close --force'
-              ' (les cookies non encore ecrits seraient perdus).')
+        print(
+            f"⚠ {len(restants)} processus resistent. Relance avec --close --force"
+            " (les cookies non encore ecrits seraient perdus)."
+        )
         return 1
-    print(f'→ {len(restants)} recalcitrants : arret force')
+    print(f"→ {len(restants)} recalcitrants : arret force")
     for pid in restants:
         try:
-            subprocess.run(['taskkill', '/F', '/PID', str(pid), '/T'],
-                           capture_output=True, timeout=15)
+            subprocess.run(
+                ["taskkill", "/F", "/PID", str(pid), "/T"], capture_output=True, timeout=15
+            )
         except Exception:
             pass
     time.sleep(1)
     reste = _pids_profil()
-    print('✓ profil libere' if not reste else f'✗ {len(reste)} processus tiennent encore')
+    print("✓ profil libere" if not reste else f"✗ {len(reste)} processus tiennent encore")
     return 0 if not reste else 1
 
 
@@ -183,12 +196,14 @@ def cmd_open(host):
     Chrome retient, et --chrome reutilisera la session."""
     url = SITES_CONNEXION.get(host)
     if not url:
-        print(f"✗ site inconnu. Connus : {', '.join(SITES_CONNEXION)}"); return 1
+        print(f"✗ site inconnu. Connus : {', '.join(SITES_CONNEXION)}")
+        return 1
     # Ouvrir dans le navigateur PAR DEFAUT enregistrerait la session dans le
     # profil de tous les jours — invisible pour les scripts. On ouvre donc le
     # profil dedie, celui que apply_runner et --check utilisent.
     try:
         from web_nav import get_sync_playwright
+
         sp, _ = get_sync_playwright("auto")
     except Exception:
         from playwright.sync_api import sync_playwright as sp
@@ -199,24 +214,30 @@ def cmd_open(host):
     with sp() as p:
         try:
             ctx = p.chromium.launch_persistent_context(
-                user_data_dir=str(PROFIL), channel="chrome", headless=False,
+                user_data_dir=str(PROFIL),
+                channel="chrome",
+                headless=False,
                 args=["--no-first-run", "--no-default-browser-check"],
                 no_viewport=True,
-                timeout=90000)
+                timeout=90000,
+            )
         except Exception as e:
-            print(f"✗ Chrome n'a pas demarre ({type(e).__name__})"); return 1
+            print(f"✗ Chrome n'a pas demarre ({type(e).__name__})")
+            return 1
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
-        try: page.goto(url, timeout=45000)
-        except Exception: pass
+        try:
+            page.goto(url, timeout=45000)
+        except Exception:
+            pass
         # Attente ACTIVE : on relit l'etat de session toutes les 2 s et on ferme
         # des que la connexion est faite. Plus besoin d'un humain pour fermer la
         # fenetre, ni d'un stdin utilisable (input() leve EOFError sous un agent,
         # et isatty() ment : il renvoie True alors que stdin est deja ferme).
-        print(f'  Attente de la connexion (jusqu a {ATTENTE_MIN} min)...')
+        print(f"  Attente de la connexion (jusqu a {ATTENTE_MIN} min)...")
         fin = time.time() + ATTENTE_MIN * 60
         connecte = False
         while time.time() < fin:
-            if not ctx.pages:            # fenetre fermee a la main = fini
+            if not ctx.pages:  # fenetre fermee a la main = fini
                 break
             try:
                 if ctx.pages[0].evaluate(_SESSION_JS):
@@ -230,11 +251,13 @@ def cmd_open(host):
                     break
                 time.sleep(2)
         if connecte:
-            print('  ✓ connexion detectee — fermeture propre (les cookies sont ecrits sur disque)')
+            print("  ✓ connexion detectee — fermeture propre (les cookies sont ecrits sur disque)")
         elif ctx.pages:
-            print('  ⚠ delai ecoule sans connexion detectee — fermeture quand meme')
-        try: ctx.close()
-        except Exception: pass
+            print("  ⚠ delai ecoule sans connexion detectee — fermeture quand meme")
+        try:
+            ctx.close()
+        except Exception:
+            pass
     if connecte:
         print("→ connexion détectée, profil conservé. Vérifie avec : python acces.py --check")
         return 0
@@ -269,9 +292,11 @@ def cmd_check(limit_hosts=None):
     hosts = [h for h in SITES_CONNEXION if not limit_hosts or h in limit_hosts]
     try:
         from web_nav import get_sync_playwright, analyze, dismiss_cookies
+
         sp, eng = get_sync_playwright("auto")
     except Exception as e:
-        print(f"✗ playwright indisponible : {type(e).__name__}"); return 1
+        print(f"✗ playwright indisponible : {type(e).__name__}")
+        return 1
     PROFIL.mkdir(parents=True, exist_ok=True)
     today = datetime.date.today().isoformat()
     with sp() as p:
@@ -281,10 +306,13 @@ def cmd_check(limit_hosts=None):
             # charge ». Ce script ne fait que LIRE un etat de session, il n'a
             # aucun besoin de furtivite.
             ctx = p.chromium.launch_persistent_context(
-                user_data_dir=str(PROFIL), channel="chrome", headless=False,
+                user_data_dir=str(PROFIL),
+                channel="chrome",
+                headless=False,
                 args=["--no-first-run", "--no-default-browser-check"],
                 no_viewport=True,
-                timeout=90000)
+                timeout=90000,
+            )
         except Exception as e:
             # Distinguer les deux causes : le message precedent annoncait
             # « profil verrouille » meme sur un simple depassement de delai.
@@ -295,7 +323,8 @@ def cmd_check(limit_hosts=None):
                 print("  processus chrome.exe ne subsiste, puis relance.")
             else:
                 print(f"✗ Chrome n'a pas demarre sur {PROFIL.name}.")
-            print(f"  ({n})"); return 1
+            print(f"  ({n})")
+            return 1
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
         for h in hosts:
             try:
@@ -304,7 +333,8 @@ def cmd_check(limit_hosts=None):
                 # COOKIE_JS cherche « Tout refuser » en priorite (OneTrust, Didomi,
                 # Axeptio, tarteaucitron) : option la plus respectueuse de la vie privee.
                 try:
-                    dismiss_cookies(page); page.wait_for_timeout(700)
+                    dismiss_cookies(page)
+                    page.wait_for_timeout(700)
                 except Exception:
                     pass
                 a = analyze(page)
@@ -325,8 +355,10 @@ def cmd_check(limit_hosts=None):
             e = c.setdefault(h, {})
             e["session"], e["session_verif"] = etat, today
             print(f"  {etat:<12} {h:<34} (kind={kind})")
-        try: ctx.close()
-        except Exception: pass
+        try:
+            ctx.close()
+        except Exception:
+            pass
     _save(COMPTES, c)
     print(f"\n→ etat ecrit dans {COMPTES.name}")
     return 0
@@ -342,8 +374,10 @@ def cmd_open_all(only=None):
     plus, et Chrome a alors ecrit les sessions sur disque.
     """
     import time as _t
+
     try:
         from web_nav import get_sync_playwright
+
         sp, _ = get_sync_playwright("auto")
     except Exception:
         from playwright.sync_api import sync_playwright as sp
@@ -354,12 +388,16 @@ def cmd_open_all(only=None):
     with sp() as p:
         try:
             ctx = p.chromium.launch_persistent_context(
-                user_data_dir=str(PROFIL), channel="chrome", headless=False,
+                user_data_dir=str(PROFIL),
+                channel="chrome",
+                headless=False,
                 args=["--no-first-run", "--no-default-browser-check"],
                 no_viewport=True,
-                timeout=90000)
+                timeout=90000,
+            )
         except Exception as e:
-            print(f"✗ Chrome n'a pas demarre ({type(e).__name__})"); return 1
+            print(f"✗ Chrome n'a pas demarre ({type(e).__name__})")
+            return 1
         first = ctx.pages[0] if ctx.pages else None
         for i, (h, u) in enumerate(sites):
             page = first if (i == 0 and first) else ctx.new_page()
@@ -369,22 +407,26 @@ def cmd_open_all(only=None):
                 # directement sur le formulaire de connexion.
                 try:
                     from web_nav import dismiss_cookies as _dc
-                    _dc(page); page.wait_for_timeout(700)
+
+                    _dc(page)
+                    page.wait_for_timeout(700)
                 except Exception:
                     pass
-                print(f"  ✓ onglet {i+1}/{len(sites)} : {h}")
+                print(f"  ✓ onglet {i + 1}/{len(sites)} : {h}")
             except Exception as ex:
-                print(f"  ! onglet {i+1}/{len(sites)} : {h} ({type(ex).__name__})")
+                print(f"  ! onglet {i + 1}/{len(sites)} : {h} ({type(ex).__name__})")
             _t.sleep(0.6)
         print("\nNavigateur ouvert. Connecte-toi dans chaque onglet.")
         print("Quand tu fermes le dernier onglet, la session est enregistree.")
         try:
-            while ctx.pages:            # tient tant qu'un onglet reste ouvert
+            while ctx.pages:  # tient tant qu'un onglet reste ouvert
                 _t.sleep(3)
         except Exception:
             pass
-        try: ctx.close()
-        except Exception: pass
+        try:
+            ctx.close()
+        except Exception:
+            pass
     print("→ navigateur ferme, sessions conservees. Verifie : python acces.py --check")
     return 0
 
@@ -407,7 +449,8 @@ def cmd_set_key(nom):
             break
         champs[c] = getpass.getpass(f"  {c} : ").strip()
     if not champs:
-        print("✗ rien saisi."); return 1
+        print("✗ rien saisi.")
+        return 1
     k = _load(KEYS, {})
     k[nom] = champs
     _save(KEYS, k)
@@ -425,24 +468,35 @@ def main():
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--open", metavar="HOST")
     ap.add_argument("--check", action="store_true")
-    ap.add_argument("--close", action="store_true",
-                    help="ferme les Chrome du profil dedie (libere le verrou)")
-    ap.add_argument("--force", action="store_true",
-                    help="avec --close : arret force si la fermeture normale echoue")
-    ap.add_argument("--open-all", action="store_true",
-                    help="ouvre TOUTES les pages de connexion en onglets")
+    ap.add_argument(
+        "--close", action="store_true", help="ferme les Chrome du profil dedie (libere le verrou)"
+    )
+    ap.add_argument(
+        "--force",
+        action="store_true",
+        help="avec --close : arret force si la fermeture normale echoue",
+    )
+    ap.add_argument(
+        "--open-all", action="store_true", help="ouvre TOUTES les pages de connexion en onglets"
+    )
     ap.add_argument("--set-id", metavar="HOST")
     ap.add_argument("--email")
     ap.add_argument("--set-key", metavar="NOM")
     a = ap.parse_args()
-    if a.close:   return cmd_close(a.force)
-    if a.open:    return cmd_open(a.open)
-    if a.open_all: return cmd_open_all()
-    if a.check:   return cmd_check()
-    if a.set_key: return cmd_set_key(a.set_key)
+    if a.close:
+        return cmd_close(a.force)
+    if a.open:
+        return cmd_open(a.open)
+    if a.open_all:
+        return cmd_open_all()
+    if a.check:
+        return cmd_check()
+    if a.set_key:
+        return cmd_set_key(a.set_key)
     if a.set_id:
         if not a.email:
-            print("✗ --email requis avec --set-id"); return 1
+            print("✗ --email requis avec --set-id")
+            return 1
         return cmd_set_id(a.set_id, a.email)
     return cmd_list()
 

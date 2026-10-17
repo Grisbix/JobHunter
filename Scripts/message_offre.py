@@ -23,6 +23,7 @@ Run :
   python message_offre.py --url https://...      # une offre
   python message_offre.py --contient Nexans
 """
+
 import sys
 import argparse
 import re
@@ -38,6 +39,7 @@ MSG_OUT.mkdir(parents=True, exist_ok=True)
 # Tous les textes viennent du profil : domaines[] (accroche, preuve par
 # domaine) et la section « message » (diplome, langues, faits, sources).
 import profil as _P
+
 _MSG = _P.get("message", {}) or {}
 
 
@@ -50,10 +52,16 @@ def _dom(cle, champ):
 # meme stage repetent le nom de l'employeur dans la meme phrase. Chaque fait
 # porte sa SOURCE (une experience, un memoire, un projet perso…), introduite
 # une fois par `message.sources`. L'ordre des sources est l'ordre de PRIORITE.
-FAITS_FR = {lab: (v.get("source", ""), v.get("fr", "")) for lab, v in (_MSG.get("faits") or {}).items()
-            if v.get("fr")}
-FAITS_EN = {lab: (v.get("source", ""), v.get("en", "")) for lab, v in (_MSG.get("faits") or {}).items()
-            if v.get("en")}
+FAITS_FR = {
+    lab: (v.get("source", ""), v.get("fr", ""))
+    for lab, v in (_MSG.get("faits") or {}).items()
+    if v.get("fr")
+}
+FAITS_EN = {
+    lab: (v.get("source", ""), v.get("en", ""))
+    for lab, v in (_MSG.get("faits") or {}).items()
+    if v.get("en")
+}
 _SOURCES = list((_MSG.get("sources") or {}).keys())
 _TETE_FR = {k: (v or {}).get("fr", "") for k, v in (_MSG.get("sources") or {}).items()}
 _TETE_EN = {k: (v or {}).get("en", "") for k, v in (_MSG.get("sources") or {}).items()}
@@ -67,9 +75,10 @@ def preuve(offre, langue, ton="sobre"):
     sache illustrer : mieux vaut une phrase generique mais vraie qu'un silence.
     """
     from tailor_application import match_skills, cv_variant_key
+
     table = FAITS_EN if langue == "en" else FAITS_FR
     tete = _TETE_EN if langue == "en" else _TETE_FR
-    demandees = set(match_skills(f"{offre.get('poste','')} {offre.get('description','')}"))
+    demandees = set(match_skills(f"{offre.get('poste', '')} {offre.get('description', '')}"))
 
     groupes = {}
     for lab, (src, clause) in table.items():
@@ -130,10 +139,16 @@ _CONTEXTE_EN = dict(_MSG.get("phrase_contexte_en") or {})
 def _phrase_durable(offre, langue, preuve_texte):
     """La phrase de contexte, ou "" si l'annonce n'y appelle pas."""
     from tailor_application import contexte_durable
-    if not contexte_durable(dict(company=offre.get("entreprise"),
-                                 role=offre.get("poste"),
-                                 offer_text=offre.get("description"),
-                                 domaine=offre.get("domaine")), langue):
+
+    if not contexte_durable(
+        dict(
+            company=offre.get("entreprise"),
+            role=offre.get("poste"),
+            offer_text=offre.get("description"),
+            domaine=offre.get("domaine"),
+        ),
+        langue,
+    ):
         return ""
     table = _CONTEXTE_EN if langue == "en" else _CONTEXTE_FR
     tete = _TETE_EN if langue == "en" else _TETE_FR
@@ -189,14 +204,33 @@ def _intro_role(offre, langue, ton="sobre"):
 # Les trois vrais noms viennent tous de l'API detail des V.I.E, la seule source
 # qui rende `contactName`. Leur nombre grandira a mesure que les V.I.E passent
 # par `ajoute_vie.py`.
-_RX_CIVILITE = re.compile(
-    r"^\s*(monsieur|madame|mr|mrs|ms|mme|m)\.?\s+(.{2,})$", re.I)
+_RX_CIVILITE = re.compile(r"^\s*(monsieur|madame|mr|mrs|ms|mme|m)\.?\s+(.{2,})$", re.I)
 
 # Particules NOBILIAIRES : minuscules meme en tete de patronyme. « Monsieur de
 # Gaulle », jamais « Monsieur De Gaulle ». Valable aussi pour les formes
 # neerlandaises et ibero-portugaises : « van den Berg », « dos Santos ».
-_PARTICULES = {"de", "du", "des", "d", "da", "das", "dos", "del", "della", "di",
-               "van", "von", "der", "den", "ten", "ter", "el", "al", "bin", "ben"}
+_PARTICULES = {
+    "de",
+    "du",
+    "des",
+    "d",
+    "da",
+    "das",
+    "dos",
+    "del",
+    "della",
+    "di",
+    "van",
+    "von",
+    "der",
+    "den",
+    "ten",
+    "ter",
+    "el",
+    "al",
+    "bin",
+    "ben",
+}
 
 # « Le » et « La » NE SONT PAS dans cette liste : en francais ils portent la
 # majuscule quand ils font corps avec le nom — « Monsieur Le Pen », « Madame
@@ -209,7 +243,9 @@ _RX_GUICHET = re.compile(
     r"\b(?:service|recrutement|recruitment|recruiting|talent|acquisition|"
     r"ressources?\s+humaines?|\brh\b|\bhr\b|human\s+resources|people|equipe|"
     r"[ée]quipe|team|d[ée]partement|department|direction|cellule|p[oô]le|"
-    r"contact|candidature|careers?|emploi|jobs?|staffing|bureau)\b", re.I)
+    r"contact|candidature|careers?|emploi|jobs?|staffing|bureau)\b",
+    re.I,
+)
 
 
 def _nom_propre(s):
@@ -219,17 +255,19 @@ def _nom_propre(s):
     Un nom deja correctement casse n'est PAS retouche : « McDonald » et
     « van Gogh » perdraient leur forme a passer dans un title() aveugle.
     """
+
     def _mot(m, premier):
         # `premier` ne protege PAS les particules nobiliaires : un patronyme
         # peut commencer par elles, et « Monsieur De Gaulle » est une faute.
         if m.lower().rstrip(".'’") in _PARTICULES:
             return m.lower()
         if not m.isupper() and not m.islower():
-            return m                       # deja casse a la main : on respecte
+            return m  # deja casse a la main : on respecte
         out = []
         for morceau in re.split(r"([-'’])", m.lower()):
             out.append(morceau if morceau in "-'’" else morceau.capitalize())
         return "".join(out)
+
     mots = [w for w in s.split() if w]
     return " ".join(_mot(w, i == 0) for i, w in enumerate(mots))
 
@@ -248,7 +286,7 @@ def _patronyme(nom):
         return ""
     majs = [w for w in mots if w.isupper() and len(w) > 1]
     if majs and len(majs) < len(mots):
-        return _nom_propre(" ".join(majs))          # casse mixte : tranche nette
+        return _nom_propre(" ".join(majs))  # casse mixte : tranche nette
     return _nom_propre(" ".join(mots[1:])) or _nom_propre(mots[0])
 
 
@@ -277,6 +315,7 @@ def nom_dans_offre(rh, texte):
     def n(s):
         s = unicodedata.normalize("NFD", str(s or "").lower())
         return "".join(c for c in s if not unicodedata.combining(c))
+
     t = n(texte)
     mots = [m for m in re.split(r"[^a-z]+", n(rh)) if len(m) >= 3 and m not in _CIVILITES]
     if any(re.search(r"(?<![a-z])" + re.escape(m) + r"(?![a-z])", t) for m in mots):
@@ -297,17 +336,20 @@ def appel(offre, langue="fr", ton="sobre"):
     # Une offre complete (avec son texte) : le nom doit y figurer.
     if "description" in offre:
         rh = nom_dans_offre(rh, f"{offre.get('poste', '')} {offre.get('description') or ''}")
-    generique = ("Dear Sir or Madam," if langue == "en"
-                 else "Bonjour," if ton == "detente" else "Madame, Monsieur,")
+    generique = (
+        "Dear Sir or Madam,"
+        if langue == "en"
+        else "Bonjour,"
+        if ton == "detente"
+        else "Madame, Monsieur,"
+    )
     # Ni une URL, ni un guichet, ni une adresse mail : on veut une PERSONNE.
     # URL et adresse mail se testent AVANT la decoupe : une URL contient des
     # barres obliques, qui sont un separateur, et s'y faire hacher en dix
     # fragments ne mene nulle part. Le GUICHET, lui, se teste APRES : dans
     # « Monsieur Martin / Service Recrutement » il ne disqualifie que la
     # seconde moitie, et rejeter le champ entier perdait un nom exploitable.
-    if (not rh
-            or rh.lower().startswith(("http://", "https://", "www."))
-            or "@" in rh):
+    if not rh or rh.lower().startswith(("http://", "https://", "www.")) or "@" in rh:
         return generique
 
     # Plusieurs destinataires. ON NE GARDE QUE LES MORCEAUX QUI SONT DES
@@ -322,7 +364,7 @@ def appel(offre, langue="fr", ton="sobre"):
         if not noms:
             return generique
         if langue == "en":
-            return "Dear " + " and ".join(n[len("Dear "):] for n in noms) + ","
+            return "Dear " + " and ".join(n[len("Dear ") :] for n in noms) + ","
         return ", ".join(noms) + ","
 
     if _RX_GUICHET.search(rh):
@@ -357,8 +399,10 @@ def _message(offre, langue=None, ton="sobre"):
     """Le texte a coller dans le formulaire. `ton` : sobre | detente."""
     from tailor_application import cv_variant_key, titre_poste, minuscule_titre
     from langue import langue_offre
-    lg = langue or langue_offre(offre.get("poste"), offre.get("description"),
-                                offre.get("localisation"))
+
+    lg = langue or langue_offre(
+        offre.get("poste"), offre.get("description"), offre.get("localisation")
+    )
     cle = cv_variant_key(offre.get("domaine"))
     titre = titre_poste(offre.get("poste") or "") or ""
     # Meme regle que dans la lettre : en francais un intitule de poste est un
@@ -387,7 +431,8 @@ def _message(offre, langue=None, ton="sobre"):
             f"{appel(offre, 'en')}\n\n"
             f"I am {_un(_dom(cle, 'accroche_en'))}{lien(dip)} and I am "
             f"applying for the {titre} position at {soc}.\n\n"
-            + f"{_intro_role(offre, 'en')} {_MSG.get('langues_en', '')}".rstrip() + "\n\n"
+            + f"{_intro_role(offre, 'en')} {_MSG.get('langues_en', '')}".rstrip()
+            + "\n\n"
             "My CV and cover letter are attached. I would be glad to discuss the role with you "
             "and am available at your convenience.\n\n"
             f"Kind regards,\n{nom}"
@@ -411,7 +456,8 @@ def _message(offre, langue=None, ton="sobre"):
         f"{appel(offre, 'fr')}\n\n"
         f"Je suis {_dom(cle, 'accroche_fr')}{lien(dip)} et je "
         f"postule au poste {_de_titre(titre)} chez {soc}.\n\n"
-        + f"{_intro_role(offre, 'fr')} {_MSG.get('langues_fr', '')}".rstrip() + "\n\n"
+        + f"{_intro_role(offre, 'fr')} {_MSG.get('langues_fr', '')}".rstrip()
+        + "\n\n"
         "Mon CV et ma lettre de motivation sont joints. Je serais "
         f"{_P.accord('heureux', 'heureuse')} d'échanger avec vous "
         "sur ce poste et me tiens à votre disposition.\n\n"
@@ -431,6 +477,7 @@ def _un(nom):
 
 def _de_titre(t):
     from tailor_application import _de
+
     return _de(t) if t else "proposé"
 
 
@@ -442,20 +489,32 @@ def main():
     # en anglais » : la detection lit la langue du TEXTE, pas cette consigne.
     # Sans ce drapeau, le message serait francais alors que le CV et la lettre
     # sont anglais — trois pieces, deux langues.
-    ap.add_argument("--langue", choices=("fr", "en"), default=None,
-                    help="forcer la langue (defaut : celle de l'annonce)")
-    ap.add_argument("--ton", choices=("sobre", "detente"), default="sobre",
-                    help="registre : detente = moins raide, memes faits")
+    ap.add_argument(
+        "--langue",
+        choices=("fr", "en"),
+        default=None,
+        help="forcer la langue (defaut : celle de l'annonce)",
+    )
+    ap.add_argument(
+        "--ton",
+        choices=("sobre", "detente"),
+        default="sobre",
+        help="registre : detente = moins raide, memes faits",
+    )
     a = ap.parse_args()
     if not (a.url or a.contient):
         ap.error("donner --url ou --contient")
 
     import queue_io
     from rename_docs import new_name
+
     q = queue_io.charger()
-    cibles = [o for o in q
-              if (a.url and a.url in (o.get("url") or ""))
-              or (a.contient and a.contient.lower() in (o.get("entreprise") or "").lower())]
+    cibles = [
+        o
+        for o in q
+        if (a.url and a.url in (o.get("url") or ""))
+        or (a.contient and a.contient.lower() in (o.get("entreprise") or "").lower())
+    ]
     if not cibles:
         print("aucune offre ne correspond")
         return 1

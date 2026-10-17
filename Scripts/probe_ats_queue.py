@@ -19,6 +19,7 @@ Run :
   python probe_ats_queue.py --fit 0          # toutes
   python probe_ats_queue.py --json out.json
 """
+
 import sys
 import re
 import json
@@ -37,8 +38,22 @@ import probe_ats
 from job_sources import rang_source, title_ok
 
 # Mots qui ne font pas partie du slug d'un ATS.
-BRUIT = {"group", "groupe", "france", "sa", "sas", "sarl", "the", "and", "co",
-         "company", "consulting", "conseil", "partners", "international"}
+BRUIT = {
+    "group",
+    "groupe",
+    "france",
+    "sa",
+    "sas",
+    "sarl",
+    "the",
+    "and",
+    "co",
+    "company",
+    "consulting",
+    "conseil",
+    "partners",
+    "international",
+}
 
 
 def variantes(nom):
@@ -52,7 +67,7 @@ def variantes(nom):
         return []
     out = ["".join(utiles), "-".join(utiles)]
     if len(utiles) > 1:
-        out.append(utiles[0])                       # « alten » pour « Alten Group »
+        out.append(utiles[0])  # « alten » pour « Alten Group »
         out.append("".join(utiles[:2]))
     return [s for s in dict.fromkeys(out) if len(s) >= 3]
 
@@ -62,23 +77,34 @@ def main():
     ap.add_argument("--fit", type=int, default=8)
     ap.add_argument("--workers", type=int, default=16)
     ap.add_argument("--json", default=str(HERE / "_ats_candidats.json"))
-    ap.add_argument("--linkedin-seul", action="store_true", default=True,
-                    help="ne considerer que les entreprises dont l'offre vient de LinkedIn")
+    ap.add_argument(
+        "--linkedin-seul",
+        action="store_true",
+        default=True,
+        help="ne considerer que les entreprises dont l'offre vient de LinkedIn",
+    )
     a = ap.parse_args()
 
     q = queue_io.charger(descriptions=False)
-    ents = sorted({(o.get("entreprise") or "").strip() for o in q
-                   if (o.get("fit") or 0) >= a.fit
-                   and (not a.linkedin_seul or rang_source(o.get("url")) == 0)
-                   and (o.get("entreprise") or "").strip()})
+    ents = sorted(
+        {
+            (o.get("entreprise") or "").strip()
+            for o in q
+            if (o.get("fit") or 0) >= a.fit
+            and (not a.linkedin_seul or rang_source(o.get("url")) == 0)
+            and (o.get("entreprise") or "").strip()
+        }
+    )
 
-    essais = {}                       # slug -> nom de societe (le 1er qui le propose)
+    essais = {}  # slug -> nom de societe (le 1er qui le propose)
     for e in ents:
         for s in variantes(e):
             essais.setdefault(s, e)
     jobs = [(k, s) for s in essais for k in probe_ats.APIS]
-    print(f"{len(ents)} entreprise(s) · {len(essais)} slug(s) · "
-          f"{len(jobs)} requetes sur {len(probe_ats.APIS)} API")
+    print(
+        f"{len(ents)} entreprise(s) · {len(essais)} slug(s) · "
+        f"{len(jobs)} requetes sur {len(probe_ats.APIS)} API"
+    )
 
     trouves = []
     with cf.ThreadPoolExecutor(max_workers=a.workers) as ex:
@@ -99,13 +125,17 @@ def main():
     trouves.sort(key=lambda r: -len(r["pertinents"]))
     utiles = [r for r in trouves if r["pertinents"]]
 
-    print(f"\n=== {len(utiles)} flux avec au moins une offre pertinente "
-          f"(sur {len(trouves)} flux actifs) ===\n")
+    print(
+        f"\n=== {len(utiles)} flux avec au moins une offre pertinente "
+        f"(sur {len(trouves)} flux actifs) ===\n"
+    )
     total = 0
     for r in utiles:
         total += len(r["pertinents"])
-        print(f"  {len(r['pertinents']):4} / {r['titres_total']:5} · {r['ats']:16} "
-              f"{r['slug']:22} {r['entreprise'][:26]}")
+        print(
+            f"  {len(r['pertinents']):4} / {r['titres_total']:5} · {r['ats']:16} "
+            f"{r['slug']:22} {r['entreprise'][:26]}"
+        )
         for t in r["pertinents"][:3]:
             print(f"         · {t[:74]}")
     print(f"\n  {total} offre(s) pertinente(s) au total")
@@ -118,9 +148,14 @@ def main():
         for k, v in par_ats.items():
             print(f'  "{k}": {sorted(set(v))},')
 
-    Path(a.json).write_text(json.dumps(
-        [{k: v for k, v in r.items() if k != "titres"} for r in trouves],
-        ensure_ascii=False, indent=1), encoding="utf-8")
+    Path(a.json).write_text(
+        json.dumps(
+            [{k: v for k, v in r.items() if k != "titres"} for r in trouves],
+            ensure_ascii=False,
+            indent=1,
+        ),
+        encoding="utf-8",
+    )
     print(f"\n-> rapport : {Path(a.json).name}")
     return 0
 
@@ -128,20 +163,27 @@ def main():
 def _tous_les_titres(kind, slug):
     """Tous les intitules du flux (probe_ats.titles n'en rend que 3)."""
     import httpx
+
     try:
-        r = httpx.get(probe_ats.APIS[kind](slug), timeout=20,
-                      headers=probe_ats.UA, follow_redirects=True)
+        r = httpx.get(
+            probe_ats.APIS[kind](slug), timeout=20, headers=probe_ats.UA, follow_redirects=True
+        )
         if r.status_code != 200:
             return []
         d = r.json()
     except Exception:
         return []
     try:
-        if kind == "greenhouse":      return [j.get("title", "") for j in d.get("jobs", [])]
-        if kind == "lever":           return [j.get("text", "") for j in d]
-        if kind == "ashby":           return [j.get("title", "") for j in d.get("jobs", [])]
-        if kind == "recruitee":       return [j.get("title", "") for j in d.get("offers", [])]
-        if kind == "smartrecruiters": return [j.get("name", "") for j in d.get("content", [])]
+        if kind == "greenhouse":
+            return [j.get("title", "") for j in d.get("jobs", [])]
+        if kind == "lever":
+            return [j.get("text", "") for j in d]
+        if kind == "ashby":
+            return [j.get("title", "") for j in d.get("jobs", [])]
+        if kind == "recruitee":
+            return [j.get("title", "") for j in d.get("offers", [])]
+        if kind == "smartrecruiters":
+            return [j.get("name", "") for j in d.get("content", [])]
     except Exception:
         pass
     return []

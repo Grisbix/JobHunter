@@ -19,6 +19,7 @@ Run :
   python probe_ats_esg.py
   python probe_ats_esg.py --json _ats_esg.json
 """
+
 import sys
 import json
 import argparse
@@ -38,24 +39,93 @@ from job_sources import title_ok, en_france
 # Complete la liste de probe_ats.CANDIDATS avec des noms FR/EU du secteur.
 ESG_AM = [
     # Societes de gestion et boutiques
-    "mirova", "sycomore", "sycomoream", "lafinanciaredelechiquier", "lfde",
-    "dnca", "comgest", "carmignac", "amiralgestion", "tocquevillefinance",
-    "edmondderothschild", "rothschildandco", "lazardfreresgestion",
-    "montpensierfinance", "monetaam", "trusteam", "sanso", "inocapgestion",
-    "ofiinvest", "lbpam", "swisslifeam", "candriam", "tikehaucapital",
-    "eiffelinvestmentgroup", "rgreeninvest", "demeter", "meeschaert",
-    "ecofi", "ecofiinvestissements", "phitrust", "quaeroCapital", "varenne",
-    "axaim", "bnpparibasam", "amundi", "natixis", "ostrum", "seeyond",
+    "mirova",
+    "sycomore",
+    "sycomoream",
+    "lafinanciaredelechiquier",
+    "lfde",
+    "dnca",
+    "comgest",
+    "carmignac",
+    "amiralgestion",
+    "tocquevillefinance",
+    "edmondderothschild",
+    "rothschildandco",
+    "lazardfreresgestion",
+    "montpensierfinance",
+    "monetaam",
+    "trusteam",
+    "sanso",
+    "inocapgestion",
+    "ofiinvest",
+    "lbpam",
+    "swisslifeam",
+    "candriam",
+    "tikehaucapital",
+    "eiffelinvestmentgroup",
+    "rgreeninvest",
+    "demeter",
+    "meeschaert",
+    "ecofi",
+    "ecofiinvestissements",
+    "phitrust",
+    "quaeroCapital",
+    "varenne",
+    "axaim",
+    "bnpparibasam",
+    "amundi",
+    "natixis",
+    "ostrum",
+    "seeyond",
     # Notation extra-financiere, data ESG, conseil climat
-    "ethifinance", "carbone4", "carbon4finance", "icare", "quantis", "axylia",
-    "novethic", "deepki", "ecoact", "tennaxia", "impak", "greenomy", "briink",
-    "clarityai", "esgbook", "sustainalytics", "worldfavor", "positiongreen",
-    "coolset", "plana", "climatiq", "altruistiq", "emitwise", "normative",
-    "greenly", "sweep", "watershed", "ecovadis", "carbometrix", "sami",
-    "greenscope", "verteego", "hellocarbo", "aktio", "toovalu", "traace",
+    "ethifinance",
+    "carbone4",
+    "carbon4finance",
+    "icare",
+    "quantis",
+    "axylia",
+    "novethic",
+    "deepki",
+    "ecoact",
+    "tennaxia",
+    "impak",
+    "greenomy",
+    "briink",
+    "clarityai",
+    "esgbook",
+    "sustainalytics",
+    "worldfavor",
+    "positiongreen",
+    "coolset",
+    "plana",
+    "climatiq",
+    "altruistiq",
+    "emitwise",
+    "normative",
+    "greenly",
+    "sweep",
+    "watershed",
+    "ecovadis",
+    "carbometrix",
+    "sami",
+    "greenscope",
+    "verteego",
+    "hellocarbo",
+    "aktio",
+    "toovalu",
+    "traace",
     # Conseil et audit a forte composante durabilite
-    "utopies", "goodwill-management", "bl-evolution", "wavestone", "sia",
-    "eleven", "kea", "square", "julhiet", "colombus", "keyrus",
+    "utopies",
+    "goodwill-management",
+    "bl-evolution",
+    "wavestone",
+    "sia",
+    "eleven",
+    "kea",
+    "square",
+    "julhiet",
+    "colombus",
+    "keyrus",
 ]
 
 
@@ -89,18 +159,18 @@ def main():
         r["titres_total"] = len(titres)
         r["pertinents"] = [t for t in titres if title_ok(t)]
 
-    utiles = sorted([r for r in trouves if r["pertinents"]],
-                    key=lambda r: -len(r["pertinents"]))
+    utiles = sorted([r for r in trouves if r["pertinents"]], key=lambda r: -len(r["pertinents"]))
     print(f"\n=== {len(utiles)} flux avec au moins une offre pertinente ===\n")
     for r in utiles:
-        print(f"  {len(r['pertinents']):4} / {r['titres_total']:5} · {r['ats']:16} "
-              f"{r['slug']:24} {r['entreprise'][:22]}")
+        print(
+            f"  {len(r['pertinents']):4} / {r['titres_total']:5} · {r['ats']:16} "
+            f"{r['slug']:24} {r['entreprise'][:22]}"
+        )
         for t in r["pertinents"][:3]:
             print(f"         · {t[:72]}")
     print(f"\n  {sum(len(r['pertinents']) for r in utiles)} offre(s) pertinente(s)")
 
-    Path(a.json).write_text(json.dumps(trouves, ensure_ascii=False, indent=1),
-                            encoding="utf-8")
+    Path(a.json).write_text(json.dumps(trouves, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"\n-> {Path(a.json).name}")
     print("Verifier l'identite avant d'ajouter :")
     print(f"  python verify_ats_slugs.py --json {Path(a.json).name}")

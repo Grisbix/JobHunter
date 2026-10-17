@@ -9,9 +9,11 @@ Garde les pages valides `/fr/companies/<slug>`. Réécrit `/jobs/search` et `/pa
 
 Run : python fix_wtj_urls.py            # applique
       python fix_wtj_urls.py --dry      # montre sans écrire"""
+
 import sys, json, re, argparse
 from urllib.parse import urlparse, quote
 from pathlib import Path
+
 sys.stdout.reconfigure(encoding="utf-8")
 
 HERE = Path(__file__).resolve().parent
@@ -31,7 +33,7 @@ def needs_fix(url):
     if "welcometothejungle.com" not in url:
         return False
     p = urlparse(url).path.lower()
-    if "/companies/" in p:            # page entreprise WTJ = valide
+    if "/companies/" in p:  # page entreprise WTJ = valide
         return False
     return "/jobs/search" in url or "/pages/" in p or url.rstrip("-").endswith("emploi")
 
@@ -40,7 +42,7 @@ def main():
     # Verrou inter-processus : ce programme reecrit la queue ENTIERE. Si un
     # autre le fait en meme temps (tache planifiee vs app), le dernier qui
     # ecrit efface le travail de l'autre.
-    if not __import__('jutil').garder(QUEUE):
+    if not __import__("jutil").garder(QUEUE):
         return 3
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true")
@@ -51,11 +53,11 @@ def main():
         u = x.get("url") or ""
         if needs_fix(u):
             new = BASE + _kw(x.get("entreprise", ""), x.get("poste", ""))
-            print(f"  {x.get('entreprise','')[:24]:24} {u[:60]}\n     → {new}")
+            print(f"  {x.get('entreprise', '')[:24]:24} {u[:60]}\n     → {new}")
             if not a.dry:
                 x["url"] = new
                 x["url_type"] = "RECHERCHE"
-                x["link_status"] = "OK"   # à revalider via recheck_dead
+                x["link_status"] = "OK"  # à revalider via recheck_dead
             n += 1
     if not a.dry:
         __import__("jutil").jwrite(QUEUE, q)

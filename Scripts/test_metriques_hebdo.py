@@ -9,6 +9,7 @@ date, seuil de relance, journaux du pipeline et jours sans run.
 
 Run : python test_metriques_hebdo.py
 """
+
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
 import sys
 import tempfile
@@ -45,14 +46,14 @@ check("illisible", M.lire_date("bientôt", AUJ), None)
 
 print("\n── B. comptes des candidatures ──")
 suivi = {
-    "A|Analyste": {"s": "postulé", "d": "2026-10-10"},        # cette semaine
-    "B|Chargé": {"s": "postulé", "d": "2026-09-20"},          # à relancer (22 j)
-    "C|Consultant": {"s": "relancé", "d": "2026-10-01"},      # à relancer (11 j)
-    "D|Data": {"s": "postulé", "d": ""},                      # sans date
-    "E|Entretien": {"s": "entretien", "d": "2026-10-05"},     # réponse < 30 j
-    "F|Refus": {"s": "refus", "d": "2026-08-01"},             # réponse > 30 j
-    "G|Mauvaise": {"s": "mauvaise", "d": "2026-10-11"},       # pas envoyée
-    "H|Rien": {"n": "note seule"},                            # sans statut
+    "A|Analyste": {"s": "postulé", "d": "2026-10-10"},  # cette semaine
+    "B|Chargé": {"s": "postulé", "d": "2026-09-20"},  # à relancer (22 j)
+    "C|Consultant": {"s": "relancé", "d": "2026-10-01"},  # à relancer (11 j)
+    "D|Data": {"s": "postulé", "d": ""},  # sans date
+    "E|Entretien": {"s": "entretien", "d": "2026-10-05"},  # réponse < 30 j
+    "F|Refus": {"s": "refus", "d": "2026-08-01"},  # réponse > 30 j
+    "G|Mauvaise": {"s": "mauvaise", "d": "2026-10-11"},  # pas envoyée
+    "H|Rien": {"n": "note seule"},  # sans statut
     "I|Vide": None,
 }
 b = M.bilan_suivi(suivi, AUJ)
@@ -62,19 +63,22 @@ check("réponses sur 30 jours", b["reponses_30j"], 1)
 check("envoyées au total", b["envoyees_total"], 6)
 check("taux de réponse cumulé", b["taux_reponse"], 2 / 6)
 check("sans date comptée à part", b["sans_date"], 1)
-check("à relancer, plus vieille d'abord",
-      b["a_relancer"], [("B|Chargé", 22), ("C|Consultant", 11)])
+check("à relancer, plus vieille d'abord", b["a_relancer"], [("B|Chargé", 22), ("C|Consultant", 11)])
 check("une « mauvaise » n'est pas une candidature", b["statuts"]["mauvaise"], 1)
 check("entrée sans statut comptée", b["statuts"]["(aucun)"], 2)
-check("statut en majuscules reconnu",
-      M.bilan_suivi({"X|Y": {"s": "Postulé", "d": "2026-10-11"}}, AUJ)["envoyees_periode"], 1)
+check(
+    "statut en majuscules reconnu",
+    M.bilan_suivi({"X|Y": {"s": "Postulé", "d": "2026-10-11"}}, AUJ)["envoyees_periode"],
+    1,
+)
 check("suivi vide : pas de division par zéro", M.bilan_suivi({}, AUJ)["taux_reponse"], None)
 
 print("\n── C. journaux du pipeline ──")
 with tempfile.TemporaryDirectory() as t:
     t = Path(t)
     (t / "pipeline_2026-10-10_1200.log").write_text(
-        "Merge : +8 nouvelles, 0 enrichies\nMerge [DRY] : +3 nouvelles\n", encoding="utf-8")
+        "Merge : +8 nouvelles, 0 enrichies\nMerge [DRY] : +3 nouvelles\n", encoding="utf-8"
+    )
     (t / "pipeline_2026-10-11_0900.log").write_text("Merge : +2 nouvelles\n", encoding="utf-8")
     (t / "pipeline_2026-10-11_1800.log").write_text("Merge : +5 nouvelles\n", encoding="utf-8")
     (t / "pipeline_2026-10-01_1200.log").write_text("Merge : +99 nouvelles\n", encoding="utf-8")

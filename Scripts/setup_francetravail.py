@@ -16,6 +16,7 @@ Run :
   python setup_francetravail.py            # saisie masquee + test
   python setup_francetravail.py --test     # teste les identifiants deja en place
 """
+
 import sys, json, argparse, getpass
 from pathlib import Path
 
@@ -29,10 +30,13 @@ def test():
     """Verifie que les identifiants obtiennent un jeton ET ramenent des offres."""
     sys.path.insert(0, str(HERE))
     import job_sources as js
+
     tok = js._ft_token()
     if not tok:
-        print("✗ jeton refuse — identifiants invalides, ou l'application n'est pas"
-              " abonnee a « Offres d'emploi v2 » sur francetravail.io")
+        print(
+            "✗ jeton refuse — identifiants invalides, ou l'application n'est pas"
+            " abonnee a « Offres d'emploi v2 » sur francetravail.io"
+        )
         return 1
     print(f"✓ jeton obtenu ({len(tok)} caracteres)")
     js.KEYWORDS = ["analyste esg"]
@@ -51,7 +55,8 @@ def main():
 
     if a.test:
         if not CFG.exists():
-            print(f"✗ {CFG.name} absent — relance sans --test pour le creer"); return 1
+            print(f"✗ {CFG.name} absent — relance sans --test pour le creer")
+            return 1
         return test()
 
     if CFG.exists():
@@ -66,10 +71,13 @@ def main():
         if CFG.exists():
             print("Saisie vide — fichier existant conserve.")
             return test()
-        print("✗ les deux champs sont requis."); return 1
+        print("✗ les deux champs sont requis.")
+        return 1
 
-    CFG.write_text(json.dumps({"client_id": cid, "client_secret": secret},
-                              ensure_ascii=False, indent=1), encoding="utf-8")
+    CFG.write_text(
+        json.dumps({"client_id": cid, "client_secret": secret}, ensure_ascii=False, indent=1),
+        encoding="utf-8",
+    )
     print(f"✓ ecrit dans {CFG.name} (ignore par git)\n")
     return test()
 

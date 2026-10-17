@@ -12,6 +12,7 @@ seconde chance ; une page normale est lue.
 
 Run : python test_glassdoor_refus.py
 """
+
 import _profil_test  # noqa: F401  — les tests tournent sur le profil d'exemple
 import io
 import sys
@@ -41,8 +42,10 @@ def ck(nom, cond):
 dormi = []
 js.time.sleep = lambda s: dormi.append(s)
 
-PAGE = ('<a class="x" data-test="job-title" href="https://www.glassdoor.fr/job/{n}">'
-        'Analyste ESG junior</a><div data-test="emp-location">Paris</div>')
+PAGE = (
+    '<a class="x" data-test="job-title" href="https://www.glassdoor.fr/job/{n}">'
+    'Analyste ESG junior</a><div data-test="emp-location">Paris</div>'
+)
 
 
 def erreur(code):
@@ -61,6 +64,7 @@ def rejouer(reponses):
         if isinstance(x, int):
             raise erreur(x)
         return io.BytesIO(x.encode("utf-8"))
+
     urllib.request.urlopen = urlopen
     return vus
 
@@ -90,8 +94,10 @@ vus = rejouer([PAGE.format(n=1), PAGE.format(n=2), 403])
 res, sortie = scan(MOTS)
 ck("403 au 3e mot : trois requetes, pas une de plus", len(vus) == 3)
 ck("403 au 3e mot : les deux offres deja lues sont conservees", len(res) == 2)
-ck("403 au 3e mot : seulement les pauses entre mots, pas de repos de 45 s",
-   js.GD_REPOS not in dormi)
+ck(
+    "403 au 3e mot : seulement les pauses entre mots, pas de repos de 45 s",
+    js.GD_REPOS not in dormi,
+)
 
 # ── 3. un 429 reste une limite de debit : pause puis seconde chance ──────────
 vus = rejouer([429, PAGE.format(n=3)])
@@ -102,10 +108,11 @@ ck("429 : seconde requete, offre lue", len(vus) == 2 and len(res) == 1)
 # ── 4. 429 persistant : arret apres GD_ABANDON refus d'affilee ───────────────
 vus = rejouer([429] * 100)
 res, sortie = scan(MOTS)
-ck("429 persistant : arret au bout de GD_ABANDON mots",
-   len(vus) == 2 * js.GD_ABANDON)
-ck("429 persistant : compte dans INCIDENTS",
-   js.INCIDENTS["glassdoor"].get("HTTP 429") == js.GD_ABANDON)
+ck("429 persistant : arret au bout de GD_ABANDON mots", len(vus) == 2 * js.GD_ABANDON)
+ck(
+    "429 persistant : compte dans INCIDENTS",
+    js.INCIDENTS["glassdoor"].get("HTTP 429") == js.GD_ABANDON,
+)
 
 print(f"\n=== BILAN : {ok} ✅  /  {ko} ❌  ({ok}/{ok + ko}) ===")
 sys.exit(1 if ko else 0)

@@ -18,6 +18,7 @@ Run :
   python homepages_linkedin.py --fit 8          # entreprises des offres fit >= 8
   python homepages_linkedin.py --fit 0          # toutes
 """
+
 import sys
 import json
 import argparse
@@ -37,9 +38,23 @@ CACHE = HERE / "homepages.json"
 # Pages qui repondent 200 mais ne sont PAS le site de l'entreprise : controles
 # anti-bot, parkings de domaine, raccourcisseurs. « Manutan » renvoyait ainsi
 # validate.perfdrive.com — accepter ca polluerait le cache d'URL inutilisables.
-REJET = ("perfdrive.com", "captcha", "cloudflare", "datadome", "incapsula",
-         "sucuri", "distil", "bot-check", "godaddy.com", "sedoparking",
-         "afternic.com", "bit.ly", "tinyurl", "linkedin.com", "facebook.com")
+REJET = (
+    "perfdrive.com",
+    "captcha",
+    "cloudflare",
+    "datadome",
+    "incapsula",
+    "sucuri",
+    "distil",
+    "bot-check",
+    "godaddy.com",
+    "sedoparking",
+    "afternic.com",
+    "bit.ly",
+    "tinyurl",
+    "linkedin.com",
+    "facebook.com",
+)
 
 
 def utilisable(url):
@@ -50,17 +65,26 @@ def utilisable(url):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true")
-    ap.add_argument("--fit", type=int, default=8,
-                    help="ne traiter que les entreprises ayant une offre a ce fit ou plus")
+    ap.add_argument(
+        "--fit",
+        type=int,
+        default=8,
+        help="ne traiter que les entreprises ayant une offre a ce fit ou plus",
+    )
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--limit", type=int, default=0)
     a = ap.parse_args()
 
     q = queue_io.charger(descriptions=False)
-    ents = sorted({(o.get("entreprise") or "").strip() for o in q
-                   if rang_source(o.get("url")) == 0
-                   and (o.get("fit") or 0) >= a.fit
-                   and (o.get("entreprise") or "").strip()})
+    ents = sorted(
+        {
+            (o.get("entreprise") or "").strip()
+            for o in q
+            if rang_source(o.get("url")) == 0
+            and (o.get("fit") or 0) >= a.fit
+            and (o.get("entreprise") or "").strip()
+        }
+    )
 
     try:
         cache = json.loads(CACHE.read_text(encoding="utf-8"))
@@ -69,8 +93,10 @@ def main():
     a_faire = [e for e in ents if e not in cache]
     if a.limit:
         a_faire = a_faire[: a.limit]
-    print(f"{len(ents)} entreprise(s) LinkedIn a fit >= {a.fit} — "
-          f"{len(ents) - len(a_faire)} deja connues, {len(a_faire)} a chercher")
+    print(
+        f"{len(ents)} entreprise(s) LinkedIn a fit >= {a.fit} — "
+        f"{len(ents) - len(a_faire)} deja connues, {len(a_faire)} a chercher"
+    )
     if a.dry or not a_faire:
         return 0
 
@@ -93,8 +119,10 @@ def main():
                 print(f"  … {n}/{len(a_faire)}  ({trouve} trouves)")
 
     _ecrire()
-    print(f"\n{trouve} site(s) trouve(s), {rejete} rejete(s) (page anti-bot ou parking), "
-          f"{len(a_faire) - trouve - rejete} introuvable(s)")
+    print(
+        f"\n{trouve} site(s) trouve(s), {rejete} rejete(s) (page anti-bot ou parking), "
+        f"{len(a_faire) - trouve - rejete} introuvable(s)"
+    )
     print(f"homepages.json : {len(cache)} entrees")
     return 0
 
