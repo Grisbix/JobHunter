@@ -4,6 +4,19 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 1.4.0 — 2026-10-17
+
+Version « atelier » : rien ne change dans ce que fait JobHunter, mais le code est
+désormais vérifié comme un logiciel professionnel (voir `docs/plan-professionnalisation.md`).
+
+- **Banc de non-régression** : 384 offres fictives dont chaque décision (note, tri, zone,
+  langue, message, lettre) est comparée à une référence à chaque modification.
+- Code mis en forme et vérifié automatiquement (ruff), contrôles avant chaque commit,
+  environnement de développement reproductible (uv), tests lancés par pytest.
+- Deux séries de tests qui ne tournaient jamais (relances, navigation) sont branchées.
+- La mise à jour remplacera presque tous les fichiers du programme (mise en forme) : un
+  fichier que tu as modifié est gardé, la nouvelle version posée à côté en `.nouveau`.
+
 ## 1.3.2 — 2026-10-17
 
 - **LinkedIn : la collecte ne perd plus les pages limitées.** Depuis le 13/10, LinkedIn
