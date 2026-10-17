@@ -3070,9 +3070,11 @@ class App:
 
     def run_all(self):
         if self._occupe(): return
-        # Memes 6 etapes que run_pipeline.ps1, pour que le bouton et la tache
-        # planifiee fassent exactement la meme chose (l'ancien enchainement
-        # s'arretait au re-score : ni descriptions, ni export CSV, ni alerte).
+        # Version COURTE du pipeline : six etapes, a la main. La tache planifiee
+        # lance pipeline_quotidien.py, qui en fait davantage (collecte en cinq
+        # passes fusionnees chacune, sauvegarde, sites carriere, dossiers).
+        # L'ancien enchainement s'arretait au re-score : ni descriptions, ni
+        # export CSV, ni alerte.
         seq = [
             ("1/6 Scan offres (ATS + LinkedIn + V.I.E)", [PY, "job_sources.py", "--all"]),
             ("2/6 Descriptions LinkedIn", [PY, "scrape_desc.py", "--all", "--canal", "linkedin", "--limit", "150"]),
