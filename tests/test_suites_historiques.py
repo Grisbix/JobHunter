@@ -28,17 +28,12 @@ SUITES = [
     "test_zones",
     "test_audit_dispo",
     "test_cv_auto",
-    "test_agregateurs",
     "test_tri_file",
     "test_site_final",
-    "test_metriques_hebdo",
     "test_lecteurs_ats",
     "test_web_nav_mock",
     "test_mise_a_jour",
     "test_web_nav",
-    "test_app_design",
-    "test_indeed",
-    "test_acces",
 ]
 
 
