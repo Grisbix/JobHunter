@@ -1,6 +1,7 @@
 ---
 paths:
   - Scripts/jutil.py
+  - src/jobhunter/stockage/*.py
   - Scripts/job_sources.py
   - Scripts/linkedin_desc.py
   - Scripts/pipeline_quotidien.py

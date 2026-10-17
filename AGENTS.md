@@ -99,6 +99,23 @@ motif à `ats_match` fait monter son compte sans qu'aucun test ait été écrit.
 
 ## Architecture
 
+### Le paquet `src/jobhunter` (phase 3 du plan, en cours)
+
+Le moteur migre de `Scripts/` vers le paquet `src/jobhunter`, une couche à la fois
+(`docs/plan-professionnalisation.md`). Fait : **`jobhunter.stockage`** — `atomique`
+(écriture tmp + `os.replace`), `verrou` (exclusion entre processus), `file` (ex-`queue_io`),
+`suivi` (ex-`suivi_io`), et `jobhunter.racine` (racine trouvée par marqueur ou
+`JOBHUNTER_RACINE` ; les données restent dans `Scripts/`). Dépendances à sens unique :
+`file`/`suivi` → `atomique`/`verrou`, jamais l'inverse ; le stockage se charge sans
+`Scripts/` (vérifié en test).
+
+**Façades.** `Scripts/queue_io.py` et `Scripts/suivi_io.py` restent, mais sont des ALIAS :
+`import queue_io` rend le module `jobhunter.stockage.file` lui-même (`sys.modules`), donc
+un `monkeypatch.setattr(queue_io, "CHEMIN", …)` agit sur le code réel. `jutil` garde ses
+utilitaires texte et chemins et réexporte le verrou. Le code nouveau importe
+`jobhunter.stockage` ; les façades partiront à la fin de la phase 3.
+
+
 ### Trois fichiers de données, trois contrats d'accès
 
 ```

@@ -4,6 +4,14 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 1.5.0 — 2026-10-18
+
+Rien ne change dans ce que fait JobHunter. Le code de stockage (la file d'offres, le suivi
+des candidatures, l'écriture sûre et le verrou entre programmes) part dans un nouveau
+dossier `src/jobhunter/` : première étape du découpage du moteur en paquet. La mise à jour
+ajoute ce dossier ; les anciens noms (`queue_io`, `suivi_io`, `jutil`) restent valables.
+Les tests sont désormais écrits avec pytest (1 153 tests).
+
 ## 1.4.0 — 2026-10-17
 
 Version « atelier » : rien ne change dans ce que fait JobHunter, mais le code est
