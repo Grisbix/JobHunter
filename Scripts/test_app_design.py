@@ -90,7 +90,10 @@ class DesignTests(unittest.TestCase):
                     self.assertEqual(app._offer_kpis["post"].cget("text"), "0")
                     root.geometry("1080x680")
                     root.deiconify()
-                    root.update_idletasks()
+                    # update() et non update_idletasks() : l'affichage d'une fenetre
+                    # (evenement Map) n'est pas une tache « idle ». En local la fenetre
+                    # etait souvent deja affichee ; sur la machine de CI, jamais.
+                    root.update()
                     self.assertTrue(app._offer_split.winfo_ismapped())
                     self.assertTrue(app.sidebar.winfo_ismapped())
                     root.withdraw()
