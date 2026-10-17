@@ -38,16 +38,16 @@ jobs:
           cache: pip
       - name: Dependances
         run: |
-          python -m pip install -r requirements.txt "pytest>=9,<10"
+          python -m pip install -r requirements.txt "pytest>=9,<10" "pytest-cov>=6,<8"
           python -m playwright install chromium
       - name: Banc de non-regression
         env:
           PYTHONIOENCODING: utf-8
         run: python outils/banc.py comparer outils/banc_reference.json
-      - name: Suites sans reseau (pytest)
+      - name: Tests et couverture (pytest)
         env:
           PYTHONIOENCODING: utf-8
-        run: python -m pytest -q
+        run: python -m pytest -q --cov --cov-report=term
 
   unix:
     # Les scripts macOS/Linux et la logique pure, hors Windows.

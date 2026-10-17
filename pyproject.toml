@@ -22,6 +22,7 @@ dev = [
     "ruff>=0.15,<0.16",
     "pytest>=9,<10",
     "pre-commit>=4,<5",
+    "pytest-cov>=6,<8",
 ]
 
 [tool.uv]
@@ -67,3 +68,21 @@ profil = ["_profil_test"]
 # ── pytest ───────────────────────────────────────────────────────────────────
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "donnees_reelles: lit les donnees reelles d'un utilisateur (suivi, file) ; a lancer expres",
+]
+addopts = "-m 'not donnees_reelles'"
+
+# ── couverture ───────────────────────────────────────────────────────────────
+[tool.coverage.run]
+source = ["Scripts"]
+omit = ["*/test_*.py", "*/_profil_test.py"]
+# Les suites historiques tournent en sous-processus : sans ceci, elles ne comptent pas.
+patch = ["subprocess"]
+
+[tool.coverage.report]
+skip_empty = true
+# Point de depart mesure le 2026-10-18 : 31 % du moteur (fichiers de test exclus). Le seuil ne descend jamais ; il monte
+# a mesure que les suites sont converties et que les modules a 0 % sont couverts.
+fail_under = 30
+
