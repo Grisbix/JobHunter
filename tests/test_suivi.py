@@ -5,8 +5,6 @@ parce que LinkedIn n'acceptait plus de candidature. Or une annonce ferme presque
 toujours APRES qu'on y a postule. Converti depuis Scripts/test_suivi.py.
 """
 
-import json
-
 import pytest
 
 import jutil
@@ -135,6 +133,6 @@ def test_exception_au_milieu_n_ecrit_rien(deux_ecrivains):
 def test_aucune_candidature_orpheline():
     """Chaque candidature du suivi pointe vers une offre de la file, ou est marquee
     `retiree` (ligne retiree expres de la file).  pytest -m donnees_reelles"""
-    reel = json.loads(suivi_io.CHEMIN.read_text(encoding="utf-8"))
+    reel = suivi_io.charger()  # jamais json.load direct (AGENTS.md)
     ids = {queue_io.oid(o) for o in queue_io.charger(descriptions=False)}
     assert [k for k in reel if k not in ids and not reel[k].get("retiree")] == []
