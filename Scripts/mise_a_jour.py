@@ -225,7 +225,12 @@ def controler():
     importe les modules centraux dans un processus neuf, sur le profil d'exemple
     (le controle ne depend pas de ton profil et ne le lit pas)."""
     erreurs = []
-    for f in sorted([*(RACINE / "Scripts").glob("*.py"), RACINE / "JobHunter.pyw"]):
+    fichiers = [
+        *(RACINE / "Scripts").glob("*.py"),
+        *(RACINE / "src").rglob("*.py"),
+        RACINE / "JobHunter.pyw",
+    ]
+    for f in sorted(fichiers):
         if not f.exists():
             continue
         try:

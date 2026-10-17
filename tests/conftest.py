@@ -14,12 +14,14 @@ import pytest
 
 RACINE = Path(__file__).resolve().parent.parent
 SCRIPTS = RACINE / "Scripts"
+SRC = RACINE / "src"
 EXEMPLE = RACINE / "profil" / "exemple_finance_esg.json"
 
 os.environ["PROFIL_JOBHUNTER"] = str(EXEMPLE)
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
-if str(SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS))
+for _d in (SRC, SCRIPTS):  # SCRIPTS en tete : les modules s'importent par leur nom
+    if str(_d) not in sys.path:
+        sys.path.insert(0, str(_d))
 
 
 class Reponse:
