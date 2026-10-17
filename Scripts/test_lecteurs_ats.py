@@ -341,12 +341,14 @@ def sequence(*reps):
 
 
 PAUSES = []
+DECALAGE = [0]                                   # temps ecoule hors pauses
 J._dormir = PAUSES.append
+J._horloge = lambda: sum(PAUSES) + DECALAGE[0]   # le temps n'avance que par les pauses
 J.LI_PAUSE = 0
 
 
 def li(*reps, mots=("esg",), lieux=None):
-    APPELS.clear(); PAUSES.clear(); J.INCIDENTS.clear()
+    APPELS.clear(); PAUSES.clear(); J.INCIDENTS.clear(); DECALAGE[0] = 0
     J.KEYWORDS = list(mots)
     J._get_borne = sequence(*reps)
     return J.scan_linkedin(lieux=lieux or {"France": 1})
@@ -363,7 +365,8 @@ verifie("linkedin 429 : Retry-After plafonne", [p for p in PAUSES if p], [240])
 r = li(RepLI("", 429), RepLI("", 429), RepLI(CARTE_LI))
 verifie("linkedin 429 : pauses doublees", [p for p in PAUSES if p], [60, 120])
 r = li(RepLI("", 429), mots=("esg", "csrd", "isr"))
-verifie("linkedin 429 persistant : arret au budget", sum(PAUSES) <= J.LI_BUDGET, True)
+verifie("linkedin 429 persistant : arret a la duree max de la passe", sum(PAUSES) <= J.LI_DUREE_MAX, True)
+verifie("linkedin 429 persistant : on a bien attendu avant d'abandonner", sum(PAUSES) > J.LI_DUREE_MAX - 240, True)
 verifie("linkedin 429 persistant : plus aucun mot-cle apres l'arret",
         all("keywords=esg" in u for u in APPELS), True)
 r = li(RepLI("", 999), mots=("esg", "csrd", "isr"), lieux={"France": 2, "Worldwide": 2})
@@ -374,6 +377,18 @@ r = li(RepLI("", 429), RepLI(CARTE_LI), RepLI("", 429), RepLI(CARTE_LI), mots=("
 verifie("linkedin : le compteur de pauses repart apres une page servie", [p for p in PAUSES if p], [60, 60])
 r = li(RepLI(CARTE_LI), mots=("esg",))
 verifie("linkedin sans incident : aucune pause de limite", [p for p in PAUSES if p], [])
+
+
+def passe_trop_longue(_httpx, url, **kw):
+    APPELS.append(url)
+    DECALAGE[0] += J.LI_DUREE_MAX     # la premiere page a pris toute la duree
+    return RepLI(CARTE_LI)
+
+
+APPELS.clear(); PAUSES.clear(); J.INCIDENTS.clear(); DECALAGE[0] = 0
+J.KEYWORDS = ["esg", "csrd", "isr"]; J._get_borne = passe_trop_longue
+r = J.scan_linkedin(lieux={"France": 1})
+verifie("linkedin : duree max depassee sans 429 -> mots-cles suivants sautes", (len(r), len(APPELS)), (1, 1))
 
 print(f"\n{ok} ✅  {ko} ❌")
 sys.exit(1 if ko else 0)

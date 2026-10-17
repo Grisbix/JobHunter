@@ -1306,22 +1306,32 @@ def linkedin_guest_search(keyword, pages=2, days=7, lieu="France"):
 # par jour a 0-28, sans rien de visible hors du compteur d'incidents.
 # Regle du projet : un 429 dit « reviens plus tard » — on espace davantage, on
 # attend (Retry-After, sinon 60 s doublees jusqu'a 240), on reprend la MEME
-# page, dans un budget d'attente par collecte ; budget epuise, LinkedIn s'arrete
-# pour la journee. 403/999 sont des refus : arret immediat, aucune reprise.
+# page. 403/999 sont des refus : arret immediat, aucune reprise.
+#
+# DUREE MAXIMALE DE LA PASSE, pas budget d'attente. Mesure du 17/10 avec un
+# budget de 900 s d'attente : 184 offres (101 neuves) au lieu de 96, mais
+# arret a 10 mots-cles sur 14, France seule — « Worldwide » n'aurait rien eu.
+# La passe LinkedIn du pipeline est tuee a 3600 s, et une passe tuee perd TOUTE
+# sa collecte (fusion en fin de passe) : on s'arrete proprement a 45 min.
 LI_PAUSE = 3.0
 LI_ATTENTES = (60, 120, 240)
-LI_BUDGET = 900
-_LI = {"stop": None, "attendu": 0.0, "suite_429": 0}
+LI_DUREE_MAX = 2700
+_LI = {"stop": None, "attendu": 0.0, "suite_429": 0, "debut": 0.0}
 _dormir = time.sleep          # les tests le remplacent
+_horloge = time.monotonic     # idem
+
+
+def _li_ecoule():
+    return _horloge() - _LI["debut"]
 
 
 def _li_pause_429(r):
-    """Attend avant de redemander apres un 429. False si le budget est epuise."""
+    """Attend avant de redemander apres un 429. False si la passe n'a plus le temps."""
     ra = (getattr(r, "headers", None) or {}).get("Retry-After", "")
     n = _LI["suite_429"]
     pause = int(ra) if str(ra).isdigit() else LI_ATTENTES[min(n, len(LI_ATTENTES) - 1)]
     pause = min(pause, max(LI_ATTENTES))
-    if _LI["attendu"] + pause > LI_BUDGET:
+    if _li_ecoule() + pause > LI_DUREE_MAX:
         return False
     print(f"  ⏳ linkedin : limite de débit (429), pause {pause} s puis reprise")
     _dormir(pause)
@@ -1363,10 +1373,12 @@ def scan_linkedin(pages=2, days=7, lieux=None):
     # Un dict donne la profondeur par lieu, une liste garde celle de l'argument.
     profondeur = dict(lieux) if isinstance(lieux, dict) else {x: pages for x in lieux}
     offers, seen = [], set()
-    _LI.update(stop=None, attendu=0.0, suite_429=0)
+    _LI.update(stop=None, attendu=0.0, suite_429=0, debut=_horloge())
     for lieu in profondeur:
         n_lieu = 0
         for kw in KEYWORDS:
+            if not _LI["stop"] and _li_ecoule() >= LI_DUREE_MAX:
+                _LI["stop"] = "durée"
             if _LI["stop"]:
                 break
             got = linkedin_guest_search(kw, pages=profondeur[lieu], days=days, lieu=lieu)
@@ -1378,9 +1390,9 @@ def scan_linkedin(pages=2, days=7, lieux=None):
             offers.extend(new)
         if len(profondeur) > 1:
             print(f"  ✓ linkedin {lieu} → {n_lieu} offres")
-    if _LI["stop"] == "429":
-        print(f"  ⚠ linkedin : limite de débit persistante, collecte arrêtée après "
-              f"{_LI['attendu']:.0f} s d'attente — reprise à la prochaine collecte")
+    if _LI["stop"] in ("429", "durée"):
+        print(f"  ⚠ linkedin : durée maximale atteinte ({_li_ecoule():.0f} s, dont "
+              f"{_LI['attendu']:.0f} s d'attente sur 429) — la suite à la prochaine collecte")
     elif _LI["stop"]:
         print(f"  ⚠ linkedin : refus HTTP {_LI['stop']}, collecte LinkedIn arrêtée")
     return offers
