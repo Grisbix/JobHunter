@@ -67,6 +67,16 @@ Fini quand : ruff propre, CI verte, banc 0 écart, `installer.bat` testé sur un
 
 Fini quand : toutes les suites converties, `pytest -q` en < 2 min, couverture publiée en CI.
 
+**Fait le 2026-10-18.** Les 27 suites converties cas pour cas : 1 142 tests (dont 1 qui lit
+des données réelles, marqué `donnees_reelles`), un garde-fou contre toute nouvelle suite
+dans `Scripts/`. Couverture 31 % du moteur (fichiers de test exclus), seuil 30 en CI.
+Trouvé en convertissant : des vérifications qui ne vérifiaient rien (idempotence de
+`titre_poste` dans test_titres, un cas `True` en dur dans test_web_nav) et une dizaine de
+suites qui modifiaient des globales du moteur (`time.sleep`, `urlopen`, `httpx.Client`,
+chemins, clés) pour tout le processus sans les remettre en place, et un test « réseau
+mocké » qui interrogeait réellement le web (80 s) et pouvait écrire dans le cache
+`homepages.json`. Durée : ~80 s, ~2 min 30 avec la couverture.
+
 ## Phase 3 — Paquet et découpage (1 à 2 semaines, par PR) → v2.0.0
 
 Structure cible :

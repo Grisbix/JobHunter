@@ -189,6 +189,13 @@ def test_homepage_fallback_atteint_les_offres(page, monkeypatch):
     assert hf.get("ok") is True
 
 
-def test_homepage_fallback_sans_homepage(page):
-    note = w.homepage_fallback(page, "Entreprise Inconnue XYZ 999", "x").get("note")
-    assert note in ("no_homepage", "homepage_goto_fail")
+def test_homepage_fallback_sans_homepage(page, monkeypatch):
+    """Societe introuvable : rien a ouvrir. La resolution est SIMULEE : la vraie
+    interrogeait le web (80 s) et pouvait ecrire dans le cache Scripts/homepages.json
+    — « Entreprise Inconnue XYZ 999 » s'y etait deja retrouvee."""
+    import enrich_homepages
+
+    monkeypatch.setattr(enrich_homepages, "resolve", lambda entreprise: None)
+    assert (
+        w.homepage_fallback(page, "Entreprise Inconnue XYZ 999", "x").get("note") == "no_homepage"
+    )

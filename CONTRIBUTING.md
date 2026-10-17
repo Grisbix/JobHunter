@@ -14,13 +14,19 @@ Python 3.12 ou plus récent. Sans uv : `python -m venv .venv`, puis
 ## Avant chaque commit
 
 ```bash
-uv run pytest -q                                                   # 27 suites, sans réseau
+uv run pytest -q                                                   # 1 142 tests, sans réseau
 uv run python outils/banc.py comparer outils/banc_reference.json   # 0 écart attendu
 ```
 
 pre-commit lance ruff (lint et format), vérifie YAML/TOML, les gros fichiers, les clés
 privées et la cohérence `VERSION` / `pyproject.toml`. La CI GitHub refait tout, sous Windows
 et Linux.
+
+## Écrire un test
+
+Dans `tests/`, en pytest, avec les fixtures de `tests/conftest.py` (faux réseau, horloge,
+file et suivi jetables, navigateur). Jamais d'affectation directe d'une globale du moteur :
+`monkeypatch`. Données fictives et profil d'exemple uniquement.
 
 ## Règles
 

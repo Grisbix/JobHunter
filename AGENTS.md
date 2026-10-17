@@ -69,8 +69,9 @@ python Scripts/apply_runner.py --canal linkedin
 
 ```bash
 uv sync                                  # venv .venv, versions verrouillées (uv.lock)
-uv run pytest -q                         # les 27 suites sans réseau (~80 s)
-uv run pytest -q -k scoring              # une seule
+uv run pytest -q                         # 1 142 tests sans réseau (~2 min)
+uv run pytest -q tests/test_scoring.py   # un fichier ; -k mot pour filtrer les cas
+uv run pytest -q --cov --cov-report=term # avec la couverture (seuil en CI)
 uv run python outils/banc.py comparer outils/banc_reference.json   # non-régression
 uv run ruff check . && uv run ruff format --check .
 ```
@@ -81,11 +82,17 @@ langue, message, et le texte de lettres. Il doit rester à **0 écart** à chaqu
 un changement de comportement est voulu, régénérer la référence (`banc.py enregistrer …`)
 **dans le même commit**, et dire pourquoi dans le message.
 
-**Les suites** sont encore des programmes autonomes (`Scripts/test_*.py`, qui comptent
-leurs cas et sortent en code non nul sur un échec) ; `tests/test_suites_historiques.py` les
-lance sous pytest et échoue si une suite n'y est pas listée. Elles seront converties une à
-une en tests pytest (phase 2 du plan). `test_live_nav.py` et `test_acces_sites.py`
-sortent vraiment sur le web — exclus, ne pas les lancer machinalement.
+**Les tests vivent dans `tests/`**, en pytest (les 27 anciennes suites de `Scripts/` y ont
+été converties le 2026-10-18, cas pour cas). `tests/conftest.py` fixe le profil d'exemple
+AVANT tout import du moteur et fournit les fixtures : `faux_reseau` (doublure de
+`_get_borne`/`_post_borne`), `horloge` (temps et pauses simulés), `file_temporaire` et
+`suivi_temporaire` (file et suivi jetables), `navigateur`/`page` (un Chromium headless par
+session, une page neuve par test). **Jamais d'affectation directe d'une globale du moteur
+dans un test : `monkeypatch`**, sinon l'état fuit d'un test à l'autre. Un test qui lit les
+données réelles d'un utilisateur porte la marque `donnees_reelles` et ne tourne qu'à la
+demande (`pytest -m donnees_reelles`). `tests/test_pas_de_suite_historique.py` refuse tout
+nouveau `Scripts/test_*.py`. `Scripts/test_live_nav.py` et `Scripts/test_acces_sites.py`
+sortent vraiment sur le web — hors pytest, ne pas les lancer machinalement.
 
 `test_scoring` génère un cas « sans backspace » **par motif du module** : ajouter un
 motif à `ats_match` fait monter son compte sans qu'aucun test ait été écrit.
