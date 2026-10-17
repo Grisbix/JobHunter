@@ -1,0 +1,69 @@
+[project]
+name = "jobhunter"
+# Doit rester egal au fichier VERSION (lu par la mise a jour) : la CI le verifie.
+version = "1.3.2"
+description = "Recherche d'emploi locale : collecte, notation, CV et lettre par offre, candidature semi-automatique."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+# Memes bornes que requirements.txt, que gardent installer.bat / installer.sh.
+dependencies = [
+    "customtkinter>=5.2.2,<7",
+    "playwright>=1.60,<2",
+    "python-docx>=1.2,<2",
+    "openpyxl>=3.1.5,<4",
+    "PyMuPDF>=1.27,<2",
+    "httpx>=0.28.1,<0.29",
+    "requests>=2.34,<3",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15,<0.16",
+    "pytest>=9,<10",
+    "pre-commit>=4,<5",
+]
+
+[tool.uv]
+# Pas encore un paquet installable : c'est la phase 3 du plan.
+package = false
+
+# ── ruff ─────────────────────────────────────────────────────────────────────
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-include = ["*.pyw"]
+# Les modules de Scripts/ s'importent entre eux par leur nom : ils sont « first-party ».
+src = ["Scripts", "outils"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "B"]
+# Regles suspendues, A RESORBER (comptes au 2026-10-17). Chacune demande un
+# travail a la main ou depend du decoupage en paquet (phase 3) ; on ne les
+# ajoute pas en vrac a `ignore` sans compte ni raison.
+ignore = [
+    "E402",   # 114 — imports apres sys.path.insert : disparait avec le paquet (phase 3)
+    "E501",   # lignes longues restantes : chaines et commentaires que le formateur ne coupe pas
+    "E741",   # 35 — variables nommees l / O / I
+    "UP031",  # 35 — formatage « % » a convertir en f-strings
+    "B007",   # 12 — variable de boucle inutilisee
+    "B905",   # 4 — zip() sans strict=
+    "B904",   # 3 — raise sans « from » dans un except
+    "B005",   # 2 — strip() avec plusieurs caracteres
+    "B023",   # 2 — fonction qui capture une variable de boucle
+    "E731",   # 4 — lambda affectee a un nom
+    "UP035",  # 1 — import deprecie
+    "F841",   # 11 — variable affectee jamais lue (a relire une par une)
+]
+
+[tool.ruff.lint.isort]
+# _profil_test doit rester le PREMIER import d'un test : il fixe le profil
+# d'exemple avant que le moteur ne lise le profil au chargement.
+section-order = ["future", "profil", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.lint.isort.sections]
+profil = ["_profil_test"]
+
+# ── pytest ───────────────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests"]
