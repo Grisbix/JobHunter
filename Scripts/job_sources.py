@@ -1250,11 +1250,26 @@ def linkedin_guest_search(keyword, pages=2, days=7, lieu="France"):
     import httpx, html as _html
     out = []
     for p in range(pages):
+        if _LI["stop"]:
+            return out
         url = ("https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
                f"?keywords={quote(keyword)}&location={quote(lieu)}"
                f"&f_TPR=r{days*86400}&start={p*25}")
         try:
             r = _get_borne(httpx, url, timeout=15, headers=UA)
+            # Une limite de debit s'ATTEND : meme page, apres la pause.
+            while r.status_code == 429:
+                INCIDENTS["linkedin_http"][429] += 1
+                if not _li_pause_429(r):
+                    _LI["stop"] = "429"
+                    return out
+                r = _get_borne(httpx, url, timeout=15, headers=UA)
+            _LI["suite_429"] = 0
+            if r.status_code in (403, 999):
+                # Un REFUS s'arrete : plus aucune requete LinkedIn de la collecte.
+                INCIDENTS["linkedin_http"][r.status_code] += 1
+                _LI["stop"] = str(r.status_code)
+                return out
             if r.status_code != 200:
                 # UN REFUS N'EST PAS UNE ABSENCE D'OFFRES. `break` muet rendait
                 # une liste vide indistinguable de « rien de neuf cette
@@ -1280,8 +1295,39 @@ def linkedin_guest_search(keyword, pages=2, days=7, lieu="France"):
         except Exception as e:
             INCIDENTS["linkedin_reseau"][type(e).__name__] += 1
             break
-        time.sleep(1.2)   # poli : évite le rate-limit guest
+        _dormir(LI_PAUSE)   # poli : espace les pages
     return out
+
+
+# LIMITE DE DEBIT LINKEDIN. Mesure du 2026-10-17 : a 1,2 s entre pages, l'API
+# invite repond 429 des la premiere poignee de requetes — 13 mots-cles sur 14
+# coupes en 32 s. Le code faisait `break` : page perdue, mot-cle suivant, 429 a
+# nouveau. Du 13 au 16/10, la collecte LinkedIn est tombee de 200-640 offres
+# par jour a 0-28, sans rien de visible hors du compteur d'incidents.
+# Regle du projet : un 429 dit « reviens plus tard » — on espace davantage, on
+# attend (Retry-After, sinon 60 s doublees jusqu'a 240), on reprend la MEME
+# page, dans un budget d'attente par collecte ; budget epuise, LinkedIn s'arrete
+# pour la journee. 403/999 sont des refus : arret immediat, aucune reprise.
+LI_PAUSE = 3.0
+LI_ATTENTES = (60, 120, 240)
+LI_BUDGET = 900
+_LI = {"stop": None, "attendu": 0.0, "suite_429": 0}
+_dormir = time.sleep          # les tests le remplacent
+
+
+def _li_pause_429(r):
+    """Attend avant de redemander apres un 429. False si le budget est epuise."""
+    ra = (getattr(r, "headers", None) or {}).get("Retry-After", "")
+    n = _LI["suite_429"]
+    pause = int(ra) if str(ra).isdigit() else LI_ATTENTES[min(n, len(LI_ATTENTES) - 1)]
+    pause = min(pause, max(LI_ATTENTES))
+    if _LI["attendu"] + pause > LI_BUDGET:
+        return False
+    print(f"  ⏳ linkedin : limite de débit (429), pause {pause} s puis reprise")
+    _dormir(pause)
+    _LI["attendu"] += pause
+    _LI["suite_429"] = n + 1
+    return True
 
 
 # POURQUOI PLUS DE LISTE DE PAYS. Le critere n'est pas le pays, c'est la
@@ -1317,9 +1363,12 @@ def scan_linkedin(pages=2, days=7, lieux=None):
     # Un dict donne la profondeur par lieu, une liste garde celle de l'argument.
     profondeur = dict(lieux) if isinstance(lieux, dict) else {x: pages for x in lieux}
     offers, seen = [], set()
+    _LI.update(stop=None, attendu=0.0, suite_429=0)
     for lieu in profondeur:
         n_lieu = 0
         for kw in KEYWORDS:
+            if _LI["stop"]:
+                break
             got = linkedin_guest_search(kw, pages=profondeur[lieu], days=days, lieu=lieu)
             new = [o for o in got if o["url"] not in seen]
             seen.update(o["url"] for o in new)
@@ -1329,6 +1378,11 @@ def scan_linkedin(pages=2, days=7, lieux=None):
             offers.extend(new)
         if len(profondeur) > 1:
             print(f"  ✓ linkedin {lieu} → {n_lieu} offres")
+    if _LI["stop"] == "429":
+        print(f"  ⚠ linkedin : limite de débit persistante, collecte arrêtée après "
+              f"{_LI['attendu']:.0f} s d'attente — reprise à la prochaine collecte")
+    elif _LI["stop"]:
+        print(f"  ⚠ linkedin : refus HTTP {_LI['stop']}, collecte LinkedIn arrêtée")
     return offers
 
 

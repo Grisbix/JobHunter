@@ -317,5 +317,63 @@ r = lit("gogenerali", "gogenerali.com", "<html>pas du json</html>")
 verifie("reponse illisible : rien, exception comptee", (r, dict(J.INCIDENTS.get("ats:gogenerali", {}))),
         ([], {"JSONDecodeError": 1}))
 
+# ── LinkedIn : un 429 s'attend et reprend la MEME page ; 403/999 arretent tout ──
+CARTE_LI = ('<li><div class="base-card"><a href="https://fr.linkedin.com/jobs/view/42?trk=x">'
+            '<span class="sr-only">Sustainable Finance Analyst</span></a>'
+            '<h4 class="base-search-card__subtitle"><a>Societe</a></h4>'
+            '<span class="job-search-card__location">Paris</span></div></li>')
+
+
+class RepLI(Rep):
+    def __init__(self, corps, statut=200, entetes=None):
+        super().__init__(corps, statut)
+        self.headers = entetes or {}
+
+
+def sequence(*reps):
+    """Doublure qui rend les reponses dans l'ordre, puis la derniere pour toujours."""
+    reste = list(reps)
+
+    def envoi(_httpx, url, **kw):
+        APPELS.append(url)
+        return reste.pop(0) if len(reste) > 1 else reste[0]
+    return envoi
+
+
+PAUSES = []
+J._dormir = PAUSES.append
+J.LI_PAUSE = 0
+
+
+def li(*reps, mots=("esg",), lieux=None):
+    APPELS.clear(); PAUSES.clear(); J.INCIDENTS.clear()
+    J.KEYWORDS = list(mots)
+    J._get_borne = sequence(*reps)
+    return J.scan_linkedin(lieux=lieux or {"France": 1})
+
+
+r = li(RepLI("", 429), RepLI(CARTE_LI))
+verifie("linkedin 429 : la page est redemandee apres la pause", (len(r), len(APPELS)), (1, 2))
+verifie("linkedin 429 : pause de 60 s sans Retry-After", [p for p in PAUSES if p], [60])
+verifie("linkedin 429 : compte en incident", dict(J.INCIDENTS["linkedin_http"]), {429: 1})
+r = li(RepLI("", 429, {"Retry-After": "7"}), RepLI(CARTE_LI))
+verifie("linkedin 429 : Retry-After respecte", [p for p in PAUSES if p], [7])
+r = li(RepLI("", 429, {"Retry-After": "86400"}), RepLI(CARTE_LI))
+verifie("linkedin 429 : Retry-After plafonne", [p for p in PAUSES if p], [240])
+r = li(RepLI("", 429), RepLI("", 429), RepLI(CARTE_LI))
+verifie("linkedin 429 : pauses doublees", [p for p in PAUSES if p], [60, 120])
+r = li(RepLI("", 429), mots=("esg", "csrd", "isr"))
+verifie("linkedin 429 persistant : arret au budget", sum(PAUSES) <= J.LI_BUDGET, True)
+verifie("linkedin 429 persistant : plus aucun mot-cle apres l'arret",
+        all("keywords=esg" in u for u in APPELS), True)
+r = li(RepLI("", 999), mots=("esg", "csrd", "isr"), lieux={"France": 2, "Worldwide": 2})
+verifie("linkedin 999 : une seule requete, aucune pause", (len(APPELS), [p for p in PAUSES if p]), (1, []))
+r = li(RepLI("", 403), mots=("esg", "csrd"))
+verifie("linkedin 403 : arret immediat", len(APPELS), 1)
+r = li(RepLI("", 429), RepLI(CARTE_LI), RepLI("", 429), RepLI(CARTE_LI), mots=("esg", "csrd"))
+verifie("linkedin : le compteur de pauses repart apres une page servie", [p for p in PAUSES if p], [60, 60])
+r = li(RepLI(CARTE_LI), mots=("esg",))
+verifie("linkedin sans incident : aucune pause de limite", [p for p in PAUSES if p], [])
+
 print(f"\n{ok} ✅  {ko} ❌")
 sys.exit(1 if ko else 0)
