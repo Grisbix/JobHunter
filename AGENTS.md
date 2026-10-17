@@ -65,52 +65,30 @@ python Scripts/audit_dispo.py --rapport     # bilan de l'état, sans réseau
 python Scripts/apply_runner.py --canal linkedin
 ```
 
-### Tests
-
-Pas de pytest, pas de configuration. Chaque suite est un programme autonome qui compte
-ses `✅`/`❌` et sort en code non nul si l'un échoue :
+### Tests et contrôles
 
 ```bash
-cd Scripts
-python test_sources.py       # 126 cas — arbitrage des doublons, accord des lexiques
-python test_patterns.py      #  67 cas — formulaires, recherche d'offre, remplissage
-python test_scoring.py       # 128 cas — fit_score, fit_fin, plafond ESG, finance classique, langue, vetos, malus
-python test_titres.py        #  39 cas — nettoyage d'intitulé, élision, idempotence
-python test_appel.py         #  41 cas — formule d'appel, destinataires multiples
-python test_lettre.py        #  57 cas — clôture, paragraphe agricole, corps sur mesure, langue
-python test_contrats.py      #  47 cas — déduction du type de contrat, « étudiant » = stage
-python test_queue_io.py      #  25 cas — exclusion entre processus, atomicité
-python test_liens.py         #  22 cas — classement des URLs
-python test_suivi.py         #  14 cas — une candidature ne disparaît jamais
-python test_zones.py         # 119 cas — zone, pays, région et lieu affiché (IDF = Paris)
-python test_audit_dispo.py   #  30 cas — boucle 429, refus 403, source, rythme, sauvegarde
-python test_cv_auto.py       #  21 cas — faits valides seuls, déclencheurs, modèles FR/EN (synthétiques)
-python test_agregateurs.py   #  21 cas — Adzuna/Jooble : refus, 429, la clé ne fuit jamais
-python test_glassdoor_refus.py # 12 cas — Glassdoor : arrêt au premier 403, 429 attendu
-python test_rejets_tri.py    #  11 cas — une offre retirée par le tri ne revient pas
-python test_tri_file.py      #  52 cas — quant, data, outils de dev, doublons, non-offres, étudiant
-python test_site_final.py    #  30 cas — intitulé strict, identité Workday, resondage, coquilles ATS
-python test_metriques_hebdo.py # 26 cas — bilan hebdo : dates du suivi, relances, journaux
-python test_lecteurs_ats.py  #  79 cas — chaque lecteur d'ATS / page carrière, refus 403/404, 429 LinkedIn attendu
-python test_mise_a_jour.py   #  78 cas — modif. utilisateur gardée, fichier retiré, données, retour arrière
+uv sync                                  # venv .venv, versions verrouillées (uv.lock)
+uv run pytest -q                         # les 27 suites sans réseau (~80 s)
+uv run pytest -q -k scoring              # une seule
+uv run python outils/banc.py comparer outils/banc_reference.json   # non-régression
+uv run ruff check . && uv run ruff format --check .
 ```
 
-Ces vingt et un-là tournent **sans réseau** : 1045 cas en moins d'une minute, tous au vert
-sur le profil d'exemple. Ce sont ceux à passer après une modification.
+**Le banc de non-régression** (`outils/banc.py`) enregistre ce que le moteur décide sur
+384 offres fictives — filtre d'intitulé, fit, fit_fin, domaine, tri, zone, pays, contrat,
+langue, message, et le texte de lettres. Il doit rester à **0 écart** à chaque commit. Si
+un changement de comportement est voulu, régénérer la référence (`banc.py enregistrer …`)
+**dans le même commit**, et dire pourquoi dans le message.
+
+**Les suites** sont encore des programmes autonomes (`Scripts/test_*.py`, qui comptent
+leurs cas et sortent en code non nul sur un échec) ; `tests/test_suites_historiques.py` les
+lance sous pytest et échoue si une suite n'y est pas listée. Elles seront converties une à
+une en tests pytest (phase 2 du plan). `test_live_nav.py` et `test_acces_sites.py`
+sortent vraiment sur le web — exclus, ne pas les lancer machinalement.
 
 `test_scoring` génère un cas « sans backspace » **par motif du module** : ajouter un
 motif à `ats_match` fait monter son compte sans qu'aucun test ait été écrit.
-
-`test_web_nav_mock.py` (20 cas) mocke réseau et Ollama. `test_web_nav.py` (45 cas) est
-synthétique. Tous deux au vert au 2026-09-23.
-`test_live_nav.py` et `test_acces_sites.py` sortent vraiment sur le web — ne pas les
-lancer machinalement.
-
-Il n'y a pas de sélection par nom de cas : la granularité est le fichier.
-
-> Les comptes ci-dessus sont **mesurés**. Ceux du tableau de `Scripts/README.md` ont
-> dérivé (il annonce 24 cas pour `test_sources`, qui en fait 126) et il ne mentionne ni
-> `test_scoring.py` ni `test_liens.py`. Recompter plutôt que recopier.
 
 ## Architecture
 
@@ -235,6 +213,11 @@ est exactement ce qu'il ne faut pas faire face à un quota).
 
 ## Environnement
 
-Python par défaut : `C:\Python314\python.exe`. Dépendances dans `requirements.txt`
-(customtkinter, playwright, python-docx, openpyxl, PyMuPDF, httpx).
-Pas de venv dans ce dépôt : les programmes tournent sur l'interpréteur système.
+Développement : **uv** (`uv sync` crée `.venv` depuis `pyproject.toml` et `uv.lock`),
+**ruff** (lint et format, règles et exceptions dans `pyproject.toml`), **pre-commit**
+(`uv run pre-commit install`, une fois). Détail : `CONTRIBUTING.md`. Feuille de route :
+`docs/plan-professionnalisation.md`.
+
+Utilisateur final : `installer.bat` / `installer.sh` installent `requirements.txt` (mêmes
+bornes que `pyproject.toml`) dans le Python du système. `VERSION` et la version de
+`pyproject.toml` doivent rester égales (`outils/verifie_version.py`, en CI).
