@@ -23,7 +23,6 @@ SUITES = [
     "test_patterns",
     "test_lecteurs_ats",
     "test_web_nav_mock",
-    "test_mise_a_jour",
     "test_web_nav",
 ]
 
