@@ -93,3 +93,27 @@ def test_couches_basses_sans_dependance_au_moteur(module):
     r = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
     charges = set(json.loads(r.stdout))
     assert charges <= {"jobhunter", "jobhunter.stockage", module}
+
+
+@pytest.mark.parametrize(
+    ("script", "donnee", "attendu"),
+    [
+        ("queue_io.py", ("apply_queue.json", '[{"entreprise": "A", "poste": "B"}]'), "1 offres"),
+        ("suivi_io.py", ("suivi.json", '{"A|B": {"s": "postulé"}}'), "1 candidature(s)"),
+    ],
+)
+def test_facade_lancee_directement_affiche_son_bilan(tmp_path, script, donnee, attendu):
+    """`python Scripts/queue_io.py` affichait le nombre d'offres ; la facade ne doit pas
+    le rendre muet."""
+    (tmp_path / "Scripts").mkdir()
+    (tmp_path / "profil").mkdir()
+    (tmp_path / "Scripts" / donnee[0]).write_text(donnee[1], encoding="utf-8")
+    env = {**os.environ, "JOBHUNTER_RACINE": str(tmp_path), "PYTHONIOENCODING": "utf-8"}
+    r = subprocess.run(
+        [sys.executable, str(RACINE / "Scripts" / script)],
+        env=env,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    assert attendu in r.stdout, r.stdout + r.stderr
