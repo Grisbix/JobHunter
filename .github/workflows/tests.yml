@@ -17,11 +17,13 @@ jobs:
         with:
           python-version: "3.12"
       - name: Outils
-        run: python -m pip install "ruff>=0.15,<0.16"
+        run: python -m pip install "ruff>=0.15,<0.16" uv
       - name: Lint
         run: ruff check --output-format github .
       - name: Format
         run: ruff format --check .
+      - name: uv.lock a jour avec pyproject.toml
+        run: uv lock --check
       - name: VERSION = pyproject.toml
         run: python outils/verifie_version.py
 
