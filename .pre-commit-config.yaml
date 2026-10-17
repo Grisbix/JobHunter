@@ -1,0 +1,25 @@
+# Verifications avant chaque commit. Installation, une fois :
+#   uv sync && uv run pre-commit install
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.18
+    hooks:
+      - id: ruff-check
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-toml
+      - id: detect-private-key
+  - repo: local
+    hooks:
+      - id: version-coherente
+        name: VERSION = version de pyproject.toml
+        language: system
+        entry: python outils/verifie_version.py
+        files: ^(VERSION|pyproject\.toml)$
+        pass_filenames: false

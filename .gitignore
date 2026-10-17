@@ -116,3 +116,8 @@ _sauvegarde_maj/
 *.nouveau
 .maj_derniere_verif
 .maj_git_avant
+
+# Developpement (uv, pytest, ruff)
+.venv/
+.pytest_cache/
+.ruff_cache/

@@ -1,13 +1,30 @@
 name: tests
 
-# Les vingt et une suites sans reseau, plus le mock de navigation, a chaque push.
-# Elles tournent sur le profil d'exemple (_profil_test.py) : aucune donnee
-# personnelle n'est necessaire.
+# A chaque push : qualite du code (ruff, version), banc de non-regression, et les
+# 27 suites sans reseau via pytest. Tout tourne sur le profil d'exemple
+# (_profil_test.py, offres fictives du banc) : aucune donnee personnelle n'est necessaire.
 on:
   push:
   pull_request:
 
 jobs:
+  qualite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Outils
+        run: python -m pip install "ruff>=0.15,<0.16"
+      - name: Lint
+        run: ruff check --output-format github .
+      - name: Format
+        run: ruff format --check .
+      - name: VERSION = pyproject.toml
+        run: python outils/verifie_version.py
+
   tests:
     runs-on: windows-latest
     timeout-minutes: 30
@@ -19,32 +36,16 @@ jobs:
           cache: pip
       - name: Dependances
         run: |
-          python -m pip install -r requirements.txt
+          python -m pip install -r requirements.txt "pytest>=9,<10"
           python -m playwright install chromium
       - name: Banc de non-regression
         env:
           PYTHONIOENCODING: utf-8
         run: python outils/banc.py comparer outils/banc_reference.json
-      - name: Suites sans reseau
-        working-directory: Scripts
-        shell: pwsh
+      - name: Suites sans reseau (pytest)
         env:
           PYTHONIOENCODING: utf-8
-        run: |
-          $suites = @(
-            "test_sources", "test_patterns", "test_scoring", "test_titres", "test_appel",
-            "test_lettre", "test_contrats", "test_queue_io", "test_liens", "test_suivi",
-            "test_zones", "test_audit_dispo", "test_cv_auto", "test_agregateurs",
-            "test_glassdoor_refus", "test_rejets_tri", "test_tri_file", "test_site_final",
-            "test_metriques_hebdo", "test_lecteurs_ats", "test_web_nav_mock",
-            "test_mise_a_jour"
-          )
-          $echecs = @()
-          foreach ($s in $suites) {
-            python "$s.py" | Select-Object -Last 1
-            if ($LASTEXITCODE -ne 0) { $echecs += $s }
-          }
-          if ($echecs.Count) { Write-Error "Suites en echec : $($echecs -join ', ')"; exit 1 }
+        run: python -m pytest -q
 
   unix:
     # Les scripts macOS/Linux et la logique pure, hors Windows.
@@ -63,17 +64,13 @@ jobs:
         run: for f in *.sh; do bash -n "$f"; echo "$f ok"; done
       - name: Compilation de tous les programmes
         run: python -m py_compile JobHunter.pyw Scripts/*.py
+      - name: Dependances
+        run: python -m pip install -r requirements.txt "pytest>=9,<10"
       - name: Banc de non-regression (meme reference que sous Windows)
         env:
           PYTHONIOENCODING: utf-8
-        run: |
-          python -m pip install -r requirements.txt
-          python outils/banc.py comparer outils/banc_reference.json
+        run: python outils/banc.py comparer outils/banc_reference.json
       - name: Logique pure (scoring, sources, titres, contrats, mise a jour)
-        working-directory: Scripts
-        shell: bash
         env:
           PYTHONIOENCODING: utf-8
-        run: |
-          python -m pip install -r ../requirements.txt
-          for s in test_scoring test_sources test_titres test_contrats test_mise_a_jour; do python "$s.py" | tail -1; done
+        run: python -m pytest -q -k "scoring or sources or titres or contrats or mise_a_jour"
