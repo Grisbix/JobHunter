@@ -73,7 +73,7 @@ ses `✅`/`❌` et sort en code non nul si l'un échoue :
 ```bash
 cd Scripts
 python test_sources.py       # 126 cas — arbitrage des doublons, accord des lexiques
-python test_patterns.py      #  68 cas — formulaires, recherche d'offre, remplissage
+python test_patterns.py      #  67 cas — formulaires, recherche d'offre, remplissage
 python test_scoring.py       # 128 cas — fit_score, fit_fin, plafond ESG, finance classique, langue, vetos, malus
 python test_titres.py        #  39 cas — nettoyage d'intitulé, élision, idempotence
 python test_appel.py         #  41 cas — formule d'appel, destinataires multiples
@@ -91,11 +91,11 @@ python test_rejets_tri.py    #  11 cas — une offre retirée par le tri ne revi
 python test_tri_file.py      #  52 cas — quant, data, outils de dev, doublons, non-offres, étudiant
 python test_site_final.py    #  30 cas — intitulé strict, identité Workday, resondage, coquilles ATS
 python test_metriques_hebdo.py # 26 cas — bilan hebdo : dates du suivi, relances, journaux
-python test_lecteurs_ats.py  #  77 cas — chaque lecteur d'ATS / page carrière, refus 403/404, 429 LinkedIn attendu
+python test_lecteurs_ats.py  #  79 cas — chaque lecteur d'ATS / page carrière, refus 403/404, 429 LinkedIn attendu
 python test_mise_a_jour.py   #  78 cas — modif. utilisateur gardée, fichier retiré, données, retour arrière
 ```
 
-Ces vingt et un-là tournent **sans réseau** : 1044 cas en moins d'une minute, tous au vert
+Ces vingt et un-là tournent **sans réseau** : 1045 cas en moins d'une minute, tous au vert
 sur le profil d'exemple. Ce sont ceux à passer après une modification.
 
 `test_scoring` génère un cas « sans backspace » **par motif du module** : ajouter un

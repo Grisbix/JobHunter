@@ -4,6 +4,14 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 1.3.2 — 2026-10-17
+
+- **LinkedIn : la collecte ne perd plus les pages limitées.** Depuis le 13/10, LinkedIn
+  répond « trop de requêtes » (429) dès les premières pages ; chaque page refusée était
+  perdue, et la collecte LinkedIn était tombée à quelques offres par jour. Désormais les
+  pages sont espacées, et un 429 fait attendre puis redemander la même page ; la passe
+  LinkedIn s'arrête proprement au bout de 45 min. Un refus (403/999) arrête LinkedIn pour la journée.
+
 ## 1.3.1 — 2026-10-15
 
 - L'installeur note l'empreinte des fichiers installés : une installation faite depuis
