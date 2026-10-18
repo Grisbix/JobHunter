@@ -16,7 +16,7 @@ if __name__ == "__main__":
     # Remplacer sys.modules["__main__"] en cours d'execution ne ferait rien, sans erreur.
     import runpy
 
-    runpy.run_module("jobhunter.profil", run_name="__main__")
+    runpy.run_module("jobhunter.profil", run_name="__main__", alter_sys=True)
 else:
     from jobhunter import profil as _module
 
