@@ -129,6 +129,13 @@ vers les programmes ; les `.bat`/`.sh` y passeront avec l'installation (phase 6)
 Fini quand : `pip install -e .` puis `jobhunter pipeline` fonctionne ; aucun
 `sys.path.insert` ; aucun cycle (vérifié en CI par `import-linter`) ; banc 0 écart à chaque PR.
 
+**Fait (2026-10-18, v1.15.0 puis v2.0.0)** : 3.9 en deux temps. La passerelle 1.15.0
+(ci-dessus) a été publiée et testée seule (mise à jour ZIP 1.14 → 1.15). La 2.0.0 déplace
+les 57 programmes de `Scripts/` dans `jobhunter.programmes` (`git mv`, historique gardé),
+retire les 14 façades ; `Scripts/` ne garde que les données ([ADR 0008](adr/0008-programmes-dans-le-paquet.md)).
+`JobHunter.pyw` est le seul `sys.path.insert` (pour lancer sans installation). Fusionnée
+après un cycle complet du pipeline réel sur le code précédent.
+
 ## Phase 4 — Effets de bord, configuration, journaux (2 à 3 jours, avec la phase 3)
 
 - **Aucune lecture de fichier ni de réseau à l'import** (91 appels aujourd'hui). Les motifs
@@ -186,6 +193,13 @@ dans `Scripts/` via `JOBHUNTER_RACINE`. Restent, et ils dépendent du retrait de
 (3.9) : Recherche_emploi dépendant d'une version étiquetée au lieu de `synchro_moteur`, et
 le test 1.x → 2.0. `VERSION` reste lu par la mise à jour tant que des installations 1.x
 existent (la CI vérifie qu'il égale `pyproject.toml`).
+
+**Fait (2026-10-19, v2.0.0 et v2.1.0)** : passage réel 1.15 → 2.0 vérifié sur une
+installation ZIP et sur un clone git (`Scripts/` vidé de ses `.py`, VERSION 2.0.0, commandes
+et contrôle OK). Recherche_emploi dépend du paquet installé à une version étiquetée
+(`pip install "jobhunter @ git+…@v2.1.0"`) ; `synchro_moteur` et les copies du moteur y sont
+retirés. Banc sur ses données : 0 écart sur 12 137 offres et 99 lettres/CV (1.14 contre
+2.1, même file). Restent, reportés : le test sur un Windows neuf et sur un Mac.
 
 ## Phase 7 — Données (optionnel, plus tard)
 
