@@ -101,23 +101,22 @@ motif à `ats_match` fait monter son compte sans qu'aucun test ait été écrit.
 
 ### Le paquet `src/jobhunter` (phase 3 du plan, en cours)
 
-Le moteur migre de `Scripts/` vers le paquet `src/jobhunter`, une couche à la fois
-(`docs/plan-professionnalisation.md`). Fait : **`jobhunter.stockage`** — `atomique`
-(écriture tmp + `os.replace`), `verrou` (exclusion entre processus), `file` (ex-`queue_io`),
-`suivi` (ex-`suivi_io`), et `jobhunter.racine` (racine trouvée par marqueur ou
-`JOBHUNTER_RACINE` ; les données restent dans `Scripts/`). Dépendances à sens unique :
-`file`/`suivi` → `atomique`/`verrou`, jamais l'inverse ; le stockage se charge sans
-`Scripts/` (vérifié en test). Aussi : **`jobhunter.profil`** (ex-`profil.py`, façade-alias)
-et **`jobhunter.reseau`** (requêtes bornées en durée totale et en taille, client httpx
-partagé ; `job_sources` garde les anciens noms `_get_borne`… que les doublures remplacent).
-`tests/test_coherence_imports.py` : chaque `module.nom` utilisé entre modules existe.
+Le moteur migre de `Scripts/` vers `src/jobhunter`, une couche à la fois
+(`docs/plan-professionnalisation.md`). Fait :
 
-**Façades.** `Scripts/queue_io.py` et `Scripts/suivi_io.py` restent, mais sont des ALIAS :
-`import queue_io` rend le module `jobhunter.stockage.file` lui-même (`sys.modules`), donc
-un `monkeypatch.setattr(queue_io, "CHEMIN", …)` agit sur le code réel. `jutil` garde ses
-utilitaires texte et chemins et réexporte le verrou. Le code nouveau importe
-`jobhunter.stockage` ; les façades partiront à la fin de la phase 3.
+| Paquet | Contenu (ancien nom) |
+|---|---|
+| `jobhunter.stockage` | `atomique`, `verrou`, `file` (`queue_io`), `suivi` (`suivi_io`) |
+| `jobhunter.scoring` | `fit` (`ats_match`), `langue`, `zones`, `tri` (`tri_file`), `lexique` |
+| `jobhunter` | `racine`, `profil`, `reseau` (requêtes bornées), `chemins`, `texte` |
 
+Dépendances à sens unique, vérifiées en test : le stockage et le scoring se chargent sans
+`Scripts/` ni `tailor_application` (les cycles `jutil`↔`queue_io` et `ats_match`↔`tailor`
+ont disparu). Imports différés restants, assumés, vers `job_sources`/`doublons`/`rejets_tri`.
+**Façades** : chaque ancien `Scripts/x.py` déplacé est un ALIAS (`sys.modules`) du module
+du paquet — `import ats_match` *est* `jobhunter.scoring.fit`, un `monkeypatch` touche le
+vrai code ; lancé directement, il exécute le module (`runpy`). `test_coherence_imports.py`
+vérifie que chaque `module.nom` utilisé entre modules existe.
 
 ### Trois fichiers de données, trois contrats d'accès
 

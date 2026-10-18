@@ -5,6 +5,8 @@ paths:
   - Scripts/regenere_docs.py
   - Scripts/sync_docs.py
   - Scripts/chemins.py
+  - src/jobhunter/chemins.py
+  - src/jobhunter/scoring/lexique.py
 ---
 # Documents générés
 

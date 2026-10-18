@@ -3,6 +3,8 @@ paths:
   - Scripts/ats_match.py
   - Scripts/job_sources.py
   - Scripts/tri_file.py
+  - src/jobhunter/scoring/*.py
+  - src/jobhunter/texte.py
 ---
 # Motifs regex — pièges mesurés
 

@@ -4,6 +4,13 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 1.7.0 — 2026-10-18
+
+Rien ne change dans ce que fait JobHunter. Le calcul des notes, de la langue, des zones et
+le tri des offres rejoignent le paquet `src/jobhunter/scoring` ; les anciens noms de
+programme (`tri_file.py`, `zones.py`…) restent valables, en ligne de commande comme dans
+le code.
+
 ## 1.6.0 — 2026-10-18
 
 Rien ne change dans ce que fait JobHunter. Le profil et les requêtes réseau (limitées en

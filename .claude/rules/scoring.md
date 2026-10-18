@@ -2,6 +2,7 @@
 paths:
   - Scripts/ats_match.py
   - Scripts/tri_file.py
+  - src/jobhunter/scoring/*.py
 ---
 # Scoring — `ats_match.fit_score`
 
