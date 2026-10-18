@@ -1,14 +1,21 @@
 ---
 paths:
   - JobHunter.pyw
+  - src/jobhunter/app/*.py
+  - src/jobhunter/accueil.py
 ---
 # Application bureau
+
+Depuis la phase 3.7, `JobHunter.pyw` n'est que le lanceur : l'app vit dans
+`src/jobhunter/app` — `fenetre.App` assemble un mixin par domaine (`tableau`, `donnees`,
+`fiche`, `actions`, `panneaux`, `detail`, `execution`). Un réglage rebindu par `global`
+(polices, espacements du `theme`) se lit `_theme.NOM`, jamais importé par copie.
 
 **Le tableau est indexé par position.** Retirer une colonne oblige à retirer *aussi*
 la valeur correspondante dans `_row_vals`, sinon tout se décale d'un cran.
 
-`_racine()` cherche `Scripts/apply_queue.json` en remontant : l'app fonctionne où
-qu'on la place. Ne jamais y coder une racine en dur — les chemins du projet ont bougé
+La racine vient de `jobhunter.racine` (marqueur `Scripts/` + `profil/`, ou
+`JOBHUNTER_RACINE`) : l'app fonctionne où qu'on la place. Ne jamais y coder une racine en dur — les chemins du projet ont bougé
 quatre fois en deux jours.
 
 `_auto_scrape()` (2026-09-21) lance `scrape_jobs.py --headless` au démarrage

@@ -1,8 +1,6 @@
 """Contrôles isolés de l'interface : aucun réseau ni écriture métier."""
 
 import datetime
-import importlib.machinery
-import importlib.util
 import os
 import tempfile
 import unittest
@@ -11,11 +9,8 @@ from unittest.mock import patch
 
 os.environ["JOBHUNTER_SANS_FOND"] = "1"
 os.environ.pop("JOBHUNTER_ACTION", None)
-path = Path(__file__).resolve().parents[1] / "JobHunter.pyw"
-loader = importlib.machinery.SourceFileLoader("jobhunter_design_test", str(path))
-spec = importlib.util.spec_from_loader(loader.name, loader)
-ui = importlib.util.module_from_spec(spec)
-loader.exec_module(ui)
+# L'app vit dans jobhunter.app depuis la phase 3.7 ; JobHunter.pyw n'est que le lanceur.
+import jobhunter.app as ui  # noqa: E402  (apres les variables d'environnement)
 
 
 class DesignTests(unittest.TestCase):
