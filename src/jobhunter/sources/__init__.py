@@ -13,7 +13,7 @@ vie, fir, talent, francetravail, agregateurs   V.I.E, FIR, Talent.com, France Tr
 fusion         fusion dans la file : dedoublonnage, promotion d'URL, scoring
 cli            la ligne de commande (`python -m jobhunter.sources` ou Scripts/job_sources.py)
 
-FACADE. `import jobhunter.sources` (et donc `import job_sources`) donne un module qui
+FACADE (jobhunter._facade). `import jobhunter.sources` (et donc `import job_sources`) donne un module qui
 voit TOUS les noms des sous-modules, comme l'ancien fichier unique : `js.title_ok`,
 `js.scan_linkedin`, `js.MONDE`. Une affectation (`js.KEYWORDS = [...]`, un monkeypatch)
 part dans le sous-module qui POSSEDE le nom ; les autres le lisent par `_commun.KEYWORDS`,
@@ -21,10 +21,9 @@ jamais par copie. Sans ce routage, un test qui remplace `_get_borne` laisserait 
 collecte sortir sur le vrai reseau.
 """
 
-import importlib
 import re
-import sys
-import types
+
+from jobhunter import _facade
 
 _SOUS_MODULES = (
     "commun",
@@ -45,7 +44,7 @@ _SOUS_MODULES = (
     "agregateurs",
     "cli",
 )
-_MODULES = [importlib.import_module(f"{__name__}.{m}") for m in _SOUS_MODULES]
+_MODULES = _facade.installer(__name__, _SOUS_MODULES)
 
 
 def _motifs():
@@ -75,54 +74,3 @@ def _verifier_motifs():
 
 
 _verifier_motifs()
-
-
-# Les liaisons d'origine de chaque sous-module : `unittest.mock.patch` sort par un
-# `delattr` sur la facade (le nom n'est pas dans SON dict) ; on remet alors la valeur
-# d'origine au lieu d'effacer la fonction du sous-module.
-_ORIGINE = {m: dict(vars(m)) for m in _MODULES}
-
-
-def _proprietaires(nom):
-    """Sous-modules ou `nom` est lie. Le proprietaire (celui qui le DEFINIT) en tete."""
-    tenants = [m for m in _MODULES if nom in vars(m) or nom in _ORIGINE[m]]
-    tenants.sort(key=lambda m: getattr(_ORIGINE[m].get(nom), "__module__", None) != m.__name__)
-    return tenants
-
-
-class _Facade(types.ModuleType):
-    def __getattr__(self, nom):
-        for m in _MODULES:
-            if nom in vars(m):
-                return vars(m)[nom]
-        raise AttributeError(f"module {self.__name__!r} has no attribute {nom!r}")
-
-    def __setattr__(self, nom, valeur):
-        tenants = [] if nom.startswith("__") or nom in _SOUS_MODULES else _proprietaires(nom)
-        if not tenants:
-            super().__setattr__(nom, valeur)
-            return
-        # Tous les sous-modules qui lient le nom : le proprietaire, et ceux qui l'ont
-        # importe tel quel (une fonction utilitaire, un compteur) — un remplacement doit
-        # valoir partout ou la collecte le lit.
-        for m in tenants:
-            setattr(m, nom, valeur)
-
-    def __delattr__(self, nom):
-        if nom in vars(self):
-            super().__delattr__(nom)
-            return
-        tenants = _proprietaires(nom)
-        if not tenants:
-            raise AttributeError(nom)
-        for m in tenants:
-            if nom in _ORIGINE[m]:
-                setattr(m, nom, _ORIGINE[m][nom])
-            else:
-                delattr(m, nom)
-
-    def __dir__(self):
-        return sorted(set(super().__dir__()).union(*(vars(m) for m in _MODULES)))
-
-
-sys.modules[__name__].__class__ = _Facade
