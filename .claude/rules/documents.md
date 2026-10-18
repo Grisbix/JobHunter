@@ -7,6 +7,7 @@ paths:
   - Scripts/chemins.py
   - src/jobhunter/chemins.py
   - src/jobhunter/scoring/lexique.py
+  - src/jobhunter/documents/*.py
 ---
 # Documents générés
 
