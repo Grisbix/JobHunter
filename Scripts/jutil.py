@@ -12,7 +12,6 @@ absente là, deux décodages `file:///` dont l'un oubliait la forme `file://`.
 
 import sys
 from pathlib import Path
-from urllib.parse import quote, unquote
 
 # Le moteur migre vers src/jobhunter (phase 3) ; tant que les programmes sont lances
 # depuis Scripts/, ce dossier doit etre importable.
@@ -21,6 +20,8 @@ if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
 # Le verrou vit dans jobhunter.stockage.verrou ; ces noms restent ceux de toujours.
+# Chemins <-> URL file:/// : jobhunter.liens (phase 3.7), noms inchanges.
+from jobhunter.liens import chemin_de, existe, url_de  # noqa: E402, F401
 from jobhunter.stockage import atomique as _atomique  # noqa: E402
 from jobhunter.stockage.verrou import (  # noqa: E402, F401
     _TENUS,
@@ -32,38 +33,6 @@ from jobhunter.stockage.verrou import (  # noqa: E402, F401
     tenu,
 )
 from jobhunter.texte import cle, sans_accent, verifier_motifs  # noqa: E402, F401
-
-
-# ── Chemins ↔ URL file:/// ───────────────────────────────────────────────────
-def chemin_de(u):
-    """URL `file:///…` (ou chemin nu) → Path. None si vide.
-
-    Gere `file:///` ET `file://` : trois des six copies precedentes ne
-    traitaient que la premiere forme et rendaient un chemin commencant par
-    « / », donc introuvable.
-    """
-    if not u:
-        return None
-    s = str(u)
-    for prefixe in ("file:///", "file://"):
-        if s.startswith(prefixe):
-            s = s[len(prefixe) :]
-            break
-    return Path(unquote(s))
-
-
-def url_de(p):
-    """Path → URL `file:///…`, séparateurs Windows convertis."""
-    return "file:///" + quote(str(p).replace("\\", "/"), safe="/:")
-
-
-def existe(u):
-    """Le document désigné par cette URL/ce chemin est-il sur le disque ?"""
-    p = chemin_de(u)
-    try:
-        return bool(p and p.exists())
-    except OSError:  # chemin invalide pour l'OS (trop long, caracteres interdits)
-        return False
 
 
 def jwrite(path, obj, _brut=False):
