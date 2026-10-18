@@ -167,6 +167,13 @@ Fini quand : mypy strict sur le cœur, aucun `# type: ignore` sans commentaire.
   restructuration déplace des dizaines de fichiers (la mise à jour retire les anciens
   intacts, garde les modifiés — à vérifier en réel, comme pour la 1.3.0).
 
+**Avancement (2026-10-18, v1.13.0)** : `src/jobhunter` se construit en wheel (vérifié en CI)
+et s'installe ; la commande `jobhunter` marche depuis un venv neuf, les programmes encore
+dans `Scripts/` via `JOBHUNTER_RACINE`. Restent, et ils dépendent du retrait des façades
+(3.9) : Recherche_emploi dépendant d'une version étiquetée au lieu de `synchro_moteur`, et
+le test 1.x → 2.0. `VERSION` reste lu par la mise à jour tant que des installations 1.x
+existent (la CI vérifie qu'il égale `pyproject.toml`).
+
 ## Phase 7 — Données (optionnel, plus tard)
 
 - SQLite derrière l'interface de `stockage/` (inchangée) : transactions, index, plus de

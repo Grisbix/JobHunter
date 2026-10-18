@@ -12,6 +12,8 @@ Rien ne change dans ce que fait JobHunter.
   lettre ou un message.
 - Le socle (stockage, profil, réseau) est entièrement typé, vérifié par mypy en CI.
 - Documentation : `docs/architecture.md` et les décisions d'architecture (`docs/adr/`).
+- Le moteur s'installe comme un paquet (`pip install -e .`) : la commande `jobhunter` existe
+  alors directement.
 
 ## 1.12.0 — 2026-10-18
 
