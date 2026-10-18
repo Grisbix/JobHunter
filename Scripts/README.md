@@ -181,3 +181,9 @@ maintenant dans `_logs/app_erreurs.log`.
 disait « récupérable via git » ; le jour de la vérification, 424 offres du disque
 n'étaient dans aucun commit. La suppression écrit maintenant une copie horodatée dans
 `_corbeille/` avant de retirer quoi que ce soit.
+
+**Deux chemins vers le même fichier ne sont pas égaux.** `queue_io` ne réinjectait les
+descriptions que si le chemin reçu valait `CHEMIN` *tel quel* : `Path("apply_queue.json")`,
+lancé depuis `Scripts/`, rendait les 11 710 offres sans description (le banc réel a vu
+25 461 écarts, tous faux), et `sauver` les aurait réécrites dans la file. Les chemins se
+comparent maintenant résolus (`_est_la_file`).

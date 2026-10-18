@@ -156,6 +156,20 @@ def test_charger_reinjecte(deux_offres):
     assert len(queue_io.charger()[0]["description"]) == 4000
 
 
+def test_chemin_relatif_vers_la_file_reinjecte(deux_offres, monkeypatch):
+    # Path("apply_queue.json") lance depuis le dossier de la file : meme fichier que
+    # CHEMIN, ecrit autrement. Compare tel quel, les descriptions disparaissaient.
+    monkeypatch.chdir(deux_offres.parent)
+    assert len(queue_io.charger(queue_io.Path("apply_queue.json"))[0]["description"]) == 4000
+
+
+def test_chemin_relatif_garde_la_file_sans_descriptions(deux_offres, monkeypatch):
+    monkeypatch.chdir(deux_offres.parent)
+    queue_io.sauver(queue_io.charger(), queue_io.Path("apply_queue.json"))
+    brut = json.loads(queue_io.CHEMIN.read_text(encoding="utf-8"))
+    assert not any("description" in o for o in brut)
+
+
 def test_description_vide_non_stockee(deux_offres):
     assert queue_io.charger()[1].get("description", "") == ""
 

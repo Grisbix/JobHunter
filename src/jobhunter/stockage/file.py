@@ -58,6 +58,19 @@ def _lire_descriptions():
         return {}
 
 
+def _est_la_file(p):
+    """`p` designe-t-il LA file (celle dont les descriptions vivent a part) ?
+
+    Compare les chemins RESOLUS : `Path("apply_queue.json")` lance depuis Scripts/
+    n'est pas egal a CHEMIN (absolu). Compare tel quel, il perdait les 11 710
+    descriptions a la lecture, et `sauver` les aurait reecrites dans la file.
+    """
+    try:
+        return Path(p).resolve() == Path(CHEMIN).resolve()
+    except OSError:
+        return False
+
+
 def charger(chemin=None, descriptions=True):
     """Les offres, en LECTURE SEULE, descriptions réinjectées.
 
@@ -73,7 +86,7 @@ def charger(chemin=None, descriptions=True):
         offres = json.loads(p.read_text(encoding="utf-8"))
     except FileNotFoundError:
         return []
-    if descriptions and p == CHEMIN:
+    if descriptions and _est_la_file(p):
         textes = _lire_descriptions()
         if textes:
             for o in offres:
@@ -93,7 +106,7 @@ def sauver(offres, chemin=None, _avant=None):
     lire, 63 ms jetés à chaque écriture.
     """
     p = Path(chemin or CHEMIN)
-    if p != CHEMIN:  # fichier de test : pas de separation
+    if not _est_la_file(p):  # fichier de test : pas de separation
         atomique.ecrire_json(p, offres)
         return
 
@@ -159,7 +172,7 @@ def transaction(chemin=None, attente=180, relire=True, descriptions=True):
         # Une seule lecture des descriptions pour toute la transaction : elle
         # sert a les reinjecter en entree, PUIS a savoir en sortie si elles ont
         # change. Les relire dans sauver coutait 63 ms pour rien.
-        textes = _lire_descriptions() if (relire and descriptions and p == CHEMIN) else {}
+        textes = _lire_descriptions() if (relire and descriptions and _est_la_file(p)) else {}
         offres = charger(p, descriptions=False) if relire else []
         if textes:
             for o in offres:
