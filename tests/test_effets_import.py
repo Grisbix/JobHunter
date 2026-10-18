@@ -21,7 +21,7 @@ SONDE = textwrap.dedent(
     ev = {"ecritures": [], "reseau": [], "lectures": set()}
     def crochet(nom, args):
         if nom in ("os.mkdir", "os.rename", "os.replace", "os.remove", "shutil.rmtree"):
-            if ".coverage" not in os.fsdecode(args[0]):
+            if ".coverage" not in os.fsdecode(args[0]) and "__pycache__" not in os.fsdecode(args[0]):
                 ev["ecritures"].append(f"{nom} {args[0]}")
         elif nom in ("socket.connect", "socket.getaddrinfo", "socket.sendto", "urllib.Request"):
             ev["reseau"].append(nom)
@@ -48,7 +48,8 @@ SONDE = textwrap.dedent(
 def _mesure():
     # Sans la couverture de pytest-cov : elle ecrirait ses .coverage.* dans ce processus.
     env = {k: v for k, v in os.environ.items() if not k.startswith(("COV_", "COVERAGE"))}
-    env.update(PYTHONPATH=str(SRC), PROFIL_JOBHUNTER=str(EXEMPLE))
+    # Le bytecode (__pycache__) est l'affaire de Python, pas du moteur.
+    env.update(PYTHONPATH=str(SRC), PROFIL_JOBHUNTER=str(EXEMPLE), PYTHONDONTWRITEBYTECODE="1")
     env.pop("JOBHUNTER_RACINE", None)
     r = subprocess.run(
         [sys.executable, "-c", SONDE, str(SRC.parent)], env=env, capture_output=True, text=True
