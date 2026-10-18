@@ -111,8 +111,12 @@ Ordre (des feuilles vers les dépendants, une PR chacun) :
 7. `app/` — la classe `App` (191 méthodes) devient un assemblage de vues.
 8. `cli.py` ; les `.bat`/`.sh` appellent `jobhunter …`.
 9. Retrait des façades `Scripts/*.py` (dernière PR, après un cycle complet de pipeline réel).
-   **En attente** : la routine du matin doit d'abord tourner sur le nouveau code ; le
-   retrait va de pair avec l'installation par `pip` (phase 6).
+   **Passerelle 1.15.0** : le moteur, les tests et l'application n'importent plus les
+   façades ; surtout, `mise_a_jour` contrôle la version installée avec SON propre code
+   (`python -m jobhunter maj --controler`). Sans elle, toute installation 1.x refuserait
+   la 2.0 : son contrôle importait `queue_io`, `job_sources`… par leur ancien nom. La 1.15
+   doit donc précéder la 2.0 ; une installation antérieure qui sauterait directement en
+   2.0 serait ramenée à sa version (rien n'est perdu) — passer par la 1.15.
 
 **Avancement** : 1 à 8 faits le 2026-10-18 (v1.5.0 à v1.12.0), banc 0 écart à chaque étape.
 `sources/` a gardé les sources en modules plats (`ats.py` réunit les lecteurs d'ATS et les

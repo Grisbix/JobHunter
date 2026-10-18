@@ -4,6 +4,16 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 1.15.0 — 2026-10-18
+
+Version de passage vers la 2.0 : installe-la avant la 2.0. Rien ne change dans ce que
+fait JobHunter.
+
+- La mise à jour vérifie la nouvelle version avec le code de cette nouvelle version.
+  Sans cela, la 2.0, qui range autrement les programmes, serait refusée à tort.
+- Le moteur, les tests et l'application n'utilisent plus les anciens fichiers de
+  `Scripts/` (`job_sources.py`, `queue_io.py`…), qui disparaîtront en 2.0.
+
 ## 1.14.0 — 2026-10-18
 
 Rien ne change dans ce que fait JobHunter.
