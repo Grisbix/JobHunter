@@ -92,7 +92,11 @@ MODULES_CENTRAUX = (
     "tri_file",
     "tailor_application",
     "job_sources",
+    "web_nav",
     "mise_a_jour",
+    # l'application elle-meme (sans ouvrir de fenetre) : une mise a jour qui la casse
+    # serait annulee au lieu de laisser un double-clic sans effet.
+    "jobhunter.app",
 )
 
 
