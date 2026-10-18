@@ -46,32 +46,18 @@ import profil as _P
 _ID = _P.identite()
 PROFILE = dict(nom=_ID["nom"], ville=_ID["ville"], email=_ID["email"], tel=_ID["tel"])
 
-# Un domaine du profil = une variante de CV + un paragraphe de parcours.
-# Le DERNIER domaine est le repli.
-_DOMAINES = _P.domaines()
-CV_VARIANT = {d["cle"]: d.get("cv") or "" for d in _DOMAINES}
-CV_VARIANT_EN = {d["cle"]: d.get("cv_en") or "" for d in _DOMAINES}
+# Domaines, variantes de CV et lexique des competences : jobhunter.scoring.lexique
+# (partages avec le scoring ; les noms restent importables d'ici).
+from jobhunter.scoring.lexique import (  # noqa: E402, F401
+    _COMP,
+    _DOMAINES,
+    CV_VARIANT,
+    CV_VARIANT_EN,
+    SKILL_LEX,
+    cv_variant_key,
+    has_skill,
+)
 
-
-def cv_variant_key(domaine):
-    """Cle de domaine du profil pour un champ `domaine` d'offre.
-
-    Accepte la cle elle-meme, son libelle (« Finance »), ou un texte libre lu
-    avec les mots d'intitule des domaines ; sinon le domaine de repli."""
-    d = (domaine or "").strip()
-    bas = d.lower()
-    for x in _DOMAINES:
-        if bas in (x["cle"].lower(), str(x.get("libelle", "")).lower()):
-            return x["cle"]
-    for x in _DOMAINES[:-1]:
-        if _P.cherche(_P.motif(x.get("mots_titre")), d):
-            return x["cle"]
-    return _DOMAINES[-1]["cle"]
-
-
-# ---- Lexique de competences (libelle -> synonymes a chercher dans l'offre) ----
-_COMP = _P.get("competences", {}) or {}
-SKILL_LEX = {lab: list(v.get("synonymes") or []) for lab, v in _COMP.items()}
 # accroche valeur par entreprise : profil, lettre.valeurs_entreprises_fr/en
 COMPANY_VALUE = dict(_P.get("lettre.valeurs_entreprises_fr", {}) or {})
 
@@ -401,7 +387,7 @@ def _contexte_applicable(ctx, offer):
         return False
     if ctx.get("densite_coeur"):
         # Import differe : ats_match importe ce module.
-        from ats_match import _ESG_DENSITE_LONG, _ESG_DENSITE_MIN, densite_esg
+        from jobhunter.scoring.fit import _ESG_DENSITE_LONG, _ESG_DENSITE_MIN, densite_esg
 
         if len(texte) >= _ESG_DENSITE_LONG and densite_esg(texte) < _ESG_DENSITE_MIN:
             return False
@@ -691,24 +677,6 @@ def company_value_en(company):
 
 
 COMPANY_VALUE_EN = dict(_P.get("lettre.valeurs_entreprises_en", {}) or {})
-
-
-# ---- moteur match keyword ----
-# Les sigles COURTS doivent matcher le mot ENTIER. En sous-chaîne ils partaient en
-# vrille : 'ges' (gaz à effet de serre) matchait « GEStion », 'gri' « aGRIcole »,
-# 'pai' « PAIement », 'var' « VARiable ». Ici l'enjeu dépasse le scoring : ces
-# libellés sont IMPRIMÉS sur le CV envoyé au recruteur.
-_SHORT = 4
-_RX_SKILL = {
-    lab: [re.compile(r"\b" + re.escape(n.strip()) + r"\b") for n in ns if len(n.strip()) <= _SHORT]
-    for lab, ns in SKILL_LEX.items()
-}
-_SUB_SKILL = {lab: [n for n in ns if len(n.strip()) > _SHORT] for lab, ns in SKILL_LEX.items()}
-
-
-def has_skill(label, t):
-    """Le libellé est-il présent dans le texte (déjà en minuscules) ?"""
-    return any(n in t for n in _SUB_SKILL[label]) or any(r.search(t) for r in _RX_SKILL[label])
 
 
 # Libelles qui servent au SCORING mais ne s'ecrivent pas dans une lettre : ce
