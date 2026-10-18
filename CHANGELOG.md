@@ -4,6 +4,18 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.1.0 — 2026-10-18
+
+- **Les offres fermées sont enfin retirées.** Le contrôle de disponibilité était coupé
+  chaque matin au bout de 45 min, avant d'arriver à la suppression : il trouvait 30 à 60
+  offres fermées par jour et n'en retirait aucune. Il s'arrête maintenant de lui-même à
+  temps, puis retire ce qu'il a trouvé.
+- **Une fois par semaine, le dimanche**, au lieu de chaque jour : la collecte des autres
+  jours dure ~45 min de moins. `python JobHunter.pyw pipeline --dispo-jour 2` le déplace
+  au mercredi ; `--dispo` le lance aujourd'hui.
+- Les tests n'écrivent plus dans le fichier d'état du contrôle de disponibilité de ton
+  dossier quand on les lance chez toi.
+
 ## 2.0.0 — 2026-10-18
 
 Rien ne change dans ce que fait JobHunter ; ce qui change, c'est la façon de lancer les
