@@ -4,6 +4,13 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 1.9.0 — 2026-10-18
+
+- CV, lettre et message court rejoignent le paquet `src/jobhunter/documents` ;
+  `tailor_application.py`, `message_offre.py` et `cv_auto.py` restent valables.
+- Correctif : lire la file par un chemin relatif (`apply_queue.json` depuis `Scripts/`)
+  rendait les offres sans leur description.
+
 ## 1.8.0 — 2026-10-18
 
 Rien ne change dans ce que fait JobHunter. La collecte (`job_sources.py`, près de
