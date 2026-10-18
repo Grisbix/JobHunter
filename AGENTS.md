@@ -107,7 +107,10 @@ Le moteur migre de `Scripts/` vers le paquet `src/jobhunter`, une couche à la f
 `suivi` (ex-`suivi_io`), et `jobhunter.racine` (racine trouvée par marqueur ou
 `JOBHUNTER_RACINE` ; les données restent dans `Scripts/`). Dépendances à sens unique :
 `file`/`suivi` → `atomique`/`verrou`, jamais l'inverse ; le stockage se charge sans
-`Scripts/` (vérifié en test).
+`Scripts/` (vérifié en test). Aussi : **`jobhunter.profil`** (ex-`profil.py`, façade-alias)
+et **`jobhunter.reseau`** (requêtes bornées en durée totale et en taille, client httpx
+partagé ; `job_sources` garde les anciens noms `_get_borne`… que les doublures remplacent).
+`tests/test_coherence_imports.py` : chaque `module.nom` utilisé entre modules existe.
 
 **Façades.** `Scripts/queue_io.py` et `Scripts/suivi_io.py` restent, mais sont des ALIAS :
 `import queue_io` rend le module `jobhunter.stockage.file` lui-même (`sys.modules`), donc

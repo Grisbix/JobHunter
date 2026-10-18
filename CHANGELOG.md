@@ -4,6 +4,13 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 1.6.0 — 2026-10-18
+
+Rien ne change dans ce que fait JobHunter. Le profil et les requêtes réseau (limitées en
+durée totale, pour qu'un site lent ne bloque jamais la collecte) rejoignent le paquet
+`src/jobhunter/`. Ces requêtes ont maintenant leurs propres tests, et un nouveau contrôle
+vérifie que chaque fonction qu'un programme appelle sur un autre existe bien.
+
 ## 1.5.0 — 2026-10-18
 
 Rien ne change dans ce que fait JobHunter. Le code de stockage (la file d'offres, le suivi
