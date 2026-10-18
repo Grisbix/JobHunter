@@ -20,7 +20,7 @@ import sys
 from docx import Document
 
 try:
-    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console : TextIOWrapper
 except Exception:
     pass
 
@@ -45,7 +45,7 @@ def cv_text(variant_key):
         return ""
 
 
-_cv_cache = {}
+_cv_cache: dict[str, str] = {}
 
 
 def cv_text_cached(k):

@@ -14,13 +14,18 @@ Python 3.12 ou plus récent. Sans uv : `python -m venv .venv`, puis
 ## Avant chaque commit
 
 ```bash
-uv run pytest -q                                                   # 1 142 tests, sans réseau
+uv run pytest -q                                                   # ~1 450 tests, sans réseau
 uv run python outils/banc.py comparer outils/banc_reference.json   # 0 écart attendu
+uv run mypy                                                        # types ; strict sur le socle
 ```
 
 pre-commit lance ruff (lint et format), vérifie YAML/TOML, les gros fichiers, les clés
 privées et la cohérence `VERSION` / `pyproject.toml`. La CI GitHub refait tout, sous Windows
 et Linux.
+
+**Types.** Toute fonction nouvelle ou modifiée du socle (`stockage`, `profil`, `reseau`,
+`racine`, `texte`, `liens`) est annotée — mypy y est strict. Ailleurs, annoter en passant ;
+un module entièrement annoté rejoint la liste stricte de `pyproject.toml`.
 
 ## Écrire un test
 

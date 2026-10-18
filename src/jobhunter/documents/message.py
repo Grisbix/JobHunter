@@ -32,7 +32,7 @@ from jobhunter import racine as _racine
 _SCRIPTS = _racine.scripts()
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
 MSG_OUT = _racine.racine() / "Lettres" / "Messages"
 

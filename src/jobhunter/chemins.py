@@ -99,7 +99,7 @@ def deplace():  # pragma: no cover - outil d'administration, voir deplace_docs.p
 if __name__ == "__main__":
     import sys
 
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
     etat = f"chemins.json → {BASE}" if CONFIG.exists() else "defaut : la racine du projet"
     print(f"source du reglage : {etat}")
     for nom, p in (

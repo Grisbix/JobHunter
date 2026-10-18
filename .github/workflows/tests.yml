@@ -17,11 +17,13 @@ jobs:
         with:
           python-version: "3.12"
       - name: Outils
-        run: python -m pip install "ruff>=0.15,<0.16" uv
+        run: python -m pip install "ruff>=0.15,<0.16" "mypy>=1.15,<3" uv
       - name: Lint
         run: ruff check --output-format github .
       - name: Format
         run: ruff format --check .
+      - name: Types (mypy, strict sur le socle)
+        run: mypy
       - name: uv.lock a jour avec pyproject.toml
         run: uv lock --check
       - name: VERSION = pyproject.toml

@@ -64,7 +64,7 @@ HERE = _racine.scripts()
 _SCRIPTS = _racine.scripts()
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
-sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
 QUEUE = HERE / "apply_queue.json"
 SUIVI = HERE / "suivi.json"

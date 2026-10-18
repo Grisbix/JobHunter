@@ -1022,7 +1022,7 @@ def _dans_secteur(t, s):
     return bool(s["communes"]) and _contient(t, s["communes"]) and not _contient(t, _REGIONS_AUTRES)
 
 
-_RX_CACHE = {}
+_RX_CACHE: dict[object, re.Pattern[str]] = {}  # cle : le tuple, ou son id()
 
 
 def _contient(t, tokens):

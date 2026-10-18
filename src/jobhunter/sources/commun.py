@@ -20,7 +20,7 @@ from jobhunter.reseau import post_borne as _post_borne  # noqa: F401
 from jobhunter.reseau import req_borne as _req_borne  # noqa: F401
 from jobhunter.scoring.domaines import classify_domaine, matches_esg_finance
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
 # Les donnees restent dans Scripts/ (racine trouvee par marqueur, JOBHUNTER_RACINE).
 HERE = _racine.scripts()
@@ -105,7 +105,9 @@ ATS_SLUGS = {
 
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
-INCIDENTS = _collections.defaultdict(_collections.Counter)
+INCIDENTS: _collections.defaultdict[str, _collections.Counter[str]] = _collections.defaultdict(
+    _collections.Counter
+)
 
 
 def incidents_resume():
