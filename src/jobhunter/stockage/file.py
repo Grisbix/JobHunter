@@ -49,6 +49,12 @@ def oid(offre: Offre) -> str:
 
     Unique sur les 2613 offres réelles (vérifié), et déjà la convention de l'app.
     Surtout PAS l'URL : elle change quand un doublon mieux classé la promeut.
+
+    Args:
+        offre: une offre de la file.
+
+    Returns:
+        « entreprise|poste », tels qu'écrits dans l'offre.
     """
     return f"{(offre.get('entreprise') or '').strip()}|{(offre.get('poste') or '').strip()}"
 
@@ -83,6 +89,13 @@ def charger(chemin: Chemin | None = None, descriptions: bool = True) -> list[Off
 
     `descriptions=False` évite de lire le fichier annexe quand on n'en a pas
     besoin : c'est là qu'est le gain de temps.
+
+    Args:
+        chemin: la file à lire ; None = `Scripts/apply_queue.json` du dossier des données.
+        descriptions: réinjecter le texte des annonces (fichier annexe).
+
+    Returns:
+        Les offres ; une liste vide si le fichier manque.
     """
     p = Path(chemin or CHEMIN)
     try:
@@ -103,12 +116,18 @@ def charger(chemin: Chemin | None = None, descriptions: bool = True) -> list[Off
 def sauver(
     offres: list[Offre], chemin: Chemin | None = None, _avant: dict[str, str] | None = None
 ) -> None:
-    """Écriture atomique, SANS verrou. Réservé aux cas où l'appelant tient déjà
-    le verrou. Dans le doute, utiliser `transaction`.
+    """Écriture atomique, SANS verrou.
 
-    `_avant` : les descriptions déjà lues par l'appelant. `transaction` les
-    transmet — sans ça, `sauver` relisait les 8,8 Mo que `charger` venait de
-    lire, 63 ms jetés à chaque écriture.
+    Réservé aux cas où l'appelant tient déjà le verrou. Dans le doute, utiliser
+    `transaction`. Le texte des annonces part dans le fichier annexe, qui n'est
+    réécrit que s'il a changé.
+
+    Args:
+        offres: toutes les offres ; leur champ `description` est retiré puis remis.
+        chemin: la file à écrire ; None = celle du dossier des données.
+        _avant: les descriptions déjà lues par l'appelant. `transaction` les
+            transmet — sans ça, `sauver` relisait les 8,8 Mo que `charger` venait
+            de lire, 63 ms jetés à chaque écriture.
     """
     p = Path(chemin or CHEMIN)
     if not _est_la_file(p):  # fichier de test : pas de separation
@@ -172,6 +191,18 @@ def transaction(
     changent un fit, un statut ou une URL sans toucher au texte des annonces.
     Les offres n'auront alors pas de champ `description`, et les descriptions
     orphelines ne sont pas purgées : c'est le travail d'une écriture complète.
+
+    Args:
+        chemin: la file ; None = celle du dossier des données.
+        attente: secondes d'attente du verrou.
+        relire: relire le disque une fois le verrou pris (à garder vrai).
+        descriptions: lire et réécrire aussi le texte des annonces.
+
+    Yields:
+        La liste des offres, à modifier en place.
+
+    Raises:
+        VerrouIndisponible: un autre programme garde la file plus de `attente` s.
     """
     p = Path(chemin or CHEMIN)
     if not verrou.prendre_verrou(p, attente=attente):
@@ -204,6 +235,17 @@ def modifier[T](
     Sucre pour les programmes qui n'ont qu'une transformation à appliquer :
 
         n = modifier(lambda offres: sum(1 for o in offres if o.pop("vieux", None)))
+
+    Args:
+        fn: la transformation, appliquée à la liste fraîchement relue.
+        chemin: la file ; None = celle du dossier des données.
+        attente: secondes d'attente du verrou.
+
+    Returns:
+        Ce que `fn` renvoie.
+
+    Raises:
+        VerrouIndisponible: un autre programme garde la file trop longtemps.
     """
     with transaction(chemin, attente=attente) as offres:
         return fn(offres)

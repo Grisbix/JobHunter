@@ -51,7 +51,7 @@ extend-include = ["*.pyw"]
 src = ["src", "outils"]
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "I", "UP", "B"]
+select = ["E", "W", "F", "I", "UP", "B", "D"]
 # Regles suspendues, A RESORBER (comptes au 2026-10-17). Chacune demande un
 # travail a la main ou depend du decoupage en paquet (phase 3) ; on ne les
 # ajoute pas en vrac a `ignore` sans compte ni raison.
@@ -69,6 +69,14 @@ ignore = [
     "UP035",  # 1 — import deprecie
     "F841",   # 11 — variable affectee jamais lue (a relire une par une)
 ]
+
+# Docstrings au format Google (phase 8) : exigees sur l'API publique du SOCLE, qui
+# rejoint la regle module par module — jamais de retour en arriere.
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"!src/jobhunter/{stockage/*,profil,racine,reseau}.py" = ["D"]
 
 [tool.ruff.lint.isort]
 # _profil_test doit rester le PREMIER import d'un test : il fixe le profil

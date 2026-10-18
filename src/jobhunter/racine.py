@@ -16,6 +16,17 @@ from pathlib import Path
 
 
 def racine() -> Path:
+    """Le dossier des donnees : celui qui contient `Scripts/` et `profil/`.
+
+    Cherche `JOBHUNTER_RACINE`, puis en remontant depuis ce fichier, puis depuis le
+    dossier courant. Jamais de racine codee en dur.
+
+    Returns:
+        Le chemin absolu du dossier des donnees.
+
+    Raises:
+        RuntimeError: aucun dossier candidat ne contient `Scripts/` et `profil/`.
+    """
     env = os.environ.get("JOBHUNTER_RACINE")
     if env:
         return Path(env).resolve()
@@ -30,9 +41,11 @@ def racine() -> Path:
 
 
 def exporter_paquet() -> None:
-    """Ajoute le dossier qui contient le paquet `jobhunter` a PYTHONPATH, herite par les
-    sous-processus : `python -m jobhunter.sources` y marche sans installation. Le
-    chemin vient de ce fichier, jamais d'une racine codee en dur."""
+    """Ajoute le dossier qui contient le paquet `jobhunter` a PYTHONPATH.
+
+    Herite par les sous-processus : `python -m jobhunter.sources` y marche sans
+    installation. Le chemin vient de ce fichier, jamais d'une racine codee en dur.
+    """
     src = str(Path(__file__).resolve().parent.parent)
     deja = os.environ.get("PYTHONPATH", "")
     if src not in deja.split(os.pathsep):

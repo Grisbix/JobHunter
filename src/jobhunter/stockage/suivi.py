@@ -52,7 +52,15 @@ class VerrouIndisponible(RuntimeError):
 
 
 def charger(chemin: Chemin | None = None) -> Suivi:
-    """Le suivi, en lecture. Dict vide si le fichier manque ou est illisible."""
+    """Le suivi, en lecture.
+
+    Args:
+        chemin: le fichier ; None = `Scripts/suivi.json` du dossier des données.
+
+    Returns:
+        Les candidatures par identité d'offre ; dict vide si le fichier manque
+        ou est illisible.
+    """
     p = Path(chemin or CHEMIN)
     try:
         d = json.loads(p.read_text(encoding="utf-8"))
@@ -67,6 +75,16 @@ def transaction(chemin: Chemin | None = None, attente: float = 30) -> Iterator[S
 
     `attente` courte : les appelants sont interactifs (un clic dans l'app) ou
     brefs (`relances.py`). Mieux vaut dire « réessaie » que figer la fenêtre.
+
+    Args:
+        chemin: le fichier ; None = celui du dossier des données.
+        attente: secondes d'attente du verrou.
+
+    Yields:
+        Le suivi fraîchement relu, à modifier en place.
+
+    Raises:
+        VerrouIndisponible: un autre programme garde le suivi plus de `attente` s.
     """
     p = Path(chemin or CHEMIN)
     # `prendre_verrou` est reentrant, `rendre_verrou` ne l'est PAS : il libere
@@ -86,7 +104,19 @@ def transaction(chemin: Chemin | None = None, attente: float = 30) -> Iterator[S
 
 
 def modifier[T](fn: Callable[[Suivi], T], chemin: Chemin | None = None, attente: float = 30) -> T:
-    """`fn(suivi)` sous verrou, sur l'état FRAÎCHEMENT relu. Rend ce que fn rend."""
+    """`fn(suivi)` sous verrou, sur l'état FRAÎCHEMENT relu.
+
+    Args:
+        fn: la transformation.
+        chemin: le fichier ; None = celui du dossier des données.
+        attente: secondes d'attente du verrou.
+
+    Returns:
+        Ce que `fn` renvoie.
+
+    Raises:
+        VerrouIndisponible: un autre programme garde le suivi trop longtemps.
+    """
     with transaction(chemin, attente=attente) as suivi:
         return fn(suivi)
 
@@ -100,6 +130,15 @@ def poser(
     mono-fil — attendre 30 s dans un gestionnaire de clic fige la fenêtre
     entière, et l'utilisateur croit l'app plantée. Mieux vaut rendre la main
     vite et afficher « réessaie ».
+
+    Args:
+        oid: l'identité de l'offre (`queue_io.oid`).
+        rec: la candidature ; vide ou None efface l'entrée.
+        chemin: le fichier ; None = celui du dossier des données.
+        attente: secondes d'attente du verrou.
+
+    Raises:
+        VerrouIndisponible: un autre programme garde le suivi trop longtemps.
     """
 
     def _f(s: Suivi) -> None:

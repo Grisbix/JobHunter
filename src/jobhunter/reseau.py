@@ -32,12 +32,20 @@ class Incidents(collections.defaultdict[str, collections.Counter[str | int]]):
 
     Une collecte vide a deux causes opposees, rien a prendre ou un refus d'entree ;
     ce compteur les distingue, et `resume()` les affiche en fin de scan pour qu'un
-    scan entierement bride ne ressemble pas a une journee calme."""
+    scan entierement bride ne ressemble pas a une journee calme.
+    """
 
     def __init__(self) -> None:
+        """Un compteur vide."""
         super().__init__(collections.Counter)
 
     def noter(self, source: str, cause: str | int) -> None:
+        """Compte un refus ou une panne.
+
+        Args:
+            source: la source concernee (« linkedin », « apec »…).
+            cause: le code HTTP ou le nom de l'exception.
+        """
         self[source][cause] += 1
 
     def resume(self) -> list[str]:
@@ -63,7 +71,8 @@ def client_partage() -> "httpx.Client":
     4,5 s par un client ; Workday 14,3 s contre 5,4. Sur une collecte de
     plusieurs centaines d'appels, c'etait l'essentiel du temps : talan seul
     prenait 8 min (69 fiches), chaque flux Workday 6 a 8 — et la passe a
-    depassait ses 60 min avant d'atteindre LinkedIn."""
+    depassait ses 60 min avant d'atteindre LinkedIn.
+    """
     global _CLIENT
     if _CLIENT is None:
         import httpx as _hx
@@ -82,16 +91,29 @@ def req_borne(
 ) -> "httpx.Response":
     """Requete httpx avec une duree TOTALE maximale. Rend une vraie httpx.Response.
 
-    `envoi` : le module httpx ou un httpx.Client — les deux ont `.stream()`.
-    `total` : par defaut trois fois le delai par operation, 60 s au moins.
-
     Voir `get_borne` pour le pourquoi. Generalisee le 2026-09-23 a toutes les
     sources : la premiere version ne protegeait que Talent.com, et rendait un
     objet sans `.json()`, ce qui interdisait de l'employer ailleurs.
 
     La Response est reconstruite SANS content-encoding : `iter_bytes` a deja
     decompresse le corps, et le laisser annonce gzip ferait decompresser deux
-    fois."""
+    fois.
+
+    Args:
+        envoi: le module httpx ou un httpx.Client — les deux ont `.stream()`.
+        methode: « GET », « POST »…
+        url: l'adresse demandee.
+        total: duree maximale de toute la requete, en secondes ; None = trois fois
+            le delai par operation, 60 s au moins.
+        max_octets: taille maximale du corps.
+        **kw: transmis a `envoi.stream` (headers, params, json, timeout…).
+
+    Returns:
+        Une vraie httpx.Response, corps deja lu.
+
+    Raises:
+        httpx.TimeoutException: duree totale ou taille maximale depassee.
+    """
     import httpx as _hx
 
     if envoi is _hx:  # le module : pas de connexion reutilisee
@@ -121,6 +143,7 @@ def req_borne(
 
 
 def post_borne(envoi: Any, url: str, **kw: Any) -> "httpx.Response":
+    """POST borne en duree totale : `req_borne(envoi, "POST", url, **kw)`."""
     return req_borne(envoi, "POST", url, **kw)
 
 
@@ -128,7 +151,19 @@ def lire_borne(f: BinaryIO, total: float = 60, max_octets: int = 20_000_000) -> 
     """`f.read()` d'un urlopen, mais borne en duree TOTALE.
 
     `urlopen(timeout=25)` borne chaque operation de socket, exactement comme
-    httpx : un serveur qui distille ses octets le tient indefiniment."""
+    httpx : un serveur qui distille ses octets le tient indefiniment.
+
+    Args:
+        f: la reponse ouverte par urlopen.
+        total: duree maximale de la lecture, en secondes.
+        max_octets: taille maximale lue.
+
+    Returns:
+        Le corps lu.
+
+    Raises:
+        TimeoutError: lecture plus longue que `total`.
+    """
     debut, taille = time.time(), 0
     blocs: list[bytes] = []
     # read1, PAS read(n) : read(65536) attend que les 64 Ko soient arrives avant
@@ -159,5 +194,17 @@ def get_borne(envoi: Any, url: str, **kw: Any) -> "httpx.Response":
 
     Ici le temps ecoule est verifie a chaque paquet recu : au pire, total + 20 s.
     Leve httpx.TimeoutException au-dela, comme un delai ordinaire — les appelants
-    qui attrapent deja `Exception` n'ont rien a changer."""
+    qui attrapent deja `Exception` n'ont rien a changer.
+
+    Args:
+        envoi: le module httpx ou un httpx.Client.
+        url: l'adresse demandee.
+        **kw: comme `req_borne` (total, max_octets, headers, params…).
+
+    Returns:
+        Une vraie httpx.Response.
+
+    Raises:
+        httpx.TimeoutException: duree totale depassee.
+    """
     return req_borne(envoi, "GET", url, **kw)

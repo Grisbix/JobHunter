@@ -99,11 +99,17 @@ def _pid_vivant(pid: int | str | None, depuis: float | str | None = None) -> boo
 def prendre_verrou(
     path: Chemin, attente: float = 180, perime: float = 1800, bavard: bool = True
 ) -> bool:
-    """Prend le verrou de `path`. Rend True si obtenu, False sinon.
+    """Prend le verrou de `path` ; reentrant pour le processus qui le tient deja.
 
-    attente : secondes d'attente avant d'abandonner.
-    perime  : un verrou plus vieux que ca est considere abandonne (processus
-              tue sans passer par atexit) et casse.
+    Args:
+        path: le fichier a proteger (le verrou est un fichier voisin).
+        attente: secondes d'attente avant d'abandonner.
+        perime: un verrou plus vieux que ca est considere abandonne (processus
+            tue sans passer par atexit) et casse — jamais un verrou vivant.
+        bavard: annoncer l'attente sur la sortie.
+
+    Returns:
+        True si le verrou est obtenu, False sinon.
     """
     v = _fverrou(path)
     # Reentrance : un programme qui tient deja le verrou ne doit pas se bloquer
@@ -190,11 +196,22 @@ def tenu(path: Chemin) -> bool:
     que son appelant le gardait pour toute la duree du programme (`garder`),
     le lui retire au passage — et la suite du travail se fait a decouvert.
     D'ou ce test : ne rendre que ce qu'on a soi-meme pris.
+
+    Args:
+        path: le fichier protege.
+
+    Returns:
+        True si ce processus tient le verrou.
     """
     return bool(_TENUS.get(str(_fverrou(path))))
 
 
 def rendre_verrou(path: Chemin) -> None:
+    """Libere le verrou de `path` s'il est tenu par ce processus (pour de bon).
+
+    Args:
+        path: le fichier protege.
+    """
     v = _fverrou(path)
     if _TENUS.pop(str(v), None):
         try:
@@ -209,6 +226,13 @@ def garder(path: Chemin, attente: float = 180) -> bool:
     Prend le verrou pour toute la duree du processus et le rend automatiquement
     a la sortie, meme sur exception. Rend False si un autre programme travaille
     deja sur le fichier : l'appelant doit alors s'arreter, pas ecraser.
+
+    Args:
+        path: le fichier que le programme va reecrire.
+        attente: secondes d'attente du verrou.
+
+    Returns:
+        True si le verrou est pris pour le reste du processus.
     """
     if not prendre_verrou(path, attente=attente):
         _log.info(

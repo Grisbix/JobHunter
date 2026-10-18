@@ -224,6 +224,11 @@ retirés. Banc sur ses données : 0 écart sur 12 137 offres et 99 lettres/CV (1
 verrou, 429/403, aucune soumission, banc). Restent les docstrings Google et le
 remplacement progressif des commentaires-récits par des renvois aux ADR.
 
+**Avancement (2026-10-19)** : docstrings au format Google (Args, Returns, Yields, Raises)
+sur toute l'API publique du socle — `stockage` (file, suivi, verrou, atomique), `profil`,
+`racine`, `reseau`. Ruff les exige désormais sur ces fichiers (règle `D`, convention
+google) ; un module rejoint la liste quand il est documenté, comme pour mypy strict.
+
 ---
 
 ## Calendrier indicatif

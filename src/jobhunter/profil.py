@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""jobhunter.profil — tout ce qui est PROPRE A LA PERSONNE, lu dans profil/profil.json
-(ancien Scripts/profil.py).
+r"""Tout ce qui est PROPRE A LA PERSONNE, lu dans profil/profil.json.
+
+Ancien Scripts/profil.py.
 
 Le moteur (collecte, tri, scoring, CV, lettres) ne connait aucun metier, aucune
 ville, aucun nom : il lit ce module. Pour changer de cible, on change le profil,
@@ -34,7 +35,7 @@ FICHIER = Path(os.environ.get("PROFIL_JOBHUNTER") or RACINE / "profil" / "profil
 
 
 class ProfilAbsent(RuntimeError):
-    pass
+    """Aucun profil : ni fichier `profil/profil.json`, ni profil injecte."""
 
 
 # Profil fourni en memoire par `utiliser` (tests, essais) ; None = le fichier.
@@ -43,6 +44,14 @@ _INJECTE: dict[str, Any] | None = None
 
 @lru_cache(maxsize=1)
 def charger() -> dict[str, Any]:
+    """Le profil entier, lu une fois puis garde en memoire.
+
+    Returns:
+        Le profil injecte par `utiliser`, sinon le contenu de `FICHIER`.
+
+    Raises:
+        ProfilAbsent: aucun profil injecte et le fichier n'existe pas.
+    """
     if _INJECTE is not None:
         return _INJECTE
     if not FICHIER.exists():
@@ -56,9 +65,14 @@ def charger() -> dict[str, Any]:
 
 
 def utiliser(donnees: dict[str, Any]) -> None:
-    """Remplace le profil par `donnees`, sans fichier : un test construit le profil
-    dont il a besoin. Tout ce que le moteur en avait tire est recalcule a la
-    lecture suivante. `recharger()` revient au fichier."""
+    """Remplace le profil par `donnees`, sans fichier.
+
+    Un test construit ainsi le profil dont il a besoin. Tout ce que le moteur en
+    avait tire est recalcule a la lecture suivante ; `recharger()` revient au fichier.
+
+    Args:
+        donnees: le profil complet, au format de profil.json.
+    """
     global _INJECTE
     _INJECTE = donnees
     charger.cache_clear()
@@ -66,8 +80,11 @@ def utiliser(donnees: dict[str, Any]) -> None:
 
 
 def recharger(fichier: Path | None = None) -> None:
-    """Revient au fichier (un autre si `fichier` est donne) et oublie les valeurs
-    tirees de l'ancien profil."""
+    """Revient au fichier et oublie les valeurs tirees de l'ancien profil.
+
+    Args:
+        fichier: un autre fichier de profil a lire desormais ; None garde `FICHIER`.
+    """
     global _INJECTE, FICHIER
     _INJECTE = None
     if fichier is not None:
@@ -77,7 +94,15 @@ def recharger(fichier: Path | None = None) -> None:
 
 
 def get(chemin: str, defaut: Any = None) -> Any:
-    """get("scoring.axes") -> valeur, ou `defaut` si une etape manque."""
+    """Une valeur du profil par son chemin pointe.
+
+    Args:
+        chemin: cles separees par des points, par exemple « scoring.axes ».
+        defaut: ce qui est rendu si une etape du chemin manque.
+
+    Returns:
+        La valeur trouvee, ou `defaut`.
+    """
     v: Any = charger()
     for k in chemin.split("."):
         if not isinstance(v, dict) or k not in v:
@@ -88,6 +113,11 @@ def get(chemin: str, defaut: Any = None) -> Any:
 
 # ── Identite ────────────────────────────────────────────────────────────────
 def identite() -> dict[str, str]:
+    """Coordonnees du candidat, sans champ manquant.
+
+    Returns:
+        nom, email, tel, linkedin, ville, et genre (« m » ou « f », pour les accords).
+    """
     i = get("identite", {}) or {}
     nom = (i.get("nom_complet") or f"{i.get('prenom', '')} {i.get('nom', '')}").strip()
     return {
@@ -126,10 +156,16 @@ def _fragment(mot: object, entier: bool) -> str:
 
 
 def motif(mots: Iterable[object] | None, entier: bool = False) -> re.Pattern[str] | None:
-    """Une regex compilee qui trouve l'un des `mots`, ou None si la liste est vide.
+    """Une regex compilee qui trouve l'un des `mots`.
 
-    `entier=True` borne aussi a droite les MOTS (sigles courts : « rse » ne doit
-    pas trouver « RSEau »). Les entrees « re:… » ne sont jamais modifiees."""
+    Args:
+        mots: mots, expressions ou regex prefixees par « re: » (prises telles quelles).
+        entier: borne aussi a droite les mots — sigles courts : « rse » ne doit pas
+            trouver « RSEau ».
+
+    Returns:
+        La regex, insensible a la casse, ou None si la liste est vide.
+    """
     mots = [m for m in (mots or []) if str(m).strip()]
     if not mots:
         return None
@@ -137,13 +173,19 @@ def motif(mots: Iterable[object] | None, entier: bool = False) -> re.Pattern[str
 
 
 def cherche(rx: re.Pattern[str] | None, texte: str | None) -> bool:
+    """Vrai si `rx` existe et trouve quelque chose dans `texte` (None = texte vide)."""
     return bool(rx and rx.search(texte or ""))
 
 
 # ── Domaines : variantes de CV et paragraphes de parcours ──────────────────
 def domaines() -> list[dict[str, Any]]:
-    """Liste ordonnee de domaines. Le premier dont un mot apparait dans
-    l'intitule gagne ; le DERNIER sert de repli."""
+    """Les domaines du profil, dans l'ordre.
+
+    Le premier dont un mot apparait dans l'intitule gagne ; le DERNIER sert de repli.
+
+    Returns:
+        Les domaines, ou un domaine « General » unique si le profil n'en a pas.
+    """
     d: list[dict[str, Any]] = get("domaines", []) or []
     if not d:
         d = [{"cle": "General", "libelle": "Général", "mots_titre": [], "cv": ""}]
@@ -151,6 +193,7 @@ def domaines() -> list[dict[str, Any]]:
 
 
 def domaine_par_cle(cle: str) -> dict[str, Any]:
+    """Le domaine de cle `cle`, ou le domaine de repli (le dernier)."""
     for d in domaines():
         if d.get("cle") == cle:
             return d
@@ -271,9 +314,11 @@ _CHAMPS_FORMULAIRE = (
 
 
 def formulaire() -> dict[str, Any]:
-    """Le profil de remplissage des formulaires : identite + section
-    « formulaire » du profil. JAMAIS de mot de passe : regle du projet, aucun
-    programme n'en manipule — les champs mot de passe restent a l'utilisateur."""
+    """Le profil de remplissage des formulaires : identite + section « formulaire ».
+
+    JAMAIS de mot de passe : regle du projet, aucun programme n'en manipule — les
+    champs mot de passe restent a l'utilisateur.
+    """
     i = get("identite", {}) or {}
     f = get("formulaire", {}) or {}
     ident = identite()
