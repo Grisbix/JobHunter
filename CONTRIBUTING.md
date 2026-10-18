@@ -27,6 +27,11 @@ et Linux.
 `racine`, `texte`, `liens`) est annotée — mypy y est strict. Ailleurs, annoter en passant ;
 un module entièrement annoté rejoint la liste stricte de `pyproject.toml`.
 
+## Comprendre le code
+
+[`docs/architecture.md`](docs/architecture.md) : paquets, données, pipeline.
+[`docs/adr/`](docs/adr/) : les décisions qui ne se rediscutent pas au détour d'une tâche.
+
 ## Écrire un test
 
 Dans `tests/`, en pytest, avec les fixtures de `tests/conftest.py` (faux réseau, horloge,
