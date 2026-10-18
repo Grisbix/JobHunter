@@ -75,7 +75,7 @@ addopts = "-m 'not donnees_reelles'"
 
 # ── couverture ───────────────────────────────────────────────────────────────
 [tool.coverage.run]
-source = ["Scripts"]
+source = ["Scripts", "src/jobhunter"]
 omit = ["*/test_*.py", "*/_profil_test.py"]
 # Les suites historiques tournent en sous-processus : sans ceci, elles ne comptent pas.
 patch = ["subprocess"]
