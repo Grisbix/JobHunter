@@ -24,7 +24,7 @@ privées et la cohérence `VERSION` / `pyproject.toml`. La CI GitHub refait tout
 et Linux.
 
 **Types.** Toute fonction nouvelle ou modifiée du socle (`stockage`, `profil`, `reseau`,
-`racine`, `texte`, `liens`) est annotée — mypy y est strict. Ailleurs, annoter en passant ;
+`racine`, `texte`, `liens`, `scoring`) est annotée — mypy y est strict. Ailleurs, annoter en passant ;
 un module entièrement annoté rejoint la liste stricte de `pyproject.toml`.
 
 ## Installer le paquet

@@ -14,9 +14,11 @@ le sous-module qui porte le nom.
 import importlib
 import sys
 import types
+from collections.abc import Sequence
+from typing import Any
 
 
-def installer(paquet, sous_modules):
+def installer(paquet: str, sous_modules: Sequence[str]) -> list[types.ModuleType]:
     """Charge `sous_modules` de `paquet` et fait du paquet leur facade. Rend les modules."""
     modules = [importlib.import_module(f"{paquet}.{m}") for m in sous_modules]
     # Les liaisons d'origine : `unittest.mock.patch` sort par un `delattr` sur la
@@ -25,20 +27,20 @@ def installer(paquet, sous_modules):
     origine = {m: dict(vars(m)) for m in modules}
     noms_sous_modules = set(sous_modules)
 
-    def tenants(nom):
+    def tenants(nom: str) -> list[types.ModuleType]:
         """Sous-modules ou `nom` est lie. Le proprietaire (celui qui le DEFINIT) en tete."""
         t = [m for m in modules if nom in vars(m) or nom in origine[m]]
         t.sort(key=lambda m: getattr(origine[m].get(nom), "__module__", None) != m.__name__)
         return t
 
     class _Facade(types.ModuleType):
-        def __getattr__(self, nom):
+        def __getattr__(self, nom: str) -> Any:
             for m in modules:
                 if nom in vars(m):
                     return vars(m)[nom]
             raise AttributeError(f"module {self.__name__!r} has no attribute {nom!r}")
 
-        def __setattr__(self, nom, valeur):
+        def __setattr__(self, nom: str, valeur: Any) -> None:
             t = [] if nom.startswith("__") or nom in noms_sous_modules else tenants(nom)
             if not t:
                 super().__setattr__(nom, valeur)
@@ -48,7 +50,7 @@ def installer(paquet, sous_modules):
             for m in t:
                 setattr(m, nom, valeur)
 
-        def __delattr__(self, nom):
+        def __delattr__(self, nom: str) -> None:
             if nom in vars(self):
                 super().__delattr__(nom)
                 return
@@ -61,7 +63,7 @@ def installer(paquet, sous_modules):
                 else:
                     delattr(m, nom)
 
-        def __dir__(self):
+        def __dir__(self) -> list[str]:
             return sorted(set(super().__dir__()).union(*(vars(m) for m in modules)))
 
     sys.modules[paquet].__class__ = _Facade

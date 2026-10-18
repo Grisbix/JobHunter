@@ -57,6 +57,7 @@ import time
 from pathlib import Path  # noqa: F401  (annotations et appelants)
 
 from jobhunter import racine as _racine
+from jobhunter.types import Offre
 
 HERE = _racine.scripts()
 # TRANSITION (phase 3) : imports differes de modules encore dans Scripts/
@@ -118,7 +119,7 @@ _RX_RESP_ADJ = re.compile(
 )
 
 
-def _sans_resp_adjectif(titre):
+def _sans_resp_adjectif(titre: str | None) -> str:
     """Le titre prive de ses « responsable » adjectifs, pour le test de seniorite."""
     return _RX_RESP_ADJ.sub(" ", titre or "")
 
@@ -407,7 +408,7 @@ _RX_OUTILS = {k: re.compile(v, re.I) for k, v in _OUTILS.items()}
 OUTILS_MAX = int(_TRI.get("outils_max", 4) or 0)  # 0 = pas de limite
 
 
-def outils_techniques(desc):
+def outils_techniques(desc: str | None) -> set[str]:
     """Familles d'outils d'ingenieur citees dans la description."""
     t = str(desc or "")
     return {k for k, rx in _RX_OUTILS.items() if rx.search(t)}
@@ -449,7 +450,7 @@ _RX_PAGE_RECHERCHE = re.compile(
 )
 
 
-def pas_une_offre(o):
+def pas_une_offre(o: Offre) -> str | None:
     """Motif si la ligne ne mene a aucune annonce precise, sinon None."""
     from urllib.parse import urlsplit
 
@@ -466,11 +467,11 @@ def pas_une_offre(o):
     return None
 
 
-def _oid(o):
+def _oid(o: Offre) -> str:
     return f"{(o.get('entreprise') or '').strip()}|{(o.get('poste') or '').strip()}"
 
 
-def motif(o, proteges):
+def motif(o: Offre, proteges: set[str]) -> str | None:
     """Motif de suppression, ou None si l'offre est conservee."""
     if _oid(o) in proteges:
         return None
@@ -519,7 +520,7 @@ def motif(o, proteges):
     return None
 
 
-def main():
+def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--supprime", action="store_true", help="ecrit la file purgee")
     ap.add_argument("--motifs", action="store_true", help="echantillon par motif")
@@ -530,7 +531,8 @@ def main():
     q = __import__("queue_io").charger(QUEUE)  # descriptions : outils_techniques les lit
     proteges = set(__import__("suivi_io").charger(SUIVI)) if SUIVI.exists() else set()
 
-    garde, jette = [], []
+    garde: list[tuple[str | None, Offre]] = []
+    jette: list[tuple[str | None, Offre]] = []
     for o in q:
         m = motif(o, proteges)
         (jette if m else garde).append((m, o))

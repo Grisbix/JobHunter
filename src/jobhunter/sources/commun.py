@@ -392,7 +392,7 @@ _RX_OU_DIPLOME = re.compile(
 )
 
 
-def demande_etudiant(desc):
+def demande_etudiant(desc: str | None) -> bool:
     """True si l'annonce demande un candidat ENCORE ETUDIANT, sans alternative
     pour un diplome. Un tel poste est un stage, quel que soit son intitule."""
     t = str(desc or "")

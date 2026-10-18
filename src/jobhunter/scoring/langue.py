@@ -62,7 +62,9 @@ _RX_CH_NON_FR = re.compile(
 )
 
 
-def langue_offre(titre="", description="", lieu=""):
+def langue_offre(
+    titre: str | None = "", description: str | None = "", lieu: str | None = ""
+) -> str:
     """'en' ou 'fr'. Le doute profite au francais, SAUF si le lieu le dement.
 
     `lieu` : la localisation de l'offre. Mesure du 2026-09-22 — apres
@@ -101,15 +103,17 @@ def langue_offre(titre="", description="", lieu=""):
     return "en" if en > fr * 1.2 else "fr"
 
 
-def main():
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+def main() -> int:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
     import collections
 
     from jobhunter.stockage import file as queue_io
 
     q = queue_io.charger()
-    c = collections.Counter()
-    par_zone = collections.defaultdict(collections.Counter)
+    c: collections.Counter[str] = collections.Counter()
+    par_zone: collections.defaultdict[str, collections.Counter[str]] = collections.defaultdict(
+        collections.Counter
+    )
     for o in q:
         lg = langue_offre(o.get("poste"), o.get("description"))
         c[lg] += 1

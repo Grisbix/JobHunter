@@ -16,6 +16,7 @@ Run:
 
 import re
 import sys
+from typing import Any
 
 from docx import Document
 
@@ -33,7 +34,7 @@ ROOT = _racine.racine()
 OUT_CSV = ROOT / "Scripts" / "ats_report.csv"
 
 
-def cv_text(variant_key):
+def cv_text(variant_key: str) -> str:
     """Texte concaténé du CV variant (lower)."""
     p = CV_ATS / CV_VARIANT[variant_key]
     if not p.exists():
@@ -48,13 +49,13 @@ def cv_text(variant_key):
 _cv_cache: dict[str, str] = {}
 
 
-def cv_text_cached(k):
+def cv_text_cached(k: str) -> str:
     if k not in _cv_cache:
         _cv_cache[k] = cv_text(k)
     return _cv_cache[k]
 
 
-def skills_in(text):
+def skills_in(text: str | None) -> set[str]:
     """Set des libellés SKILL_LEX présents dans le texte.
     Matcher partagé avec tailor_application (has_skill) : sigles courts = mot
     ENTIER, expressions longues = sous-chaîne. Évite les faux positifs 'ges' dans
@@ -75,7 +76,7 @@ _RX_SENIOR_FIN = _P.motif(_P.get("niveau.senior_en_fin", []))
 NEG = tuple(_P.get("niveau.mots_negatifs", []) or [])
 
 
-def experience_years(text):
+def experience_years(text: str | None) -> int:
     """Années d'expérience EXIGÉES détectées (0 si aucune). Prend le max des nombres
     apparaissant près d'un mot 'expérience'. Ex '10 ans d'expérience' → 10.
     Plafond 15 (>15 = bruit : âge, ancienneté société…). Ignore si poste junior/alternance.
@@ -172,12 +173,12 @@ _RX_HORS_METIER = _P.motif(_SC.get("intitules_hors_metier"))
 _c = _P.cherche
 
 
-def _titre_hse(role):
+def _titre_hse(role: str) -> bool:
     """Intitule d'un metier voisin a ecarter (exemple finance durable : HSE)."""
     return bool(_c(_RX_HSE_SIGLE, role) or (_c(_RX_SECURITE, role) and _c(_RX_SANTE_ENV, role)))
 
 
-def _titre_hors_cible(role):
+def _titre_hors_cible(role: str) -> bool:
     """Metier technique ou hors metier : le vocabulaire de la cible ne le rapproche pas du profil."""
     tech = _c(_RX_TECHNIQUE_TITRE, role) and not _c(_RX_TITRE_FINANCE, role)
     return bool(tech or _c(_RX_HORS_METIER, role))
@@ -194,7 +195,7 @@ _ESG_DENSITE_LONG = int(
 )  # en deca, le texte est trop court pour qu'une densite veuille dire quelque chose
 
 
-def densite_esg(text):
+def densite_esg(text: str | None) -> float:
     """Marqueurs ESG pour 1000 caractères. 0.0 sur un texte vide."""
     t = text or ""
     if not t or _ESG_TITLE_RX is None:
@@ -202,10 +203,10 @@ def densite_esg(text):
     return 1000.0 * sum(1 for _ in _ESG_TITLE_RX.finditer(t)) / len(t)
 
 
-def axis_scores(text):
+def axis_scores(text: str | None) -> dict[str, float]:
     """Densité 0.0-1.0 par axe. Utile pour comprendre POURQUOI une offre score."""
     got = skills_in(text)
-    out = {}
+    out: dict[str, float] = {}
     for axe, labels in AXES.items():
         cap = min(_CAP, len(labels)) or 1
         out[axe] = min(sum(1 for l in labels if l in got), cap) / cap
@@ -228,12 +229,12 @@ _MALUS_EXP = sorted(
 )
 
 
-def _malus_experience(yrs):
+def _malus_experience(yrs: int) -> float:
     """Malus pour `yrs` annees exigees : le palier le plus haut atteint."""
     return next((m for seuil, m in _MALUS_EXP if yrs >= seuil), 0.0)
 
 
-def fit_score(text, title=""):
+def fit_score(text: str | None, title: str | None = "") -> tuple[int, int]:
     """(fit entier 1-10, annees d'experience exigees). Voir fit_detail."""
     fit, yrs, _fin = fit_detail(text, title)
     return fit, yrs
@@ -333,11 +334,11 @@ _NOMS_LANGUES = {
 }
 
 
-def _compte_langues(mots):
+def _compte_langues(mots: list[str]) -> dict[str, int]:
     return {k: sum(1 for m in mots if m in v) for k, v in _MOTS_OUTILS.items()}
 
 
-def langue_redaction(t):
+def langue_redaction(t: str | None) -> str:
     """Code de la langue dominante du texte ('' si texte trop court ou indecis).
 
     L'EN-TETE compte a part : EURES traduit automatiquement en anglais des
@@ -345,7 +346,7 @@ def langue_redaction(t):
     4). Les premieres lignes sont celles de l'employeur : si elles sont
     nettement dans une langue non parlee, l'annonce l'est."""
     tete = _compte_langues(_RX_MOT.findall((t or "")[:600].lower()))
-    lg = max(tete, key=tete.get)
+    lg = max(tete, key=tete.__getitem__)
     parlees = [tete[k] for k in LANGUES_PARLEES if k in tete] or [0]
     if lg not in LANGUES_PARLEES and tete[lg] >= 4 and tete[lg] >= 2 * max(parlees):
         return lg
@@ -353,7 +354,7 @@ def langue_redaction(t):
     if len(mots) < 60:
         return ""
     compte = _compte_langues(mots)
-    ordre = sorted(compte, key=compte.get, reverse=True)
+    ordre = sorted(compte, key=compte.__getitem__, reverse=True)
     premier, second = compte[ordre[0]], compte[ordre[1]]
     if premier < 12 or premier < 1.5 * second:
         return ""
@@ -421,7 +422,7 @@ _RX_ALTERNATIVE = re.compile(
 _RX_NOM_LANGUE = re.compile(r"\b" + _LANGUES_ETRANGERES + r"\b", re.I)
 
 
-def langue_exigee(t):
+def langue_exigee(t: str | None) -> str:
     """Nom d'une langue non parlee que l'annonce EXIGE, sinon ''."""
     t = t or ""
     if "nl" not in LANGUES_PARLEES and _RX_NEERLANDOPHONE.search(t):
@@ -441,7 +442,7 @@ def langue_exigee(t):
     return ""
 
 
-def plafond_langue(t):
+def plafond_langue(t: str | None) -> tuple[float, str]:
     """(plafond, motif) : 2 si redigee dans une langue non parlee, 4 si elle en
     exige une, (10, '') sinon."""
     lg = langue_redaction(t)
@@ -453,7 +454,7 @@ def plafond_langue(t):
     return 10.0, ""
 
 
-def fit_detail(text, title=""):
+def fit_detail(text: str | None, title: str | None = "") -> tuple[int, int, float]:
     """(fit, yrs, fit_fin). `fit_fin` departage les ex aequo d'un meme fit.
 
     l'utilisateur, 2026-10-09 : 546 offres a 10, 1203 a 8, 3321 a 6 — dans un niveau,
@@ -536,7 +537,7 @@ def fit_detail(text, title=""):
     return entier, yrs, round(entier - 0.45 + 0.9 * _departage(t, role, fit, entier, yrs), 3)
 
 
-def _departage(t, role, fit, entier, yrs):
+def _departage(t: str, role: str, fit: float, entier: int, yrs: int) -> float:
     """0..1 : rang d'une offre parmi celles de meme fit entier.
 
     Les axes du fit plafonnent a 1 : au sommet, toutes les offres riches
@@ -560,7 +561,7 @@ def _departage(t, role, fit, entier, yrs):
     )
 
 
-def score_offer(offer):
+def score_offer(offer: dict[str, Any]) -> dict[str, Any]:
     required = skills_in(f"{offer['role']} {offer['missions']} {offer['profil']}")
     if not required:
         # rien de détecté -> neutre

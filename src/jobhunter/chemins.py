@@ -43,7 +43,7 @@ CONFIG = HERE / "chemins.json"
 DEFAUT_AILLEURS = Path("D:/Recherche_emploi_documents")
 
 
-def _base():
+def _base() -> Path:
     """Racine des documents generes. Jamais d'exception : a defaut, la racine du projet."""
     try:
         cfg = json.loads(CONFIG.read_text(encoding="utf-8"))
@@ -85,14 +85,14 @@ LT_SUR_MESURE = ROOT / "Lettres" / "Sur_mesure"
 CV_SUR_MESURE = ROOT / "CV" / "Sur_mesure"
 
 
-def preparer():
+def preparer() -> tuple[Path, Path]:
     """Cree les dossiers de sortie. Appele par les programmes qui ecrivent."""
     for d in (CV_PAR_OFFRE, LT_PAR_OFFRE):
         d.mkdir(parents=True, exist_ok=True)
     return CV_PAR_OFFRE, LT_PAR_OFFRE
 
 
-def deplace():  # pragma: no cover - outil d'administration, voir deplace_docs.py
+def deplace() -> None:  # pragma: no cover - outil d'administration, voir deplace_docs.py
     raise NotImplementedError("le deplacement se fait par deplace_docs.py")
 
 

@@ -28,9 +28,13 @@ import argparse
 import collections
 import re
 import sys
+from collections.abc import Iterable
+from typing import Any
 
 from jobhunter import racine as _racine
 from jobhunter.texte import sans_accent
+
+Secteur = dict[str, Any]  # cle, libelle, lieux, communes, departements, wtj
 
 # TRANSITION (phase 3) : imports differes de modules encore dans Scripts/
 # (doublons, rejets_tri, depuis tri). A retirer quand ils auront rejoint le paquet.
@@ -168,7 +172,7 @@ _VAGUE = (
 )
 
 
-def _n(t):
+def _n(t: object) -> str:
     """Minuscules, sans accent, blancs ecrases."""
     return re.sub(r"\s+", " ", sans_accent(str(t or "")).lower()).strip()
 
@@ -972,7 +976,7 @@ CATALOGUE = {
 }
 
 
-def _secteur(x):
+def _secteur(x: object) -> Secteur | None:
     """Secteur du catalogue (par cle) ou declare dans le profil (dict)."""
     if isinstance(x, dict):
         return {
@@ -996,7 +1000,7 @@ def _secteur(x):
     }
 
 
-def _secteurs(cle_profil, defaut):
+def _secteurs(cle_profil: str, defaut: list[Any]) -> list[Secteur]:
     try:
         from jobhunter import profil as _P
 
@@ -1014,7 +1018,7 @@ _WTJ_PRIORITAIRE = set().union(*(s["wtj"] for s in SECTEURS_PRIORITAIRES))
 _WTJ_SUD_EST = set().union(*(s["wtj"] for s in SECTEURS_SECONDAIRES))
 
 
-def _dans_secteur(t, s):
+def _dans_secteur(t: str, s: Secteur) -> bool:
     """Le lieu normalise `t` nomme-t-il le secteur `s` ? (communes d'IDF : pas
     si une autre region est nommee — « Asnières, Normandy »)."""
     if s["lieux"] and _contient(t, s["lieux"]):
@@ -1025,7 +1029,7 @@ def _dans_secteur(t, s):
 _RX_CACHE: dict[object, re.Pattern[str]] = {}  # cle : le tuple, ou son id()
 
 
-def _contient(t, tokens):
+def _contient(t: str, tokens: Iterable[str]) -> bool:
     """Un des `tokens` apparait-il comme MOT ENTIER dans `t` ?
 
     La comparaison en sous-chaine faisait entrer « Singapore » dans le Sud-Est :
@@ -1045,7 +1049,7 @@ def _contient(t, tokens):
     return bool(rx.search(t))
 
 
-def _departement(t):
+def _departement(t: str) -> str | None:
     """Numero de departement lu dans le lieu normalise, ou None."""
     m = _RX_DEP.search(t)
     if not m:
@@ -1063,7 +1067,7 @@ _RX_VILLE_ETAT = re.compile(
 )
 
 
-def _code_etranger(job_sources, lieu):
+def _code_etranger(job_sources: Any, lieu: str) -> bool:
     """_RX_ETRANGER, sans prendre une particule pour un code pays : son motif
     est insensible a la casse, et « Rive-de-Gier » y devenait l'Allemagne
     (« de »). Un code de deux lettres ne compte qu'en MAJUSCULES et hors d'un
@@ -1078,7 +1082,7 @@ def _code_etranger(job_sources, lieu):
     return False
 
 
-def zone_lieu(lieu):
+def zone_lieu(lieu: str | None) -> str:
     """Zone d'un lieu : prioritaire / sud-est / ailleurs / international / inconnu.
 
     Ordre : noms francais cibles, puis indices etrangers, PUIS departement.
@@ -1159,7 +1163,7 @@ def zone_lieu(lieu):
     return AILLEURS
 
 
-def sous_zone(lieu):
+def sous_zone(lieu: str | None) -> str:
     """Pour une offre PRIORITAIRE : « bordeaux » ou « idf ». Sinon ''.
 
     Les deux cibles partagent une zone (meme priorite de tri), mais pas une
@@ -1172,15 +1176,15 @@ def sous_zone(lieu):
     d = _departement(t)
     for s in SECTEURS_PRIORITAIRES:
         if _dans_secteur(t, s) or (d and d in s["departements"]):
-            return s["cle"]
-    return SECTEURS_PRIORITAIRES[0]["cle"] if SECTEURS_PRIORITAIRES else ""
+            return str(s["cle"])
+    return str(SECTEURS_PRIORITAIRES[0]["cle"]) if SECTEURS_PRIORITAIRES else ""
 
 
-def libelle_secteur(cle):
+def libelle_secteur(cle: str) -> str:
     """« Paris », « Bordeaux »… pour une cle rendue par sous_zone."""
     for s in SECTEURS_PRIORITAIRES + SECTEURS_SECONDAIRES:
         if s["cle"] == cle:
-            return s["libelle"]
+            return str(s["libelle"])
     return cle
 
 
@@ -1553,7 +1557,7 @@ _ISO_PAYS = {
 }
 
 
-def pays_lieu(lieu):
+def pays_lieu(lieu: str | None) -> str:
     """Pays d'un lieu, en francais : « France », « Suisse »…, ou « ? ».
 
     La France se decide par zone_lieu, qui connait deja departements, communes
@@ -1692,7 +1696,7 @@ _REGIONS = {
 _PAYS_REGION = {p: r for r, ps in _REGIONS.items() for p in ps}
 
 
-def region_pays(pays):
+def region_pays(pays: str | None) -> str:
     """Region d'un pays rendu par pays_lieu. La France est en Europe, comme
     tout pays europeen non liste ailleurs ; « ? » et « étranger (autre) »
     restent « ? »."""
@@ -1701,7 +1705,7 @@ def region_pays(pays):
     return _PAYS_REGION.get(pays, "Europe")
 
 
-def lieu_du_titre(titre):
+def lieu_du_titre(titre: str | None) -> str | None:
     """Ville etrangere nommee dans l'INTITULE (« … (VIE - New York) »), ou None.
 
     POURQUOI. Talent et Glassdoor donnent parfois le SIEGE comme lieu : Numberly
@@ -1721,7 +1725,7 @@ def lieu_du_titre(titre):
     return None
 
 
-def lieu_effectif(lieu, titre):
+def lieu_effectif(lieu: str | None, titre: str | None) -> str | None:
     """Le lieu a retenir : celui de l'annonce, sauf s'il est francais (ou vide)
     alors que l'intitule nomme une ville etrangere."""
     t = lieu_du_titre(titre)
@@ -1730,7 +1734,7 @@ def lieu_effectif(lieu, titre):
     return lieu
 
 
-def ville_affichee(lieu):
+def ville_affichee(lieu: str | None) -> str:
     """Le lieu tel que l'app l'affiche : toute l'Ile-de-France devient « Paris »
     (l'utilisateur, 2026-10-05). « La Defense », « Paris - 75 », « Courbevoie, Ile-de-
     France » et « Greater Paris Metropolitan Region » sont une seule recherche
@@ -1740,13 +1744,13 @@ def ville_affichee(lieu):
     return lieu or ""
 
 
-def main():
+def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "--ecrire", action="store_true", help="inscrit le champ `zone` dans chaque offre de la file"
     )
     a = ap.parse_args()
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
     from jobhunter.stockage import file as queue_io
 

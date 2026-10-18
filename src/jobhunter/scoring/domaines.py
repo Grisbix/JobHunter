@@ -4,6 +4,8 @@ Venu de Scripts/scrape_jobs.py (phase 3.4) : job_sources l'importait en tete, ce
 liait la collecte au scraping des sites carriere ; scrape_jobs le re-exporte.
 """
 
+import re
+
 from jobhunter import profil as _P
 
 # ── Lexique LARGE du filtre d'offres : profil.json, filtre_titre.lexique_large ──
@@ -35,7 +37,7 @@ DOMAINE_MAP = {
 # sous-chaines : « isr » nu se retrouve au milieu d'autres mots, et ce depot a
 # deja paye singapore pour « gap », diverse pour « rse » et Credit Agricole pour
 # « agricol ». Les termes longs, eux, n'ont pas besoin de bornes.
-_DOMAINES_RX = None
+_DOMAINES_RX: list[tuple[str, re.Pattern[str] | None]] | None = None
 
 
 def classify_domaine(title: str) -> str:

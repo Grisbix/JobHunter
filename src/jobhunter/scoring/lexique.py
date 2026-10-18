@@ -16,7 +16,7 @@ CV_VARIANT = {d["cle"]: d.get("cv") or "" for d in _DOMAINES}
 CV_VARIANT_EN = {d["cle"]: d.get("cv_en") or "" for d in _DOMAINES}
 
 
-def cv_variant_key(domaine):
+def cv_variant_key(domaine: str | None) -> str:
     """Cle de domaine du profil pour un champ `domaine` d'offre.
 
     Accepte la cle elle-meme, son libelle (« Finance »), ou un texte libre lu
@@ -25,11 +25,11 @@ def cv_variant_key(domaine):
     bas = d.lower()
     for x in _DOMAINES:
         if bas in (x["cle"].lower(), str(x.get("libelle", "")).lower()):
-            return x["cle"]
+            return str(x["cle"])
     for x in _DOMAINES[:-1]:
         if _P.cherche(_P.motif(x.get("mots_titre")), d):
-            return x["cle"]
-    return _DOMAINES[-1]["cle"]
+            return str(x["cle"])
+    return str(_DOMAINES[-1]["cle"])
 
 
 # ---- Lexique de competences (libelle -> synonymes a chercher dans l'offre) ----
@@ -50,6 +50,6 @@ _RX_SKILL = {
 _SUB_SKILL = {lab: [n for n in ns if len(n.strip()) > _SHORT] for lab, ns in SKILL_LEX.items()}
 
 
-def has_skill(label, t):
+def has_skill(label: str, t: str) -> bool:
     """Le libellé est-il présent dans le texte (déjà en minuscules) ?"""
     return any(n in t for n in _SUB_SKILL[label]) or any(r.search(t) for r in _RX_SKILL[label])

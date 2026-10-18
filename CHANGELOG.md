@@ -10,7 +10,8 @@ Rien ne change dans ce que fait JobHunter.
 
 - Charger le moteur ne crée plus de dossiers : ils le sont au moment d'écrire un CV, une
   lettre ou un message.
-- Le socle (stockage, profil, réseau) est entièrement typé, vérifié par mypy en CI.
+- Le socle (stockage, profil, réseau) et le calcul des notes sont entièrement typés,
+  vérifiés par mypy en CI.
 - Documentation : `docs/architecture.md` et les décisions d'architecture (`docs/adr/`).
 - Le moteur s'installe comme un paquet (`pip install -e .`) : la commande `jobhunter` existe
   alors directement.

@@ -154,8 +154,9 @@ du moteur, et `INCIDENTS` porté par le client HTTP.
 Fini quand : mypy strict sur le cœur, aucun `# type: ignore` sans commentaire.
 
 **Avancement (2026-10-18, v1.13.0)** : mypy en CI sur tout le paquet ; strict sur le socle
-(`stockage`, `profil`, `reseau`, `racine`, `texte`, `liens`, `types`). Reste le `scoring`
-(~170 erreurs strictes, surtout des signatures à annoter) et les `TypedDict`.
+(`stockage`, `profil`, `reseau`, `racine`, `texte`, `liens`, `types`) et sur tout le
+`scoring` (+ `chemins`, `_facade`) : le critère de fin est atteint. Restent, en continu,
+les `TypedDict` d'`Offre` et `Candidature`, et le durcissement des autres paquets.
 
 ## Phase 6 — Distribution (1 journée) → v2.x
 
