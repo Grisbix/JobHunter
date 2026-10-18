@@ -20,8 +20,10 @@ import json
 import os
 import re
 import sys
+from collections.abc import Iterable
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 from jobhunter import racine as _racine
 
@@ -35,20 +37,20 @@ class ProfilAbsent(RuntimeError):
 
 
 @lru_cache(maxsize=1)
-def charger():
+def charger() -> dict[str, Any]:
     if not FICHIER.exists():
         raise ProfilAbsent(
             f"Profil introuvable : {FICHIER}\n"
             "Lance d'abord : python Scripts/premier_lancement.py <ton_cv.pdf|docx>"
         )
     with open(FICHIER, encoding="utf-8") as f:
-        p = json.load(f)
+        p: dict[str, Any] = json.load(f)
     return p
 
 
-def get(chemin, defaut=None):
+def get(chemin: str, defaut: Any = None) -> Any:
     """get("scoring.axes") -> valeur, ou `defaut` si une etape manque."""
-    v = charger()
+    v: Any = charger()
     for k in chemin.split("."):
         if not isinstance(v, dict) or k not in v:
             return defaut
@@ -57,7 +59,7 @@ def get(chemin, defaut=None):
 
 
 # ── Identite ────────────────────────────────────────────────────────────────
-def identite():
+def identite() -> dict[str, str]:
     i = get("identite", {}) or {}
     nom = (i.get("nom_complet") or f"{i.get('prenom', '')} {i.get('nom', '')}").strip()
     return {
@@ -70,7 +72,7 @@ def identite():
     }
 
 
-def prefixe_fichier():
+def prefixe_fichier() -> str:
     """« Prenom_Nom » pour nommer les documents generes."""
     nom = identite()["nom"]
     import unicodedata
@@ -79,13 +81,13 @@ def prefixe_fichier():
     return re.sub(r"[^A-Za-z0-9]+", "_", s).strip("_") or "Candidat"
 
 
-def accord(masculin, feminin):
+def accord(masculin: str, feminin: str) -> str:
     """Choisit la forme selon le genre du profil (« Diplômé » / « Diplômée »)."""
     return feminin if identite()["genre"] == "f" else masculin
 
 
 # ── Motifs ──────────────────────────────────────────────────────────────────
-def _fragment(mot, entier):
+def _fragment(mot: object, entier: bool) -> str:
     mot = str(mot)
     if mot.startswith("re:"):
         return "(?:" + mot[3:] + ")"  # regex : prise TELLE QUELLE
@@ -95,7 +97,7 @@ def _fragment(mot, entier):
     return r"\b" + corps + (r"\b" if entier else "")
 
 
-def motif(mots, entier=False):
+def motif(mots: Iterable[object] | None, entier: bool = False) -> re.Pattern[str] | None:
     """Une regex compilee qui trouve l'un des `mots`, ou None si la liste est vide.
 
     `entier=True` borne aussi a droite les MOTS (sigles courts : « rse » ne doit
@@ -106,21 +108,21 @@ def motif(mots, entier=False):
     return re.compile("|".join(_fragment(m, entier) for m in mots), re.I)
 
 
-def cherche(rx, texte):
+def cherche(rx: re.Pattern[str] | None, texte: str | None) -> bool:
     return bool(rx and rx.search(texte or ""))
 
 
 # ── Domaines : variantes de CV et paragraphes de parcours ──────────────────
-def domaines():
+def domaines() -> list[dict[str, Any]]:
     """Liste ordonnee de domaines. Le premier dont un mot apparait dans
     l'intitule gagne ; le DERNIER sert de repli."""
-    d = get("domaines", []) or []
+    d: list[dict[str, Any]] = get("domaines", []) or []
     if not d:
         d = [{"cle": "General", "libelle": "Général", "mots_titre": [], "cv": ""}]
     return d
 
 
-def domaine_par_cle(cle):
+def domaine_par_cle(cle: str) -> dict[str, Any]:
     for d in domaines():
         if d.get("cle") == cle:
             return d
@@ -240,14 +242,14 @@ _CHAMPS_FORMULAIRE = (
 )
 
 
-def formulaire():
+def formulaire() -> dict[str, Any]:
     """Le profil de remplissage des formulaires : identite + section
     « formulaire » du profil. JAMAIS de mot de passe : regle du projet, aucun
     programme n'en manipule — les champs mot de passe restent a l'utilisateur."""
     i = get("identite", {}) or {}
     f = get("formulaire", {}) or {}
     ident = identite()
-    out = {
+    out: dict[str, Any] = {
         "full": ident["nom"],
         "prenom": i.get("prenom", ""),
         "nom": i.get("nom", ""),
@@ -264,7 +266,7 @@ def formulaire():
 
 
 if __name__ == "__main__":
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
     try:
         p = charger()
     except ProfilAbsent as e:

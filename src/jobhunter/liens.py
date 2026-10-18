@@ -4,12 +4,13 @@ Une seule implementation : les six copies d'avant divergeaient (casse, accents,
 `file://` oublie). jutil les re-exporte.
 """
 
+from os import PathLike
 from pathlib import Path
 from urllib.parse import quote, unquote
 
 
 # ── Chemins ↔ URL file:/// ───────────────────────────────────────────────────
-def chemin_de(u):
+def chemin_de(u: str | PathLike[str] | None) -> Path | None:
     """URL `file:///…` (ou chemin nu) → Path. None si vide.
 
     Gere `file:///` ET `file://` : trois des six copies precedentes ne
@@ -26,12 +27,12 @@ def chemin_de(u):
     return Path(unquote(s))
 
 
-def url_de(p):
+def url_de(p: str | PathLike[str]) -> str:
     """Path → URL `file:///…`, séparateurs Windows convertis."""
     return "file:///" + quote(str(p).replace("\\", "/"), safe="/:")
 
 
-def existe(u):
+def existe(u: str | PathLike[str] | None) -> bool:
     """Le document désigné par cette URL/ce chemin est-il sur le disque ?"""
     p = chemin_de(u)
     try:

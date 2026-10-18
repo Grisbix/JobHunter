@@ -36,11 +36,13 @@ donc conservé. Une exception dans la fonction annule l'écriture.
 """
 
 import json
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
 from jobhunter import racine
 from jobhunter.stockage import atomique, verrou
+from jobhunter.types import Candidature, Chemin, Suivi
 
 CHEMIN = racine.scripts() / "suivi.json"
 
@@ -49,7 +51,7 @@ class VerrouIndisponible(RuntimeError):
     """Un autre programme modifie le suivi et ne l'a pas relâché à temps."""
 
 
-def charger(chemin=None):
+def charger(chemin: Chemin | None = None) -> Suivi:
     """Le suivi, en lecture. Dict vide si le fichier manque ou est illisible."""
     p = Path(chemin or CHEMIN)
     try:
@@ -60,7 +62,7 @@ def charger(chemin=None):
 
 
 @contextmanager
-def transaction(chemin=None, attente=30):
+def transaction(chemin: Chemin | None = None, attente: float = 30) -> Iterator[Suivi]:
     """Verrou + relecture fraîche + écriture atomique à la sortie du bloc.
 
     `attente` courte : les appelants sont interactifs (un clic dans l'app) ou
@@ -83,13 +85,15 @@ def transaction(chemin=None, attente=30):
             verrou.rendre_verrou(p)
 
 
-def modifier(fn, chemin=None, attente=30):
+def modifier[T](fn: Callable[[Suivi], T], chemin: Chemin | None = None, attente: float = 30) -> T:
     """`fn(suivi)` sous verrou, sur l'état FRAÎCHEMENT relu. Rend ce que fn rend."""
     with transaction(chemin, attente=attente) as suivi:
         return fn(suivi)
 
 
-def poser(oid, rec, chemin=None, attente=30):
+def poser(
+    oid: str, rec: Candidature | None, chemin: Chemin | None = None, attente: float = 30
+) -> None:
     """Écrit (ou efface, si `rec` est vide) l'entrée d'une candidature.
 
     `attente` : à raccourcir quand l'appelant est une interface. Tkinter est
@@ -98,7 +102,7 @@ def poser(oid, rec, chemin=None, attente=30):
     vite et afficher « réessaie ».
     """
 
-    def _f(s):
+    def _f(s: Suivi) -> None:
         if rec:
             s[oid] = rec
         else:
@@ -110,7 +114,7 @@ def poser(oid, rec, chemin=None, attente=30):
 if __name__ == "__main__":
     import sys
 
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
     s = charger()
     print(f"{len(s)} candidature(s) dans {CHEMIN.name}")
     for k, v in sorted(s.items())[:10]:

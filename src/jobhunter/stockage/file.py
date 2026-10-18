@@ -21,11 +21,13 @@ Le masquer casserait l'application.
 """
 
 import json
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
 from jobhunter import racine
 from jobhunter.stockage import atomique, verrou
+from jobhunter.types import Chemin, Offre
 
 HERE = racine.scripts()
 CHEMIN = HERE / "apply_queue.json"
@@ -42,7 +44,7 @@ CHEMIN = HERE / "apply_queue.json"
 DESCRIPTIONS = HERE / "descriptions.json"
 
 
-def oid(offre):
+def oid(offre: Offre) -> str:
     """Identifiant stable d'une offre : « entreprise|poste ».
 
     Unique sur les 2613 offres réelles (vérifié), et déjà la convention de l'app.
@@ -51,14 +53,15 @@ def oid(offre):
     return f"{(offre.get('entreprise') or '').strip()}|{(offre.get('poste') or '').strip()}"
 
 
-def _lire_descriptions():
+def _lire_descriptions() -> dict[str, str]:
     try:
-        return json.loads(DESCRIPTIONS.read_text(encoding="utf-8"))
+        textes: dict[str, str] = json.loads(DESCRIPTIONS.read_text(encoding="utf-8"))
+        return textes
     except (FileNotFoundError, ValueError):
         return {}
 
 
-def _est_la_file(p):
+def _est_la_file(p: Chemin) -> bool:
     """`p` designe-t-il LA file (celle dont les descriptions vivent a part) ?
 
     Compare les chemins RESOLUS : `Path("apply_queue.json")` lance depuis Scripts/
@@ -71,7 +74,7 @@ def _est_la_file(p):
         return False
 
 
-def charger(chemin=None, descriptions=True):
+def charger(chemin: Chemin | None = None, descriptions: bool = True) -> list[Offre]:
     """Les offres, en LECTURE SEULE, descriptions réinjectées.
 
     Pas de verrou : les écritures étant atomiques (tmp + os.replace), une lecture
@@ -83,7 +86,7 @@ def charger(chemin=None, descriptions=True):
     """
     p = Path(chemin or CHEMIN)
     try:
-        offres = json.loads(p.read_text(encoding="utf-8"))
+        offres: list[Offre] = json.loads(p.read_text(encoding="utf-8"))
     except FileNotFoundError:
         return []
     if descriptions and _est_la_file(p):
@@ -97,7 +100,9 @@ def charger(chemin=None, descriptions=True):
     return offres
 
 
-def sauver(offres, chemin=None, _avant=None):
+def sauver(
+    offres: list[Offre], chemin: Chemin | None = None, _avant: dict[str, str] | None = None
+) -> None:
     """Écriture atomique, SANS verrou. Réservé aux cas où l'appelant tient déjà
     le verrou. Dans le doute, utiliser `transaction`.
 
@@ -146,7 +151,12 @@ class VerrouIndisponible(RuntimeError):
 
 
 @contextmanager
-def transaction(chemin=None, attente=180, relire=True, descriptions=True):
+def transaction(
+    chemin: Chemin | None = None,
+    attente: float = 180,
+    relire: bool = True,
+    descriptions: bool = True,
+) -> Iterator[list[Offre]]:
     """Verrou + relecture fraîche + écriture atomique à la sortie du bloc.
 
     `relire` : relit le disque À L'INTÉRIEUR du verrou. C'est le point essentiel.
@@ -186,7 +196,9 @@ def transaction(chemin=None, attente=180, relire=True, descriptions=True):
         verrou.rendre_verrou(p)
 
 
-def modifier(fn, chemin=None, attente=180):
+def modifier[T](
+    fn: Callable[[list[Offre]], T], chemin: Chemin | None = None, attente: float = 180
+) -> T:
     """`fn(offres)` sous verrou. Renvoie ce que `fn` renvoie.
 
     Sucre pour les programmes qui n'ont qu'une transformation à appliquer :

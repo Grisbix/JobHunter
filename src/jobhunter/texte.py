@@ -7,10 +7,11 @@ des lettres. Une seule version, partout.
 
 import re
 import unicodedata
+from collections.abc import Mapping
 
 
 # ── Normalisation de texte ───────────────────────────────────────────────────
-def sans_accent(s):
+def sans_accent(s: object) -> str:
     """Minuscules sans accents, via NFD.
 
     Remplace des tables manuelles qui oubliaient la moitie des lettres
@@ -20,7 +21,7 @@ def sans_accent(s):
     return "".join(c for c in s if not unicodedata.combining(c))
 
 
-def cle(s):
+def cle(s: str | None) -> str:
     """Clé de comparaison : minuscules, blancs normalises. GARDE les accents.
 
     Volontairement distincte de `sans_accent` : cette fonction sert de cle de
@@ -31,7 +32,7 @@ def cle(s):
     return re.sub(r"\s+", " ", (s or "").strip().lower())
 
 
-def verifier_motifs(espace, minimum=1):
+def verifier_motifs(espace: Mapping[str, object], minimum: int = 1) -> int:
     """Refuse de demarrer si une regex du module porte un `\\b` corrompu.
 
     Une frontiere de mot se corrompt de deux facons, toutes deux SILENCIEUSES —

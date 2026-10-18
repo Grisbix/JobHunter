@@ -20,14 +20,16 @@ import os
 import time as _time
 from pathlib import Path
 
-_TENUS = {}
+_TENUS: dict[str, bool] = {}
+
+Chemin = str | os.PathLike[str]
 
 
-def _fverrou(path):
+def _fverrou(path: Chemin) -> Path:
     return Path(str(path) + ".lock")
 
 
-def _pid_vivant(pid, depuis=None):
+def _pid_vivant(pid: int | str | None, depuis: float | str | None = None) -> bool:
     """True si le processus tourne encore. En cas de doute : True (on ne casse pas).
 
     Un programme tue de force (Stop-Process, taskkill /F, crash) ne passe pas par
@@ -42,7 +44,7 @@ def _pid_vivant(pid, depuis=None):
     proprietaire ; un processus ne APRES ne peut pas l'etre.
     """
     try:
-        pid = int(pid)
+        pid = int(pid)  # type: ignore[arg-type]  # None (verrou illisible) leve TypeError, attrape
     except (TypeError, ValueError):
         return True
     if pid <= 0:
@@ -56,7 +58,7 @@ def _pid_vivant(pid, depuis=None):
         if not h:
             # 87 = ERREUR_PARAMETRE_INVALIDE -> le PID n'existe pas.
             # Tout autre code (acces refuse…) : on suppose vivant.
-            return k.GetLastError() != 87
+            return bool(k.GetLastError() != 87)
         try:
             code = ctypes.c_ulong()
             if k.GetExitCodeProcess(h, ctypes.byref(code)) and code.value != STILL_ACTIVE:
@@ -88,7 +90,9 @@ def _pid_vivant(pid, depuis=None):
         return True
 
 
-def prendre_verrou(path, attente=180, perime=1800, bavard=True):
+def prendre_verrou(
+    path: Chemin, attente: float = 180, perime: float = 1800, bavard: bool = True
+) -> bool:
     """Prend le verrou de `path`. Rend True si obtenu, False sinon.
 
     attente : secondes d'attente avant d'abandonner.
@@ -172,7 +176,7 @@ def prendre_verrou(path, attente=180, perime=1800, bavard=True):
         _time.sleep(1)
 
 
-def tenu(path):
+def tenu(path: Chemin) -> bool:
     """CE processus tient-il deja le verrou de `path` ?
 
     `prendre_verrou` est reentrant, mais `rendre_verrou` ne l'est PAS : il
@@ -184,7 +188,7 @@ def tenu(path):
     return bool(_TENUS.get(str(_fverrou(path))))
 
 
-def rendre_verrou(path):
+def rendre_verrou(path: Chemin) -> None:
     v = _fverrou(path)
     if _TENUS.pop(str(v), None):
         try:
@@ -193,7 +197,7 @@ def rendre_verrou(path):
             pass
 
 
-def garder(path, attente=180):
+def garder(path: Chemin, attente: float = 180) -> bool:
     """A appeler au debut d'un programme qui reecrit `path` en entier.
 
     Prend le verrou pour toute la duree du processus et le rend automatiquement

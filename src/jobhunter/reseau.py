@@ -17,11 +17,15 @@ remplacent la, et les appels de job_sources passent par eux.
 """
 
 import time
+from typing import TYPE_CHECKING, Any, BinaryIO
 
-_CLIENT = None
+if TYPE_CHECKING:
+    import httpx
+
+_CLIENT: "httpx.Client | None" = None
 
 
-def client_partage():
+def client_partage() -> "httpx.Client":
     """Un httpx.Client unique, qui GARDE SES CONNEXIONS OUVERTES.
 
     POURQUOI. Appeler `httpx.get` rouvre une connexion TLS a chaque requete.
@@ -38,7 +42,14 @@ def client_partage():
     return _CLIENT
 
 
-def req_borne(envoi, methode, url, total=None, max_octets=20_000_000, **kw):
+def req_borne(
+    envoi: Any,
+    methode: str,
+    url: str,
+    total: float | None = None,
+    max_octets: int = 20_000_000,
+    **kw: Any,
+) -> "httpx.Response":
     """Requete httpx avec une duree TOTALE maximale. Rend une vraie httpx.Response.
 
     `envoi` : le module httpx ou un httpx.Client — les deux ont `.stream()`.
@@ -60,7 +71,8 @@ def req_borne(envoi, methode, url, total=None, max_octets=20_000_000, **kw):
     total = total or max(60, 3 * t)
     debut = time.time()
     with envoi.stream(methode, url, **kw) as r:
-        blocs, taille = [], 0
+        blocs: list[bytes] = []
+        taille = 0
         for bloc in r.iter_bytes():
             blocs.append(bloc)
             taille += len(bloc)
@@ -78,16 +90,17 @@ def req_borne(envoi, methode, url, total=None, max_octets=20_000_000, **kw):
         )
 
 
-def post_borne(envoi, url, **kw):
+def post_borne(envoi: Any, url: str, **kw: Any) -> "httpx.Response":
     return req_borne(envoi, "POST", url, **kw)
 
 
-def lire_borne(f, total=60, max_octets=20_000_000):
+def lire_borne(f: BinaryIO, total: float = 60, max_octets: int = 20_000_000) -> bytes:
     """`f.read()` d'un urlopen, mais borne en duree TOTALE.
 
     `urlopen(timeout=25)` borne chaque operation de socket, exactement comme
     httpx : un serveur qui distille ses octets le tient indefiniment."""
-    debut, blocs, taille = time.time(), [], 0
+    debut, taille = time.time(), 0
+    blocs: list[bytes] = []
     # read1, PAS read(n) : read(65536) attend que les 64 Ko soient arrives avant
     # de rendre la main, donc la duree n'etait controlee qu'a la toute fin —
     # mesure : un serveur a un octet toutes les 0,3 s tenait la lecture 60 s
@@ -103,7 +116,7 @@ def lire_borne(f, total=60, max_octets=20_000_000):
             raise TimeoutError(f"lecture de plus de {total} s ou {max_octets} octets")
 
 
-def get_borne(envoi, url, **kw):
+def get_borne(envoi: Any, url: str, **kw: Any) -> "httpx.Response":
     """GET avec une duree TOTALE maximale. Rend une vraie httpx.Response.
 
     POURQUOI. `timeout=20` dans httpx borne CHAQUE operation — connexion,

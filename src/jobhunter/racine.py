@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 
-def racine():
+def racine() -> Path:
     env = os.environ.get("JOBHUNTER_RACINE")
     if env:
         return Path(env).resolve()
@@ -26,6 +26,6 @@ def racine():
     )
 
 
-def scripts():
+def scripts() -> Path:
     """Le dossier des donnees de travail (file, descriptions, suivi)."""
     return racine() / "Scripts"

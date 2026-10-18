@@ -11,10 +11,11 @@ reessaie quelques fois avant d'abandonner.
 import json
 import os
 import time
+from os import PathLike
 from pathlib import Path
 
 
-def ecrire_json(path, obj):
+def ecrire_json(path: str | PathLike[str], obj: object) -> None:
     path = Path(path)
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
