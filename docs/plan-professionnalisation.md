@@ -111,6 +111,8 @@ Ordre (des feuilles vers les dépendants, une PR chacun) :
 7. `app/` — la classe `App` (191 méthodes) devient un assemblage de vues.
 8. `cli.py` ; les `.bat`/`.sh` appellent `jobhunter …`.
 9. Retrait des façades `Scripts/*.py` (dernière PR, après un cycle complet de pipeline réel).
+   **En attente** : la routine du matin doit d'abord tourner sur le nouveau code ; le
+   retrait va de pair avec l'installation par `pip` (phase 6).
 
 **Avancement** : 1 à 8 faits le 2026-10-18 (v1.5.0 à v1.12.0), banc 0 écart à chaque étape.
 `sources/` a gardé les sources en modules plats (`ats.py` réunit les lecteurs d'ATS et les
@@ -135,6 +137,13 @@ Fini quand : `pip install -e .` puis `jobhunter pipeline` fonctionne ; aucun
 
 Fini quand : `python -c "import jobhunter.sources.linkedin"` ne lit aucun fichier.
 
+**Avancement (2026-10-18, v1.13.0)** : l'import n'écrit plus rien (trois dossiers étaient
+créés au chargement), n'ouvre aucune connexion, et ne lit que le profil et
+`Scripts/chemins.json` — vérifié par `tests/test_effets_import.py`, un cliquet. Restent :
+le `Profil` paresseux/injecté (les motifs du filtre sont compilés au chargement ; les
+tests les remplacent par la façade, à revoir ensemble), `logging` à la place des `print`
+du moteur, et `INCIDENTS` porté par le client HTTP.
+
 ## Phase 5 — Typage (continu, à partir de la phase 3)
 
 - Annotations sur toutes les fonctions publiques. `Offre` et `Candidature` en `TypedDict`
@@ -143,6 +152,10 @@ Fini quand : `python -c "import jobhunter.sources.linkedin"` ne lit aucun fichie
   ailleurs, durci module par module.
 
 Fini quand : mypy strict sur le cœur, aucun `# type: ignore` sans commentaire.
+
+**Avancement (2026-10-18, v1.13.0)** : mypy en CI sur tout le paquet ; strict sur le socle
+(`stockage`, `profil`, `reseau`, `racine`, `texte`, `liens`, `types`). Reste le `scoring`
+(~170 erreurs strictes, surtout des signatures à annoter) et les `TypedDict`.
 
 ## Phase 6 — Distribution (1 journée) → v2.x
 
@@ -166,6 +179,10 @@ Fini quand : mypy strict sur le cœur, aucun `# type: ignore` sans commentaire.
   contexte, décision, conséquence) ; le code garde une ou deux lignes et le lien.
 - `docs/architecture.md` (schéma des paquets et du pipeline), `CONTRIBUTING.md`
   (installer, tester, publier), docstrings au format Google sur l'API publique.
+
+**Avancement (2026-10-18, v1.13.0)** : `docs/architecture.md` et six ADR (façades, données,
+verrou, 429/403, aucune soumission, banc). Restent les docstrings Google et le
+remplacement progressif des commentaires-récits par des renvois aux ADR.
 
 ---
 

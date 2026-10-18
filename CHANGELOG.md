@@ -4,6 +4,15 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 1.13.0 — 2026-10-18
+
+Rien ne change dans ce que fait JobHunter.
+
+- Charger le moteur ne crée plus de dossiers : ils le sont au moment d'écrire un CV, une
+  lettre ou un message.
+- Le socle (stockage, profil, réseau) est entièrement typé, vérifié par mypy en CI.
+- Documentation : `docs/architecture.md` et les décisions d'architecture (`docs/adr/`).
+
 ## 1.12.0 — 2026-10-18
 
 Une entrée unique pour tous les programmes : `python -m jobhunter` liste les commandes
