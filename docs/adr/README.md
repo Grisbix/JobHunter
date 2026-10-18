@@ -11,5 +11,6 @@ lignes et renvoie ici. Vue d'ensemble : [`../architecture.md`](../architecture.m
 | [0004](0004-429-attendre-403-arreter.md) | Une limite de débit s'attend, un refus d'entrée s'arrête |
 | [0005](0005-aucune-soumission-automatique.md) | Aucune soumission automatique, aucun mot de passe manipulé |
 | [0006](0006-banc-de-non-regression.md) | Un banc de non-régression avant toute refonte |
+| [0007](0007-valeurs-du-profil-paresseuses.md) | Ce qui vient du profil se calcule à la première lecture |
 
 Nouvelle décision : `NNNN-titre-court.md`, numéro suivant, statut et date en tête.

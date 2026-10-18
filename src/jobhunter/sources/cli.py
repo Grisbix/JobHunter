@@ -3,8 +3,12 @@
 Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
 import argparse
+import importlib
 import json
+import sys
+from typing import Any
 
+from jobhunter import paresseux as _paresseux
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.agregateurs import scan_adzuna, scan_jooble
 from jobhunter.sources.apec import scan_apec
@@ -16,13 +20,27 @@ from jobhunter.sources.fir import scan_fir
 from jobhunter.sources.francetravail import scan_france_travail
 from jobhunter.sources.fusion import merge_into_queue
 from jobhunter.sources.glassdoor import scan_glassdoor
-from jobhunter.sources.indeed import INDEED_LIEUX, scan_indeed
+from jobhunter.sources.indeed import scan_indeed
 from jobhunter.sources.linkedin import scan_linkedin
 from jobhunter.sources.talent import scan_talent
 from jobhunter.sources.vie import scan_vie
 from jobhunter.sources.workday import scan_workday
 from jobhunter.sources.wtj import scan_wtj
 from jobhunter.texte import cle as _norm
+
+_ici = sys.modules[__name__]
+# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
+# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+_PARESSEUX: _paresseux.Fabriques = {}
+
+
+def __getattr__(nom: str) -> Any:
+    return _paresseux.lire(_ici, _PARESSEUX, nom)
+
+
+_PARESSEUX["INDEED_LIEUX"] = lambda: (
+    importlib.import_module("jobhunter.sources.indeed").INDEED_LIEUX
+)
 
 
 def main():
@@ -47,7 +65,7 @@ def main():
     )
     ap.add_argument(
         "--indeed-lieux",
-        default=",".join(INDEED_LIEUX),
+        default=",".join(_ici.INDEED_LIEUX),
         help="villes Indeed, separees par des virgules",
     )
     ap.add_argument(

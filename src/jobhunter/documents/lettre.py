@@ -2,18 +2,19 @@
 
 Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5)."""
 
+import importlib
 import re
+import sys
+from typing import Any
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt
 
 from jobhunter import chemins
+from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _P
 from jobhunter.documents.commun import (
-    LT_OUT,
-    PROFILE,
-    SKILL_INTERNES,
     _de,
     _slug,
     company_value,
@@ -21,7 +22,36 @@ from jobhunter.documents.commun import (
     minuscule_titre,
     titre_poste,
 )
-from jobhunter.scoring.lexique import _COMP, _DOMAINES, SKILL_LEX, cv_variant_key
+from jobhunter.scoring.lexique import cv_variant_key
+
+_ici = sys.modules[__name__]
+# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
+# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+_PARESSEUX: _paresseux.Fabriques = {}
+
+
+def __getattr__(nom: str) -> Any:
+    return _paresseux.lire(_ici, _PARESSEUX, nom)
+
+
+_PARESSEUX["LT_OUT"] = lambda: importlib.import_module("jobhunter.documents.commun").LT_OUT
+
+
+_PARESSEUX["PROFILE"] = lambda: importlib.import_module("jobhunter.documents.commun").PROFILE
+
+
+_PARESSEUX["SKILL_INTERNES"] = lambda: (
+    importlib.import_module("jobhunter.documents.commun").SKILL_INTERNES
+)
+
+
+_PARESSEUX["_COMP"] = lambda: importlib.import_module("jobhunter.scoring.lexique")._COMP
+
+
+_PARESSEUX["_DOMAINES"] = lambda: importlib.import_module("jobhunter.scoring.lexique")._DOMAINES
+
+
+_PARESSEUX["SKILL_LEX"] = lambda: importlib.import_module("jobhunter.scoring.lexique").SKILL_LEX
 
 
 def _citable(t, langue):
@@ -63,16 +93,16 @@ def _citable(t, langue):
 # Le deux-points et la virgule font le meme travail sans rien ajouter au bruit.
 # Ni tiret cadratin ni barre oblique non plus : « risque/performance » s'ecrit
 # « le risque et la performance ».
-SOCLE_FR = {d["cle"]: d.get("parcours_fr") or "" for d in _DOMAINES}
+_PARESSEUX["SOCLE_FR"] = lambda: ({d["cle"]: d.get("parcours_fr") or "" for d in _ici._DOMAINES})
 
 
-SOCLE_EN = {d["cle"]: d.get("parcours_en") or "" for d in _DOMAINES}
+_PARESSEUX["SOCLE_EN"] = lambda: ({d["cle"]: d.get("parcours_en") or "" for d in _ici._DOMAINES})
 
 
 def socle(cle, langue="fr"):
     """Paragraphe de parcours du domaine `cle`, ou celui du premier domaine
     qui en a un : une lettre sans parcours ne dit rien du candidat."""
-    table = SOCLE_EN if langue == "en" else SOCLE_FR
+    table = _ici.SOCLE_EN if langue == "en" else _ici.SOCLE_FR
     if table.get(cle):
         return table[cle]
     return next((v for v in table.values() if v), "")
@@ -94,7 +124,7 @@ def socle(cle, langue="fr"):
 #   - `sauf_domaines` : inutile quand le parcours choisi dit deja la meme chose ;
 #   - UN SEUL contexte par lettre, le premier de la liste qui s'applique :
 #     le concret chasse le generique, deux paragraphes voisins se repetaient.
-_CONTEXTES = _P.get("lettre.contextes", []) or []
+_PARESSEUX["_CONTEXTES"] = lambda: _P.get("lettre.contextes", []) or []
 
 
 def _contexte_applicable(ctx, offer):
@@ -135,7 +165,7 @@ def contexte(offer, langue="fr", position=None):
     PREMIER contexte applicable masquait les autres : une offre a la fois
     agricole (paragraphe) et durable (socle) perdait la phrase durable du
     message, que le code d'origine ajoutait independamment (Ortec, 15/10)."""
-    for ctx in _CONTEXTES:
+    for ctx in _ici._CONTEXTES:
         if position and (ctx.get("position") or "paragraphe") != position:
             continue
         if _contexte_applicable(ctx, offer):
@@ -287,13 +317,13 @@ def salutation(offer, langue="fr"):
 def company_value_en(company):
     """Accroche anglaise connue, ou "" (meme regle que company_value)."""
     c = (company or "").lower()
-    for k, v in COMPANY_VALUE_EN.items():
+    for k, v in _ici.COMPANY_VALUE_EN.items():
         if k in c:
             return v
     return ""
 
 
-COMPANY_VALUE_EN = dict(_P.get("lettre.valeurs_entreprises_en", {}) or {})
+_PARESSEUX["COMPANY_VALUE_EN"] = lambda: dict(_P.get("lettre.valeurs_entreprises_en", {}) or {})
 
 
 # Les libelles de competence tels qu'ils s'ecrivent DANS UNE PHRASE. Sur le CV
@@ -307,10 +337,14 @@ COMPANY_VALUE_EN = dict(_P.get("lettre.valeurs_entreprises_en", {}) or {})
 # se lit comme un export de base de donnees, pas comme une lettre. L'article
 # est inclus parce qu'il depend du mot (le, la, l', les) et qu'aucune regle
 # simple ne le devine.
-SKILL_PROSE_FR = {lab: v["prose_fr"] for lab, v in _COMP.items() if v.get("prose_fr")}
+_PARESSEUX["SKILL_PROSE_FR"] = lambda: (
+    {lab: v["prose_fr"] for lab, v in _ici._COMP.items() if v.get("prose_fr")}
+)
 
 
-SKILL_PROSE_EN = {lab: v["prose_en"] for lab, v in _COMP.items() if v.get("prose_en")}
+_PARESSEUX["SKILL_PROSE_EN"] = lambda: (
+    {lab: v["prose_en"] for lab, v in _ici._COMP.items() if v.get("prose_en")}
+)
 
 
 def _enumere(items, langue="fr"):
@@ -354,7 +388,7 @@ def competences_en_prose(skills, langue="fr", n=4):
        l'analyse financière et le contrôle de gestion » : deux conjonctions
        pour trois idees, alors que l'enumeration n'en demande qu'une.
     """
-    table = SKILL_PROSE_EN if langue == "en" else SKILL_PROSE_FR
+    table = _ici.SKILL_PROSE_EN if langue == "en" else _ici.SKILL_PROSE_FR
     lien = " and " if langue == "en" else " et "
     vus, fins, sortie = set(), set(), []
     for s in skills:
@@ -377,7 +411,9 @@ def competences_en_prose(skills, langue="fr", n=4):
 # Competences qui ne sont pas des termes TECHNIQUES : les citer dans cette
 # enumeration donnait « forecast, audit, excel, anglais » — et l'anglais est
 # deja annonce deux lignes plus bas, avec son score au TOEIC.
-_NON_TECHNIQUE = {lab for lab, v in _COMP.items() if v.get("technique") is False}
+_PARESSEUX["_NON_TECHNIQUE"] = lambda: (
+    {lab for lab, v in _ici._COMP.items() if v.get("technique") is False}
+)
 
 
 # Faux amis : mots francais du lexique qui existent aussi en anglais avec un
@@ -409,7 +445,7 @@ _FAUX_AMIS_EN = {
 # Chaque entree dit la forme FR et la forme EN. `None` = ne pas ecrire dans
 # cette langue-la. Un terme absent de la table n'est pas imprime : mieux vaut
 # une enumeration plus courte qu'un anglicisme de trop.
-_TERMES = {k: tuple(v) for k, v in (_P.get("termes", {}) or {}).items()}
+_PARESSEUX["_TERMES"] = lambda: ({k: tuple(v) for k, v in (_P.get("termes", {}) or {}).items()})
 
 
 def mots_techniques(offer_text, n=6, langue="fr"):
@@ -433,8 +469,8 @@ def mots_techniques(offer_text, n=6, langue="fr"):
     t = (offer_text or "").lower()
     i = 0 if langue != "en" else 1
     trouves = []
-    for lab, mots in SKILL_LEX.items():
-        if lab in SKILL_INTERNES or lab in _NON_TECHNIQUE:
+    for lab, mots in _ici.SKILL_LEX.items():
+        if lab in _ici.SKILL_INTERNES or lab in _ici._NON_TECHNIQUE:
             continue
         for m in mots:
             m = m.lower()
@@ -444,7 +480,7 @@ def mots_techniques(offer_text, n=6, langue="fr"):
             # et « esg » dans n'importe quel identifiant. C'est la faute qui
             # revient le plus souvent dans ce projet.
             if len(m) >= 3 and re.search(r"\b" + re.escape(m) + r"\b", t):
-                forme = _TERMES.get(m, (None, None))[i]
+                forme = _ici._TERMES.get(m, (None, None))[i]
                 if forme and forme not in trouves:
                     trouves.append(forme)
                 break
@@ -502,9 +538,9 @@ def tailor_letter(offer, nom=None, langue="fr"):
 
     # en-tete expediteur
     for line in [
-        PROFILE["nom"],
-        PROFILE["email"],
-        PROFILE["tel"],
+        _ici.PROFILE["nom"],
+        _ici.PROFILE["email"],
+        _ici.PROFILE["tel"],
     ]:  # pas d'adresse/ville (vie privee)
         para(line, WD_ALIGN_PARAGRAPH.LEFT, 0)
     para("")
@@ -565,10 +601,10 @@ def tailor_letter(offer, nom=None, langue="fr"):
             for _bloc in _corps:
                 para(_bloc)
             para("Yours sincerely," if _nomme else "Yours faithfully,", space=12)
-            para(PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
+            para(_ici.PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
             from rename_docs import new_name
 
-            out_sm = LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
+            out_sm = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
             doc.save(str(out_sm))
             return out_sm
         # « caught my full attention » est le calque de « a retenu toute mon
@@ -646,10 +682,10 @@ def tailor_letter(offer, nom=None, langue="fr"):
         # inconnu ; « Yours sincerely » suppose qu'on l'a nomme. La lettre sait
         # desormais lequel des deux cas s'applique.
         para("Yours sincerely," if _nomme else "Yours faithfully,", space=12)
-        para(PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
+        para(_ici.PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
         from rename_docs import new_name
 
-        out_en = LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
+        out_en = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
         doc.save(str(out_en))
         return out_en
     # le titre BRUT de l'annonce ne va pas dans la lettre : voir titre_poste()
@@ -674,10 +710,10 @@ def tailor_letter(offer, nom=None, langue="fr"):
             f"Je vous prie d'agréer, {_reprise_civ}, l'expression de mes salutations distinguées.",
             space=12,
         )
-        para(PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
+        para(_ici.PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
         from rename_docs import new_name
 
-        out_sm = LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
+        out_sm = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
         doc.save(str(out_sm))
         return out_sm
 
@@ -795,10 +831,10 @@ def tailor_letter(offer, nom=None, langue="fr"):
         f"Je vous prie d'agréer, {_reprise_civ}, l'expression de mes salutations distinguées.",
         space=12,
     )
-    para(PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
+    para(_ici.PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
 
     from rename_docs import new_name  # Prenom_Nom_Lettre_<Poste court>_<Entreprise>
 
-    out = LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
+    out = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
     doc.save(str(out))
     return out

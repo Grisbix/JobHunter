@@ -4,9 +4,12 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
 import json
 import re
+import sys
 import time
+from typing import Any
 from urllib.parse import quote
 
+from jobhunter import paresseux as _paresseux
 from jobhunter.scoring import zones as _zones
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.commun import (
@@ -18,6 +21,16 @@ from jobhunter.sources.commun import (
     contrat_du_titre,
     title_ok,
 )
+
+_ici = sys.modules[__name__]
+# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
+# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+_PARESSEUX: _paresseux.Fabriques = {}
+
+
+def __getattr__(nom: str) -> Any:
+    return _paresseux.lire(_ici, _PARESSEUX, nom)
+
 
 # ═══════════════ Indeed — la PAGE DE RÉSULTATS, et rien d'autre ═══════════════
 # Ce qu'on lit et ce qu'on ne lit pas. La frontiere n'est pas technique, elle
@@ -86,7 +99,9 @@ INDEED_REPOS = 45  # repos apres un refus, avant la seule seconde chance
 # Depuis le 04/10 : refus 403/challenge = arrêt immédiat ; quota 429 = un
 # réessai borné, puis arrêt. Le challenge Cloudflare a été observé en réel.
 # Lieux de recherche : les secteurs prioritaires du profil (zones.py).
-INDEED_LIEUX = [s["libelle"] for s in _zones.SECTEURS_PRIORITAIRES] or ["France"]
+_PARESSEUX["INDEED_LIEUX"] = lambda: (
+    [s["libelle"] for s in _zones.SECTEURS_PRIORITAIRES] or ["France"]
+)
 
 # On se presente pour ce qu'on est. Mesure faite, les trois cas :
 #   « JobHunter/1.0 … »   → 200, 1 108 971 o
@@ -274,7 +289,7 @@ def scan_indeed(mots=None, lieux=None, pause=None, *, persist=True):
     qu'une qui en tente 20, elle perd seulement une heure en repos inutiles.
     """
     mots = mots or _commun.KEYWORDS
-    lieux = lieux or INDEED_LIEUX
+    lieux = lieux or _ici.INDEED_LIEUX
     pause = INDEED_PAUSE if pause is None else pause
     _EX = _commun.contrats_exclus()
     offers = []

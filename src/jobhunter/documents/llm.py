@@ -2,14 +2,31 @@
 
 Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5)."""
 
+import importlib
 import os
+import sys
+from typing import Any
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt
 
+from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _P
-from jobhunter.documents.commun import PROFILE, _de, titre_poste
+from jobhunter.documents.commun import _de, titre_poste
+
+_ici = sys.modules[__name__]
+# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
+# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+_PARESSEUX: _paresseux.Fabriques = {}
+
+
+def __getattr__(nom: str) -> Any:
+    return _paresseux.lire(_ici, _PARESSEUX, nom)
+
+
+_PARESSEUX["PROFILE"] = lambda: importlib.import_module("jobhunter.documents.commun").PROFILE
+
 
 # ---- mode LLM : Claude API (si clé) OU Ollama local (gratuit) ----
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
@@ -20,7 +37,7 @@ OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.1:8b")
 
 def _llm_prompt(offer):
     return (
-        f"Tu es {PROFILE['nom']}. {_P.get('lettre.presentation_llm', '') or ''} "
+        f"Tu es {_ici.PROFILE['nom']}. {_P.get('lettre.presentation_llm', '') or ''} "
         f"Rédige le CORPS (3 paragraphes, français, sobre, factuel, sans clichés ni superlatifs) d'une lettre de motivation "
         f"pour le poste « {offer['role']} » chez {offer['company']}.\n\n"
         f"Missions de l'offre : {offer['missions'][:600]}\n"
@@ -80,7 +97,12 @@ def llm_rewrite(offer, cv_docx, letter_docx):
     doc = Document()
     doc.styles["Normal"].font.name = "Calibri"
     doc.styles["Normal"].font.size = Pt(11)
-    for line in [PROFILE["nom"], PROFILE["email"], PROFILE["tel"], ""]:  # pas d'adresse/ville
+    for line in [
+        _ici.PROFILE["nom"],
+        _ici.PROFILE["email"],
+        _ici.PROFILE["tel"],
+        "",
+    ]:  # pas d'adresse/ville
         doc.add_paragraph(line)
     # même nettoyage + élision que tailor_letter : ce chemin LLM écrivait le titre brut
     _t = titre_poste(offer.get("role") or "")
@@ -92,6 +114,6 @@ def llm_rewrite(offer, cv_docx, letter_docx):
         p = doc.add_paragraph(para.strip())
         p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     doc.add_paragraph("Je vous prie d'agréer, Madame, Monsieur, mes salutations distinguées.")
-    doc.add_paragraph(PROFILE["nom"])
+    doc.add_paragraph(_ici.PROFILE["nom"])
     doc.save(str(letter_docx))
     return True

@@ -25,6 +25,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from jobhunter import paresseux as _paresseux
 from jobhunter import racine as _racine
 
 RACINE = _racine.racine()
@@ -36,8 +37,14 @@ class ProfilAbsent(RuntimeError):
     pass
 
 
+# Profil fourni en memoire par `utiliser` (tests, essais) ; None = le fichier.
+_INJECTE: dict[str, Any] | None = None
+
+
 @lru_cache(maxsize=1)
 def charger() -> dict[str, Any]:
+    if _INJECTE is not None:
+        return _INJECTE
     if not FICHIER.exists():
         raise ProfilAbsent(
             f"Profil introuvable : {FICHIER}\n"
@@ -46,6 +53,27 @@ def charger() -> dict[str, Any]:
     with open(FICHIER, encoding="utf-8") as f:
         p: dict[str, Any] = json.load(f)
     return p
+
+
+def utiliser(donnees: dict[str, Any]) -> None:
+    """Remplace le profil par `donnees`, sans fichier : un test construit le profil
+    dont il a besoin. Tout ce que le moteur en avait tire est recalcule a la
+    lecture suivante. `recharger()` revient au fichier."""
+    global _INJECTE
+    _INJECTE = donnees
+    charger.cache_clear()
+    _paresseux.oublier()
+
+
+def recharger(fichier: Path | None = None) -> None:
+    """Revient au fichier (un autre si `fichier` est donne) et oublie les valeurs
+    tirees de l'ancien profil."""
+    global _INJECTE, FICHIER
+    _INJECTE = None
+    if fichier is not None:
+        FICHIER = Path(fichier)
+    charger.cache_clear()
+    _paresseux.oublier()
 
 
 def get(chemin: str, defaut: Any = None) -> Any:

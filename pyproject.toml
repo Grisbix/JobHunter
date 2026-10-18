@@ -109,6 +109,7 @@ module = [
     "jobhunter.scoring.*",
     "jobhunter.chemins",
     "jobhunter._facade",
+    "jobhunter.paresseux",
 ]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

@@ -2,15 +2,39 @@
 
 Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5)."""
 
+import importlib
 import json
 import shutil
+import sys
+from typing import Any
 
 from docx import Document
 
 from jobhunter import chemins
-from jobhunter.documents.commun import CV_ATS, CV_OUT, _de, _slug, titre_poste
+from jobhunter import paresseux as _paresseux
+from jobhunter.documents.commun import CV_ATS, _de, _slug, titre_poste
 from jobhunter.documents.rendu import to_pdf
-from jobhunter.scoring.lexique import CV_VARIANT, CV_VARIANT_EN, cv_variant_key
+from jobhunter.scoring.lexique import cv_variant_key
+
+_ici = sys.modules[__name__]
+# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
+# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+_PARESSEUX: _paresseux.Fabriques = {}
+
+
+def __getattr__(nom: str) -> Any:
+    return _paresseux.lire(_ici, _PARESSEUX, nom)
+
+
+_PARESSEUX["CV_OUT"] = lambda: importlib.import_module("jobhunter.documents.commun").CV_OUT
+
+
+_PARESSEUX["CV_VARIANT"] = lambda: importlib.import_module("jobhunter.scoring.lexique").CV_VARIANT
+
+
+_PARESSEUX["CV_VARIANT_EN"] = lambda: (
+    importlib.import_module("jobhunter.scoring.lexique").CV_VARIANT_EN
+)
 
 
 def cv_sur_mesure(offer):
@@ -98,12 +122,18 @@ def tailor_cv(offer, nom=None, langue="fr", allege=0, auto=True):
     un CV francais vaut mieux que pas de CV."""
     chemins.preparer()  # dossiers de sortie, au moment d'ecrire
     key = cv_variant_key(offer["domaine"])
-    src = CV_ATS / (CV_VARIANT.get(key) or "")
-    if not CV_VARIANT.get(key):
+    src = CV_ATS / (_ici.CV_VARIANT.get(key) or "")
+    if not _ici.CV_VARIANT.get(key):
         # Variante sans fichier : le premier CV du profil qui existe.
-        src = next((CV_ATS / f for f in CV_VARIANT.values() if f and (CV_ATS / f).exists()), src)
-    if langue == "en" and CV_VARIANT_EN.get(key) and (CV_ATS / CV_VARIANT_EN[key]).exists():
-        src = CV_ATS / CV_VARIANT_EN[key]
+        src = next(
+            (CV_ATS / f for f in _ici.CV_VARIANT.values() if f and (CV_ATS / f).exists()), src
+        )
+    if (
+        langue == "en"
+        and _ici.CV_VARIANT_EN.get(key)
+        and (CV_ATS / _ici.CV_VARIANT_EN[key]).exists()
+    ):
+        src = CV_ATS / _ici.CV_VARIANT_EN[key]
     if not src.is_file():
         print(f"  ! CV variante absente: {src.name or key} (profil.json, domaines[].cv)")
         return None
@@ -112,7 +142,9 @@ def tailor_cv(offer, nom=None, langue="fr", allege=0, auto=True):
     if src.suffix.lower() == ".pdf":
         # CV fourni en PDF seulement : il part tel quel, sans adaptation.
         # Un modele .docx permet d'y inserer l'intitule du poste.
-        out = CV_OUT / ((nom or new_name("CV", offer.get("role") or "", offer["company"])) + ".pdf")
+        out = _ici.CV_OUT / (
+            (nom or new_name("CV", offer.get("role") or "", offer["company"])) + ".pdf"
+        )
         shutil.copyfile(src, out)
         return out
     doc = Document(str(src))
@@ -194,7 +226,7 @@ def tailor_cv(offer, nom=None, langue="fr", allege=0, auto=True):
 
     from rename_docs import new_name  # Prenom_Nom_CV_<Poste court>_<Entreprise>
 
-    out = CV_OUT / ((nom or new_name("CV", role, offer["company"])) + ".docx")
+    out = _ici.CV_OUT / ((nom or new_name("CV", role, offer["company"])) + ".docx")
     doc.save(str(out))
     return out
 

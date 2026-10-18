@@ -7,7 +7,9 @@ import json
 import re
 import sys
 import time
+from typing import Any
 
+from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _P
 from jobhunter import racine as _racine
 
@@ -19,6 +21,16 @@ from jobhunter.reseau import lire_borne as _lire_borne  # noqa: F401
 from jobhunter.reseau import post_borne as _post_borne  # noqa: F401
 from jobhunter.reseau import req_borne as _req_borne  # noqa: F401
 from jobhunter.scoring.domaines import classify_domaine, matches_esg_finance
+
+_ici = sys.modules[__name__]
+# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
+# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+_PARESSEUX: _paresseux.Fabriques = {}
+
+
+def __getattr__(nom: str) -> Any:
+    return _paresseux.lire(_ici, _PARESSEUX, nom)
+
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -39,7 +51,7 @@ FRESH = HERE / "offres_scan.json"
 
 REJETS_TRI = HERE / "_rejets_tri.json"  # les tests le remplacent
 
-KEYWORDS = list(_P.get("collecte.mots_cles", []) or [])
+_PARESSEUX["KEYWORDS"] = lambda: list(_P.get("collecte.mots_cles", []) or [])
 
 # ── Slugs ATS publics (fintech/climate/finance FR-EU). 404 = ignoré silencieusement. ──
 # Vérifiés avec probe_ats.py (les slugs qui ne répondent pas sont ignorés en 404).
@@ -178,22 +190,24 @@ def _strip_html(h):
 # NB : sans csr|transition|environnement|hse, de vrais postes ESG étaient jetés —
 # « VIE Transition Énergétique Corporate » (Crédit Agricole) et « CSR & HR Officer »
 # (ODDO BHF) passaient matches_esg_finance mais échouaient ici, faute de mot métier.
-_FT = _P.get("filtre_titre", {}) or {}
+_PARESSEUX["_FT"] = lambda: _P.get("filtre_titre", {}) or {}
 
 # Mot METIER requis dans l'intitule (vide = pas d'exigence).
-_DOMAIN_RX = _P.motif(_FT.get("metier"))
+_PARESSEUX["_DOMAIN_RX"] = lambda: _P.motif(_ici._FT.get("metier"))
 
 # Roles jamais voulus, quel que soit le domaine.
-_HARD_NEG_RX = _P.motif(_FT.get("exclus"))
+_PARESSEUX["_HARD_NEG_RX"] = lambda: _P.motif(_ici._FT.get("exclus"))
 
 # Roles ecartes SAUF s'ils portent un marqueur de la cible secondaire
 # (exemple finance durable : « Developer » non, « AI Engineer » oui).
-_DEV_NEG_RX = _P.motif(_FT.get("exclus_sauf_complement"))
+_PARESSEUX["_DEV_NEG_RX"] = lambda: _P.motif(_ici._FT.get("exclus_sauf_complement"))
 
-_NEG_TITLE_RX = _P.motif((_FT.get("exclus") or []) + (_FT.get("exclus_sauf_complement") or []))
+_PARESSEUX["_NEG_TITLE_RX"] = lambda: _P.motif(
+    (_ici._FT.get("exclus") or []) + (_ici._FT.get("exclus_sauf_complement") or [])
+)
 
 # Marqueurs de la cible secondaire : passent meme avec un mot de _DEV_NEG_RX.
-_AI_RX = _P.motif(_FT.get("complement"))
+_PARESSEUX["_AI_RX"] = lambda: _P.motif(_ici._FT.get("complement"))
 
 # LinkedIn etiquette « CDI » les offres d'alternance et de stage : sa metadonnee
 # est fausse. L'intitule, lui, ne ment pas — « Alternance - Data Analyst » EST
@@ -499,12 +513,12 @@ def title_ok(t):
     « développeur », car c'est le marché visé en complément de l'ESG."""
     if not t:
         return False
-    if _P.cherche(_AI_RX, t):
-        return not _P.cherche(_HARD_NEG_RX, t)
+    if _P.cherche(_ici._AI_RX, t):
+        return not _P.cherche(_ici._HARD_NEG_RX, t)
     return bool(
         matches_esg_finance(t)
-        and (_DOMAIN_RX is None or _DOMAIN_RX.search(t))
-        and not _P.cherche(_NEG_TITLE_RX, t)
+        and (_ici._DOMAIN_RX is None or _ici._DOMAIN_RX.search(t))
+        and not _P.cherche(_ici._NEG_TITLE_RX, t)
     )
 
 

@@ -1,10 +1,11 @@
-"""Charger le moteur n'ecrit rien, ne sort pas sur le reseau, et ne lit que le profil.
+"""Charger le moteur n'ecrit rien, ne sort pas sur le reseau, et ne lit aucun fichier.
 
 Phase 4 du plan. Mesure faite par un crochet d'audit (`sys.addaudithook`) dans un
 processus neuf qui importe TOUS les modules de `jobhunter`. Avant : trois dossiers de
 sortie crees a l'import (CV/Par_offre, Lettres/Par_offre, Lettres/Messages) ; ils le
-sont maintenant au moment d'ecrire. Cliquet : toute nouvelle lecture a l'import doit
-etre justifiee ici.
+sont maintenant au moment d'ecrire. Le profil et `Scripts/chemins.json` etaient lus
+au chargement ; ce qui en est tire se calcule a la premiere lecture
+(`jobhunter.paresseux`).
 """
 
 import json
@@ -69,10 +70,5 @@ def test_aucun_reseau_a_l_import():
     assert MESURE["reseau"] == []
 
 
-def test_lectures_limitees_au_profil_et_aux_chemins():
-    # Le profil (motifs et listes du filtre, compiles au chargement) et Scripts/chemins.json
-    # (ou vivent les documents). Rendre le profil paresseux est la suite de la phase 4.
-    assert set(MESURE["lectures"]) <= {
-        "profil/exemple_finance_esg.json",
-        "Scripts/chemins.json",
-    }
+def test_aucune_lecture_a_l_import():
+    assert MESURE["lectures"] == []

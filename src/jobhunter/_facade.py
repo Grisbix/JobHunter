@@ -27,9 +27,14 @@ def installer(paquet: str, sous_modules: Sequence[str]) -> list[types.ModuleType
     origine = {m: dict(vars(m)) for m in modules}
     noms_sous_modules = set(sous_modules)
 
+    def paresseux(m: types.ModuleType) -> dict[str, Any]:
+        """Fabriques des valeurs calculees a la premiere lecture (jobhunter.paresseux)."""
+        fabriques: dict[str, Any] = vars(m).get("_PARESSEUX", {})
+        return fabriques
+
     def tenants(nom: str) -> list[types.ModuleType]:
         """Sous-modules ou `nom` est lie. Le proprietaire (celui qui le DEFINIT) en tete."""
-        t = [m for m in modules if nom in vars(m) or nom in origine[m]]
+        t = [m for m in modules if nom in vars(m) or nom in origine[m] or nom in paresseux(m)]
         t.sort(key=lambda m: getattr(origine[m].get(nom), "__module__", None) != m.__name__)
         return t
 
@@ -38,6 +43,8 @@ def installer(paquet: str, sous_modules: Sequence[str]) -> list[types.ModuleType
             for m in modules:
                 if nom in vars(m):
                     return vars(m)[nom]
+                if nom in paresseux(m):
+                    return getattr(m, nom)
             raise AttributeError(f"module {self.__name__!r} has no attribute {nom!r}")
 
         def __setattr__(self, nom: str, valeur: Any) -> None:

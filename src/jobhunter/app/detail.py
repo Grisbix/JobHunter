@@ -2,15 +2,19 @@
 
 Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
 
+import importlib
 import os
 import subprocess
+import sys
 import threading
 import tkinter as tk
 from pathlib import Path
 from tkinter import scrolledtext, ttk
+from typing import Any
 
+from jobhunter import paresseux as _paresseux
 from jobhunter.app import theme as _theme
-from jobhunter.app.commun import _PREFIXE, CV_ATS_DIR, CV_OFFRE_DIR, LETTRES_DIR, PY, SCRIPTS
+from jobhunter.app.commun import CV_ATS_DIR, PY, SCRIPTS
 from jobhunter.app.theme import (
     ACC,
     ACC_H,
@@ -30,6 +34,24 @@ from jobhunter.app.theme import (
     WORK,
 )
 from jobhunter.liens import chemin_de
+
+_ici = sys.modules[__name__]
+# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
+# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+_PARESSEUX: _paresseux.Fabriques = {}
+
+
+def __getattr__(nom: str) -> Any:
+    return _paresseux.lire(_ici, _PARESSEUX, nom)
+
+
+_PARESSEUX["_PREFIXE"] = lambda: importlib.import_module("jobhunter.app.commun")._PREFIXE
+
+
+_PARESSEUX["CV_OFFRE_DIR"] = lambda: importlib.import_module("jobhunter.app.commun").CV_OFFRE_DIR
+
+
+_PARESSEUX["LETTRES_DIR"] = lambda: importlib.import_module("jobhunter.app.commun").LETTRES_DIR
 
 
 class DetailMixin:
@@ -162,7 +184,7 @@ class DetailMixin:
             # pour l'édition : préfère le .docx jumeau des lettres
             if (
                 path.suffix.lower() == ".pdf"
-                and LETTRES_DIR in path.parents
+                and _ici.LETTRES_DIR in path.parents
                 and path.with_suffix(".docx").exists()
             ):
                 path = path.with_suffix(".docx")
@@ -208,7 +230,7 @@ class DetailMixin:
                     rtxt.insert("end", "\n".join(p.text for p in Document(str(path)).paragraphs))
                 else:
                     rtxt.insert("end", path.read_text(encoding="utf-8", errors="replace"))
-                editable = (path.suffix.lower() == ".txt") or (LETTRES_DIR in path.parents)
+                editable = (path.suffix.lower() == ".txt") or (_ici.LETTRES_DIR in path.parents)
                 rinfo.configure(
                     text=f"{path.name} · "
                     + (
@@ -225,7 +247,7 @@ class DetailMixin:
             if not p:
                 return
             ext = p.suffix.lower()
-            if not ((ext == ".txt") or (ext == ".docx" and LETTRES_DIR in p.parents)):
+            if not ((ext == ".txt") or (ext == ".docx" and _ici.LETTRES_DIR in p.parents)):
                 self._log("✗ édition réservée aux lettres/.txt — CV : 📂 Ouvrir (Word)\n")
                 return
             txt = rtxt.get("1.0", "end").rstrip("\n")
@@ -394,10 +416,10 @@ class DetailMixin:
 
         def _letters(flt=""):
             """Lettres : préfère le .DOCX (ÉDITABLE dans le panneau) — le pdf suit via sync."""
-            if not LETTRES_DIR.exists():
+            if not _ici.LETTRES_DIR.exists():
                 return []
             by_stem = {}
-            for f in LETTRES_DIR.iterdir():
+            for f in _ici.LETTRES_DIR.iterdir():
                 if f.suffix.lower() not in (".pdf", ".docx"):
                     continue
                 if flt and flt not in f.name.lower():
@@ -417,9 +439,11 @@ class DetailMixin:
                 lb.insert("end", "── CV ATS (5 variantes) ──")
                 files.append(None)
                 for f in ats:
-                    lb.insert("end", "  " + f.stem.replace(f"CV_{_PREFIXE}_", "").replace("_", " "))
+                    lb.insert(
+                        "end", "  " + f.stem.replace(f"CV_{_ici._PREFIXE}_", "").replace("_", " ")
+                    )
                     files.append(f)
-            per = sorted(CV_OFFRE_DIR.glob("*.pdf")) if CV_OFFRE_DIR.exists() else []
+            per = sorted(_ici.CV_OFFRE_DIR.glob("*.pdf")) if _ici.CV_OFFRE_DIR.exists() else []
             if flt:
                 per = [f for f in per if flt in f.name.lower()]
             lb.insert("end", f"── CV par offre ({len(per)}) ──")
@@ -427,7 +451,8 @@ class DetailMixin:
             for f in per[:250]:
                 lb.insert(
                     "end",
-                    "  " + f.stem.replace("CV_", "").replace(f"{_PREFIXE}_", "").replace("_", " "),
+                    "  "
+                    + f.stem.replace("CV_", "").replace(f"{_ici._PREFIXE}_", "").replace("_", " "),
                 )
                 files.append(f)
             lets = _letters(flt)
@@ -438,7 +463,7 @@ class DetailMixin:
                     "end",
                     "  "
                     + f.stem.replace("_cover_letter", "")
-                    .replace(f"{_PREFIXE}_", "")
+                    .replace(f"{_ici._PREFIXE}_", "")
                     .replace("_", " "),
                 )
                 files.append(f)
@@ -555,7 +580,7 @@ class DetailMixin:
                 else:
                     txt = path.read_text(encoding="utf-8", errors="replace")
                 txtv.insert("end", txt or "(document vide)")
-                editable = (ext == ".txt") or (LETTRES_DIR in path.parents)
+                editable = (ext == ".txt") or (_ici.LETTRES_DIR in path.parents)
                 pginfo.configure(
                     text=f"{len(txt)} car. · "
                     + (
@@ -582,7 +607,7 @@ class DetailMixin:
             if not p:
                 return
             ext = p.suffix.lower()
-            editable = (ext == ".txt") or (ext == ".docx" and LETTRES_DIR in p.parents)
+            editable = (ext == ".txt") or (ext == ".docx" and _ici.LETTRES_DIR in p.parents)
             if not editable:
                 self._log(
                     "✗ édition intégrée réservée aux lettres/.txt — CV .docx : bouton 📂 Ouvrir (Word)\n"
@@ -708,7 +733,7 @@ class DetailMixin:
         CB(
             bt,
             text="Lettres",
-            command=lambda: LETTRES_DIR.exists() and os.startfile(str(LETTRES_DIR)),
+            command=lambda: _ici.LETTRES_DIR.exists() and os.startfile(str(_ici.LETTRES_DIR)),
             bg=BTN,
             fg=TX,
             relief="flat",

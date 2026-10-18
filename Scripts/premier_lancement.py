@@ -699,8 +699,7 @@ def main():
     import profil as _profil
 
     os.environ["PROFIL_JOBHUNTER"] = str(sortie)
-    _profil.FICHIER = sortie
-    _profil.charger.cache_clear()
+    _profil.recharger(sortie)
     profil["tri"]["metiers_exclus"] = familles_tri_a_exclure(metiers)
     sortie.write_text(json.dumps(profil, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"  profil        : {sortie.relative_to(RACINE)}")

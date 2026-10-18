@@ -25,10 +25,29 @@ try:
 except Exception:
     pass
 
+import importlib
+
+from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _P
 from jobhunter import racine as _racine
 from jobhunter.chemins import CV_MODELES as CV_ATS
-from jobhunter.scoring.lexique import CV_VARIANT, SKILL_LEX, cv_variant_key, has_skill
+from jobhunter.scoring.lexique import cv_variant_key, has_skill
+
+_ici = sys.modules[__name__]
+# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
+# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+_PARESSEUX: _paresseux.Fabriques = {}
+
+
+def __getattr__(nom: str) -> Any:
+    return _paresseux.lire(_ici, _PARESSEUX, nom)
+
+
+_PARESSEUX["CV_VARIANT"] = lambda: importlib.import_module("jobhunter.scoring.lexique").CV_VARIANT
+
+
+_PARESSEUX["SKILL_LEX"] = lambda: importlib.import_module("jobhunter.scoring.lexique").SKILL_LEX
+
 
 ROOT = _racine.racine()
 OUT_CSV = ROOT / "Scripts" / "ats_report.csv"
@@ -36,7 +55,7 @@ OUT_CSV = ROOT / "Scripts" / "ats_report.csv"
 
 def cv_text(variant_key: str) -> str:
     """Texte concaténé du CV variant (lower)."""
-    p = CV_ATS / CV_VARIANT[variant_key]
+    p = CV_ATS / _ici.CV_VARIANT[variant_key]
     if not p.exists():
         return ""
     try:
@@ -61,7 +80,7 @@ def skills_in(text: str | None) -> set[str]:
     ENTIER, expressions longues = sous-chaîne. Évite les faux positifs 'ges' dans
     « GEStion », 'gri' dans « aGRIcole », 'pai' dans « PAIement »."""
     t = (text or "").lower()
-    return {label for label in SKILL_LEX if has_skill(label, t)}
+    return {label for label in _ici.SKILL_LEX if has_skill(label, t)}
 
 
 # ── Détecteur d'expérience requise ──
@@ -70,10 +89,10 @@ _EXP_CTX = re.compile(r"(exp[ée]rien|experien|ann[ée]es?\s+d|years?\s+of|d['e]
 # Niveau vise : profil.json, section « niveau ». Cherches dans l'INTITULE seul
 # (voir fit_detail) ; « lead » n'y est pas en sous-chaine — il attrape « Lead
 # Generation » — c'est `senior_en_fin` qui s'en charge, avec la negation qu'il faut.
-JUNIOR = tuple(_P.get("niveau.mots_junior", []) or [])
-SENIOR = tuple(_P.get("niveau.mots_senior", []) or [])
-_RX_SENIOR_FIN = _P.motif(_P.get("niveau.senior_en_fin", []))
-NEG = tuple(_P.get("niveau.mots_negatifs", []) or [])
+_PARESSEUX["JUNIOR"] = lambda: tuple(_P.get("niveau.mots_junior", []) or [])
+_PARESSEUX["SENIOR"] = lambda: tuple(_P.get("niveau.mots_senior", []) or [])
+_PARESSEUX["_RX_SENIOR_FIN"] = lambda: _P.motif(_P.get("niveau.senior_en_fin", []))
+_PARESSEUX["NEG"] = lambda: tuple(_P.get("niveau.mots_negatifs", []) or [])
 
 
 def experience_years(text: str | None) -> int:
@@ -140,17 +159,23 @@ def experience_years(text: str | None) -> int:
 #   cible_score     somme ponderee qui vaut fit = 10
 #   saturation_axe  un axe sature a N libelles distincts (on ne divise pas par la
 #                   taille de l'axe : un axe large serait mecaniquement desavantage)
-_SC = _P.get("scoring", {}) or {}
-AXES = {a: list(v.get("competences") or []) for a, v in (_SC.get("axes") or {}).items()}
-POIDS = {a: float(v.get("poids", 1.0)) for a, v in (_SC.get("axes") or {}).items()}
-COEUR = _SC.get("axe_coeur") or (next(iter(AXES)) if AXES else "")
-COMPLEMENT = _SC.get("axe_complement") or ""
-_CAP = int(_SC.get("saturation_axe", 3))
-_TARGET = float(_SC.get("cible_score", 3.0))
-_PLAFOND_SANS_COEUR = float(_SC.get("plafond_sans_coeur", 6.0))
-_PLAFOND_COMPLEMENT = float(_SC.get("plafond_complement", 8.0))
-_PLAFOND_SECOND = float(_SC.get("plafond_second", 8.0))
-_PLAFOND_VETO = float(_SC.get("plafond_veto", 6.0))
+_PARESSEUX["_SC"] = lambda: _P.get("scoring", {}) or {}
+_PARESSEUX["AXES"] = lambda: (
+    {a: list(v.get("competences") or []) for a, v in (_ici._SC.get("axes") or {}).items()}
+)
+_PARESSEUX["POIDS"] = lambda: (
+    {a: float(v.get("poids", 1.0)) for a, v in (_ici._SC.get("axes") or {}).items()}
+)
+_PARESSEUX["COEUR"] = lambda: (
+    _ici._SC.get("axe_coeur") or (next(iter(_ici.AXES)) if _ici.AXES else "")
+)
+_PARESSEUX["COMPLEMENT"] = lambda: _ici._SC.get("axe_complement") or ""
+_PARESSEUX["_CAP"] = lambda: int(_ici._SC.get("saturation_axe", 3))
+_PARESSEUX["_TARGET"] = lambda: float(_ici._SC.get("cible_score", 3.0))
+_PARESSEUX["_PLAFOND_SANS_COEUR"] = lambda: float(_ici._SC.get("plafond_sans_coeur", 6.0))
+_PARESSEUX["_PLAFOND_COMPLEMENT"] = lambda: float(_ici._SC.get("plafond_complement", 8.0))
+_PARESSEUX["_PLAFOND_SECOND"] = lambda: float(_ici._SC.get("plafond_second", 8.0))
+_PARESSEUX["_PLAFOND_VETO"] = lambda: float(_ici._SC.get("plafond_veto", 6.0))
 
 # INTITULES. Le titre dit ce QU'EST le poste, la description ne fait que
 # mentionner des sujets : c'est lui qui leve ou abaisse le plafond.
@@ -161,27 +186,30 @@ _PLAFOND_VETO = float(_SC.get("plafond_veto", 6.0))
 #   intitules_techniques (sauf ..._sauf) et intitules_hors_metier : le
 #     vocabulaire de la cible ne rapproche pas ces metiers du profil
 # Les noms historiques (_ESG_TITLE_RX…) restent : les tests et la densite les lisent.
-_ESG_TITLE_RX = _P.motif(_SC.get("intitules_coeur"))
-_ESG_TITRE_FORT = _P.motif(_SC.get("intitules_coeur_forts"))
-_TITRE_FINANCE = _P.motif(_SC.get("intitules_second"))
-_RX_HSE_SIGLE = _P.motif(_SC.get("veto_sigles"))
-_RX_SECURITE = _P.motif(_SC.get("veto_si"))
-_RX_SANTE_ENV = _P.motif(_SC.get("veto_et"))
-_RX_TECHNIQUE_TITRE = _P.motif(_SC.get("intitules_techniques"))
-_RX_TITRE_FINANCE = _P.motif(_SC.get("intitules_techniques_sauf"))
-_RX_HORS_METIER = _P.motif(_SC.get("intitules_hors_metier"))
+_PARESSEUX["_ESG_TITLE_RX"] = lambda: _P.motif(_ici._SC.get("intitules_coeur"))
+_PARESSEUX["_ESG_TITRE_FORT"] = lambda: _P.motif(_ici._SC.get("intitules_coeur_forts"))
+_PARESSEUX["_TITRE_FINANCE"] = lambda: _P.motif(_ici._SC.get("intitules_second"))
+_PARESSEUX["_RX_HSE_SIGLE"] = lambda: _P.motif(_ici._SC.get("veto_sigles"))
+_PARESSEUX["_RX_SECURITE"] = lambda: _P.motif(_ici._SC.get("veto_si"))
+_PARESSEUX["_RX_SANTE_ENV"] = lambda: _P.motif(_ici._SC.get("veto_et"))
+_PARESSEUX["_RX_TECHNIQUE_TITRE"] = lambda: _P.motif(_ici._SC.get("intitules_techniques"))
+_PARESSEUX["_RX_TITRE_FINANCE"] = lambda: _P.motif(_ici._SC.get("intitules_techniques_sauf"))
+_PARESSEUX["_RX_HORS_METIER"] = lambda: _P.motif(_ici._SC.get("intitules_hors_metier"))
 _c = _P.cherche
 
 
 def _titre_hse(role: str) -> bool:
     """Intitule d'un metier voisin a ecarter (exemple finance durable : HSE)."""
-    return bool(_c(_RX_HSE_SIGLE, role) or (_c(_RX_SECURITE, role) and _c(_RX_SANTE_ENV, role)))
+    return bool(
+        _c(_ici._RX_HSE_SIGLE, role)
+        or (_c(_ici._RX_SECURITE, role) and _c(_ici._RX_SANTE_ENV, role))
+    )
 
 
 def _titre_hors_cible(role: str) -> bool:
     """Metier technique ou hors metier : le vocabulaire de la cible ne le rapproche pas du profil."""
-    tech = _c(_RX_TECHNIQUE_TITRE, role) and not _c(_RX_TITRE_FINANCE, role)
-    return bool(tech or _c(_RX_HORS_METIER, role))
+    tech = _c(_ici._RX_TECHNIQUE_TITRE, role) and not _c(_ici._RX_TITRE_FINANCE, role)
+    return bool(tech or _c(_ici._RX_HORS_METIER, role))
 
 
 # ── Anti-boilerplate ─────────────────────────────────────────────────────────
@@ -189,49 +217,55 @@ def _titre_hors_cible(role: str) -> bool:
 # trois mots de la cible sature l'axe : c'est du discours d'employeur, pas le
 # poste. La DENSITE (marqueurs de l'intitule coeur pour 1000 caracteres) separe
 # les deux ; en dessous du seuil, l'axe coeur est attenue au prorata.
-_ESG_DENSITE_MIN = float(_SC.get("densite_coeur_min", 1.0))  # marqueurs pour 1000 caracteres
-_ESG_DENSITE_LONG = int(
-    _SC.get("densite_coeur_longueur", 800)
+_PARESSEUX["_ESG_DENSITE_MIN"] = lambda: float(
+    _ici._SC.get("densite_coeur_min", 1.0)
+)  # marqueurs pour 1000 caracteres
+_PARESSEUX["_ESG_DENSITE_LONG"] = lambda: int(
+    _ici._SC.get("densite_coeur_longueur", 800)
 )  # en deca, le texte est trop court pour qu'une densite veuille dire quelque chose
 
 
 def densite_esg(text: str | None) -> float:
     """Marqueurs ESG pour 1000 caractères. 0.0 sur un texte vide."""
     t = text or ""
-    if not t or _ESG_TITLE_RX is None:
+    if not t or _ici._ESG_TITLE_RX is None:
         return 0.0
-    return 1000.0 * sum(1 for _ in _ESG_TITLE_RX.finditer(t)) / len(t)
+    return 1000.0 * sum(1 for _ in _ici._ESG_TITLE_RX.finditer(t)) / len(t)
 
 
 def axis_scores(text: str | None) -> dict[str, float]:
     """Densité 0.0-1.0 par axe. Utile pour comprendre POURQUOI une offre score."""
     got = skills_in(text)
     out: dict[str, float] = {}
-    for axe, labels in AXES.items():
-        cap = min(_CAP, len(labels)) or 1
+    for axe, labels in _ici.AXES.items():
+        cap = min(_ici._CAP, len(labels)) or 1
         out[axe] = min(sum(1 for l in labels if l in got), cap) / cap
     # L'axe ESG, et lui seul, est attenue quand ses marqueurs sont noyes : c'est
     # le seul qui leve le plafond de fit, donc le seul ou une mention de passage
     # coute cher. Un texte court echappe au controle — « Analyste ESG » seul
     # fait 12 caracteres pour un marqueur, sa densite n'a pas de sens.
-    if out.get(COEUR, 0) > 0 and _ESG_TITLE_RX is not None and len(text or "") >= _ESG_DENSITE_LONG:
+    if (
+        out.get(_ici.COEUR, 0) > 0
+        and _ici._ESG_TITLE_RX is not None
+        and len(text or "") >= _ici._ESG_DENSITE_LONG
+    ):
         d = densite_esg(text)
-        if d < _ESG_DENSITE_MIN:
-            out[COEUR] *= d / _ESG_DENSITE_MIN
+        if d < _ici._ESG_DENSITE_MIN:
+            out[_ici.COEUR] *= d / _ici._ESG_DENSITE_MIN
     return out
 
 
-_NIV = _P.get("niveau", {}) or {}
-_BONUS_JUNIOR = float(_NIV.get("bonus_junior", 1.0))
-_MALUS_SENIOR = float(_NIV.get("malus_senior", 2.0))
-_MALUS_EXP = sorted(
-    ((int(k), float(v)) for k, v in (_NIV.get("malus_experience") or {}).items()), reverse=True
+_PARESSEUX["_NIV"] = lambda: _P.get("niveau", {}) or {}
+_PARESSEUX["_BONUS_JUNIOR"] = lambda: float(_ici._NIV.get("bonus_junior", 1.0))
+_PARESSEUX["_MALUS_SENIOR"] = lambda: float(_ici._NIV.get("malus_senior", 2.0))
+_PARESSEUX["_MALUS_EXP"] = lambda: sorted(
+    ((int(k), float(v)) for k, v in (_ici._NIV.get("malus_experience") or {}).items()), reverse=True
 )
 
 
 def _malus_experience(yrs: int) -> float:
     """Malus pour `yrs` annees exigees : le palier le plus haut atteint."""
-    return next((m for seuil, m in _MALUS_EXP if yrs >= seuil), 0.0)
+    return next((m for seuil, m in _ici._MALUS_EXP if yrs >= seuil), 0.0)
 
 
 def fit_score(text: str | None, title: str | None = "") -> tuple[int, int]:
@@ -248,7 +282,7 @@ def fit_score(text: str | None, title: str | None = "") -> tuple[int, int]:
 #   - annonce qui EXIGE une langue non parlee (« fluent Dutch », « Nederlands
 #     vereist ») -> 4. « Dutch is a plus » n'exige rien : ignore.
 # Langues parlees : profil « langues_parlees » (codes fr, en, de, es, it, nl, pt...).
-LANGUES_PARLEES = set(_P.get("langues_parlees", ["fr", "en"]) or ["fr", "en"])
+_PARESSEUX["LANGUES_PARLEES"] = lambda: set(_P.get("langues_parlees", ["fr", "en"]) or ["fr", "en"])
 
 # Mots-outils propres a chaque langue (articles, pronoms, prepositions) et
 # quelques mots d'annonce sans equivalent ailleurs. Les mots communs a deux
@@ -347,8 +381,8 @@ def langue_redaction(t: str | None) -> str:
     nettement dans une langue non parlee, l'annonce l'est."""
     tete = _compte_langues(_RX_MOT.findall((t or "")[:600].lower()))
     lg = max(tete, key=tete.__getitem__)
-    parlees = [tete[k] for k in LANGUES_PARLEES if k in tete] or [0]
-    if lg not in LANGUES_PARLEES and tete[lg] >= 4 and tete[lg] >= 2 * max(parlees):
+    parlees = [tete[k] for k in _ici.LANGUES_PARLEES if k in tete] or [0]
+    if lg not in _ici.LANGUES_PARLEES and tete[lg] >= 4 and tete[lg] >= 2 * max(parlees):
         return lg
     mots = _RX_MOT.findall((t or "")[:4000].lower())
     if len(mots) < 60:
@@ -361,10 +395,12 @@ def langue_redaction(t: str | None) -> str:
     return ordre[0]
 
 
-_LANGUES_ETRANGERES = (
-    "(?:" + "|".join(v for k, v in _NOMS_LANGUES.items() if k not in LANGUES_PARLEES) + ")"
+_PARESSEUX["_LANGUES_ETRANGERES"] = lambda: (
+    "(?:" + "|".join(v for k, v in _NOMS_LANGUES.items() if k not in _ici.LANGUES_PARLEES) + ")"
 )
-_PARLEES = "(?:" + "|".join(v for k, v in _NOMS_LANGUES.items() if k in LANGUES_PARLEES) + ")"
+_PARESSEUX["_PARLEES"] = lambda: (
+    "(?:" + "|".join(v for k, v in _NOMS_LANGUES.items() if k in _ici.LANGUES_PARLEES) + ")"
+)
 # Le nom de langue designe un marche ou une entite, pas une competence :
 # « strong presence in Chinese markets », « Dutch GAAP », « Italian clients ».
 _PAS_UNE_LANGUE = (
@@ -375,18 +411,18 @@ _PAS_UNE_LANGUE = (
 # « Fluent in English and Dutch », « maitrise du neerlandais ». Seuls des mots
 # qui parlent de LANGUE introduisent : « strong », « excellent » precedaient
 # aussi bien un marche.
-_RX_LANGUE_AVANT = re.compile(
+_PARESSEUX["_RX_LANGUE_AVANT"] = lambda: re.compile(
     r"\b(?:fluen(?:t|cy)|native|mother\s+tongue|proficien\w*|business[- ]level"
     r"|courant|ma[iî]trise|bilingue?|bilingual|vloeiend)\W+(?:\w+\W+){0,4}?"
-    + _LANGUES_ETRANGERES
+    + _ici._LANGUES_ETRANGERES
     + r"\b"
     + _PAS_UNE_LANGUE,
     re.I,
 )
 # « Dutch is required », « Dutch speaking », « Nederlands vereist », « neerlandais exige »
-_RX_LANGUE_APRES = re.compile(
+_PARESSEUX["_RX_LANGUE_APRES"] = lambda: re.compile(
     r"\b"
-    + _LANGUES_ETRANGERES
+    + _ici._LANGUES_ETRANGERES
     + _PAS_UNE_LANGUE
     + r"\W+(?:\w+\W+){0,3}?(?:required|mandatory|essential|must|speak(?:ing|er)s?|native"
     r"|fluent|fluency|language|skills|proficiency|vereist|noodzakelijk|verplicht"
@@ -407,36 +443,36 @@ _RX_FACULTATIF_AVANT = re.compile(
     re.I,
 )
 # Une alternative avec une langue parlee n'exige rien : « Dutch and/or French ».
-_RX_ALTERNATIVE = re.compile(
+_PARESSEUX["_RX_ALTERNATIVE"] = lambda: re.compile(
     r"(?:"
-    + _PARLEES
+    + _ici._PARLEES
     + r"\s*(?:and\s*/\s*or|et\s*/\s*ou|or|ou|of)\s+"
-    + _LANGUES_ETRANGERES
+    + _ici._LANGUES_ETRANGERES
     + r"|"
-    + _LANGUES_ETRANGERES
+    + _ici._LANGUES_ETRANGERES
     + r"\s*(?:and\s*/\s*or|et\s*/\s*ou|or|ou|of)\s+"
-    + _PARLEES
+    + _ici._PARLEES
     + r")\b",
     re.I,
 )
-_RX_NOM_LANGUE = re.compile(r"\b" + _LANGUES_ETRANGERES + r"\b", re.I)
+_PARESSEUX["_RX_NOM_LANGUE"] = lambda: re.compile(r"\b" + _ici._LANGUES_ETRANGERES + r"\b", re.I)
 
 
 def langue_exigee(t: str | None) -> str:
     """Nom d'une langue non parlee que l'annonce EXIGE, sinon ''."""
     t = t or ""
-    if "nl" not in LANGUES_PARLEES and _RX_NEERLANDOPHONE.search(t):
+    if "nl" not in _ici.LANGUES_PARLEES and _RX_NEERLANDOPHONE.search(t):
         return "nederlands"
-    for rx in (_RX_LANGUE_AVANT, _RX_LANGUE_APRES):
+    for rx in (_ici._RX_LANGUE_AVANT, _ici._RX_LANGUE_APRES):
         for m in rx.finditer(t):
-            nom = _RX_NOM_LANGUE.search(m.group(0))
+            nom: re.Match[str] | None = _ici._RX_NOM_LANGUE.search(m.group(0))
             debut = nom.start() + m.start() if nom else m.start()
             fin = nom.end() + m.start() if nom else m.end()
             if _RX_FACULTATIF.search(t[fin : fin + 60]):
                 continue
             if _RX_FACULTATIF_AVANT.search(t[max(0, debut - 40) : debut]):
                 continue
-            if _RX_ALTERNATIVE.search(t[max(0, debut - 30) : fin + 30]):
+            if _ici._RX_ALTERNATIVE.search(t[max(0, debut - 30) : fin + 30]):
                 continue
             return (nom.group(0) if nom else m.group(0)).lower()
     return ""
@@ -446,7 +482,7 @@ def plafond_langue(t: str | None) -> tuple[float, str]:
     """(plafond, motif) : 2 si redigee dans une langue non parlee, 4 si elle en
     exige une, (10, '') sinon."""
     lg = langue_redaction(t)
-    if lg and lg not in LANGUES_PARLEES:
+    if lg and lg not in _ici.LANGUES_PARLEES:
         return 2.0, f"redigee en {lg}"
     exige = langue_exigee(t)
     if exige:
@@ -474,8 +510,8 @@ def fit_detail(text: str | None, title: str | None = "") -> tuple[int, int, floa
     t = (text or "").lower()
     role = (title or text or "").lower()
     sc = axis_scores(t)
-    raw = sum(sc[a] * POIDS[a] for a in AXES)
-    fit = 1 + 9 * min(1.0, raw / _TARGET)  # 1..10, pas de magic number empilé
+    raw = sum(sc[a] * _ici.POIDS[a] for a in _ici.AXES)
+    fit = 1 + 9 * min(1.0, raw / _ici._TARGET)  # 1..10, pas de magic number empilé
     # PLAFOND PAR PRIORITE DE PROFIL. Sans lui, finance + risk + conseil suffisent
     # a atteindre _TARGET sans le moindre signal ESG : 251 offres sortaient a
     # fit >= 8 avec l'axe ESG a ZERO, et le TOP 25 ne contenait plus que 3
@@ -487,18 +523,20 @@ def fit_detail(text: str | None, title: str | None = "") -> tuple[int, int, floa
     # capte au detour d'une longue description (esg=0.33) suffisait a contourner
     # un plafond binaire, et « ANALYSTE M&A » restait a 10.
     #   esg 0.00 -> 6   esg 0.33 -> 7.3   esg 0.67 -> 8.7   esg 1.00 -> 10
-    coeur = sc.get(COEUR, 0.0) if COEUR else 1.0  # sans axe coeur : pas de plafond
-    compl = sc.get(COMPLEMENT, 0.0) if COMPLEMENT else 0.0
-    cap = _PLAFOND_SANS_COEUR + (10.0 - _PLAFOND_SANS_COEUR) * coeur
+    coeur = sc.get(_ici.COEUR, 0.0) if _ici.COEUR else 1.0  # sans axe coeur : pas de plafond
+    compl = sc.get(_ici.COMPLEMENT, 0.0) if _ici.COMPLEMENT else 0.0
+    cap = _ici._PLAFOND_SANS_COEUR + (10.0 - _ici._PLAFOND_SANS_COEUR) * coeur
     if coeur == 0 and compl >= 0.5:
-        cap = _PLAFOND_COMPLEMENT  # cible secondaire
-    if _c(_TITRE_FINANCE, role):
-        cap = max(cap, _PLAFOND_SECOND + (10.0 - _PLAFOND_SECOND) * coeur)  # metier vise en second
+        cap = _ici._PLAFOND_COMPLEMENT  # cible secondaire
+    if _c(_ici._TITRE_FINANCE, role):
+        cap = max(
+            cap, _ici._PLAFOND_SECOND + (10.0 - _ici._PLAFOND_SECOND) * coeur
+        )  # metier vise en second
     # Un intitule explicitement ESG leve le plafond : le titre dit ce QU'EST le
     # poste, la description ne fait que mentionner des sujets.
-    fort = _c(_ESG_TITRE_FORT, role)
+    fort = _c(_ici._ESG_TITRE_FORT, role)
     hors = _titre_hors_cible(role)
-    if fort or (_c(_ESG_TITLE_RX, role) and not hors):
+    if fort or (_c(_ici._ESG_TITLE_RX, role) and not hors):
         cap = 10.0
     # Vetos en dernier : HSE, metier technique ou hors finance l'emportent sur
     # le vocabulaire environnemental de l'intitule ET de la description, jamais
@@ -509,9 +547,9 @@ def fit_detail(text: str | None, title: str | None = "") -> tuple[int, int, floa
     # d'IA (cible secondaire), 6 sinon. Un plafond fixe a 6 faisait perdre deux
     # points a 137 postes « AI Engineer » que personne ne jugeait trop hauts.
     if not fort and _titre_hse(role):
-        cap = min(cap, _PLAFOND_VETO)
+        cap = min(cap, _ici._PLAFOND_VETO)
     elif not fort and hors:
-        cap = min(cap, _PLAFOND_COMPLEMENT if compl >= 0.5 else _PLAFOND_VETO)
+        cap = min(cap, _ici._PLAFOND_COMPLEMENT if compl >= 0.5 else _ici._PLAFOND_VETO)
     # LES BONUS D'ABORD, LE PLAFOND ENSUITE. Le plafond etait applique avant, et
     # le bonus junior le franchissait : « Auditeur junior analyste » sortait a
     # 10 avec un plafond calcule a 8.7. Un plafond qu'un bonus peut depasser ne
@@ -521,11 +559,11 @@ def fit_detail(text: str | None, title: str | None = "") -> tuple[int, int, floa
     # dans toute la description : un « ... ouvert aux alternants » en pied
     # d'annonce donnait +1 a un poste qui n'a rien de junior. C'est exactement
     # le faux positif deja corrige pour les deux autres listes, laisse ici.
-    if any(k in role for k in JUNIOR):
-        fit += _BONUS_JUNIOR
-    if any(k in role for k in SENIOR) or _c(_RX_SENIOR_FIN, role):
-        fit -= _MALUS_SENIOR
-    if any(k in role for k in NEG):
+    if any(k in role for k in _ici.JUNIOR):
+        fit += _ici._BONUS_JUNIOR
+    if any(k in role for k in _ici.SENIOR) or _c(_ici._RX_SENIOR_FIN, role):
+        fit -= _ici._MALUS_SENIOR
+    if any(k in role for k in _ici.NEG):
         fit -= 2
     # La langue en dernier : aucun intitule ni bonus ne rend lisible une
     # annonce dans une langue que l'utilisateur ne parle pas.
@@ -545,12 +583,12 @@ def _departage(t: str, role: str, fit: float, entier: int, yrs: int) -> float:
     doucement) : ce que dit l'INTITULE, la densite ESG du texte, le nombre de
     competences ESG/finance citees, la place du score brut dans le niveau, et
     l'experience exigee (moins vaut mieux : l'utilisateur est junior)."""
-    titre = 1.0 if _c(_ESG_TITRE_FORT, role) else 0.6 if _c(_ESG_TITLE_RX, role) else 0.0
+    titre = 1.0 if _c(_ici._ESG_TITRE_FORT, role) else 0.6 if _c(_ici._ESG_TITLE_RX, role) else 0.0
     d = densite_esg(t)
     got = skills_in(t)
     # Les deux axes les plus lourds : la cible et le metier de base.
-    lourds = sorted(AXES, key=lambda a: -POIDS.get(a, 0))[:2]
-    n = sum(1 for axe in lourds for l in AXES[axe] if l in got)
+    lourds = sorted(_ici.AXES, key=lambda a: -_ici.POIDS.get(a, 0))[:2]
+    n = sum(1 for axe in lourds for l in _ici.AXES[axe] if l in got)
     pos = max(0.0, min(1.0, fit - (entier - 0.5)))
     return (
         0.30 * titre

@@ -5,10 +5,12 @@ Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
 import functools as _ft
 import re
 import sys
+from typing import Any
 
 import customtkinter as ctk
 
 from jobhunter import chemins as chemins
+from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _profil
 from jobhunter import racine as _racine
 from jobhunter.app import theme as _theme
@@ -31,6 +33,16 @@ from jobhunter.app.theme import (
     WORK,
 )
 from jobhunter.scoring import zones as _zones
+
+_ici = sys.modules[__name__]
+# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
+# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+_PARESSEUX: _paresseux.Fabriques = {}
+
+
+def __getattr__(nom: str) -> Any:
+    return _paresseux.lire(_ici, _PARESSEUX, nom)
+
 
 ROOT = _racine.racine()  # marqueur ou JOBHUNTER_RACINE (jobhunter.racine)
 
@@ -64,13 +76,13 @@ if str(SCRIPTS) not in sys.path:
 CV_ATS_DIR = chemins.CV_MODELES  # 5 CV variants (source, dans le depot)
 
 
-CV_OFFRE_DIR = chemins.CV_PAR_OFFRE  # CV cibles par offre
+_PARESSEUX["CV_OFFRE_DIR"] = lambda: chemins.CV_PAR_OFFRE  # CV cibles par offre
 
 
-LETTRES_DIR = chemins.LT_PAR_OFFRE  # lettres de motivation (docx+pdf)
+_PARESSEUX["LETTRES_DIR"] = lambda: chemins.LT_PAR_OFFRE  # lettres de motivation (docx+pdf)
 
 
-_PREFIXE = _profil.prefixe_fichier()
+_PARESSEUX["_PREFIXE"] = lambda: _profil.prefixe_fichier()
 
 
 # Pays et lieu affiches, memorises par chaine de lieu : le tableau les recalcule

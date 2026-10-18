@@ -146,7 +146,7 @@ _RX_JUNIOR = re.compile(
 # piege des sous-chaines, qui a produit huit bugs sur ce projet :
 # « sinGAPore », « diveRSE », « CLIMATisation », « transVERSE », « POWER
 # Platform », « BP dans BPCE ». Tout est borne.
-_METIERS = {
+_METIERS_CATALOGUE = {  # toutes les familles connues
     # QUANT ET INGENIERIE DATA : hors cible meme avec « ESG » dans le titre
     # (l'utilisateur, 2026-10-05). « Analyste Climate Finance / ESG Quant » ou « ESG
     # Data Engineer » sortaient a fit 10 : le mot ESG levait le sauvetage, alors
@@ -296,12 +296,25 @@ _METIERS = {
 #   « durabilite ». Deux offres a fit 10 partaient ainsi au motif « logistique »
 #   — « Trainee Sustainability & Strategic Regulatory » chez PwC et « Working
 #   Student Sustainable Procurement » chez Sika.
+from typing import Any
+
+from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _P
 
-_TRI = _P.get("tri", {}) or {}
+_ici = sys.modules[__name__]
+# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
+# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+_PARESSEUX: _paresseux.Fabriques = {}
+
+
+def __getattr__(nom: str) -> Any:
+    return _paresseux.lire(_ici, _PARESSEUX, nom)
+
+
+_PARESSEUX["_TRI"] = lambda: _P.get("tri", {}) or {}
 # Mots de la CIBLE qui sauvent un intitule d'une famille ecartee (profil,
 # tri.sauvetage) : « Sustainable Procurement » reste pour un profil durable.
-_RX_SAUVETAGE = _P.motif(_TRI.get("sauvetage"))
+_PARESSEUX["_RX_SAUVETAGE"] = lambda: _P.motif(_ici._TRI.get("sauvetage"))
 
 # FAMILLES QUE LE SAUVETAGE NE RATTRAPE PAS. Un mot ESG dans l'intitule ne
 # rend pas le poste accessible : un post-doctorat « AI for Sustainable Energy »
@@ -309,13 +322,15 @@ _RX_SAUVETAGE = _P.motif(_TRI.get("sauvetage"))
 # un diplome d'ingenieur, un poste de soignant demande un diplome d'Etat. Le
 # sauvetage sert a ne pas jeter un poste de FINANCE sur un mot de contexte ; il
 # ne sert pas a ouvrir des metiers fermes.
-_METIERS_DURS = set(_TRI.get("metiers_durs", []) or [])
+_PARESSEUX["_METIERS_DURS"] = lambda: set(_ici._TRI.get("metiers_durs", []) or [])
 # Familles RETIREES pour ce profil (tri.metiers_exclus) ; le catalogue
-# _METIERS ci-dessus reste la bibliotheque. Absent du profil = toutes.
-_METIERS_CATALOGUE = dict(_METIERS)  # toutes les familles connues
-_EXCLUS = _TRI.get("metiers_exclus")
-if _EXCLUS is not None:
-    _METIERS = {k: v for k, v in _METIERS.items() if k in set(_EXCLUS)}
+# _METIERS_CATALOGUE ci-dessus reste la bibliotheque. Absent du profil = toutes.
+_PARESSEUX["_EXCLUS"] = lambda: _ici._TRI.get("metiers_exclus")
+_PARESSEUX["_METIERS"] = lambda: (
+    dict(_METIERS_CATALOGUE)
+    if _ici._EXCLUS is None
+    else {k: v for k, v in _METIERS_CATALOGUE.items() if k in set(_ici._EXCLUS)}
+)
 
 # ── 2 bis. TROP D'OUTILS DE DEVELOPPEMENT ───────────────────────────────────
 # « Garde AI engineer, mais quand il faut trop d'outils techniques pour coder,
@@ -405,7 +420,7 @@ _OUTILS = {
     "shell": r"\b(?:bash|shell\s+script\w*|powershell)\b",
 }
 _RX_OUTILS = {k: re.compile(v, re.I) for k, v in _OUTILS.items()}
-OUTILS_MAX = int(_TRI.get("outils_max", 4) or 0)  # 0 = pas de limite
+_PARESSEUX["OUTILS_MAX"] = lambda: int(_ici._TRI.get("outils_max", 4) or 0)  # 0 = pas de limite
 
 
 def outils_techniques(desc: str | None) -> set[str]:
@@ -417,9 +432,9 @@ def outils_techniques(desc: str | None) -> set[str]:
 # ── 3. EXPERIENCE ───────────────────────────────────────────────────────────
 # Cinq ans. En dessous, une candidature junior se defend ; au-dessus, l'annonce
 # demande un parcours qui n'existe pas encore.
-EXP_MAX = int(_P.get("niveau.experience_max", 5) or 99)
-_SENIORITE = bool(_TRI.get("retirer_seniors", True))
-_ETUDIANT = bool(_TRI.get("retirer_etudiants", True))
+_PARESSEUX["EXP_MAX"] = lambda: int(_P.get("niveau.experience_max", 5) or 99)
+_PARESSEUX["_SENIORITE"] = lambda: bool(_ici._TRI.get("retirer_seniors", True))
+_PARESSEUX["_ETUDIANT"] = lambda: bool(_ici._TRI.get("retirer_etudiants", True))
 
 # ── 4. LIENS MORTS ──────────────────────────────────────────────────────────
 # ANTI-BOT n'est PAS un lien mort : c'est une page qu'on n'a pas pu lire, pas
@@ -489,7 +504,7 @@ def motif(o: Offre, proteges: set[str]) -> str | None:
         return "lien_mort"
 
     exp = o.get("exp_requise")
-    if isinstance(exp, int) and exp >= EXP_MAX:
+    if isinstance(exp, int) and exp >= _ici.EXP_MAX:
         return "experience"
 
     # Une annonce qui demande un candidat ENCORE etudiant n'est pas pour un
@@ -499,23 +514,23 @@ def motif(o: Offre, proteges: set[str]) -> str | None:
     # passait avant la description, l'offre restait a fit 10.
     from jobhunter.sources.commun import demande_etudiant
 
-    if _ETUDIANT and demande_etudiant(o.get("description")):
+    if _ici._ETUDIANT and demande_etudiant(o.get("description")):
         return "etudiant"
 
-    if _SENIORITE and _RX_SENIOR_DUR.search(titre):
+    if _ici._SENIORITE and _RX_SENIOR_DUR.search(titre):
         return "seniorite"
     if (
-        _SENIORITE
+        _ici._SENIORITE
         and _RX_SENIOR_MOU.search(_sans_resp_adjectif(titre))
         and not _RX_JUNIOR.search(titre)
     ):
         return "seniorite"
 
-    sauve = _P.cherche(_RX_SAUVETAGE, titre)
-    for famille, rx in _METIERS.items():
-        if rx.search(titre) and (famille in _METIERS_DURS or not sauve):
+    sauve = _P.cherche(_ici._RX_SAUVETAGE, titre)
+    for famille, rx in _ici._METIERS.items():
+        if rx.search(titre) and (famille in _ici._METIERS_DURS or not sauve):
             return f"metier:{famille}"
-    if OUTILS_MAX and len(outils_techniques(o.get("description"))) >= OUTILS_MAX:
+    if _ici.OUTILS_MAX and len(outils_techniques(o.get("description"))) >= _ici.OUTILS_MAX:
         return "outils_techniques"
     return None
 

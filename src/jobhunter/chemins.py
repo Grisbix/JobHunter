@@ -27,9 +27,22 @@ modeles. Modeles, Relances et Messages sont des ENTREES ecrites a la main,
 """
 
 import json
+import sys
 from pathlib import Path
+from typing import Any
 
+from jobhunter import paresseux as _paresseux
 from jobhunter import racine as _racine
+
+_ici = sys.modules[__name__]
+# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
+# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+_PARESSEUX: _paresseux.Fabriques = {}
+
+
+def __getattr__(nom: str) -> Any:
+    return _paresseux.lire(_ici, _PARESSEUX, nom)
+
 
 HERE = _racine.scripts()
 ROOT = HERE.parent
@@ -55,11 +68,11 @@ def _base() -> Path:
     return ROOT
 
 
-BASE = _base()
+_PARESSEUX["BASE"] = lambda: _base()
 
 # ── Genere, volumineux, deplacable ──────────────────────────────────────────
-CV_PAR_OFFRE = BASE / "CV" / "Par_offre"
-LT_PAR_OFFRE = BASE / "Lettres" / "Par_offre"
+_PARESSEUX["CV_PAR_OFFRE"] = lambda: _ici.BASE / "CV" / "Par_offre"
+_PARESSEUX["LT_PAR_OFFRE"] = lambda: _ici.BASE / "Lettres" / "Par_offre"
 
 # ── Ecrit a la main, minuscule, RESTE dans OneDrive ─────────────────────────
 # Ancres sur ROOT et non sur BASE : deplacer les modeles n'economiserait rien
@@ -87,9 +100,9 @@ CV_SUR_MESURE = ROOT / "CV" / "Sur_mesure"
 
 def preparer() -> tuple[Path, Path]:
     """Cree les dossiers de sortie. Appele par les programmes qui ecrivent."""
-    for d in (CV_PAR_OFFRE, LT_PAR_OFFRE):
+    for d in (_ici.CV_PAR_OFFRE, _ici.LT_PAR_OFFRE):
         d.mkdir(parents=True, exist_ok=True)
-    return CV_PAR_OFFRE, LT_PAR_OFFRE
+    return _ici.CV_PAR_OFFRE, _ici.LT_PAR_OFFRE
 
 
 def deplace() -> None:  # pragma: no cover - outil d'administration, voir deplace_docs.py
@@ -100,11 +113,11 @@ if __name__ == "__main__":
     import sys
 
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
-    etat = f"chemins.json → {BASE}" if CONFIG.exists() else "defaut : la racine du projet"
+    etat = f"chemins.json → {_ici.BASE}" if CONFIG.exists() else "defaut : la racine du projet"
     print(f"source du reglage : {etat}")
     for nom, p in (
-        ("CV/Par_offre", CV_PAR_OFFRE),
-        ("Lettres/Par_offre", LT_PAR_OFFRE),
+        ("CV/Par_offre", _ici.CV_PAR_OFFRE),
+        ("Lettres/Par_offre", _ici.LT_PAR_OFFRE),
         ("CV/Modeles", CV_MODELES),
         ("Lettres/Relances", LT_RELANCES),
         ("Lettres/Messages", LT_MESSAGES),

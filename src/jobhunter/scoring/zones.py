@@ -31,8 +31,19 @@ import sys
 from collections.abc import Iterable
 from typing import Any
 
+from jobhunter import paresseux as _paresseux
 from jobhunter import racine as _racine
 from jobhunter.texte import sans_accent
+
+_ici = sys.modules[__name__]
+# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
+# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+_PARESSEUX: _paresseux.Fabriques = {}
+
+
+def __getattr__(nom: str) -> Any:
+    return _paresseux.lire(_ici, _PARESSEUX, nom)
+
 
 Secteur = dict[str, Any]  # cle, libelle, lieux, communes, departements, wtj
 
@@ -1010,12 +1021,18 @@ def _secteurs(cle_profil: str, defaut: list[Any]) -> list[Secteur]:
     return [s for s in (_secteur(x) for x in (brut or [])) if s]
 
 
-SECTEURS_PRIORITAIRES = _secteurs("prioritaires", [])
-SECTEURS_SECONDAIRES = _secteurs("secondaires", [])
-_DEP_PRIORITAIRE = set().union(*(s["departements"] for s in SECTEURS_PRIORITAIRES))
-_DEP_SUD_EST = set().union(*(s["departements"] for s in SECTEURS_SECONDAIRES))
-_WTJ_PRIORITAIRE = set().union(*(s["wtj"] for s in SECTEURS_PRIORITAIRES))
-_WTJ_SUD_EST = set().union(*(s["wtj"] for s in SECTEURS_SECONDAIRES))
+_PARESSEUX["SECTEURS_PRIORITAIRES"] = lambda: _secteurs("prioritaires", [])
+_PARESSEUX["SECTEURS_SECONDAIRES"] = lambda: _secteurs("secondaires", [])
+_PARESSEUX["_DEP_PRIORITAIRE"] = lambda: set().union(
+    *(s["departements"] for s in _ici.SECTEURS_PRIORITAIRES)
+)
+_PARESSEUX["_DEP_SUD_EST"] = lambda: set().union(
+    *(s["departements"] for s in _ici.SECTEURS_SECONDAIRES)
+)
+_PARESSEUX["_WTJ_PRIORITAIRE"] = lambda: set().union(
+    *(s["wtj"] for s in _ici.SECTEURS_PRIORITAIRES)
+)
+_PARESSEUX["_WTJ_SUD_EST"] = lambda: set().union(*(s["wtj"] for s in _ici.SECTEURS_SECONDAIRES))
 
 
 def _dans_secteur(t: str, s: Secteur) -> bool:
@@ -1102,12 +1119,12 @@ def zone_lieu(lieu: str | None) -> str:
     # avant tout : « Saint-Denis, Reunion » n'est pas le 93.
     if _contient(t, _OUTRE_MER):
         return AILLEURS
-    if any(_dans_secteur(t, s) for s in SECTEURS_PRIORITAIRES) or (
-        pays == "fr" and reg in _WTJ_PRIORITAIRE
+    if any(_dans_secteur(t, s) for s in _ici.SECTEURS_PRIORITAIRES) or (
+        pays == "fr" and reg in _ici._WTJ_PRIORITAIRE
     ):
         return PRIORITAIRE
-    if any(_dans_secteur(t, s) for s in SECTEURS_SECONDAIRES) or (
-        pays == "fr" and reg in _WTJ_SUD_EST
+    if any(_dans_secteur(t, s) for s in _ici.SECTEURS_SECONDAIRES) or (
+        pays == "fr" and reg in _ici._WTJ_SUD_EST
     ):
         return SECONDAIRE
     # Code pays WTJ autre que FR : « Zaventem, VLG, BE · France ». Le « France »
@@ -1156,9 +1173,9 @@ def zone_lieu(lieu: str | None) -> str:
     # Departement : seuls 75 et 92 etaient connus, en jetons. « Bobigny - 93 »,
     # « Melun - 77 » ou « Bron - 69 » tombaient dans « le reste de la France ».
     d = _departement(t)
-    if d in _DEP_PRIORITAIRE:
+    if d in _ici._DEP_PRIORITAIRE:
         return PRIORITAIRE
-    if d in _DEP_SUD_EST:
+    if d in _ici._DEP_SUD_EST:
         return SECONDAIRE
     return AILLEURS
 
@@ -1174,15 +1191,15 @@ def sous_zone(lieu: str | None) -> str:
         return ""
     t = _n(lieu)
     d = _departement(t)
-    for s in SECTEURS_PRIORITAIRES:
+    for s in _ici.SECTEURS_PRIORITAIRES:
         if _dans_secteur(t, s) or (d and d in s["departements"]):
             return str(s["cle"])
-    return str(SECTEURS_PRIORITAIRES[0]["cle"]) if SECTEURS_PRIORITAIRES else ""
+    return str(_ici.SECTEURS_PRIORITAIRES[0]["cle"]) if _ici.SECTEURS_PRIORITAIRES else ""
 
 
 def libelle_secteur(cle: str) -> str:
     """« Paris », « Bordeaux »… pour une cle rendue par sous_zone."""
-    for s in SECTEURS_PRIORITAIRES + SECTEURS_SECONDAIRES:
+    for s in _ici.SECTEURS_PRIORITAIRES + _ici.SECTEURS_SECONDAIRES:
         if s["cle"] == cle:
             return str(s["libelle"])
     return cle

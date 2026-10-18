@@ -5,12 +5,27 @@ liait la collecte au scraping des sites carriere ; scrape_jobs le re-exporte.
 """
 
 import re
+import sys
+from typing import Any
 
+from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _P
+
+_ici = sys.modules[__name__]
+# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
+# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+_PARESSEUX: _paresseux.Fabriques = {}
+
+
+def __getattr__(nom: str) -> Any:
+    return _paresseux.lire(_ici, _PARESSEUX, nom)
+
 
 # ── Lexique LARGE du filtre d'offres : profil.json, filtre_titre.lexique_large ──
 # Liste de sous-chaines. Vide = tout passe ce premier tamis (title_ok resserre).
-ESG_FINANCE_KEYWORDS = [k.lower() for k in (_P.get("filtre_titre.lexique_large", []) or [])]
+_PARESSEUX["ESG_FINANCE_KEYWORDS"] = lambda: (
+    [k.lower() for k in (_P.get("filtre_titre.lexique_large", []) or [])]
+)
 
 DOMAINE_MAP = {
     "esg": "ESG_Finance_Durable",
@@ -73,4 +88,4 @@ def matches_esg_finance(title: str) -> bool:
     entre, appeler `offre_retenue`, jamais cette fonction seule.
     """
     t = (title or "").lower()
-    return not ESG_FINANCE_KEYWORDS or any(kw in t for kw in ESG_FINANCE_KEYWORDS)
+    return not _ici.ESG_FINANCE_KEYWORDS or any(kw in t for kw in _ici.ESG_FINANCE_KEYWORDS)

@@ -3,35 +3,61 @@
 Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5)."""
 
 # Noms du lexique, re-exportes : `tailor_application.cv_variant_key` reste valable.
+import importlib
 import re
+import sys
+from typing import Any
 
 from jobhunter import chemins
+from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _P
-from jobhunter.scoring.lexique import (  # noqa: F401
-    _COMP,
-    _DOMAINES,
-    CV_VARIANT,
-    CV_VARIANT_EN,
-    SKILL_LEX,
-    cv_variant_key,
-    has_skill,
+from jobhunter.scoring.lexique import cv_variant_key, has_skill  # noqa: F401
+
+_ici = sys.modules[__name__]
+# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
+# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+_PARESSEUX: _paresseux.Fabriques = {}
+
+
+def __getattr__(nom: str) -> Any:
+    return _paresseux.lire(_ici, _PARESSEUX, nom)
+
+
+_PARESSEUX["_COMP"] = lambda: importlib.import_module("jobhunter.scoring.lexique")._COMP
+
+
+_PARESSEUX["_DOMAINES"] = lambda: importlib.import_module("jobhunter.scoring.lexique")._DOMAINES
+
+
+_PARESSEUX["CV_VARIANT"] = lambda: importlib.import_module("jobhunter.scoring.lexique").CV_VARIANT
+
+
+_PARESSEUX["CV_VARIANT_EN"] = lambda: (
+    importlib.import_module("jobhunter.scoring.lexique").CV_VARIANT_EN
 )
+
+
+_PARESSEUX["SKILL_LEX"] = lambda: importlib.import_module("jobhunter.scoring.lexique").SKILL_LEX
+
 
 CV_ATS = chemins.CV_MODELES
 
 
 # Dossiers de sortie : crees au moment d'ecrire (chemins.preparer), pas a l'import.
-CV_OUT, LT_OUT = chemins.CV_PAR_OFFRE, chemins.LT_PAR_OFFRE
+_PARESSEUX["CV_OUT"] = lambda: chemins.CV_PAR_OFFRE
+_PARESSEUX["LT_OUT"] = lambda: chemins.LT_PAR_OFFRE
 
 
-_ID = _P.identite()
+_PARESSEUX["_ID"] = lambda: _P.identite()
 
 
-PROFILE = dict(nom=_ID["nom"], ville=_ID["ville"], email=_ID["email"], tel=_ID["tel"])
+_PARESSEUX["PROFILE"] = lambda: dict(
+    nom=_ici._ID["nom"], ville=_ici._ID["ville"], email=_ici._ID["email"], tel=_ici._ID["tel"]
+)
 
 
 # accroche valeur par entreprise : profil, lettre.valeurs_entreprises_fr/en
-COMPANY_VALUE = dict(_P.get("lettre.valeurs_entreprises_fr", {}) or {})
+_PARESSEUX["COMPANY_VALUE"] = lambda: dict(_P.get("lettre.valeurs_entreprises_fr", {}) or {})
 
 
 # Mots qui gardent leur majuscule dans un intitule de poste : noms propres
@@ -274,7 +300,7 @@ def company_value(company):
     """Accroche connue pour cette entreprise, ou "" : quand l'entreprise est
     inconnue, la lettre ne lui prete AUCUN engagement, elle parle du poste."""
     c = (company or "").lower()
-    for k, v in COMPANY_VALUE.items():
+    for k, v in _ici.COMPANY_VALUE.items():
         if k in c:
             return v
     return ""
@@ -305,7 +331,7 @@ def _slug(s):
 # lettres ; les laisser en francais trahit la generation automatique plus
 # surement qu'une faute de style. Les sigles reglementaires (SFDR, CSRD, GRI,
 # TCFD, PAI) ne se traduisent PAS : ce sont les memes textes europeens.
-SKILL_EN = {lab: v.get("en") or lab for lab, v in _COMP.items()}
+_PARESSEUX["SKILL_EN"] = lambda: ({lab: v.get("en") or lab for lab, v in _ici._COMP.items()})
 
 
 _SKILL_EN_NORM = None
@@ -323,7 +349,7 @@ def skills_en(labels):
     if _SKILL_EN_NORM is None:
         from jutil import sans_accent
 
-        _SKILL_EN_NORM = {sans_accent(k).lower(): v for k, v in SKILL_EN.items()}
+        _SKILL_EN_NORM = {sans_accent(k).lower(): v for k, v in _ici.SKILL_EN.items()}
     from jutil import sans_accent
 
     return [_SKILL_EN_NORM.get(sans_accent(x).lower(), x) for x in labels]
@@ -334,14 +360,14 @@ def skills_en(labels):
 # (généraliste) » s'est retrouve tel quel, parentheses comprises, dans une
 # lettre anglaise envoyee a EY Geneve — au milieu de SFDR et GRI/TCFD, il
 # signalait le systeme qui l'avait ecrite.
-SKILL_INTERNES = {lab for lab, v in _COMP.items() if v.get("interne")}
+_PARESSEUX["SKILL_INTERNES"] = lambda: ({lab for lab, v in _ici._COMP.items() if v.get("interne")})
 
 
 def match_skills(offer_text, max_n=8):
     t = (offer_text or "").lower()
     hits = []
-    for label in SKILL_LEX:
-        if label in SKILL_INTERNES:
+    for label in _ici.SKILL_LEX:
+        if label in _ici.SKILL_INTERNES:
             continue
         if has_skill(label, t):
             hits.append(label)

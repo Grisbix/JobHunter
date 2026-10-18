@@ -68,6 +68,7 @@ def test_le_lexique_ne_depend_que_du_profil():
         "jobhunter",
         "jobhunter.racine",
         "jobhunter.profil",
+        "jobhunter.paresseux",
         "jobhunter.scoring",
         "jobhunter.scoring.lexique",
     }

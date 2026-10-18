@@ -38,9 +38,22 @@ MSG_OUT = _racine.racine() / "Lettres" / "Messages"
 
 # Tous les textes viennent du profil : domaines[] (accroche, preuve par
 # domaine) et la section « message » (diplome, langues, faits, sources).
+from typing import Any
+
+from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _P
 
-_MSG = _P.get("message", {}) or {}
+_ici = sys.modules[__name__]
+# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
+# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+_PARESSEUX: _paresseux.Fabriques = {}
+
+
+def __getattr__(nom: str) -> Any:
+    return _paresseux.lire(_ici, _PARESSEUX, nom)
+
+
+_PARESSEUX["_MSG"] = lambda: _P.get("message", {}) or {}
 
 
 def _dom(cle, champ):
@@ -52,19 +65,27 @@ def _dom(cle, champ):
 # meme stage repetent le nom de l'employeur dans la meme phrase. Chaque fait
 # porte sa SOURCE (une experience, un memoire, un projet perso…), introduite
 # une fois par `message.sources`. L'ordre des sources est l'ordre de PRIORITE.
-FAITS_FR = {
-    lab: (v.get("source", ""), v.get("fr", ""))
-    for lab, v in (_MSG.get("faits") or {}).items()
-    if v.get("fr")
-}
-FAITS_EN = {
-    lab: (v.get("source", ""), v.get("en", ""))
-    for lab, v in (_MSG.get("faits") or {}).items()
-    if v.get("en")
-}
-_SOURCES = list((_MSG.get("sources") or {}).keys())
-_TETE_FR = {k: (v or {}).get("fr", "") for k, v in (_MSG.get("sources") or {}).items()}
-_TETE_EN = {k: (v or {}).get("en", "") for k, v in (_MSG.get("sources") or {}).items()}
+_PARESSEUX["FAITS_FR"] = lambda: (
+    {
+        lab: (v.get("source", ""), v.get("fr", ""))
+        for lab, v in (_ici._MSG.get("faits") or {}).items()
+        if v.get("fr")
+    }
+)
+_PARESSEUX["FAITS_EN"] = lambda: (
+    {
+        lab: (v.get("source", ""), v.get("en", ""))
+        for lab, v in (_ici._MSG.get("faits") or {}).items()
+        if v.get("en")
+    }
+)
+_PARESSEUX["_SOURCES"] = lambda: list((_ici._MSG.get("sources") or {}).keys())
+_PARESSEUX["_TETE_FR"] = lambda: (
+    {k: (v or {}).get("fr", "") for k, v in (_ici._MSG.get("sources") or {}).items()}
+)
+_PARESSEUX["_TETE_EN"] = lambda: (
+    {k: (v or {}).get("en", "") for k, v in (_ici._MSG.get("sources") or {}).items()}
+)
 
 
 def preuve(offre, langue, ton="sobre"):
@@ -76,8 +97,8 @@ def preuve(offre, langue, ton="sobre"):
     """
     from jobhunter.documents.commun import cv_variant_key, match_skills
 
-    table = FAITS_EN if langue == "en" else FAITS_FR
-    tete = _TETE_EN if langue == "en" else _TETE_FR
+    table = _ici.FAITS_EN if langue == "en" else _ici.FAITS_FR
+    tete = _ici._TETE_EN if langue == "en" else _ici._TETE_FR
     demandees = set(match_skills(f"{offre.get('poste', '')} {offre.get('description', '')}"))
 
     groupes = {}
@@ -104,7 +125,7 @@ def preuve(offre, langue, ton="sobre"):
     lien = " and " if langue == "en" else " et "
     phrases = []
     # Deux sources au plus : trois font une enumeration, pas une phrase.
-    for src in _SOURCES:
+    for src in _ici._SOURCES:
         if src not in groupes or len(phrases) >= 2:
             continue
         # UN SEUL fait par source. Deux faits du meme stage se telescopaient :
@@ -132,8 +153,8 @@ def preuve(offre, langue, ton="sobre"):
 #   - la preuve cite UNE source presente dans la table -> la phrase de cette cle
 #   - la preuve cite plusieurs sources                  -> rien, elle se suffit
 #   - sinon                                             -> la phrase « autre »
-_CONTEXTE_FR = dict(_MSG.get("phrase_contexte_fr") or {})
-_CONTEXTE_EN = dict(_MSG.get("phrase_contexte_en") or {})
+_PARESSEUX["_CONTEXTE_FR"] = lambda: dict(_ici._MSG.get("phrase_contexte_fr") or {})
+_PARESSEUX["_CONTEXTE_EN"] = lambda: dict(_ici._MSG.get("phrase_contexte_en") or {})
 
 
 def _phrase_durable(offre, langue, preuve_texte):
@@ -150,9 +171,11 @@ def _phrase_durable(offre, langue, preuve_texte):
         langue,
     ):
         return ""
-    table = _CONTEXTE_EN if langue == "en" else _CONTEXTE_FR
-    tete = _TETE_EN if langue == "en" else _TETE_FR
-    citees = [k for k in _SOURCES if tete.get(k, "").strip() and tete[k].strip() in preuve_texte]
+    table = _ici._CONTEXTE_EN if langue == "en" else _ici._CONTEXTE_FR
+    tete = _ici._TETE_EN if langue == "en" else _ici._TETE_FR
+    citees = [
+        k for k in _ici._SOURCES if tete.get(k, "").strip() and tete[k].strip() in preuve_texte
+    ]
     if len(citees) > 1:
         return ""
     cle = citees[0] if citees and citees[0] in table else "autre"
@@ -426,12 +449,12 @@ def _message(offre, langue=None, ton="sobre"):
         return f", {diplome}," if diplome else ""
 
     if lg == "en":
-        dip = _MSG.get("diplome_en", "")
+        dip = _ici._MSG.get("diplome_en", "")
         return (
             f"{appel(offre, 'en')}\n\n"
             f"I am {_un(_dom(cle, 'accroche_en'))}{lien(dip)} and I am "
             f"applying for the {titre} position at {soc}.\n\n"
-            + f"{_intro_role(offre, 'en')} {_MSG.get('langues_en', '')}".rstrip()
+            + f"{_intro_role(offre, 'en')} {_ici._MSG.get('langues_en', '')}".rstrip()
             + "\n\n"
             "My CV and cover letter are attached. I would be glad to discuss the role with you "
             "and am available at your convenience.\n\n"
@@ -439,8 +462,8 @@ def _message(offre, langue=None, ton="sobre"):
         )
     if ton == "detente":
         # Un parcours a l'etranger se raconte sans bravade : le fait suffit.
-        dip = _MSG.get("diplome_detente_fr") or _MSG.get("diplome_fr", "")
-        langues = _MSG.get("langues_detente_fr") or _MSG.get("langues_fr", "")
+        dip = _ici._MSG.get("diplome_detente_fr") or _ici._MSG.get("diplome_fr", "")
+        langues = _ici._MSG.get("langues_detente_fr") or _ici._MSG.get("langues_fr", "")
         return (
             f"{appel(offre, 'fr', 'detente')}\n\n"
             f"Je suis {_dom(cle, 'accroche_fr')}{lien(dip)} et je postule au poste "
@@ -451,12 +474,12 @@ def _message(offre, langue=None, ton="sobre"):
             f"{_P.accord('ravi', 'ravie')} d'en discuter avec vous.\n\n"
             f"Bien à vous,\n{nom}"
         )
-    dip = _MSG.get("diplome_fr", "")
+    dip = _ici._MSG.get("diplome_fr", "")
     return (
         f"{appel(offre, 'fr')}\n\n"
         f"Je suis {_dom(cle, 'accroche_fr')}{lien(dip)} et je "
         f"postule au poste {_de_titre(titre)} chez {soc}.\n\n"
-        + f"{_intro_role(offre, 'fr')} {_MSG.get('langues_fr', '')}".rstrip()
+        + f"{_intro_role(offre, 'fr')} {_ici._MSG.get('langues_fr', '')}".rstrip()
         + "\n\n"
         "Mon CV et ma lettre de motivation sont joints. Je serais "
         f"{_P.accord('heureux', 'heureuse')} d'échanger avec vous "
