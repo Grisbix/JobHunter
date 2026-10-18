@@ -5,4 +5,5 @@ langue    langue de redaction d'une annonce
 zones     zone, pays, region d'un lieu
 tri       retrait de ce qui ne colle pas au profil (ancien Scripts/tri_file.py)
 lexique   competences et domaines du profil, partages avec les documents
+domaines  domaine d'une offre d'apres son intitule (ancien scrape_jobs.classify_domaine)
 """
