@@ -2,6 +2,7 @@
 paths:
   - Scripts/web_nav.py
   - Scripts/site_strategies.py
+  - src/jobhunter/navigation/*.py
   - Scripts/apply_runner.py
   - Scripts/acces.py
 ---
