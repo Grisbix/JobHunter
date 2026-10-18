@@ -4,6 +4,16 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 1.14.0 — 2026-10-18
+
+Rien ne change dans ce que fait JobHunter.
+
+- Charger le moteur ne lit plus aucun fichier : ce qui vient du profil se calcule au
+  premier usage. Changer de profil (premier lancement) vaut aussitôt partout.
+- Le pipeline du matin écrit, à côté de son journal habituel, un journal du moteur
+  horodaté (`Scripts/_logs/pipeline_<date>_<heure>_moteur.log`).
+- `python Scripts/chemins.py` remarche (il levait une erreur).
+
 ## 1.13.0 — 2026-10-18
 
 Rien ne change dans ce que fait JobHunter.
