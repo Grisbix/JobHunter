@@ -3,6 +3,7 @@
 Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
 
 import datetime
+import importlib
 import json
 import subprocess
 import threading
@@ -48,7 +49,7 @@ class DonneesMixin:
         except Exception:
             self.offers = []
         try:
-            self.suivi = __import__("suivi_io").charger(_commun.SUIVI)
+            self.suivi = importlib.import_module("jobhunter.stockage.suivi").charger(_commun.SUIVI)
         except Exception:
             self.suivi = {}
         try:

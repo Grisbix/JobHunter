@@ -12,7 +12,7 @@ import json
 import pytest
 from conftest import Reponse
 
-import job_sources as J
+from jobhunter import sources as J
 
 
 class JS(dict):

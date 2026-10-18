@@ -14,17 +14,14 @@ import sys
 import pytest
 from conftest import EXEMPLE, SRC
 
-import ats_match
-import chemins
 import jutil
-import langue
-import tailor_application
-import tri_file
-import zones
+from jobhunter import chemins, texte
 from jobhunter import chemins as chemins_paquet
-from jobhunter import texte
-from jobhunter.scoring import fit, lexique, tri
+from jobhunter import documents as tailor_application
+from jobhunter.scoring import fit, langue, lexique, tri, zones
+from jobhunter.scoring import fit as ats_match
 from jobhunter.scoring import langue as langue_paquet
+from jobhunter.scoring import tri as tri_file
 from jobhunter.scoring import zones as zones_paquet
 
 

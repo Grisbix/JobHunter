@@ -50,6 +50,7 @@ Run :
 """
 
 import argparse
+import importlib
 import re
 import shutil
 import sys
@@ -543,8 +544,14 @@ def main() -> int:
     ap.add_argument("--echantillon", type=int, default=20)
     a = ap.parse_args()
 
-    q = __import__("queue_io").charger(QUEUE)  # descriptions : outils_techniques les lit
-    proteges = set(__import__("suivi_io").charger(SUIVI)) if SUIVI.exists() else set()
+    q = importlib.import_module("jobhunter.stockage.file").charger(
+        QUEUE
+    )  # descriptions : outils_techniques les lit
+    proteges = (
+        set(importlib.import_module("jobhunter.stockage.suivi").charger(SUIVI))
+        if SUIVI.exists()
+        else set()
+    )
 
     garde: list[tuple[str | None, Offre]] = []
     jette: list[tuple[str | None, Offre]] = []

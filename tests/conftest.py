@@ -77,7 +77,7 @@ class FauxReseau:
 @pytest.fixture
 def faux_reseau(monkeypatch):
     """Aucun appel reseau reel : job_sources passe par la doublure."""
-    import job_sources
+    from jobhunter import sources as job_sources
 
     f = FauxReseau()
     monkeypatch.setattr(job_sources, "_get_borne", f)
@@ -104,7 +104,7 @@ class Horloge:
 
 @pytest.fixture
 def horloge(monkeypatch):
-    import job_sources
+    from jobhunter import sources as job_sources
 
     h = Horloge()
     monkeypatch.setattr(job_sources, "_horloge", h)
@@ -115,7 +115,7 @@ def horloge(monkeypatch):
 @pytest.fixture
 def file_temporaire(tmp_path, monkeypatch):
     """apply_queue.json (et descriptions.json) jetables : queue_io y ecrit."""
-    import queue_io
+    from jobhunter.stockage import file as queue_io
 
     chemin = tmp_path / "apply_queue.json"
     monkeypatch.setattr(queue_io, "CHEMIN", chemin)
@@ -126,7 +126,7 @@ def file_temporaire(tmp_path, monkeypatch):
 @pytest.fixture
 def suivi_temporaire(tmp_path, monkeypatch):
     """suivi.json jetable."""
-    import suivi_io
+    from jobhunter.stockage import suivi as suivi_io
 
     chemin = tmp_path / "suivi.json"
     monkeypatch.setattr(suivi_io, "CHEMIN", chemin)

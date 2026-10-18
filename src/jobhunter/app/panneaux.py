@@ -2,6 +2,7 @@
 
 Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
 
+import importlib
 import json
 import subprocess
 import sys
@@ -146,7 +147,11 @@ class PanneauxMixin:
             except Exception:
                 q = list(self.offers)
             try:
-                sv = __import__("suivi_io").charger(_commun.SUIVI) if _commun.SUIVI.exists() else {}
+                sv = (
+                    importlib.import_module("jobhunter.stockage.suivi").charger(_commun.SUIVI)
+                    if _commun.SUIVI.exists()
+                    else {}
+                )
             except Exception:
                 sv = {}
             # Cle « s », pas « statut » : c'est ce qu'ecrivent _set_statut et
@@ -680,7 +685,7 @@ class PanneauxMixin:
                 # seed depuis les défauts du module
                 sys.path.insert(0, str(SCRIPTS))
                 try:
-                    import job_sources as js
+                    from jobhunter import sources as js
 
                     return {"keywords": list(js.KEYWORDS), "ats_slugs": dict(js.ATS_SLUGS)}
                 except Exception:
@@ -886,7 +891,7 @@ class PanneauxMixin:
         CB(
             bar,
             text="Scanner maintenant",
-            command=lambda: self.run_step([PY, "job_sources.py", "--all"], "Scan offres"),
+            command=lambda: self.run_step([PY, "-m", "jobhunter.sources", "--all"], "Scan offres"),
             bg=ACC,
             fg=ACC_TX,
             relief="flat",

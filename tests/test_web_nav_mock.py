@@ -9,7 +9,7 @@ import urllib.request
 
 import pytest
 
-import web_nav as w
+from jobhunter import navigation as w
 
 
 # ── FakePage : simule page.goto sans navigateur ni reseau ──────────────────────

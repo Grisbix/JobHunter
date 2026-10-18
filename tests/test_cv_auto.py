@@ -8,9 +8,9 @@ l'automatique. Banques SYNTHETIQUES. Converti depuis Scripts/test_cv_auto.py.
 import pytest
 from docx import Document
 
-import chemins
-import cv_auto
-import tailor_application as ta
+from jobhunter import chemins
+from jobhunter import documents as ta
+from jobhunter.documents import cv_auto
 
 # ── la banque minimale : un fait valide, un fait NON valide ────────────────────
 B = {

@@ -12,9 +12,15 @@ Converti depuis Scripts/test_lettre.py.
 
 import pytest
 
-import profil
-from langue import langue_offre
-from tailor_application import _sans_societe, _slug, contexte_agricole, corps_sur_mesure, salutation
+from jobhunter import profil
+from jobhunter.documents import (
+    _sans_societe,
+    _slug,
+    contexte_agricole,
+    corps_sur_mesure,
+    salutation,
+)
+from jobhunter.scoring.langue import langue_offre
 from verifie_redites import corps
 
 _AGRI = next(c for c in profil.get("lettre.contextes") if c["nom"] == "agricole")

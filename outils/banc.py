@@ -94,13 +94,12 @@ def _sur(f, *a, **k):
 def mesurer(offres, cle, n_docs):
     """{cle: decisions} pour chaque offre."""
     sys.path.insert(0, str(SCRIPTS))
-    import ats_match
-    import job_sources
-    import langue
-    import message_offre
-    import tailor_application
-    import tri_file
-    import zones
+    from jobhunter import documents as tailor_application
+    from jobhunter import sources as job_sources
+    from jobhunter.documents import message as message_offre
+    from jobhunter.scoring import fit as ats_match
+    from jobhunter.scoring import langue, zones
+    from jobhunter.scoring import tri as tri_file
     from scrape_jobs import classify_domaine
 
     resultats = {}
@@ -153,7 +152,7 @@ def mesurer(offres, cle, n_docs):
 def charger_jeu(a):
     if a.file:
         sys.path.insert(0, str(SCRIPTS))
-        import queue_io
+        from jobhunter.stockage import file as queue_io
 
         offres = queue_io.charger(Path(a.file))
         return offres, (lambda i, o: queue_io.oid(o))

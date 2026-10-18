@@ -9,8 +9,8 @@ import pytest
 
 import jutil
 import linkedin_closed as L
-import queue_io
-import suivi_io
+from jobhunter.stockage import file as queue_io
+from jobhunter.stockage import suivi as suivi_io
 
 # ── A. la cle du suivi est la meme partout ─────────────────────────────────────
 OFFRE = {"entreprise": " Amundi ", "poste": " Analyste ESG "}

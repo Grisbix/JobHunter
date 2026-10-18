@@ -12,7 +12,7 @@ import urllib.request
 
 import pytest
 
-import job_sources as js
+from jobhunter import sources as js
 
 PAGE = (
     '<a class="x" data-test="job-title" href="https://www.glassdoor.fr/job/{n}">'

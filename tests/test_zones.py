@@ -7,22 +7,22 @@ Sud-Est). Sans reseau. Converti depuis Scripts/test_zones.py.
 
 import pytest
 
-from zones import (
+from jobhunter.scoring.zones import (
     AILLEURS as A,
 )
-from zones import (
+from jobhunter.scoring.zones import (
     INCONNU as U,
 )
-from zones import (
+from jobhunter.scoring.zones import (
     INTERNATIONAL as I,
 )
-from zones import (
+from jobhunter.scoring.zones import (
     PRIORITAIRE as P,
 )
-from zones import (
+from jobhunter.scoring.zones import (
     SECONDAIRE as S,
 )
-from zones import (
+from jobhunter.scoring.zones import (
     lieu_effectif,
     pays_lieu,
     region_pays,

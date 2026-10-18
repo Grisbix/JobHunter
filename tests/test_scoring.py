@@ -10,9 +10,9 @@ import re
 
 import pytest
 
-import ats_match
 import jutil
-from ats_match import (
+from jobhunter.scoring import fit as ats_match
+from jobhunter.scoring.fit import (
     _ESG_DENSITE_MIN,
     _ESG_TITLE_RX,
     axis_scores,

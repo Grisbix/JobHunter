@@ -10,8 +10,8 @@ import re
 
 import pytest
 
-import job_sources as J
-from job_sources import en_france, rang_source
+from jobhunter import sources as J
+from jobhunter.sources import en_france, rang_source
 from scrape_jobs import matches_esg_finance, offre_retenue
 
 LI = "https://fr.linkedin.com/jobs/view/x-4"

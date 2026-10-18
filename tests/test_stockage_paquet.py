@@ -15,10 +15,10 @@ import pytest
 from conftest import RACINE, SRC
 
 import jutil
-import queue_io
-import suivi_io
 from jobhunter import racine
 from jobhunter.stockage import atomique, file, suivi, verrou
+from jobhunter.stockage import file as queue_io
+from jobhunter.stockage import suivi as suivi_io
 
 
 def test_queue_io_est_le_module_du_paquet():

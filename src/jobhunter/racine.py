@@ -26,6 +26,16 @@ def racine() -> Path:
     )
 
 
+def exporter_paquet() -> None:
+    """Ajoute le dossier qui contient le paquet `jobhunter` a PYTHONPATH, herite par les
+    sous-processus : `python -m jobhunter.sources` y marche sans installation. Le
+    chemin vient de ce fichier, jamais d'une racine codee en dur."""
+    src = str(Path(__file__).resolve().parent.parent)
+    deja = os.environ.get("PYTHONPATH", "")
+    if src not in deja.split(os.pathsep):
+        os.environ["PYTHONPATH"] = os.pathsep.join(p for p in (src, deja) if p)
+
+
 def scripts() -> Path:
     """Le dossier des donnees de travail (file, descriptions, suivi)."""
     return racine() / "Scripts"

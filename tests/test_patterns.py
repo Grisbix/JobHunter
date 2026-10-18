@@ -14,7 +14,7 @@ Converti depuis Scripts/test_patterns.py.
 import pytest
 
 import apply_runner as ar
-import web_nav as w
+from jobhunter import navigation as w
 
 PROF = {
     "prenom": "Camille",

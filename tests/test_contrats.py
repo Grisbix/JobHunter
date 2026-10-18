@@ -6,7 +6,7 @@ phrases reelles de la file (2026-10-04).
 
 import pytest
 
-from job_sources import contrat_de_la_description, contrat_du_titre
+from jobhunter.sources import contrat_de_la_description, contrat_du_titre
 
 PAR_TITRE = [
     # acronymes francais

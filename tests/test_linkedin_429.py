@@ -9,7 +9,7 @@ Scripts/test_lecteurs_ats.py.
 import pytest
 from conftest import Reponse
 
-import job_sources as J
+from jobhunter import sources as J
 
 CARTE_LI = (
     '<li><div class="base-card"><a href="https://fr.linkedin.com/jobs/view/42?trk=x">'

@@ -13,12 +13,11 @@ import sys
 import pytest
 from conftest import EXEMPLE, SRC
 
-import cv_auto
 import jobhunter.documents as paquet
-import message_offre
-import tailor_application
-from jobhunter.documents import commun, cv, lettre, llm, message, rendu
+from jobhunter import documents as tailor_application
+from jobhunter.documents import commun, cv, cv_auto, lettre, llm, message, rendu
 from jobhunter.documents import cv_auto as cv_auto_paquet
+from jobhunter.documents import message as message_offre
 
 
 @pytest.mark.parametrize(

@@ -172,7 +172,7 @@ STEPS = [
     (
         "Scan offres",
         "#2563eb",
-        [PY, "job_sources.py", "--all"],
+        [PY, "-m", "jobhunter.sources", "--all"],
         "NOUVELLES offres : APIs ATS (greenhouse/lever/ashby…) + LinkedIn public + WTJ → merge queue (dédup)",
     ),
     (
@@ -201,7 +201,7 @@ MAINT = [
             # Le scan quotidien ne voit que 7 jours (filtre f_TPR LinkedIn). Une
             # offre publiee en debut de mois et ratee sur le moment reste
             # invisible sans cette passe elargie.
-            ("Rattrapage 31 j", [PY, "job_sources.py", "--all", "--days", "31"]),
+            ("Rattrapage 31 j", [PY, "-m", "jobhunter.sources", "--all", "--days", "31"]),
             ("Sonder flux ATS", [PY, "probe_ats.py"]),
             ("Sonder flux Workday", [PY, "probe_workday.py"]),
             ("Sonder mots-clés", [PY, "probe_keywords.py", "--days", "30", "--min-new", "3"]),

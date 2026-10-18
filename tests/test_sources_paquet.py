@@ -15,9 +15,9 @@ from unittest import mock
 import pytest
 from conftest import EXEMPLE, SRC
 
-import job_sources
 import jobhunter.sources as paquet
 import scrape_jobs
+from jobhunter import sources as job_sources
 from jobhunter.scoring import domaines
 from jobhunter.sources import cli, commun, indeed, linkedin
 

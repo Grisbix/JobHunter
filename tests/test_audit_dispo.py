@@ -13,9 +13,9 @@ import httpx
 import pytest
 
 import audit_dispo as a
-import job_sources
 import linkedin_desc as ld
 import pipeline_quotidien as pq
+from jobhunter import sources as job_sources
 
 JOUR = "2026-10-02"
 

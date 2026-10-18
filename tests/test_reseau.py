@@ -11,10 +11,9 @@ import io
 import httpx
 import pytest
 
-import job_sources
-import profil
+from jobhunter import profil, reseau
 from jobhunter import profil as profil_paquet
-from jobhunter import reseau
+from jobhunter import sources as job_sources
 
 
 class FluxLent:

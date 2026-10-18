@@ -70,7 +70,7 @@ def _citable(t, langue):
     if len(t) <= 15:
         return False
     try:
-        from langue import langue_offre
+        from jobhunter.scoring.langue import langue_offre
 
         # langue_offre exige 120 caracteres pour se prononcer ; en dessous il
         # repond « fr » par defaut, ce qui ferait taire toute citation courte
@@ -234,7 +234,7 @@ def corps_sur_mesure(offer):
     des parentheses et des majuscules aleatoires. Windows ignorant deja la
     casse, chercher a l'identique ne donnerait qu'un faux negatif silencieux.
     """
-    from chemins import LT_SUR_MESURE
+    from jobhunter.chemins import LT_SUR_MESURE
 
     if not LT_SUR_MESURE.exists():
         return []

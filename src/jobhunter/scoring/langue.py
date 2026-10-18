@@ -86,7 +86,7 @@ def langue_offre(
         # Import differe : `zones` importe `job_sources` pour son detecteur de
         # pays, et ce module-ci est importe tot par les generateurs.
         try:
-            from zones import INCONNU, INTERNATIONAL, zone_lieu
+            from jobhunter.scoring.zones import INCONNU, INTERNATIONAL, zone_lieu
 
             z = zone_lieu(L)
         except Exception:

@@ -55,7 +55,7 @@ def cv_sur_mesure(offer):
 
     Le modele reste la source : on ne retouche que ce que l'offre demande, et la
     regeneration reprend les retouches au lieu de les ecraser."""
-    from chemins import CV_SUR_MESURE
+    from jobhunter.chemins import CV_SUR_MESURE
 
     if not CV_SUR_MESURE.exists():
         return None

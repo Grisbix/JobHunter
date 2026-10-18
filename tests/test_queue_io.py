@@ -13,7 +13,7 @@ import pytest
 from conftest import SCRIPTS
 
 import jutil
-import queue_io
+from jobhunter.stockage import file as queue_io
 
 
 @pytest.fixture

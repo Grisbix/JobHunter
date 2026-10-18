@@ -9,7 +9,7 @@ import json
 
 import pytest
 
-import job_sources as js
+from jobhunter import sources as js
 
 CLE = "CLE-SECRETE-123"
 

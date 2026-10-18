@@ -11,7 +11,7 @@ from email.message import Message
 from pathlib import Path
 from unittest.mock import patch
 
-import job_sources as js
+from jobhunter import sources as js
 
 
 class Reponse(io.BytesIO):

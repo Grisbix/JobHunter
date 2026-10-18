@@ -8,7 +8,7 @@ televersement. Converti depuis Scripts/test_web_nav.py, qui ajoutait une fonctio
 
 import pytest
 
-import web_nav as w
+from jobhunter import navigation as w
 
 
 def pick(pg, tache):

@@ -11,6 +11,7 @@ from tkinter import messagebox
 import customtkinter as ctk
 
 from jobhunter import profil as _profil
+from jobhunter import racine as _racine
 from jobhunter.app import theme as _theme
 from jobhunter.app.actions import ActionsMixin
 from jobhunter.app.commun import MAINT, STEPS
@@ -497,6 +498,7 @@ def _annonce_mise_a_jour(root, app):
 
 
 def main():
+    _racine.exporter_paquet()  # les etapes lancent `python -m jobhunter...`
     r = ctk.CTk()
     a = App(r)
     _annonce_mise_a_jour(r, a)

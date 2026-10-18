@@ -5,7 +5,7 @@ non-offres, etudiant ; et la protection du suivi. Converti depuis Scripts/test_t
 import pytest
 
 import doublons as D
-import tri_file as T
+from jobhunter.scoring import tri as T
 
 
 def m(titre, desc="", **kw):

@@ -13,9 +13,9 @@ import pytest
 from conftest import EXEMPLE, SRC
 
 import jobhunter.navigation as paquet
-import site_strategies
-import web_nav
+from jobhunter import navigation as web_nav
 from jobhunter.navigation import carrieres, formulaires, navigateur, page, segment, strategies
+from jobhunter.navigation import strategies as site_strategies
 
 SOUS_MODULES = [
     "page",

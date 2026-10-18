@@ -8,7 +8,7 @@ n'etait pas vide : l'idempotence n'etait pas verifiee. Elle l'est ici.
 
 import pytest
 
-import tailor_application as T
+from jobhunter import documents as T
 
 
 def objet(role):

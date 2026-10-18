@@ -106,7 +106,7 @@ class ExecutionMixin:
         # L'ancien enchainement s'arretait au re-score : ni descriptions, ni
         # export CSV, ni alerte.
         seq = [
-            ("1/6 Scan offres (ATS + LinkedIn + V.I.E)", [PY, "job_sources.py", "--all"]),
+            ("1/6 Scan offres (ATS + LinkedIn + V.I.E)", [PY, "-m", "jobhunter.sources", "--all"]),
             (
                 "2/6 Descriptions LinkedIn",
                 [PY, "scrape_desc.py", "--all", "--canal", "linkedin", "--limit", "150"],

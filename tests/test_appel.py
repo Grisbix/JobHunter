@@ -7,7 +7,7 @@ Converti depuis Scripts/test_appel.py.
 
 import pytest
 
-from message_offre import _nom_propre, _patronyme, appel, nom_dans_offre
+from jobhunter.documents.message import _nom_propre, _patronyme, appel, nom_dans_offre
 
 
 def a(rh, langue="fr", ton="sobre"):
