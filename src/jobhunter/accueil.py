@@ -14,7 +14,7 @@ from jobhunter import profil as _profil
 from jobhunter import racine as _rac
 
 
-def assurer_profil():
+def assurer_profil() -> None:
     try:
         _profil.charger()
     except _profil.ProfilAbsent as _e:

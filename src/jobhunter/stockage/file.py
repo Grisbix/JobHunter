@@ -141,9 +141,9 @@ def sauver(
         atomique.ecrire_json(DESCRIPTIONS, textes)
     atomique.ecrire_json(p, offres)
     for o in offres:  # l'appelant garde son objet complet
-        t = textes.get(oid(o))
-        if t:
-            o["description"] = t
+        texte = textes.get(oid(o))
+        if texte:
+            o["description"] = texte
 
 
 class VerrouIndisponible(RuntimeError):

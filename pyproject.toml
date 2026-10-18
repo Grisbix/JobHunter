@@ -117,6 +117,9 @@ module = [
     "jobhunter._facade",
     "jobhunter.paresseux",
     "jobhunter.journal",
+    "jobhunter.cli",
+    "jobhunter.accueil",
+    "jobhunter.mise_a_jour",
 ]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

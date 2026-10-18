@@ -177,6 +177,12 @@ Fini quand : mypy strict sur le cœur, aucun `# type: ignore` sans commentaire.
 `scoring` (+ `chemins`, `_facade`) : le critère de fin est atteint. Restent, en continu,
 les `TypedDict` d'`Offre` et `Candidature`, et le durcissement des autres paquets.
 
+**Avancement (2026-10-19)** : `Offre` et `Candidature` sont des `TypedDict` non totaux
+(toutes les clés facultatives : une offre se construit par étapes), inventoriés sur une vraie
+file de 12 137 offres et sur les clés que le code lit ou écrit. `cli`, `accueil` et
+`mise_a_jour` rejoignent la liste stricte. Mesuré pour la suite, en erreurs du mode strict :
+`documents` 187, `navigation` 175, `sources` 395, `app` 1 024, les programmes ~85.
+
 ## Phase 6 — Distribution (1 journée) → v2.x
 
 - JobHunter installable : `pip install git+https://github.com/Grisbix/JobHunter@v2.0.0`.

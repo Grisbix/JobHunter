@@ -17,6 +17,7 @@ Aucune commande n'envoie de candidature : le clic final reste celui de l'utilisa
 import importlib.util
 import runpy
 import sys
+from collections.abc import Sequence
 
 from jobhunter import racine
 
@@ -49,7 +50,7 @@ COMMANDES = {
 }
 
 
-def aide():
+def aide() -> str:
     largeur = max(map(len, COMMANDES))
     lignes = ["usage : jobhunter <commande> [options]   (jobhunter <commande> --help)", ""]
     lignes += [f"  {c:<{largeur}}  {d}" for c, (_m, d) in COMMANDES.items()]
@@ -57,7 +58,7 @@ def aide():
     return "\n".join(lignes)
 
 
-def module_de(cmd):
+def module_de(cmd: str) -> str | None:
     """Le module d'une commande : une commande nommee, ou un programme par son nom."""
     if cmd in COMMANDES:
         return COMMANDES[cmd][0]
@@ -66,7 +67,7 @@ def module_de(cmd):
     return None
 
 
-def main(argv=None):
+def main(argv: Sequence[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv or argv[0] in ("-h", "--help", "aide"):
         print(aide())
