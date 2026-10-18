@@ -4,6 +4,23 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.0.0 — 2026-10-18
+
+Rien ne change dans ce que fait JobHunter ; ce qui change, c'est la façon de lancer les
+commandes à la main. Passe par la 1.15 avant (la mise à jour le fait d'elle-même si tu
+es à jour).
+
+- Tout le programme vit maintenant dans `src/jobhunter` ; `Scripts/` ne garde que tes
+  données (file d'offres, suivi, réglages, journaux).
+- Les commandes se lancent par `python JobHunter.pyw <commande>` : `collecte`,
+  `documents`, `postuler`, `pipeline`, `maj`… (`python JobHunter.pyw aide` les liste), et
+  tout autre programme par son nom (`python JobHunter.pyw probe_ats`). Les anciennes
+  lignes `python Scripts/xxx.py` ne marchent plus.
+- Double-clic, `lancer.bat`, `mettre_a_jour.bat` : rien ne change.
+- **Collecte planifiée** : si tu l'avais programmée avec `planifier.bat` ou
+  `./planifier.sh`, relance-le une fois — l'ancienne tâche vise un fichier qui n'existe
+  plus. La mise à jour te le signale si c'est le cas.
+
 ## 1.15.0 — 2026-10-18
 
 Version de passage vers la 2.0 : installe-la avant la 2.0. Rien ne change dans ce que
