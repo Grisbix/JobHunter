@@ -31,7 +31,9 @@ un module entièrement annoté rejoint la liste stricte de `pyproject.toml`.
 
 `uv sync` installe `src/jobhunter` en mode éditable ; `pip install -e .` aussi. La commande
 `jobhunter <commande>` existe alors (`jobhunter` seul liste les commandes). Hors du dépôt,
-`JOBHUNTER_RACINE` désigne le dossier qui contient `Scripts/` et `profil/`.
+`JOBHUNTER_RACINE` désigne le dossier qui contient `Scripts/` et `profil/` (sinon le paquet
+le cherche en remontant depuis le dossier courant). Sans installation : `python JobHunter.pyw
+<commande>`.
 
 ## Comprendre le code
 

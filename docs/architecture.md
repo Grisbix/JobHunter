@@ -51,11 +51,19 @@ chacun leur ADR dans [`docs/adr/`](adr/) ; le plan qui a mené ici est
 | `jobhunter.documents` | CV, lettre, message court, PDF | profil, scoring.lexique, chemins |
 | `jobhunter.navigation` | Playwright : du site de la société au formulaire rempli | racine |
 | `jobhunter.app` | l'application bureau (customtkinter) | tout ce qui précède |
-| `jobhunter.cli` | `python -m jobhunter <commande>` | racine |
+| `jobhunter.programmes` | les programmes (pipeline, documents, candidature, audits, sondes) | tout ce qui précède |
+| `jobhunter.cli` | `python -m jobhunter <commande>`, et tout programme par son nom | racine |
 
 Les dépendances vont dans un seul sens (de haut en bas du tableau). Quelques imports
-différés vers `Scripts/` restent, marqués `TRANSITION` dans le code : `doublons`,
-`rejets_tri`, `exclusions`, `wtj_desc`, `enrich_homepages`, `relances`, `mise_a_jour`.
+différés vers `jobhunter.programmes` restent, marqués `TRANSITION` dans le code :
+`doublons`, `rejets_tri`, `exclusions`, `wtj_desc`, `enrich_homepages`, `relances`,
+`mise_a_jour`.
+
+**Lancer sans installer** : `python JobHunter.pyw` (l'application) ou
+`python JobHunter.pyw <commande>` ; c'est le seul fichier qui ajoute `src/` au chemin
+d'import, et les `.bat`/`.sh` comme la tâche planifiée passent par lui. Installé par
+`pip`, le paquet trouve le dossier des données par `JOBHUNTER_RACINE` ou en remontant
+depuis le dossier courant ([ADR 0008](adr/0008-programmes-dans-le-paquet.md)).
 
 ## Les données
 
@@ -74,8 +82,8 @@ Un programme qui trouve la file verrouillée sort en **code 3** sans rien modifi
 
 ## Le pipeline quotidien
 
-`Scripts/pipeline_quotidien.py` (ou `python -m jobhunter pipeline`), lancé chaque matin
-par la tâche que pose `planifier.bat` :
+`jobhunter.programmes.pipeline_quotidien` (`python JobHunter.pyw pipeline`), lancé chaque
+matin par la tâche que pose `planifier.bat` :
 
 1. **collecte**, en cinq passes fusionnées chacune (ATS/Workday/V.I.E ; LinkedIn ;
    eFC/EURES ; APEC/France Travail/Adzuna/Jooble ; Glassdoor/WTJ) — une passe qui dépasse
@@ -101,13 +109,13 @@ nouvelle tentative avant 30 jours ([ADR 0004](adr/0004-429-attendre-403-arreter.
 Aucun contournement anti-bot, aucun moteur furtif, aucun mot de passe manipulé, aucune
 soumission automatique ([ADR 0005](adr/0005-aucune-soumission-automatique.md)).
 
-## Code hérité : les façades
+## Paquets découpés : un seul espace de noms
 
-Chaque ancien `Scripts/x.py` déplacé dans le paquet est un **alias** du module
-(`sys.modules`), pas une copie ; un paquet découpé (`sources`, `documents`,
-`navigation`, `app`) voit les noms de tous ses sous-modules, et une affectation va au
-module qui possède le nom ([ADR 0001](adr/0001-facades-alias.md)). Les façades
-disparaîtront avec l'installation par `pip` (phase 6 du plan).
+Un paquet découpé (`sources`, `documents`, `navigation`, `app`) voit les noms de tous
+ses sous-modules, et une affectation va au module qui possède le nom
+([ADR 0001](adr/0001-facades-alias.md)) : `jobhunter.sources.title_ok` et un
+`monkeypatch` sur `jobhunter.sources._get_borne` marchent. Les anciens `Scripts/x.py`
+(alias de ces modules) ont été retirés en 2.0.
 
 ## Vérifier qu'un changement ne change rien
 

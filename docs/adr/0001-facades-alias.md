@@ -1,6 +1,6 @@
 # 0001 — Les anciens modules deviennent des alias du paquet
 
-**Statut** : accepté, 2026-10-18 (phases 3.1 à 3.7).
+**Statut** : accepté, 2026-10-18 (phases 3.1 à 3.7). Les alias `Scripts/x.py` sont retirés en 2.0 ([0008](0008-programmes-dans-le-paquet.md)) ; la façade de paquet (`_facade`) reste.
 
 ## Contexte
 

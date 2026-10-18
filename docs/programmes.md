@@ -1,11 +1,17 @@
-# Scripts — que fait quoi
+# Les programmes — que fait quoi
 
-48 programmes à plat, parce que les déplacer casserait les imports et une quarantaine de
-chemins codés en dur. Cette page remplace le rangement : elle dit à quoi sert chacun.
+Ancien `Scripts/README.md`. Depuis la 2.0, les programmes vivent dans
+`src/jobhunter/programmes/` (et le moteur dans les autres paquets de `src/jobhunter`) ;
+`Scripts/` ne garde que les données. Les noms ci-dessous sont les noms historiques des
+fichiers : `job_sources.py` est `jobhunter.sources`, `queue_io.py` est
+`jobhunter.stockage.file`, `web_nav.py` est `jobhunter.navigation`, etc.
+(`docs/architecture.md`).
 
-**Point d'entrée quotidien : l'app (`../JobHunter.pyw`).** Presque tout ici est
-appelé par elle. La ligne de commande sert quand un programme a besoin du clavier, ou
-pour les opérations en lot.
+**Point d'entrée quotidien : l'app (`JobHunter.pyw`).** Presque tout ici est appelé par
+elle. La ligne de commande sert quand un programme a besoin du clavier, ou pour les
+opérations en lot : `python JobHunter.pyw <commande>` (ou `python -m jobhunter
+<commande>` une fois installé), et tout programme par son nom
+(`python JobHunter.pyw probe_ats`).
 
 **Le fichier qui compte : `apply_queue.json`.** Toutes les offres y sont — sauf leurs
 descriptions, qui vivent à part dans `descriptions.json` (elles pesaient 64 % du fichier,

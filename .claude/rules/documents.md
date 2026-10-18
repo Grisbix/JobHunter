@@ -1,10 +1,10 @@
 ---
 paths:
-  - Scripts/tailor_application.py
-  - Scripts/generate_docs.py
-  - Scripts/regenere_docs.py
-  - Scripts/sync_docs.py
-  - Scripts/chemins.py
+  - src/jobhunter/documents/**
+  - src/jobhunter/programmes/generate_docs.py
+  - src/jobhunter/programmes/regenere_docs.py
+  - src/jobhunter/programmes/sync_docs.py
+  - src/jobhunter/chemins.py
   - src/jobhunter/chemins.py
   - src/jobhunter/scoring/lexique.py
   - src/jobhunter/documents/*.py

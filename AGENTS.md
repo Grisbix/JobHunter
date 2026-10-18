@@ -8,12 +8,12 @@ Langue : **français**. Le code, les commentaires, les commits et les docs le so
 ## Version partagée : le moteur ne connaît personne
 
 Tout ce qui est PROPRE À LA PERSONNE vit dans `profil/profil.json`, lu par
-`Scripts/profil.py` : identité, métiers visés (`domaines`), compétences, axes et
+`src/jobhunter/profil.py` : identité, métiers visés (`domaines`), compétences, axes et
 plafonds du scoring, filtres d'intitulé, niveau, familles retirées par le tri, zones,
 mots-clés de collecte, textes des lettres et messages. **Aucun module ne code un
 métier, une ville ou un nom.** Pour changer de cible, on change le profil.
 
-- Créer le profil : `python Scripts/premier_lancement.py <cv.pdf|docx>`.
+- Créer le profil : `python -m jobhunter profil <cv.pdf|docx>`.
 - Profil complet de référence : `profil/exemple_finance_esg.json` (junior en finance
   durable). C'est sur lui que tournent **tous les tests** — `_profil_test.py`, importé
   en tête de chaque `test_*.py`, force `PROFIL_JOBHUNTER` vers ce fichier.
@@ -21,7 +21,7 @@ métier, une ville ou un nom.** Pour changer de cible, on change le profil.
   quel). `profil.motif()` les compile.
 - Guide utilisateur : `README.md`. Paramétrage par Claude Code : `/configurer-profil` (`.claude/commands/configurer-profil.md`).
 - Outils à double-clic (racine) : `installer.bat`, `lancer.bat` (CV pris dans `Mon_CV/`), `planifier.bat`
-  (tâche planifiée quotidienne), `mettre_a_jour.bat` → `Scripts/mise_a_jour.py` (git pull, ou ZIP
+  (tâche planifiée quotidienne), `mettre_a_jour.bat` → `src/jobhunter/programmes/mise_a_jour.py` (git pull, ou ZIP
   GitHub fichier par fichier : données jamais touchées, fichier modifié gardé + `.nouveau`,
   fichier retiré enlevé s'il est intact, contrôle de chargement puis retour arrière automatique,
   `--annuler`). **À chaque publication : monter `VERSION`, ajouter sa section en tête de
@@ -34,7 +34,7 @@ métier, une ville ou un nom.** Pour changer de cible, on change le profil.
 
 ## À lire avant de toucher au code
 
-**`Scripts/README.md`** — ce que fait chaque programme, et surtout sa section finale
+**`docs/programmes.md`** — ce que fait chaque programme, et surtout sa section finale
 « Pièges du code, appris à la dure ». Chaque piège y est un bug réel, mesuré, avec son
 symptôme. Ne pas redécouvrir ces bugs. `README.md` à la racine s'adresse à l'utilisateur ;
 l'historique des changements est dans les messages de commit.
@@ -46,23 +46,23 @@ l'historique des changements est dans les messages de commit.
 python JobHunter.pyw
 
 # Collecte + fusion dans la file (voir --help : ~20 sources activables séparément)
-python Scripts/job_sources.py --all
-python Scripts/job_sources.py --linkedin --apec --efc
-python Scripts/job_sources.py --efc --efc-sites monde --eures   # étranger : eFC ×9 sites, EURES
+python -m jobhunter collecte --all
+python -m jobhunter collecte --linkedin --apec --efc
+python -m jobhunter collecte --efc --efc-sites monde --eures   # étranger : eFC ×9 sites, EURES
 
 # Documents : CV + lettre par offre
-python Scripts/generate_docs.py --top 30
-python Scripts/generate_docs.py --all --dry
-python Scripts/regenere_docs.py --cv        # régénère l'existant après un changement de gabarit
-python Scripts/cv_auto.py --liste           # banque de faits du CV automatique (CV/Faits.json)
-python Scripts/generate_docs.py --url <extrait>   # refait CV et lettre d'une offre
+python -m jobhunter documents --top 30
+python -m jobhunter documents --all --dry
+python -m jobhunter regenerer --cv        # régénère l'existant après un changement de gabarit
+python -m jobhunter cv-auto --liste           # banque de faits du CV automatique (CV/Faits.json)
+python -m jobhunter documents --url <extrait>   # refait CV et lettre d'une offre
 
 # Offres fermées : contrôle (API guest LinkedIn, 404/410) puis retrait, reprise auto sur 429
-python Scripts/audit_dispo.py --supprime
-python Scripts/audit_dispo.py --rapport     # bilan de l'état, sans réseau
+python -m jobhunter dispo --supprime
+python -m jobhunter dispo --rapport     # bilan de l'état, sans réseau
 
 # Candidature semi-automatique — DANS UN VRAI TERMINAL, il attend le clavier
-python Scripts/apply_runner.py --canal linkedin
+python -m jobhunter postuler --canal linkedin
 ```
 
 ### Tests et contrôles
@@ -91,7 +91,7 @@ session, une page neuve par test). **Jamais d'affectation directe d'une globale 
 dans un test : `monkeypatch`**, sinon l'état fuit d'un test à l'autre. Un test qui lit les
 données réelles d'un utilisateur porte la marque `donnees_reelles` et ne tourne qu'à la
 demande (`pytest -m donnees_reelles`). `tests/test_pas_de_suite_historique.py` refuse tout
-nouveau `Scripts/test_*.py`. `Scripts/test_live_nav.py` et `Scripts/test_acces_sites.py`
+programme dans `Scripts/`. `programmes/test_live_nav` et `programmes/test_acces_sites`
 sortent vraiment sur le web — hors pytest, ne pas les lancer machinalement.
 
 `test_scoring` génère un cas « sans backspace » **par motif du module** : ajouter un
@@ -99,9 +99,10 @@ motif à `ats_match` fait monter son compte sans qu'aucun test ait été écrit.
 
 ## Architecture
 
-### Le paquet `src/jobhunter` (phase 3 du plan, en cours)
+### Le paquet `src/jobhunter` (2.0 : tout le code y est)
 
-Le moteur migre de `Scripts/` vers `src/jobhunter` (`docs/plan-professionnalisation.md`) :
+`Scripts/` ne garde que les données ; le code vit dans `src/jobhunter`
+(`docs/plan-professionnalisation.md`) :
 
 | Paquet | Contenu (ancien nom) |
 |---|---|
@@ -111,12 +112,14 @@ Le moteur migre de `Scripts/` vers `src/jobhunter` (`docs/plan-professionnalisat
 | `jobhunter.documents` | `tailor_application` (`commun`, `cv`, `lettre`, `llm`, `rendu`), `message` (`message_offre`), `cv_auto` |
 | `jobhunter.navigation` | `web_nav` : une section par module (`page`, `carrieres`, `formulaires`…), `strategies` (`site_strategies`) |
 | `jobhunter.app` | `JobHunter.pyw` (désormais lanceur) : `fenetre.App` = un mixin par domaine, `theme`, `commun` |
+| `jobhunter.programmes` | les ~57 programmes (anciens `Scripts/*.py`) : `pipeline_quotidien`, `generate_docs`, `apply_runner`, `audit_dispo`, `jutil`… |
 | `jobhunter` | `racine`, `profil`, `reseau` (requêtes bornées), `chemins`, `texte`, `liens`, `accueil`, `cli` (`python -m jobhunter <commande>`) |
 
 Dépendances à sens unique, vérifiées en test (cycles `jutil`↔`queue_io`, `ats_match`↔`tailor`,
-`job_sources`↔`scrape_jobs` cassés) ; imports différés restants vers `Scripts/` : assumés.
-**Façades** : chaque ancien `Scripts/x.py` est un ALIAS (`sys.modules`) du module du paquet,
-`runpy` s'il est lancé ; un paquet découpé voit les noms de ses sous-modules (`_facade`).
+`job_sources`↔`scrape_jobs` cassés). Un paquet découpé voit les noms de ses sous-modules
+(`_facade`) : `jobhunter.sources.title_ok` marche. Sans installation, `python JobHunter.pyw
+<commande>` lance tout (c'est le seul fichier qui ajoute `src/` au chemin) ; installé
+(`pip install -e .`), `python -m jobhunter <commande>` ou `jobhunter <commande>`.
 `test_coherence_imports.py` vérifie que chaque `module.nom` utilisé entre modules existe.
 
 ### Trois fichiers de données, trois contrats d'accès

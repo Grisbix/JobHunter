@@ -84,7 +84,7 @@ Mêmes étapes, avec les scripts `.sh` dans un terminal ouvert dans le dossier (
 ```bash
 pip install -r requirements.txt
 python -m playwright install chromium
-python Scripts/premier_lancement.py "chemin/vers/mon_CV.docx"
+python JobHunter.pyw profil "chemin/vers/mon_CV.docx"
 python JobHunter.pyw
 ```
 </details>
@@ -109,11 +109,11 @@ compléter. **Il n'invente aucun fait** : ce qui n'est pas dans ton CV, il te le
 | Quoi | Comment |
 |---|---|
 | Ouvrir l'application | `lancer.bat` (ou `python JobHunter.pyw`) |
-| Collecte + tri + CV/lettres des meilleures offres (1 à 3 h) | `python Scripts/pipeline_quotidien.py` |
-| Collecte LinkedIn seule / essai sans rien écrire | `python Scripts/job_sources.py --linkedin [--dry]` |
-| CV + lettre des 20 meilleures offres | `python Scripts/generate_docs.py --top 20` |
-| Refaire CV et lettre d'une offre | `python Scripts/generate_docs.py --url <morceau-du-lien>` |
-| Remplissage semi-automatique d'un formulaire | `python Scripts/apply_runner.py --canal linkedin` (dans un terminal) |
+| Collecte + tri + CV/lettres des meilleures offres (1 à 3 h) | `python JobHunter.pyw pipeline` |
+| Collecte LinkedIn seule / essai sans rien écrire | `python JobHunter.pyw collecte --linkedin [--dry]` |
+| CV + lettre des 20 meilleures offres | `python JobHunter.pyw documents --top 20` |
+| Refaire CV et lettre d'une offre | `python JobHunter.pyw documents --url <morceau-du-lien>` |
+| Remplissage semi-automatique d'un formulaire | `python JobHunter.pyw postuler --canal linkedin` (dans un terminal) |
 
 Les mêmes programmes ont une entrée unique : `python -m jobhunter` liste les commandes
 (`collecte`, `documents`, `postuler`, `pipeline`, `maj`…), avec `src` dans `PYTHONPATH` ;
@@ -121,7 +121,7 @@ Les mêmes programmes ont une entrée unique : `python -m jobhunter` liste les c
 
 **Chaque matin automatiquement** : `planifier.bat` (voir plus haut).
 **Mettre à jour** : `mettre_a_jour.bat` (ou le bouton « Mettre à jour JobHunter » de l'app) ;
-`python Scripts/mise_a_jour.py --verifier` pour seulement voir ce qu'apporte la nouvelle version,
+`python JobHunter.pyw maj --verifier` pour seulement voir ce qu'apporte la nouvelle version,
 `--annuler` pour revenir à la précédente. Nouveautés de chaque version : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Le profil
@@ -147,8 +147,8 @@ pour changer de cible, on change le profil. Modèle complet : `profil/exemple_fi
 Contrôler le profil, sans réseau :
 
 ```bash
-python Scripts/profil.py                                              # il se lit ?
-python Scripts/verifie_profil.py "Chargé de communication" "Développeur Java"
+python JobHunter.pyw voir-profil                                              # il se lit ?
+python JobHunter.pyw verifier-profil "Chargé de communication" "Développeur Java"
 ```
 
 Le second dit, pour chaque intitulé, s'il est collecté ou écarté, son domaine et sa note.
@@ -160,7 +160,7 @@ Le second dit, pour chaque intitulé, s'il est collecté ou écarté, son domain
 - **Lettre écrite à la main** : `Lettres/Sur_mesure/<entreprise>__<poste>.txt` remplace le
   corps de la lettre générée.
 - **Entreprises suivies directement** : `Scripts/sources_config.json` ;
-  `python Scripts/probe_ats.py` trouve le flux carrière d'une entreprise.
+  `python JobHunter.pyw probe_ats` trouve le flux carrière d'une entreprise.
 - **Adzuna, Jooble** : crée toi-même une clé d'API gratuite et mets-la dans
   `Scripts/adzuna.json` / `Scripts/jooble.json` (jamais publiés). Sans clé, sources ignorées.
 - **Lettres par IA locale** : installe [Ollama](https://ollama.com/), puis `ollama pull llama3.1:8b`.

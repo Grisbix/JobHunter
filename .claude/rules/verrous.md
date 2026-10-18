@@ -1,13 +1,13 @@
 ---
 paths:
-  - Scripts/jutil.py
+  - src/jobhunter/programmes/jutil.py
   - src/jobhunter/stockage/*.py
   - src/jobhunter/reseau.py
-  - Scripts/job_sources.py
+  - src/jobhunter/sources/**
   - src/jobhunter/sources/*.py
-  - Scripts/linkedin_desc.py
-  - Scripts/pipeline_quotidien.py
-  - Scripts/audit_dispo.py
+  - src/jobhunter/programmes/linkedin_desc.py
+  - src/jobhunter/programmes/pipeline_quotidien.py
+  - src/jobhunter/programmes/audit_dispo.py
 ---
 # Verrous, code de sortie 3, requêtes bornées
 

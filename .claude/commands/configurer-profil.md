@@ -38,12 +38,12 @@ CV indiqué : $ARGUMENTS
 
 3. **Le squelette.** Lance (ajoute `--force` si un profil existe, après accord) :
    ```bash
-   python Scripts/premier_lancement.py "<cv>" --metiers "<m1, m2>" --annees <n> --genre <m|f> --prioritaires "<secteurs>" --secondaires "<secteurs>" --entreprises <o|n>
+   python -m jobhunter profil "<cv>" --metiers "<m1, m2>" --annees <n> --genre <m|f> --prioritaires "<secteurs>" --secondaires "<secteurs>" --entreprises <o|n>
    ```
    Secteurs connus : `python -c "import sys;sys.path.insert(0,'Scripts');import zones;print(list(zones.CATALOGUE))"`.
    Une ville absente du catalogue se déclare dans `zones` du profil, en objet
    `{"cle", "libelle", "lieux", "departements"}` (exemple en tête de la section
-   « SECTEURS GEOGRAPHIQUES » de `Scripts/zones.py`).
+   « SECTEURS GEOGRAPHIQUES » de `src/jobhunter/scoring/zones.py`).
    `--entreprises o` seulement si la personne vise la finance ou l'ESG.
 
 4. **Le profil complet.** Compare `profil/profil.json` à l'exemple, rubrique par
@@ -68,18 +68,18 @@ CV indiqué : $ARGUMENTS
 
 5. **Vérifie.**
    ```bash
-   python Scripts/profil.py
-   python Scripts/verifie_profil.py "<intitulé visé 1>" "<intitulé visé 2>" "<intitulé voisin hors cible>" "<intitulé senior du métier>"
+   python -m jobhunter voir-profil
+   python -m jobhunter verifier-profil "<intitulé visé 1>" "<intitulé visé 2>" "<intitulé voisin hors cible>" "<intitulé senior du métier>"
    ```
    Attendu : les intitulés visés sont `garde`, dans le bon domaine, avec la note la plus
    haute ; les hors cible sont `ECARTE` ou notés bas ; le senior est pénalisé si la
    personne est junior. La note est calculée sur l'intitulé seul : une vraie offre,
    notée avec sa description, monte plus haut. Corrige le profil et recommence
    jusqu'à ce que ce soit juste.
-   Puis un essai réel, sans rien écrire : `python Scripts/job_sources.py --linkedin --dry`.
+   Puis un essai réel, sans rien écrire : `python -m jobhunter collecte --linkedin --dry`.
    Regarde les intitulés gardés : s'ils débordent ou manquent, ajuste `filtre_titre` et
    `collecte.mots_cles`.
 
 6. **Le bilan à l'utilisateur** : ce qui a été rempli, ce qui reste `À COMPLÉTER`, les
    choix faits à sa place, et la suite : `python JobHunter.pyw`, puis
-   `python Scripts/pipeline_quotidien.py` pour la première collecte complète.
+   `python -m jobhunter pipeline` pour la première collecte complète.

@@ -1,10 +1,10 @@
 ---
 paths:
-  - Scripts/web_nav.py
-  - Scripts/site_strategies.py
+  - src/jobhunter/navigation/**
+  - src/jobhunter/navigation/strategies.py
   - src/jobhunter/navigation/*.py
-  - Scripts/apply_runner.py
-  - Scripts/acces.py
+  - src/jobhunter/programmes/apply_runner.py
+  - src/jobhunter/programmes/acces.py
 ---
 # Navigation web et candidature
 
@@ -30,6 +30,6 @@ Elles tiennent depuis le début du projet et ne se rediscutent pas au détour d'
   inaccessibles et le restent.
 - **Aucun mot de passe manipulé par les programmes.** Les sessions vivent dans un
   profil Chrome dédié ; la connexion se fait une fois à la main via
-  `Scripts/acces.py --open <site>`.
+  `python -m jobhunter acces --open <site>`.
 - **Aucune création de compte, aucune lecture de boîte mail par programme.** Un code
   reçu par mail (OTP) se lit et se saisit à la main.
