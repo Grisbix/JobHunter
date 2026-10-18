@@ -5,9 +5,13 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 import re
 import time
 
+from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.commun import INCIDENTS, _lire_borne, _mk, contrat_du_titre, title_ok
 from jobhunter.sources.indeed import INDEED_UA, _IndeedBride
+
+_log = _journal.journal(__name__)
+
 
 # ═══════════════ Glassdoor — la page de recherche, page 1 ═══════════════
 # Meme demarche qu'Indeed, meme frontiere, resultat plus maigre.
@@ -138,16 +142,16 @@ def _gd_cartes(mot):
             # atteints, et l'etape a ete tuee a 40 min (idem le 2026-10-03).
             if e.code == 429 and essai == 1:
                 attente = int(e.headers.get("Retry-After") or GD_REPOS)
-                print(f"    ~ {mot} : HTTP {e.code}, repos {attente} s")
+                _log.info(f"    ~ {mot} : HTTP {e.code}, repos {attente} s")
                 time.sleep(min(attente, 300))
                 continue
-            print(f"    ! {mot} : HTTP {e.code}")
+            _log.info(f"    ! {mot} : HTTP {e.code}")
             INCIDENTS["glassdoor"][f"HTTP {e.code}"] += 1
             if e.code in (403, 429):
                 raise _IndeedBride(e.code)
             return []
         except Exception as e:
-            print(f"    ! {mot} : {type(e).__name__}")
+            _log.info(f"    ! {mot} : {type(e).__name__}")
             return []
 
     return _gd_parse(texte)
@@ -194,7 +198,7 @@ def scan_glassdoor(mots=None, pause=None):
     _EX = _commun.contrats_exclus()
     offers, vus = [], set()
     refus = refuses = 0
-    print(
+    _log.info(
         f"  Glassdoor : {len(mots)} mots-cles ({pause} s entre chaque, "
         f"~{len(mots) * pause // 60} min)"
     )
@@ -212,7 +216,7 @@ def scan_glassdoor(mots=None, pause=None):
             # que chaque requete de plus prolonge la mise a l'ecart. Le cout
             # d'un 403 fortuit : les mots restants de Glassdoor, pour un jour.
             if e.args and e.args[0] == 403:
-                print(
+                _log.warning(
                     f"  ⏸ Glassdoor : refus d'entree (HTTP 403) — source fermee "
                     f"pour aujourd'hui, pas d'insistance, {len(offers)} offres "
                     f"conservees"
@@ -220,7 +224,7 @@ def scan_glassdoor(mots=None, pause=None):
                 break
             refus += 1
             if refus >= GD_ABANDON:
-                print(
+                _log.warning(
                     f"  ⏸ Glassdoor : {refus} refus d'affilee (HTTP {e}) — passe "
                     f"arretee, {len(offers)} offres conservees"
                 )
@@ -230,7 +234,7 @@ def scan_glassdoor(mots=None, pause=None):
             # 2026-10-07, la passe a ete coupee a 40 min par la minuterie, et WTJ,
             # qui passe apres, n'a rien collecte.
             if refuses >= 2 * GD_ABANDON:
-                print(
+                _log.warning(
                     f"  ⏸ Glassdoor : {refuses} refus sur {i + 1} mots-cles — passe "
                     f"arretee, {len(offers)} offres conservees"
                 )
@@ -263,7 +267,7 @@ def scan_glassdoor(mots=None, pause=None):
             o["salaire"] = c["salaire"]
             o["desc_partielle"] = True
             offers.append(o)
-    print(
+    _log.warning(
         f"  ✓ Glassdoor → {len(offers)} offres ({refuses} requetes refusees) — "
         f"description = extrait, pas de contrat structure"
     )

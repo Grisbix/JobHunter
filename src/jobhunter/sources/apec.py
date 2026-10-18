@@ -5,6 +5,7 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 import json
 import time
 
+from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.commun import (
     INCIDENTS,
@@ -16,6 +17,9 @@ from jobhunter.sources.commun import (
     contrat_du_titre,
     title_ok,
 )
+
+_log = _journal.journal(__name__)
+
 
 # ═══════════════ APEC — le remplacant d'Indeed ═══════════════
 #
@@ -105,11 +109,11 @@ def _apec_page(mot, debut):
         with urllib.request.urlopen(r, timeout=30) as f:
             d = json.loads(_lire_borne(f).decode("utf-8", "replace"))
     except urllib.error.HTTPError as e:
-        print(f"    ! {mot} : HTTP {e.code}")
+        _log.info(f"    ! {mot} : HTTP {e.code}")
         INCIDENTS["apec"][f"HTTP {e.code}"] += 1
         return None, 0
     except Exception as e:
-        print(f"    ! {mot} : {type(e).__name__}")
+        _log.info(f"    ! {mot} : {type(e).__name__}")
         return [], 0
     return d.get("resultats") or [], d.get("totalCount") or 0
 
@@ -125,14 +129,14 @@ def scan_apec(mots=None, pages=2):
     mots = mots or _commun.KEYWORDS
     _EX = _commun.contrats_exclus()
     offers, vus = [], set()
-    print(
+    _log.info(
         f"  APEC : {len(mots)} mots-cles x {pages} page(s) de {APEC_PAR_PAGE} "
         f"({APEC_PAUSE} s entre chaque)"
     )
     fait = refus = 0
     for mot in mots:
         if refus >= APEC_ABANDON:
-            print(
+            _log.warning(
                 f"  ⏸ APEC : {refus} refus d'affilee — source fermee pour aujourd'hui, "
                 f"pas d'insistance"
             )
@@ -192,7 +196,7 @@ def scan_apec(mots=None, pages=2):
             if len(res) < APEC_PAR_PAGE:
                 break
     rares = sum(1 for x in offers if x.get("peu_de_candidats"))
-    print(
+    _log.info(
         f"  ✓ APEC → {len(offers)} offres sur {fait} requetes "
         f"(extrait de 283 car., {rares} a faible candidature)"
     )

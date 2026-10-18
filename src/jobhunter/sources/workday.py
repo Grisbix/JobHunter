@@ -4,8 +4,12 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
 import time
 
+from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.commun import INCIDENTS, UA, _mk, _strip_html, title_ok
+
+_log = _journal.journal(__name__)
+
 
 # Court a dessein. Les 55 mots-cles de KEYWORDS viseraient LinkedIn, pas un flux
 # d'entreprise ou l'on cherche un METIER dans un catalogue deja restreint.
@@ -136,6 +140,6 @@ def scan_workday():
         futs = [(f[0], ex.submit(fetch_workday, *f)) for f in _commun.WORKDAY_FLUX]
         for tenant, fut in futs:
             got = fut.result()
-            print(f"  ✓ workday:{tenant} → {len(got)} offres retenues")
+            _log.info(f"  ✓ workday:{tenant} → {len(got)} offres retenues")
             offres.extend(got)
     return offres

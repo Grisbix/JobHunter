@@ -11,10 +11,14 @@ from typing import Any
 from docx import Document
 
 from jobhunter import chemins
+from jobhunter import journal as _journal
 from jobhunter import paresseux as _paresseux
 from jobhunter.documents.commun import CV_ATS, _de, _slug, titre_poste
 from jobhunter.documents.rendu import to_pdf
 from jobhunter.scoring.lexique import cv_variant_key
+
+_log = _journal.journal(__name__)
+
 
 _ici = sys.modules[__name__]
 # Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
@@ -135,7 +139,7 @@ def tailor_cv(offer, nom=None, langue="fr", allege=0, auto=True):
     ):
         src = CV_ATS / _ici.CV_VARIANT_EN[key]
     if not src.is_file():
-        print(f"  ! CV variante absente: {src.name or key} (profil.json, domaines[].cv)")
+        _log.info(f"  ! CV variante absente: {src.name or key} (profil.json, domaines[].cv)")
         return None
     from rename_docs import new_name
 
@@ -207,7 +211,7 @@ def tailor_cv(offer, nom=None, langue="fr", allege=0, auto=True):
     if retouches:
         manquees = appliquer_cv_sur_mesure(doc, retouches)
         for m in manquees:
-            print(f"  ! CV sur mesure : texte introuvable dans le modele : « {m[:60]} »")
+            _log.info(f"  ! CV sur mesure : texte introuvable dans le modele : « {m[:60]} »")
     elif auto:
         from jobhunter.documents import cv_auto
 

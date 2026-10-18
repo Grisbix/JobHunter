@@ -5,9 +5,13 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 import re
 import time
 
+from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.commun import INCIDENTS, UA, _mk, _strip_html, contrat_du_titre, title_ok
 from jobhunter.sources.efc import _RX_EFC_ESG, _RX_EFC_SENIOR, _est_graduate
+
+_log = _journal.journal(__name__)
+
 
 # ═══════════════ 9. EURES — le portail d'emploi OFFICIEL de l'Union europeenne ═══
 # POURQUOI. 96 % des offres etrangeres de la file venaient de la seule recherche
@@ -202,8 +206,8 @@ def scan_eures(pages=1, par_page=50, mots=None):
                     if o:
                         offers.append(o)
                         garde += 1
-                print(f"    « {mot} » p{page} : {len(jvs)} lues, {garde} retenues")
+                _log.info(f"    « {mot} » p{page} : {len(jvs)} lues, {garde} retenues")
                 if len(jvs) < par_page:
                     break
-    print(f"  ✓ EURES → {len(offers)} offres (avec description)")
+    _log.info(f"  ✓ EURES → {len(offers)} offres (avec description)")
     return offers

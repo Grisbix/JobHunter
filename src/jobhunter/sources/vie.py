@@ -5,8 +5,12 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 import re
 import time
 
+from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.commun import UA, _mk, title_ok
+
+_log = _journal.journal(__name__)
+
 
 # ═══════════════ 4. V.I.E / V.I.A — Business France (civiweb) ═══════════════
 # Le site mon-vie-via est une SPA Nuxt : le HTML brut est une coquille vide, mais
@@ -59,11 +63,11 @@ def fetch_vie(limit=1000):
                 httpx, VIE_API, json={"limit": 100, "skip": skip}, timeout=30, headers=H
             )
             if r.status_code != 200:
-                print(f"  ✗ VIE http {r.status_code} (clé rotée ? relancer probe)")
+                _log.info(f"  ✗ VIE http {r.status_code} (clé rotée ? relancer probe)")
                 break
             d = r.json()
         except Exception as e:
-            print(f"  ✗ VIE {type(e).__name__}")
+            _log.info(f"  ✗ VIE {type(e).__name__}")
             break
         res = d.get("result") or []
         if not res:
@@ -110,5 +114,5 @@ def fetch_vie(limit=1000):
 
 def scan_vie():
     o = fetch_vie()
-    print(f"  ✓ V.I.E/V.I.A Business France → {len(o)} offres (après filtre métier)")
+    _log.info(f"  ✓ V.I.E/V.I.A Business France → {len(o)} offres (après filtre métier)")
     return o

@@ -11,9 +11,13 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt
 
+from jobhunter import journal as _journal
 from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _P
 from jobhunter.documents.commun import _de, titre_poste
+
+_log = _journal.journal(__name__)
+
 
 _ici = sys.modules[__name__]
 # Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
@@ -62,7 +66,7 @@ def _ollama_generate(prompt):
         with urllib.request.urlopen(req, timeout=120) as r:
             return _json.loads(r.read()).get("response", "").strip()
     except Exception as e:
-        print(
+        _log.info(
             f"  ! Ollama indispo ({type(e).__name__}) — lance `ollama serve` + `ollama pull {OLLAMA_MODEL}`"
         )
         return None
@@ -83,14 +87,14 @@ def llm_rewrite(offer, cv_docx, letter_docx):
                 messages=[{"role": "user", "content": prompt}],
             )
             body = msg.content[0].text.strip()
-            print("  ✎ Claude API")
+            _log.info("  ✎ Claude API")
         except Exception as e:
-            print(f"  ! Claude API échec: {type(e).__name__}")
+            _log.warning(f"  ! Claude API échec: {type(e).__name__}")
     # 2) sinon Ollama local (gratuit)
     if not body:
         body = _ollama_generate(prompt)
         if body:
-            print(f"  ✎ Ollama local ({OLLAMA_MODEL})")
+            _log.info(f"  ✎ Ollama local ({OLLAMA_MODEL})")
     if not body:
         return False
     # reconstruit la lettre avec le corps LLM

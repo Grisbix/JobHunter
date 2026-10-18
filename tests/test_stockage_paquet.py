@@ -84,7 +84,8 @@ def test_jwrite_redirige_toujours_la_file_vers_la_separation(file_temporaire):
 
 @pytest.mark.parametrize("module", ["jobhunter.stockage.verrou", "jobhunter.stockage.atomique"])
 def test_couches_basses_sans_dependance_au_moteur(module):
-    """atomique et verrou n'importent rien d'autre du projet."""
+    """atomique et verrou n'importent rien d'autre du projet, sauf le journal (sans
+    dependance lui-meme)."""
     code = (
         f"import json, sys, {module}; "
         "print(json.dumps([m for m in sys.modules if m.startswith('jobhunter')]))"
@@ -92,7 +93,7 @@ def test_couches_basses_sans_dependance_au_moteur(module):
     env = {**os.environ, "PYTHONPATH": str(SRC)}
     r = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
     charges = set(json.loads(r.stdout))
-    assert charges <= {"jobhunter", "jobhunter.stockage", module}
+    assert charges <= {"jobhunter", "jobhunter.stockage", "jobhunter.journal", module}
 
 
 @pytest.mark.parametrize(

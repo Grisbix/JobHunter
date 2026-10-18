@@ -26,6 +26,10 @@ import re
 import sys
 from functools import lru_cache
 
+from jobhunter import journal as _journal
+
+_log = _journal.journal(__name__)
+
 
 def _chemin():
     from jobhunter import chemins
@@ -40,7 +44,7 @@ def banque():
     try:
         return json.loads(_chemin().read_text(encoding="utf-8"))
     except (OSError, ValueError) as e:
-        print(f"  ! CV/Faits.json illisible ({type(e).__name__}) — CV sans faits automatiques")
+        _log.info(f"  ! CV/Faits.json illisible ({type(e).__name__}) — CV sans faits automatiques")
         return {}
 
 

@@ -110,6 +110,7 @@ module = [
     "jobhunter.chemins",
     "jobhunter._facade",
     "jobhunter.paresseux",
+    "jobhunter.journal",
 ]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

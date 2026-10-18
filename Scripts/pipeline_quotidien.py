@@ -40,6 +40,7 @@ CE PIPELINE-CI appelle le code du projet, celui qui est teste :
     5. generate_docs.py --top N    CV et lettre pour le haut de la file
 
 Chaque lancement ecrit son journal dans _logs/pipeline_<date>_<heure>.log.
+Les modules du moteur y ajoutent pipeline_<date>_<heure>_moteur.log (horodate).
 
 LES ETAPES SONT SEQUENTIELLES, et ce n'est pas un choix de style :
 `job_sources.main()` prend le verrou de la file a son demarrage et le garde
@@ -259,6 +260,9 @@ def main():
     journaux.mkdir(exist_ok=True)
     journal = journaux / f"pipeline_{time.strftime('%Y-%m-%d_%H%M')}.log"
     sys.stdout = _Journal(sys.stdout, journal)
+    # Le journal horodate du moteur (jobhunter.journal : heure, niveau, module), un
+    # par execution, a cote du journal de la console ; les etapes en heritent.
+    os.environ["JOBHUNTER_JOURNAL"] = str(journal.with_name(journal.stem + "_moteur.log"))
 
     titre = f"Pipeline quotidien — {time.strftime('%Y-%m-%d %H:%M')}"
     print(f"╔{'═' * 60}╗")

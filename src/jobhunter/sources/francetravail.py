@@ -4,8 +4,12 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
 import time
 
+from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.commun import HERE, UA, _mk, title_ok
+
+_log = _journal.journal(__name__)
+
 
 # ═══════════════ 7. France Travail — API OFFICIELLE (identifiants requis) ═══════
 # Ex-Pole emploi : le plus gros gisement d'offres en France, API publique, gratuite,
@@ -48,11 +52,11 @@ def _ft_token():
             },
         )
         if r.status_code != 200:
-            print(f"  ✗ France Travail token http {r.status_code} — verifie les identifiants")
+            _log.info(f"  ✗ France Travail token http {r.status_code} — verifie les identifiants")
             return None
         return r.json().get("access_token")
     except Exception as e:
-        print(f"  ✗ France Travail token {type(e).__name__}")
+        _log.info(f"  ✗ France Travail token {type(e).__name__}")
         return None
 
 
@@ -105,7 +109,7 @@ def fetch_france_travail(par_mot=50):
             )
             got += 1
         if got:
-            print(f"  ✓ france-travail «{kw}» → {got} offres")
+            _log.info(f"  ✓ france-travail «{kw}» → {got} offres")
         time.sleep(0.3)
     return out
 
@@ -113,7 +117,9 @@ def fetch_france_travail(par_mot=50):
 def scan_france_travail():
     o = fetch_france_travail()
     if not o and not FT_CFG.exists():
-        print("  · France Travail ignore (Scripts/francetravail.json absent — voir le commentaire)")
+        _log.info(
+            "  · France Travail ignore (Scripts/francetravail.json absent — voir le commentaire)"
+        )
     else:
-        print(f"  ✓ France Travail → {len(o)} offres")
+        _log.info(f"  ✓ France Travail → {len(o)} offres")
     return o

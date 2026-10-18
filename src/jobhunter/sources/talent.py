@@ -6,8 +6,12 @@ import datetime
 import re
 import time
 
+from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.commun import UA, _mk, title_ok
+
+_log = _journal.journal(__name__)
+
 
 # ═══════════════ 6. Talent.com — agregateur (remplace la couverture Indeed) ══════
 # Indeed est INACCESSIBLE : Cloudflare bloque au niveau IP/empreinte TLS, y compris
@@ -114,13 +118,13 @@ def fetch_talent(max_days=60, per_kw=20):
             out.append(_mk(titre, u, ent or "Talent.com", loc, date, f"talent:{kw}", desc))
             got += 1
         if got:
-            print(f"  ✓ talent «{kw}» → {got} offres")
+            _log.info(f"  ✓ talent «{kw}» → {got} offres")
         time.sleep(0.5)
-    print(f"  Talent : {connues} offres deja dans la file, fiches non rechargees")
+    _log.info(f"  Talent : {connues} offres deja dans la file, fiches non rechargees")
     return out
 
 
 def scan_talent():
     o = fetch_talent()
-    print(f"  ✓ Talent.com → {len(o)} offres (avec description)")
+    _log.info(f"  ✓ Talent.com → {len(o)} offres (avec description)")
     return o

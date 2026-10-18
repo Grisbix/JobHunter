@@ -6,8 +6,12 @@ import re
 import time
 from urllib.parse import quote
 
+from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.commun import INCIDENTS, UA, _mk, title_ok
+
+_log = _journal.journal(__name__)
+
 
 # ═══════════════ 2. LinkedIn recherche PUBLIQUE (guest, httpx, paginé) ═══════════════
 _LI_CARD = re.compile(
@@ -131,7 +135,7 @@ def _li_pause_429(r):
     pause = min(pause, max(LI_ATTENTES))
     if _li_ecoule() + pause > LI_DUREE_MAX:
         return False
-    print(f"  ⏳ linkedin : limite de débit (429), pause {pause} s puis reprise")
+    _log.warning(f"  ⏳ linkedin : limite de débit (429), pause {pause} s puis reprise")
     _dormir(pause)
     _LI["attendu"] += pause
     _LI["suite_429"] = n + 1
@@ -184,15 +188,15 @@ def scan_linkedin(pages=2, days=7, lieux=None):
             seen.update(o["url"] for o in new)
             n_lieu += len(new)
             if new and len(profondeur) == 1:
-                print(f"  ✓ linkedin «{kw}» → {len(new)} offres")
+                _log.info(f"  ✓ linkedin «{kw}» → {len(new)} offres")
             offers.extend(new)
         if len(profondeur) > 1:
-            print(f"  ✓ linkedin {lieu} → {n_lieu} offres")
+            _log.info(f"  ✓ linkedin {lieu} → {n_lieu} offres")
     if _LI["stop"] in ("429", "durée"):
-        print(
+        _log.warning(
             f"  ⚠ linkedin : durée maximale atteinte ({_li_ecoule():.0f} s, dont "
             f"{_LI['attendu']:.0f} s d'attente sur 429) — la suite à la prochaine collecte"
         )
     elif _LI["stop"]:
-        print(f"  ⚠ linkedin : refus HTTP {_LI['stop']}, collecte LinkedIn arrêtée")
+        _log.warning(f"  ⚠ linkedin : refus HTTP {_LI['stop']}, collecte LinkedIn arrêtée")
     return offers

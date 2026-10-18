@@ -4,8 +4,12 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
 import re
 
+from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.commun import UA, _mk, title_ok
+
+_log = _journal.journal(__name__)
+
 
 # ═══════════════ 5. FIR / French SIF — offres 100 % ISR-ESG ═══════════════
 # Forum pour l'Investissement Responsable : tableau d'offres exclusivement ISR/ESG.
@@ -25,10 +29,10 @@ def fetch_fir():
     try:
         r = _commun._get_borne(httpx, FIR_URL, timeout=25, headers=UA, follow_redirects=True)
         if r.status_code != 200:
-            print(f"  ✗ FIR http {r.status_code}")
+            _log.info(f"  ✗ FIR http {r.status_code}")
             return []
     except Exception as e:
-        print(f"  ✗ FIR {type(e).__name__}")
+        _log.info(f"  ✗ FIR {type(e).__name__}")
         return []
     out = []
     for a in re.split(r'<article class="loop post-', r.text)[1:]:
@@ -61,5 +65,5 @@ def fetch_fir():
 
 def scan_fir():
     o = fetch_fir()
-    print(f"  ✓ FIR / French SIF → {len(o)} offres (100 % ISR-ESG)")
+    _log.info(f"  ✓ FIR / French SIF → {len(o)} offres (100 % ISR-ESG)")
     return o

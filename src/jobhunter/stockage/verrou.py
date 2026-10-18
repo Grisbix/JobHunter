@@ -21,6 +21,11 @@ import sys
 import time as _time
 from pathlib import Path
 
+from jobhunter import journal as _journal
+
+_log = _journal.journal(__name__)
+
+
 _TENUS: dict[str, bool] = {}
 
 Chemin = str | os.PathLike[str]
@@ -133,7 +138,7 @@ def prendre_verrou(
         # Inutile d'attendre l'expiration, personne ne touche plus au fichier.
         if tenu_par and not _pid_vivant(tenu_par, pose):
             if bavard:
-                print(f"! verrou {v.name} laisse par le PID {tenu_par}, mort — je le casse")
+                _log.info(f"! verrou {v.name} laisse par le PID {tenu_par}, mort — je le casse")
             try:
                 v.unlink()
             except FileNotFoundError:
@@ -152,7 +157,7 @@ def prendre_verrou(
         # qui tient le verrou.
         if age > perime and not tenu_par:
             if bavard:
-                print(
+                _log.warning(
                     f"! verrou {v.name} abandonne depuis {int(age)}s, sans proprietaire — je le casse"
                 )
             try:
@@ -161,7 +166,7 @@ def prendre_verrou(
                 pass
             continue
         if age > perime and bavard and not prevenu:
-            print(
+            _log.info(
                 f"! verrou {v.name} tenu depuis {int(age)}s par le PID {tenu_par}, "
                 f"toujours vivant — j'attends au lieu de casser"
             )
@@ -172,7 +177,7 @@ def prendre_verrou(
                 qui = v.read_text(encoding="utf-8").split()[0]
             except Exception:
                 qui = "?"
-            print(f"… {v.name} tenu par le PID {qui} — j'attends (max {attente}s)")
+            _log.info(f"… {v.name} tenu par le PID {qui} — j'attends (max {attente}s)")
             prevenu = True
         _time.sleep(1)
 
@@ -206,7 +211,7 @@ def garder(path: Chemin, attente: float = 180) -> bool:
     deja sur le fichier : l'appelant doit alors s'arreter, pas ecraser.
     """
     if not prendre_verrou(path, attente=attente):
-        print(
+        _log.info(
             f"✗ {Path(path).name} est deja en cours de modification par un autre"
             f" programme. Rien n'a ete touche — relance quand il aura fini."
         )

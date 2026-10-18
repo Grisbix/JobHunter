@@ -7,6 +7,7 @@ import re
 import time
 from urllib.parse import unquote, urlparse
 
+from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.commun import (
     INCIDENTS,
@@ -17,6 +18,9 @@ from jobhunter.sources.commun import (
     en_france,
     title_ok,
 )
+
+_log = _journal.journal(__name__)
+
 
 # ═══════════════ 8. eFinancialCareers — sitemap PUBLIC declare dans robots.txt ═══
 # POURQUOI. Site d'emploi 100 % finance, francais, exactement le marche de l'utilisateur.
@@ -140,7 +144,7 @@ def _efc_urls(client, site="fr"):
     """(url, titre approximatif) de chaque offre du sitemap. Une seule requete."""
     r = _commun._get_borne(client, _efc_sitemap(site), headers=EFC_UA, timeout=60)
     if r.status_code != 200:
-        print(f"  ~ eFC .{site} : sitemap injoignable (statut {r.status_code})")
+        _log.info(f"  ~ eFC .{site} : sitemap injoignable (statut {r.status_code})")
         INCIDENTS[f"efc:{site}"][f"HTTP {r.status_code}"] += 1
         return []
     out = []
@@ -253,7 +257,7 @@ def scan_efc(limit=40, filtre="esg", sites=("fr",)):
                 if lst:
                     alterne.append(lst.pop(0))
         cibles = alterne[:limit]
-        print(
+        _log.info(
             f"  eFC : {len(toutes)} offres au sitemap → {len(cibles)} a lire "
             f"({deja} deja en file) "
             f"({EFC_DELAI} s entre chaque, {len(cibles) * EFC_DELAI // 60} min)"
@@ -291,6 +295,6 @@ def scan_efc(limit=40, filtre="esg", sites=("fr",)):
                 )
             )
             if n % 10 == 0:
-                print(f"    … {n}/{len(cibles)} ({len(offers)} retenues)")
-    print(f"  ✓ eFinancialCareers → {len(offers)} offres (avec description)")
+                _log.info(f"    … {n}/{len(cibles)} ({len(offers)} retenues)")
+    _log.info(f"  ✓ eFinancialCareers → {len(offers)} offres (avec description)")
     return offers

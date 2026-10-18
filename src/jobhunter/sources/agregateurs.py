@@ -4,6 +4,7 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
 import time
 
+from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.commun import (
     HERE,
@@ -14,6 +15,9 @@ from jobhunter.sources.commun import (
     contrat_du_titre,
     title_ok,
 )
+
+_log = _journal.journal(__name__)
+
 
 # ═══════════════ 8. Adzuna et Jooble — agregateurs, API officielles (cle requise) ═══
 # POURQUOI. Indeed refuse tout depuis le 24/09 (403 a la premiere requete) et
@@ -89,7 +93,9 @@ def _cle(chemin, *champs):
         c = _json.loads(chemin.read_text(encoding="utf-8"))
         return tuple(str(c[k]) for k in champs)
     except Exception as e:
-        print(f"  ✗ {chemin.name} illisible ({type(e).__name__}) — attendu : {', '.join(champs)}")
+        _log.info(
+            f"  ✗ {chemin.name} illisible ({type(e).__name__}) — attendu : {', '.join(champs)}"
+        )
         return None
 
 
@@ -104,18 +110,18 @@ class _Garde:
         if r.status_code == 429:
             INCIDENTS[self.nom]["HTTP 429"] += 1
             if self.repos >= 2:
-                print(f"  ⏸ {self.nom} : limite de debit persistante — arret de la source")
+                _log.info(f"  ⏸ {self.nom} : limite de debit persistante — arret de la source")
                 self.fini = True
                 return False
             self.repos += 1
-            print(f"  ⏸ {self.nom} : limite de debit (429) — pause {AGREG_REPOS_429} s")
+            _log.warning(f"  ⏸ {self.nom} : limite de debit (429) — pause {AGREG_REPOS_429} s")
             time.sleep(AGREG_REPOS_429)
             return False
         if r.status_code in (401, 403):
             INCIDENTS[self.nom][f"HTTP {r.status_code}"] += 1
             self.refus += 1
             if self.refus >= AGREG_ABANDON:
-                print(
+                _log.warning(
                     f"  ⏸ {self.nom} : {self.refus} refus d'affilee (HTTP {r.status_code}) — "
                     f"cle refusee ou acces bloque, arret de la source"
                 )
@@ -158,7 +164,7 @@ def scan_adzuna():
 
     cle = _cle(ADZUNA_CFG, "app_id", "app_key")
     if not cle:
-        print("  · Adzuna ignore (Scripts/adzuna.json absent — voir le commentaire)")
+        _log.info("  · Adzuna ignore (Scripts/adzuna.json absent — voir le commentaire)")
         return []
     app_id, app_key = cle
     _EX = _commun.contrats_exclus()
@@ -215,7 +221,7 @@ def scan_adzuna():
             )
             if o:
                 out.append(o)
-    print(f"  ✓ Adzuna → {len(out)} offres sur {faites} requetes (extraits, liens Adzuna)")
+    _log.info(f"  ✓ Adzuna → {len(out)} offres sur {faites} requetes (extraits, liens Adzuna)")
     return out
 
 
@@ -224,7 +230,7 @@ def scan_jooble():
 
     cle = _cle(JOOBLE_CFG, "key")
     if not cle:
-        print("  · Jooble ignore (Scripts/jooble.json absent — voir le commentaire)")
+        _log.info("  · Jooble ignore (Scripts/jooble.json absent — voir le commentaire)")
         return []
     _EX = _commun.contrats_exclus()
     garde, out, vus = _Garde("jooble"), [], set()
@@ -272,5 +278,5 @@ def scan_jooble():
             )
             if o:
                 out.append(o)
-    print(f"  ✓ Jooble → {len(out)} offres sur {faites} requetes (extraits, liens Jooble)")
+    _log.info(f"  ✓ Jooble → {len(out)} offres sur {faites} requetes (extraits, liens Jooble)")
     return out

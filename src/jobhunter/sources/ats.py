@@ -9,9 +9,12 @@ import re
 import time
 from urllib.parse import quote, unquote, urlparse
 
+from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
 from jobhunter.sources import workday as _workday
 from jobhunter.sources.commun import INCIDENTS, UA, _mk, _strip_html, title_ok
+
+_log = _journal.journal(__name__)
 
 
 # ═══════════════ 1. ATS APIs (httpx pur, pas de navigateur) — AVEC descriptions ═══════════════
@@ -253,7 +256,7 @@ def scan_ats():
         for slug in slugs:
             got = fetch_ats(kind, slug)
             if got:
-                print(f"  ✓ {kind}:{slug} → {len(got)} offres")
+                _log.info(f"  ✓ {kind}:{slug} → {len(got)} offres")
             offers.extend(got)
             time.sleep(ATS_PAUSE)
     offers.extend(scan_autres())
@@ -990,10 +993,10 @@ def scan_autres():
     offres = []
     for kind, cle, nom in _commun.AUTRES_FLUX:
         got = fetch_autre(kind, cle, nom)
-        print(f"  ✓ {kind}:{cle.split('|')[0]} → {len(got)} offres")
+        _log.info(f"  ✓ {kind}:{cle.split('|')[0]} → {len(got)} offres")
         offres.extend(got)
         time.sleep(ATS_PAUSE)
     got = fetch_service_public()
-    print(f"  ✓ choisirleservicepublic → {len(got)} offres")
+    _log.info(f"  ✓ choisirleservicepublic → {len(got)} offres")
     offres.extend(got)
     return offres

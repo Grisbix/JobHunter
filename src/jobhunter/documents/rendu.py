@@ -5,6 +5,11 @@ Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5).
 import subprocess
 from pathlib import Path
 
+from jobhunter import journal as _journal
+
+_log = _journal.journal(__name__)
+
+
 # ---- PDF via LibreOffice ----
 SOFFICE = [
     r"C:\Program Files\LibreOffice\program\soffice.exe",
@@ -33,5 +38,5 @@ def to_pdf(docx_path):
         )
         return docx_path.with_suffix(".pdf")
     except Exception as e:
-        print(f"  ! PDF échec: {e}")
+        _log.warning(f"  ! PDF échec: {e}")
         return None

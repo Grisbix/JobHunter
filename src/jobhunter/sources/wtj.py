@@ -6,6 +6,7 @@ import json
 import re
 import time
 
+from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.commun import (
     _mk,
@@ -16,6 +17,9 @@ from jobhunter.sources.commun import (
     title_ok,
 )
 from jobhunter.sources.efc import _RX_EFC_ESG, _efc_lieu
+
+_log = _journal.journal(__name__)
+
 
 # ═══════════════ 3. Welcome to the Jungle — sitemap public ═══════════════
 _WTJ_JS = r"""
@@ -137,11 +141,11 @@ def scan_wtj(pages=2):
         try:
             idx = _lire(client, WTJ_SITEMAP)
         except Exception as e:
-            print(f"  ~ WTJ : sitemap injoignable ({type(e).__name__})")
+            _log.info(f"  ~ WTJ : sitemap injoignable ({type(e).__name__})")
             return offers
         fichiers = [l for l in re.findall(r"<loc>([^<]+)</loc>", idx) if "job-listings" in l]
         if not fichiers:
-            print("  ~ WTJ : aucun sitemap d'offres dans l'index")
+            _log.info("  ~ WTJ : aucun sitemap d'offres dans l'index")
             return offers
 
         cibles = []
@@ -172,7 +176,7 @@ def scan_wtj(pages=2):
         }
         neuves = [u for u in cibles if _norm_url(u) not in connues]
         plafond = max(1, pages) * 5
-        print(
+        _log.info(
             f"  WTJ : {len(cibles)} offres ESG au sitemap, {len(neuves)} nouvelles "
             f"— {min(len(neuves), plafond)} lue(s) cette passe (le reste au prochain scan)"
         )
@@ -195,10 +199,10 @@ def scan_wtj(pages=2):
                     return _wtj_fiche(url, client) or {}
                 except Bloque as e:
                     if etat["attentes"] >= WTJ_PATIENCE:
-                        print(f"  ~ {e} — arret WTJ apres {etat['attentes']} attente(s).")
+                        _log.info(f"  ~ {e} — arret WTJ apres {etat['attentes']} attente(s).")
                         return None
                     etat["attentes"] += 1
-                    print(f"  ~ {e} — pause {WTJ_REPOS} s ({etat['attentes']}/{WTJ_PATIENCE})…")
+                    _log.info(f"  ~ {e} — pause {WTJ_REPOS} s ({etat['attentes']}/{WTJ_PATIENCE})…")
                     time.sleep(WTJ_REPOS)
 
         for u in neuves[:plafond]:
@@ -224,5 +228,5 @@ def scan_wtj(pages=2):
             offers.append(
                 _mk(titre, u, soc, lieu, str(jp.get("datePosted") or "")[:10], "wtj-sitemap", d)
             )
-    print(f"  \u2713 Welcome to the Jungle \u2192 {len(offers)} offres (avec description)")
+    _log.info(f"  \u2713 Welcome to the Jungle \u2192 {len(offers)} offres (avec description)")
     return offers

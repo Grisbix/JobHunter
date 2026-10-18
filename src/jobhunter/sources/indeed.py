@@ -9,6 +9,7 @@ import time
 from typing import Any
 from urllib.parse import quote
 
+from jobhunter import journal as _journal
 from jobhunter import paresseux as _paresseux
 from jobhunter.scoring import zones as _zones
 from jobhunter.sources import commun as _commun
@@ -21,6 +22,9 @@ from jobhunter.sources.commun import (
     contrat_du_titre,
     title_ok,
 )
+
+_log = _journal.journal(__name__)
+
 
 _ici = sys.modules[__name__]
 # Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
@@ -228,7 +232,7 @@ def _indeed_cartes(mot, lieu):
             # Ne jamais réessayer avant un Retry-After supérieur au budget.
             if essai == 2 or attente > 300:
                 raise _IndeedBride(429)
-            print(f"    ~ {mot} / {lieu} : HTTP 429, repos {attente:g} s")
+            _log.warning(f"    ~ {mot} / {lieu} : HTTP 429, repos {attente:g} s")
             time.sleep(attente)
         except Exception as e:
             bloque(type(e).__name__)
@@ -307,7 +311,7 @@ def scan_indeed(mots=None, lieux=None, pause=None, *, persist=True):
     tranche = [
         couples[(depart + i) % len(couples)] for i in range(min(INDEED_BUDGET, len(couples)))
     ]
-    print(
+    _log.info(
         f"  Indeed : {len(tranche)} couples sur {len(couples)} "
         f"(depuis le n° {depart + 1}, {pause} s entre chaque, "
         f"~{len(tranche) * pause // 60} min)"
@@ -325,11 +329,11 @@ def scan_indeed(mots=None, lieux=None, pause=None, *, persist=True):
             cartes = _indeed_cartes(mot, lieu)
         except _IndeedBloque as e:
             bloque_raison = str(e)
-            print(f"  Indeed : source indisponible ({e}) — arrêt sans réessai")
+            _log.info(f"  Indeed : source indisponible ({e}) — arrêt sans réessai")
             break
         except _IndeedBride as e:
             bride = True
-            print(f"  Indeed : quota HTTP {e} — arrêt de la passe")
+            _log.info(f"  Indeed : quota HTTP {e} — arrêt de la passe")
             break
         for c in cartes:
             jk = c.get("jobkey")
@@ -366,7 +370,7 @@ def scan_indeed(mots=None, lieux=None, pause=None, *, persist=True):
             o["desc_partielle"] = True
             offers.append(o)
         if fait % 10 == 0:
-            print(f"    … {fait}/{len(tranche)} ({len(offers)} retenues)")
+            _log.info(f"    … {fait}/{len(tranche)} ({len(offers)} retenues)")
 
     # OU REPRENDRE DEMAIN. On avance de ce qui a ete REELLEMENT tente, pas du
     # budget : une passe arretee au 6e refus n'a couvert que six couples, et
@@ -379,12 +383,12 @@ def scan_indeed(mots=None, lieux=None, pause=None, *, persist=True):
         pass
 
     etat = "indisponible" if bloque_raison else "quota atteint" if bride else "terminé"
-    print(
+    _log.info(
         f"  Indeed [{etat}] : {len(offers)} offres, {fait} couples, "
         f"{INDEED_REQUETES - debut_http} tentatives HTTP"
     )
     if bride:
-        print(
+        _log.info(
             f"    reprise au couple n° {(depart + fait) % len(couples) + 1} "
             f"sur {len(couples)} a la prochaine passe"
         )
