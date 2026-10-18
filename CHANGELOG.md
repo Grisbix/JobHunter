@@ -4,6 +4,13 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 1.11.0 — 2026-10-18
+
+- L'application rejoint le paquet `src/jobhunter/app` ; `JobHunter.pyw` (double-clic)
+  ne fait plus que la lancer. Rien ne change à l'écran.
+- La mise à jour vérifie aussi que l'application et la navigation se chargent, et revient
+  en arrière sinon.
+
 ## 1.10.0 — 2026-10-18
 
 Rien ne change dans ce que fait JobHunter. La navigation web (`web_nav.py`, près de

@@ -101,8 +101,7 @@ motif à `ats_match` fait monter son compte sans qu'aucun test ait été écrit.
 
 ### Le paquet `src/jobhunter` (phase 3 du plan, en cours)
 
-Le moteur migre de `Scripts/` vers `src/jobhunter`, une couche à la fois
-(`docs/plan-professionnalisation.md`). Fait :
+Le moteur migre de `Scripts/` vers `src/jobhunter` (`docs/plan-professionnalisation.md`) :
 
 | Paquet | Contenu (ancien nom) |
 |---|---|
@@ -111,7 +110,8 @@ Le moteur migre de `Scripts/` vers `src/jobhunter`, une couche à la fois
 | `jobhunter.sources` | `job_sources` : une source par module, `commun`, `fusion`, `cli` — affectation routée au propriétaire |
 | `jobhunter.documents` | `tailor_application` (`commun`, `cv`, `lettre`, `llm`, `rendu`), `message` (`message_offre`), `cv_auto` |
 | `jobhunter.navigation` | `web_nav` : une section par module (`page`, `carrieres`, `formulaires`…), `strategies` (`site_strategies`) |
-| `jobhunter` | `racine`, `profil`, `reseau` (requêtes bornées), `chemins`, `texte` |
+| `jobhunter.app` | `JobHunter.pyw` (désormais lanceur) : `fenetre.App` = un mixin par domaine, `theme`, `commun` |
+| `jobhunter` | `racine`, `profil`, `reseau` (requêtes bornées), `chemins`, `texte`, `liens`, `accueil` |
 
 Dépendances à sens unique, vérifiées en test (cycles `jutil`↔`queue_io`, `ats_match`↔`tailor`,
 `job_sources`↔`scrape_jobs` cassés) ; imports différés restants vers `Scripts/` : assumés.
@@ -213,8 +213,8 @@ Le détail est dans `.claude/rules/navigation-web.md` ; la version courte, qui v
 jours et tout ce qui codait une racine a cassé en silence — dont une veille qui s'est
 déclarée `success` pendant deux mois en ne suivant plus que 2 comptes sur 44. Détecter par
 marqueur : le premier dossier candidat, en remontant, qui contient réellement un fichier
-témoin. `JobHunter.pyw::_racine()` cherche `Scripts/apply_queue.json` et fonctionne donc
-où qu'on le place.
+témoin. `jobhunter.racine` cherche `Scripts/` + `profil/` (ou `JOBHUNTER_RACINE`) : l'app
+et le moteur fonctionnent où qu'on les place.
 
 **Les regex ne s'écrivent pas via un heredoc shell** — détail et pièges de motifs dans
 `.claude/rules/motifs.md`.
