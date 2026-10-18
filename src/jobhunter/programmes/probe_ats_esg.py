@@ -15,8 +15,8 @@ Chaine identique a probe_ats_queue.py : flux actif -> offres pertinentes
 Ne modifie RIEN : ecrit un rapport, l'ajout reste une decision explicite.
 
 Run :
-  python probe_ats_esg.py
-  python probe_ats_esg.py --json _ats_esg.json
+  python JobHunter.pyw probe_ats_esg
+  python JobHunter.pyw probe_ats_esg --json _ats_esg.json
 """
 
 import argparse
@@ -173,7 +173,7 @@ def main():
     Path(a.json).write_text(json.dumps(trouves, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"\n-> {Path(a.json).name}")
     print("Verifier l'identite avant d'ajouter :")
-    print(f"  python verify_ats_slugs.py --json {Path(a.json).name}")
+    print(f"  python JobHunter.pyw verify_ats_slugs --json {Path(a.json).name}")
     return 0
 
 

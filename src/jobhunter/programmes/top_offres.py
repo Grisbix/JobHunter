@@ -18,8 +18,8 @@ REJETS, chacun tire d'un cas reel :
   - pas de description : le fit est alors calcule sur le seul intitule.
 
 Run :
-  python top_offres.py
-  python top_offres.py --n 20 --zone prioritaire
+  python JobHunter.pyw top_offres
+  python JobHunter.pyw top_offres --n 20 --zone prioritaire
 """
 
 import argparse

@@ -18,8 +18,8 @@ Le fichier va a cote de la lettre, en .txt : c'est du texte a copier-coller,
 pas un document a joindre.
 
 Run :
-  python message_offre.py --url https://...      # une offre
-  python message_offre.py --contient Nexans
+  python JobHunter.pyw message --url https://...      # une offre
+  python JobHunter.pyw message --contient Nexans
 """
 
 import argparse

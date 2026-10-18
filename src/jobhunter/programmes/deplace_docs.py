@@ -31,14 +31,14 @@ TROIS CHOSES BOUGENT, dans cet ordre, et l'ordre compte :
 
 CE QUI N'EST PAS SAUVEGARDE APRES COUP. Hors de OneDrive, ces 760 Mo ne sont
 plus repliques dans le nuage. C'est assume : ce sont des sorties de generation,
-reconstructibles par `python regenere_docs.py --cv`. Les entrees — modeles,
+reconstructibles par `python JobHunter.pyw regenerer --cv`. Les entrees — modeles,
 file, suivi — restent, elles, synchronisees.
 
 Run :
-  python deplace_docs.py                      # inspection, rien n'est ecrit
-  python deplace_docs.py --executer
-  python deplace_docs.py --executer --vers "D:/Recherche_emploi_documents"
-  python deplace_docs.py --retour             # revient dans OneDrive
+  python JobHunter.pyw deplace_docs                      # inspection, rien n'est ecrit
+  python JobHunter.pyw deplace_docs --executer
+  python JobHunter.pyw deplace_docs --executer --vers "D:/Recherche_emploi_documents"
+  python JobHunter.pyw deplace_docs --retour             # revient dans OneDrive
 """
 
 import argparse

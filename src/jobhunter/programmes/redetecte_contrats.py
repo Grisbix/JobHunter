@@ -14,8 +14,8 @@ L'intitule reste PRIORITAIRE sur la description : « Stage - Analyste ESG » dit
 ce qu'est le poste, et personne ne se trompe en ecrivant son propre titre.
 
 Run :
-  python redetecte_contrats.py --dry
-  python redetecte_contrats.py
+  python JobHunter.pyw redetecte_contrats --dry
+  python JobHunter.pyw redetecte_contrats
 """
 
 import argparse

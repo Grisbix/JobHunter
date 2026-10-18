@@ -17,8 +17,8 @@ de la lettre. Les documents deja generes ne sont PAS refaits ici — ils le
 seront a la prochaine regeneration, ou a la demande.
 
 Run :
-  python reclasse_domaines.py --dry
-  python reclasse_domaines.py
+  python JobHunter.pyw reclasse_domaines --dry
+  python JobHunter.pyw reclasse_domaines
 """
 
 import argparse

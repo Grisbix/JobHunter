@@ -17,9 +17,9 @@ Re-score le fit ET exp_requise dans la foulee : une description ajoutee sans
 re-scoring laisse l'offre a son ancien fit, calcule sur le seul titre.
 
 Run :
-  python wtj_desc.py --dry
-  python wtj_desc.py --limit 20
-  python wtj_desc.py
+  python JobHunter.pyw wtj_desc --dry
+  python JobHunter.pyw wtj_desc --limit 20
+  python JobHunter.pyw wtj_desc
 """
 
 import argparse

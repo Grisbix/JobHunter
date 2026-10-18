@@ -6,8 +6,8 @@ côté WTJ → 404. On les réécrit vers la vraie recherche : `/fr/jobs?query=<
 
 Garde les pages valides `/fr/companies/<slug>`. Réécrit `/jobs/search` et `/pages/emploi-*`.
 
-Run : python fix_wtj_urls.py            # applique
-      python fix_wtj_urls.py --dry      # montre sans écrire"""
+Run : python JobHunter.pyw fix_wtj_urls            # applique
+      python JobHunter.pyw fix_wtj_urls --dry      # montre sans écrire"""
 
 import argparse
 import importlib

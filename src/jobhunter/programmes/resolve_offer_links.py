@@ -16,9 +16,9 @@ pour pouvoir revenir en arriere.
 CAPTCHA : jamais contourne. Une page qui en presente un est notee et sautee.
 
 Run :
-  python resolve_offer_links.py --dry              # montre sans rien ecrire
-  python resolve_offer_links.py --limit 20
-  python resolve_offer_links.py --headed           # navigateur visible
+  python JobHunter.pyw resolve_offer_links --dry              # montre sans rien ecrire
+  python JobHunter.pyw resolve_offer_links --limit 20
+  python JobHunter.pyw resolve_offer_links --headed           # navigateur visible
 """
 
 import argparse

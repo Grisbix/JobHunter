@@ -17,8 +17,8 @@ La cle est l'`oid` de queue_io — « entreprise|poste » — et surtout pas l'U
 qui change des qu'un doublon mieux classe la promeut.
 
 Run :
-  python exclusions.py                 # rapport : ce que la notation rate
-  python exclusions.py --liste
+  python JobHunter.pyw exclusions                 # rapport : ce que la notation rate
+  python JobHunter.pyw exclusions --liste
 """
 
 import argparse

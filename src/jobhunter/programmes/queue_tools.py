@@ -4,8 +4,8 @@
                  sur chaque offre (OK / EXPIREE / ANTI-BOT / MORT) + sidecar link_status.json.
   writeback()  : réécrit l'URL d'une offre (ex: URL morte → homepage résolue), garde `url_orig`.
 Appelé par apply_runner (write-back après homepage_fallback) et le bouton JobHunter (marquage).
-CLI : python queue_tools.py mark        # marque les URLs mortes
-      python queue_tools.py test        # auto-test (fichier temporaire)
+CLI : python JobHunter.pyw queue_tools mark        # marque les URLs mortes
+      python JobHunter.pyw queue_tools test        # auto-test (fichier temporaire)
 """
 
 import json

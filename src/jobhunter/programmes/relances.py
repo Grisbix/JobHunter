@@ -5,9 +5,9 @@ relances.py — Genere des mails de relance J+7 / J+10 personnalises par offre.
 Lit apply_queue.json, prend les offres 'prio' (ou --all), ecrit un .txt de relance
 pret a copier-coller dans Lettres/Relances/. La relance ~double le taux de reponse.
 
-Run: python relances.py            # toutes les offres 'prio'
-     python relances.py --company Amundi
-     python relances.py --jours 10 # variante J+10 (defaut J+7)
+Run: python JobHunter.pyw relances            # toutes les offres 'prio'
+     python JobHunter.pyw relances --company Amundi
+     python JobHunter.pyw relances --jours 10 # variante J+10 (defaut J+7)
 """
 
 import argparse
@@ -181,7 +181,7 @@ def preparer_brouillons(lst, dossier=None):
         if etat == "nouveau":
             ecrire_brouillon(o, j, dossier)
         l.append(f"| {age} j | {o['entreprise']} | {o['poste']} | J+{j} | `{f.name}` ({etat}) |")
-    l += ["", 'Après envoi : `python Scripts/relances.py --mark "Entreprise|Poste"`.']
+    l += ["", 'Après envoi : `python JobHunter.pyw relances --mark "Entreprise|Poste"`.']
     return "\n".join(l)
 
 
@@ -248,8 +248,8 @@ def main():
     print(f"🔔 {len(lst)} candidature(s) à relancer (≥ {a.days} j) :")
     for o, st, d, age in lst:
         print(f"  {age:3} j  [{st}] {o['entreprise'][:28]} — {o['poste'][:45]}")
-    print('\n→ python relances.py --draft "Entreprise|Poste"   (brouillon + mailto)')
-    print('→ python relances.py --mark  "Entreprise|Poste"   (statut relancé)')
+    print('\n→ python JobHunter.pyw relances --draft "Entreprise|Poste"   (brouillon + mailto)')
+    print('→ python JobHunter.pyw relances --mark  "Entreprise|Poste"   (statut relancé)')
 
 
 if __name__ == "__main__":

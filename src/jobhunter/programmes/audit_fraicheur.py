@@ -18,9 +18,9 @@ Ne supprime RIEN. Echantillonne, mesure, rapporte. La suppression est un autre
 programme et une autre decision.
 
 Run :
-  python audit_fraicheur.py                 # 12 offres par source
-  python audit_fraicheur.py --par-source 30
-  python audit_fraicheur.py --source indeed
+  python JobHunter.pyw audit_fraicheur                 # 12 offres par source
+  python JobHunter.pyw audit_fraicheur --par-source 30
+  python JobHunter.pyw audit_fraicheur --source indeed
 """
 
 import argparse

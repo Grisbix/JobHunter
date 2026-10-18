@@ -17,8 +17,8 @@ lignes du modele qu'on peut retirer, dans l'ordre ; tailor_application les
 retire une par une tant que le PDF fait plus d'une page.
 
 Run :
-  python cv_auto.py --essai "texte d'annonce"     # faits retenus pour ce texte
-  python cv_auto.py --liste                       # la banque et son etat
+  python JobHunter.pyw cv-auto --essai "texte d'annonce"     # faits retenus pour ce texte
+  python JobHunter.pyw cv-auto --liste                       # la banque et son etat
 """
 
 import json

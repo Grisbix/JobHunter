@@ -9,9 +9,9 @@ et liste les compétences MANQUANTES (gaps à ajouter au CV/lettre).
 Réutilise le lexique multi-profil de tailor_application (SKILL_LEX).
 
 Run:
-    python ats_match.py --company Amundi
-    python ats_match.py --all --min 0          # rapport complet -> ats_report.csv
-    python ats_match.py --n 12
+    python -m jobhunter.scoring.fit --company Amundi
+    python -m jobhunter.scoring.fit --all --min 0          # rapport complet -> ats_report.csv
+    python -m jobhunter.scoring.fit --n 12
 """
 
 import re

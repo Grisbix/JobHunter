@@ -6,12 +6,12 @@ Utilise Playwright pour naviguer sur chaque site carrière,
 détecter les listes d'offres et filtrer par mots-clés ESG/Finance.
 
 Usage:
-    python scrape_jobs.py                         # Scrape tous les sites
-    python scrape_jobs.py --sites 1-10            # Sites 1 à 10 seulement
-    python scrape_jobs.py --domains wtj,smart     # Par nom de domaine partiel
-    python scrape_jobs.py --output offres_fraiches.json
-    python scrape_jobs.py --headless              # Mode headless (pas de fenêtre)
-    python scrape_jobs.py --skip 10               # Sites déjà scrapés, reprendre au 11e
+    python JobHunter.pyw scrape_jobs                         # Scrape tous les sites
+    python JobHunter.pyw scrape_jobs --sites 1-10            # Sites 1 à 10 seulement
+    python JobHunter.pyw scrape_jobs --domains wtj,smart     # Par nom de domaine partiel
+    python JobHunter.pyw scrape_jobs --output offres_fraiches.json
+    python JobHunter.pyw scrape_jobs --headless              # Mode headless (pas de fenêtre)
+    python JobHunter.pyw scrape_jobs --skip 10               # Sites déjà scrapés, reprendre au 11e
 """
 
 import argparse

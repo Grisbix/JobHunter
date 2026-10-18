@@ -10,9 +10,9 @@ Ouvre chaque URL dans un vrai navigateur, lance le détecteur `dead` de web_nav
   - OK       : offre bien présente
 
 Run :
-  python recheck_dead.py --status ANTI-BOT,OK --limit 60      # cible les suspects
-  python recheck_dead.py --canal auto                          # offres auto
-  python recheck_dead.py --dry                                 # montre sans écrire
+  python JobHunter.pyw recheck_dead --status ANTI-BOT,OK --limit 60      # cible les suspects
+  python JobHunter.pyw recheck_dead --canal auto                          # offres auto
+  python JobHunter.pyw recheck_dead --dry                                 # montre sans écrire
 """
 
 import argparse

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """mise_a_jour.py — Met JobHunter a jour depuis GitHub, sans toucher a tes donnees.
 
-    python Scripts/mise_a_jour.py            # met a jour si une version plus recente existe
-    python Scripts/mise_a_jour.py --verifier # dit s'il y a une mise a jour, et ce qu'elle apporte
-    python Scripts/mise_a_jour.py --forcer   # reinstalle meme a version egale
-    python Scripts/mise_a_jour.py --annuler  # revient a la version d'avant la derniere mise a jour
+    python JobHunter.pyw maj            # met a jour si une version plus recente existe
+    python JobHunter.pyw maj --verifier # dit s'il y a une mise a jour, et ce qu'elle apporte
+    python JobHunter.pyw maj --forcer   # reinstalle meme a version egale
+    python JobHunter.pyw maj --annuler  # revient a la version d'avant la derniere mise a jour
 
 Deux chemins :
   - dossier clone avec git -> `git pull --rebase --autostash` ;

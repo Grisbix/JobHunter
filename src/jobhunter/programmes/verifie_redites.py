@@ -21,9 +21,9 @@ CE QU'IL SIGNALE :
 Il ne corrige rien : il rend la liste, a corriger dans tailor_application.py.
 
 Run :
-  python verifie_redites.py                    # 40 lettres au hasard
-  python verifie_redites.py --toutes
-  python verifie_redites.py --fichier "Lettres/Par_offre/xxx.docx"
+  python JobHunter.pyw verifie_redites                    # 40 lettres au hasard
+  python JobHunter.pyw verifie_redites --toutes
+  python JobHunter.pyw verifie_redites --fichier "Lettres/Par_offre/xxx.docx"
 """
 
 import argparse

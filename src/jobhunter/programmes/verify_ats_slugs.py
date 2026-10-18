@@ -10,7 +10,7 @@ d'identite, on injecterait dans la file les offres d'une autre entreprise.
 Ce programme interroge chaque API pour le NOM que la societe se donne, et le
 compare a celui de la file. Ne modifie rien.
 
-Run : python verify_ats_slugs.py [--json _ats_candidats.json]
+Run : python JobHunter.pyw verify_ats_slugs [--json _ats_candidats.json]
 """
 
 import argparse

@@ -3,8 +3,8 @@
 (sans Excel). Exigences offre = missions + PROFIL requis (+ description si récupérée).
 Couverture = CV variant. Écrit le nouveau % dans la queue.
 
-Run : python rescore_ats.py            # tout
-      python rescore_ats.py --dry      # montre les changements sans écrire"""
+Run : python JobHunter.pyw rescore_ats            # tout
+      python JobHunter.pyw rescore_ats --dry      # montre les changements sans écrire"""
 
 import argparse
 import sys

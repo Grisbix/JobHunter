@@ -14,9 +14,9 @@ Ne modifie RIEN. Ecrit un rapport JSON ; l'ajout dans sources_config.json reste
 une decision explicite.
 
 Run :
-  python probe_ats_queue.py --fit 8          # entreprises des offres fit >= 8
-  python probe_ats_queue.py --fit 0          # toutes
-  python probe_ats_queue.py --json out.json
+  python JobHunter.pyw probe_ats_queue --fit 8          # entreprises des offres fit >= 8
+  python JobHunter.pyw probe_ats_queue --fit 0          # toutes
+  python JobHunter.pyw probe_ats_queue --json out.json
 """
 
 import argparse

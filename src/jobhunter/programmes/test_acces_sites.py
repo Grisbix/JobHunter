@@ -14,10 +14,10 @@ code a du ACCEPTER faute de bouton de refus (accept-fallback) : ces cas-la sont
 les seuls ou un consentement est donne, autant les connaitre.
 
 Run :
-  python test_acces_sites.py                 # sites CARRIERE (hors job boards)
-  python test_acces_sites.py --boards        # job boards uniquement
-  python test_acces_sites.py --all --limit 0 # tout, sans plafond
-  python test_acces_sites.py --json out.json
+  python JobHunter.pyw test_acces_sites                 # sites CARRIERE (hors job boards)
+  python JobHunter.pyw test_acces_sites --boards        # job boards uniquement
+  python JobHunter.pyw test_acces_sites --all --limit 0 # tout, sans plafond
+  python JobHunter.pyw test_acces_sites --json out.json
 """
 
 import argparse

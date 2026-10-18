@@ -9,9 +9,9 @@ anti-bot, avec la description fournie d'office.
 Ne modifie RIEN : affiche seulement ce qui répond. Sortie triée par nb d'offres.
 
 Run :
-  python probe_ats.py                        # liste candidate intégrée
-  python probe_ats.py --slugs dnca,comgest   # teste des slugs precis
-  python probe_ats.py --json out.json
+  python JobHunter.pyw probe_ats                        # liste candidate intégrée
+  python JobHunter.pyw probe_ats --slugs dnca,comgest   # teste des slugs precis
+  python JobHunter.pyw probe_ats --json out.json
 """
 
 import argparse

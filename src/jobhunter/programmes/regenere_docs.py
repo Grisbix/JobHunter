@@ -20,10 +20,10 @@ Les .docx d'origine sont suivis par git. En cas de doute :
     git checkout -- Lettres/Par_offre
 
 Run :
-  python regenere_docs.py --dry
-  python regenere_docs.py                   # lettres
-  python regenere_docs.py --cv              # CV
-  python regenere_docs.py --cv --sans-pdf   # .docx seuls, PDF plus tard
+  python JobHunter.pyw regenerer --dry
+  python JobHunter.pyw regenerer                   # lettres
+  python JobHunter.pyw regenerer --cv              # CV
+  python JobHunter.pyw regenerer --cv --sans-pdf   # .docx seuls, PDF plus tard
 """
 
 import argparse

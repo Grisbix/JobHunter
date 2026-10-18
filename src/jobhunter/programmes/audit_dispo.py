@@ -33,10 +33,10 @@ suivi.json et les lignes RECHERCHE. Motifs :
   - avec --age-max N : invérifiable ET collectee il y a plus de N jours.
 
 Run :
-  python audit_dispo.py                    # controle, n'ecrit que l'etat
-  python audit_dispo.py --supprime         # controle puis retire les fermees
-  python audit_dispo.py --supprime --age-max 60
-  python audit_dispo.py --rapport          # bilan de l'etat, sans reseau
+  python JobHunter.pyw dispo                    # controle, n'ecrit que l'etat
+  python JobHunter.pyw dispo --supprime         # controle puis retire les fermees
+  python JobHunter.pyw dispo --supprime --age-max 60
+  python JobHunter.pyw dispo --rapport          # bilan de l'etat, sans reseau
 """
 
 import argparse

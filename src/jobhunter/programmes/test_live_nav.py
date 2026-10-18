@@ -2,7 +2,7 @@
 """test_live_nav.py — Test RÉEL (read-only) : navigue de vrais sites carrière,
 lance la reconnaissance (detect_ats, segment_page, cookies, goto_careers, find_offer)
 et rapporte si le programme s'adapte. AUCUN login, AUCUN submit. Headless.
-Run: python test_live_nav.py
+Run: python JobHunter.pyw test_live_nav
 """
 
 import sys

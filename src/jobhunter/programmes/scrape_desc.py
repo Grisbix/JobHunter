@@ -4,8 +4,8 @@ l'enregistre dans apply_queue.json (champ 'description'). Réutilise le moteur
 Playwright standard, sans session personnelle.
 
 Usage :
-  python scrape_desc.py --key "Entreprise|Poste"            # 1 offre (URL lue dans la queue)
-  python scrape_desc.py --all --canal auto --limit 50       # lot (offres sans description)
+  python JobHunter.pyw scrape_desc --key "Entreprise|Poste"            # 1 offre (URL lue dans la queue)
+  python JobHunter.pyw scrape_desc --all --canal auto --limit 50       # lot (offres sans description)
 
 Aucun envoi, aucune connexion tapée. Lecture seule de la page → texte."""
 

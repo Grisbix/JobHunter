@@ -4,8 +4,8 @@ Devine le domaine depuis le nom (slug + .com/.fr) et VALIDE par HTTP (200, host 
 Écrit Scripts/homepages.json {entreprise: url}. build_queue l'utilise en fallback
 (url_type=HOMEPAGE, canal=auto) → le runner navigue home → goto_careers → offre.
 
-Run: python enrich_homepages.py        (toutes les entreprises sans URL du queue)
-     python enrich_homepages.py --force (revalide même celles déjà en cache)
+Run: python JobHunter.pyw enrich_homepages        (toutes les entreprises sans URL du queue)
+     python JobHunter.pyw enrich_homepages --force (revalide même celles déjà en cache)
 """
 
 import concurrent.futures as cf

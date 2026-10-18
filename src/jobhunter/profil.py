@@ -6,7 +6,7 @@ Le moteur (collecte, tri, scoring, CV, lettres) ne connait aucun metier, aucune
 ville, aucun nom : il lit ce module. Pour changer de cible, on change le profil,
 jamais le code.
 
-Le fichier se cree avec `python Scripts/premier_lancement.py <ton_cv.pdf>`, puis
+Le fichier se cree avec `python JobHunter.pyw profil <ton_cv.pdf>`, puis
 se retouche a la main. Un exemple complet (finance durable) est dans
 profil/exemple_finance_esg.json.
 
@@ -48,7 +48,7 @@ def charger() -> dict[str, Any]:
     if not FICHIER.exists():
         raise ProfilAbsent(
             f"Profil introuvable : {FICHIER}\n"
-            "Lance d'abord : python Scripts/premier_lancement.py <ton_cv.pdf|docx>"
+            "Lance d'abord : python JobHunter.pyw profil <ton_cv.pdf|docx>"
         )
     with open(FICHIER, encoding="utf-8") as f:
         p: dict[str, Any] = json.load(f)

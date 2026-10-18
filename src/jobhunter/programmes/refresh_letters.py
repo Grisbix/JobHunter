@@ -6,7 +6,7 @@
   3. DESTINATAIRE : pas de nom de recruteur connu → retire le bloc entreprise
      (« <Entreprise> » + « À l'attention du service Recrutement »)
 
-Idempotent. Run : python refresh_letters.py [--dry] [--no-pdf]"""
+Idempotent. Run : python JobHunter.pyw refresh_letters [--dry] [--no-pdf]"""
 
 import argparse
 import importlib

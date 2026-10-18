@@ -12,10 +12,10 @@ Entreprise|Poste), donc la même offre n'alerte qu'une fois, même si le pipelin
 tourne tous les jours.
 
 Run :
-  python notify_matches.py                  # fit >= 8, offres vivantes
-  python notify_matches.py --min-fit 9
-  python notify_matches.py --dry            # montre sans notifier ni marquer
-  python notify_matches.py --reset          # oublie l'historique (tout redevient nouveau)
+  python JobHunter.pyw notify_matches                  # fit >= 8, offres vivantes
+  python JobHunter.pyw notify_matches --min-fit 9
+  python JobHunter.pyw notify_matches --dry            # montre sans notifier ni marquer
+  python JobHunter.pyw notify_matches --reset          # oublie l'historique (tout redevient nouveau)
 """
 
 import argparse

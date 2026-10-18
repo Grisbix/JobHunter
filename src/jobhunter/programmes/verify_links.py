@@ -14,9 +14,9 @@ Ne touche pas aux job boards (LinkedIn, Indeed, WTJ...) : leurs URL ne portent
 pas le nom de la societe, une redirection y est normale.
 
 Run :
-  python verify_links.py                 # rapport seul
-  python verify_links.py --fix           # met a jour les URL redirigees
-  python verify_links.py --limit 50
+  python JobHunter.pyw verify_links                 # rapport seul
+  python JobHunter.pyw verify_links --fix           # met a jour les URL redirigees
+  python JobHunter.pyw verify_links --limit 50
 """
 
 import argparse

@@ -16,7 +16,7 @@ majorite de la file, et se tromper vers le francais sur une offre francaise
 coute moins qu'envoyer un CV anglais a une PME de Gironde.
 
 Run :
-  python langue.py            # repartition de la file
+  python -m jobhunter.scoring.langue            # repartition de la file
 """
 
 import re

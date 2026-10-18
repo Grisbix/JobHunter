@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """premier_lancement.py — cree TON profil a partir de ton CV.
 
-    python Scripts/premier_lancement.py chemin/vers/mon_cv.pdf      (ou .docx)
-    python Scripts/premier_lancement.py mon_cv.docx --auto           (aucune question)
+    python JobHunter.pyw profil chemin/vers/mon_cv.pdf      (ou .docx)
+    python JobHunter.pyw profil mon_cv.docx --auto           (aucune question)
 
 Ce que fait le programme :
   1. lit le CV (PDF ou Word) : nom, email, telephone, LinkedIn, ville, langues,
@@ -762,7 +762,7 @@ def main():
         )
     for m in manque:
         print(f"  - {m}")
-    print("\nVerifier : python Scripts/profil.py   ·   Lancer l'app : python JobHunter.pyw")
+    print("\nVerifier : python JobHunter.pyw voir-profil   ·   Lancer l'app : python JobHunter.pyw")
     return 0
 
 

@@ -319,7 +319,7 @@ class ActionsMixin:
 
         Le motif n'est pas un ornement. Un refus sur une offre à fit élevé est
         un désaccord entre le score et le jugement de l'utilisateur — c'est ce que lit
-        `python exclusions.py` pour montrer ce que la notation rate.
+        `python JobHunter.pyw exclusions` pour montrer ce que la notation rate.
         """
         oids = set(self.checked)
         if not oids:
@@ -359,7 +359,7 @@ class ActionsMixin:
         self._log(
             f"✕ {retirees} offre(s) écartée(s) — « {motif} ». "
             f"{n_exc} nouvelle(s) exclusion(s) ; elles ne reviendront pas au scan.\n"
-            f"   Bilan de ce que la notation rate : python Scripts/exclusions.py\n"
+            f"   Bilan de ce que la notation rate : python JobHunter.pyw exclusions\n"
         )
 
     def _demander_motif(self, n):

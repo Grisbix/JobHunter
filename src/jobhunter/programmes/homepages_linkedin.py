@@ -13,9 +13,9 @@ Celles-ci en ont une (LinkedIn), donc il les ignorait.
 Alimente homepages.json, que consomme ensuite offres_depuis_site.py (etape 2).
 
 Run :
-  python homepages_linkedin.py --dry            # compte, n'ecrit rien
-  python homepages_linkedin.py --fit 8          # entreprises des offres fit >= 8
-  python homepages_linkedin.py --fit 0          # toutes
+  python JobHunter.pyw homepages_linkedin --dry            # compte, n'ecrit rien
+  python JobHunter.pyw homepages_linkedin --fit 8          # entreprises des offres fit >= 8
+  python JobHunter.pyw homepages_linkedin --fit 0          # toutes
 """
 
 import argparse

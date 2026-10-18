@@ -4,7 +4,7 @@
   2. adoucit les formules trop agressives de l'ancien générateur
   3. régénère les PDF jumeaux (LibreOffice)
 
-Idempotent. Run : python fix_letters.py [--dry] [--no-pdf]"""
+Idempotent. Run : python JobHunter.pyw fix_letters [--dry] [--no-pdf]"""
 
 import argparse
 import subprocess

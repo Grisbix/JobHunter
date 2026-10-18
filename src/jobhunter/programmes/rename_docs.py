@@ -6,7 +6,7 @@ contrat, parenthèses…), puis l'entreprise courte (anti-collision).
 Source de vérité = apply_queue.json (champs cv/lettre) → renomme docx + PDF jumeau
 + MET À JOUR les liens file:/// dans la queue. Idempotent.
 
-Run : python rename_docs.py [--dry]"""
+Run : python JobHunter.pyw rename_docs [--dry]"""
 
 import argparse
 import importlib

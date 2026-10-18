@@ -13,8 +13,8 @@ merge_into_queue reprend desormais la description a la promotion. Ce programme
 repare les offres deja en file, que le scan ne repassera pas.
 
 Run :
-  python refresh_desc_efc.py --dry
-  python refresh_desc_efc.py
+  python JobHunter.pyw refresh_desc_efc --dry
+  python JobHunter.pyw refresh_desc_efc
 """
 
 import argparse

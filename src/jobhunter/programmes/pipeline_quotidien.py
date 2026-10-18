@@ -53,9 +53,9 @@ pas faire face a un quota. Ce programme releve donc les compteurs de chaque
 etape et le dit quand une etape n'a rien rendu.
 
 Run :
-  python pipeline_quotidien.py
-  python pipeline_quotidien.py --docs 50
-  python pipeline_quotidien.py --sans-docs
+  python JobHunter.pyw pipeline
+  python JobHunter.pyw pipeline --docs 50
+  python JobHunter.pyw pipeline --sans-docs
 """
 
 import argparse

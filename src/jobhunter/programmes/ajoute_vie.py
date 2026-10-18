@@ -18,9 +18,9 @@ LA LANGUE N'EST PAS FORCEE : langue_offre() lit l'annonce. Une V.I.E redigee
 en anglais recoit un dossier en anglais.
 
 Run :
-  python ajoute_vie.py 245612
-  python ajoute_vie.py https://mon-vie-via.businessfrance.fr/offres/245612
-  python ajoute_vie.py 245612 --dry
+  python JobHunter.pyw ajoute_vie 245612
+  python JobHunter.pyw ajoute_vie https://mon-vie-via.businessfrance.fr/offres/245612
+  python JobHunter.pyw ajoute_vie 245612 --dry
 """
 
 import argparse

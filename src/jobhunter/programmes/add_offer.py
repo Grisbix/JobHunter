@@ -2,8 +2,8 @@
 """add_offer.py — COLLE UN LIEN d'offre → analyse la page (titre, entreprise,
 description), score (fit/ATS), ajoute à apply_queue.json, puis génère CV + lettre.
 
-Run : python add_offer.py --url "https://…"           # analyse + queue + docs
-      python add_offer.py --url "https://…" --no-docs # sans CV/lettre
+Run : python JobHunter.pyw ajouter --url "https://…"           # analyse + queue + docs
+      python JobHunter.pyw ajouter --url "https://…" --no-docs # sans CV/lettre
 """
 
 import argparse

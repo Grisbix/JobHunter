@@ -22,11 +22,11 @@ CE QUE CE FICHIER GARDE
     masquees et jamais affichees
 
 Run :
-  python acces.py --list                    # etat des acces
-  python acces.py --open linkedin.com       # ouvre la page de connexion dans TON Chrome
-  python acces.py --check                   # teste quelles sessions sont encore actives
-  python acces.py --set-id linkedin.com --email moi@x.fr
-  python acces.py --set-key francetravail   # saisie masquee d'une cle d'API
+  python JobHunter.pyw acces --list                    # etat des acces
+  python JobHunter.pyw acces --open linkedin.com       # ouvre la page de connexion dans TON Chrome
+  python JobHunter.pyw acces --check                   # teste quelles sessions sont encore actives
+  python JobHunter.pyw acces --set-id linkedin.com --email moi@x.fr
+  python JobHunter.pyw acces --set-key francetravail   # saisie masquee d'une cle d'API
 """
 
 import argparse
@@ -266,9 +266,13 @@ def cmd_open(host):
         except Exception:
             pass
     if connecte:
-        print("→ connexion détectée, profil conservé. Vérifie avec : python acces.py --check")
+        print(
+            "→ connexion détectée, profil conservé. Vérifie avec : python JobHunter.pyw acces --check"
+        )
         return 0
-    print("→ connexion non confirmée ; profil conservé. Vérifie avec : python acces.py --check")
+    print(
+        "→ connexion non confirmée ; profil conservé. Vérifie avec : python JobHunter.pyw acces --check"
+    )
     return 4
 
 
@@ -434,7 +438,7 @@ def cmd_open_all(only=None):
             ctx.close()
         except Exception:
             pass
-    print("→ navigateur ferme, sessions conservees. Verifie : python acces.py --check")
+    print("→ navigateur ferme, sessions conservees. Verifie : python JobHunter.pyw acces --check")
     return 0
 
 

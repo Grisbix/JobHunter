@@ -10,9 +10,9 @@ de « Charles é » sur les accents.
 Séparateur : ';' — Excel en locale FR découpe sur ';', pas sur ','.
 
 Run :
-  python export_queue_csv.py                 # export du jour dans _exports/
-  python export_queue_csv.py --keep 8        # ne garde que les 8 plus récents
-  python export_queue_csv.py --out chemin.csv
+  python JobHunter.pyw export_queue_csv                 # export du jour dans _exports/
+  python JobHunter.pyw export_queue_csv --keep 8        # ne garde que les 8 plus récents
+  python JobHunter.pyw export_queue_csv --out chemin.csv
 """
 
 import argparse

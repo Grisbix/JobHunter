@@ -20,8 +20,8 @@ TROIS PIEGES, tous rencontres dans les donnees reelles :
      « ILE DE FRANCE »). On compare sans accent ni casse.
 
 Run :
-  python zones.py            # repartition de la file
-  python zones.py --ecrire   # inscrit le champ `zone` dans chaque offre
+  python -m jobhunter.scoring.zones            # repartition de la file
+  python -m jobhunter.scoring.zones --ecrire   # inscrit le champ `zone` dans chaque offre
 """
 
 import argparse

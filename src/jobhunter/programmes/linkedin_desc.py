@@ -16,9 +16,9 @@ Re-score le fit ET exp_requise dans la foulee : une description ajoutee sans
 re-scoring laisse l'offre a son ancien fit, calcule sans elle.
 
 Run :
-  python linkedin_desc.py --dry              # compte, n'ecrit rien
-  python linkedin_desc.py --limit 100
-  python linkedin_desc.py                    # toutes les offres concernees
+  python JobHunter.pyw linkedin_desc --dry              # compte, n'ecrit rien
+  python JobHunter.pyw linkedin_desc --limit 100
+  python JobHunter.pyw linkedin_desc                    # toutes les offres concernees
 """
 
 import argparse

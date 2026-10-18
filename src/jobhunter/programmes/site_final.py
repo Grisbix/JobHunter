@@ -28,9 +28,9 @@ Etat : `_site_final.json`, une entree par entreprise (flux trouves, date).
 Une entreprise sans flux n'est resondee qu'apres 30 jours.
 
 Run :
-  python site_final.py --dry               # mesure, n'ecrit rien dans la file
-  python site_final.py                     # fit >= 9
-  python site_final.py --fit 8 --limite 100
+  python JobHunter.pyw site_final --dry               # mesure, n'ecrit rien dans la file
+  python JobHunter.pyw site_final                     # fit >= 9
+  python JobHunter.pyw site_final --fit 8 --limite 100
 """
 
 import argparse

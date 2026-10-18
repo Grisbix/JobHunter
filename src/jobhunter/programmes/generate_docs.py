@@ -2,9 +2,9 @@
 """generate_docs.py — Génère CV + lettre pour les offres de la QUEUE qui n'en ont pas
 (ou dont les liens sont morts). Remplace l'ancien tailor CLI (qui lisait l'Excel archivé).
 
-Run : python generate_docs.py --top 30        # top fit sans docs
-      python generate_docs.py --all           # toutes les offres sans docs
-      python generate_docs.py --dry"""
+Run : python JobHunter.pyw documents --top 30        # top fit sans docs
+      python JobHunter.pyw documents --all           # toutes les offres sans docs
+      python JobHunter.pyw documents --dry"""
 
 import argparse
 import importlib

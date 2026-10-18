@@ -1,7 +1,7 @@
 """Montre comment le profil traite des intitules d'offre, sans reseau.
 
-    python Scripts/verifie_profil.py "Chargé de communication" "Développeur Java" ...
-    python Scripts/verifie_profil.py            # intitules tires des domaines du profil
+    python JobHunter.pyw verifier-profil "Chargé de communication" "Développeur Java" ...
+    python JobHunter.pyw verifier-profil            # intitules tires des domaines du profil
 
 Pour chaque intitule : garde ou ecarte par le filtre de collecte (title_ok), domaine
 attribue, et note 1-10 calculee sur l'intitule seul (une vraie offre est notee avec sa

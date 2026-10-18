@@ -10,9 +10,9 @@ Passes (défaut = toutes sauf --format) :
   4. --format  : homogénéise les lettres (justifié+césure, date du jour,
                  Objet avant salutation, destinataire retiré, tirets IA)
 
-Run : python sync_docs.py            # 1+2+3
-      python sync_docs.py --format   # 1+2+3+4
-      python sync_docs.py --dry      # montre sans toucher"""
+Run : python JobHunter.pyw sync_docs            # 1+2+3
+      python JobHunter.pyw sync_docs --format   # 1+2+3+4
+      python JobHunter.pyw sync_docs --dry      # montre sans toucher"""
 
 import argparse
 import importlib

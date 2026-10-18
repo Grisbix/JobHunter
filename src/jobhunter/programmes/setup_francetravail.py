@@ -12,8 +12,8 @@ Ou obtenir les identifiants :
   3. relever client_id et client_secret
 
 Run :
-  python setup_francetravail.py            # saisie masquee + test
-  python setup_francetravail.py --test     # teste les identifiants deja en place
+  python JobHunter.pyw setup_francetravail            # saisie masquee + test
+  python JobHunter.pyw setup_francetravail --test     # teste les identifiants deja en place
 """
 
 import argparse
@@ -46,7 +46,7 @@ def test():
     print(f"✓ API interrogee — {len(offres)} offre(s) sur le mot-cle test")
     for o in offres[:3]:
         print(f"    {o['titre'][:52]:<52} | {o['entreprise'][:22]}")
-    print("\nOK. `python job_sources.py --all` inclut desormais France Travail.")
+    print("\nOK. `python JobHunter.pyw collecte --all` inclut desormais France Travail.")
     return 0
 
 

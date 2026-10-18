@@ -26,10 +26,10 @@ Ashby et Recruitee exposent tous une API JSON publique. C'est ce qui fait que
 Ne modifie RIEN. Affiche, et écrit un JSON si on le demande.
 
 Run :
-  python probe_carrieres.py
-  python probe_carrieres.py --json carrieres.json
-  python probe_carrieres.py --domaines axa,bpce      # filtre
-  python probe_carrieres.py --sans-sitemap           # passes 1 et 3 seulement
+  python JobHunter.pyw probe_carrieres
+  python JobHunter.pyw probe_carrieres --json carrieres.json
+  python JobHunter.pyw probe_carrieres --domaines axa,bpce      # filtre
+  python JobHunter.pyw probe_carrieres --sans-sitemap           # passes 1 et 3 seulement
 """
 
 import argparse

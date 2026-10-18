@@ -43,10 +43,10 @@ supprime que l'INGENIERIE logicielle — ML engineer, data engineer, devops,
 architecte — pas les postes d'analyse ou de conseil qui portent « IA ».
 
 Run :
-  python tri_file.py                 # inspection seule, rien n'est ecrit
-  python tri_file.py --motifs        # + echantillon de 20 titres par motif
-  python tri_file.py --garde         # + echantillon de ce qui est CONSERVE
-  python tri_file.py --supprime      # ecrit, apres sauvegarde horodatee
+  python JobHunter.pyw tri                 # inspection seule, rien n'est ecrit
+  python JobHunter.pyw tri --motifs        # + echantillon de 20 titres par motif
+  python JobHunter.pyw tri --garde         # + echantillon de ce qui est CONSERVE
+  python JobHunter.pyw tri --supprime      # ecrit, apres sauvegarde horodatee
 """
 
 import argparse

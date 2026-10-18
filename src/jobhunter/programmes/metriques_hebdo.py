@@ -18,7 +18,7 @@ datés de la semaine, et les réponses se comptent à la date de la réponse.
 Certaines entrées n'ont pas de date, ou une date `jj/mm` sans année : elles
 sont comptées à part plutôt que devinées.
 
-Run : python metriques_hebdo.py [--jours 7]
+Run : python JobHunter.pyw metriques_hebdo [--jours 7]
 """
 
 import argparse

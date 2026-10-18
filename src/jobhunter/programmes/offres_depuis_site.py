@@ -22,8 +22,8 @@ des candidatures n'est pas concerne (sa cle est « entreprise|poste », pas l'UR
 CAPTCHA : jamais contourne. Une page protegee est notee et sautee.
 
 Run :
-  python offres_depuis_site.py --dry --fit 8
-  python offres_depuis_site.py --fit 8 --limit 50
+  python JobHunter.pyw offres_depuis_site --dry --fit 8
+  python JobHunter.pyw offres_depuis_site --fit 8 --limit 50
 """
 
 import argparse

@@ -14,8 +14,8 @@ Deux etapes, pour ne pas marteler :
 Ne modifie RIEN : affiche les flux qui repondent.
 
 Run :
-  python probe_workday.py
-  python probe_workday.py --tenants axa,allianz --json out.json
+  python JobHunter.pyw probe_workday
+  python JobHunter.pyw probe_workday --tenants axa,allianz --json out.json
 """
 
 import argparse

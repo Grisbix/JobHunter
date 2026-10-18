@@ -13,9 +13,9 @@ qui décide s'il vaut la peine d'être ajouté au scan.
 Ne modifie RIEN. Ajout au scan = via sources_config.json (voir --config).
 
 Run :
-  python probe_keywords.py                       # liste candidate intégrée
-  python probe_keywords.py --kw "analyste climat,finance verte"
-  python probe_keywords.py --min-new 3 --config  # ajoute les rentables à la config
+  python JobHunter.pyw probe_keywords                       # liste candidate intégrée
+  python JobHunter.pyw probe_keywords --kw "analyste climat,finance verte"
+  python JobHunter.pyw probe_keywords --min-new 3 --config  # ajoute les rentables à la config
 """
 
 import argparse

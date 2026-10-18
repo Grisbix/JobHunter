@@ -27,9 +27,9 @@ deja tranche. Si le detecteur change, PURGER ce fichier : ses verdicts ont ete
 rendus par l'ancienne version.
 
 Run :
-  python linkedin_closed.py --dry                      # compte seulement
-  python linkedin_closed.py --workers 1 --pause 20     # passe lente
-  python linkedin_closed.py                            # supprime pour de bon
+  python JobHunter.pyw linkedin_closed --dry                      # compte seulement
+  python JobHunter.pyw linkedin_closed --workers 1 --pause 20     # passe lente
+  python JobHunter.pyw linkedin_closed                            # supprime pour de bon
 """
 
 import argparse
