@@ -88,7 +88,7 @@ class DonneesMixin:
         def work():
             try:
                 subprocess.run(
-                    [PY, "scrape_desc.py", "--all", "--limit", "40"],
+                    [PY, "-m", "jobhunter.programmes.scrape_desc", "--all", "--limit", "40"],
                     cwd=str(SCRIPTS),
                     capture_output=True,
                     text=True,
@@ -96,7 +96,7 @@ class DonneesMixin:
                     creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                 )
                 subprocess.run(
-                    [PY, "rescore_ats.py"],
+                    [PY, "-m", "jobhunter.programmes.rescore_ats"],
                     cwd=str(SCRIPTS),
                     capture_output=True,
                     text=True,
@@ -134,7 +134,7 @@ class DonneesMixin:
         def work():
             try:
                 r = subprocess.run(
-                    [PY, "sync_docs.py"],
+                    [PY, "-m", "jobhunter.programmes.sync_docs"],
                     cwd=str(SCRIPTS),
                     capture_output=True,
                     text=True,
@@ -203,7 +203,7 @@ class DonneesMixin:
         def work():
             try:
                 r = subprocess.run(
-                    [PY, "scrape_jobs.py", "--headless"],
+                    [PY, "-m", "jobhunter.programmes.scrape_jobs", "--headless"],
                     cwd=str(SCRIPTS),
                     capture_output=True,
                     text=True,
@@ -250,7 +250,7 @@ class DonneesMixin:
 
                 if str(SCRIPTS) not in _s.path:
                     _s.path.insert(0, str(SCRIPTS))
-                import relances
+                from jobhunter.programmes import relances
 
                 lst = relances.a_relancer(10)
             except Exception:
@@ -274,7 +274,7 @@ class DonneesMixin:
         def work():
             try:
                 subprocess.run(
-                    [PY, "relances.py", "--draft", key],
+                    [PY, "-m", "jobhunter.programmes.relances", "--draft", key],
                     cwd=str(SCRIPTS),
                     capture_output=True,
                     timeout=60,

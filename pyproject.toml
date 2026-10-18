@@ -34,9 +34,9 @@ dev = [
 requires = ["hatchling>=1.27,<2"]
 build-backend = "hatchling.build"
 
-# Le paquet installable est src/jobhunter (phase 6 du plan). Les programmes encore dans
-# Scripts/ et les donnees restent dans le depot ; une installation par pip pointe dessus
-# avec JOBHUNTER_RACINE.
+# Le paquet installable est src/jobhunter, programmes compris (2.0). Les donnees
+# (Scripts/, profil/, CV, lettres) restent dans le dossier de l'utilisateur : le paquet
+# installe le trouve par JOBHUNTER_RACINE ou en remontant depuis le dossier courant.
 [tool.hatch.build.targets.wheel]
 packages = ["src/jobhunter"]
 
@@ -48,8 +48,7 @@ package = true
 line-length = 100
 target-version = "py312"
 extend-include = ["*.pyw"]
-# Les modules de Scripts/ s'importent entre eux par leur nom : ils sont « first-party ».
-src = ["src", "Scripts", "outils"]
+src = ["src", "outils"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "UP", "B"]
@@ -57,7 +56,7 @@ select = ["E", "W", "F", "I", "UP", "B"]
 # travail a la main ou depend du decoupage en paquet (phase 3) ; on ne les
 # ajoute pas en vrac a `ignore` sans compte ni raison.
 ignore = [
-    "E402",   # 114 — imports apres sys.path.insert : disparait avec le paquet (phase 3)
+    "E402",   # 43 — imports apres du code (console UTF-8, profil d'exemple en tete)
     "E501",   # lignes longues restantes : chaines et commentaires que le formateur ne coupe pas
     "E741",   # 35 — variables nommees l / O / I
     "UP031",  # 35 — formatage « % » a convertir en f-strings
@@ -96,6 +95,13 @@ python_version = "3.12"
 files = ["src/jobhunter"]
 ignore_missing_imports = true
 warn_unused_ignores = true
+# Les programmes (anciens Scripts/*.py, entres dans le paquet en 2.0) n'ont jamais ete
+# types : 85 erreurs au 2026-10-18, A RESORBER programme par programme.
+untyped_calls_exclude = ["jobhunter.programmes"]
+
+[[tool.mypy.overrides]]
+module = ["jobhunter.programmes.*"]
+ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = [
@@ -122,7 +128,7 @@ no_implicit_reexport = true
 strict_equality = true
 
 [tool.coverage.run]
-source = ["Scripts", "src/jobhunter"]
+source = ["src/jobhunter"]
 omit = ["*/test_*.py", "*/_profil_test.py"]
 # Les suites historiques tournent en sous-processus : sans ceci, elles ne comptent pas.
 patch = ["subprocess"]

@@ -13,8 +13,8 @@ Converti depuis Scripts/test_patterns.py.
 
 import pytest
 
-import apply_runner as ar
 from jobhunter import navigation as w
+from jobhunter.programmes import apply_runner as ar
 
 PROF = {
     "prenom": "Camille",

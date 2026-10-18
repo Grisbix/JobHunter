@@ -162,7 +162,7 @@ class FicheMixin:
         def work():
             try:
                 r = subprocess.run(
-                    [PY, "scrape_desc.py", "--key", key],
+                    [PY, "-m", "jobhunter.programmes.scrape_desc", "--key", key],
                     cwd=str(SCRIPTS),
                     capture_output=True,
                     text=True,

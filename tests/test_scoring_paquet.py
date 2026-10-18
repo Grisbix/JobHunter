@@ -14,10 +14,10 @@ import sys
 import pytest
 from conftest import EXEMPLE, SRC
 
-import jutil
 from jobhunter import chemins, texte
 from jobhunter import chemins as chemins_paquet
 from jobhunter import documents as tailor_application
+from jobhunter.programmes import jutil
 from jobhunter.scoring import fit, langue, lexique, tri, zones
 from jobhunter.scoring import fit as ats_match
 from jobhunter.scoring import langue as langue_paquet

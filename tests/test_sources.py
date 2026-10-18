@@ -11,8 +11,8 @@ import re
 import pytest
 
 from jobhunter import sources as J
+from jobhunter.programmes.scrape_jobs import matches_esg_finance, offre_retenue
 from jobhunter.sources import en_france, rang_source
-from scrape_jobs import matches_esg_finance, offre_retenue
 
 LI = "https://fr.linkedin.com/jobs/view/x-4"
 WTJ = "https://www.welcometothejungle.com/fr/companies/o/jobs/x"

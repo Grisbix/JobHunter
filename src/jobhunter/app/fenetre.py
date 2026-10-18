@@ -485,7 +485,7 @@ def _annonce_mise_a_jour(root, app):
 
     def verifier():
         try:
-            import mise_a_jour
+            from jobhunter.programmes import mise_a_jour
 
             v = mise_a_jour.nouvelle_version()
             installee = mise_a_jour.version_locale()

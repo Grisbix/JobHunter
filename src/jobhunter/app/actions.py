@@ -157,7 +157,7 @@ class ActionsMixin:
             f"📮 Postuler {len(sel)} offre(s) cochée(s) — console (remplit, STOP sur Envoyer).\n"
         )
         self.run_console(
-            [PY, "apply_runner.py", "--selection", str(SEL), "--auto"],
+            [PY, "-m", "jobhunter.programmes.apply_runner", "--selection", str(SEL), "--auto"],
             f"Postuler sélection ({len(sel)})",
         )
 
@@ -329,7 +329,7 @@ class ActionsMixin:
         if not motif:
             return
         try:
-            import exclusions
+            from jobhunter.programmes import exclusions
         except Exception as ex:
             self._log(f"! exclusions.py introuvable: {ex}\n")
             return
@@ -372,7 +372,7 @@ class ActionsMixin:
         s'ouvrait jamais — l'exception partait dans le journal de panne.
         """
         try:
-            import exclusions
+            from jobhunter.programmes import exclusions
 
             motifs = list(exclusions.MOTIFS)
         except Exception:
@@ -532,7 +532,7 @@ class ActionsMixin:
         try:
             if str(SCRIPTS) not in sys.path:
                 sys.path.insert(0, str(SCRIPTS))
-            import jutil
+            from jobhunter.programmes import jutil
         except Exception:
             return True  # jutil introuvable : on n'empeche pas d'agir
         try:

@@ -9,7 +9,7 @@ import datetime
 
 import pytest
 
-import site_final as S
+from jobhunter.programmes import site_final as S
 
 J = datetime.date(2026, 10, 7)
 

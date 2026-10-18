@@ -97,10 +97,10 @@ def mesurer(offres, cle, n_docs):
     from jobhunter import documents as tailor_application
     from jobhunter import sources as job_sources
     from jobhunter.documents import message as message_offre
+    from jobhunter.programmes.scrape_jobs import classify_domaine
     from jobhunter.scoring import fit as ats_match
     from jobhunter.scoring import langue, zones
     from jobhunter.scoring import tri as tri_file
-    from scrape_jobs import classify_domaine
 
     resultats = {}
     pas = max(1, len(offres) // n_docs) if n_docs else 0

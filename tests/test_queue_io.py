@@ -10,9 +10,9 @@ import subprocess
 import sys
 
 import pytest
-from conftest import SCRIPTS
+from conftest import SRC
 
-import jutil
+from jobhunter.programmes import jutil
 from jobhunter.stockage import file as queue_io
 
 
@@ -26,7 +26,7 @@ def q(tmp_path):
 def autre_processus(chemin):
     """Un AUTRE processus tente de prendre le verrou ; rend « True » ou « False »."""
     sonde = (
-        f"import sys, pathlib; sys.path.insert(0, r'{SCRIPTS}'); import jutil;"
+        f"import sys, pathlib; sys.path.insert(0, r'{SRC}'); from jobhunter.programmes import jutil;"
         f"print(jutil.prendre_verrou(pathlib.Path(r'{chemin}'), attente=2, bavard=False))"
     )
     r = subprocess.run([sys.executable, "-c", sonde], capture_output=True, text=True)

@@ -67,8 +67,8 @@ def _wtj_fiche(url, client):
     vaut pour l'IP entiere et insister ne sert a rien. Surtout, 202 est un code
     de SUCCES — le confondre avec une page vide ferait passer le mur pour une
     fiche sans description."""
-    from wtj_desc import UA as _WUA
-    from wtj_desc import Bloque
+    from jobhunter.programmes.wtj_desc import UA as _WUA
+    from jobhunter.programmes.wtj_desc import Bloque
 
     try:
         r = _commun._get_borne(client, url, headers=_WUA, timeout=30)
@@ -122,8 +122,8 @@ def scan_wtj(pages=2):
 
     import httpx
 
-    from wtj_desc import UA as _WUA
-    from wtj_desc import Bloque
+    from jobhunter.programmes.wtj_desc import UA as _WUA
+    from jobhunter.programmes.wtj_desc import Bloque
 
     _EX = _commun.contrats_exclus()
     offers = []

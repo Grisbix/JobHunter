@@ -561,7 +561,7 @@ def main() -> int:
     # Doublons parmi ce qui reste : meme annonce sous deux intitules ou dans
     # deux langues (doublons.py). Apres les motifs, pour ne garder que des
     # offres qui survivent de toute facon.
-    import doublons
+    from jobhunter.programmes import doublons
 
     dbl = doublons.doublons([o for _, o in garde], proteges)
     jette += [("doublon", o) for _, o in garde if _oid(o) in dbl]
@@ -651,7 +651,7 @@ def main() -> int:
         return 3
     print(f"file purgee : {avant} → {restant} offres ({avant - restant} supprimees)")
     # La collecte ne doit pas les reprendre demain : voir rejets_tri.py.
-    import rejets_tri
+    from jobhunter.programmes import rejets_tri
 
     n = rejets_tri.ajouter(retires)
     print(f"rejets memorises : {n} (la collecte les ignore {rejets_tri.DUREE_JOURS} jours)")

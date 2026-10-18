@@ -4,7 +4,7 @@ non-offres, etudiant ; et la protection du suivi. Converti depuis Scripts/test_t
 
 import pytest
 
-import doublons as D
+from jobhunter.programmes import doublons as D
 from jobhunter.scoring import tri as T
 
 

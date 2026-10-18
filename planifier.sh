@@ -20,7 +20,7 @@ fi
 HEURE=${1:-08:00}
 H=${HEURE%%:*}; M=${HEURE##*:}
 PY=$(command -v python3 || command -v python)
-LIGNE="$((10#$M)) $((10#$H)) * * * cd \"$DOSSIER\" && \"$PY\" Scripts/pipeline_quotidien.py >/dev/null 2>&1 $MARQUE"
+LIGNE="$((10#$M)) $((10#$H)) * * * cd \"$DOSSIER\" && \"$PY\" JobHunter.pyw pipeline >/dev/null 2>&1 $MARQUE"
 printf '%s\n%s\n' "$ACTUEL" "$LIGNE" | sed '/^$/d' | crontab -
 echo "Collecte planifiee chaque jour a $HEURE (si l'ordinateur est allume)."
 echo "Journaux : Scripts/_logs/  -  Pour la retirer : ./planifier.sh supprimer"

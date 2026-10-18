@@ -10,8 +10,8 @@ import json
 
 import pytest
 
-import rejets_tri as R
 from jobhunter import sources as J
+from jobhunter.programmes import rejets_tri as R
 
 J0 = datetime.date(2026, 10, 5)
 CLE = "Acme|Senior ESG Manager"

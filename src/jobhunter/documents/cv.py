@@ -141,7 +141,7 @@ def tailor_cv(offer, nom=None, langue="fr", allege=0, auto=True):
     if not src.is_file():
         _log.info(f"  ! CV variante absente: {src.name or key} (profil.json, domaines[].cv)")
         return None
-    from rename_docs import new_name
+    from jobhunter.programmes.rename_docs import new_name
 
     if src.suffix.lower() == ".pdf":
         # CV fourni en PDF seulement : il part tel quel, sans adaptation.
@@ -228,7 +228,9 @@ def tailor_cv(offer, nom=None, langue="fr", allege=0, auto=True):
     #    trahissait un CV auto-généré auprès des recruteurs. Les skills servent toujours
     #    au scoring (fit/ATS) et à la LETTRE, mais ne sont plus injectés dans le CV.
 
-    from rename_docs import new_name  # Prenom_Nom_CV_<Poste court>_<Entreprise>
+    from jobhunter.programmes.rename_docs import (
+        new_name,  # Prenom_Nom_CV_<Poste court>_<Entreprise>
+    )
 
     out = _ici.CV_OUT / ((nom or new_name("CV", role, offer["company"])) + ".docx")
     doc.save(str(out))

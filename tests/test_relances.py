@@ -7,7 +7,7 @@ clairement que rien n'est envoye. Converti depuis Scripts/test_relances.py.
 
 import pytest
 
-import relances as R
+from jobhunter.programmes import relances as R
 
 A = {"entreprise": "Amundi", "poste": "Analyste ESG"}
 B = {"entreprise": "Covéa Finance", "poste": "Analyste PAI"}

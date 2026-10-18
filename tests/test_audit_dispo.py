@@ -12,10 +12,10 @@ import datetime
 import httpx
 import pytest
 
-import audit_dispo as a
-import linkedin_desc as ld
-import pipeline_quotidien as pq
 from jobhunter import sources as job_sources
+from jobhunter.programmes import audit_dispo as a
+from jobhunter.programmes import linkedin_desc as ld
+from jobhunter.programmes import pipeline_quotidien as pq
 
 JOUR = "2026-10-02"
 

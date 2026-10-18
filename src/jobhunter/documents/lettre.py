@@ -602,7 +602,7 @@ def tailor_letter(offer, nom=None, langue="fr"):
                 para(_bloc)
             para("Yours sincerely," if _nomme else "Yours faithfully,", space=12)
             para(_ici.PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
-            from rename_docs import new_name
+            from jobhunter.programmes.rename_docs import new_name
 
             out_sm = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
             doc.save(str(out_sm))
@@ -683,7 +683,7 @@ def tailor_letter(offer, nom=None, langue="fr"):
         # desormais lequel des deux cas s'applique.
         para("Yours sincerely," if _nomme else "Yours faithfully,", space=12)
         para(_ici.PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
-        from rename_docs import new_name
+        from jobhunter.programmes.rename_docs import new_name
 
         out_en = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
         doc.save(str(out_en))
@@ -711,7 +711,7 @@ def tailor_letter(offer, nom=None, langue="fr"):
             space=12,
         )
         para(_ici.PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
-        from rename_docs import new_name
+        from jobhunter.programmes.rename_docs import new_name
 
         out_sm = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
         doc.save(str(out_sm))
@@ -833,7 +833,9 @@ def tailor_letter(offer, nom=None, langue="fr"):
     )
     para(_ici.PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
 
-    from rename_docs import new_name  # Prenom_Nom_Lettre_<Poste court>_<Entreprise>
+    from jobhunter.programmes.rename_docs import (
+        new_name,  # Prenom_Nom_Lettre_<Poste court>_<Entreprise>
+    )
 
     out = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
     doc.save(str(out))

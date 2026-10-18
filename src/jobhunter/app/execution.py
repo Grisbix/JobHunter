@@ -109,12 +109,27 @@ class ExecutionMixin:
             ("1/6 Scan offres (ATS + LinkedIn + V.I.E)", [PY, "-m", "jobhunter.sources", "--all"]),
             (
                 "2/6 Descriptions LinkedIn",
-                [PY, "scrape_desc.py", "--all", "--canal", "linkedin", "--limit", "150"],
+                [
+                    PY,
+                    "-m",
+                    "jobhunter.programmes.scrape_desc",
+                    "--all",
+                    "--canal",
+                    "linkedin",
+                    "--limit",
+                    "150",
+                ],
             ),
-            ("3/6 Re-score fit + ATS", [PY, "rescore_ats.py"]),
-            ("4/6 Verif liens morts", [PY, "recheck_dead.py", "--status", "OK", "--limit", "120"]),
-            ("5/6 Export CSV", [PY, "export_queue_csv.py", "--keep", "8"]),
-            ("6/6 Alerte nouveaux matchs", [PY, "notify_matches.py", "--min-fit", "8"]),
+            ("3/6 Re-score fit + ATS", [PY, "-m", "jobhunter.programmes.rescore_ats"]),
+            (
+                "4/6 Verif liens morts",
+                [PY, "-m", "jobhunter.programmes.recheck_dead", "--status", "OK", "--limit", "120"],
+            ),
+            ("5/6 Export CSV", [PY, "-m", "jobhunter.programmes.export_queue_csv", "--keep", "8"]),
+            (
+                "6/6 Alerte nouveaux matchs",
+                [PY, "-m", "jobhunter.programmes.notify_matches", "--min-fit", "8"],
+            ),
         ]
         self._log(f"\n{'=' * 56}\n▶ TOUT FAIRE — pipeline complet (6 etapes)\n{'=' * 56}\n")
         threading.Thread(target=self._exec_seq, args=(seq,), daemon=True).start()
@@ -133,7 +148,7 @@ class ExecutionMixin:
             self.root.after(3000, lambda: self.mettre_a_jour(en_attente=True))
             return
         try:
-            import mise_a_jour
+            from jobhunter.programmes import mise_a_jour
 
             avant = mise_a_jour.version_locale()
         except Exception:
@@ -141,7 +156,7 @@ class ExecutionMixin:
         self._log(f"\n{'=' * 56}\n▶ Mise à jour de JobHunter\n{'=' * 56}\n")
 
         def tache():
-            ok = self._exec([PY, "mise_a_jour.py"], "mise à jour")
+            ok = self._exec([PY, "-m", "jobhunter.programmes.mise_a_jour"], "mise à jour")
             apres = mise_a_jour.version_locale() if mise_a_jour else "?"
             self.q.put(("maj_fin", (ok, avant, apres)))
 
@@ -336,4 +351,7 @@ class ExecutionMixin:
         )
         if not n:
             return
-        self.run_step([PY, "generate_docs.py", "--top", str(n)], f"CV/lettres — {n} offre(s)")
+        self.run_step(
+            [PY, "-m", "jobhunter.programmes.generate_docs", "--top", str(n)],
+            f"CV/lettres — {n} offre(s)",
+        )

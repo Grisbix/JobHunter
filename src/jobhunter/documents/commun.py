@@ -347,10 +347,10 @@ def skills_en(labels):
     mot francais visible qu'une competence disparue."""
     global _SKILL_EN_NORM
     if _SKILL_EN_NORM is None:
-        from jutil import sans_accent
+        from jobhunter.programmes.jutil import sans_accent
 
         _SKILL_EN_NORM = {sans_accent(k).lower(): v for k, v in _ici.SKILL_EN.items()}
-    from jutil import sans_accent
+    from jobhunter.programmes.jutil import sans_accent
 
     return [_SKILL_EN_NORM.get(sans_accent(x).lower(), x) for x in labels]
 

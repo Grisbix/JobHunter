@@ -7,8 +7,8 @@ toujours APRES qu'on y a postule. Converti depuis Scripts/test_suivi.py.
 
 import pytest
 
-import jutil
-import linkedin_closed as L
+from jobhunter.programmes import jutil
+from jobhunter.programmes import linkedin_closed as L
 from jobhunter.stockage import file as queue_io
 from jobhunter.stockage import suivi as suivi_io
 

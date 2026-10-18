@@ -326,7 +326,9 @@ class PanneauxMixin:
         CB(
             bar,
             text="Vérifier les sessions",
-            command=lambda: self.run_step([PY, "acces.py", "--check"], "Vérif sessions"),
+            command=lambda: self.run_step(
+                [PY, "-m", "jobhunter.programmes.acces", "--check"], "Vérif sessions"
+            ),
             bg=BTN,
             fg=TX,
             activebackground=BTN_H,
@@ -337,7 +339,7 @@ class PanneauxMixin:
             bar,
             text="Saisir une clé d'API",
             command=lambda: self.run_step(
-                [PY, "acces.py", "--set-key", "francetravail"], "Clé API"
+                [PY, "-m", "jobhunter.programmes.acces", "--set-key", "francetravail"], "Clé API"
             ),
             bg=BTN,
             fg=TX,
@@ -376,11 +378,8 @@ class PanneauxMixin:
         keys.pack(fill="x", padx=28, pady=(0, 8))
 
         def reload_():
-            import importlib.util as _iu
+            from jobhunter.programmes import acces as m
 
-            spec = _iu.spec_from_file_location("acces", SCRIPTS / "acces.py")
-            m = _iu.module_from_spec(spec)
-            spec.loader.exec_module(m)
             try:
                 comptes = json.loads((SCRIPTS / "comptes.json").read_text(encoding="utf-8"))
             except Exception:
@@ -424,7 +423,7 @@ class PanneauxMixin:
             self._log("Selectionne d'abord un site dans la liste.\n")
             return
         host = w._tv.item(sel[0], "values")[0]
-        self.run_step([PY, "acces.py", "--open", host], f"Connexion {host}")
+        self.run_step([PY, "-m", "jobhunter.programmes.acces", "--open", host], f"Connexion {host}")
 
     # sites d'OFFRES généraux (boards) — PAS des entreprises
     BOARD_HOSTS = (
@@ -664,7 +663,8 @@ class PanneauxMixin:
             bar,
             text="Scraper ces sites",
             command=lambda: self.run_step(
-                [PY, "scrape_jobs.py", "--headless"], "Scrape sites entreprises"
+                [PY, "-m", "jobhunter.programmes.scrape_jobs", "--headless"],
+                "Scrape sites entreprises",
             ),
             bg=ACC,
             fg=ACC_TX,
@@ -912,7 +912,7 @@ class PanneauxMixin:
         def work():
             try:
                 r = subprocess.run(
-                    [PY, "add_offer.py", "--url", url],
+                    [PY, "-m", "jobhunter.programmes.add_offer", "--url", url],
                     cwd=str(SCRIPTS),
                     capture_output=True,
                     text=True,

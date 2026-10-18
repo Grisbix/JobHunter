@@ -50,8 +50,9 @@ def assurer_profil():
         _py = Path(sys.executable)
         _py = _py.with_name("python.exe") if _py.name.lower() == "pythonw.exe" else _py
         _racine = _rac.racine()
+        _rac.exporter_paquet()
         subprocess.run(
-            [str(_py), str(_racine / "Scripts" / "premier_lancement.py"), _cv],
+            [str(_py), "-m", "jobhunter.programmes.premier_lancement", _cv],
             cwd=str(_racine),
             creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0),
         )

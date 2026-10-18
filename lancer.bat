@@ -10,7 +10,7 @@ if not defined CV (
   exit /b 1
 )
 echo Premier lancement : creation du profil a partir de %CV%
-python Scripts\premier_lancement.py "%CV%" || (pause & exit /b 1)
+python JobHunter.pyw profil "%CV%" || (pause & exit /b 1)
 echo.
 echo Profil cree dans profil\profil.json. Relis-le, ou demande a Claude Code : /configurer-profil
 pause

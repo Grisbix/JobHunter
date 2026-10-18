@@ -4,13 +4,13 @@ import importlib.util
 import io
 import sys
 import tempfile
-import types
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import acces
+from jobhunter import navigation
+from jobhunter.programmes import acces
 
 
 class AccesTest(unittest.TestCase):
@@ -18,7 +18,7 @@ class AccesTest(unittest.TestCase):
         import os
         import shutil
 
-        import apply_runner
+        from jobhunter.programmes import apply_runner
 
         class FinDuTest(Exception):
             pass
@@ -33,7 +33,11 @@ class AccesTest(unittest.TestCase):
             with (
                 patch.dict(os.environ, {"LOCALAPPDATA": t}),
                 patch.object(apply_runner, "PW_USER_DIR", profil),
-                patch.object(sys, "argv", ["apply_runner.py", "--canal", "linkedin", "--chrome"]),
+                patch.object(
+                    sys,
+                    "argv",
+                    ["apply_runner.py", "--canal", "linkedin", "--chrome"],
+                ),
                 patch.object(shutil, "rmtree") as supprimer,
                 patch.object(shutil, "copytree") as copier,
                 patch.object(shutil, "copy2") as copier_fichier,
@@ -65,11 +69,10 @@ class AccesTest(unittest.TestCase):
         moteur.chromium.launch_persistent_context.return_value = ctx
         fabrique = MagicMock()
         fabrique.return_value.__enter__.return_value = moteur
-        navigation = types.SimpleNamespace(get_sync_playwright=lambda _: (fabrique, "mock"))
         with (
             tempfile.TemporaryDirectory() as t,
             patch.object(acces, "PROFIL", Path(t)),
-            patch.dict(sys.modules, {"web_nav": navigation}),
+            patch.object(navigation, "get_sync_playwright", lambda _: (fabrique, "mock")),
             patch.object(acces.time, "time", side_effect=horloge),
             patch.object(acces.time, "sleep"),
             redirect_stdout(io.StringIO()),

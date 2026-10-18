@@ -34,7 +34,7 @@ if errorlevel 1 (
 python -m pip install -r requirements.txt || goto erreur
 python -m playwright install chromium || goto erreur
 rem Empreinte des fichiers tels qu'installes : la mise a jour reconnaitra tes modifications.
-python Scripts\mise_a_jour.py --initialiser
+python JobHunter.pyw maj --initialiser
 echo.
 echo Installation terminee. Depose ton CV dans Mon_CV puis lance lancer.bat.
 echo Ensuite : planifier.bat lance la collecte chaque matin, mettre_a_jour.bat recupere les nouveautes.

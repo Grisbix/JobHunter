@@ -178,13 +178,21 @@ STEPS = [
     (
         "Candidatures en lot",
         "#dc2626",
-        [PY, "apply_runner.py", "--canal", "auto", "--auto", "--fast"],
+        [PY, "-m", "jobhunter.programmes.apply_runner", "--canal", "auto", "--auto", "--fast"],
         "Remplit+upload chaque offre, tu tapes juste Entrée = envoyé+suivant (console)",
     ),
     (
         "LinkedIn",
         "#0a66c2",
-        [PY, "apply_runner.py", "--canal", "linkedin", "--chrome", "--auto"],
+        [
+            PY,
+            "-m",
+            "jobhunter.programmes.apply_runner",
+            "--canal",
+            "linkedin",
+            "--chrome",
+            "--auto",
+        ],
         "Easy Apply semi-auto : réutilise ta session (connecte-toi 1 fois), remplit, STOP sur Envoyer (tu cliques)",
     ),
 ]
@@ -196,39 +204,45 @@ MAINT = [
     (
         "Sources & offres",
         [
-            ("Scrape les sites", [PY, "scrape_jobs.py", "--headless"]),
-            ("Homepages", [PY, "enrich_homepages.py"]),
+            ("Scrape les sites", [PY, "-m", "jobhunter.programmes.scrape_jobs", "--headless"]),
+            ("Homepages", [PY, "-m", "jobhunter.programmes.enrich_homepages"]),
             # Le scan quotidien ne voit que 7 jours (filtre f_TPR LinkedIn). Une
             # offre publiee en debut de mois et ratee sur le moment reste
             # invisible sans cette passe elargie.
             ("Rattrapage 31 j", [PY, "-m", "jobhunter.sources", "--all", "--days", "31"]),
-            ("Sonder flux ATS", [PY, "probe_ats.py"]),
-            ("Sonder flux Workday", [PY, "probe_workday.py"]),
-            ("Sonder mots-clés", [PY, "probe_keywords.py", "--days", "30", "--min-new", "3"]),
+            ("Sonder flux ATS", [PY, "-m", "jobhunter.programmes.probe_ats"]),
+            ("Sonder flux Workday", [PY, "-m", "jobhunter.programmes.probe_workday"]),
+            (
+                "Sonder mots-clés",
+                [PY, "-m", "jobhunter.programmes.probe_keywords", "--days", "30", "--min-new", "3"],
+            ),
         ],
     ),
     (
         "Documents",
         [
             ("CV/lettres…", None),  # None = commande construite a la volee
-            ("Sync docs+format", [PY, "sync_docs.py", "--format"]),
-            ("Export CSV", [PY, "export_queue_csv.py", "--keep", "8"]),
+            ("Sync docs+format", [PY, "-m", "jobhunter.programmes.sync_docs", "--format"]),
+            ("Export CSV", [PY, "-m", "jobhunter.programmes.export_queue_csv", "--keep", "8"]),
         ],
     ),
     (
         "Hygiène de la file",
         [
-            ("URLs mortes", [PY, "queue_tools.py", "mark"]),
-            ("Recheck 404", [PY, "recheck_dead.py", "--status", "OK", "--limit", "120"]),
-            ("Fix WTJ", [PY, "fix_wtj_urls.py"]),
-            ("Re-score", [PY, "rescore_ats.py"]),
+            ("URLs mortes", [PY, "-m", "jobhunter.programmes.queue_tools", "mark"]),
+            (
+                "Recheck 404",
+                [PY, "-m", "jobhunter.programmes.recheck_dead", "--status", "OK", "--limit", "120"],
+            ),
+            ("Fix WTJ", [PY, "-m", "jobhunter.programmes.fix_wtj_urls"]),
+            ("Re-score", [PY, "-m", "jobhunter.programmes.rescore_ats"]),
         ],
     ),
     (
         "Suivi",
         [
-            ("Relances", [PY, "relances.py"]),
-            ("Alerte matchs", [PY, "notify_matches.py", "--min-fit", "8"]),
+            ("Relances", [PY, "-m", "jobhunter.programmes.relances"]),
+            ("Alerte matchs", [PY, "-m", "jobhunter.programmes.notify_matches", "--min-fit", "8"]),
         ],
     ),
     (
@@ -236,9 +250,12 @@ MAINT = [
         [
             # Saisie masquee du secret API : il ne transite ni par le chat ni par
             # l'historique shell. Console reelle obligatoire (getpass lit stdin).
-            ("Clés France Travail", [PY, "setup_francetravail.py"]),
-            ("Fermer Chrome", [PY, "acces.py", "--close"]),
-            ("Tester accès aux sites", [PY, "test_acces_sites.py", "--all", "--limit", "0"]),
+            ("Clés France Travail", [PY, "-m", "jobhunter.programmes.setup_francetravail"]),
+            ("Fermer Chrome", [PY, "-m", "jobhunter.programmes.acces", "--close"]),
+            (
+                "Tester accès aux sites",
+                [PY, "-m", "jobhunter.programmes.test_acces_sites", "--all", "--limit", "0"],
+            ),
             ("Tests live (lent, ouvre un navigateur)", [PY, "test_web_nav.py"]),
             ("Mettre à jour JobHunter", "maj"),  # "maj" = mise a jour + relance (App.mettre_a_jour)
         ],
@@ -247,7 +264,11 @@ MAINT = [
 
 
 # scripts interactifs (input()) -> lancés dans une VRAIE console, pas en subprocess piped
-INTERACTIVE = ("apply_runner.py", "setup_francetravail.py", "acces.py")
+INTERACTIVE = (
+    "jobhunter.programmes.apply_runner",
+    "jobhunter.programmes.setup_francetravail",
+    "jobhunter.programmes.acces",
+)
 
 
 SCRAPE_TAG = "\U0001f50e"  # loupe, prefixe des logs du scan automatique

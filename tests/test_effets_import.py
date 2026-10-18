@@ -38,7 +38,8 @@ SONDE = textwrap.dedent(
     sys.addaudithook(crochet)
     import jobhunter
     for m in pkgutil.walk_packages(jobhunter.__path__, "jobhunter."):
-        if not m.name.endswith("__main__"):
+        # les programmes (jobhunter.programmes) sont des commandes, pas le moteur
+        if not m.name.endswith("__main__") and ".programmes" not in m.name:
             importlib.import_module(m.name)
     ev["lectures"] = sorted(ev["lectures"])
     print(json.dumps(ev))

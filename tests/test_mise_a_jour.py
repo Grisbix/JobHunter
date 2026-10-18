@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-import mise_a_jour as maj
+from jobhunter.programmes import mise_a_jour as maj
 
 
 def zip_de(fichiers, racine="JobHunter-main"):
@@ -477,3 +477,19 @@ def test_le_controle_du_nouvel_arbre_passe_par_son_propre_code(capsys):
     # appelle apres avoir remplace les fichiers.
     assert maj.controler_nouveau()
     assert "tous les scripts se chargent" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    ("sortie", "attendu"),
+    [(r'<Command>"C:\py.exe" "D:\JH\Scripts\pipeline_quotidien.py"</Command>', True), ("", False)],
+)
+def test_une_tache_planifiee_qui_vise_l_ancien_pipeline_est_signalee(
+    monkeypatch, capsys, sortie, attendu
+):
+    monkeypatch.setattr(
+        maj.subprocess,
+        "run",
+        lambda *a, **k: maj.subprocess.CompletedProcess(a, 0 if sortie else 1, sortie, ""),
+    )
+    assert maj.signaler_tache_ancienne() is attendu
+    assert ("Relance" in capsys.readouterr().out) is attendu

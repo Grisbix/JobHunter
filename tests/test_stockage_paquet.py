@@ -14,8 +14,8 @@ import sys
 import pytest
 from conftest import RACINE, SRC
 
-import jutil
 from jobhunter import racine
+from jobhunter.programmes import jutil
 from jobhunter.stockage import atomique, file, suivi, verrou
 from jobhunter.stockage import file as queue_io
 from jobhunter.stockage import suivi as suivi_io
@@ -99,22 +99,41 @@ def test_couches_basses_sans_dependance_au_moteur(module):
 @pytest.mark.parametrize(
     ("script", "donnee", "attendu"),
     [
-        ("queue_io.py", ("apply_queue.json", '[{"entreprise": "A", "poste": "B"}]'), "1 offres"),
-        ("suivi_io.py", ("suivi.json", '{"A|B": {"s": "postulé"}}'), "1 candidature(s)"),
+        ("file", ("apply_queue.json", '[{"entreprise": "A", "poste": "B"}]'), "1 offres"),
+        ("suivi", ("suivi.json", '{"A|B": {"s": "postulé"}}'), "1 candidature(s)"),
     ],
 )
-def test_facade_lancee_directement_affiche_son_bilan(tmp_path, script, donnee, attendu):
-    """`python Scripts/queue_io.py` affichait le nombre d'offres ; la facade ne doit pas
-    le rendre muet."""
+def test_module_lance_directement_affiche_son_bilan(tmp_path, script, donnee, attendu):
+    """`python -m jobhunter.stockage.file` affiche le nombre d'offres (ancien
+    `python Scripts/queue_io.py`)."""
     (tmp_path / "Scripts").mkdir()
     (tmp_path / "profil").mkdir()
     (tmp_path / "Scripts" / donnee[0]).write_text(donnee[1], encoding="utf-8")
-    env = {**os.environ, "JOBHUNTER_RACINE": str(tmp_path), "PYTHONIOENCODING": "utf-8"}
+    env = {
+        **os.environ,
+        "JOBHUNTER_RACINE": str(tmp_path),
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONPATH": str(SRC),
+    }
     r = subprocess.run(
-        [sys.executable, str(RACINE / "Scripts" / script)],
+        [sys.executable, "-m", f"jobhunter.stockage.{script}"],
         env=env,
         capture_output=True,
         text=True,
         encoding="utf-8",
     )
     assert attendu in r.stdout, r.stdout + r.stderr
+
+
+def test_racine_trouvee_depuis_le_dossier_courant(tmp_path, monkeypatch):
+    # Paquet installe par pip (site-packages) : le marqueur se cherche aussi en
+    # remontant depuis le dossier courant.
+    from jobhunter import racine
+
+    (tmp_path / "Scripts").mkdir()
+    (tmp_path / "profil").mkdir()
+    (tmp_path / "Scripts" / "sous").mkdir()
+    monkeypatch.delenv("JOBHUNTER_RACINE", raising=False)
+    monkeypatch.setattr(racine, "__file__", str(tmp_path.parent / "ailleurs" / "racine.py"))
+    monkeypatch.chdir(tmp_path / "Scripts" / "sous")
+    assert racine.racine() == tmp_path.resolve()

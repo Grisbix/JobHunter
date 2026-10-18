@@ -2,6 +2,7 @@
 
 Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
+import importlib
 import time
 
 from jobhunter.scoring import zones as _zones
@@ -139,13 +140,13 @@ def _merge_into_queue(fresh, dry, fit_detail, score_offer, queue_io):
     _RX_PAYS = _rx_pays_exclus()
     # Offres ECARTEES a la main. Supprimer une offre ne la tue pas : le scan la
     # retrouve a la source et la reajoute le lendemain. Le refus doit tenir.
-    import exclusions as _exc
+    from jobhunter.programmes import exclusions as _exc
 
     _REFUSEES = _exc.charger()
     # Offres RETIREES PAR LE TRI. Le tri juge sur la description, que la collecte
     # n'a pas encore : sans cette memoire, 1157 offres retirees a midi revenaient
     # le soir comme nouvelles (2026-10-05). Voir rejets_tri.py.
-    import rejets_tri as _rej
+    from jobhunter.programmes import rejets_tri as _rej
 
     _REJ_TRI = _rej.charger(_commun.REJETS_TRI)
     ecartees = rejetees_tri = 0
@@ -354,7 +355,7 @@ def _merge_into_queue(fresh, dry, fit_detail, score_offer, queue_io):
         par_url[_norm_url(o["url"])] = ligne
         added += 1
     if not dry:
-        __import__("jutil").jwrite(_commun.QUEUE, q)
+        importlib.import_module("jobhunter.programmes.jutil").jwrite(_commun.QUEUE, q)
     return dict(
         added=added,
         updated=updated,

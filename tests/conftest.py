@@ -1,9 +1,8 @@
 """Socle commun des tests pytest.
 
-Le moteur lit le profil AU CHARGEMENT de ses modules : le profil d'exemple doit
-etre fixe avant le premier import, donc ici, au niveau du module (pytest charge
-conftest.py avant les fichiers de test). Les tests ne lisent jamais
-profil/profil.json.
+Le profil d'exemple est fixe ici, avant le premier import du moteur (pytest charge
+conftest.py avant les fichiers de test) : `jobhunter.profil` lit la variable
+PROFIL_JOBHUNTER a son chargement. Les tests ne lisent jamais profil/profil.json.
 """
 
 import os
@@ -19,9 +18,8 @@ EXEMPLE = RACINE / "profil" / "exemple_finance_esg.json"
 
 os.environ["PROFIL_JOBHUNTER"] = str(EXEMPLE)
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
-for _d in (SRC, SCRIPTS):  # SCRIPTS en tete : les modules s'importent par leur nom
-    if str(_d) not in sys.path:
-        sys.path.insert(0, str(_d))
+if str(SRC) not in sys.path:  # sans installation (pip install -e .), le paquet est la
+    sys.path.insert(0, str(SRC))
 
 
 class Reponse:

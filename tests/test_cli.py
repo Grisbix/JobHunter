@@ -6,7 +6,7 @@ import subprocess
 import sys
 
 import pytest
-from conftest import EXEMPLE, SCRIPTS, SRC
+from conftest import EXEMPLE, SRC
 
 from jobhunter import cli
 
@@ -40,7 +40,6 @@ def test_aucune_commande_d_envoi():
 
 @pytest.mark.parametrize("cmd", list(cli.COMMANDES))
 def test_chaque_commande_vise_un_module_existant(cmd, monkeypatch):
-    monkeypatch.syspath_prepend(str(SCRIPTS))
     assert importlib.util.find_spec(cli.COMMANDES[cmd][0]) is not None
 
 

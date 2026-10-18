@@ -17,7 +17,7 @@ fi
 "$PY" -m pip install -r requirements.txt
 "$PY" -m playwright install chromium
 # Empreinte des fichiers tels qu'installes : la mise a jour reconnaitra tes modifications.
-"$PY" Scripts/mise_a_jour.py --initialiser
+"$PY" JobHunter.pyw maj --initialiser
 echo
 echo "Installation terminee. Depose ton CV dans Mon_CV puis lance ./lancer.sh"
 echo "Ensuite : ./planifier.sh lance la collecte chaque matin, ./mettre_a_jour.sh recupere les nouveautes."

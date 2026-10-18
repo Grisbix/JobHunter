@@ -70,7 +70,7 @@ jobs:
         run: for f in *.sh; do bash -n "$f"; echo "$f ok"; done
       - name: Compilation de tous les programmes
         shell: bash
-        run: python -m py_compile JobHunter.pyw Scripts/*.py $(find src -name '*.py')
+        run: python -m py_compile JobHunter.pyw $(find src -name '*.py')
       - name: Dependances
         run: python -m pip install -r requirements.txt "pytest>=9,<10"
       - name: Banc de non-regression (meme reference que sous Windows)

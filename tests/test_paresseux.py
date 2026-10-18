@@ -62,12 +62,12 @@ def test_oublier_refait_la_valeur():
     assert commun._DOMAIN_RX.pattern == avant.pattern
 
 
-def test_une_facade_lancee_comme_programme_lit_ses_valeurs_paresseuses():
-    # `runpy` sans alter_sys laissait sys.modules["__main__"] a la facade : `_ici`
-    # pointait sur elle, et `python Scripts/chemins.py` levait AttributeError.
-    env = {**os.environ, "PROFIL_JOBHUNTER": str(EXEMPLE)}
+def test_un_module_lance_comme_programme_lit_ses_valeurs_paresseuses():
+    # Lance en `__main__`, le module doit trouver ses valeurs par `_ici` (avant la 2.0,
+    # une facade lancee par runpy sans alter_sys le faisait echouer).
+    env = {**os.environ, "PROFIL_JOBHUNTER": str(EXEMPLE), "PYTHONPATH": str(SRC)}
     r = subprocess.run(
-        [sys.executable, str(SRC.parent / "Scripts" / "chemins.py")],
+        [sys.executable, "-m", "jobhunter.chemins"],
         env=env,
         capture_output=True,
         text=True,

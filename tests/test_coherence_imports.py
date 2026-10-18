@@ -4,8 +4,8 @@ POURQUOI. Pendant la phase 3, `ruff --fix` a supprime de job_sources un import j
 inutile (`_client_partage`) : il n'etait pas utilise DANS job_sources, mais
 audit_dispo appelle `job_sources._client_partage()`. Rien ne cassait au chargement ;
 l'erreur ne serait sortie qu'a l'execution de l'audit. Ce test relit le code
-(AST) de Scripts/, src/ et JobHunter.pyw, repere chaque acces `alias.nom` sur un
-module du projet importe, et verifie que le nom existe vraiment.
+(AST) de src/ et JobHunter.pyw, repere chaque acces `alias.nom` sur un module du
+projet importe, et verifie que le nom existe vraiment.
 """
 
 import ast
@@ -14,12 +14,16 @@ import importlib
 import pytest
 from conftest import RACINE
 
-SCRIPTS = RACINE / "Scripts"
-PROJET = {p.stem for p in SCRIPTS.glob("*.py")}
-FICHIERS = sorted(
-    [*SCRIPTS.glob("*.py"), *(RACINE / "src").rglob("*.py"), RACINE / "JobHunter.pyw"]
-)
-HORS_LIGNE = {"test_live_nav", "test_acces_sites"}  # sortent sur le web : on ne les importe pas
+SRC = RACINE / "src"
+FICHIERS = sorted([*SRC.rglob("*.py"), RACINE / "JobHunter.pyw"])
+# sortent sur le web : on ne les importe pas
+HORS_LIGNE = {"jobhunter.programmes.test_live_nav", "jobhunter.programmes.test_acces_sites"}
+
+
+def est_module(nom):
+    """`nom` (pointe) designe-t-il un module ou un paquet de src/ ?"""
+    chemin = SRC.joinpath(*nom.split("."))
+    return chemin.with_suffix(".py").exists() or (chemin / "__init__.py").exists()
 
 
 def acces(fichier):
@@ -27,13 +31,14 @@ def acces(fichier):
     arbre = ast.parse(fichier.read_text(encoding="utf-8"))
     alias = {}
     for n in ast.walk(arbre):
-        if isinstance(n, ast.Import):
+        if (
+            isinstance(n, ast.ImportFrom)
+            and n.level == 0
+            and (n.module or "").startswith("jobhunter")
+        ):
             for a in n.names:
-                if a.name in PROJET:
-                    alias[a.asname or a.name] = a.name
-        elif isinstance(n, ast.ImportFrom) and n.module == "jobhunter" and n.level == 0:
-            for a in n.names:
-                alias[a.asname or a.name] = f"jobhunter.{a.name}"
+                if est_module(f"{n.module}.{a.name}"):
+                    alias[a.asname or a.name] = f"{n.module}.{a.name}"
     vus = set()
     for n in ast.walk(arbre):
         if (

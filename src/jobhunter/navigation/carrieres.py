@@ -2,6 +2,7 @@
 
 Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
 
+import importlib
 import sys
 
 from jobhunter import racine as _racine
@@ -959,7 +960,7 @@ def homepage_fallback(page, entreprise, role="", homepage=None):
             hp = None
     if not hp:  # 2) résolution à la volée (devine domaine + valide HTTP)
         try:
-            from enrich_homepages import resolve as _resolve
+            from jobhunter.programmes.enrich_homepages import resolve as _resolve
 
             hp = _resolve(entreprise)
             if isinstance(hp, tuple):  # resolve() retourne (nom, url)
@@ -979,7 +980,7 @@ def homepage_fallback(page, entreprise, role="", homepage=None):
                     # Atomique : ce cache est relu par d'autres programmes, et
                     # un write_text interrompu le laissait tronque — donc
                     # illisible, donc reconstruit de zero au scan suivant.
-                    __import__("jutil").jwrite(_hp_f, c)
+                    importlib.import_module("jobhunter.programmes.jutil").jwrite(_hp_f, c)
                 except Exception:
                     pass
         except Exception:

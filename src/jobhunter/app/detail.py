@@ -747,7 +747,7 @@ class DetailMixin:
             def work():
                 try:
                     r = subprocess.run(
-                        [PY, script],
+                        [PY, "-m", script],
                         cwd=str(SCRIPTS),
                         capture_output=True,
                         text=True,
@@ -780,10 +780,16 @@ class DetailMixin:
             relief="flat",
             cursor="hand2",
         )
-        b_maj.configure(command=lambda: _tool("refresh_letters.py", "🗓 MAJ lettres", b_maj))
+        b_maj.configure(
+            command=lambda: _tool("jobhunter.programmes.refresh_letters", "🗓 MAJ lettres", b_maj)
+        )
         b_maj.pack(side="left", padx=(10, 2))
         b_ren = CB(bt, text="Renommer (mon nom)", bg=BTN, fg=TX, relief="flat", cursor="hand2")
-        b_ren.configure(command=lambda: _tool("rename_docs.py", "📛 Renommer (mon nom)", b_ren))
+        b_ren.configure(
+            command=lambda: _tool(
+                "jobhunter.programmes.rename_docs", "📛 Renommer (mon nom)", b_ren
+            )
+        )
         b_ren.pack(side="left", padx=6)
         CB(bt, text="Retour", command=self._show_dash, bg=BTN, fg=TX, relief="flat").pack(
             side="right", padx=6

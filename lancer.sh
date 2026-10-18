@@ -9,7 +9,7 @@ if [ ! -f profil/profil.json ]; then
     exit 1
   fi
   echo "Premier lancement : creation du profil a partir de $CV"
-  "$PY" Scripts/premier_lancement.py "$CV" || exit 1
+  "$PY" JobHunter.pyw profil "$CV" || exit 1
   echo
   echo "Profil cree dans profil/profil.json. Relis-le, ou demande a Claude Code : /configurer-profil"
 fi

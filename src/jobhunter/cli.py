@@ -3,37 +3,49 @@
 Chaque commande lance le programme d'origine tel quel (memes options, meme `--help`) ;
 ce module ne fait qu'aiguiller. Exemples :
 
-    jobhunter collecte --linkedin --apec      (= python Scripts/job_sources.py ...)
-    jobhunter documents --top 30              (= python Scripts/generate_docs.py ...)
+    jobhunter collecte --linkedin --apec      (ancien python Scripts/job_sources.py ...)
+    jobhunter documents --top 30              (ancien python Scripts/generate_docs.py ...)
     jobhunter postuler --canal linkedin       (DANS UN VRAI TERMINAL : il attend le clavier)
+    jobhunter probe_ats ...                   tout programme de jobhunter.programmes, par son nom
 
-Sans installation : `python -m jobhunter ...` avec src/ dans le chemin. Installe
-(`pip install -e .`, phase 6 du plan), la commande `jobhunter` existe directement.
+Sans installation : `python JobHunter.pyw <commande> ...` depuis le dossier de
+JobHunter. Installe (`pip install -e .`), la commande `jobhunter` existe directement.
 
 Aucune commande n'envoie de candidature : le clic final reste celui de l'utilisateur.
 """
 
+import importlib.util
 import runpy
 import sys
 
 from jobhunter import racine
 
-# commande -> (module, ce qu'elle fait). Un nom sans point est un programme de Scripts/.
+# commande -> (module, ce qu'elle fait). Les programmes vivent dans jobhunter.programmes.
 COMMANDES = {
     "app": ("jobhunter.app", "ouvre l'application (comme JobHunter.pyw)"),
     "collecte": ("jobhunter.sources", "collecte les offres et les fusionne dans la file"),
     "tri": ("jobhunter.scoring.tri", "retire de la file ce qui ne colle pas au profil"),
-    "documents": ("generate_docs", "CV et lettre par offre"),
-    "regenerer": ("regenere_docs", "refait les documents existants apres un changement de gabarit"),
+    "documents": ("jobhunter.programmes.generate_docs", "CV et lettre par offre"),
+    "regenerer": (
+        "jobhunter.programmes.regenere_docs",
+        "refait les documents existants apres un changement de gabarit",
+    ),
     "message": ("jobhunter.documents.message", "message court des formulaires"),
     "cv-auto": ("jobhunter.documents.cv_auto", "banque de faits du CV automatique"),
-    "dispo": ("audit_dispo", "controle les offres fermees"),
-    "postuler": ("apply_runner", "candidature semi-automatique (l'envoi reste humain)"),
-    "pipeline": ("pipeline_quotidien", "la routine quotidienne complete"),
-    "ajouter": ("add_offer", "ajoute une offre par son URL"),
-    "profil": ("premier_lancement", "cree le profil depuis un CV"),
-    "verifier-profil": ("verifie_profil", "intitules gardes ou ecartes, domaine, note"),
-    "maj": ("mise_a_jour", "met JobHunter a jour depuis GitHub"),
+    "dispo": ("jobhunter.programmes.audit_dispo", "controle les offres fermees"),
+    "postuler": (
+        "jobhunter.programmes.apply_runner",
+        "candidature semi-automatique (l'envoi reste humain)",
+    ),
+    "pipeline": ("jobhunter.programmes.pipeline_quotidien", "la routine quotidienne complete"),
+    "ajouter": ("jobhunter.programmes.add_offer", "ajoute une offre par son URL"),
+    "profil": ("jobhunter.programmes.premier_lancement", "cree le profil depuis un CV"),
+    "verifier-profil": (
+        "jobhunter.programmes.verifie_profil",
+        "intitules gardes ou ecartes, domaine, note",
+    ),
+    "voir-profil": ("jobhunter.profil", "affiche le profil tel que le moteur le lit"),
+    "maj": ("jobhunter.programmes.mise_a_jour", "met JobHunter a jour depuis GitHub"),
 }
 
 
@@ -41,7 +53,17 @@ def aide():
     largeur = max(map(len, COMMANDES))
     lignes = ["usage : jobhunter <commande> [options]   (jobhunter <commande> --help)", ""]
     lignes += [f"  {c:<{largeur}}  {d}" for c, (_m, d) in COMMANDES.items()]
+    lignes += ["", "  et tout programme de jobhunter.programmes par son nom (jobhunter probe_ats)"]
     return "\n".join(lignes)
+
+
+def module_de(cmd):
+    """Le module d'une commande : une commande nommee, ou un programme par son nom."""
+    if cmd in COMMANDES:
+        return COMMANDES[cmd][0]
+    if cmd.isidentifier() and importlib.util.find_spec(f"jobhunter.programmes.{cmd}"):
+        return f"jobhunter.programmes.{cmd}"
+    return None
 
 
 def main(argv=None):
@@ -50,18 +72,16 @@ def main(argv=None):
         print(aide())
         return 0
     cmd, reste = argv[0], argv[1:]
-    if cmd not in COMMANDES:
+    module = module_de(cmd)
+    if module is None:
         print(f"jobhunter : commande inconnue « {cmd} »\n\n{aide()}", file=sys.stderr)
         return 2
-    module = COMMANDES[cmd][0]
     if module == "jobhunter.app":
         from jobhunter.accueil import assurer_profil
 
         assurer_profil()
-    # Les programmes de Scripts/ s'importent entre eux par leur nom.
-    scripts = str(racine.scripts())
-    if scripts not in sys.path:
-        sys.path.insert(0, scripts)
+    # Les etapes lancees en sous-processus (pipeline, application) font `python -m ...`.
+    racine.exporter_paquet()
     sys.argv = [f"jobhunter {cmd}", *reste]
     try:
         runpy.run_module(module, run_name="__main__", alter_sys=True)

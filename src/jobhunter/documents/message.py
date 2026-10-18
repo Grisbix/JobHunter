@@ -528,8 +528,8 @@ def main():
     if not (a.url or a.contient):
         ap.error("donner --url ou --contient")
 
+    from jobhunter.programmes.rename_docs import new_name
     from jobhunter.stockage import file as queue_io
-    from rename_docs import new_name
 
     q = queue_io.charger()
     cibles = [

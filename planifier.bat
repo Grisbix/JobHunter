@@ -29,7 +29,7 @@ if not exist "profil\profil.json" (
   exit /b 1
 )
 
-schtasks /Create /F /SC DAILY /ST %HEURE% /TN "%TACHE%" /TR "\"%PY%\" \"%~dp0Scripts\pipeline_quotidien.py\""
+schtasks /Create /F /SC DAILY /ST %HEURE% /TN "%TACHE%" /TR "\"%PY%\" \"%~dp0JobHunter.pyw\" pipeline"
 if errorlevel 1 (
   echo La tache n'a pas pu etre creee.
   pause

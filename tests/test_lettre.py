@@ -20,8 +20,8 @@ from jobhunter.documents import (
     corps_sur_mesure,
     salutation,
 )
+from jobhunter.programmes.verifie_redites import corps
 from jobhunter.scoring.langue import langue_offre
-from verifie_redites import corps
 
 _AGRI = next(c for c in profil.get("lettre.contextes") if c["nom"] == "agricole")
 AGRI_FR, AGRI_EN = _AGRI["fr"], _AGRI["en"]
