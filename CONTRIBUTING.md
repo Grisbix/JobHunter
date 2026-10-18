@@ -42,7 +42,9 @@ un module entièrement annoté rejoint la liste stricte de `pyproject.toml`.
 
 Dans `tests/`, en pytest, avec les fixtures de `tests/conftest.py` (faux réseau, horloge,
 file et suivi jetables, navigateur). Jamais d'affectation directe d'une globale du moteur :
-`monkeypatch`. Données fictives et profil d'exemple uniquement.
+`monkeypatch`. Données fictives et profil d'exemple uniquement. Un test qui a besoin d'un
+autre profil le construit et le passe à `profil.utiliser(donnees)`, puis
+`profil.recharger()` en fin de test.
 
 ## Règles
 
@@ -51,6 +53,11 @@ file et suivi jetables, navigateur). Jamais d'affectation directe d'une globale 
 - **Un sujet par commit**, message clair qui explique le pourquoi.
 - **Le moteur ne connaît personne** : tout ce qui est propre à une personne vit dans
   `profil/profil.json` (voir `AGENTS.md`).
+- **Rien à l'import** : ni lecture, ni écriture, ni réseau (`tests/test_effets_import.py`).
+  Une valeur tirée du profil s'écrit `_PARESSEUX["NOM"] = lambda: ...` et se lit
+  `_ici.NOM` dans son module ([ADR 0007](docs/adr/0007-valeurs-du-profil-paresseuses.md)).
+- **`print` pour la sortie d'une commande (`main()`), `logging` pour le reste** :
+  `_log = journal.journal(__name__)`.
 - **Limites non négociables** : aucune soumission automatique de candidature, aucun
   contournement anti-bot ni résolution de CAPTCHA, aucun mot de passe manipulé par les
   programmes. Détail : `AGENTS.md`.

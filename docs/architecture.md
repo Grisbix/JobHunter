@@ -40,8 +40,10 @@ chacun leur ADR dans [`docs/adr/`](adr/) ; le plan qui a mené ici est
 | Paquet | Rôle | Dépend de |
 |---|---|---|
 | `jobhunter.racine` | racine de l'installation (marqueur `Scripts/` + `profil/`, ou `JOBHUNTER_RACINE`) | — |
-| `jobhunter.profil` | lecture du profil, motifs compilés depuis ses listes | racine |
-| `jobhunter.reseau` | requêtes HTTP bornées en durée totale, client partagé | — |
+| `jobhunter.profil` | lecture du profil, motifs compilés depuis ses listes ; `utiliser()` injecte un profil | racine, paresseux |
+| `jobhunter.paresseux` | valeurs de module calculées à la première lecture ([ADR 0007](adr/0007-valeurs-du-profil-paresseuses.md)) | — |
+| `jobhunter.journal` | `logging` du moteur : console à l'identique, fichier horodaté par exécution | — |
+| `jobhunter.reseau` | requêtes HTTP bornées en durée totale, client partagé, compteur des refus `INCIDENTS` | — |
 | `jobhunter.texte`, `liens` | normalisation de texte, chemins ↔ `file:///` | — |
 | `jobhunter.stockage` | file, descriptions, suivi : verrou, atomicité | racine |
 | `jobhunter.scoring` | note, langue, zones, domaine, tri | profil, texte, chemins |
@@ -85,6 +87,11 @@ par la tâche que pose `planifier.bat` :
 
 Une sauvegarde de la file, des descriptions et des scans est faite avant toute étape
 (`Scripts/_sauvegardes/<date>/`, sept jours glissants).
+
+Journaux : `Scripts/_logs/pipeline_<date>_<heure>.log` garde la console de chaque étape ;
+`…_moteur.log` à côté garde les messages du moteur avec heure, niveau et module
+(`jobhunter.journal`, variable `JOBHUNTER_JOURNAL`). Dans le moteur, `print` est réservé
+à la sortie des commandes (`main()`) ; le reste passe par `logging`.
 
 ## Réseau : ce qui est permis
 

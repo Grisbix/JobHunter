@@ -138,11 +138,19 @@ Fini quand : `pip install -e .` puis `jobhunter pipeline` fonctionne ; aucun
 Fini quand : `python -c "import jobhunter.sources.linkedin"` ne lit aucun fichier.
 
 **Avancement (2026-10-18, v1.13.0)** : l'import n'écrit plus rien (trois dossiers étaient
-créés au chargement), n'ouvre aucune connexion, et ne lit que le profil et
-`Scripts/chemins.json` — vérifié par `tests/test_effets_import.py`, un cliquet. Restent :
-le `Profil` paresseux/injecté (les motifs du filtre sont compilés au chargement ; les
-tests les remplacent par la façade, à revoir ensemble), `logging` à la place des `print`
-du moteur, et `INCIDENTS` porté par le client HTTP.
+créés au chargement) et n'ouvre aucune connexion — vérifié par
+`tests/test_effets_import.py`, un cliquet.
+
+**Fait (2026-10-18, v1.14.0)** : l'import ne lit plus aucun fichier. Les ~110 valeurs
+tirées du profil et de `chemins.json` se calculent à la première lecture
+(`jobhunter.paresseux`, [ADR 0007](adr/0007-valeurs-du-profil-paresseuses.md)) ;
+`profil.utiliser()` injecte un profil en mémoire, `profil.recharger()` revient au
+fichier. `logging` (`jobhunter.journal`) remplace les 80 `print` des fonctions du moteur,
+avec la même sortie console et un fichier horodaté par exécution du pipeline.
+`INCIDENTS` vit dans `jobhunter.reseau`, à côté du client HTTP. Non fait, à dessein :
+passer `ClientHttp` et les chemins en paramètre de chaque fonction — les tests les
+remplacent déjà sans globales cachées (`_get_borne`, `CHEMIN`), et le changement
+toucherait toutes les signatures pour rien de mesurable.
 
 ## Phase 5 — Typage (continu, à partir de la phase 3)
 
