@@ -30,9 +30,18 @@ dev = [
     "mypy>=1.15,<3",
 ]
 
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+# Le paquet installable est src/jobhunter (phase 6 du plan). Les programmes encore dans
+# Scripts/ et les donnees restent dans le depot ; une installation par pip pointe dessus
+# avec JOBHUNTER_RACINE.
+[tool.hatch.build.targets.wheel]
+packages = ["src/jobhunter"]
+
 [tool.uv]
-# Pas encore un paquet installable : c'est la phase 3 du plan.
-package = false
+package = true
 
 # ── ruff ─────────────────────────────────────────────────────────────────────
 [tool.ruff]

@@ -523,7 +523,7 @@ wheels = [
 [[package]]
 name = "jobhunter"
 version = "1.13.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "customtkinter" },
     { name = "httpx" },

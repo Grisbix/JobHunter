@@ -27,6 +27,12 @@ et Linux.
 `racine`, `texte`, `liens`) est annotée — mypy y est strict. Ailleurs, annoter en passant ;
 un module entièrement annoté rejoint la liste stricte de `pyproject.toml`.
 
+## Installer le paquet
+
+`uv sync` installe `src/jobhunter` en mode éditable ; `pip install -e .` aussi. La commande
+`jobhunter <commande>` existe alors (`jobhunter` seul liste les commandes). Hors du dépôt,
+`JOBHUNTER_RACINE` désigne le dossier qui contient `Scripts/` et `profil/`.
+
 ## Comprendre le code
 
 [`docs/architecture.md`](docs/architecture.md) : paquets, données, pipeline.

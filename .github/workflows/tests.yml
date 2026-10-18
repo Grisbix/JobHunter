@@ -24,6 +24,8 @@ jobs:
         run: ruff format --check .
       - name: Types (mypy, strict sur le socle)
         run: mypy
+      - name: Le paquet se construit (wheel)
+        run: uv build --wheel
       - name: uv.lock a jour avec pyproject.toml
         run: uv lock --check
       - name: VERSION = pyproject.toml
