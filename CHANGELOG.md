@@ -4,6 +4,12 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 1.10.0 — 2026-10-18
+
+Rien ne change dans ce que fait JobHunter. La navigation web (`web_nav.py`, près de
+4 000 lignes) et `site_strategies.py` rejoignent le paquet `src/jobhunter/navigation`,
+une section par module ; les anciens noms restent valables.
+
 ## 1.9.0 — 2026-10-18
 
 - CV, lettre et message court rejoignent le paquet `src/jobhunter/documents` ;

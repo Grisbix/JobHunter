@@ -110,14 +110,14 @@ Le moteur migre de `Scripts/` vers `src/jobhunter`, une couche à la fois
 | `jobhunter.scoring` | `fit` (`ats_match`), `langue`, `zones`, `tri` (`tri_file`), `lexique`, `domaines` |
 | `jobhunter.sources` | `job_sources` : une source par module, `commun`, `fusion`, `cli` — affectation routée au propriétaire |
 | `jobhunter.documents` | `tailor_application` (`commun`, `cv`, `lettre`, `llm`, `rendu`), `message` (`message_offre`), `cv_auto` |
+| `jobhunter.navigation` | `web_nav` : une section par module (`page`, `carrieres`, `formulaires`…), `strategies` (`site_strategies`) |
 | `jobhunter` | `racine`, `profil`, `reseau` (requêtes bornées), `chemins`, `texte` |
 
 Dépendances à sens unique, vérifiées en test (cycles `jutil`↔`queue_io`, `ats_match`↔`tailor`,
 `job_sources`↔`scrape_jobs` cassés) ; imports différés restants vers `Scripts/` : assumés.
-**Façades** : chaque ancien `Scripts/x.py` déplacé est un ALIAS (`sys.modules`) du module
-du paquet — `import ats_match` *est* `jobhunter.scoring.fit`, un `monkeypatch` touche le
-vrai code ; lancé directement, il exécute le module (`runpy`). `test_coherence_imports.py`
-vérifie que chaque `module.nom` utilisé entre modules existe.
+**Façades** : chaque ancien `Scripts/x.py` est un ALIAS (`sys.modules`) du module du paquet,
+`runpy` s'il est lancé ; un paquet découpé voit les noms de ses sous-modules (`_facade`).
+`test_coherence_imports.py` vérifie que chaque `module.nom` utilisé entre modules existe.
 
 ### Trois fichiers de données, trois contrats d'accès
 
