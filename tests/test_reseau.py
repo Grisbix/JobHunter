@@ -155,3 +155,17 @@ def test_profil_est_le_module_du_paquet():
 
 def test_profil_lit_le_profil_d_exemple():
     assert profil.FICHIER.name == "exemple_finance_esg.json" and profil.get("langues_parlees")
+
+
+def test_incidents_un_seul_compteur_porte_par_le_reseau():
+    from jobhunter.sources import commun
+
+    assert commun.INCIDENTS is reseau.INCIDENTS
+    reseau.INCIDENTS.clear()
+    try:
+        reseau.INCIDENTS.noter("linkedin_http", 429)
+        reseau.INCIDENTS["linkedin_http"][429] += 1
+        reseau.INCIDENTS.noter("apec", "HTTP 403")
+        assert commun.incidents_resume() == ["  ⚠ apec : HTTP 403×1", "  ⚠ linkedin_http : 429×2"]
+    finally:
+        reseau.INCIDENTS.clear()

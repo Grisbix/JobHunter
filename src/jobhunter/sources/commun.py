@@ -2,7 +2,6 @@
 
 Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
-import collections as _collections
 import json
 import re
 import sys
@@ -12,6 +11,7 @@ from typing import Any
 from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _P
 from jobhunter import racine as _racine
+from jobhunter import reseau as _reseau
 
 # Requetes bornees : jobhunter.reseau (phase 3.2). Les anciens noms restent ici,
 # ce sont eux que les tests remplacent (via la facade jobhunter.sources).
@@ -117,20 +117,13 @@ ATS_SLUGS = {
 
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
-INCIDENTS: _collections.defaultdict[str, _collections.Counter[str]] = _collections.defaultdict(
-    _collections.Counter
-)
+# Le compteur des refus vit dans jobhunter.reseau, a cote du client HTTP.
+INCIDENTS = _reseau.INCIDENTS
 
 
 def incidents_resume():
     """Les refus du run, en une ligne par source. Vide si tout s'est bien passe."""
-    lignes = []
-    for source, par_cause in sorted(INCIDENTS.items()):
-        detail = ", ".join(
-            f"{cause}×{n}" for cause, n in sorted(par_cause.items(), key=lambda kv: -kv[1])
-        )
-        lignes.append(f"  ⚠ {source} : {detail}")
-    return lignes
+    return INCIDENTS.resume()
 
 
 # ── sources éditables depuis l'app (panneau 🌍 Sites d'offres) ──

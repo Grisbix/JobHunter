@@ -10,12 +10,14 @@ la connexion indefiniment (le 2026-09-22, fr.talent.com a bloque le scan planifi
     req_borne(envoi, methode, url, total=..., max_octets=...)
     lire_borne(f, total, max_octets)  f.read() d'un urlopen, borne aussi
     client_partage()                le httpx.Client unique qui garde ses connexions
+    INCIDENTS                       les refus et pannes du run, par source et par cause
 
 `envoi` : le module httpx (on passe alors par le client partage) ou un httpx.Client.
 job_sources garde ses anciens noms (`_get_borne`...) : les doublures des tests les
 remplacent la, et les appels de job_sources passent par eux.
 """
 
+import collections
 import time
 from typing import TYPE_CHECKING, Any, BinaryIO
 
@@ -23,6 +25,34 @@ if TYPE_CHECKING:
     import httpx
 
 _CLIENT: "httpx.Client | None" = None
+
+
+class Incidents(collections.defaultdict[str, collections.Counter[str | int]]):
+    """Les refus et pannes du run : `INCIDENTS[source][cause] += 1`.
+
+    Une collecte vide a deux causes opposees, rien a prendre ou un refus d'entree ;
+    ce compteur les distingue, et `resume()` les affiche en fin de scan pour qu'un
+    scan entierement bride ne ressemble pas a une journee calme."""
+
+    def __init__(self) -> None:
+        super().__init__(collections.Counter)
+
+    def noter(self, source: str, cause: str | int) -> None:
+        self[source][cause] += 1
+
+    def resume(self) -> list[str]:
+        """Une ligne par source, causes les plus frequentes d'abord. Vide si rien."""
+        lignes = []
+        for source, par_cause in sorted(self.items()):
+            detail = ", ".join(
+                f"{cause}×{n}" for cause, n in sorted(par_cause.items(), key=lambda kv: -kv[1])
+            )
+            lignes.append(f"  ⚠ {source} : {detail}")
+        return lignes
+
+
+# Un seul compteur par processus, a cote du client qui fait les requetes.
+INCIDENTS = Incidents()
 
 
 def client_partage() -> "httpx.Client":
