@@ -90,7 +90,7 @@ matin par la tâche que pose `planifier.bat` :
    son temps ne perd que la sienne ;
 2. **fiches détaillées** des V.I.E, **descriptions** LinkedIn et sites carrière ;
 3. **tri** : séniorité, expérience exigée, métier — les candidatures sont épargnées ;
-4. **disponibilité** : offres fermées retirées (API publique, 404/410) ;
+4. **disponibilité**, le dimanche : offres fermées retirées (API publique, 404/410) ;
 5. **documents** : CV et lettre pour le haut de la file.
 
 Une sauvegarde de la file, des descriptions et des scans est faite avant toute étape

@@ -15,6 +15,13 @@ tard ». Le programme ATTEND alors — l'en-tete Retry-After s'il existe, sinon
 arrete. Au bout de --pauses attentes, il sauvegarde et rend la main ; la
 relance suivante reprend grace a l'etat sur disque.
 
+LA DUREE (--duree N, en minutes). Le programme s'arrete DE LUI-MEME au bout de
+N minutes de controle, puis retire ce qu'il a trouve ferme. Sans elle, c'est la
+minuterie du pipeline qui le tuait : du 08 au 18/10/2026, l'etape 4b a ete
+coupee a 45 min CHAQUE jour, avant d'arriver a la suppression — 30 a 60 offres
+fermees trouvees par jour, aucune retiree. Une attente de limite de debit qui
+depasserait la duree n'est pas commencee.
+
 Un 403, un 999 ou une page CAPTCHA, eux, ne sont PAS une limite de debit :
 c'est un refus d'entree (APEC derriere DataDome, Glassdoor, Indeed). On ne
 boucle pas dessus — on note « invérifiable » et on passe. Aucun contournement,
@@ -141,8 +148,13 @@ def controle_autre(url):
     return "OK", "200"
 
 
-def verifier(cibles, etat, pauses_max, aujourd_hui):
+def verifier(cibles, etat, pauses_max, aujourd_hui, fin=None):
+    """Controle les cibles ; rend True si toutes l'ont ete. `fin` : instant
+    (time.monotonic) ou s'arreter de soi-meme, None = pas de duree."""
     import httpx
+
+    def temps_ecoule(marge=0):
+        return fin is not None and time.monotonic() + marge >= fin
 
     li = [o for o in cibles if _RX_LI_ID.search(o["url"])]
     autres = [o for o in cibles if not _RX_LI_ID.search(o["url"])]
@@ -161,6 +173,9 @@ def verifier(cibles, etat, pauses_max, aujourd_hui):
     cl = httpx.Client(timeout=15, headers=UA, follow_redirects=True)
     i = 0
     while i < len(li):
+        if temps_ecoule():
+            print(f"  ⏱ duree ecoulee — arret a {i}/{len(li)}, la prochaine relance reprendra ici")
+            break
         o = li[i]
         oid = queue_io.oid(o)
         url = f"https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{_RX_LI_ID.search(o['url']).group(1)}"
@@ -175,7 +190,7 @@ def verifier(cibles, etat, pauses_max, aujourd_hui):
             if refus < 3:  # un 429 isole : courte pause
                 time.sleep(30)
                 continue
-            if pauses >= pauses_max:
+            if pauses >= pauses_max or temps_ecoule(_attente(r, pauses + 1)):
                 print(
                     f"  ⏸ LinkedIn limite toujours apres {pauses} pause(s) — "
                     f"arret a {i}/{len(li)}, la prochaine relance reprendra ici"
@@ -519,6 +534,12 @@ def main():
     )
     ap.add_argument("--limite", type=int, default=0, help="plafond d'offres a controler (essai)")
     ap.add_argument(
+        "--duree",
+        type=float,
+        default=0,
+        help="minutes de controle au plus, puis suppression (0 = sans limite)",
+    )
+    ap.add_argument(
         "--absente",
         type=int,
         default=30,
@@ -542,8 +563,9 @@ def main():
     limite = (datetime.date.today() - datetime.timedelta(days=a.frais or 5)).isoformat()
     if a.limite:
         cibles = cibles[: a.limite]
-    complet = verifier(cibles, etat, a.pauses, aujourd_hui)
-    if not a.sans_source:
+    fin = time.monotonic() + a.duree * 60 if a.duree else None
+    complet = verifier(cibles, etat, a.pauses, aujourd_hui, fin)
+    if not a.sans_source and (fin is None or time.monotonic() < fin):
         par_la_source(q, etat, aujourd_hui, limite)
     rapport(etat)
     if a.supprime:

@@ -2,7 +2,8 @@
 
 Une limite de debit s'attend et reprend, un refus d'entree s'arrete ; APEC et WTJ
 retrouvent l'offre par leur propre source ; une offre suivie n'est jamais retiree ;
-choix et ordre des cibles ; la sauvegarde du jour n'est jamais ecrasee.
+choix et ordre des cibles ; arret de soi-meme a la duree ;
+controle hebdomadaire dans le pipeline ; la sauvegarde du jour n'est jamais ecrasee.
 Converti depuis Scripts/test_audit_dispo.py, qui remplacait httpx.Client et
 time.sleep pour tout le processus.
 """
@@ -18,6 +19,13 @@ from jobhunter.programmes import linkedin_desc as ld
 from jobhunter.programmes import pipeline_quotidien as pq
 
 JOUR = "2026-10-02"
+
+
+@pytest.fixture(autouse=True)
+def etat_isole(tmp_path, monkeypatch):
+    """L'etat sur disque va dans tmp_path : lances dans un vrai dossier de donnees,
+    les tests de par_la_source ecrasaient son _audit_dispo.json (2026-10-18)."""
+    monkeypatch.setattr(a, "ETAT", tmp_path / "_audit_dispo.json")
 
 
 class R:
@@ -321,3 +329,44 @@ def test_premiere_sauvegarde_du_jour_gagne(tmp_path, monkeypatch):
     (tmp_path / "apply_queue.json").write_text("soir", encoding="utf-8")
     pq.sauvegarder()
     assert (copie / "apply_queue.json").read_text(encoding="utf-8") == "matin"
+
+
+# ── la duree : s'arreter de soi-meme, pour arriver a la suppression ────────────
+def test_duree_ecoulee_arret_avant_tout_controle(pauses, scenario):
+    scenario([OUVERTE] * 3)
+    etat = {}
+    fini = a.verifier([offre(i) for i in range(3)], etat, 4, JOUR, fin=0)
+    assert not fini and etat == {}
+
+
+def test_duree_pas_de_pause_qui_la_depasserait(pauses, scenario):
+    scenario([OUVERTE] + [R(429)] * 5)
+    fin = a.time.monotonic() + 600  # 10 min restantes, la pause en ferait 15
+    assert not a.verifier([offre(i) for i in range(3)], {}, 4, JOUR, fin=fin)
+    assert not [s for s in pauses if s > 30]
+
+
+def test_duree_large_rien_ne_change(trois_429):
+    assert trois_429[0]
+
+
+@pytest.mark.parametrize(
+    "jour, options, attendu",
+    [
+        (6, [], True),
+        (2, [], False),
+        (2, ["--dispo"], True),
+        (2, ["--dispo-jour", "2"], True),
+        (6, ["--sans-dispo"], False),
+        (6, ["--sans-dispo", "--dispo"], False),
+    ],
+)
+def test_pipeline_dispo_une_fois_par_semaine(jour, options, attendu):
+    import argparse
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--sans-dispo", action="store_true")
+    ap.add_argument("--dispo", action="store_true")
+    ap.add_argument("--dispo-jour", type=int, default=6)
+    ap.add_argument("--rapide", action="store_true")
+    assert pq.dispo_aujourd_hui(ap.parse_args(options), jour) is attendu

@@ -226,6 +226,13 @@ def etape(nom, args, cle, timeout=5400):
     return p.returncode, n, sortie
 
 
+def dispo_aujourd_hui(a, jour):
+    """Le controle de disponibilite tourne-t-il aujourd'hui (jour : 0 = lundi) ?"""
+    if a.sans_dispo:
+        return False
+    return a.dispo or a.rapide or jour == a.dispo_jour
+
+
 def main():
     _racine.exporter_paquet()  # les etapes lancent `python -m jobhunter...`
     ap = argparse.ArgumentParser()
@@ -235,6 +242,13 @@ def main():
     ap.add_argument("--sans-desc", action="store_true")
     ap.add_argument("--sans-tri", action="store_true")
     ap.add_argument("--sans-dispo", action="store_true")
+    ap.add_argument(
+        "--dispo-jour",
+        type=int,
+        default=6,
+        help="jour du controle de disponibilite, 0 = lundi ... 6 = dimanche (defaut)",
+    )
+    ap.add_argument("--dispo", action="store_true", help="controle de disponibilite aujourd'hui")
     ap.add_argument("--sans-site", action="store_true")
     # UN PIPELINE QU'ON NE PEUT PAS ESSAYER N'EST PAS VERIFIABLE. `--all` prend
     # plus d'une heure : impossible de repondre « est-ce que ca marche ? » sans
@@ -381,16 +395,19 @@ def main():
     # — une seule pause ici, pour ne pas retarder les dossiers ; il rend alors
     # le code 4 (« incomplet »), et la relance du lendemain reprend la ou il
     # s'est arrete. Ce n'est pas une panne.
-    if not a.sans_dispo:
+    # UNE FOIS PAR SEMAINE (le dimanche, --dispo-jour). Chaque jour, l'etape
+    # coutait 45 min pour rien : coupee par la minuterie avant de retirer quoi
+    # que ce soit (08-18/10/2026). Elle s'arrete maintenant d'elle-meme
+    # (--duree, 100 min, les meilleures offres d'abord) puis retire les fermees ;
+    # la minuterie ne sert plus que de filet.
+    if dispo_aujourd_hui(a, time.localtime().tm_wday):
         dispo = ["-m", "jobhunter.programmes.audit_dispo", "--pauses", "1"]
-        # 900 controles au plus (~40 min a 2,6 s), les meilleures offres d'abord :
-        # le reste passe le lendemain, plutot que d'etre coupe par la minuterie.
         dispo += (
-            ["--limite", "20"] if a.rapide else ["--supprime", "--sans-copie", "--limite", "900"]
+            ["--limite", "20"] if a.rapide else ["--supprime", "--sans-copie", "--duree", "100"]
         )
-        code, n, _ = etape("4b/5 Disponibilite — offres fermees", dispo, "dispo", timeout=45 * 60)
+        code, n, _ = etape("4b/5 Disponibilite — offres fermees", dispo, "dispo", timeout=110 * 60)
         if code == 4:
-            alertes.append("audit de disponibilite incomplet (limite de debit) — reprise demain")
+            alertes.append("controle de disponibilite incomplet — reprise la semaine prochaine")
             code = 0
         bilan.append(("disponibilite", code, n))
 

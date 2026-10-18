@@ -178,7 +178,10 @@ tard » : `audit_dispo` fait une pause (Retry-After, sinon 15 min doublées jusq
 reprend où il s'était arrêté, et garde son état dans `_audit_dispo.json` pour reprendre
 d'une exécution à l'autre. Un 403/999/CAPTCHA (APEC derrière DataDome) est un refus :
 pas de boucle dessus, et pas de nouvelle tentative avant 30 jours. Dans le pipeline,
-l'étape 4b n'a droit qu'à une pause et rend le code 4 si elle n'a pas fini — normal.
+l'étape 4b ne tourne que le dimanche (`--dispo-jour`, `--dispo` pour la forcer), s'arrête
+d'elle-même au bout de 100 min (`audit_dispo --duree`) puis retire les fermées ; une seule
+pause, code 4 s'il reste à faire — normal. Avant, coupée chaque jour par la minuterie à
+45 min, elle n'arrivait jamais à la suppression (08-18/10/2026).
 
 ### Règles chargées à la demande
 
