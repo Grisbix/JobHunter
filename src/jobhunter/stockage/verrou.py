@@ -17,6 +17,7 @@ verrou vivant ne se casse jamais (detail : .claude/rules/verrous.md).
 # D'ou un verrou porte par un fichier, visible de tous les processus.
 import atexit as _atexit
 import os
+import sys
 import time as _time
 from pathlib import Path
 
@@ -49,7 +50,7 @@ def _pid_vivant(pid: int | str | None, depuis: float | str | None = None) -> boo
         return True
     if pid <= 0:
         return True
-    if os.name == "nt":
+    if sys.platform == "win32":  # (et non os.name : mypy le comprend sous Linux)
         import ctypes
 
         k = ctypes.windll.kernel32
