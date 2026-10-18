@@ -1,7 +1,7 @@
 [project]
 name = "jobhunter"
 # Doit rester egal au fichier VERSION (lu par la mise a jour) : la CI le verifie.
-version = "1.11.0"
+version = "1.12.0"
 description = "Recherche d'emploi locale : collecte, notation, CV et lettre par offre, candidature semi-automatique."
 readme = "README.md"
 license = "MIT"
@@ -16,6 +16,10 @@ dependencies = [
     "httpx>=0.28.1,<0.29",
     "requests>=2.34,<3",
 ]
+
+# `jobhunter <commande>` une fois le paquet installe (phase 6) ; avant : python -m jobhunter.
+[project.scripts]
+jobhunter = "jobhunter.cli:main"
 
 [dependency-groups]
 dev = [

@@ -115,6 +115,10 @@ compléter. **Il n'invente aucun fait** : ce qui n'est pas dans ton CV, il te le
 | Refaire CV et lettre d'une offre | `python Scripts/generate_docs.py --url <morceau-du-lien>` |
 | Remplissage semi-automatique d'un formulaire | `python Scripts/apply_runner.py --canal linkedin` (dans un terminal) |
 
+Les mêmes programmes ont une entrée unique : `python -m jobhunter` liste les commandes
+(`collecte`, `documents`, `postuler`, `pipeline`, `maj`…), avec `src` dans `PYTHONPATH` ;
+`python -m jobhunter documents --top 20` équivaut à la ligne du tableau.
+
 **Chaque matin automatiquement** : `planifier.bat` (voir plus haut).
 **Mettre à jour** : `mettre_a_jour.bat` (ou le bouton « Mettre à jour JobHunter » de l'app) ;
 `python Scripts/mise_a_jour.py --verifier` pour seulement voir ce qu'apporte la nouvelle version,

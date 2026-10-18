@@ -111,7 +111,7 @@ Le moteur migre de `Scripts/` vers `src/jobhunter` (`docs/plan-professionnalisat
 | `jobhunter.documents` | `tailor_application` (`commun`, `cv`, `lettre`, `llm`, `rendu`), `message` (`message_offre`), `cv_auto` |
 | `jobhunter.navigation` | `web_nav` : une section par module (`page`, `carrieres`, `formulaires`…), `strategies` (`site_strategies`) |
 | `jobhunter.app` | `JobHunter.pyw` (désormais lanceur) : `fenetre.App` = un mixin par domaine, `theme`, `commun` |
-| `jobhunter` | `racine`, `profil`, `reseau` (requêtes bornées), `chemins`, `texte`, `liens`, `accueil` |
+| `jobhunter` | `racine`, `profil`, `reseau` (requêtes bornées), `chemins`, `texte`, `liens`, `accueil`, `cli` (`python -m jobhunter <commande>`) |
 
 Dépendances à sens unique, vérifiées en test (cycles `jutil`↔`queue_io`, `ats_match`↔`tailor`,
 `job_sources`↔`scrape_jobs` cassés) ; imports différés restants vers `Scripts/` : assumés.

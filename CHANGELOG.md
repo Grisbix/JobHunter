@@ -4,6 +4,12 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 1.12.0 — 2026-10-18
+
+Une entrée unique pour tous les programmes : `python -m jobhunter` liste les commandes
+(`collecte`, `documents`, `postuler`, `pipeline`, `maj`…). Les anciennes lignes
+(`python Scripts/generate_docs.py …`) marchent toujours.
+
 ## 1.11.0 — 2026-10-18
 
 - L'application rejoint le paquet `src/jobhunter/app` ; `JobHunter.pyw` (double-clic)
