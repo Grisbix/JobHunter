@@ -83,16 +83,18 @@ REECRITS_AU_PREMIER_LANCEMENT = {"Scripts/sources_config.json"}
 # installee et la mise a jour se representerait a chaque lancement.
 TOUJOURS_REMPLACES = {"VERSION", "CHANGELOG.md"}
 # Modules charges par le controle d'apres mise a jour : le coeur du tri et des documents.
+# Le controle est celui de la version INSTALLEE (controler_nouveau) : cette liste decrit
+# donc toujours l'arbre qui la contient.
 MODULES_CENTRAUX = (
-    "profil",
+    "jobhunter.profil",
     "jutil",
-    "queue_io",
-    "suivi_io",
-    "ats_match",
-    "tri_file",
-    "tailor_application",
-    "job_sources",
-    "web_nav",
+    "jobhunter.stockage.file",
+    "jobhunter.stockage.suivi",
+    "jobhunter.scoring.fit",
+    "jobhunter.scoring.tri",
+    "jobhunter.documents",
+    "jobhunter.sources",
+    "jobhunter.navigation",
     "mise_a_jour",
     # l'application elle-meme (sans ouvrir de fenetre) : une mise a jour qui la casse
     # serait annulee au lieu de laisser un double-clic sans effet.
@@ -244,6 +246,9 @@ def controler():
     if not erreurs:
         env = {
             **os.environ,
+            "PYTHONPATH": os.pathsep.join(
+                x for x in (str(RACINE / "src"), os.environ.get("PYTHONPATH", "")) if x
+            ),
             "PROFIL_JOBHUNTER": str(RACINE / EXEMPLE),
             "PYTHONIOENCODING": "utf-8",
             "PYTHONDONTWRITEBYTECODE": "1",
@@ -269,6 +274,38 @@ def controler():
         return False
     print("\nContrôle : tous les scripts se chargent.")
     return True
+
+
+def controler_nouveau():
+    """Le controle de la version qu'on vient d'installer, par SON propre code.
+
+    Ce processus est l'ancienne version : sa liste de modules et sa facon de les
+    charger decrivent l'ancien arbre. Une version qui deplace des fichiers (2.0 : les
+    facades de Scripts/ retirees) serait annulee a tort. On lance donc le controle du
+    nouvel arbre, par une entree stable : `python -m jobhunter maj --controler`."""
+    if not (RACINE / "src" / "jobhunter" / "cli.py").exists():
+        return controler()  # arbre d'avant la 1.12 : pas d'entree unique
+    env = {
+        **os.environ,
+        "PYTHONPATH": os.pathsep.join(
+            x for x in (str(RACINE / "src"), os.environ.get("PYTHONPATH", "")) if x
+        ),
+        "PYTHONIOENCODING": "utf-8",
+    }
+    r = subprocess.run(
+        [sys.executable, "-m", "jobhunter", "maj", "--controler"],
+        cwd=RACINE,
+        env=env,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=300,
+    )
+    print((r.stdout or "").rstrip())
+    if r.returncode and r.stderr:
+        print(r.stderr.strip().splitlines()[-1])
+    return r.returncode == 0
 
 
 def apres(changes_requirements):
@@ -504,7 +541,7 @@ def par_zip(args):
     if plan["refuser"]:
         print(f"\n{len(plan['refuser'])} fichier(s) de données ignorés (jamais remplacés).")
 
-    if not controler():
+    if not controler_nouveau():
         print("\nRetour automatique à la version d'avant…")
         _restaurer(sauvegarde, journal)
         print(
@@ -602,7 +639,7 @@ def par_git(args):
             "pas été perdus : `git status` montre où en est le dossier."
         )
         return 1
-    if not controler():
+    if not controler_nouveau():
         print("\nRetour automatique à la version d'avant…")
         _git("reset", "--keep", avant)
         print(
@@ -643,11 +680,18 @@ def main():
         help="revenir à la version d'avant la dernière mise à jour",
     )
     ap.add_argument(
+        "--controler",
+        action="store_true",
+        help="(mise a jour) verifier que cette installation se charge",
+    )
+    ap.add_argument(
         "--initialiser",
         action="store_true",
         help="(installeur) noter l'empreinte des fichiers tels qu'installés",
     )
     args = ap.parse_args()
+    if args.controler:
+        return 0 if controler() else 1
     if args.initialiser:
         if initialiser():
             print("Empreinte de l'installation enregistrée (.maj_manifeste.json).")

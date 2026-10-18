@@ -95,6 +95,7 @@ def installer(tmp_path, monkeypatch):
 
         monkeypatch.setattr(maj, "_get", _get)
         monkeypatch.setattr(maj, "controler", lambda: controle)
+        monkeypatch.setattr(maj, "controler_nouveau", lambda: controle)
         return tmp_path
 
     return faire
@@ -469,3 +470,10 @@ def test_verifier_ne_touche_a_rien(verification):
 # ── controle reel sur ce depot ─────────────────────────────────────────────────
 def test_tous_les_scripts_se_chargent(capsys):
     assert maj.controler()
+
+
+def test_le_controle_du_nouvel_arbre_passe_par_son_propre_code(capsys):
+    # `python -m jobhunter maj --controler` : l'entree stable que l'ancienne version
+    # appelle apres avoir remplace les fichiers.
+    assert maj.controler_nouveau()
+    assert "tous les scripts se chargent" in capsys.readouterr().out
