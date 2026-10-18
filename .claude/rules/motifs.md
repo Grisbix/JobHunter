@@ -2,6 +2,7 @@
 paths:
   - Scripts/ats_match.py
   - Scripts/job_sources.py
+  - src/jobhunter/sources/*.py
   - Scripts/tri_file.py
   - src/jobhunter/scoring/*.py
   - src/jobhunter/texte.py

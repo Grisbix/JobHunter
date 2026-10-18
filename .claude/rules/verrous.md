@@ -4,6 +4,7 @@ paths:
   - src/jobhunter/stockage/*.py
   - src/jobhunter/reseau.py
   - Scripts/job_sources.py
+  - src/jobhunter/sources/*.py
   - Scripts/linkedin_desc.py
   - Scripts/pipeline_quotidien.py
   - Scripts/audit_dispo.py

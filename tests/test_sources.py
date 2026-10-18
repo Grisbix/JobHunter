@@ -290,7 +290,8 @@ def test_offre_retenue(titre, attendu):
 
 # ── le garde-fou \b couvre TOUS les motifs ─────────────────────────────────────
 def test_au_moins_25_motifs_compiles():
-    assert len([n for n, v in vars(J).items() if isinstance(v, re.Pattern)]) >= 25
+    # les motifs vivent dans les sous-modules de jobhunter.sources (phase 3.4)
+    assert len(J._motifs()) >= 25
 
 
 @pytest.mark.parametrize(

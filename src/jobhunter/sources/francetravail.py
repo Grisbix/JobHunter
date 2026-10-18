@@ -1,0 +1,119 @@
+"""France Travail : API officielle (identifiants requis).
+
+Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
+
+import time
+
+from jobhunter.sources import commun as _commun
+from jobhunter.sources.commun import HERE, UA, _mk, title_ok
+
+# ═══════════════ 7. France Travail — API OFFICIELLE (identifiants requis) ═══════
+# Ex-Pole emploi : le plus gros gisement d'offres en France, API publique, gratuite,
+# legale. Couvre tres largement ce qu'Indeed agrege, sans aucun contournement.
+#
+# ⚠ IDENTIFIANTS A CREER PAR L'UTILISATEUR (je ne cree pas de comptes) :
+#   1. https://francetravail.io  ->  creer un compte, puis une application
+#   2. souscrire a l'API « Offres d'emploi v2 »
+#   3. copier client_id / client_secret dans Scripts/francetravail.json :
+#        {"client_id": "...", "client_secret": "..."}
+#      (fichier ignore par git : il contient un secret)
+# Sans ce fichier, la source se desactive silencieusement.
+FT_CFG = HERE / "francetravail.json"
+
+FT_TOKEN_URL = (
+    "https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=%2Fpartenaire"
+)
+
+FT_SEARCH = "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search"
+
+
+def _ft_token():
+    import json as _json
+
+    import httpx
+
+    if not FT_CFG.exists():
+        return None
+    try:
+        c = _json.loads(FT_CFG.read_text(encoding="utf-8"))
+        r = _commun._post_borne(
+            httpx,
+            FT_TOKEN_URL,
+            timeout=20,
+            data={
+                "grant_type": "client_credentials",
+                "client_id": c["client_id"],
+                "client_secret": c["client_secret"],
+                "scope": "api_offresdemploiv2 o2dsoffre",
+            },
+        )
+        if r.status_code != 200:
+            print(f"  ✗ France Travail token http {r.status_code} — verifie les identifiants")
+            return None
+        return r.json().get("access_token")
+    except Exception as e:
+        print(f"  ✗ France Travail token {type(e).__name__}")
+        return None
+
+
+def fetch_france_travail(par_mot=50):
+    import httpx
+
+    tok = _ft_token()
+    if not tok:
+        return []
+    H = {**UA, "Authorization": f"Bearer {tok}", "Accept": "application/json"}
+    out, seen = [], set()
+    for kw in _commun.KEYWORDS:
+        try:
+            r = _commun._get_borne(
+                httpx,
+                FT_SEARCH,
+                timeout=25,
+                headers=H,
+                params={"motsCles": kw, "range": f"0-{par_mot - 1}"},
+            )
+            # 204 = aucun resultat, 206 = resultat partiel (pagination) : les deux OK
+            if r.status_code not in (200, 206):
+                continue
+            res = r.json().get("resultats") or []
+        except Exception:
+            continue
+        got = 0
+        for j in res:
+            u = (j.get("origineOffre") or {}).get(
+                "urlOrigine"
+            ) or f"https://candidat.francetravail.fr/offres/recherche/detail/{j.get('id')}"
+            if u in seen:
+                continue
+            titre = str(j.get("intitule") or "").strip()
+            if not title_ok(titre):
+                continue
+            seen.add(u)
+            lieu = str((j.get("lieuTravail") or {}).get("libelle") or "")
+            desc = str(j.get("description") or "")
+            out.append(
+                _mk(
+                    titre,
+                    u,
+                    str((j.get("entreprise") or {}).get("nom") or "France Travail"),
+                    lieu,
+                    str(j.get("dateCreation") or "")[:10],
+                    f"francetravail:{kw}",
+                    desc,
+                )
+            )
+            got += 1
+        if got:
+            print(f"  ✓ france-travail «{kw}» → {got} offres")
+        time.sleep(0.3)
+    return out
+
+
+def scan_france_travail():
+    o = fetch_france_travail()
+    if not o and not FT_CFG.exists():
+        print("  · France Travail ignore (Scripts/francetravail.json absent — voir le commentaire)")
+    else:
+        print(f"  ✓ France Travail → {len(o)} offres")
+    return o

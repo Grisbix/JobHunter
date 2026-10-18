@@ -33,7 +33,7 @@ from jobhunter import racine as _racine
 from jobhunter.texte import sans_accent
 
 # TRANSITION (phase 3) : imports differes de modules encore dans Scripts/
-# (job_sources, doublons, rejets_tri). A retirer quand ils auront rejoint le paquet.
+# (doublons, rejets_tri, depuis tri). A retirer quand ils auront rejoint le paquet.
 _SCRIPTS = _racine.scripts()
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
@@ -1124,7 +1124,7 @@ def zone_lieu(lieu):
         return INTERNATIONAL
     if _RX_METRO.search(t) and not _contient(t, _METROS_FR):
         try:
-            import job_sources
+            from jobhunter.sources import commun as job_sources
 
             if not job_sources._RX_FR.search(lieu or ""):
                 return INTERNATIONAL
@@ -1134,7 +1134,7 @@ def zone_lieu(lieu):
     # endroit ou vivent les listes de pays et de codes d'Etats americains.
     # Import tardif : job_sources importe zones pour etiqueter a l'ajout.
     try:
-        import job_sources
+        from jobhunter.sources import commun as job_sources
 
         # LA FRANCE SE TESTE EN PREMIER. _RX_ETRANGER contient le code pays
         # « de », qui matche le « de » de « Hauts-de-France » : Lille et Nantes
@@ -1594,7 +1594,7 @@ def pays_lieu(lieu):
         if _contient(t, villes):
             return canon
     try:
-        import job_sources
+        from jobhunter.sources import commun as job_sources
 
         if job_sources._RX_ETAT_US.search(lieu or ""):
             return "États-Unis"

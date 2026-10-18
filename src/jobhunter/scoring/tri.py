@@ -496,7 +496,7 @@ def motif(o, proteges):
     # Sustainable Finance Analyst » veut un « final or penultimate year
     # student » (l'utilisateur, 2026-10-07). Le contrat venu de l'intitule (V.I.E)
     # passait avant la description, l'offre restait a fit 10.
-    from job_sources import demande_etudiant
+    from jobhunter.sources.commun import demande_etudiant
 
     if _ETUDIANT and demande_etudiant(o.get("description")):
         return "etudiant"
