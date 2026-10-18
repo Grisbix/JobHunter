@@ -4,6 +4,13 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 1.8.0 — 2026-10-18
+
+Rien ne change dans ce que fait JobHunter. La collecte (`job_sources.py`, près de
+5 000 lignes) est découpée en un module par source dans `src/jobhunter/sources` ;
+`python Scripts/job_sources.py ...` marche comme avant, et `python -m jobhunter.sources`
+aussi.
+
 ## 1.7.0 — 2026-10-18
 
 Rien ne change dans ce que fait JobHunter. Le calcul des notes, de la langue, des zones et

@@ -107,12 +107,13 @@ Le moteur migre de `Scripts/` vers `src/jobhunter`, une couche à la fois
 | Paquet | Contenu (ancien nom) |
 |---|---|
 | `jobhunter.stockage` | `atomique`, `verrou`, `file` (`queue_io`), `suivi` (`suivi_io`) |
-| `jobhunter.scoring` | `fit` (`ats_match`), `langue`, `zones`, `tri` (`tri_file`), `lexique` |
+| `jobhunter.scoring` | `fit` (`ats_match`), `langue`, `zones`, `tri` (`tri_file`), `lexique`, `domaines` |
+| `jobhunter.sources` | `job_sources` : une source par module, `commun`, `fusion`, `cli` — affectation routée au propriétaire |
 | `jobhunter` | `racine`, `profil`, `reseau` (requêtes bornées), `chemins`, `texte` |
 
 Dépendances à sens unique, vérifiées en test : le stockage et le scoring se chargent sans
 `Scripts/` ni `tailor_application` (les cycles `jutil`↔`queue_io` et `ats_match`↔`tailor`
-ont disparu). Imports différés restants, assumés, vers `job_sources`/`doublons`/`rejets_tri`.
+ont disparu). Imports différés restants, assumés, vers `doublons`/`rejets_tri`/`exclusions`/`wtj_desc`.
 **Façades** : chaque ancien `Scripts/x.py` déplacé est un ALIAS (`sys.modules`) du module
 du paquet — `import ats_match` *est* `jobhunter.scoring.fit`, un `monkeypatch` touche le
 vrai code ; lancé directement, il exécute le module (`runpy`). `test_coherence_imports.py`

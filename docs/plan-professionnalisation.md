@@ -112,6 +112,10 @@ Ordre (des feuilles vers les dépendants, une PR chacun) :
 8. `cli.py` ; les `.bat`/`.sh` appellent `jobhunter …`.
 9. Retrait des façades `Scripts/*.py` (dernière PR, après un cycle complet de pipeline réel).
 
+**Avancement** : 1 à 4 faits le 2026-10-18 (v1.5.0 à v1.8.0), banc 0 écart à chaque étape.
+`sources/` a gardé les sources en modules plats (`ats.py` réunit les lecteurs d'ATS et les
+« autres API », qui s'appelaient l'un l'autre) ; `sites_carriere` reste dans `scrape_jobs`.
+
 Fini quand : `pip install -e .` puis `jobhunter pipeline` fonctionne ; aucun
 `sys.path.insert` ; aucun cycle (vérifié en CI par `import-linter`) ; banc 0 écart à chaque PR.
 
