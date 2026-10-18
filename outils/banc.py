@@ -93,7 +93,7 @@ def _sur(f, *a, **k):
 
 def mesurer(offres, cle, n_docs):
     """{cle: decisions} pour chaque offre."""
-    sys.path.insert(0, str(SCRIPTS))
+    sys.path[:0] = [str(SCRIPTS.parent / "src"), str(SCRIPTS)]  # le moteur mesure
     from jobhunter import documents as tailor_application
     from jobhunter import sources as job_sources
     from jobhunter.documents import message as message_offre
@@ -151,7 +151,7 @@ def mesurer(offres, cle, n_docs):
 
 def charger_jeu(a):
     if a.file:
-        sys.path.insert(0, str(SCRIPTS))
+        sys.path[:0] = [str(SCRIPTS.parent / "src"), str(SCRIPTS)]
         from jobhunter.stockage import file as queue_io
 
         offres = queue_io.charger(Path(a.file))
