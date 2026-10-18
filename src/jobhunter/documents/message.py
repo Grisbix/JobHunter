@@ -35,7 +35,6 @@ if str(_SCRIPTS) not in sys.path:
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 MSG_OUT = _racine.racine() / "Lettres" / "Messages"
-MSG_OUT.mkdir(parents=True, exist_ok=True)
 
 # Tous les textes viennent du profil : domaines[] (accroche, preuve par
 # domaine) et la section « message » (diplome, langues, faits, sources).
@@ -521,6 +520,7 @@ def main():
         return 1
     for o in cibles:
         txt = message(o, langue=a.langue, ton=a.ton)
+        MSG_OUT.mkdir(parents=True, exist_ok=True)  # au moment d'ecrire, pas a l'import
         f = MSG_OUT / (new_name("Message", o.get("poste", ""), o.get("entreprise", "")) + ".txt")
         f.write_text(txt, encoding="utf-8")
         print(f"\n=== {o.get('entreprise')} — {(o.get('poste') or '')[:50]} ===")

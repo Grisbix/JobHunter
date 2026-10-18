@@ -20,7 +20,8 @@ from jobhunter.scoring.lexique import (  # noqa: F401
 CV_ATS = chemins.CV_MODELES
 
 
-CV_OUT, LT_OUT = chemins.preparer()
+# Dossiers de sortie : crees au moment d'ecrire (chemins.preparer), pas a l'import.
+CV_OUT, LT_OUT = chemins.CV_PAR_OFFRE, chemins.LT_PAR_OFFRE
 
 
 _ID = _P.identite()

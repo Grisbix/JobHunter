@@ -8,6 +8,7 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt
 
+from jobhunter import chemins
 from jobhunter import profil as _P
 from jobhunter.documents.commun import (
     LT_OUT,
@@ -473,6 +474,7 @@ def tailor_letter(offer, nom=None, langue="fr"):
     « Je vous prie d'agreer… » n'a pas d'equivalent litteral et devient
     « Yours faithfully », qui est la forme attendue quand le destinataire est
     inconnu (« Dear Sir or Madam »)."""
+    chemins.preparer()  # dossiers de sortie, au moment d'ecrire
     company = offer["company"]
     role = (offer["role"] or "ce poste").strip()
     skills = match_skills(offer["offer_text"])

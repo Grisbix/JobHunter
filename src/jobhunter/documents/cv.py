@@ -7,6 +7,7 @@ import shutil
 
 from docx import Document
 
+from jobhunter import chemins
 from jobhunter.documents.commun import CV_ATS, CV_OUT, _de, _slug, titre_poste
 from jobhunter.documents.rendu import to_pdf
 from jobhunter.scoring.lexique import CV_VARIANT, CV_VARIANT_EN, cv_variant_key
@@ -95,6 +96,7 @@ def tailor_cv(offer, nom=None, langue="fr", allege=0, auto=True):
     disqualifier avant lecture. Le repli sur le francais est SILENCIEUX quand le
     modele anglais manque (toutes les variantes ne sont pas encore traduites) —
     un CV francais vaut mieux que pas de CV."""
+    chemins.preparer()  # dossiers de sortie, au moment d'ecrire
     key = cv_variant_key(offer["domaine"])
     src = CV_ATS / (CV_VARIANT.get(key) or "")
     if not CV_VARIANT.get(key):
@@ -215,6 +217,7 @@ def cv_une_page(offer, nom=None, langue="fr"):
     repart du modele sans fait automatique : un CV generique d'une page vaut
     mieux qu'un CV adapte de deux. Un CV/Sur_mesure n'est jamais allege : il a
     ete relu, sa page aussi."""
+    chemins.preparer()  # dossiers de sortie, au moment d'ecrire
     from jobhunter.documents import cv_auto
 
     lg = langue if langue == "en" else "fr"
