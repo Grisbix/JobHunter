@@ -83,6 +83,7 @@ perdue, le scan la retrouve demain ; une candidature perdue ne revient jamais.
 
 | Programme | Rôle |
 |---|---|
+| `rendement_sources.py` | Bilan par source des collectes (journal `Scripts/_rendement.jsonl`) : ramenées, nouvelles, pertinentes, temps, verdict (ok, rien à prendre, limité, partiel, refusé). `python JobHunter.pyw rendement`. Lecture seule. |
 | `controle_dossiers.py` | Contrôle des dossiers avant envoi (lecture seule) : PDF lisible, une page, coordonnées, gabarit rempli ; préfère le PDF à jour à son .docx. Étape 5b du pipeline. `python JobHunter.pyw controle`. |
 | `apply_runner.py` | Remplit les formulaires, **semi-automatique** : le clic final d'envoi reste le tien. Piloté par le panneau Candidatures de l'app (`--pilote`) ou au clavier ; après « envoyé », observe la page et écrit le suivi avec la preuve (`envoi` confirmé / incertain, capture dans `Scripts/_preuves/`). |
 | `relances.py` | Mails de relance J+7 / J+10 par offre. `--brouillons` prépare ceux de toutes les relances dues, sans rien ouvrir ni envoyer : tâche Windows `Relances`, le lundi à 9h30, bilan dans le vault (`Routines/Relances/`). |

@@ -285,3 +285,10 @@ texte, une page, coordonnées du profil, aucun gabarit vide) ; un dossier à rev
 signalé dans le panneau, la fiche et la routine (étape 5b). Trouvé en route : 22 offres
 pointaient sur la lettre .docx alors que son PDF était à côté — c'est le PDF à jour qui
 part désormais.
+
+**2.4.0 (même jour)** : troisième axe, « un rendement mesurable pour chaque connecteur ».
+`jobhunter.sources.rendement` mesure chaque appel de source (durée, ramenées, incidents de
+CET appel), la fusion compte nouvelles et pertinentes par source ; verdict ok / rien à
+prendre / limité / partiel / refusé. Journal `Scripts/_rendement.jsonl`, bilan
+`jobhunter rendement`. Non mesurés pour l'instant : descriptions complètes et liens
+employeur par source (ils arrivent aux étapes suivantes du pipeline, pas à la collecte).

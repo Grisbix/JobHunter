@@ -124,3 +124,5 @@ _sauvegarde_maj/
 .coverage
 # captures prises apres un envoi (preuve, ADR 0009) : donnees personnelles
 Scripts/_preuves/
+# journal de rendement des sources (une ligne par collecte)
+Scripts/_rendement.jsonl

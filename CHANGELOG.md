@@ -4,6 +4,17 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.4.0 — 2026-10-19
+
+- **Ce que rapporte chaque source.** À la fin de chaque collecte, une ligne par source :
+  offres ramenées, nouvelles, pertinentes (fit ≥ 8), temps passé, et un verdict qui dit
+  POURQUOI : « ok », « rien à prendre » (journée calme), « limité » (le site a demandé de
+  ralentir), « partiel » (erreurs en route) ou « refusé » (accès refusé, CAPTCHA). Une
+  collecte vide ne ressemble plus à une journée sans nouveauté.
+- `python JobHunter.pyw rendement` : le bilan des 14 derniers jours (`--jours 30` pour
+  plus), les sources les plus rentables d'abord ; une source refusée à chaque collecte est
+  signalée. Aucun contournement : la retirer se décide à la main.
+
 ## 2.3.0 — 2026-10-19
 
 - **Chaque dossier est contrôlé avant de partir.** Pour le CV et la lettre qui seront
