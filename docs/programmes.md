@@ -83,6 +83,7 @@ perdue, le scan la retrouve demain ; une candidature perdue ne revient jamais.
 
 | Programme | Rôle |
 |---|---|
+| `evaluation_classement.py` | Le classement face aux jugements du suivi : AUC et intervalle, précision des premières, pires erreurs ; `--enregistrer` garde une référence (`Scripts/_evaluation.json`). `python JobHunter.pyw evaluation`. Lecture seule. |
 | `rendement_sources.py` | Bilan par source des collectes (journal `Scripts/_rendement.jsonl`) : ramenées, nouvelles, pertinentes, temps, verdict (ok, rien à prendre, limité, partiel, refusé). `python JobHunter.pyw rendement`. Lecture seule. |
 | `controle_dossiers.py` | Contrôle des dossiers avant envoi (lecture seule) : PDF lisible, une page, coordonnées, gabarit rempli ; préfère le PDF à jour à son .docx. Étape 5b du pipeline. `python JobHunter.pyw controle`. |
 | `apply_runner.py` | Remplit les formulaires, **semi-automatique** : le clic final d'envoi reste le tien. Piloté par le panneau Candidatures de l'app (`--pilote`) ou au clavier ; après « envoyé », observe la page et écrit le suivi avec la preuve (`envoi` confirmé / incertain, capture dans `Scripts/_preuves/`). |

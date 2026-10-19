@@ -35,7 +35,7 @@ Règle inchangée : chaque étape livre seule, banc à 0 écart, et ne s'adopte 
 
 | # | Quoi | Pourquoi | Fini quand |
 |---|---|---|---|
-| C1 | **Classement évalué sur les jugements réels** : constituer le jeu de référence à partir de ce qui existe déjà. Pertinentes : les offres postulées, relancées ou en entretien du suivi. Inutiles : « pas intéressé » et `exclusions.json`. Puis mesurer le classement actuel (précision des N premières). | Aucune mesure aujourd'hui de « les premières offres sont-elles les bonnes ». C'est le préalable à toute variante, sémantique ou autre. | un chiffre de référence reproductible (`jobhunter evaluation`) ; toute modification du scoring est comparée à lui, avec le banc |
+| C1 ✅ (v2.5.0) | **Classement évalué sur les jugements réels** : constituer le jeu de référence à partir de ce qui existe déjà. Pertinentes : les offres postulées, relancées ou en entretien du suivi. Inutiles : « pas intéressé » et `exclusions.json`. Puis mesurer le classement actuel (précision des N premières). | Aucune mesure aujourd'hui de « les premières offres sont-elles les bonnes ». C'est le préalable à toute variante, sémantique ou autre. | un chiffre de référence reproductible (`jobhunter evaluation`) ; toute modification du scoring est comparée à lui, avec le banc |
 | C2 | **Identité d'offre plus robuste** : d'abord une **étude**. Compter sur la vraie file les homonymes (même `entreprise\|poste`, lieu ou référence différents) et les doublons sous deux intitulés. | La clé `entreprise\|poste` est celle de `suivi.json`, la donnée la moins reconstituable. On ne migre rien sans un problème mesuré. | une ADR qui chiffre le problème et tranche : identité secondaire (référence de source) en complément, ou statu quo |
 
 ## Étape D — L'application testée comme elle tourne (Codex 19/10, P1, effort moyen)
@@ -86,3 +86,17 @@ Ce qui reste hors d'atteinte, quoi qu'il arrive :
     LinkedIn).
   - Trouvé en route : 10 des 16 comptes Greenhouse de la configuration répondaient 404
     (entreprises parties de Greenhouse), retirés de la configuration d'exemple.
+- **C1** (v2.5.0) : `jobhunter evaluation` mesure le classement (`fit_fin`) face aux
+  jugements du suivi. Pertinentes : postulé, relancé, entretien, refus, à postuler.
+  Inutiles : mauvaise, pas intéressé ; une « mauvaise » dont la note dit un fait (pourvu,
+  page sans offre) ne compte pas. La commande donne l'AUC avec un intervalle à 90 %,
+  la précision des premières, et les pires erreurs.
+  `--enregistrer` garde une référence pour juger toute variante.
+  - **Premier constat**, sur les 37 jugements d'un utilisateur : **AUC 0,46**
+    (intervalle 0,31 – 0,62), c'est-à-dire pas mieux que le hasard **sur les offres
+    jugées**.
+  - Beaucoup d'offres écartées sont notées au maximum, souvent sans note qui dise
+    pourquoi : le moteur ne peut pas apprendre ce qu'il ne voit pas.
+  - **Suite logique (C1 bis)** : un motif en un clic quand on écarte une offre (stage,
+    langue, séniorité, métier, lieu…), pour savoir ce que le scoring rate avant de le
+    modifier.

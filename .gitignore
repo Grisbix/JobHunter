@@ -126,3 +126,5 @@ _sauvegarde_maj/
 Scripts/_preuves/
 # journal de rendement des sources (une ligne par collecte)
 Scripts/_rendement.jsonl
+# reference d'evaluation du classement (jugements personnels)
+Scripts/_evaluation.json

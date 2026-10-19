@@ -4,6 +4,15 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.5.0 — 2026-10-19
+
+- **Ton classement face à tes choix.** `python JobHunter.pyw evaluation` compare la note de
+  chaque offre à ce que tu en as fait : postulé ou à postuler d'un côté, « mauvaise » ou
+  « pas intéressé » de l'autre. Il dit si les offres que tu retiens sont bien mieux notées
+  que celles que tu écartes (avec la marge d'incertitude), et lesquelles le classement
+  surestime ou sous-estime le plus. `--enregistrer` garde le résultat pour comparer plus
+  tard. Plus tu marques d'offres, plus le chiffre est fiable.
+
 ## 2.4.3 — 2026-10-19
 
 - **Configuration d'exemple** : 10 des 16 comptes Greenhouse ne répondaient plus (404) :
