@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import overload
 
 from jobhunter import racine as _racine
-from jobhunter.app.textes_en import EN, JOURNAL_EN
+from jobhunter.app.textes_en import EN, JOURNAL_EN, SORTIE_EN
 
 LANGUES = ("fr", "en")
 FICHIER = "_interface.json"
@@ -75,13 +75,15 @@ def _modele(cle: str) -> "re.Pattern[str]":
     return re.compile(motif)
 
 
-_MODELES = [(_modele(k), v) for k, v in JOURNAL_EN.items() if "{" in k]
+# Les messages de l'app, puis la sortie des programmes qu'elle lance.
+_LIGNES = {**JOURNAL_EN, **SORTIE_EN}
+_MODELES = [(_modele(k), v) for k, v in _LIGNES.items() if "{" in k]
 
 
 def _ligne(texte: str) -> str:
     """Une ligne du journal (sans espaces de bord) en anglais, ou telle quelle."""
-    if texte in JOURNAL_EN:
-        return JOURNAL_EN[texte]
+    if texte in _LIGNES:
+        return _LIGNES[texte]
     for motif, cible in _MODELES:
         m = motif.fullmatch(texte)
         if m:
@@ -93,8 +95,8 @@ def journal(texte: str) -> str:
     """Le texte du journal de l'app, ligne à ligne, dans la langue de l'interface.
 
     Chaque ligne connue de `JOURNAL_EN` (sans ses espaces de bord) est traduite, y
-    compris celles qui portent un nombre ou un nom (modèles à `{a}`) ; les autres, dont
-    la sortie des programmes lancés, restent telles quelles.
+    compris celles qui portent un nombre ou un nom (modèles à `{a}`), et les bilans des
+    programmes lancés (`SORTIE_EN`) ; les autres lignes restent telles quelles.
     """
     if LANGUE == "fr":
         return texte

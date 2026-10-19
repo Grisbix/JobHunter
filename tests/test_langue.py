@@ -110,8 +110,54 @@ def test_journal(monkeypatch):
         langue.journal("＋ flux Ashby alan — lu par API dès la prochaine collecte (Alan)\n")
         == "＋ Ashby feed alan — read by API from the next collection (Alan)\n"
     )
-    # La sortie d'un programme lancé reste telle quelle.
-    assert langue.journal("Scan : 6 offres uniques\n") == "Scan : 6 offres uniques\n"
+    # Une ligne inconnue reste telle quelle.
+    assert langue.journal("→ [3/9] Amundi|Analyste\n") == "→ [3/9] Amundi|Analyste\n"
+
+
+def test_sortie_des_programmes(monkeypatch):
+    """Les bilans des programmes lancés par l'app, tels qu'ils les impriment."""
+    monkeypatch.setattr(langue, "LANGUE", "en")
+    sortie = (
+        "\nScan : 412 offres uniques (→ offres_scan.json)\n"
+        "  francetravail  rien à prendre      0 ramenées ·    0 nouvelles ·   0 pertinentes"
+        " ·    1.2 s\n"
+        "Merge : +12 nouvelles, 3 enrichies (desc), 0 liens promus (LinkedIn -> vrai site), "
+        "4 hors de France, 1 écartées à la main, 7 déjà rejetées par le tri, 2 pays écartés, "
+        "0 bruits purgés — 12431 total\n"
+        "   ── 20/150 — 18 ok — 2.4s/offre, reste ~5 min\n"
+        "notifié — 3 marquée(s), historique 41\n"
+        "non notifié (toast KO) — 3 marquée(s), historique 41\n"
+    )
+    assert langue.journal(sortie) == (
+        "\nScan: 412 unique offers (→ offres_scan.json)\n"
+        "  francetravail  rien à prendre      0 fetched ·    0 new ·   0 relevant ·    1.2 s\n"
+        "Merge : +12 new, 3 enriched (desc), 0 links promoted (LinkedIn -> real site), "
+        "4 outside France, 1 set aside by hand, 7 already rejected by sorting, 2 countries "
+        "set aside, 0 noise purged — 12431 total\n"
+        "   ── 20/150 — 18 ok — 2.4s/offer, ~5 min left\n"
+        "notified — 3 marked, history 41\n"
+        "not notified (toast failed) — 3 marked, history 41\n"
+    )
+
+
+def test_sortie_modeles_vivent_dans_le_paquet():
+    """Chaque ligne de SORTIE_EN est encore imprimée quelque part dans le paquet."""
+    from jobhunter.app.textes_en import SORTIE_EN
+
+    source = "\n".join(
+        p.read_text(encoding="utf-8") for p in APP.parent.rglob("*.py") if p.name != "textes_en.py"
+    )
+    trous = re.compile(r"\{(\w+)\}")
+    morts = []
+    for fr, en in SORTIE_EN.items():
+        assert sorted(trous.findall(fr)) == sorted(trous.findall(en)), fr
+        # Le code coupe souvent ces lignes en plusieurs chaînes : on cherche le début de
+        # CHAQUE morceau fixe, assez court pour tenir dans une seule.
+        for morceau in trous.split(fr)[::2]:
+            debut = re.sub(r"^\W+", "", morceau)[:8]
+            if len(debut) >= 4 and debut not in source:
+                morts.append((fr, debut))
+    assert morts == []
 
 
 def test_journal_modeles_coherents():

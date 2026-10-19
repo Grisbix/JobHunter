@@ -393,3 +393,96 @@ JOURNAL_EN = {
     "déjà suivi : {a} ({b})": "already followed: {a} ({b})",
     "déjà suivi : {a}": "already followed: {a}",
 }
+
+# La sortie des programmes que l'app lance (collecte, « TOUT FAIRE »), traduite ligne à
+# ligne comme JOURNAL_EN : les bilans et les en-têtes, pas le détail offre par offre
+# (noms d'entreprise et de poste, qui ne se traduisent pas). Chaque modèle doit vivre dans
+# le code du paquet (test_langue).
+SORTIE_EN = {
+    # Collecte (jobhunter.sources)
+    "── recherche restreinte à la FRANCE ──": "── search restricted to FRANCE ──",
+    "── ATS APIs (greenhouse/lever/ashby/recruitee/smartrecruiters) ──": "── ATS APIs "
+    "(greenhouse/lever/ashby/recruitee/smartrecruiters) ──",
+    "── Workday (API publique des grands groupes) ──": "── Workday (public API of large groups) ──",
+    "── LinkedIn recherche publique (guest) ──": "── LinkedIn public search (guest) ──",
+    "── V.I.E / V.I.A (Business France) ──": "── V.I.E / V.I.A (Business France) ──",
+    "── FIR / French SIF (100 % ISR-ESG) ──": "── FIR / French SIF (100% SRI-ESG) ──",
+    "── Talent.com (agrégateur) ──": "── Talent.com (aggregator) ──",
+    "── Indeed (page 1 des résultats — voir le commentaire de scan_indeed) ──": "── Indeed "
+    "(results page 1 — see the scan_indeed comment) ──",
+    "── APEC (API publique, annonce entière dans la liste) ──": "── APEC (public API, full "
+    "posting in the list) ──",
+    "── Glassdoor (page 1 de la recherche, France entière) ──": "── Glassdoor (search page "
+    "1, all of France) ──",
+    "── eFinancialCareers ({a}, {b} site(s), sitemap public, crawl-delay 10 s) ──": "── "
+    "eFinancialCareers ({a}, {b} site(s), public sitemap, crawl-delay 10 s) ──",
+    "── EURES (portail officiel UE, API publique, crawl-delay 10 s) ──": "── EURES (official "
+    "EU portal, public API, crawl-delay 10 s) ──",
+    "── France Travail (API officielle) ──": "── France Travail (official API) ──",
+    "── Adzuna (API officielle, France + 7 pays) ──": "── Adzuna (official API, France + 7 "
+    "countries) ──",
+    "── Jooble (API officielle) ──": "── Jooble (official API) ──",
+    "── Welcome to the Jungle (sitemap public, débit bridé) ──": "── Welcome to the Jungle "
+    "(public sitemap, throttled) ──",
+    "Scan : {a} offres uniques (non ecrit : --dry)": "Scan: {a} unique offers (not written: --dry)",
+    "Scan : {a} offres uniques (→ {b})": "Scan: {a} unique offers (→ {b})",
+    "Refus rencontrés (une collecte vide peut venir de là) :": "Refusals met (an empty "
+    "collection can come from them):",
+    "Rendement par source :": "Yield per source:",
+    "{a} ramenées · {b} nouvelles · {c} pertinentes · {d} s": "{a} fetched · {b} new · {c} "
+    "relevant · {d} s",
+    "Merge {a}: +{b} nouvelles, {c} enrichies (desc), {d} liens promus (LinkedIn -> vrai "
+    "site), {e} hors de France, {f} écartées à la main, {g} déjà rejetées par le tri, {h} "
+    "pays écartés, {i} bruits purgés — {j} total": "Merge {a}: +{b} new, {c} enriched "
+    "(desc), {d} links promoted (LinkedIn -> real site), {e} outside France, {f} set aside "
+    "by hand, {g} already rejected by sorting, {h} countries set aside, {i} noise purged — "
+    "{j} total",
+    "→ re-score + descriptions manquantes : automatiques au prochain lancement de l'app.": "→ "
+    "re-score + missing descriptions: automatic at the next app start.",
+    "Le scan est conserve dans {a} : `jobhunter collecte --fusion-seule` le fusionnera.": "The "
+    "scan is kept in {a}: `jobhunter collecte --fusion-seule` will merge it.",
+    "! journal de rendement non écrit : {a}": "! yield log not written: {a}",
+    # Descriptions (scrape_desc)
+    "Rien à faire : --key ou --all requis.": "Nothing to do: --key or --all required.",
+    "Aucune offre ciblée.": "No offer targeted.",
+    "{a} offre(s) à récupérer…": "{a} offer(s) to fetch…",
+    "── {a}/{b} — {c} ok — {d}s/offre, reste ~{e} min": "── {a}/{b} — {c} ok — {d}s/offer, "
+    "~{e} min left",
+    "=== {a}/{b} descriptions enregistrées (API) ===": "=== {a}/{b} descriptions saved (API) ===",
+    "=== {a}/{b} descriptions enregistrées dans apply_queue.json ===": "=== {a}/{b} "
+    "descriptions saved to apply_queue.json ===",
+    "✅ {a} car. (via {b})": "✅ {a} chars (via {b})",
+    "✖ relance navigateur impossible : {a}": "✖ browser restart failed: {a}",
+    # Re-score (rescore_ats)
+    "{a} ATS% + {b} fit re-scorés / {c}": "{a} ATS% + {b} fit re-scored / {c}",
+    "Offres exigeant ≥3 ans d'expérience (fit pénalisé) : {a}": "Offers requiring ≥3 years "
+    "of experience (fit penalised): {a}",
+    "Distribution ATS% : {a}": "ATS% distribution: {a}",
+    # Liens morts (recheck_dead)
+    "Aucune offre à revérifier (filtre trop strict ?).": "No offer to recheck (filter too "
+    "strict?).",
+    "{a} offre(s) à revérifier en navigateur (status={b})…": "{a} offer(s) to recheck in the "
+    "browser (status={b})…",
+    "✖ {a} échecs d'affilée — arrêt (relance plus tard, reprise auto)": "✖ {a} failures in a "
+    "row — stopping (run again later, resumes automatically)",
+    "── checkpoint {a}/{b} — {c}s/lien, reste ~{d} min": "── checkpoint {a}/{b} — {c}s/link, "
+    "~{d} min left",
+    "=== {a}changements: {b} ===": "=== {a}changes: {b} ===",
+    # Export (export_queue_csv)
+    "! apply_queue.json introuvable": "! apply_queue.json not found",
+    "(suivi.json illisible : {a} — export sans le suivi)": "(suivi.json unreadable: {a} — "
+    "export without the tracking)",
+    "=== {a} offres -> {b} ({c} Ko) ===": "=== {a} offers -> {b} ({c} KB) ===",
+    "rotation : {a} supprimé": "rotation: {a} deleted",
+    # Alertes (notify_matches)
+    "historique de notification remis à zéro": "notification history reset",
+    "aucune NOUVELLE offre fit >= {a} (déjà notifiées : {b})": "no NEW offer with fit >= {a} "
+    "(already notified: {b})",
+    "=== {a} nouvelle(s) offre(s) fit >= {b} ===": "=== {a} new offer(s) with fit >= {b} ===",
+    "[dry] pas de notification, historique inchangé": "[dry] no notification, history unchanged",
+    "notifié — {a} marquée(s), historique {b}": "notified — {a} marked, history {b}",
+    "non notifié (toast KO) — {a} marquée(s), historique {b}": "not notified (toast failed) — "
+    "{a} marked, history {b}",
+    "! toast échoué : {a}": "! toast failed: {a}",
+    "! toast impossible : {a}": "! toast unavailable: {a}",
+}

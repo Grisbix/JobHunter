@@ -367,7 +367,7 @@ def _fusionner(uniq: Any, dry: bool) -> int:
         print(f"! {e}")
         print(
             f"  Le scan est conserve dans {FRESH.name} : "
-            f"`python job_sources.py --fusion-seule` le fusionnera."
+            f"`jobhunter collecte --fusion-seule` le fusionnera."
         )
         return 3
     # RENDEMENT PAR SOURCE : ce que chacune a rapporte, et pourquoi pas plus.
