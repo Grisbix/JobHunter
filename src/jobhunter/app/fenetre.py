@@ -15,6 +15,7 @@ import customtkinter as ctk
 from jobhunter import gele as _gele
 from jobhunter import profil as _profil
 from jobhunter import racine as _racine
+from jobhunter.app import courriels as _courriels
 from jobhunter.app import theme as _theme
 from jobhunter.app.actions import ActionsMixin
 from jobhunter.app.candidature import CandidatureMixin
@@ -228,6 +229,8 @@ class App(
                         if c == "langue"
                         else self._planifier()
                         if c == "planifier"
+                        else _courriels.ouvrir(self)
+                        if c == "courriels"
                         else self.run_step(c, l)
                     ),
                     font=(_theme.FONT_UI, 12),

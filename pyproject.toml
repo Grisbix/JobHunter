@@ -21,6 +21,11 @@ dependencies = [
 [project.scripts]
 jobhunter = "jobhunter.cli:main"
 
+# Lecture des statuts dans Gmail (jobhunter statuts-mail --gmail), en option : l'export
+# .mbox / .eml n'en a pas besoin.
+[project.optional-dependencies]
+gmail = ["google-auth-oauthlib>=1.2,<2"]
+
 [dependency-groups]
 dev = [
     "ruff>=0.15,<0.16",

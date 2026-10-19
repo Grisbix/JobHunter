@@ -90,6 +90,15 @@ class Candidature(TypedDict, total=False):
     retiree: str  # date a laquelle l'offre a quitte la file
     envoi: str  # « confirmé », « incertain » ou « déclaré » (ADR 0009)
     preuve: Preuve
+    courriel: "CourrielStatut"  # le courriel qui a justifié le dernier statut (2.20)
+
+
+class CourrielStatut(TypedDict, total=False):
+    """Le courriel qu'un statut proposé, puis accepté, cite (jobhunter.courriels)."""
+
+    de: str  # expéditeur
+    sujet: str
+    le: str  # date du courriel, AAAA-MM-JJ
 
 
 Suivi = dict[str, Candidature]

@@ -214,6 +214,29 @@ EN: dict[str, str] = {
     "Homepages": "Homepages",
     "Mettre à jour JobHunter": "Update JobHunter",
     "Collecte chaque matin…": "Collect every morning…",
+    "Statuts depuis mes courriels…": "Statuses from my emails…",
+    "Statuts depuis mes courriels": "Statuses from my emails",
+    "Lecture seule : les courriels sont lus et classés (refus, entretien, accusé de "
+    "réception), jamais modifiés. Chaque statut proposé attend ton accord.": "Read-only: "
+    "emails are read and classified (rejection, interview, acknowledgement), never "
+    "changed. Each suggested status waits for your approval.",
+    "Candidature": "Application",
+    "Formule trouvée": "Phrase found",
+    "{a} courriel(s) lus, {b} statut(s) à proposer.": "{a} email(s) read, {b} status(es) "
+    "to suggest.",
+    "Lecture des courriels…": "Reading emails…",
+    'Lecture Gmail : installe d\'abord pip install "jobhunter[gmail]".': "Gmail reading: "
+    'first run pip install "jobhunter[gmail]".',
+    "Fichier .mbox": ".mbox file",
+    "Dossier de fichiers .eml": "Folder of .eml files",
+    "Fichier .mbox…": ".mbox file…",
+    "Dossier .eml…": ".eml folder…",
+    "Gmail (lecture seule)": "Gmail (read-only)",
+    "Suivi occupé : réessaie dans un instant.": "Tracking busy: try again in a moment.",
+    "Le suivi a changé entre-temps : rien écrit.": "The tracking changed meanwhile: nothing "
+    "written.",
+    "Appliquer": "Apply",
+    "Ignorer": "Ignore",
     "La collecte quotidienne est déjà planifiée. La retirer ?": "The daily collection is "
     "already scheduled. Remove it?",
     "Collecter les offres chaque jour à quelle heure ? (format 08:00)": "Collect offers every "

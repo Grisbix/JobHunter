@@ -93,6 +93,8 @@ PROTEGES_NOMS = {
     "Scripts/suivi.json",
     "Scripts/adzuna.json",
     "Scripts/francetravail.json",
+    "Scripts/gmail_client.json",
+    "Scripts/gmail_token.json",
     "Scripts/jooble.json",
     "Scripts/apply_runner_done.json",
     "Scripts/chemins.json",

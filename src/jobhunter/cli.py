@@ -52,6 +52,10 @@ COMMANDES = {
         "jobhunter.programmes.relecture",
         "relit les lettres et signale ce qui cloche (rien n'est modifie)",
     ),
+    "statuts-mail": (
+        "jobhunter.programmes.statuts_mail",
+        "statuts proposes depuis tes courriels, valides un a un (lecture seule)",
+    ),
     "postuler": (
         "jobhunter.programmes.apply_runner",
         "candidature semi-automatique (l'envoi reste humain)",

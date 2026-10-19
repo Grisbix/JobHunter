@@ -3,6 +3,8 @@
 Scripts/.ats_password
 Scripts/apply_profile.json
 Scripts/mail_config.json
+Scripts/gmail_client.json
+Scripts/gmail_token.json
 Scripts/.pw_chrome_profile/
 *cookies*.json
 *google_state*.json
