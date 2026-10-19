@@ -6,9 +6,12 @@ récente en haut.
 
 ## 2.4.3 — 2026-10-19
 
-- **Configuration d'exemple** : 10 des 16 comptes Greenhouse ne répondaient plus (404 :
-  ces entreprises recrutent ailleurs désormais). Ils sont retirés ; si ta configuration
-  les contient encore, `python JobHunter.pyw rendement` le montrera aussi.
+- **Configuration d'exemple** : 10 des 16 comptes Greenhouse ne répondaient plus (404) :
+  ces entreprises recrutent ailleurs désormais. 7 ont été retrouvées et suivent leur
+  nouvel outil (Lever : Pigment, Swile, Vestiaire Collective ; Ashby : Back Market,
+  Sweep ; SmartRecruiters : EcoVadis ; Recruitee : iBanFirst). ClarityAI, Payfit et
+  Spendesk sont retirés. Si ta configuration les contient encore,
+  `python JobHunter.pyw probe_ats --slugs <nom>` cherche leur nouvel outil.
 - En coulisse : les sources sont testées sur de vraies réponses enregistrées, rejouées sans
   réseau.
 
