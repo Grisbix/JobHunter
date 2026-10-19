@@ -4,6 +4,21 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.7.0 — 2026-10-19
+
+- **Dix programmes en moins.** Des outils de réparation ponctuelle, déjà passés sur les
+  données ou remplacés par mieux, quittaient rarement leur dossier et brouillaient la liste.
+  Ils sont retirés :
+  - `audit_fraicheur` et `verify_links` : remplacés par le contrôle de disponibilité
+    (`audit_dispo`) ;
+  - `offres_depuis_site`, `probe_ats_esg` et `homepages_linkedin` : remplacés par les flux
+    ATS suivis et `probe_ats_queue` ;
+  - `deplace_docs`, `reclasse_domaines`, `redetecte_contrats`, `refresh_desc_efc` et
+    `fix_wtj_urls` : réparations faites une fois, devenues inutiles. L'entrée « Fix WTJ »
+    quitte le menu Maintenance.
+
+  Le code reste dans l'historique git pour qui en aurait besoin.
+
 ## 2.6.0 — 2026-10-19
 
 - **Le bon exemplaire d'un poste publié dans plusieurs villes.** Quand une entreprise

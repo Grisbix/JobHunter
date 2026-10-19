@@ -244,7 +244,6 @@ MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
                 "Recheck 404",
                 [PY, "-m", "jobhunter.programmes.recheck_dead", "--status", "OK", "--limit", "120"],
             ),
-            ("Fix WTJ", [PY, "-m", "jobhunter.programmes.fix_wtj_urls"]),
             ("Re-score", [PY, "-m", "jobhunter.programmes.rescore_ats"]),
         ],
     ),

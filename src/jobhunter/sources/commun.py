@@ -784,7 +784,7 @@ _RX_ETAT_US = re.compile(
 # RECHERCHE MONDIALE. Le filtre geographique est un CHOIX, pas une loi : il a
 # ecarte 179 offres au seul scan du 8 septembre. Quand l'utilisateur veut chercher
 # partout, on ne le desactive PAS en modifiant chaque appelant — il y en a
-# quatre, dont un dans probe_ats_esg — mais ici, a la source. `zones.py` range
+# plusieurs — mais ici, a la source. `zones.py` range
 # ensuite ces offres dans une zone « international » a part, pour qu'elles ne
 # se melangent pas a ses cibles francaises.
 # DEFAUT : on garde le monde entier. l'utilisateur a tranche le 17/09 — les offres

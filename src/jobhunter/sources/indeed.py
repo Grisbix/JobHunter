@@ -350,8 +350,8 @@ def scan_indeed(
                 continue
             vus.add(jk)
             # Indeed marque lui-meme les annonces mortes. C'est
-            # exactement ce que audit_fraicheur.py va chercher a la
-            # main, offre par offre : ici c'est donne.
+            # exactement ce que le controle de disponibilite va chercher,
+            # offre par offre : ici c'est donne.
             if c.get("expired"):
                 continue
             titre = (c.get("title") or c.get("displayTitle") or "").strip()

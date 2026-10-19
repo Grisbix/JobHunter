@@ -60,10 +60,8 @@ perdue, le scan la retrouve demain ; une candidature perdue ne revient jamais.
 | `resolve_offer_links.py` | Remplace un lien « page carrière » par le lien de l'offre. |
 | `enrich_homepages.py` | Trouve la page d'accueil des entreprises sans URL d'offre. |
 | `link_check.py` | Vérifie les URLs (live / dead / soft-404). Module. |
-| `verify_links.py` | Détecte les liens qui n'aboutissent plus chez la bonne société. |
 | `recheck_dead.py` | Soft-404 rendus en JavaScript (HTTP 200 mais corps vide). |
 | `audit_dispo.py` | Contrôle de toute la file sans navigateur et retrait des offres fermées ; attend et reprend sur 429 ; `--duree` l'arrête de lui-même avant de retirer. Étape 4b du pipeline, le dimanche. |
-| `fix_wtj_urls.py` | Répare les liens Welcome to the Jungle. |
 | `queue_tools.py` | Maintenance de la file. |
 | `rescore_ats.py` | Recalcule `ats_pct` et `skills_match` sur toute la file. |
 | `export_queue_csv.py` | Sauvegarde lisible en CSV. |

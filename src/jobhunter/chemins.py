@@ -52,11 +52,6 @@ ROOT = HERE.parent
 # Reglage de machine. Absent = comportement historique.
 CONFIG = HERE / "chemins.json"
 
-# Ou `deplace_docs.py` propose d'aller quand on ressort les documents de
-# l'arbre : hors du depot, et sur un disque qu'on choisit. Ce n'est qu'un
-# defaut d'argument — rien ne l'utilise tant qu'on ne deplace pas.
-DEFAUT_AILLEURS = Path("D:/Recherche_emploi_documents")
-
 
 def _base() -> Path:
     """Racine des documents generes. Jamais d'exception : a defaut, la racine du projet."""
@@ -105,15 +100,6 @@ def preparer() -> tuple[Path, Path]:
     for d in (_ici.CV_PAR_OFFRE, _ici.LT_PAR_OFFRE):
         d.mkdir(parents=True, exist_ok=True)
     return _ici.CV_PAR_OFFRE, _ici.LT_PAR_OFFRE
-
-
-def deplace() -> None:  # pragma: no cover - outil d'administration, voir deplace_docs.py
-    """Réservé : le déplacement des documents se fait par `deplace_docs`.
-
-    Raises:
-        NotImplementedError: toujours.
-    """
-    raise NotImplementedError("le deplacement se fait par deplace_docs.py")
 
 
 if __name__ == "__main__":

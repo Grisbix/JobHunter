@@ -2,7 +2,7 @@
 """probe_ats_queue.py — Quelles entreprises de la file exposent un flux ATS lisible ?
 
 POURQUOI. Remonter au site de l'employeur par navigation ne marche pas : mesure
-0 sur 27 (voir offres_depuis_site.py). Les API ATS, elles, rendent du JSON avec
+0 sur 27 (mesure de l'ancien offres_depuis_site, retire en 2.7). Les API ATS, elles, rendent du JSON avec
 l'URL directe de l'annonce ET sa description, sans navigateur ni anti-bot.
 
 Ce programme part des entreprises DEJA dans la queue — pas d'une liste devinee
