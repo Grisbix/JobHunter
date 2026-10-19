@@ -36,7 +36,7 @@ Règle inchangée : chaque étape livre seule, banc à 0 écart, et ne s'adopte 
 | # | Quoi | Pourquoi | Fini quand |
 |---|---|---|---|
 | C1 ✅ (v2.5.0) | **Classement évalué sur les jugements réels** : constituer le jeu de référence à partir de ce qui existe déjà. Pertinentes : les offres postulées, relancées ou en entretien du suivi. Inutiles : « pas intéressé » et `exclusions.json`. Puis mesurer le classement actuel (précision des N premières). | Aucune mesure aujourd'hui de « les premières offres sont-elles les bonnes ». C'est le préalable à toute variante, sémantique ou autre. | un chiffre de référence reproductible (`jobhunter evaluation`) ; toute modification du scoring est comparée à lui, avec le banc |
-| C2 | **Identité d'offre plus robuste** : d'abord une **étude**. Compter sur la vraie file les homonymes (même `entreprise\|poste`, lieu ou référence différents) et les doublons sous deux intitulés. | La clé `entreprise\|poste` est celle de `suivi.json`, la donnée la moins reconstituable. On ne migre rien sans un problème mesuré. | une ADR qui chiffre le problème et tranche : identité secondaire (référence de source) en complément, ou statu quo |
+| C2 ✅ (v2.6.0) | **Identité d'offre plus robuste** : d'abord une **étude**. Compter sur la vraie file les homonymes (même `entreprise\|poste`, lieu ou référence différents) et les doublons sous deux intitulés. | La clé `entreprise\|poste` est celle de `suivi.json`, la donnée la moins reconstituable. On ne migre rien sans un problème mesuré. | une ADR qui chiffre le problème et tranche : identité secondaire (référence de source) en complément, ou statu quo |
 
 ## Étape D — L'application testée comme elle tourne (Codex 19/10, P1, effort moyen)
 
@@ -100,3 +100,11 @@ Ce qui reste hors d'atteinte, quoi qu'il arrive :
   - **Suite logique (C1 bis)** : un motif en un clic quand on écarte une offre (stage,
     langue, séniorité, métier, lieu…), pour savoir ce que le scoring rate avant de le
     modifier.
+- **C2** (v2.6.0, [ADR 0010](adr/0010-identite-entreprise-poste.md)) : étude chiffrée.
+  - Constats : 12 offres sur 86 perdues comme même poste dans plusieurs villes ; 9 URL
+    portent 2 ou 3 clés dans une file de 12 169 offres.
+  - Décision : la clé `entreprise|poste` reste, il n'y a pas de migration du suivi.
+  - Le dédoublonnage du scan garde la ville de la meilleure zone et note les autres
+    (`autres_lieux`).
+  - `doublons` réunit les offres de même URL d'annonce, en gardant l'offre suivie puis
+    l'intitulé actuel.

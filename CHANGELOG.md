@@ -4,6 +4,17 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.6.0 — 2026-10-19
+
+- **Le bon exemplaire d'un poste publié dans plusieurs villes.** Quand une entreprise
+  publie le même poste à Paris, Lyon et Berlin, un seul entre dans ta file. Jusqu'ici,
+  c'était le premier vu, au hasard ; c'est désormais celui de ta zone la plus prioritaire.
+  Les autres villes sont notées, et la fiche les affiche (« Aussi à : »).
+- **Les intitulés retouchés ne s'accumulent plus.** Quand un employeur renomme son annonce
+  (même lien, nouveau titre), les anciennes versions restées dans la file sont retirées au
+  tri. Seule la version actuelle reste, sauf si tu as déjà agi sur une autre : celle de
+  ton suivi est toujours gardée.
+
 ## 2.5.0 — 2026-10-19
 
 - **Ton classement face à tes choix.** `python JobHunter.pyw evaluation` compare la note de

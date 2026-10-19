@@ -1,7 +1,7 @@
 [project]
 name = "jobhunter"
 # Doit rester egal au fichier VERSION (lu par la mise a jour) : la CI le verifie.
-version = "2.5.0"
+version = "2.6.0"
 description = "Recherche d'emploi locale : collecte, notation, CV et lettre par offre, candidature semi-automatique."
 readme = "README.md"
 license = "MIT"
