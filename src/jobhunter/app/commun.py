@@ -12,6 +12,7 @@ from typing import Any
 import customtkinter as ctk
 
 from jobhunter import chemins as chemins
+from jobhunter import gele as _gele
 from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _profil
 from jobhunter import racine as _racine
@@ -68,7 +69,9 @@ ROOT = _racine.racine()  # marqueur ou JOBHUNTER_RACINE (jobhunter.racine)
 SCRIPTS = ROOT / "Scripts"
 
 
-PY = sys.executable or "python"
+# Lance les programmes en sous-processus : python.exe sous Python, jobhunter-cli.exe
+# dans l'application installée (jobhunter.gele).
+PY = _gele.interpreteur()
 
 
 QUEUE = SCRIPTS / "apply_queue.json"

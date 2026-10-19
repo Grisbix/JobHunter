@@ -128,3 +128,7 @@ Scripts/_preuves/
 Scripts/_rendement.jsonl
 # reference d'evaluation du classement (jugements personnels)
 Scripts/_evaluation.json
+
+# Application autonome (outils/installateur/construire.py)
+/dist/
+/outils/installateur/build/

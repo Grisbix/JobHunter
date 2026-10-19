@@ -7,6 +7,43 @@ import random as _rnd
 import re as _re_block
 from typing import Any
 
+# Navigateurs du système essayés quand le Chromium de Playwright n'est pas installé :
+# l'application installée (jobhunter.gele) ne l'embarque pas, et Edge est présent sur
+# tout Windows 10/11.
+CANAUX_SYSTEME = ("chrome", "msedge")
+
+
+def _manque_navigateur(e: Exception) -> bool:
+    t = str(e).lower()
+    return "executable doesn't exist" in t or "playwright install" in t
+
+
+def lancer(chromium: Any, **options: Any) -> Any:
+    """`chromium.launch(**options)`, puis Chrome ou Edge du système si Chromium manque.
+
+    Args:
+        chromium: `playwright.chromium`.
+        **options: les options de `launch` (headless, args…).
+
+    Returns:
+        Le navigateur lancé.
+
+    Raises:
+        Exception: l'erreur d'origine si aucun navigateur ne démarre, ou si l'échec
+            n'est pas un navigateur absent.
+    """
+    try:
+        return chromium.launch(**options)
+    except Exception as e:
+        if not _manque_navigateur(e) or options.get("channel"):
+            raise
+        for canal in CANAUX_SYSTEME:
+            try:
+                return chromium.launch(channel=canal, **options)
+            except Exception:
+                continue
+        raise
+
 
 def human_pause(page: Any, lo: int = 350, hi: int = 1100) -> None:
     """Pause fixe (moyenne de lo et hi), pour ne pas marteler le site."""
@@ -179,7 +216,8 @@ class BrowserSession:
         """Lance le navigateur et retourne la page active."""
         SyncPlaywright = self._get_playwright()
         self._playwright = SyncPlaywright().start()
-        self._browser = self._playwright.chromium.launch(
+        self._browser = lancer(
+            self._playwright.chromium,
             headless=self.headless,
             args=[
                 "--disable-dev-shm-usage",

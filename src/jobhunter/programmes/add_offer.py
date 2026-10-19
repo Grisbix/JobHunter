@@ -14,6 +14,7 @@ import time
 from urllib.parse import urlparse
 
 from jobhunter import racine as _racine
+from jobhunter.navigation.navigateur import lancer as _lancer
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -44,7 +45,7 @@ def analyze_url(url):
     spw, eng = get_sync_playwright("auto")
     out = {"titre": "", "entreprise": "", "description": ""}
     with spw() as p:
-        b = p.chromium.launch(headless=True)
+        b = _lancer(p.chromium, headless=True)
         pg = b.new_page()
         block_resources(pg.context, images=False)
         g = robust_goto(pg, url, tries=2)

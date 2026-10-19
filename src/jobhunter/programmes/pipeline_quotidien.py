@@ -66,6 +66,7 @@ import sys
 import threading
 import time
 
+from jobhunter import gele as _gele
 from jobhunter import racine as _racine
 
 # La racine par MARQUEUR (jobhunter.racine), jamais un chemin en dur : les dossiers
@@ -173,7 +174,7 @@ def etape(nom, args, cle, timeout=5400):
     print(f"\n{'─' * 62}\n▶ {nom}\n  {' '.join(args)}")
     env = dict(os.environ, PYTHONUNBUFFERED="1", PYTHONIOENCODING="utf-8")
     p = subprocess.Popen(
-        [sys.executable, *args],
+        [_gele.interpreteur(), *args],
         cwd=str(SCRIPTS),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,

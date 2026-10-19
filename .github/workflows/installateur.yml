@@ -1,0 +1,62 @@
+name: installateur
+
+# Construit JobHunterSetup.exe (application autonome, sans Python sur la machine) et
+# l'attache à la release. Lancé à chaque release publiée, ou à la main (Actions →
+# installateur → Run workflow) ou par une PR qui touche l'empaquetage : l'installateur
+# est alors un artefact du run.
+# Décision : docs/adr/0011-application-autonome.md
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "outils/installateur/**"
+      - "src/jobhunter/gele.py"
+      - ".github/workflows/installateur.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Dependances
+        run: python -m pip install -r requirements.txt "pyinstaller>=6.10,<7"
+      - name: Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue) -and
+              -not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+          }
+      - name: Application et installateur
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python outils/installateur/construire.py
+      - name: Installation silencieuse et premier lancement
+        shell: pwsh
+        run: |
+          $dest = "$env:RUNNER_TEMP\JobHunterInstall"
+          Start-Process dist\JobHunterSetup.exe -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/DIR=$dest" -Wait
+          $env:JOBHUNTER_RACINE = "$env:RUNNER_TEMP\JobHunterDonnees"
+          & "$dest\jobhunter-cli.exe" --help
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if (-not (Test-Path "$env:JOBHUNTER_RACINE\profil\exemple_finance_esg.json")) { exit 1 }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JobHunterSetup
+          path: dist/JobHunterSetup.exe
+      - name: Attacher a la release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/JobHunterSetup.exe --clobber

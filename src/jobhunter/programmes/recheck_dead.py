@@ -23,6 +23,7 @@ import sys
 import time
 
 from jobhunter import racine as _racine
+from jobhunter.navigation.navigateur import lancer as _lancer
 
 # line_buffering : sinon rien ne sort quand la sortie est redirigée (run en fond = aveugle)
 sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
@@ -171,7 +172,7 @@ def main():
 
         def launch():
             """(ctx, page) neufs. Rappelé si le navigateur meurt en cours de lot."""
-            b = p.chromium.launch(headless=True)
+            b = _lancer(p.chromium, headless=True)
             pg = b.new_page()
             c = pg.context  # gardé : pg.context est inutilisable après pg.close()
             try:

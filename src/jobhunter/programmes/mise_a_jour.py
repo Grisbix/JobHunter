@@ -50,6 +50,7 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
+from jobhunter import gele as _gele
 from jobhunter import racine as _racine
 
 # line_buffering : nos lignes s'intercalent dans le bon ordre avec la sortie de git et
@@ -59,6 +60,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True) 
 RACINE = _racine.racine()
 DEPOT = "Grisbix/JobHunter"
 ZIP_URL = f"https://github.com/{DEPOT}/archive/refs/heads/main.zip"
+PAGE_VERSIONS = f"https://github.com/{DEPOT}/releases/latest"
 TAG_URL = f"https://github.com/{DEPOT}/archive/refs/tags/v{{}}.zip"
 VERSION_URL = f"https://raw.githubusercontent.com/{DEPOT}/main/VERSION"
 MANIFESTE = RACINE / ".maj_manifeste.json"
@@ -115,7 +117,10 @@ def protege(rel):
 
 
 def version_locale():
-    p = RACINE / "VERSION"
+    # Application installée : la version livrée avec le programme, pas un fichier des
+    # données de l'utilisateur.
+    base = Path(getattr(sys, "_MEIPASS", RACINE)) if _gele.est_gele() else RACINE
+    p = base / "VERSION"
     return p.read_text(encoding="utf-8").strip() if p.exists() else "0"
 
 
@@ -137,7 +142,7 @@ def nouvelle_version(timeout=5, intervalle_h=24):
     neuf » — une verification ne doit jamais gener le lancement."""
     # Sans fichier VERSION, ce n'est pas une installation publiee (copie de
     # developpement, depot qui synchronise le moteur) : rien a annoncer.
-    if not (RACINE / "VERSION").exists():
+    if not _gele.est_gele() and not (RACINE / "VERSION").exists():
         return None
     try:
         if (
@@ -716,6 +721,20 @@ def main():
         help="(installeur) noter l'empreinte des fichiers tels qu'installés",
     )
     args = ap.parse_args()
+    if _gele.est_gele():
+        # Application installée : pas de fichiers à remplacer un par un, la nouvelle
+        # version est un nouvel installateur, qui garde les données (Documents/JobHunter).
+        v = nouvelle_version(intervalle_h=0)
+        print(
+            f"Version installée : {version_locale()}"
+            + (f" · disponible : {v}" if v else " · c'est la plus récente.")
+        )
+        if v and not args.verifier:
+            print("Télécharge JobHunterSetup.exe sur la page qui s'ouvre, puis lance-le.")
+            import webbrowser
+
+            webbrowser.open(PAGE_VERSIONS)
+        return 0
     if args.controler:
         if not controler():
             return 1

@@ -9,6 +9,7 @@ import threading
 from tkinter import messagebox, scrolledtext, simpledialog
 from typing import Any
 
+from jobhunter import gele as _gele
 from jobhunter.app import theme as _theme
 from jobhunter.app._type_app import AppTypee
 from jobhunter.app.commun import INTERACTIVE, PY, QUEUE, ROOT, SCRIPTS, ouvrir
@@ -143,6 +144,16 @@ class ExecutionMixin:
         auto, sync docs) : `_occupe()` refusait alors le « Oui » en silence. On
         attend la fin de ce travail — remplacer les scripts sous un programme qui
         tourne n'est pas une option."""
+        if _gele.est_gele():
+            # Application installée : la mise à jour est le nouvel installateur, que
+            # l'utilisateur télécharge et lance ; ses données ne bougent pas.
+            import webbrowser
+
+            from jobhunter.programmes import mise_a_jour as _maj
+
+            self._log("🌐 Télécharge JobHunterSetup.exe sur la page ouverte, puis lance-le.\n")
+            webbrowser.open(_maj.PAGE_VERSIONS)
+            return
         if (self.proc and self.proc.poll() is None) or getattr(self, "_bg_busy", False):
             if not en_attente:
                 self._log("\n⏳ Mise à jour : elle démarre dès que le travail en cours est fini.\n")

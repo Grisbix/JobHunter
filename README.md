@@ -11,13 +11,21 @@ une lettre de motivation et un court message. **Il n'envoie jamais rien** : le c
 
 Tout tourne sur ton ordinateur. Ton CV et tes candidatures ne quittent pas ta machine.
 
+<p align="center">
+  <a href="https://github.com/Grisbix/JobHunter/releases/latest/download/JobHunterSetup.exe"><img alt="Télécharger l'installateur pour Windows" src="https://img.shields.io/badge/T%C3%A9l%C3%A9charger-JobHunterSetup.exe-2563eb?style=for-the-badge&logo=windows&logoColor=white"></a>
+  &nbsp;
+  <a href="#depuis-le-code-source-windows"><img alt="Code source" src="https://img.shields.io/badge/Code%20source-personnaliser-334155?style=for-the-badge&logo=github&logoColor=white"></a>
+</p>
+
+<p align="center"><sub>Windows 10/11 · sans Python ni droits d'administrateur · tes données restent dans <code>Documents\JobHunter</code></sub></p>
+
 | Les offres, triées pour ton profil | La lettre préparée pour une offre |
 |---|---|
 | ![Liste des offres](docs/captures/offres.png) | ![Lettre générée](docs/captures/lettre.png) |
 
 <sub>Captures faites avec un profil et des offres **fictifs** (Léa Martin, chargée de communication à Lyon) : le profil créé par le premier lancement, avant tout complément par Claude.</sub>
 
-- [Démarrage rapide](#démarrage-rapide-windows) · [macOS / Linux](#macos--linux)
+- [Installer (Windows)](#installer-windows) · [Depuis le code source](#depuis-le-code-source-windows) · [macOS / Linux](#macos--linux)
 - [Paramétrer ton profil avec Claude](#paramétrer-ton-profil-avec-claude-code)
 - [Au quotidien](#au-quotidien)
 - [Le profil](#le-profil)
@@ -27,7 +35,27 @@ Tout tourne sur ton ordinateur. Ton CV et tes candidatures ne quittent pas ta ma
 
 ---
 
-## Démarrage rapide (Windows)
+## Installer (Windows)
+
+1. **Télécharge [`JobHunterSetup.exe`](https://github.com/Grisbix/JobHunter/releases/latest/download/JobHunterSetup.exe)**
+   et lance-le. Pas de Python à installer, pas de droits d'administrateur : JobHunter
+   s'installe pour toi seul et ajoute un raccourci au menu Démarrer.
+2. **Au premier lancement**, choisis ton CV (`.docx` de préférence) : JobHunter le lit et
+   pose cinq questions (métiers visés, expérience, villes, accords, secteur).
+3. **Clique sur « Actualiser les offres »** : la collecte, la note et les documents se font
+   depuis l'application.
+
+Tes données (profil, CV, lettres, offres, suivi) vivent dans `Documents\JobHunter` : la
+mise à jour et la désinstallation n'y touchent jamais. Pour mettre à jour, l'application te
+propose la nouvelle version au démarrage ; télécharge et lance le nouvel installateur.
+
+Conseillés : [LibreOffice](https://www.libreoffice.org/download/) (CV et lettres en PDF) et
+Google Chrome (candidature semi-automatique ; à défaut, la collecte utilise Edge, présent sur
+tout Windows).
+
+## Depuis le code source (Windows)
+
+Pour personnaliser JobHunter ou le développer : le code complet, avec Python.
 
 **Les outils**
 

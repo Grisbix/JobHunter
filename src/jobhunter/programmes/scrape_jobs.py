@@ -37,6 +37,7 @@ except Exception:
     pass
 
 # Domaine d'une offre et lexique large : jobhunter.scoring.domaines (phase 3.4).
+from jobhunter.navigation.navigateur import lancer as _lancer  # noqa: E402
 from jobhunter.scoring.domaines import (  # noqa: E402, F401
     DOMAINE_MAP,
     ESG_FINANCE_KEYWORDS,
@@ -834,7 +835,7 @@ def scrape_all_sites(
 
     with sync_playwright() as p:
         browser_type = p.chromium
-        browser = browser_type.launch(headless=headless)
+        browser = _lancer(browser_type, headless=headless)
         context = browser.new_context(viewport={"width": 1280, "height": 800})
         page = context.new_page()
         # TURBO : bloque images/polices/pubs → scan 2-5× plus rapide (texte suffit)

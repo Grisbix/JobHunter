@@ -4,6 +4,18 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.9.0 — 2026-10-19
+
+- **JobHunter s'installe sans Python.** `JobHunterSetup.exe`, attaché à chaque version sur
+  GitHub, installe l'application pour toi seul, sans droits d'administrateur, avec un
+  raccourci au menu Démarrer. Tes données vivent dans `Documents\JobHunter` : ni la mise à
+  jour ni la désinstallation n'y touchent. Le code source reste téléchargeable pour qui veut
+  personnaliser.
+- **Plus besoin du navigateur de Playwright pour collecter.** S'il n'est pas installé, la
+  collecte utilise Chrome ou Edge, déjà sur ta machine.
+- Dans l'application installée, « Mettre à jour » ouvre la page de la nouvelle version, où
+  tu télécharges le nouvel installateur.
+
 ## 2.8.0 — 2026-10-19
 
 Les panneaux « Entreprises », « Accès » et « Mes CV » montrent enfin des chiffres justes.

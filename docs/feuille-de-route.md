@@ -76,7 +76,7 @@ Décisions de l'utilisateur :
 | F1 ✅ (v2.7.0) | **Faire le tri**, en trois volets (voir le détail sous le tableau) | chaque fichier restant a un rôle écrit ; l'arborescence se lit d'un coup d'œil |
 | F2 ✅ (v2.8.0) | **Panneaux de l'app à jour**, un par un (voir le détail sous le tableau) | chaque chiffre affiché est juste et chaque ligne a une action |
 | F3 | **Source HelloWork** : pages publiques de recherche, sans contournement ; robots.txt et conditions vérifiés d'abord | offres HelloWork dans la file, réponse enregistrée et rejouée (B2), verdict dans `rendement` |
-| F4 | **Installateur autonome** `JobHunterSetup.exe` (voir le détail sous le tableau) | sur un Windows sans Python : installation, ouverture, collecte et dossier |
+| F4 ✅ (v2.9.0) | **Installateur autonome** `JobHunterSetup.exe` (voir le détail sous le tableau) | sur un Windows sans Python : installation, ouverture, collecte et dossier |
 | F5 | **Français et anglais** : textes de l'interface dans des catalogues, choix dans les réglages ; vitrine du dépôt en anglais (README, docs utilisateur, notes de version), version française à côté | l'app entière en anglais d'un réglage ; README anglais avec le lien français |
 
 **F1 — faire le tri**

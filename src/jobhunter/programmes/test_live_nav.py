@@ -15,6 +15,7 @@ sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console 
 from playwright.sync_api import sync_playwright
 
 from jobhunter import navigation as w
+from jobhunter.navigation.navigateur import lancer as _lancer
 
 ENG = "playwright"
 
@@ -145,7 +146,7 @@ def main():
     print(f"=== TEST NAV RÉEL ({ENG}, read-only, headless) ===\n")
     rows = []
     with sync_playwright() as p:
-        b = p.chromium.launch(headless=True)
+        b = _lancer(p.chromium, headless=True)
         ctx = b.new_context(locale="fr-FR")
         page = ctx.new_page()
         page.set_default_timeout(15000)

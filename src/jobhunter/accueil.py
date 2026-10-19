@@ -10,6 +10,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox
 
+from jobhunter import gele as _gele
 from jobhunter import profil as _profil
 from jobhunter import racine as _rac
 
@@ -51,9 +52,9 @@ def assurer_profil() -> None:
                 "l'auras sous la main. (Voir README.md)",
             )
             sys.exit(1)
-        # pythonw n'a pas de console : premier_lancement a besoin de python.exe.
-        _py = Path(sys.executable)
-        _py = _py.with_name("python.exe") if _py.name.lower() == "pythonw.exe" else _py
+        # pythonw n'a pas de console : premier_lancement a besoin de python.exe (ou de
+        # jobhunter-cli.exe dans l'application installée).
+        _py = _gele.interpreteur()
         _racine = _rac.racine()
         _rac.exporter_paquet()
         subprocess.run(
