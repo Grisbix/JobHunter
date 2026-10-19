@@ -41,7 +41,8 @@ class AccesTest(unittest.TestCase):
                 patch.object(shutil, "rmtree") as supprimer,
                 patch.object(shutil, "copytree") as copier,
                 patch.object(shutil, "copy2") as copier_fichier,
-                patch("builtins.open", side_effect=FinDuTest),
+                # la file se lit par queue_io (ADR 0002) : on s'arrete la, avant tout navigateur
+                patch("jobhunter.stockage.file.charger", side_effect=FinDuTest),
                 redirect_stdout(io.StringIO()),
             ):
                 # Arrêt avant lecture de la file et avant tout navigateur réel.

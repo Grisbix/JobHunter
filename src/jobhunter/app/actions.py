@@ -17,7 +17,7 @@ import customtkinter as ctk
 from jobhunter.app import commun as _commun
 from jobhunter.app import theme as _theme
 from jobhunter.app._type_app import AppTypee
-from jobhunter.app.commun import EXPIRE, PAS_INTERESSE, PY, QUEUE, SCRIPTS, ST_EMOJI
+from jobhunter.app.commun import EXPIRE, PAS_INTERESSE, QUEUE, SCRIPTS, ST_EMOJI
 from jobhunter.app.theme import BG, BTN, BTN_H, CARD, CB, CE, CF, CL, DEL, MUT, TX, WORK
 from jobhunter.stockage import file as queue_io
 from jobhunter.stockage import suivi as suivi_io
@@ -134,13 +134,27 @@ class ActionsMixin:
         self._log(f"↶ annulé ({len(geste)} offre(s)).\n")
 
     def _postuler(self: "AppTypee", o: Any) -> None:
-        """Enregistre uniquement un envoi explicitement confirmé par l'utilisateur."""
+        """Enregistre uniquement un envoi explicitement confirmé par l'utilisateur.
+
+        Déclaration manuelle, sans observation de la page : `envoi` = « déclaré »
+        (ADR 0009). Une preuve déjà observée n'est jamais effacée."""
         if not o:
             return
-        if messagebox.askyesno(
+        if not messagebox.askyesno(
             "Confirmer l'envoi", "As-tu envoyé cette candidature ?", parent=self.root
         ):
-            self._set_statut(o, "postulé")
+            return
+        oid = self._oid(o)
+        avant = dict(suivi_io.charger(_commun.SUIVI).get(oid, {}))
+        try:
+            suivi_io.declarer_envoi(oid, "déclaré", chemin=_commun.SUIVI, attente=4)
+        except suivi_io.VerrouIndisponible:
+            self._log("⏳ suivi.json occupé par un autre programme — réessaie dans un instant.\n")
+            return
+        self._annuler.append([(oid, avant)])
+        self.suivi = suivi_io.charger(_commun.SUIVI)
+        self._log(f"📌 statut: {o.get('entreprise', '')} → postulé (envoi déclaré)\n")
+        self.refresh_table()
 
     def _apply_checked(self: "AppTypee") -> None:
         """Postule TOUTES les offres cochées : runner semi-auto (remplit + upload, STOP sur
@@ -156,13 +170,9 @@ class ActionsMixin:
         except Exception as ex:
             self._log(f"! écriture sélection KO: {ex}\n")
             return
-        self._log(
-            f"📮 Postuler {len(sel)} offre(s) cochée(s) — console (remplit, STOP sur Envoyer).\n"
-        )
-        self.run_console(
-            [PY, "-m", "jobhunter.programmes.apply_runner", "--selection", str(SEL), "--auto"],
-            f"Postuler sélection ({len(sel)})",
-        )
+        # Panneau Candidatures : le programme remplit et s'arrete sur Envoyer, l'utilisateur
+        # clique dans Chrome puis « J'ai envoyé » ; plus de console (2.2.0).
+        self._candidater(SEL, len(sel))
 
     def _find_by_oid(self: "AppTypee", oid: Any) -> Any:
         for o in self.offers:

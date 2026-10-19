@@ -676,7 +676,7 @@ def main():
                 try:
                     print("=" * 70)
                     print(f"[{seen}/{total}] {d['comp']} — {d['role']}")
-                    fa: dict = {}  # remplissage de CETTE offre (vide si echec)
+                    fa = {}  # remplissage de CETTE offre (vide si echec)
                     ui.evenement(
                         "offre",
                         i=seen,

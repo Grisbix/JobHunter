@@ -277,6 +277,8 @@ class ExecutionMixin:
                     self.root.after(1500, self._auto_enrich)
                 elif kind == "maj_fin":
                     self._apres_mise_a_jour(*val)
+                elif kind == "candidature":
+                    self._cand_evenement(val)
         except queue.Empty:
             pass
         except Exception as ex:

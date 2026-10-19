@@ -61,6 +61,7 @@ class FicheMixin:
         yrs = o.get("exp_requise")
         if yrs:  # années d'expérience exigées (l'utilisateur junior → fit pénalisé si ≥3)
             meta.append(f"⚠️ Exp requise: {yrs} ans" if yrs >= 3 else f"Exp requise: {yrs} ans")
+        meta.extend(self._etat_candidature(o))
         if meta:
             d.insert("end", "\n".join(meta) + "\n", "m")
         desc = (o.get("description") or "").strip()
@@ -85,6 +86,27 @@ class FicheMixin:
                 d.insert("end", v)
         d.configure(state="disabled")
         d.see("1.0")
+
+    def _etat_candidature(self: "AppTypee", o: Any) -> list[str]:
+        """Le statut de suivi et l'état de la preuve d'envoi (ADR 0009), pour la fiche."""
+        sv = self.suivi.get(self._oid(o), {})
+        if not sv.get("s"):
+            return []
+        ligne = f"Candidature : {sv['s']}" + (f" le {sv['d']}" if sv.get("d") else "")
+        envoi = sv.get("envoi")
+        if envoi:
+            ligne += {
+                "confirmé": " · envoi confirmé par le site",
+                "incertain": " · envoi NON confirmé par le site (à vérifier)",
+                "déclaré": " · envoi déclaré",
+            }.get(envoi, f" · {envoi}")
+        lignes = [ligne]
+        preuve = sv.get("preuve") or {}
+        if preuve.get("texte"):
+            lignes.append(f"  « {str(preuve['texte'])[:140]} »")
+        if preuve.get("capture"):
+            lignes.append(f"  capture : {preuve['capture']}")
+        return lignes
 
     def _show_detail(self: "AppTypee", o: Any) -> None:
         self._fill_detail(self.detail, o)

@@ -30,24 +30,18 @@ class DesignTests(unittest.TestCase):
         )
 
     def test_envoi_explicite(self):
+        """Rien n'est écrit sans un « oui » explicite ; le oui déclare l'envoi (ADR 0009)."""
         app = object.__new__(ui.App)
         offer = {"entreprise": "Test", "poste": "Analyste"}
         app.root = None
         with (
             patch.object(ui.messagebox, "askyesno", return_value=False),
-            patch.object(app, "_set_statut") as statut,
+            patch("jobhunter.app.actions.suivi_io.declarer_envoi") as declarer,
             patch.object(app, "_open_offer") as ouvrir,
         ):
             app._postuler(offer)
-            statut.assert_not_called()
+            declarer.assert_not_called()
             ouvrir.assert_not_called()
-        with (
-            patch.object(ui.messagebox, "askyesno", return_value=True),
-            patch.object(app, "_set_statut") as statut,
-            patch.object(app, "_open_offer") as ouvrir,
-        ):
-            app._postuler(offer)
-            statut.assert_called_once_with(offer, "postulé")
             ouvrir.assert_not_called()
 
     def test_panneaux_et_colonnes(self):

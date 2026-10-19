@@ -15,6 +15,7 @@ from jobhunter import profil as _profil
 from jobhunter import racine as _racine
 from jobhunter.app import theme as _theme
 from jobhunter.app.actions import ActionsMixin
+from jobhunter.app.candidature import CandidatureMixin
 from jobhunter.app.commun import MAINT, STEPS
 from jobhunter.app.detail import DetailMixin
 from jobhunter.app.donnees import DonneesMixin
@@ -52,6 +53,7 @@ class App(
     PanneauxMixin,
     DetailMixin,
     ExecutionMixin,
+    CandidatureMixin,
 ):
     """La fenetre JobHunter. Chaque mixin porte un domaine ; ils ne se partagent que `self`."""
 
@@ -60,6 +62,11 @@ class App(
         _resoudre_espacements(root)
         self.root = root
         self.proc: Any = None
+        # panneau Candidatures (app/candidature.py) : programme pilote et ses widgets
+        self._cand_proc: Any = None
+        self._cand_win: Any = None
+        self._cand_lbl: dict[str, Any] = {}
+        self._cand_boutons: list[Any] = []
         self.q: Any = queue.Queue()
         # Une exception dans un rappel Tk s'imprime sur stderr. Dans un .pyw il
         # n'y a pas de console : elle part dans le vide, le bouton ne fait rien
