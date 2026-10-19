@@ -4,6 +4,18 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.19.0 — 2026-10-19
+
+- **La collecte chaque matin, depuis l'application** : Maintenance → « Collecte chaque
+  matin… » crée la tâche Windows à l'heure choisie (ou la retire). C'est la même tâche
+  que `planifier.bat` ; l'application installée, sans Python, peut enfin collecter seule.
+- **L'application installée est essayée à chaque construction de l'installateur**, sur
+  une machine Windows neuve et **sans Python sur le PATH** : la fenêtre s'ouvre et reste
+  ouverte ; le navigateur du système démarre ; un scan fictif est fusionné dans la file ;
+  un dossier de candidature est écrit ; la mise à jour télécharge, contrôle et prépare
+  l'installateur suivant, qui s'installe par-dessus en gardant les données.
+- Document d'architecture de l'application autonome (ADR 0011) mis à jour.
+
 ## 2.18.0 — 2026-10-19
 
 - **Mise à jour de l'application installée en un clic** : le bouton « Mettre à jour »
