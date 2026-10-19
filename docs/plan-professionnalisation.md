@@ -266,3 +266,15 @@ couvre déjà — un passage à la fois, parce que c'est un jugement, pas une su
 | Mise à jour 1.3 → 2.0 qui casse l'install d'un utilisateur | Test réel ZIP + git avant publication ; retour arrière automatique déjà en place |
 | Recherche_emploi désynchronisé pendant la refonte | Il reste sur la 1.3.x jusqu'à la 2.0 ; correctifs urgents rétroportés |
 | Refonte qui s'éternise | Chaque PR livre seule et laisse tout vert ; on peut s'arrêter après n'importe laquelle |
+
+---
+
+## Après le plan : candidature depuis l'application (2.2.0, 2026-10-19)
+
+Premier chantier de la suite proposée par Codex (note du 18/10). Le panneau Candidatures
+pilote `apply_runner --pilote` ; après « J'ai envoyé », la page est observée et le suivi
+reçoit `envoi` (confirmé / incertain / déclaré) et `preuve`
+([ADR 0009](adr/0009-preuve-distincte-de-la-declaration.md)). Le clic d'envoi reste
+humain ; aucune commande du protocole ne clique. Suites possibles, du même document :
+classement évalué sur les jugements réels, identité d'offre plus robuste, rendement par
+source, contrôle du PDF final.

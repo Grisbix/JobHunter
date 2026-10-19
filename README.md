@@ -113,7 +113,7 @@ compléter. **Il n'invente aucun fait** : ce qui n'est pas dans ton CV, il te le
 | Collecte LinkedIn seule / essai sans rien écrire | `python JobHunter.pyw collecte --linkedin [--dry]` |
 | CV + lettre des 20 meilleures offres | `python JobHunter.pyw documents --top 20` |
 | Refaire CV et lettre d'une offre | `python JobHunter.pyw documents --url <morceau-du-lien>` |
-| Remplissage semi-automatique d'un formulaire | `python JobHunter.pyw postuler --canal linkedin` (dans un terminal) |
+| Remplissage semi-automatique d'un formulaire | dans l'application : coche des offres, « Postuler la sélection » (panneau Candidatures) ; ou `python JobHunter.pyw postuler --canal linkedin` dans un terminal |
 
 Les mêmes programmes ont une entrée unique : `python -m jobhunter` liste les commandes
 (`collecte`, `documents`, `postuler`, `pipeline`, `maj`…), avec `src` dans `PYTHONPATH` ;

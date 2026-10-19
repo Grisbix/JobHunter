@@ -83,7 +83,7 @@ perdue, le scan la retrouve demain ; une candidature perdue ne revient jamais.
 
 | Programme | Rôle |
 |---|---|
-| `apply_runner.py` | Remplit les formulaires, **semi-automatique** : le clic final d'envoi reste le tien. |
+| `apply_runner.py` | Remplit les formulaires, **semi-automatique** : le clic final d'envoi reste le tien. Piloté par le panneau Candidatures de l'app (`--pilote`) ou au clavier ; après « envoyé », observe la page et écrit le suivi avec la preuve (`envoi` confirmé / incertain, capture dans `Scripts/_preuves/`). |
 | `relances.py` | Mails de relance J+7 / J+10 par offre. `--brouillons` prépare ceux de toutes les relances dues, sans rien ouvrir ni envoyer : tâche Windows `Relances`, le lundi à 9h30, bilan dans le vault (`Routines/Relances/`). |
 | `metriques_hebdo.py` | Bilan de la semaine, en lecture seule : candidatures envoyées, à relancer, réponses, fusions du pipeline et jours sans run. Lancé le dimanche à 21h par la tâche Windows `Metriques_Emploi` ; sortie dans le vault, `Routines/Metriques_Emploi/`. |
 | `notify_matches.py` | Alerte Windows quand une offre à fort fit arrive. |

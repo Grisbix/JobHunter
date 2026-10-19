@@ -122,3 +122,5 @@ _sauvegarde_maj/
 .pytest_cache/
 .ruff_cache/
 .coverage
+# captures prises apres un envoi (preuve, ADR 0009) : donnees personnelles
+Scripts/_preuves/

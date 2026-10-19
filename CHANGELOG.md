@@ -4,6 +4,26 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.2.0 — 2026-10-19
+
+- **Postuler depuis l'application, sans console.** Coche des offres, « Postuler la
+  sélection » : un panneau s'ouvre. Pour chaque offre, JobHunter ouvre la page dans
+  Chrome, remplit le formulaire, joint CV et lettre et surligne le bouton d'envoi. Tu
+  vérifies, **tu cliques Envoyer dans Chrome**, puis « J'ai envoyé » dans le panneau.
+  Boutons : Sauter, Re-remplir, Rouvrir l'offre, Arrêter. Un CAPTCHA ou une connexion
+  t'est signalé : c'est à toi, JobHunter ne contourne rien.
+- **Une preuve, pas seulement une déclaration.** Après « J'ai envoyé », JobHunter regarde
+  la page — sans rien cliquer — et note dans ton suivi :
+  - « envoi confirmé » si le site affiche sa confirmation (« Merci pour votre
+    candidature », « Application submitted »…) ;
+  - « envoi non confirmé » sinon : vérifie ta boîte mail ou ton espace candidat. Rien
+    n'est jamais renvoyé automatiquement.
+  Une capture de la page est gardée dans `Scripts/_preuves/` ; la fiche de l'offre montre
+  l'état et l'extrait.
+- Plus de double confirmation : « J'ai envoyé » suffit, la candidature passe à « postulé ».
+  « Confirmer une candidature envoyée… » (fiche, clic droit) reste là pour un envoi fait
+  ailleurs.
+
 ## 2.1.1 — 2026-10-19
 
 - **Mac et Linux** : les boutons qui ouvrent un document ou un dossier (CV, lettres,

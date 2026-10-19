@@ -205,7 +205,10 @@ Elles tiennent depuis le début du projet et ne se rediscutent pas au détour d'
 Le détail est dans `.claude/rules/navigation-web.md` ; la version courte, qui vaut partout :
 
 - **Aucune soumission automatique.** Le clic final d'envoi est celui de l'utilisateur.
-  N'ajouter aucun drapeau `--auto` / `--submit` à `apply_runner.py`, ni ailleurs.
+  N'ajouter aucun drapeau `--auto` / `--submit` à `apply_runner.py`, ni ailleurs. Le mode
+  `--pilote` (panneau Candidatures de l'app) ne clique rien non plus : « J'ai envoyé »
+  DÉCLARE, puis la page est observée (`envoi` = confirmé / incertain, ADR 0009) — et
+  « incertain » ne relance jamais un envoi.
 - **Aucun contournement anti-bot**, aucune résolution de CAPTCHA.
   Ni moteur furtif, ni masquage de l'automatisation, ni profil Chrome personnel :
   le navigateur se présente comme automatisé (détail : `.claude/rules/navigation-web.md`).
