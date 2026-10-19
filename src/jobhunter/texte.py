@@ -33,7 +33,7 @@ def cle(s: str | None) -> str:
 
 
 def verifier_motifs(espace: Mapping[str, object], minimum: int = 1) -> int:
-    """Refuse de demarrer si une regex du module porte un `\\b` corrompu.
+    r"""Refuse de demarrer si une regex du module porte un `\b` corrompu.
 
     Une frontiere de mot se corrompt de deux facons, toutes deux SILENCIEUSES —
     le motif compile, ne leve rien, et ne matche plus jamais :

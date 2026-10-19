@@ -2,7 +2,8 @@
 
 Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
 
-Decision : docs/adr/0005-aucune-soumission-automatique.md"""
+Decision : docs/adr/0005-aucune-soumission-automatique.md
+"""
 
 from typing import Any
 
@@ -74,8 +75,10 @@ _REQSUBMIT_JS = r"""
 
 
 def react_submit(page: Any) -> bool:
-    """Soumission native HTML (form.requestSubmit) quand le clic bouton est avalé
-    par React/SPA. Retour True si un form a été soumis."""
+    """Soumission native HTML (form.requestSubmit) quand le clic bouton est avalé par React/SPA.
+
+    Retour True si un form a été soumis.
+    """
     try:
         return bool(page.evaluate(_REQSUBMIT_JS))
     except Exception:
@@ -84,9 +87,11 @@ def react_submit(page: Any) -> bool:
 
 def login_flow(page: Any, email: str, pwd: str, max_steps: int = 3) -> dict[str, Any]:
     """Login multi-étapes (SmartRecruiters : email→continue→password→login).
-    Remplit les champs vides + clique continue/login à chaque étape.
-    Fallback requestSubmit() si le clic ne fait pas avancer (React).
-    Le mot de passe n'est JAMAIS tape : regle du projet, quel que soit pwd."""
+
+    Remplit les champs vides + clique continue/login à chaque étape. Fallback
+    requestSubmit() si le clic ne fait pas avancer (React). Le mot de passe n'est JAMAIS
+    tape : regle du projet, quel que soit pwd.
+    """
     pwd = ""
     import json as _json
 
@@ -155,7 +160,9 @@ _SWITCH_REG_JS = r"""
 
 def switch_to_register(page: Any) -> dict[str, Any]:
     """Bascule d'un écran login vers l'écran création de compte (toggle/onglet).
-    Retour {switched, label, kind}. kind = analyze après clic."""
+
+    Retour {switched, label, kind}. kind = analyze après clic.
+    """
     try:
         r = page.evaluate(_SWITCH_REG_JS)
     except Exception:

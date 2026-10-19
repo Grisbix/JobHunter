@@ -4,6 +4,11 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.4.2 — 2026-10-19
+
+- En coulisse, rien de visible : chaque fonction publique du moteur est documentée au même
+  format, et l'outil de contrôle l'exige désormais.
+
 ## 2.4.1 — 2026-10-19
 
 - En coulisse : le dossier de tes données (`Scripts/`) n'est plus ajouté au chemin

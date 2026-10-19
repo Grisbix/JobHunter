@@ -15,6 +15,11 @@ from jobhunter import racine as _rac
 
 
 def assurer_profil() -> None:
+    """Garantit un profil avant d'ouvrir l'application.
+
+    Sans profil, propose de choisir son CV, puis lance la création du profil dans une
+    console (premier lancement guidé) ; l'application démarre ensuite normalement.
+    """
     try:
         _profil.charger()
     except _profil.ProfilAbsent as _e:

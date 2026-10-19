@@ -69,6 +69,14 @@ _cv_cache: dict[str, str] = {}
 
 
 def cv_text_cached(k: str) -> str:
+    """Le texte du CV d'une variante, lu une fois par processus.
+
+    Args:
+        k: la clé de variante de CV (domaine).
+
+    Returns:
+        Le texte du CV.
+    """
     if k not in _cv_cache:
         _cv_cache[k] = cv_text(k)
     return _cv_cache[k]
@@ -76,9 +84,11 @@ def cv_text_cached(k: str) -> str:
 
 def skills_in(text: str | None) -> set[str]:
     """Set des libellés SKILL_LEX présents dans le texte.
-    Matcher partagé avec tailor_application (has_skill) : sigles courts = mot
-    ENTIER, expressions longues = sous-chaîne. Évite les faux positifs 'ges' dans
-    « GEStion », 'gri' dans « aGRIcole », 'pai' dans « PAIement »."""
+
+    Matcher partagé avec tailor_application (has_skill) : sigles courts = mot ENTIER,
+    expressions longues = sous-chaîne. Évite les faux positifs 'ges' dans « GEStion »,
+    'gri' dans « aGRIcole », 'pai' dans « PAIement ».
+    """
     t = (text or "").lower()
     return {label for label in _ici.SKILL_LEX if has_skill(label, t)}
 
@@ -96,9 +106,11 @@ _PARESSEUX["NEG"] = lambda: tuple(_P.get("niveau.mots_negatifs", []) or [])
 
 
 def experience_years(text: str | None) -> int:
-    """Années d'expérience EXIGÉES détectées (0 si aucune). Prend le max des nombres
-    apparaissant près d'un mot 'expérience'. Ex '10 ans d'expérience' → 10.
-    Plafond 15 (>15 = bruit : âge, ancienneté société…). Ignore si poste junior/alternance.
+    r"""Années d'expérience EXIGÉES détectées (0 si aucune).
+
+    Prend le max des nombres apparaissant près d'un mot 'expérience'. Ex '10 ans
+    d'expérience' → 10. Plafond 15 (>15 = bruit : âge, ancienneté société…). Ignore si
+    poste junior/alternance.
 
     Les blancs sont ÉCRASÉS avant la recherche. La fenêtre de contexte ne fait que
     28 caractères de part et d'autre du nombre, et les fiches structurées séparent
@@ -108,7 +120,8 @@ def experience_years(text: str | None) -> int:
 
     Le mot « expérience » tombait alors hors fenêtre et l'exigence passait
     inaperçue. CNP « EXPERT INVESTISSEMENT RESPONSABLE » sortait ainsi à fit 10
-    avec exp_requise = 0 alors que l'annonce demande plus de dix ans."""
+    avec exp_requise = 0 alors que l'annonce demande plus de dix ans.
+    """
     t = re.sub(r"\s+", " ", (text or "")).lower()
     if any(
         k in t
@@ -378,7 +391,8 @@ def langue_redaction(t: str | None) -> str:
     L'EN-TETE compte a part : EURES traduit automatiquement en anglais des
     annonces neerlandaises ; le corps anglais l'emportait (26 mots-outils contre
     4). Les premieres lignes sont celles de l'employeur : si elles sont
-    nettement dans une langue non parlee, l'annonce l'est."""
+    nettement dans une langue non parlee, l'annonce l'est.
+    """
     tete = _compte_langues(_RX_MOT.findall((t or "")[:600].lower()))
     lg = max(tete, key=tete.__getitem__)
     parlees = [tete[k] for k in _ici.LANGUES_PARLEES if k in tete] or [0]
@@ -479,8 +493,7 @@ def langue_exigee(t: str | None) -> str:
 
 
 def plafond_langue(t: str | None) -> tuple[float, str]:
-    """(plafond, motif) : 2 si redigee dans une langue non parlee, 4 si elle en
-    exige une, (10, '') sinon."""
+    """(plafond, motif) : 2 si redigee dans une langue non parlee, 4 si elle en exige une, (10, '') sinon."""
     lg = langue_redaction(t)
     if lg and lg not in _ici.LANGUES_PARLEES:
         return 2.0, f"redigee en {lg}"
@@ -506,7 +519,8 @@ def fit_detail(text: str | None, title: str | None = "") -> tuple[int, int, floa
     — « Lead Generation » déclenchait le malus SENIOR et « présence commerciale »
     le malus NEG, soit −4 sur une offre qui n'est ni senior ni commerciale.
     Le niveau et le type de poste se lisent dans l'intitulé, pas dans la
-    présentation de l'entreprise."""
+    présentation de l'entreprise.
+    """
     t = (text or "").lower()
     role = (title or text or "").lower()
     sc = axis_scores(t)
@@ -582,7 +596,8 @@ def _departage(t: str, role: str, fit: float, entier: int, yrs: int) -> float:
     sortaient egales. On prend donc des signaux qui ne saturent pas (ou
     doucement) : ce que dit l'INTITULE, la densite ESG du texte, le nombre de
     competences ESG/finance citees, la place du score brut dans le niveau, et
-    l'experience exigee (moins vaut mieux : l'utilisateur est junior)."""
+    l'experience exigee (moins vaut mieux : l'utilisateur est junior).
+    """
     titre = 1.0 if _c(_ici._ESG_TITRE_FORT, role) else 0.6 if _c(_ici._ESG_TITLE_RX, role) else 0.0
     d = densite_esg(t)
     got = skills_in(t)
@@ -600,6 +615,15 @@ def _departage(t: str, role: str, fit: float, entier: int, yrs: int) -> float:
 
 
 def score_offer(offer: dict[str, Any]) -> dict[str, Any]:
+    """Couverture des compétences demandées par l'annonce par le CV de son domaine.
+
+    Args:
+        offer: l'offre (role, missions, profil, domaine).
+
+    Returns:
+        {required, covered, missing, pct} ; pct = None si l'annonce ne demande
+        aucune compétence connue.
+    """
     required = skills_in(f"{offer['role']} {offer['missions']} {offer['profil']}")
     if not required:
         # rien de détecté -> neutre

@@ -1,6 +1,7 @@
 """Trouver la page carriere d'une societe, puis l'offre dedans.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
+Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+"""
 
 import importlib
 from typing import Any
@@ -33,6 +34,20 @@ def smart_step(
     target_kinds: tuple[str, ...] = ("apply_form", "register", "login"),
     max_tries: int = 6,
 ) -> dict[str, Any]:
+    """Fait avancer la page vers l'une des cibles, en essayant des stratégies dans l'ordre.
+
+    Cookies, clic sur le bon lien, page carrières, menus, portail… Un CAPTCHA ou un
+    blocage arrête et passe la main : rien n'est contourné.
+
+    Args:
+        page: la page Playwright.
+        task: l'intention (« apply », « login »…).
+        target_kinds: les types de page qui terminent la recherche.
+        max_tries: nombre maximal d'essais.
+
+    Returns:
+        {status: ok | stuck | blocked, kind, note, …}.
+    """
     strategies = [
         "cookies",
         "click",
@@ -215,9 +230,10 @@ _SEARCH_JS = r"""
 
 
 def search_careers(page: Any, query: str) -> dict[str, Any]:
-    """Tape le rôle dans le champ recherche d'offres de la page carrière puis
-    soumet (Enter). Fait surgir l'offre quand la liste ne la montre pas.
-    Retour {searched, ph}."""
+    """Tape le rôle dans le champ recherche d'offres de la page carrière puis soumet (Enter).
+
+    Fait surgir l'offre quand la liste ne la montre pas. Retour {searched, ph}.
+    """
     if not query:
         return {"searched": False}
     try:
@@ -504,10 +520,11 @@ _DEEP_CAREER_SCAN_JS = r"""
 
 
 def goto_careers(page: Any) -> dict[str, Any]:
-    """Depuis la home corporate, atteint la section Carrières / Nous rejoindre /
-    Careers / Join us (FR/EN/DE/NL, shadow DOM, data-attributes, JS-only links).
-    Utilise un scan DOM profond multi-passes.
-    Retour {clicked, label, kind, reason, href, top5}."""
+    """Depuis la home corporate, atteint la section Carrières / Nous rejoindre / Careers / Join us (FR/EN/DE/NL, shadow DOM, data-attributes, JS-only links).
+
+    Utilise un scan DOM profond multi-passes. Retour {clicked, label, kind, reason,
+    href, top5}.
+    """
     # ── Primary: deep career scan (4-pass comprehensive DOM search) ──
     try:
         r = page.evaluate(_DEEP_CAREER_SCAN_JS)
@@ -745,9 +762,11 @@ _CAREERS_AUTH_JS = r"""
 
 # ── FALLBACK SITEMAP.XML : dernier recours quand aucun lien carrière trouvé ──
 def fetch_sitemap_careers(page: Any, base_url: str = "") -> list[Any]:
-    """Récupère /sitemap.xml et en extrait les URLs contenant des patterns
-    carrière. Retour liste de {url, label, score}.
-    À utiliser quand goto_careers() échoue (no_career_links)."""
+    """Récupère /sitemap.xml et en extrait les URLs contenant des patterns carrière.
+
+    Retour liste de {url, label, score}. À utiliser quand goto_careers() échoue
+    (no_career_links).
+    """
     import re as _re
     from urllib.parse import urlparse
 
@@ -815,9 +834,11 @@ def fetch_sitemap_careers(page: Any, base_url: str = "") -> list[Any]:
 
 
 def drill_to_offer(page: Any, role_hint: str = "", job_rx: str = "") -> dict[str, Any]:
-    """Page carrière = liste d'offres, pas d'offre précise. Clique le lien d'offre
-    qui matche le mieux le rôle visé (sinon le 1er). `job_rx` = pattern liens
-    spécifique à l'ATS (via detect_ats). Retour {clicked, label, n}."""
+    """Page carrière = liste d'offres, pas d'offre précise.
+
+    Clique le lien d'offre qui matche le mieux le rôle visé (sinon le 1er). `job_rx` =
+    pattern liens spécifique à l'ATS (via detect_ats). Retour {clicked, label, n}.
+    """
     try:
         r = page.evaluate(_drill_js(role_hint, job_rx))
     except Exception:
@@ -835,12 +856,13 @@ def drill_to_offer(page: Any, role_hint: str = "", job_rx: str = "") -> dict[str
 # ── RECHERCHE D'OFFRE UNIFIÉE : reconnait l'ATS -> cherche -> entre dans l'offre ─
 def find_offer(page: Any, role_hint: str = "", max_tries: int = 3) -> Any:
     """Point d'entrée UNIQUE pour atteindre une offre sur un site carrière.
-    1) detect_ats (Workday/iCIMS/TalentSoft/… + pattern liens & champ recherche)
-    2) si déjà sur form/CTA -> ok
-    3) search_careers (tape le rôle) -> re-analyse
-    4) drill_to_offer avec le pattern liens de l'ATS -> re-analyse
-    LOOP : si pas atteint, _unstick (cookies/scroll/wait/hover/reload) + réessaie.
-    Retour {reached, kind, ats, via, tries}."""
+
+    1) detect_ats (Workday/iCIMS/TalentSoft/… + pattern liens & champ recherche) 2) si
+    déjà sur form/CTA -> ok 3) search_careers (tape le rôle) -> re-analyse 4)
+    drill_to_offer avec le pattern liens de l'ATS -> re-analyse LOOP : si pas atteint,
+    _unstick (cookies/scroll/wait/hover/reload) + réessaie. Retour {reached, kind, ats,
+    via, tries}.
+    """
     TARGET = ("apply_form", "apply_cta", "register", "login")
     # laisse le JS rendre les offres (cartes React/Vue) avant d'analyser
     try:
@@ -946,10 +968,10 @@ _ANNUAIRES = (
 def homepage_fallback(
     page: Any, entreprise: str, role: str = "", homepage: str | None = None
 ) -> dict[str, Any]:
-    """PIPELINE DE BASE quand l'URL d'offre est morte :
-    nom entreprise → site officiel (cache homepages.json, sinon résolution
-    enrich_homepages : slug+validation+web) → section Carrières → offre.
-    Retour {ok, homepage, careers, kind, via, note}."""
+    """PIPELINE DE BASE quand l'URL d'offre est morte : nom entreprise → site officiel (cache homepages.json, sinon résolution enrich_homepages : slug+validation+web) → section Carrières → offre.
+
+    Retour {ok, homepage, careers, kind, via, note}.
+    """
     import json as _json
 
     hp = homepage

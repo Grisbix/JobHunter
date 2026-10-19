@@ -1,6 +1,7 @@
 """France Travail : API officielle (identifiants requis).
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
+Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+"""
 
 import time
 from typing import Any
@@ -63,6 +64,14 @@ def _ft_token() -> str | None:
 
 
 def fetch_france_travail(par_mot: int = 50) -> list[dict[str, Any]]:
+    """Les offres France Travail (API officielle), par mot-clé.
+
+    Args:
+        par_mot: nombre maximal d'offres par mot-clé.
+
+    Returns:
+        Les offres ; [] sans jeton (identifiants absents ou refusés).
+    """
     import httpx
 
     tok = _ft_token()
@@ -117,6 +126,11 @@ def fetch_france_travail(par_mot: int = 50) -> list[dict[str, Any]]:
 
 
 def scan_france_travail() -> list[dict[str, Any]]:
+    """Collecte France Travail ; signale si les identifiants ne sont pas configurés.
+
+    Returns:
+        Les offres.
+    """
     o = fetch_france_travail()
     if not o and not FT_CFG.exists():
         _log.info(

@@ -1,4 +1,6 @@
-"""jobhunter.scoring.langue — L'annonce est-elle en anglais ou en francais ? (ancien Scripts/langue.py)
+"""jobhunter.scoring.langue — L'annonce est-elle en anglais ou en francais ?
+
+Ancien Scripts/langue.py.
 
 POURQUOI. 2492 offres de la file sont a l'etranger et la plupart sont redigees
 en anglais. Leur envoyer un CV et une lettre en francais, c'est se disqualifier
@@ -104,6 +106,7 @@ def langue_offre(
 
 
 def main() -> int:
+    """Ligne de commande : bilan des langues détectées dans la file."""
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
     import collections
 

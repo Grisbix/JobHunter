@@ -1,6 +1,7 @@
 """Etapes intermediaires : boutons en deux temps, portails, menus, nouvelles tentatives.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
+Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+"""
 
 from typing import Any
 
@@ -65,7 +66,9 @@ _PORTAL_LOGIN_JS = r"""
 
 def click_portal_login(page: Any) -> bool:
     """Page portail (UBS, etc.) : liste de liens vers différents espaces login.
-    Clique le premier lien de connexion pertinent. Retour True si cliqué."""
+
+    Clique le premier lien de connexion pertinent. Retour True si cliqué.
+    """
     try:
         r = page.evaluate(_PORTAL_LOGIN_JS)
         if r and r.get("found"):
@@ -133,9 +136,11 @@ _HAMBURGER_JS = r"""
 
 
 def expand_hamburger_menu(page: Any) -> dict[str, Any]:
-    """Détecte et clique l'icône hamburger (☰) pour révéler la navigation
-    cachée. À appeler AVANT tout scan de liens carrière/login.
-    Retour {expanded, label, selector}."""
+    """Détecte et clique l'icône hamburger (☰) pour révéler la navigation cachée.
+
+    À appeler AVANT tout scan de liens carrière/login. Retour {expanded, label,
+    selector}.
+    """
     try:
         r = page.evaluate(_HAMBURGER_JS)
     except Exception:
@@ -163,8 +168,10 @@ def expand_hamburger_menu(page: Any) -> dict[str, Any]:
 
 
 def hover_menus(page: Any) -> int:
-    """Survole les déclencheurs de menu (dérouler panneau/sous-menu) pour révéler
-    le bon bouton caché. Retour nb de triggers survolés."""
+    """Survole les déclencheurs de menu (dérouler panneau/sous-menu) pour révéler le bon bouton caché.
+
+    Retour nb de triggers survolés.
+    """
     try:
         n = page.evaluate(_HOVERTRIG_JS)
     except Exception:
@@ -181,8 +188,10 @@ def hover_menus(page: Any) -> int:
 
 
 def _unstick(page: Any, i: int) -> None:
-    """Action de « déblocage » escaladante entre 2 essais d'un finder qui a raté :
-    cookies → scroll → attente → hover sous-menus → reload. Idempotent, silencieux."""
+    """Action de « déblocage » escaladante entre 2 essais d'un finder qui a raté : cookies → scroll → attente → hover sous-menus → reload.
+
+    Idempotent, silencieux.
+    """
     try:
         if i <= 0:
             dismiss_cookies(page)
@@ -205,9 +214,11 @@ def _unstick(page: Any, i: int) -> None:
 
 
 def retry(page: Any, fn: Any, is_ok: Any, max_tries: int = 3) -> Any:
-    """Relance `fn()` tant que `is_ok(result)` est faux, en appliquant _unstick
-    (cookies/scroll/wait/hover/reload) entre chaque essai raté. Retour dernier result.
-    Usage: retry(page, lambda: goto_careers(page), lambda r: r.get('clicked'))."""
+    """Relance `fn()` tant que `is_ok(result)` est faux, en appliquant _unstick (cookies/scroll/wait/hover/reload) entre chaque essai raté.
+
+    Retour dernier result. Usage: retry(page, lambda: goto_careers(page), lambda r:
+    r.get('clicked')).
+    """
     result = None
     for i in range(max(1, max_tries)):
         try:

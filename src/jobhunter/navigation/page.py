@@ -1,6 +1,7 @@
 """Lecture d'une page : bandeau cookies (REFUS d'abord), analyse, attente du formulaire.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
+Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+"""
 
 from typing import Any
 
@@ -162,6 +163,14 @@ _DEEP_CLICKABLE = r"""
 
 
 def pick_js(task: str) -> str:
+    """Le script qui repère, sur la page, le lien ou bouton correspondant à une tâche.
+
+    Args:
+        task: « register », « login », « apply » ou « careers ».
+
+    Returns:
+        Le code JavaScript à évaluer dans la page.
+    """
     RX = {
         "register": r"(cr[eé][eé]?z? (un |mon |votre )?compte|nouveau compte|ouvrir un compte|s'?inscri(re|vez)|inscri(ption|vez)|s'?enregistr(er|ez)|enregistr(er|ez)|register|registrieren|konto erstellen|sign ?up|signup|create (an |your )?account|(cr[eé]e\w*|ouvrir) (un |mon |votre )?espace( candidat)?|cr[eé][eé]?z? mon profil|je m'?inscris|rejoign(ez|dre)|join us|devenir membre|pas (encore )?de compte|no account|don'?t have an account|nouvel utilisateur|new user)",
         "login": r"(se connecter|connexion|log ?in|sign ?in|j'?ai deja un compte|identifiez-vous|connectez-vous|acceder a mon compte|mon (espace|compte)( candidat| personnel)?|espace (candidat|personnel|client)|anmeld(en|ung)|einloggen|accedi|iniciar sesi[oó]n)",
@@ -214,6 +223,14 @@ def pick_js(task: str) -> str:
 
 
 def dismiss_cookies(page: Any) -> Any:
+    """Ferme le bandeau de cookies en REFUSANT d'abord ce qui n'est pas nécessaire.
+
+    Args:
+        page: la page Playwright.
+
+    Returns:
+        {done: ce qui a été fait} ; {done: "err"} si le script a échoué.
+    """
     try:
         return page.evaluate(COOKIE_JS)
     except Exception:
@@ -252,8 +269,10 @@ _OVERLAY_JS = r"""
 
 
 def dismiss_overlays(page: Any) -> Any:
-    """Ferme les widgets chat (Intercom/Drift/Zendesk/Crisp…) et modales non-essentielles
-    qui interceptent les clics. NE touche PAS aux bannières cookies/formulaires d'offre/auth."""
+    """Ferme les widgets chat (Intercom/Drift/Zendesk/Crisp…) et modales non-essentielles qui interceptent les clics.
+
+    NE touche PAS aux bannières cookies/formulaires d'offre/auth.
+    """
     try:
         return page.evaluate(_OVERLAY_JS)
     except Exception:
@@ -261,6 +280,14 @@ def dismiss_overlays(page: Any) -> Any:
 
 
 def analyze(page: Any) -> Any:
+    """Analyse la page : type (formulaire, connexion, offre…), CAPTCHA, blocage.
+
+    Args:
+        page: la page Playwright.
+
+    Returns:
+        Le diagnostic ; « other » sans CAPTCHA si l'analyse a échoué.
+    """
     try:
         return page.evaluate(ANALYZE_JS)
     except Exception:
@@ -283,8 +310,10 @@ _COUNT_VISIBLE_INPUTS_JS = r"""
 def wait_for_form(
     page: Any, min_inputs: int = 1, timeout_ms: int = 7000, timeout: int | None = None
 ) -> Any:
-    """Attend que les champs de saisie apparaissent (formulaire chargé
-    dynamiquement). Retour nb d'inputs visibles (0 = jamais rendu)."""
+    """Attend que les champs de saisie apparaissent (formulaire chargé dynamiquement).
+
+    Retour nb d'inputs visibles (0 = jamais rendu).
+    """
     if timeout is not None:
         timeout_ms = timeout
     import time as _t
@@ -306,6 +335,15 @@ def wait_for_form(
 
 
 def click_for_task(page: Any, task: str) -> Any:
+    """Clique le lien ou bouton qui mène à la tâche (jamais un bouton d'envoi).
+
+    Args:
+        page: la page Playwright.
+        task: « register », « login », « apply » ou « careers ».
+
+    Returns:
+        Le libellé cliqué, ou None si rien ne correspond.
+    """
     try:
         r = page.evaluate(pick_js(task))
         if r and r.get("found"):

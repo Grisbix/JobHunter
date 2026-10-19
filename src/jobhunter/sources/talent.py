@@ -1,6 +1,7 @@
 """Talent.com : agregateur.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
+Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+"""
 
 import datetime
 import re
@@ -65,8 +66,11 @@ def _talent_detail(httpx: Any, url: str) -> Any:
 
 
 def fetch_talent(max_days: int = 60, per_kw: int = 20) -> list[dict[str, Any]]:
-    """Offres Talent.com pour chaque mot-cle. max_days ecarte les annonces
-    anciennes : le site sert des offres de plus d'un an (vu : datePosted 2025-06)."""
+    """Offres Talent.com pour chaque mot-cle.
+
+    max_days ecarte les annonces anciennes : le site sert des offres de plus d'un an (vu
+    : datePosted 2025-06).
+    """
     from urllib.parse import quote as _q
 
     import httpx
@@ -126,6 +130,11 @@ def fetch_talent(max_days: int = 60, per_kw: int = 20) -> list[dict[str, Any]]:
 
 
 def scan_talent() -> list[dict[str, Any]]:
+    """Collecte Talent.com (hors --all depuis le 2026-10-03) et l'annonce dans le journal.
+
+    Returns:
+        Les offres, avec description.
+    """
     o = fetch_talent()
     _log.info(f"  ✓ Talent.com → {len(o)} offres (avec description)")
     return o

@@ -1,6 +1,7 @@
 """Conversion .docx -> .pdf (LibreOffice).
 
-Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5)."""
+Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5).
+"""
 
 import subprocess
 from pathlib import Path
@@ -18,6 +19,14 @@ SOFFICE = [
 
 
 def to_pdf(docx_path: Path) -> Path | None:
+    """Convertit un .docx en PDF par LibreOffice, à côté du fichier.
+
+    Args:
+        docx_path: le document Word.
+
+    Returns:
+        Le chemin du PDF, ou None si LibreOffice est absent ou a échoué.
+    """
     exe = next((s for s in SOFFICE if Path(s).exists()), None)
     if not exe:
         return None

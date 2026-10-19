@@ -1,6 +1,7 @@
 """LinkedIn Easy Apply : remplit, l'humain envoie.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
+Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+"""
 
 from typing import Any
 
@@ -10,7 +11,9 @@ from jobhunter.navigation.segment import highlight_submit
 
 def linkedin_ready(page: Any) -> Any:
     """LinkedIn : session connectée ? (aucun mdp tapé — on lit juste l'état).
-    Retour True si nav globale connectée détectée, False si mur login/join."""
+
+    Retour True si nav globale connectée détectée, False si mur login/join.
+    """
     js = r"""
     () => {
       // signaux CONNECTÉ : nav globale + avatar "Me"
@@ -47,11 +50,14 @@ def linkedin_easy_apply(
     fast: bool = False,
     max_screens: int = 8,
 ) -> dict[str, Any]:
-    """LinkedIn « Candidature simplifiée » SEMI-AUTO :
-      1. clique le bouton Easy Apply (si candidature EXTERNE → retour kind=external, pipeline générique prend le relais)
-      2. dans la modale : remplit champs + upload CV à chaque écran
-      3. avance via Suivant/Vérifier — s'ARRÊTE avant « Envoyer la candidature » (surligné, l'humain clique)
-    Aucun mdp tapé, aucun envoi auto. Retour dict {ok, kind, screens, note, submit_label}."""
+    """LinkedIn « Candidature simplifiée » SEMI-AUTO : 1.
+
+    clique le bouton Easy Apply (si candidature EXTERNE → retour kind=external, pipeline
+    générique prend le relais) 2. dans la modale : remplit champs + upload CV à chaque
+    écran 3. avance via Suivant/Vérifier — s'ARRÊTE avant « Envoyer la candidature »
+    (surligné, l'humain clique) Aucun mdp tapé, aucun envoi auto. Retour dict {ok, kind,
+    screens, note, submit_label}.
+    """
     import time as _t
 
     st = linkedin_ready(page)

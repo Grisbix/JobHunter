@@ -1,4 +1,6 @@
-"""jobhunter.navigation.strategies — Stratégies spécifiques par site pour les 62 sites sans compte. (ancien Scripts/site_strategies.py)
+"""jobhunter.navigation.strategies — Stratégies spécifiques par site pour les 62 sites sans compte.
+
+Ancien Scripts/site_strategies.py.
 
 4 catégories :
   CAT1 — ESPACE CANDIDAT BLOQUÉ (11 sites) : solutions de contournement

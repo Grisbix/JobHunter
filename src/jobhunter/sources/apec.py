@@ -1,6 +1,7 @@
 """APEC.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
+Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+"""
 
 import json
 import time

@@ -1,6 +1,7 @@
 """EURES : le portail d'emploi officiel de l'Union europeenne.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
+Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+"""
 
 import re
 import time

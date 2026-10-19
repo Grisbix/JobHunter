@@ -1,6 +1,7 @@
 """Adzuna et Jooble : API officielles (cle requise).
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
+Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+"""
 
 import time
 from pathlib import Path
@@ -172,6 +173,11 @@ def _agreg_offre(
 
 
 def scan_adzuna() -> list[dict[str, Any]]:
+    """Collecte Adzuna (API officielle, France et sept pays).
+
+    Returns:
+        Les offres ; [] si la clé (Scripts/adzuna.json) est absente.
+    """
     import httpx
 
     cle = _cle(ADZUNA_CFG, "app_id", "app_key")
@@ -238,6 +244,11 @@ def scan_adzuna() -> list[dict[str, Any]]:
 
 
 def scan_jooble() -> list[dict[str, Any]]:
+    """Collecte Jooble (API officielle).
+
+    Returns:
+        Les offres ; [] si la clé (Scripts/jooble.json) est absente.
+    """
     import httpx
 
     cle = _cle(JOOBLE_CFG, "key")

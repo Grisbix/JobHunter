@@ -1,4 +1,6 @@
-"""jobhunter.chemins — Le seul endroit qui decide ou vivent les documents generes. (ancien Scripts/chemins.py)
+"""jobhunter.chemins — Le seul endroit qui decide ou vivent les documents generes.
+
+Ancien Scripts/chemins.py.
 
 ETAT DEPUIS LE 20/09/2026 : tout le projet vit dans C:/Recherche_emploi, hors
 de OneDrive, et les documents sont dans l'arbre du projet. `chemins.json`
@@ -106,6 +108,11 @@ def preparer() -> tuple[Path, Path]:
 
 
 def deplace() -> None:  # pragma: no cover - outil d'administration, voir deplace_docs.py
+    """Réservé : le déplacement des documents se fait par `deplace_docs`.
+
+    Raises:
+        NotImplementedError: toujours.
+    """
     raise NotImplementedError("le deplacement se fait par deplace_docs.py")
 
 

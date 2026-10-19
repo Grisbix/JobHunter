@@ -1,6 +1,7 @@
 """Welcome to the Jungle : le sitemap public.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
+Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+"""
 
 import json
 import re
@@ -39,8 +40,7 @@ _WTJ_JS = r"""
 
 
 def _wtj_429(pg: Any) -> bool:
-    """WTJ nous bride-t-il ? Lisible MEME quand la navigation a echoue : la page
-    d'erreur porte « Too Many Requests » alors que robust_goto rend ok=False."""
+    """WTJ nous bride-t-il ? Lisible MEME quand la navigation a echoue : la page d'erreur porte « Too Many Requests » alors que robust_goto rend ok=False."""
     try:
         return "too many requests" in pg.evaluate("document.body.innerText.slice(0,200)").lower()
     except Exception:
@@ -61,13 +61,16 @@ WTJ_PATIENCE = 2  # nombre maximum d'attentes par passe
 
 
 def _wtj_fiche(url: str, client: Any) -> dict[str, Any] | None:
-    """JobPosting d'une fiche WTJ, ou None. Meme balisage que eFinancialCareers :
-    un <script type="application/ld+json"> destine a Google.
+    """JobPosting d'une fiche WTJ, ou None.
+
+    Meme balisage que eFinancialCareers : un <script type="application/ld+json"> destine
+    a Google.
 
     Leve `Bloque` sur 202/429 : c'est le challenge anti-bot de CloudFront, il
     vaut pour l'IP entiere et insister ne sert a rien. Surtout, 202 est un code
     de SUCCES — le confondre avec une page vide ferait passer le mur pour une
-    fiche sans description."""
+    fiche sans description.
+    """
     from jobhunter.programmes.wtj_desc import UA as _WUA
     from jobhunter.programmes.wtj_desc import Bloque
 

@@ -1,4 +1,6 @@
-"""jobhunter.documents.cv_auto — Retouches de CV automatiques, sans LLM, a partir d'une banque de faits. (ancien Scripts/cv_auto.py)
+"""jobhunter.documents.cv_auto — Retouches de CV automatiques, sans LLM, a partir d'une banque de faits.
+
+Ancien Scripts/cv_auto.py.
 
 POURQUOI. Le CV d'une offre sortait du modele tel quel, a l'intitule pres. Une
 annonce Helexia (solaire, Espagne) recevait « Espagnol (débutant) » et aucune
@@ -41,8 +43,11 @@ def _chemin() -> Path:
 
 @lru_cache(maxsize=1)
 def banque() -> dict[str, Any]:
-    """La banque lue une fois par processus. {} si absente ou illisible : sans
-    banque, le CV sort du modele comme avant — jamais d'erreur bloquante."""
+    """La banque lue une fois par processus.
+
+    {} si absente ou illisible : sans banque, le CV sort du modele comme avant — jamais
+    d'erreur bloquante.
+    """
     try:
         b: dict[str, Any] = json.loads(_chemin().read_text(encoding="utf-8"))
         return b
@@ -70,7 +75,8 @@ def retouches(
 ) -> dict[str, Any]:
     """Retouches au format de CV/Sur_mesure pour une annonce.
 
-    `allege` : nombre de lignes d'`allegements` a retirer (0 = aucune)."""
+    `allege` : nombre de lignes d'`allegements` a retirer (0 = aucune).
+    """
     b = banque() if b is None else b
     r: dict[str, list[Any]] = {"remplace": [], "ajoute_apres": [], "supprime": [], "faits": []}
     for f in faits_retenus(texte, b):
@@ -87,11 +93,21 @@ def retouches(
 
 
 def nb_allegements(langue: str = "fr", b: dict[str, Any] | None = None) -> int:
+    """Nombre de lignes que `cv_une_page` peut retirer pour tenir sur une page.
+
+    Args:
+        langue: « fr » ou « en ».
+        b: la banque de faits ; None = celle de CV/Faits.json.
+
+    Returns:
+        Le nombre d'allègements disponibles.
+    """
     b = banque() if b is None else b
     return len((b.get("allegements") or {}).get(langue, []))
 
 
 def main() -> int:
+    """Ligne de commande : liste la banque de faits ou essaie une annonce."""
     import argparse
 
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper

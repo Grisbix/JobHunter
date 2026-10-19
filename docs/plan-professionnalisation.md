@@ -254,6 +254,21 @@ garde le lien dans les deux sens : un ADR que rien ne cite, ou une citation vers
 absent, fait échouer la suite. Reste, au fil de l'eau : raccourcir les récits que l'ADR
 couvre déjà — un passage à la fois, parce que c'est un jugement, pas une substitution.
 
+**Fait (2026-10-19, v2.4.2)** : docstrings au format Google sur **toute l'API publique**
+du paquet. Il fallait :
+- écrire 37 fonctions publiques qui n'en avaient pas ;
+- isoler le résumé de 84 docstrings, avec un contrôle automatique que les mots restent
+  identiques.
+
+Ruff (`D`, convention google) les exige partout. Sont exemptés les programmes
+(`jobhunter.programmes`, des lignes de commande) et la fenêtre (`jobhunter.app`, des mixins
+d'interface).
+
+Récits : un seul répétait une ADR (le refus 403/CAPTCHA dans `audit_dispo`), réduit à une
+ligne et au lien. Les autres racontent un bug mesuré, propre à leur fonction (« coupée à
+45 min chaque jour du 08 au 18/10 »…) : ils restent dans le code, c'est leur place. Une
+ADR décide ; le récit dit pourquoi telle ligne existe.
+
 ---
 
 ## Calendrier indicatif

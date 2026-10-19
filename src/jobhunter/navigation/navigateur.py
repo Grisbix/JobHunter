@@ -1,6 +1,7 @@
 """Navigateur : Playwright standard seul, aides de saisie, chargement robuste, session.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
+Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+"""
 
 import random as _rnd
 import re as _re_block
@@ -64,9 +65,11 @@ _CAPTCHA_OK_RX = _re_block.compile(
 
 
 def block_resources(ctx: Any, images: bool = False) -> None:
-    """TURBO : abandonne les requêtes lourdes/inutiles (media, fonts, pubs, analytics ;
-    images aussi si images=False). Accélère 2-5× le chargement. CSS gardé (layout/clics).
-    Les ressources CAPTCHA passent toujours (sinon grille invisible = insoluble)."""
+    """TURBO : abandonne les requêtes lourdes/inutiles (media, fonts, pubs, analytics ; images aussi si images=False).
+
+    Accélère 2-5× le chargement. CSS gardé (layout/clics). Les ressources CAPTCHA
+    passent toujours (sinon grille invisible = insoluble).
+    """
     heavy = {"media", "font"} | (set() if images else {"image"})
 
     def _route(route: Any) -> Any:
@@ -92,8 +95,10 @@ def block_resources(ctx: Any, images: bool = False) -> None:
 def robust_goto(
     page: Any, url: str, tries: int = 3, wait_until: str = "domcontentloaded"
 ) -> dict[str, Any]:
-    """goto avec retry + backoff sur erreurs réseau/timeout transitoires.
-    Retour {ok, status, note}. Ne contourne pas captcha (détecté ailleurs)."""
+    """Goto avec retry + backoff sur erreurs réseau/timeout transitoires.
+
+    Retour {ok, status, note}. Ne contourne pas captcha (détecté ailleurs).
+    """
     last = ""
     for i in range(tries):
         try:
@@ -117,9 +122,10 @@ def robust_goto(
 
 
 def apply_stealth(context_or_page: Any) -> bool:
-    """RETIRE. Masquer l'automatisation au site (navigator.webdriver, empreinte
-    WebGL...) est un contournement anti-bot, contraire aux regles du projet.
-    Garde pour les appelants ; ne fait rien."""
+    """RETIRE. Masquer l'automatisation au site (navigator.webdriver, empreinte WebGL...) est un contournement anti-bot, contraire aux regles du projet.
+
+    Garde pour les appelants ; ne fait rien.
+    """
     return False
 
 
@@ -151,6 +157,12 @@ class BrowserSession:
     """
 
     def __init__(self, headless: bool = False, engine: str = "playwright") -> None:
+        """Prépare la session sans lancer le navigateur (voir `start`).
+
+        Args:
+            headless: navigateur sans fenêtre.
+            engine: moteur de navigation (Playwright standard seul).
+        """
         self.headless = headless
         self.engine = engine
         self._playwright: Any = None
@@ -227,6 +239,7 @@ class BrowserSession:
             return False
 
     def close(self) -> None:
+        """Ferme la page, le contexte, le navigateur et Playwright, sans lever."""
         try:
             if self._page and not self._page.is_closed():
                 self._page.close()

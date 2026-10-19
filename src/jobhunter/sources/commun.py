@@ -1,6 +1,7 @@
 """Tronc commun de la collecte : reglages, filtre d'intitule, contrats, pays, fiche d'offre.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
+Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+"""
 
 import json
 import re
@@ -130,13 +131,7 @@ SOURCES_CFG = HERE / "sources_config.json"
 
 
 def _load_cfg() -> None:
-    """sources_config.json — écrase les défauts :
-        keywords      [mots-clés]
-        ats_slugs     {ats: [slugs]}
-        workday_flux  [[tenant, hote, site, nom], ...]   [] = aucun flux Workday
-        autres_flux   [[type, cle, nom], ...]            [] = aucun autre ATS
-    Les listes d'entreprises livrees visent la finance et l'ESG : un profil
-    d'un autre metier les vide (premier_lancement.py) et ajoute les siennes."""
+    """sources_config.json — écrase les défauts : keywords      [mots-clés] ats_slugs     {ats: [slugs]} workday_flux  [[tenant, hote, site, nom], ...]   [] = aucun flux Workday autres_flux   [[type, cle, nom], ...]            [] = aucun autre ATS Les listes d'entreprises livrees visent la finance et l'ESG : un profil d'un autre metier les vide (premier_lancement.py) et ajoute les siennes."""
     global KEYWORDS, ATS_SLUGS, WORKDAY_FLUX, AUTRES_FLUX
     try:
         cfg = json.loads(SOURCES_CFG.read_text(encoding="utf-8"))
@@ -234,9 +229,11 @@ _RX_VIE_MAJ = re.compile(r"\bVIE\b(?=\s*[-–—/:|,(])")  # sans re.I : « vie 
 
 
 def contrats_exclus() -> set[str]:
-    """Types de contrat que l'utilisateur ne veut pas voir. Regle dans
-    sources_config.json, pas en dur : il n'est pas etudiant aujourd'hui, il
-    pourrait vouloir les revoir un jour. Liste vide = tout est affiche."""
+    """Types de contrat que l'utilisateur ne veut pas voir.
+
+    Regle dans sources_config.json, pas en dur : il n'est pas etudiant aujourd'hui, il
+    pourrait vouloir les revoir un jour. Liste vide = tout est affiche.
+    """
     try:
         import json as _j
 
@@ -276,7 +273,7 @@ def _est_vie(o: Any) -> bool:
 
 
 def _rx_pays_exclus() -> re.Pattern[str] | None:
-    """Le motif compile, ou None si rien n'est exclu.
+    r"""Le motif compile, ou None si rien n'est exclu.
 
     Les motifs viennent du reglage et sont assembles tels quels : c'est la
     configuration qui decide, pas le code.
@@ -407,8 +404,10 @@ _RX_OU_DIPLOME = re.compile(
 
 
 def demande_etudiant(desc: str | None) -> bool:
-    """True si l'annonce demande un candidat ENCORE ETUDIANT, sans alternative
-    pour un diplome. Un tel poste est un stage, quel que soit son intitule."""
+    """True si l'annonce demande un candidat ENCORE ETUDIANT, sans alternative pour un diplome.
+
+    Un tel poste est un stage, quel que soit son intitule.
+    """
     t = str(desc or "")
     for m in _RX_ETUDIANT.finditer(t):
         # La phrase qui porte la demande : du point precedent au suivant.
@@ -425,7 +424,8 @@ def contrat_de_la_description(desc: str, defaut: str = "") -> str:
 
     Un contrat FAUX est pire qu'un contrat vide : la colonne sert a filtrer.
     On privilegie donc le libelle structure, et on ne retombe sur les mots-cles
-    que pour ceux qui ne peuvent rien designer d'autre."""
+    que pour ceux qui ne peuvent rien designer d'autre.
+    """
     t = str(desc or "")
     if len(t) < 60:
         return defaut
@@ -509,8 +509,10 @@ def contrat_du_titre(titre: str, source: str = "", defaut: str = "") -> str:
 
 def title_ok(t: str) -> bool:
     """Filtre titre : mot-clé métier requis + pas un rôle hors-cible + lexique global.
-    Exception IA : un titre estampillé IA passe même s'il contient « engineer »/
-    « développeur », car c'est le marché visé en complément de l'ESG."""
+
+    Exception IA : un titre estampillé IA passe même s'il contient « engineer »/ «
+    développeur », car c'est le marché visé en complément de l'ESG.
+    """
     if not t:
         return False
     if _P.cherche(_ici._AI_RX, t):
@@ -707,8 +709,10 @@ _URL_JUNK = {
 
 
 def _norm_url(u: str | None) -> str:
-    """Clé de dédup d'URL : hôte sans www, chemin sans / final, params de
-    tracking retirés et reste trié. Les vrais identifiants (?jk=, ?id=) restent."""
+    """Clé de dédup d'URL : hôte sans www, chemin sans / final, params de tracking retirés et reste trié.
+
+    Les vrais identifiants (?jk=, ?id=) restent.
+    """
     from urllib.parse import parse_qsl, urlencode, urlsplit
 
     u = (u or "").strip()

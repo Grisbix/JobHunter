@@ -1,7 +1,7 @@
 [project]
 name = "jobhunter"
 # Doit rester egal au fichier VERSION (lu par la mise a jour) : la CI le verifie.
-version = "2.4.1"
+version = "2.4.2"
 description = "Recherche d'emploi locale : collecte, notation, CV et lettre par offre, candidature semi-automatique."
 readme = "README.md"
 license = "MIT"
@@ -70,13 +70,16 @@ ignore = [
     "F841",   # 11 — variable affectee jamais lue (a relire une par une)
 ]
 
-# Docstrings au format Google (phase 8) : exigees sur l'API publique du SOCLE, qui
-# rejoint la regle module par module — jamais de retour en arriere.
+# Docstrings au format Google (phase 8) : exigees sur toute l'API publique du paquet.
+# Exemptes : les programmes (jobhunter.programmes, des lignes de commande) et la
+# fenetre (jobhunter.app, des mixins d'interface), qui ne sont pas des bibliotheques.
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"!src/jobhunter/{stockage/*,profil,racine,reseau}.py" = ["D"]
+"!src/jobhunter/**/*.py" = ["D"]
+"src/jobhunter/programmes/*" = ["D"]
+"src/jobhunter/app/*" = ["D"]
 
 [tool.ruff.lint.isort]
 # _profil_test doit rester le PREMIER import d'un test : il fixe le profil

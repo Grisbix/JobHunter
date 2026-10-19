@@ -22,10 +22,8 @@ coupee a 45 min CHAQUE jour, avant d'arriver a la suppression — 30 a 60 offres
 fermees trouvees par jour, aucune retiree. Une attente de limite de debit qui
 depasserait la duree n'est pas commencee.
 
-Un 403, un 999 ou une page CAPTCHA, eux, ne sont PAS une limite de debit :
-c'est un refus d'entree (APEC derriere DataDome, Glassdoor, Indeed). On ne
-boucle pas dessus — on note « invérifiable » et on passe. Aucun contournement,
-aucune rotation d'IP, aucune resolution de CAPTCHA.
+Un 403, un 999 ou une page CAPTCHA sont un refus, pas une limite (ADR 0004 ci-dessous) :
+l'offre est notée « invérifiable » et le programme passe à la suivante.
 
 L'ETAT vit dans `_audit_dispo.json` (oid -> [statut, note, url, date]). Une
 offre controlee depuis moins de --frais jours n'est pas recontrolee : un arret,

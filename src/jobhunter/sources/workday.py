@@ -1,6 +1,7 @@
 """Workday : l'API publique des grands groupes.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
+Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+"""
 
 import time
 from typing import Any
@@ -130,10 +131,12 @@ def fetch_workday(tenant: str, host: str, site: str, nom: str) -> list[dict[str,
 
 
 def scan_workday() -> list[dict[str, Any]]:
-    """Les flux en parallele, WORKDAY_PARALLELE a la fois. Chaque tenant est un
-    site distinct : la pause par flux tient toujours, aucun n'est sollicite plus
-    vite qu'avant. En serie, 27 flux a ~70 s depassaient le plafond de 30 min
-    de la passe 1a (2026-10-08)."""
+    """Les flux en parallele, WORKDAY_PARALLELE a la fois.
+
+    Chaque tenant est un site distinct : la pause par flux tient toujours, aucun n'est
+    sollicite plus vite qu'avant. En serie, 27 flux a ~70 s depassaient le plafond de 30
+    min de la passe 1a (2026-10-08).
+    """
     import concurrent.futures as cf
 
     offres = []

@@ -2,7 +2,8 @@
 
 Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
 
-Decision : docs/adr/0004-429-attendre-403-arreter.md"""
+Decision : docs/adr/0004-429-attendre-403-arreter.md
+"""
 
 import re
 import time
@@ -32,12 +33,14 @@ def linkedin_guest_search(
     keyword: str, pages: int = 2, days: int = 7, lieu: str = "France"
 ) -> list[dict[str, Any]]:
     """API guest LinkedIn (HTML fragments, AUCUN login, lecture publique).
+
     Pagination par start=0,25,50… f_TPR filtre fraîcheur (604800s=7j).
 
     `lieu` etait code en dur sur « France ». Desactiver le filtre geographique
     a l'entree de la file ne servait donc a rien pour cette source : elle ne
     DEMANDAIT que des offres francaises. Un filtre en aval ne peut pas rattraper
-    ce qu'une requete en amont n'a jamais demande."""
+    ce qu'une requete en amont n'a jamais demande.
+    """
     import html as _html
 
     import httpx
@@ -171,9 +174,10 @@ LIEUX_MONDE = {"France": 3, "Worldwide": 12}
 def scan_linkedin(
     pages: int = 2, days: int = 7, lieux: list[str] | dict[str, int] | None = None
 ) -> list[dict[str, Any]]:
-    """days = fenetre de fraicheur LinkedIn (f_TPR). Le defaut de 7 jours suffit
-    au scan quotidien, mais il rend invisibles les offres plus anciennes jamais
-    captees : passer --days 31 pour rattraper un mois entier.
+    """Days = fenetre de fraicheur LinkedIn (f_TPR).
+
+    Le defaut de 7 jours suffit au scan quotidien, mais il rend invisibles les offres
+    plus anciennes jamais captees : passer --days 31 pour rattraper un mois entier.
 
     `lieux` : les zones interrogees. En recherche mondiale on ne peut pas se
     contenter de retirer le filtre d'entree — il faut DEMANDER les autres pays.

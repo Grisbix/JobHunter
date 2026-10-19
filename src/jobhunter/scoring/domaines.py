@@ -60,7 +60,8 @@ def classify_domaine(title: str) -> str:
 
     Le premier domaine dont un mot apparait gagne ; le DERNIER domaine du
     profil sert de repli. Le domaine decrit l'OFFRE, pas la cible : il choisit
-    la variante de CV et le paragraphe de parcours de la lettre."""
+    la variante de CV et le paragraphe de parcours de la lettre.
+    """
     global _DOMAINES_RX
     if _DOMAINES_RX is None:
         _DOMAINES_RX = [(d["cle"], _P.motif(d.get("mots_titre"))) for d in _P.domaines()]

@@ -1,6 +1,7 @@
 """Glassdoor : la page de recherche, page 1.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
+Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+"""
 
 import re
 import time
@@ -159,8 +160,10 @@ def _gd_cartes(mot: str) -> list[Any]:
 
 
 def _gd_parse(texte: str) -> list[Any]:
-    """HTML de la page de recherche → cartes. Separe du reseau pour etre
-    testable sur une page enregistree, sans requete."""
+    """HTML de la page de recherche → cartes.
+
+    Separe du reseau pour etre testable sur une page enregistree, sans requete.
+    """
     titres = list(_RX_GD_TITRE.finditer(texte))
     cartes = []
     for n, m in enumerate(titres):

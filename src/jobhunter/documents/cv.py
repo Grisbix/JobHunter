@@ -1,6 +1,7 @@
 """CV par offre : copie de la variante, titre, competences ciblees, retouches sur mesure.
 
-Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5)."""
+Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5).
+"""
 
 import importlib
 import json
@@ -55,7 +56,8 @@ def cv_sur_mesure(offer: dict[str, Any]) -> dict[str, Any] | None:
     offre-la ne lit pas.
 
     Le modele reste la source : on ne retouche que ce que l'offre demande, et la
-    regeneration reprend les retouches au lieu de les ecraser."""
+    regeneration reprend les retouches au lieu de les ecraser.
+    """
     from jobhunter.chemins import CV_SUR_MESURE
 
     if not CV_SUR_MESURE.exists():
@@ -75,7 +77,8 @@ def appliquer_cv_sur_mesure(doc: Any, retouches: dict[str, Any]) -> list[str]:
     experience melange un intitule gras et une date tabulee, et reecrire le
     paragraphe entier perdrait cette mise en forme. Une ancre introuvable est
     SIGNALEE, jamais ignoree : le modele a pu changer, et une retouche qui ne
-    s'applique plus enverrait le CV generique sans un mot."""
+    s'applique plus enverrait le CV generique sans un mot.
+    """
     import copy
 
     manquees = []
@@ -124,14 +127,17 @@ def tailor_cv(
     allege: int = 0,
     auto: bool = True,
 ) -> Path | None:
-    """`nom` : stem impose. Sans lui, plusieurs offres au titre voisin
-    produisent le MEME fichier et s'ecrasent — voir generate_docs._noms_uniques.
+    """`nom` : stem impose.
+
+    Sans lui, plusieurs offres au titre voisin produisent le MEME fichier et s'ecrasent
+    — voir generate_docs._noms_uniques.
 
     `langue` : 'en' choisit le modele anglais quand il existe. 1525 offres de la
     file sont redigees en anglais ; leur envoyer un CV francais, c'est se
     disqualifier avant lecture. Le repli sur le francais est SILENCIEUX quand le
     modele anglais manque (toutes les variantes ne sont pas encore traduites) —
-    un CV francais vaut mieux que pas de CV."""
+    un CV francais vaut mieux que pas de CV.
+    """
     chemins.preparer()  # dossiers de sortie, au moment d'ecrire
     key = cv_variant_key(offer["domaine"])
     src = CV_ATS / (_ici.CV_VARIANT.get(key) or "")
@@ -265,7 +271,8 @@ def cv_une_page(
     les `allegements` de CV/Faits.json un par un. En dernier recours, le CV
     repart du modele sans fait automatique : un CV generique d'une page vaut
     mieux qu'un CV adapte de deux. Un CV/Sur_mesure n'est jamais allege : il a
-    ete relu, sa page aussi."""
+    ete relu, sa page aussi.
+    """
     chemins.preparer()  # dossiers de sortie, au moment d'ecrire
     from jobhunter.documents import cv_auto
 

@@ -1,6 +1,7 @@
 """Reconnaissance des parties d'une page, ATS detecte, bouton d'envoi SURLIGNE (jamais clique).
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
+Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+"""
 
 from typing import Any
 
@@ -53,9 +54,10 @@ _ATS_DETECT_JS = r"""
 
 
 def detect_ats(page: Any) -> Any:
-    """Reconnait la plateforme/ATS du site d'entreprise (Workday, iCIMS, TalentSoft,
-    SmartRecruiters, Greenhouse, Lever, Taleo, SuccessFactors, Teamtailor, Breezy,
-    Recruitee, Workable, WTTJ, … + 'generic'). Retour {name, jobLinkRx, searchSel}."""
+    """Reconnait la plateforme/ATS du site d'entreprise (Workday, iCIMS, TalentSoft, SmartRecruiters, Greenhouse, Lever, Taleo, SuccessFactors, Teamtailor, Breezy, Recruitee, Workable, WTTJ, … + 'generic').
+
+    Retour {name, jobLinkRx, searchSel}.
+    """
     try:
         r = page.evaluate(_ATS_DETECT_JS)
         return r or {"name": "generic"}
@@ -147,11 +149,10 @@ _SEGMENT_JS = r"""
 
 
 def segment_page(page: Any) -> Any:
-    """RECONNAISSANCE COMPLÈTE : mappe toutes les parties de la page —
-    régions (header/nav/main/footer/aside/iframes), overlays (cookie/captcha/chat/
-    modal/newsletter), chaque bouton classé par rôle (cookie/login/register/apply/
-    submit/careers/search/social/menu/lang), chaque formulaire + son but, nb d'offres,
-    signaux (mdp/fichier/email). Retour dict complet (base des décisions nav)."""
+    """RECONNAISSANCE COMPLÈTE : mappe toutes les parties de la page — régions (header/nav/main/footer/aside/iframes), overlays (cookie/captcha/chat/ modal/newsletter), chaque bouton classé par rôle (cookie/login/register/apply/ submit/careers/search/social/menu/lang), chaque formulaire + son but, nb d'offres, signaux (mdp/fichier/email).
+
+    Retour dict complet (base des décisions nav).
+    """
     try:
         return page.evaluate(_SEGMENT_JS)
     except Exception as e:
@@ -166,10 +167,12 @@ def segment_page(page: Any) -> Any:
 
 
 def plan_action(page: Any, goal: str = "apply") -> dict[str, Any]:
-    """CERVEAU déterministe : lit la carte complète (segment_page) et renvoie la
-    MEILLEURE action suivante — {action, role, reason, seg}. Actions :
-    stop(captcha) / cookies / ready / drill / careers / click / auth / register / search / none.
-    Gratuit, hors-ligne, sans LLM. Complète smart_step (qui exécute)."""
+    """CERVEAU déterministe : lit la carte complète (segment_page) et renvoie la MEILLEURE action suivante — {action, role, reason, seg}.
+
+    Actions : stop(captcha) / cookies / ready / drill / careers / click / auth /
+    register / search / none. Gratuit, hors-ligne, sans LLM. Complète smart_step (qui
+    exécute).
+    """
     s = segment_page(page)
     ov = s.get("overlays", {})
     if ov.get("captcha"):
@@ -321,8 +324,11 @@ _SUBMIT_RX = r"(envoyer ma candidature|soumettre|submit application|submit your 
 
 
 def try_open_form(page: Any) -> Any:
-    """Clique un bouton 'Postuler/Apply' pour ouvrir le formulaire. JAMAIS un submit final.
-    Retour label cliqué ou ''. (Défini dans web_nav pour apply_to_offer — était absent → NameError)."""
+    """Clique un bouton 'Postuler/Apply' pour ouvrir le formulaire.
+
+    JAMAIS un submit final. Retour label cliqué ou ''. (Défini dans web_nav pour
+    apply_to_offer — était absent → NameError).
+    """
     js = r"""
     ([openRx, submitRx]) => {
       const o=new RegExp(openRx,'i'), s=new RegExp(submitRx,'i');
@@ -348,8 +354,11 @@ def try_open_form(page: Any) -> Any:
 
 
 def highlight_submit(page: Any) -> Any:
-    """Surligne le bouton d'envoi final en ROUGE + scroll. Ne clique PAS (l'humain clique).
-    Retour label ou ''. (Défini dans web_nav pour apply_to_offer — était absent → NameError)."""
+    """Surligne le bouton d'envoi final en ROUGE + scroll.
+
+    Ne clique PAS (l'humain clique). Retour label ou ''. (Défini dans web_nav pour
+    apply_to_offer — était absent → NameError).
+    """
     js = r"""
     (submitRx) => {
       const s=new RegExp(submitRx,'i');

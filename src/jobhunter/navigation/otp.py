@@ -1,6 +1,7 @@
 """Code recu par courriel : colle le code, surligne Verifier, l'humain clique.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
+Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+"""
 
 from typing import Any
 
@@ -86,8 +87,10 @@ def paste_otp(page: Any, code: Any) -> Any:
 
 
 def highlight_otp_verify(page: Any) -> Any:
-    """Surligne en ROUGE le bouton Vérifier/Valider (data-wn-otp=verify). NE clique PAS.
-    Retour le libellé du bouton, ou '' si introuvable."""
+    """Surligne en ROUGE le bouton Vérifier/Valider (data-wn-otp=verify).
+
+    NE clique PAS. Retour le libellé du bouton, ou '' si introuvable.
+    """
     try:
         return page.evaluate(_OTP_VERIFY_JS)
     except Exception:
@@ -95,8 +98,10 @@ def highlight_otp_verify(page: Any) -> Any:
 
 
 def otp_flow(page: Any, code: Any) -> dict[str, Any]:
-    """SEMI-AUTO : colle le code + surligne le bouton de validation. L'HUMAIN clique.
-    Retour {pasted, mode, verify}."""
+    """SEMI-AUTO : colle le code + surligne le bouton de validation.
+
+    L'HUMAIN clique. Retour {pasted, mode, verify}.
+    """
     r = paste_otp(page, code)
     v = highlight_otp_verify(page) if r.get("filled") else ""
     return {"pasted": r.get("filled", 0), "mode": r.get("mode"), "verify": v}

@@ -1,6 +1,7 @@
 """Reecriture optionnelle par un modele local (Ollama).
 
-Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5)."""
+Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5).
+"""
 
 import importlib
 import os
@@ -74,6 +75,18 @@ def _ollama_generate(prompt: str) -> str | None:
 
 
 def llm_rewrite(offer: dict[str, Any], cv_docx: Any, letter_docx: Any) -> bool:
+    """Réécrit le corps de la lettre par un modèle de langue, s'il y en a un.
+
+    Claude si une clé ANTHROPIC_API_KEY est définie, sinon Ollama en local.
+
+    Args:
+        offer: l'offre (role, company, missions…).
+        cv_docx: le CV généré (non modifié ici).
+        letter_docx: la lettre générée, dont le corps est remplacé.
+
+    Returns:
+        True si la lettre a été réécrite.
+    """
     prompt = _llm_prompt(offer)
     body = None
     # 1) Claude API si clé

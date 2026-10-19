@@ -1,6 +1,7 @@
 """Lecteurs des API publiques d'ATS (Greenhouse, Lever, Ashby...) et des autres API de recrutement.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
+Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+"""
 
 import datetime
 import html
@@ -81,6 +82,14 @@ ATS_NOMS = {
 
 
 def nom_ats(slug: str) -> str:
+    """Le nom d'entreprise lisible d'un identifiant d'ATS (« rolandberger » → Roland Berger).
+
+    Args:
+        slug: l'identifiant du compte sur l'ATS.
+
+    Returns:
+        Le nom connu, sinon l'identifiant en capitales initiales.
+    """
     return ATS_NOMS.get(slug.lower()) or slug.title()
 
 
@@ -96,6 +105,16 @@ def _tt(champ: str, item: Any) -> str:
 
 
 def fetch_ats(kind: str, slug: str) -> list[dict[str, Any]]:
+    """Les offres d'un compte sur un ATS public (Greenhouse, Lever, Ashby, Recruitee…).
+
+    Args:
+        kind: le type d'ATS.
+        slug: l'identifiant du compte.
+
+    Returns:
+        Les offres au titre et à l'URL renseignés ; [] sur refus ou panne (comptés
+        dans INCIDENTS).
+    """
     import httpx
 
     out = []
@@ -252,6 +271,11 @@ ATS_PAUSE = 0.5  # entre deux slugs : 40 appels d'affilee, autant les espacer
 
 
 def scan_ats() -> list[dict[str, Any]]:
+    """Collecte tous les comptes ATS de la configuration.
+
+    Returns:
+        Les offres de tous les comptes.
+    """
     offers = []
     for kind, slugs in _commun.ATS_SLUGS.items():
         for slug in slugs:
@@ -330,6 +354,16 @@ def _sans_cdata(s: str) -> str:
 
 
 def fetch_autre(kind: str, cle: str, nom: str) -> list[dict[str, Any]]:
+    """Les offres d'un autre flux public (Workable, Pinpoint, Eightfold, Teamtailor…).
+
+    Args:
+        kind: le type de flux.
+        cle: l'identifiant du compte (et ses paramètres).
+        nom: le nom d'entreprise à afficher.
+
+    Returns:
+        Les offres au titre et à l'URL renseignés.
+    """
     import httpx
 
     out = []
@@ -886,6 +920,11 @@ _RX_CSP_CHAMP = re.compile(r'<span class="sr-only">([^<]+?) : </span>\s*(.*?)\s*
 
 
 def fetch_service_public() -> list[dict[str, Any]]:
+    """Collecte Choisir le service public, par mots-clés.
+
+    Returns:
+        Les offres, sans doublon.
+    """
     import httpx
 
     out, vus = [], set()
@@ -952,6 +991,11 @@ _RX_IP_CARTE = re.compile(
 
 
 def fetch_impactpool() -> list[dict[str, Any]]:
+    """Collecte Impactpool (organisations internationales), par mots-clés.
+
+    Returns:
+        Les offres, sans doublon.
+    """
     import httpx
 
     out, vus = [], set()
@@ -991,6 +1035,11 @@ def _texte_brut(fragment: str) -> str:
 
 
 def scan_autres() -> list[dict[str, Any]]:
+    """Collecte tous les « autres flux » de la configuration.
+
+    Returns:
+        Les offres de tous les flux.
+    """
     offres = []
     for kind, cle, nom in _commun.AUTRES_FLUX:
         got = fetch_autre(kind, cle, nom)

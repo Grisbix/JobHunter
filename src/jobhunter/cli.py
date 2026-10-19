@@ -61,6 +61,7 @@ COMMANDES = {
 
 
 def aide() -> str:
+    """Le texte d'aide : les commandes nommées et leur rôle."""
     largeur = max(map(len, COMMANDES))
     lignes = ["usage : jobhunter <commande> [options]   (jobhunter <commande> --help)", ""]
     lignes += [f"  {c:<{largeur}}  {d}" for c, (_m, d) in COMMANDES.items()]
@@ -78,6 +79,14 @@ def module_de(cmd: str) -> str | None:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """Lance une commande : `jobhunter <commande> [options]`.
+
+    Args:
+        argv: les arguments, sans le nom du programme ; None = sys.argv.
+
+    Returns:
+        Le code de sortie de la commande (2 si elle est inconnue).
+    """
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv or argv[0] in ("-h", "--help", "aide"):
         print(aide())

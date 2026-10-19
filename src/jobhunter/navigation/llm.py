@@ -1,6 +1,7 @@
 """Repli par modele local (Ollama) : vision et agent pas a pas.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
+Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+"""
 
 import random as _rnd
 from typing import Any
@@ -44,8 +45,10 @@ def vision_pick(
     page: Any, task: str, model: str | None = None, host: str = "http://localhost:11434"
 ) -> dict[str, Any]:
     """Fallback vision : screenshot -> Ollama lit le bon bouton -> clic DOM.
-    Auto-détecte le modèle vision disponible (qwen2.5vl, llava, etc.).
-    Silencieux si Ollama absent/modèle absent. Retour {clicked, label, note}."""
+
+    Auto-détecte le modèle vision disponible (qwen2.5vl, llava, etc.). Silencieux si
+    Ollama absent/modèle absent. Retour {clicked, label, note}.
+    """
     import base64
     import json
     import urllib.error
@@ -100,7 +103,9 @@ def vision_pick(
 
 def _detect_vision_model(host: str = "http://localhost:11434") -> str | None:
     """Détecte le premier modèle vision disponible via l'API Ollama.
-    Ordre de préférence : qwen2.5vl → llava → minicpm-v → bakllava."""
+
+    Ordre de préférence : qwen2.5vl → llava → minicpm-v → bakllava.
+    """
     import json
     import urllib.error
     import urllib.request
@@ -185,11 +190,12 @@ def llm_agent(
     host: str = "http://localhost:11434",
     profile: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """#1 Agent plan-act : à chaque étape lit le DOM (digest), demande au LLM local
-    (Ollama) l'action à faire pour atteindre `goal`, l'exécute, recommence.
-    Actions : click / fill / scroll / done / stop. GARDE-FOUS : refuse submit final
-    & captcha (renvoie stop). Dégrade proprement si Ollama absent.
-    Retour {ok, steps, log, note}."""
+    """#1 Agent plan-act : à chaque étape lit le DOM (digest), demande au LLM local (Ollama) l'action à faire pour atteindre `goal`, l'exécute, recommence.
+
+    Actions : click / fill / scroll / done / stop. GARDE-FOUS : refuse submit final &
+    captcha (renvoie stop). Dégrade proprement si Ollama absent. Retour {ok, steps, log,
+    note}.
+    """
     import json
     import re as _re
     import urllib.request

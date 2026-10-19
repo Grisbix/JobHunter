@@ -33,7 +33,8 @@ def cv_variant_key(domaine: str | None) -> str:
     """Cle de domaine du profil pour un champ `domaine` d'offre.
 
     Accepte la cle elle-meme, son libelle (« Finance »), ou un texte libre lu
-    avec les mots d'intitule des domaines ; sinon le domaine de repli."""
+    avec les mots d'intitule des domaines ; sinon le domaine de repli.
+    """
     d = (domaine or "").strip()
     bas = d.lower()
     for x in _ici._DOMAINES:

@@ -1,6 +1,7 @@
 """Lettre de motivation par offre : salutation, contexte, corps, competences.
 
-Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5)."""
+Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5).
+"""
 
 import importlib
 import re
@@ -101,8 +102,7 @@ _PARESSEUX["SOCLE_EN"] = lambda: ({d["cle"]: d.get("parcours_en") or "" for d in
 
 
 def socle(cle: str, langue: str = "fr") -> str:
-    """Paragraphe de parcours du domaine `cle`, ou celui du premier domaine
-    qui en a un : une lettre sans parcours ne dit rien du candidat."""
+    """Paragraphe de parcours du domaine `cle`, ou celui du premier domaine qui en a un : une lettre sans parcours ne dit rien du candidat."""
     table = _ici.SOCLE_EN if langue == "en" else _ici.SOCLE_FR
     if table.get(cle):
         return str(table[cle])
@@ -162,12 +162,14 @@ def contexte(
     offer: dict[str, Any], langue: str = "fr", position: str | None = None
 ) -> tuple[str, str]:
     """(position, texte) du contexte a ajouter, ou ("", "").
+
     position : "socle" (ajoute au parcours) ou "paragraphe" (paragraphe a part).
 
     `position` restreint la recherche a une seule position. Sans elle, le
     PREMIER contexte applicable masquait les autres : une offre a la fois
     agricole (paragraphe) et durable (socle) perdait la phrase durable du
-    message, que le code d'origine ajoutait independamment (Ortec, 15/10)."""
+    message, que le code d'origine ajoutait independamment (Ortec, 15/10).
+    """
     for ctx in _ici._CONTEXTES:
         if position and (ctx.get("position") or "paragraphe") != position:
             continue
@@ -228,9 +230,10 @@ def _reprise(civs: list[str], langue: str) -> str:
 
 
 def corps_sur_mesure(offer: dict[str, Any]) -> list[str]:
-    """Les paragraphes ecrits a la main pour cette offre, ou [] s'il n'y en a
-    pas. Le fichier se nomme `<entreprise>__<poste>.txt`, paragraphes separes
-    par une ligne vide.
+    """Les paragraphes ecrits a la main pour cette offre, ou [] s'il n'y en a pas.
+
+    Le fichier se nomme `<entreprise>__<poste>.txt`, paragraphes separes par une ligne
+    vide.
 
     La recherche est TOLERANTE a la casse et a la ponctuation : le nom de
     fichier vient d'un intitule d'annonce, ou l'on trouve des barres obliques,
@@ -351,9 +354,7 @@ _PARESSEUX["SKILL_PROSE_EN"] = lambda: (
 
 
 def _enumere(items: list[str], langue: str = "fr") -> str:
-    """« a, b et c ». Une enumeration se termine par une conjonction, pas par
-    une virgule : sans elle, la phrase se lit comme une liste a puces mise bout
-    a bout.
+    """« a, b et c ». Une enumeration se termine par une conjonction, pas par une virgule : sans elle, la phrase se lit comme une liste a puces mise bout a bout.
 
     Un element peut CONTENIR la conjonction (« la trésorerie et le financement »,
     « Python et SQL »). Place en dernier, il donnait deux « et » de suite :
@@ -514,7 +515,8 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
     change. Les formules de politesse, elles, ne se traduisent pas mot a mot :
     « Je vous prie d'agreer… » n'a pas d'equivalent litteral et devient
     « Yours faithfully », qui est la forme attendue quand le destinataire est
-    inconnu (« Dear Sir or Madam »)."""
+    inconnu (« Dear Sir or Madam »).
+    """
     chemins.preparer()  # dossiers de sortie, au moment d'ecrire
     company = offer["company"]
     role = (offer["role"] or "ce poste").strip()

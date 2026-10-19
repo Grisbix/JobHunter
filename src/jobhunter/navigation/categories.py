@@ -1,6 +1,7 @@
 """Strategies par categorie de site (tableaux de navigation/strategies.py).
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
+Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+"""
 
 from typing import Any
 
@@ -16,7 +17,9 @@ from jobhunter.navigation.strategies import (
 
 def click_first_job_offer(page: Any) -> Any:
     """Cat2/3 : trouve et clique la premiere offre d'emploi sur la page.
-    Retour {found, href, label, total_offers}."""
+
+    Retour {found, href, label, total_offers}.
+    """
     try:
         r = page.evaluate(FIRST_JOB_OFFER_JS)
     except Exception:
@@ -37,9 +40,10 @@ def click_first_job_offer(page: Any) -> Any:
 
 
 def check_apply_for_register(page: Any) -> Any:
-    """Cat2/3 : apres avoir clique une offre, verifie si le flux apply
-    inclut une creation de compte (email + password demandes).
-    Retour {kind, hasEmail, hasNewPwd, ...}."""
+    """Cat2/3 : apres avoir clique une offre, verifie si le flux apply inclut une creation de compte (email + password demandes).
+
+    Retour {kind, hasEmail, hasNewPwd, ...}.
+    """
     try:
         return page.evaluate(ATS_APPLY_REGISTER_DETECT_JS)
     except Exception:
@@ -48,7 +52,9 @@ def check_apply_for_register(page: Any) -> Any:
 
 def probe_auth_endpoints(page: Any) -> Any:
     """Cat3 : scanne les liens /login, /register, /signin dans la page.
-    Retour {found, authLinks, footerAuthLinks}."""
+
+    Retour {found, authLinks, footerAuthLinks}.
+    """
     try:
         return page.evaluate(SITEMAP_PROBE_JS)
     except Exception:
@@ -57,7 +63,9 @@ def probe_auth_endpoints(page: Any) -> Any:
 
 def check_root_domain(page: Any) -> Any:
     """Cat4 : verifie si le domaine racine est accessible et a des liens carriere.
-    Retour {title, bodyPreview, hasCareerLinks, careerLinks, url, status}."""
+
+    Retour {title, bodyPreview, hasCareerLinks, careerLinks, url, status}.
+    """
     try:
         return page.evaluate(ROOT_DOMAIN_CHECK_JS)
     except Exception:
@@ -72,7 +80,9 @@ def check_root_domain(page: Any) -> Any:
 
 def didomi_reject_and_wait(page: Any, wait_ms: int = 12000) -> Any:
     """Ferme la banniere Didomi (Bpifrance) et attend le chargement React.
-    Retour {done, ...}."""
+
+    Retour {done, ...}.
+    """
     try:
         r = page.evaluate(BPIFRANCE_DIDOMI_JS)
     except Exception:
@@ -83,7 +93,9 @@ def didomi_reject_and_wait(page: Any, wait_ms: int = 12000) -> Any:
 
 def scan_nonstandard_inputs(page: Any) -> Any:
     """Scan les inputs non-standards (BPCE, Engagement Jeunes) pour diagnostic.
-    Retour {found, inputs}."""
+
+    Retour {found, inputs}.
+    """
     try:
         return page.evaluate(BPCE_INPUT_JS)
     except Exception:

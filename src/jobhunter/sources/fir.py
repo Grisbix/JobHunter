@@ -1,6 +1,7 @@
 """FIR / French SIF : offres 100 % ISR-ESG.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
+Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+"""
 
 import re
 from typing import Any
@@ -23,6 +24,11 @@ FIR_URL = "https://www.frenchsif.org/isr_esg/emplois-et-stages/"
 
 
 def fetch_fir() -> list[dict[str, Any]]:
+    """Les offres du FIR / French SIF (finance 100 % ISR-ESG).
+
+    Returns:
+        Les offres ; [] si la page n'a pas pu être lue.
+    """
     import html as _html
 
     import httpx
@@ -65,6 +71,11 @@ def fetch_fir() -> list[dict[str, Any]]:
 
 
 def scan_fir() -> list[dict[str, Any]]:
+    """Collecte FIR / French SIF et l'annonce dans le journal.
+
+    Returns:
+        Les offres.
+    """
     o = fetch_fir()
     _log.info(f"  ✓ FIR / French SIF → {len(o)} offres (100 % ISR-ESG)")
     return o

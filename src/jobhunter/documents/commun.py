@@ -1,6 +1,7 @@
 """Ce que partagent CV, lettre et message : intitule nettoye, competences, valeurs d'entreprise.
 
-Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5)."""
+Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5).
+"""
 
 # Noms du lexique, re-exportes : `tailor_application.cv_variant_key` reste valable.
 import importlib
@@ -176,7 +177,7 @@ def minuscule_titre(t: str) -> str:
 
 
 def _de(mot: str, apostrophe: str = "'") -> str:
-    """Élision : 'de Amundi' -> \"d'Amundi\".
+    r"""Élision : 'de Amundi' -> "d'Amundi".
 
     'h' et 'y' EXCLUS : « de Hollande » et « de Yann » sont corrects, pas « d'Hollande ».
 
@@ -283,9 +284,11 @@ def titre_poste(t: str | None, maxlen: int = 80) -> str:
 
 
 def _coupe_mot(t: str | None, n: int) -> str:
-    """Tronque a n caracteres SANS couper un mot, et sans laisser de ponctuation
-    pendante. « …help to build a better wor » est parti dans une vraie lettre :
-    une citation coupee en plein mot est plus visible qu'une citation absente."""
+    """Tronque a n caracteres SANS couper un mot, et sans laisser de ponctuation pendante.
+
+    « …help to build a better wor » est parti dans une vraie lettre : une citation
+    coupee en plein mot est plus visible qu'une citation absente.
+    """
     t = " ".join((t or "").split())
     if len(t) <= n:
         return t.rstrip(" ,;:.-")
@@ -297,8 +300,7 @@ def _coupe_mot(t: str | None, n: int) -> str:
 
 
 def company_value(company: str | None) -> str:
-    """Accroche connue pour cette entreprise, ou "" : quand l'entreprise est
-    inconnue, la lettre ne lui prete AUCUN engagement, elle parle du poste."""
+    """Accroche connue pour cette entreprise, ou "" : quand l'entreprise est inconnue, la lettre ne lui prete AUCUN engagement, elle parle du poste."""
     c = (company or "").lower()
     for k, v in _ici.COMPANY_VALUE.items():
         if k in c:
@@ -338,13 +340,16 @@ _SKILL_EN_NORM = None
 
 
 def skills_en(labels: list[str]) -> list[str]:
-    """Libelles traduits. La recherche ignore les ACCENTS : les cles de SKILL_EN
-    sont ecrites sans eux, les libelles reels en portent (« Analyse financiere »
-    contre « Analyse financiere »). Comparer tels quels ne trouvait rien et la
-    lettre anglaise restait farcie de francais.
+    """Libelles traduits.
+
+    La recherche ignore les ACCENTS : les cles de SKILL_EN sont ecrites sans eux, les
+    libelles reels en portent (« Analyse financiere » contre « Analyse financiere »).
+    Comparer tels quels ne trouvait rien et la lettre anglaise restait farcie de
+    francais.
 
     Un libelle inconnu est RENDU TEL QUEL plutot que supprime : mieux vaut un
-    mot francais visible qu'une competence disparue."""
+    mot francais visible qu'une competence disparue.
+    """
     global _SKILL_EN_NORM
     if _SKILL_EN_NORM is None:
         from jobhunter.programmes.jutil import sans_accent
@@ -364,6 +369,15 @@ _PARESSEUX["SKILL_INTERNES"] = lambda: ({lab for lab, v in _ici._COMP.items() if
 
 
 def match_skills(offer_text: str | None, max_n: int = 8) -> list[str]:
+    """Les compétences du lexique présentes dans une annonce, hors compétences internes.
+
+    Args:
+        offer_text: le texte de l'annonce.
+        max_n: nombre maximal de compétences rendues.
+
+    Returns:
+        Les libellés trouvés, dans l'ordre du lexique.
+    """
     t = (offer_text or "").lower()
     hits = []
     for label in _ici.SKILL_LEX:

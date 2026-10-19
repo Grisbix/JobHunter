@@ -7,8 +7,10 @@ part dans les sous-modules qui lient le nom ; les autres le lisent par
 `_proprietaire.NOM`, jamais par copie. Sans ce routage, un test qui remplace
 `_get_borne` laisserait la collecte sortir sur le vrai reseau.
 
-A retirer avec les facades `Scripts/*.py` (phase 3.9) : les appelants importeront alors
-le sous-module qui porte le nom.
+Les facades `Scripts/*.py` sont parties en 2.0 ; celle-ci reste pour `sources`,
+`documents`, `navigation` et `app`, dont les programmes et les tests lisent encore des
+noms par le paquet (`jobhunter.sources.title_ok`). La retirer demanderait de pointer
+chaque appelant vers le sous-module qui porte le nom.
 
 Decision : docs/adr/0001-facades-alias.md
 """

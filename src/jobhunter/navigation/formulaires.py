@@ -2,7 +2,8 @@
 
 Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
 
-Decision : docs/adr/0005-aucune-soumission-automatique.md"""
+Decision : docs/adr/0005-aucune-soumission-automatique.md
+"""
 
 import random as _rnd
 import re as _re_lex
@@ -48,11 +49,12 @@ _WIZARD_NEXT_JS = r"""
 
 def run_wizard(page: Any, fill_fn: Any = None, max_screens: int = 6) -> dict[str, Any]:
     """#3 Parcourt un formulaire de candidature MULTI-ÉCRANS (Workday/iCIMS/SmartRecruiters).
-    Boucle : remplit l'écran (fill_fn) + coche CGU + clique "Suivant/Continuer"
-    (jamais le submit final) → écran suivant → répète. S'arrête quand seul le submit
-    final reste (à toi de cliquer Envoyer) ou plus de progression.
-    fill_fn(page)->int : callback de remplissage (autofill du runner). Retour
-    {screens, filled_total, stopped}."""
+
+    Boucle : remplit l'écran (fill_fn) + coche CGU + clique "Suivant/Continuer" (jamais
+    le submit final) → écran suivant → répète. S'arrête quand seul le submit final reste
+    (à toi de cliquer Envoyer) ou plus de progression. fill_fn(page)->int : callback de
+    remplissage (autofill du runner). Retour {screens, filled_total, stopped}.
+    """
     filled_total, screens = 0, 0
     seen_urls = []
     for _ in range(max(1, max_screens)):
@@ -119,9 +121,10 @@ _FILEINPUT_JS = r"""
 
 
 def accept_consent(page: Any) -> Any:
-    """Coche les cases de consentement OBLIGATOIRES (CGU, conditions, politique de confidentialité,
-    traitement des données) nécessaires pour postuler. Ne coche PAS les opt-ins
-    marketing (newsletter, offres commerciales)."""
+    """Coche les cases de consentement OBLIGATOIRES (CGU, conditions, politique de confidentialité, traitement des données) nécessaires pour postuler.
+
+    Ne coche PAS les opt-ins marketing (newsletter, offres commerciales).
+    """
     js = r"""
     () => {
       const REQ = /(accepte|conditions|cgu|c\.g\.u|politique|traitement.*donn|j'?ai lu|termes|terms|privacy|consent|rgpd|mentions l)/i;
@@ -149,11 +152,10 @@ def accept_consent(page: Any) -> Any:
 
 
 def _handle_smartrecruiters_iframe(page: Any) -> Any:
-    """SmartRecruiters: click Apply button, wait for the application iframe,
-    and return the frame object (or None if not applicable).
+    r"""SmartRecruiters: click Apply button, wait for the application iframe, and return the frame object (or None if not applicable).
 
     SmartRecruiters loads the application form inside a dynamically created
-    iframe after clicking an \"Apply\"/\"Postuler\" button. This function:
+    iframe after clicking an "Apply"/"Postuler" button. This function:
       1. Detects the Apply button using ATS-specific selectors
       2. Clicks it
       3. Waits up to 15 s for the iframe to appear
@@ -251,8 +253,7 @@ def apply_to_offer(
     lettre_path: Any = None,
     submit_highlight: bool = True,
 ) -> Any:
-    """Navigue vers une offre d'emploi, remplit TOUS les champs du formulaire,
-    upload CV + lettre de motivation, et surligne le bouton de soumission.
+    """Navigue vers une offre d'emploi, remplit TOUS les champs du formulaire, upload CV + lettre de motivation, et surligne le bouton de soumission.
 
     Args:
         page: Playwright page object
@@ -601,7 +602,9 @@ def apply_to_offer(
 
 def smart_upload(page: Any, cv: Any, letter: Any) -> Any:
     """Upload CV + lettre en matchant chaque input[type=file] par label (cv/lettre).
-    Inputs cachés gérés (set_input_files marche même non visible)."""
+
+    Inputs cachés gérés (set_input_files marche même non visible).
+    """
     from pathlib import Path as _P
 
     done = []
@@ -754,8 +757,10 @@ def accept_consent_dialog(page: Any) -> Any:
 
 def _best_form_target(page: Any) -> Any:
     """Renvoie le contexte (page OU iframe) qui contient le vrai formulaire.
-    SmartRecruiters/Taleo/SuccessFactors chargent le form dans une iframe :
-    on choisit le frame avec le plus de champs de saisie visibles."""
+
+    SmartRecruiters/Taleo/SuccessFactors chargent le form dans une iframe : on choisit
+    le frame avec le plus de champs de saisie visibles.
+    """
     try:
         best_n = page.evaluate(_COUNT_VISIBLE_INPUTS_JS)
     except Exception:
@@ -785,11 +790,11 @@ def _best_form_target(page: Any) -> Any:
 def fill_application(
     page: Any, profile: dict[str, Any], cv: Any = None, letter: Any = None, docs: Any = None
 ) -> dict[str, Any]:
-    """POSTULER UNIVERSEL : reconnait TOUS les patterns de champs et remplit tout —
-    texte/email/tel/date/select(dropdown)/radio(civilité)/checkbox(CGU)/textarea +
-    upload de TOUS les documents (CV, lettre, + docs extra par label).
-    Cherche le form dans les iframes (SmartRecruiters/Taleo) si la page est vide.
-    Retour {total, filled, uploaded, consent, cover_pct, unmatched:[…]}."""
+    """POSTULER UNIVERSEL : reconnait TOUS les patterns de champs et remplit tout — texte/email/tel/date/select(dropdown)/radio(civilité)/checkbox(CGU)/textarea + upload de TOUS les documents (CV, lettre, + docs extra par label).
+
+    Cherche le form dans les iframes (SmartRecruiters/Taleo) si la page est vide. Retour
+    {total, filled, uploaded, consent, cover_pct, unmatched:[…]}.
+    """
     from pathlib import Path as _P
 
     page = _best_form_target(page)  # bascule sur l'iframe du form si besoin
@@ -919,7 +924,7 @@ def fill_application(
 
 
 def _fold(s: str) -> str:
-    """minuscule + sans accents (Française→francaise) pour matcher les <option>."""
+    """Minuscule + sans accents (Française→francaise) pour matcher les <option>."""
     import unicodedata as _ud
 
     return "".join(
@@ -929,7 +934,9 @@ def _fold(s: str) -> str:
 
 def _pick_option(loc: Any, options: Any, val: Any, extra: Any = ()) -> bool:
     """Sélectionne l'option d'un <select> matchant val (label/valeur), + variantes extra.
-    Accent-insensible + match code ISO (option value='FR' pour 'France')."""
+
+    Accent-insensible + match code ISO (option value='FR' pour 'France').
+    """
     cands = [_fold(val)] + [_fold(e) for e in extra]
     try:
         for i, o in enumerate(options):

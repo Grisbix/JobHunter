@@ -1,6 +1,7 @@
 """La ligne de commande de la collecte (python Scripts/job_sources.py ...).
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
+Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+"""
 
 import argparse
 import importlib
@@ -45,6 +46,11 @@ _PARESSEUX["INDEED_LIEUX"] = lambda: (
 
 
 def main() -> int:
+    """Ligne de commande de la collecte : sources choisies, dédoublonnage, fusion.
+
+    Returns:
+        0, 3 si la file est verrouillée par un autre programme, 4 si Indeed a été bridé.
+    """
     _load_cfg()  # sources éditées depuis l'app
     ap = argparse.ArgumentParser()
     ap.add_argument("--all", action="store_true")
@@ -310,7 +316,8 @@ def _fusionner(uniq: Any, dry: bool) -> int:
     attend jusqu'a 30 minutes : ce qui precede a coute une heure de reseau, et
     abandonner au bout de 3 minutes, comme par defaut, le jetterait. Si
     l'attente echoue quand meme, rien n'est perdu — le scan est deja dans
-    offres_scan.json, et `--fusion-seule` le refusionne sans rien recollecter."""
+    offres_scan.json, et `--fusion-seule` le refusionne sans rien recollecter.
+    """
     from jobhunter.stockage import file as queue_io
 
     try:

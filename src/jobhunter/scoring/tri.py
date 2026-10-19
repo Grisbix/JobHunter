@@ -1,4 +1,6 @@
-"""jobhunter.scoring.tri — Separe ce qui colle au profil de ce qui n'y colle pas, et purge. (ancien Scripts/tri_file.py)
+"""jobhunter.scoring.tri — Separe ce qui colle au profil de ce qui n'y colle pas, et purge.
+
+Ancien Scripts/tri_file.py.
 
 POURQUOI PAS LE FIT. Le fit mesure la DENSITE DE VOCABULAIRE ESG et finance,
 pas l'adequation d'un poste a un candidat junior. Mesure sur la file du
@@ -532,6 +534,7 @@ def motif(o: Offre, proteges: set[str]) -> str | None:
 
 
 def main() -> int:
+    """Ligne de commande : tri de la file (inspection, ou purge avec --supprime)."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--supprime", action="store_true", help="ecrit la file purgee")
     ap.add_argument("--motifs", action="store_true", help="echantillon par motif")

@@ -1,4 +1,6 @@
-"""jobhunter.scoring.zones — Ou l'utilisateur veut travailler, et comment le lire dans un lieu. (ancien Scripts/zones.py)
+"""jobhunter.scoring.zones — Ou l'utilisateur veut travailler, et comment le lire dans un lieu.
+
+Ancien Scripts/zones.py.
 
 PREFERENCE DECLAREE (2026-09-08) : Bordeaux et l'Ile-de-France d'abord ; le
 Sud-Est ensuite ; le reste de la France sans grand interet.
@@ -1030,8 +1032,7 @@ _PARESSEUX["_WTJ_SUD_EST"] = lambda: set().union(*(s["wtj"] for s in _ici.SECTEU
 
 
 def _dans_secteur(t: str, s: Secteur) -> bool:
-    """Le lieu normalise `t` nomme-t-il le secteur `s` ? (communes d'IDF : pas
-    si une autre region est nommee — « Asnières, Normandy »)."""
+    """Le lieu normalise `t` nomme-t-il le secteur `s` ? (communes d'IDF : pas si une autre region est nommee — « Asnières, Normandy »)."""
     if s["lieux"] and _contient(t, s["lieux"]):
         return True
     return bool(s["communes"]) and _contient(t, s["communes"]) and not _contient(t, _REGIONS_AUTRES)
@@ -1079,10 +1080,11 @@ _RX_VILLE_ETAT = re.compile(
 
 
 def _code_etranger(job_sources: Any, lieu: str) -> bool:
-    """_RX_ETRANGER, sans prendre une particule pour un code pays : son motif
-    est insensible a la casse, et « Rive-de-Gier » y devenait l'Allemagne
-    (« de »). Un code de deux lettres ne compte qu'en MAJUSCULES et hors d'un
-    nom compose (« Düsseldorf … DE » oui, « -de- » non)."""
+    """_RX_ETRANGER, sans prendre une particule pour un code pays : son motif est insensible a la casse, et « Rive-de-Gier » y devenait l'Allemagne (« de »).
+
+    Un code de deux lettres ne compte qu'en MAJUSCULES et hors d'un nom compose («
+    Düsseldorf … DE » oui, « -de- » non).
+    """
     for m in job_sources._RX_ETRANGER.finditer(lieu):
         s = m.group(0)
         if len(s) != 2:
@@ -1708,9 +1710,11 @@ _PAYS_REGION = {p: r for r, ps in _REGIONS.items() for p in ps}
 
 
 def region_pays(pays: str | None) -> str:
-    """Region d'un pays rendu par pays_lieu. La France est en Europe, comme
-    tout pays europeen non liste ailleurs ; « ? » et « étranger (autre) »
-    restent « ? »."""
+    """Region d'un pays rendu par pays_lieu.
+
+    La France est en Europe, comme tout pays europeen non liste ailleurs ; « ? » et «
+    étranger (autre) » restent « ? ».
+    """
     if pays in ("?", "étranger (autre)", "", None):
         return "?"
     return _PAYS_REGION.get(pays, "Europe")
@@ -1726,7 +1730,8 @@ def lieu_du_titre(titre: str | None) -> str | None:
 
     Les VILLES seulement, pas les pays : « Analyste ESG — couverture UK » ou
     « Marches US » decrivent un perimetre, pas un lieu de travail. Une ville
-    nommee dans un intitule, elle, est presque toujours le lieu du poste."""
+    nommee dans un intitule, elle, est presque toujours le lieu du poste.
+    """
     t = _n(titre)
     for pays, villes in _VILLE_PAYS.items():
         for v in villes:
@@ -1737,8 +1742,7 @@ def lieu_du_titre(titre: str | None) -> str | None:
 
 
 def lieu_effectif(lieu: str | None, titre: str | None) -> str | None:
-    """Le lieu a retenir : celui de l'annonce, sauf s'il est francais (ou vide)
-    alors que l'intitule nomme une ville etrangere."""
+    """Le lieu a retenir : celui de l'annonce, sauf s'il est francais (ou vide) alors que l'intitule nomme une ville etrangere."""
     t = lieu_du_titre(titre)
     if t and zone_lieu(lieu) != INTERNATIONAL:
         return t
@@ -1746,16 +1750,19 @@ def lieu_effectif(lieu: str | None, titre: str | None) -> str | None:
 
 
 def ville_affichee(lieu: str | None) -> str:
-    """Le lieu tel que l'app l'affiche : toute l'Ile-de-France devient « Paris »
-    (l'utilisateur, 2026-10-05). « La Defense », « Paris - 75 », « Courbevoie, Ile-de-
-    France » et « Greater Paris Metropolitan Region » sont une seule recherche
-    pour lui ; dans la colonne Lieu, ils faisaient cinquante cases a cocher."""
+    """Le lieu tel que l'app l'affiche : toute l'Ile-de-France devient « Paris » (l'utilisateur, 2026-10-05).
+
+    « La Defense », « Paris - 75 », « Courbevoie, Ile-de- France » et « Greater Paris
+    Metropolitan Region » sont une seule recherche pour lui ; dans la colonne Lieu, ils
+    faisaient cinquante cases a cocher.
+    """
     if sous_zone(lieu) == "idf":
         return "Paris"
     return lieu or ""
 
 
 def main() -> int:
+    """Ligne de commande : bilan des zones de la file, ou inscription avec --ecrire."""
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "--ecrire", action="store_true", help="inscrit le champ `zone` dans chaque offre de la file"

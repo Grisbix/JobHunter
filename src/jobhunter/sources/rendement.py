@@ -75,8 +75,10 @@ def verdict(ramenees: int, incidents: dict[str, int]) -> str:
 def mesurer(
     nom: str, fn: Callable[..., list[dict[str, Any]]], *args: Any, **kw: Any
 ) -> list[dict[str, Any]]:
-    """Appelle une source et note son rendement. Les offres rendues sont étiquetées
-    `_passe` = `nom` pour que la fusion compte les nouvelles par source.
+    """Appelle une source et note son rendement.
+
+    Les offres rendues sont étiquetées `_passe` = `nom` pour que la fusion compte les
+    nouvelles par source.
 
     Une exception de la source remonte comme avant ; la mesure est notée quand même.
     """
@@ -97,8 +99,7 @@ def mesurer(
 
 
 def completer(uniques: Iterable[dict[str, Any]], par_source: dict[str, dict[str, int]]) -> None:
-    """Ajoute aux mesures les offres uniques (après dédoublonnage du scan) et, depuis la
-    fusion, les nouvelles et les pertinentes ; pose le verdict de chaque source."""
+    """Ajoute aux mesures les offres uniques (après dédoublonnage du scan) et, depuis la fusion, les nouvelles et les pertinentes ; pose le verdict de chaque source."""
     n_uniques = collections.Counter(str(o.get("_passe") or "") for o in uniques)
     for nom, m in MESURES.items():
         m["uniques"] = n_uniques.get(nom, 0)

@@ -1,4 +1,6 @@
-"""jobhunter.documents.message — Le message COURT que demandent les formulaires. (ancien Scripts/message_offre.py)
+"""jobhunter.documents.message — Le message COURT que demandent les formulaires.
+
+Ancien Scripts/message_offre.py.
 
 POURQUOI. Business France, LinkedIn Easy Apply et beaucoup d'ATS demandent,
 EN PLUS du CV et de la lettre, un message libre de quelques lignes. Coller la
@@ -269,8 +271,10 @@ _RX_GUICHET = re.compile(
 
 
 def _nom_propre(s: str) -> str:
-    """« SILVA PEREIRA » -> « Silva Pereira ». Gere traits d'union et
-    apostrophes : « JEAN-PIERRE » -> « Jean-Pierre », « O'BRIEN » -> « O'Brien ».
+    """« SILVA PEREIRA » -> « Silva Pereira ».
+
+    Gere traits d'union et apostrophes : « JEAN-PIERRE » -> « Jean-Pierre », « O'BRIEN »
+    -> « O'Brien ».
 
     Un nom deja correctement casse n'est PAS retouche : « McDonald » et
     « van Gogh » perdraient leur forme a passer dans un title() aveugle.
@@ -322,14 +326,14 @@ _CIVILITES = {"madame", "monsieur", "mme", "mr", "mrs", "ms", "m", "dr", "mlle",
 
 
 def nom_dans_offre(rh: str | None, texte: str | None) -> str:
-    """`rh` si l'un de ses noms (hors civilite, 3 lettres au moins) figure dans
-    le TEXTE de l'annonce, "" sinon.
+    """`rh` si l'un de ses noms (hors civilite, 3 lettres au moins) figure dans le TEXTE de l'annonce, "" sinon.
 
     l'utilisateur, 2026-10-07 : on ne nomme pas un destinataire que l'annonce ne
     nomme pas. Business France transmet un « contactName » (Madame Rossi chez
     Meridiam, Madame Lopez chez Schneider) qui n'apparait nulle part dans le
     texte publie : s'adresser a cette personne trahit qu'on a lu un champ
-    technique, pas l'offre."""
+    technique, pas l'offre.
+    """
     import unicodedata
 
     def n(s: object) -> str:
@@ -344,8 +348,10 @@ def nom_dans_offre(rh: str | None, texte: str | None) -> str:
 
 
 def appel(offre: dict[str, Any], langue: str = "fr", ton: str = "sobre") -> str:
-    """La formule d'appel. Nominative si `rh` porte une civilite et un nom,
-    generique sinon. Plusieurs noms separes par « et » sont tous repris.
+    """La formule d'appel.
+
+    Nominative si `rh` porte une civilite et un nom, generique sinon. Plusieurs noms
+    separes par « et » sont tous repris.
 
     LE GENRE NE SE DEVINE PAS D'UN PRENOM. Sans civilite explicite dans le
     champ, on ne choisit pas entre « Monsieur » et « Madame » : en anglais on
@@ -410,8 +416,10 @@ def appel(offre: dict[str, Any], langue: str = "fr", ton: str = "sobre") -> str:
 
 
 def message(offre: dict[str, Any], langue: str | None = None, ton: str = "sobre") -> str:
-    """Le texte a coller dans le formulaire. `ton` : sobre | detente.
-    Un champ vide du profil ne laisse pas de paragraphe vide."""
+    """Le texte a coller dans le formulaire.
+
+    `ton` : sobre | detente. Un champ vide du profil ne laisse pas de paragraphe vide.
+    """
     return re.sub(r"\n{3,}", "\n\n", _message(offre, langue, ton)).strip()
 
 
@@ -487,8 +495,7 @@ def _message(offre: dict[str, Any], langue: str | None = None, ton: str = "sobre
 
 
 def _un(nom: str) -> str:
-    """« a junior analyst », « an ESG analyst » : l'article suit le SON initial ;
-    un sigle se lit lettre par lettre (« an ESG », « an MBA »)."""
+    """« a junior analyst », « an ESG analyst » : l'article suit le SON initial ; un sigle se lit lettre par lettre (« an ESG », « an MBA »)."""
     if not nom:
         return ""
     mot = nom.split()[0]
@@ -503,6 +510,7 @@ def _de_titre(t: str) -> str:
 
 
 def main() -> int:
+    """Ligne de commande : écrit le message court d'une offre dans Lettres/Messages."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--url", default="", help="fragment de l'URL de l'offre")
     ap.add_argument("--contient", default="", help="fragment du nom de l'entreprise")

@@ -1,6 +1,7 @@
 """Indeed : la page de resultats, et rien d'autre.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
+Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+"""
 
 import json
 import re
@@ -138,13 +139,15 @@ _INDEED_CONTRAT = {
 
 
 class _IndeedBride(Exception):
-    """Indeed bride apres une seconde chance. On arrete la passe et on GARDE ce
-    qui a ete lu : une passe interrompue vaut mieux qu'une passe perdue, et le
-    scan suivant reprendra les mots-cles restants."""
+    """Indeed bride apres une seconde chance.
+
+    On arrete la passe et on GARDE ce qui a ete lu : une passe interrompue vaut mieux
+    qu'une passe perdue, et le scan suivant reprendra les mots-cles restants.
+    """
 
 
 def _json_objet(texte: str, depart: int) -> str:
-    """L'objet JSON complet qui commence a l'accolade `depart`.
+    r"""L'objet JSON complet qui commence a l'accolade `depart`.
 
     Une expression non gourmande (\\{.*?\\};) s'arreterait au premier « }; »
     rencontre, y compris a l'interieur d'une chaine. Le blob d'Indeed fait 54 ko

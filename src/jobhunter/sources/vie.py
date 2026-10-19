@@ -1,6 +1,7 @@
 """V.I.E / V.I.A : Business France (civiweb).
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
+Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+"""
 
 import re
 import time
@@ -29,8 +30,7 @@ _VIE_KEY_FALLBACK = "l+KwpoLPiXlsjxNT/NQ2iOFz8+iuygxAODs9FeAEWYM="
 
 
 def _vie_key() -> str:
-    """Clé lue en direct dans la config publique du site ; le fallback évite de
-    tout casser si la page change, mais une clé figée finira par tourner.
+    r"""Clé lue en direct dans la config publique du site ; le fallback évite de tout casser si la page change, mais une clé figée finira par tourner.
 
     Deux pièges vérifiés :
       - la clé est échappée dans le HTML (`\\u002F` pour `/`) → à décoder, sinon 401 ;
@@ -51,8 +51,11 @@ def _vie_key() -> str:
 
 
 def fetch_vie(limit: int = 1000) -> list[dict[str, Any]]:
-    """Offres V.I.E/V.I.A. Intérêt pour un profil junior : contrat 12-24 mois,
-    indemnité nette, et beaucoup de postes finance/ESG en filiale à l'étranger."""
+    """Offres V.I.E/V.I.A.
+
+    Intérêt pour un profil junior : contrat 12-24 mois, indemnité nette, et beaucoup de
+    postes finance/ESG en filiale à l'étranger.
+    """
     import httpx
 
     key = _vie_key()
@@ -115,6 +118,11 @@ def fetch_vie(limit: int = 1000) -> list[dict[str, Any]]:
 
 
 def scan_vie() -> list[dict[str, Any]]:
+    """Collecte les V.I.E et V.I.A de Business France, filtrés par métier.
+
+    Returns:
+        Les offres.
+    """
     o = fetch_vie()
     _log.info(f"  ✓ V.I.E/V.I.A Business France → {len(o)} offres (après filtre métier)")
     return o
