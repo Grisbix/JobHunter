@@ -4,6 +4,23 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.17.0 — 2026-10-19
+
+- **Le journal de l'app en anglais, programmes compris** : les bilans de la collecte
+  (sources, rendement, fusion) et des étapes de « TOUT FAIRE » (descriptions, re-score,
+  liens morts, export, alertes) sont traduits. Le détail offre par offre (noms
+  d'entreprise et de poste) reste tel quel.
+- Correctifs d'un second audit Codex, sur le code des versions 2.12 à 2.16 :
+  - **Le relecteur ne se laisse plus tromper par une adresse qui imite une connue** :
+    `acme.fr.evil.test` ou `evil.test/acme.fr` étaient pris pour le site `acme.fr`. Les
+    hôtes se comparent désormais entiers, à une frontière de point.
+  - **Chaque destinataire de la formule d'appel est vérifié** dans l'annonce
+    (« Madame Martin, Madame Dupont, »), pas seulement le premier.
+  - **Deux saisies simultanées d'une clé d'API ne s'effacent plus** : l'écriture se fait
+    sous verrou. Chaque écriture JSON utilise un fichier temporaire qui lui est propre.
+- Une file occupée pendant la fusion conseille `jobhunter collecte --fusion-seule` (le
+  message citait encore l'ancien `job_sources.py`).
+
 ## 2.16.0 — 2026-10-19
 
 Correctifs d'un audit du dépôt (Codex, 19/10) : quatre pertes de données possibles et
