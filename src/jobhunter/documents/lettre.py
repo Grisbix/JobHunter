@@ -5,6 +5,7 @@ Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5).
 import importlib
 import re
 import sys
+from pathlib import Path
 from typing import Any
 
 from docx import Document
@@ -54,7 +55,7 @@ _PARESSEUX["_DOMAINES"] = lambda: importlib.import_module("jobhunter.scoring.lex
 _PARESSEUX["SKILL_LEX"] = lambda: importlib.import_module("jobhunter.scoring.lexique").SKILL_LEX
 
 
-def _citable(t, langue):
+def _citable(t: str | None, langue: str) -> bool:
     """Ce passage peut-il etre CITE dans une lettre ecrite en `langue` ?
 
     Une citation dans l'autre langue saute aux yeux : la lettre anglaise pour
@@ -99,12 +100,12 @@ _PARESSEUX["SOCLE_FR"] = lambda: ({d["cle"]: d.get("parcours_fr") or "" for d in
 _PARESSEUX["SOCLE_EN"] = lambda: ({d["cle"]: d.get("parcours_en") or "" for d in _ici._DOMAINES})
 
 
-def socle(cle, langue="fr"):
+def socle(cle: str, langue: str = "fr") -> str:
     """Paragraphe de parcours du domaine `cle`, ou celui du premier domaine
     qui en a un : une lettre sans parcours ne dit rien du candidat."""
     table = _ici.SOCLE_EN if langue == "en" else _ici.SOCLE_FR
     if table.get(cle):
-        return table[cle]
+        return str(table[cle])
     return next((v for v in table.values() if v), "")
 
 
@@ -127,7 +128,7 @@ def socle(cle, langue="fr"):
 _PARESSEUX["_CONTEXTES"] = lambda: _P.get("lettre.contextes", []) or []
 
 
-def _contexte_applicable(ctx, offer):
+def _contexte_applicable(ctx: dict[str, Any], offer: dict[str, Any]) -> bool:
     if cv_variant_key(offer.get("domaine")) in (ctx.get("sauf_domaines") or []):
         return False
     rx = _P.motif(ctx.get("mots"))
@@ -135,7 +136,7 @@ def _contexte_applicable(ctx, offer):
         return False
     ign = _P.motif(ctx.get("ignorer"))
 
-    def net(t):
+    def net(t: str | None) -> str:
         return ign.sub(" ", t or "") if ign else (t or "")
 
     role = net(str(offer.get("role") or ""))
@@ -157,7 +158,9 @@ def _contexte_applicable(ctx, offer):
     return True
 
 
-def contexte(offer, langue="fr", position=None):
+def contexte(
+    offer: dict[str, Any], langue: str = "fr", position: str | None = None
+) -> tuple[str, str]:
     """(position, texte) du contexte a ajouter, ou ("", "").
     position : "socle" (ajoute au parcours) ou "paragraphe" (paragraphe a part).
 
@@ -175,12 +178,12 @@ def contexte(offer, langue="fr", position=None):
     return "", ""
 
 
-def contexte_durable(offer, langue="fr"):
+def contexte_durable(offer: dict[str, Any], langue: str = "fr") -> str:
     """Compatibilite : le texte d'un contexte place dans le socle, ou ""."""
     return contexte(offer, langue, "socle")[1]
 
 
-def contexte_agricole(offer, langue="fr"):
+def contexte_agricole(offer: dict[str, Any], langue: str = "fr") -> str:
     """Compatibilite : le texte d'un contexte en paragraphe a part, ou ""."""
     return contexte(offer, langue, "paragraphe")[1]
 
@@ -204,7 +207,7 @@ def contexte_agricole(offer, langue="fr"):
 _CIV_FEM = {"madame", "mme", "mrs", "ms"}
 
 
-def _reprise(civs, langue):
+def _reprise(civs: list[str], langue: str) -> str:
     """La civilite SEULE, pour la formule de cloture.
 
     « Je vous prie d'agreer, Monsieur Mac Arthur, Monsieur Lebrun » ne se dit
@@ -224,7 +227,7 @@ def _reprise(civs, langue):
     return "Madame, Monsieur"
 
 
-def corps_sur_mesure(offer):
+def corps_sur_mesure(offer: dict[str, Any]) -> list[str]:
     """Les paragraphes ecrits a la main pour cette offre, ou [] s'il n'y en a
     pas. Le fichier se nomme `<entreprise>__<poste>.txt`, paragraphes separes
     par une ligne vide.
@@ -250,7 +253,7 @@ def corps_sur_mesure(offer):
     return []
 
 
-def _sans_societe(role, company):
+def _sans_societe(role: str, company: str) -> str:
     """Retire du titre le nom de la societe quand l'annonce l'y a colle.
 
     « Analyste Investissement - Capital Naturel - Mirova » donnait un objet de
@@ -276,7 +279,7 @@ def _sans_societe(role, company):
     return " - ".join(coupe).strip() or r
 
 
-def salutation(offer, langue="fr"):
+def salutation(offer: dict[str, Any], langue: str = "fr") -> tuple[str, str, bool]:
     """Rend (formule d'appel, reprise de cloture, nominative ?).
 
     LE TEXTE DE L'APPEL VIENT DE `message_offre.appel`, qui sait deja le faire
@@ -314,12 +317,12 @@ def salutation(offer, langue="fr"):
     return texte, _reprise(civs, langue), True
 
 
-def company_value_en(company):
+def company_value_en(company: str | None) -> str:
     """Accroche anglaise connue, ou "" (meme regle que company_value)."""
     c = (company or "").lower()
     for k, v in _ici.COMPANY_VALUE_EN.items():
         if k in c:
-            return v
+            return str(v)
     return ""
 
 
@@ -347,7 +350,7 @@ _PARESSEUX["SKILL_PROSE_EN"] = lambda: (
 )
 
 
-def _enumere(items, langue="fr"):
+def _enumere(items: list[str], langue: str = "fr") -> str:
     """« a, b et c ». Une enumeration se termine par une conjonction, pas par
     une virgule : sans elle, la phrase se lit comme une liste a puces mise bout
     a bout.
@@ -376,7 +379,7 @@ def _enumere(items, langue="fr"):
     return ", ".join(items[:-1]) + lien + items[-1]
 
 
-def competences_en_prose(skills, langue="fr", n=4):
+def competences_en_prose(skills: list[str], langue: str = "fr", n: int = 4) -> str:
     """Les competences retenues, ecrites pour tenir dans une phrase.
 
     Deux filtres contre la redite, tous deux constates sur une sortie reelle :
@@ -390,7 +393,9 @@ def competences_en_prose(skills, langue="fr", n=4):
     """
     table = _ici.SKILL_PROSE_EN if langue == "en" else _ici.SKILL_PROSE_FR
     lien = " and " if langue == "en" else " et "
-    vus, fins, sortie = set(), set(), []
+    vus: set[str] = set()
+    fins: set[str] = set()
+    sortie: list[str] = []
     for s in skills:
         p = table.get(s)
         if not p or p in vus:
@@ -448,7 +453,7 @@ _FAUX_AMIS_EN = {
 _PARESSEUX["_TERMES"] = lambda: ({k: tuple(v) for k, v in (_P.get("termes", {}) or {}).items()})
 
 
-def mots_techniques(offer_text, n=6, langue="fr"):
+def mots_techniques(offer_text: str | None, n: int = 6, langue: str = "fr") -> list[str]:
     """Les termes techniques que l'ANNONCE emploie et que le CV couvre.
 
     Les libelles de competence sont notre vocabulaire ; ceci est le LEUR. Un
@@ -487,7 +492,7 @@ def mots_techniques(offer_text, n=6, langue="fr"):
     return trouves[:n]
 
 
-def _enable_hyphenation(doc):
+def _enable_hyphenation(doc: Any) -> None:
     """Active la césure automatique Word → un texte justifié sans « trous » (rivières)."""
     try:
         from docx.oxml.ns import qn
@@ -501,7 +506,7 @@ def _enable_hyphenation(doc):
 
 
 # ---- Lettre : docx tailoree aux missions reelles ----
-def tailor_letter(offer, nom=None, langue="fr"):
+def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "fr") -> Path:
     """`nom` : stem impose, meme raison que tailor_cv.
 
     `langue` : 'en' ecrit la lettre en anglais. Les FAITS sont les memes — meme
@@ -528,7 +533,9 @@ def tailor_letter(offer, nom=None, langue="fr"):
     style.font.size = Pt(11)
     _enable_hyphenation(doc)  # césure auto : justifié SANS trous (rivières)
 
-    def para(txt, align=WD_ALIGN_PARAGRAPH.JUSTIFY, space=6, bold=False):
+    def para(
+        txt: str, align: Any = WD_ALIGN_PARAGRAPH.JUSTIFY, space: int = 6, bold: bool = False
+    ) -> Any:
         p = doc.add_paragraph()
         p.alignment = align
         r = p.add_run(txt)
@@ -604,7 +611,7 @@ def tailor_letter(offer, nom=None, langue="fr"):
             para(_ici.PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
             from jobhunter.programmes.rename_docs import new_name
 
-            out_sm = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
+            out_sm: Path = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
             doc.save(str(out_sm))
             return out_sm
         # « caught my full attention » est le calque de « a retenu toute mon
@@ -685,7 +692,7 @@ def tailor_letter(offer, nom=None, langue="fr"):
         para(_ici.PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
         from jobhunter.programmes.rename_docs import new_name
 
-        out_en = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
+        out_en: Path = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
         doc.save(str(out_en))
         return out_en
     # le titre BRUT de l'annonce ne va pas dans la lettre : voir titre_poste()
@@ -837,6 +844,6 @@ def tailor_letter(offer, nom=None, langue="fr"):
         new_name,  # Prenom_Nom_Lettre_<Poste court>_<Entreprise>
     )
 
-    out = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
+    out: Path = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
     doc.save(str(out))
     return out

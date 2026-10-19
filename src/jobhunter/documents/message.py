@@ -25,6 +25,7 @@ Run :
 import argparse
 import re
 import sys
+from typing import Any, cast
 
 from jobhunter import racine as _racine
 
@@ -38,7 +39,6 @@ MSG_OUT = _racine.racine() / "Lettres" / "Messages"
 
 # Tous les textes viennent du profil : domaines[] (accroche, preuve par
 # domaine) et la section « message » (diplome, langues, faits, sources).
-from typing import Any
 
 from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _P
@@ -56,7 +56,7 @@ def __getattr__(nom: str) -> Any:
 _PARESSEUX["_MSG"] = lambda: _P.get("message", {}) or {}
 
 
-def _dom(cle, champ):
+def _dom(cle: str, champ: str) -> str:
     return _P.domaine_par_cle(cle).get(champ) or ""
 
 
@@ -88,20 +88,21 @@ _PARESSEUX["_TETE_EN"] = lambda: (
 )
 
 
-def preuve(offre, langue, ton="sobre"):
+def preuve(offre: dict[str, Any], langue: str, ton: str = "sobre") -> str:
     """Les faits du CV qui repondent le mieux a CETTE annonce.
 
     Groupes par source pour ne nommer le stage ou le memoire qu'une fois.
     Se rabat sur la phrase par domaine quand l'annonce ne demande rien qu'on
     sache illustrer : mieux vaut une phrase generique mais vraie qu'un silence.
     """
-    from jobhunter.documents.commun import cv_variant_key, match_skills
+    from jobhunter.documents.commun import match_skills
+    from jobhunter.scoring.lexique import cv_variant_key
 
     table = _ici.FAITS_EN if langue == "en" else _ici.FAITS_FR
     tete = _ici._TETE_EN if langue == "en" else _ici._TETE_FR
     demandees = set(match_skills(f"{offre.get('poste', '')} {offre.get('description', '')}"))
 
-    groupes = {}
+    groupes: dict[str, list[str]] = {}
     for lab, (src, clause) in table.items():
         if lab not in demandees:
             continue
@@ -123,7 +124,7 @@ def preuve(offre, langue, ton="sobre"):
         return p
 
     lien = " and " if langue == "en" else " et "
-    phrases = []
+    phrases: list[str] = []
     # Deux sources au plus : trois font une enumeration, pas une phrase.
     for src in _ici._SOURCES:
         if src not in groupes or len(phrases) >= 2:
@@ -157,7 +158,7 @@ _PARESSEUX["_CONTEXTE_FR"] = lambda: dict(_ici._MSG.get("phrase_contexte_fr") or
 _PARESSEUX["_CONTEXTE_EN"] = lambda: dict(_ici._MSG.get("phrase_contexte_en") or {})
 
 
-def _phrase_durable(offre, langue, preuve_texte):
+def _phrase_durable(offre: dict[str, Any], langue: str, preuve_texte: str) -> str:
     """La phrase de contexte, ou "" si l'annonce n'y appelle pas."""
     from jobhunter.documents.lettre import contexte_durable
 
@@ -182,7 +183,7 @@ def _phrase_durable(offre, langue, preuve_texte):
     return (" " + table[cle]) if table.get(cle) else ""
 
 
-def _intro_role(offre, langue, ton="sobre"):
+def _intro_role(offre: dict[str, Any], langue: str, ton: str = "sobre") -> str:
     """Les faits du CV qui repondent a l'annonce. Rien d'autre.
 
     Une phrase nommait auparavant le quotidien decrit par l'offre :
@@ -271,7 +272,7 @@ _RX_GUICHET = re.compile(
 )
 
 
-def _nom_propre(s):
+def _nom_propre(s: str) -> str:
     """« SILVA PEREIRA » -> « Silva Pereira ». Gere traits d'union et
     apostrophes : « JEAN-PIERRE » -> « Jean-Pierre », « O'BRIEN » -> « O'Brien ».
 
@@ -279,7 +280,7 @@ def _nom_propre(s):
     « van Gogh » perdraient leur forme a passer dans un title() aveugle.
     """
 
-    def _mot(m, premier):
+    def _mot(m: str, premier: bool) -> str:
         # `premier` ne protege PAS les particules nobiliaires : un patronyme
         # peut commencer par elles, et « Monsieur De Gaulle » est une faute.
         if m.lower().rstrip(".'’") in _PARTICULES:
@@ -295,7 +296,7 @@ def _nom_propre(s):
     return " ".join(_mot(w, i == 0) for i, w in enumerate(mots))
 
 
-def _patronyme(nom):
+def _patronyme(nom: str) -> str:
     """Le NOM DE FAMILLE seul, depuis « Prenom NOM » ou « PRENOM NOM NOM ».
 
     Deux formes rencontrees dans l'API Business France :
@@ -324,7 +325,7 @@ GENERIQUES = ("Madame, Monsieur,", "Dear Sir or Madam,", "Bonjour,")
 _CIVILITES = {"madame", "monsieur", "mme", "mr", "mrs", "ms", "m", "dr", "mlle", "mademoiselle"}
 
 
-def nom_dans_offre(rh, texte):
+def nom_dans_offre(rh: str | None, texte: str | None) -> str:
     """`rh` si l'un de ses noms (hors civilite, 3 lettres au moins) figure dans
     le TEXTE de l'annonce, "" sinon.
 
@@ -335,18 +336,18 @@ def nom_dans_offre(rh, texte):
     technique, pas l'offre."""
     import unicodedata
 
-    def n(s):
+    def n(s: object) -> str:
         s = unicodedata.normalize("NFD", str(s or "").lower())
         return "".join(c for c in s if not unicodedata.combining(c))
 
     t = n(texte)
     mots = [m for m in re.split(r"[^a-z]+", n(rh)) if len(m) >= 3 and m not in _CIVILITES]
     if any(re.search(r"(?<![a-z])" + re.escape(m) + r"(?![a-z])", t) for m in mots):
-        return rh
+        return rh or ""
     return ""
 
 
-def appel(offre, langue="fr", ton="sobre"):
+def appel(offre: dict[str, Any], langue: str = "fr", ton: str = "sobre") -> str:
     """La formule d'appel. Nominative si `rh` porte une civilite et un nom,
     generique sinon. Plusieurs noms separes par « et » sont tous repris.
 
@@ -412,16 +413,17 @@ def appel(offre, langue="fr", ton="sobre"):
     return f"{titre} {fam},"
 
 
-def message(offre, langue=None, ton="sobre"):
+def message(offre: dict[str, Any], langue: str | None = None, ton: str = "sobre") -> str:
     """Le texte a coller dans le formulaire. `ton` : sobre | detente.
     Un champ vide du profil ne laisse pas de paragraphe vide."""
     return re.sub(r"\n{3,}", "\n\n", _message(offre, langue, ton)).strip()
 
 
-def _message(offre, langue=None, ton="sobre"):
+def _message(offre: dict[str, Any], langue: str | None = None, ton: str = "sobre") -> str:
     """Le texte a coller dans le formulaire. `ton` : sobre | detente."""
-    from jobhunter.documents.commun import cv_variant_key, minuscule_titre, titre_poste
+    from jobhunter.documents.commun import minuscule_titre, titre_poste
     from jobhunter.scoring.langue import langue_offre
+    from jobhunter.scoring.lexique import cv_variant_key
 
     lg = langue or langue_offre(
         offre.get("poste"), offre.get("description"), offre.get("localisation")
@@ -443,7 +445,7 @@ def _message(offre, langue=None, ton="sobre"):
 
     nom = _P.identite()["nom"]
 
-    def lien(diplome):
+    def lien(diplome: str) -> str:
         # « Je suis analyste ESG, diplômé de …, et je postule » : le diplome
         # est optionnel dans le profil, la phrase doit tenir sans lui.
         return f", {diplome}," if diplome else ""
@@ -488,7 +490,7 @@ def _message(offre, langue=None, ton="sobre"):
     )
 
 
-def _un(nom):
+def _un(nom: str) -> str:
     """« a junior analyst », « an ESG analyst » : l'article suit le SON initial ;
     un sigle se lit lettre par lettre (« an ESG », « an MBA »)."""
     if not nom:
@@ -498,13 +500,13 @@ def _un(nom):
     return ("an " if (mot[0].lower() in "aeiou" or sigle_voyelle) else "a ") + nom
 
 
-def _de_titre(t):
+def _de_titre(t: str) -> str:
     from jobhunter.documents.commun import _de
 
     return _de(t) if t else "proposé"
 
 
-def main():
+def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--url", default="", help="fragment de l'URL de l'offre")
     ap.add_argument("--contient", default="", help="fragment du nom de l'entreprise")
@@ -542,7 +544,7 @@ def main():
         print("aucune offre ne correspond")
         return 1
     for o in cibles:
-        txt = message(o, langue=a.langue, ton=a.ton)
+        txt = message(cast(dict[str, Any], o), langue=a.langue, ton=a.ton)
         MSG_OUT.mkdir(parents=True, exist_ok=True)  # au moment d'ecrire, pas a l'import
         f = MSG_OUT / (new_name("Message", o.get("poste", ""), o.get("entreprise", "")) + ".txt")
         f.write_text(txt, encoding="utf-8")
