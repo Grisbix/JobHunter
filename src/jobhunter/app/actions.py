@@ -141,7 +141,7 @@ class ActionsMixin:
         if not o:
             return
         if not messagebox.askyesno(
-            "Confirmer l'envoi", "As-tu envoyé cette candidature ?", parent=self.root
+            _t("Confirmer l'envoi"), _t("As-tu envoyé cette candidature ?"), parent=self.root
         ):
             return
         oid = self._oid(o)
@@ -481,11 +481,13 @@ class ActionsMixin:
             self._log("Coche d'abord des offres (colonne ☐).\n")
             return
         if not messagebox.askyesno(
-            "Supprimer les offres",
-            f"Supprimer {len(oids)} offre(s) cochée(s) de la liste ?\n\n"
-            "Une copie est gardée dans Scripts/_corbeille/ — rien n'est perdu.\n"
-            "Pour qu'elles ne reviennent pas au prochain scan, préfère\n"
-            "« Écarter » : le motif est retenu.",
+            _t("Supprimer les offres"),
+            _t(
+                "Supprimer {n} offre(s) cochée(s) de la liste ?\n\n"
+                "Une copie est gardée dans Scripts/_corbeille/ — rien n'est perdu.\n"
+                "Pour qu'elles ne reviennent pas au prochain scan, préfère\n"
+                "« Écarter » : le motif est retenu."
+            ).format(n=len(oids)),
         ):
             return
         # VERROU. Relire le disque juste avant d'ecrire REDUIT la fenetre de course

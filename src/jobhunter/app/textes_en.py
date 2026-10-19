@@ -121,8 +121,16 @@ EN: dict[str, str] = {
     "used from the next collection; “Collect this source” tries it.",
     "Obtenir une clé": "Get a key",
     "Filtrer : entreprise, outil ou adresse": "Filter: company, tool or address",
-    "Colle l'adresse de la page carrière d'une entreprise à suivre": "Paste the careers "
-    "page address of a company to follow",
+    "Adresse de sa page carrière, ou nom de l'entreprise (annuaire)": "Its careers page "
+    "address, or the company name (directory)",
+    "Annuaire": "Directory",
+    "Annuaire des entreprises": "Company directory",
+    "3 600 entreprises lues par l'API publique de Lever, Ashby ou Greenhouse. "
+    "Double-clic ou Entrée : suivre.": "3,600 companies read through the public API of "
+    "Lever, Ashby or Greenhouse. Double-click or Enter: follow.",
+    "Identifiant": "Identifier",
+    "Outil": "Tool",
+    "suivie": "followed",
     "Ouvrir la connexion": "Open sign-in page",
     "Vérifier les sessions": "Check sessions",
     "Source": "Source",
@@ -232,7 +240,152 @@ EN: dict[str, str] = {
     "PDF à refaire": "PDF to redo",
     "incomplet": "incomplete",
     "autres : affine la recherche": "more: refine the search",
+    # Boîtes de dialogue
+    "Confirmer l'envoi": "Confirm submission",
+    "As-tu envoyé cette candidature ?": "Did you submit this application?",
+    "Supprimer les offres": "Delete offers",
+    "Supprimer {n} offre(s) cochée(s) de la liste ?\n\n"
+    "Une copie est gardée dans Scripts/_corbeille/ — rien n'est perdu.\n"
+    "Pour qu'elles ne reviennent pas au prochain scan, préfère\n"
+    "« Écarter » : le motif est retenu.": "Delete {n} ticked offer(s) from the list?\n\n"
+    "A copy is kept in Scripts/_corbeille/ — nothing is lost.\n"
+    "To keep them from coming back in the next scan, prefer\n"
+    "“Dismiss”: the reason is remembered.",
+    "JobHunter — mise à jour": "JobHunter — update",
+    "La mise à jour n'a pas abouti ; le détail est dans "
+    "le journal. Tes données n'ont pas été touchées.": "The update did not complete; "
+    "details are in the log. Your data was not touched.",
+    "Version {v} installée. Relancer JobHunter maintenant ?": "Version {v} installed. "
+    "Restart JobHunter now?",
+    "JobHunter — mise à jour disponible": "JobHunter — update available",
+    "La version {v} est disponible (installée : {installee}).\n\n"
+    "L'installer maintenant ? Ton profil, ton CV, tes lettres et ton suivi ne "
+    "sont pas touchés, et la version d'avant est sauvegardée.": "Version {v} is available "
+    "(installed: {installee}).\n\nInstall it now? Your profile, CV, letters and tracking "
+    "are not touched, and the previous version is backed up.",
     "pas avant le": "not before",
     "offres": "offers",
     "offre": "offer",
+}
+
+
+# Journal de l'app (langue.journal) : une ligne affichée → sa traduction. Une clé avec
+# des `{a}`, `{b}` est un modèle : chaque `{x}` reprend tel quel le morceau variable de la
+# ligne. La sortie des programmes lancés n'est pas traduite (le moteur parle français).
+JOURNAL_EN = {
+    # ── lignes fixes ──
+    "Sélectionne d'abord une offre.": "Select an offer first.",
+    "Coche d'abord des offres (colonne ☐).": "Tick some offers first (☐ column).",
+    "✗ un autre programme écrit suivi.json — réessaie dans un instant.": "✗ another program "
+    "is writing suivi.json — try again in a moment.",
+    "Rien à annuler.": "Nothing to undo.",
+    "⏳ suivi.json occupé par un autre programme — réessaie dans un instant.": "⏳ suivi.json "
+    "is busy with another program — try again in a moment.",
+    "✗ un autre programme modifie la file — réessaie dans un instant.": "✗ another program "
+    "is changing the queue — try again in a moment.",
+    "Bilan de ce que la notation rate : python JobHunter.pyw exclusions": "What the scoring "
+    "misses: python JobHunter.pyw exclusions",
+    "Le panneau Candidatures est déjà ouvert.": "The Applications panel is already open.",
+    "✗ édition réservée aux lettres/.txt — CV : 📂 Ouvrir (Word)": "✗ editing is for "
+    "letters/.txt only — CV: 📂 Open (Word)",
+    "Sélectionne d'abord un dossier d'offre dans la liste.": "Select an offer's folder in "
+    "the list first.",
+    "✗ édition intégrée réservée aux lettres/.txt — CV .docx : bouton 📂 Ouvrir (Word)": "✗ "
+    "built-in editing is for letters/.txt only — CV .docx: 📂 Open (Word) button",
+    "(clic droit sur l'offre → 🔔 Relance)": "(right-click the offer → 🔔 Follow-up)",
+    "Prêt. « ▶ TOUT FAIRE » régénère.": "Ready. “▶ DO EVERYTHING” regenerates.",
+    "⏳ tâche en cours.": "⏳ a task is running.",
+    "⏳ un travail de fond écrit la file (descriptions ou sync docs).": "⏳ a background job "
+    "is writing the queue (descriptions or document sync).",
+    "Réessaie dans un instant — il se termine tout seul.": "Try again in a moment — it "
+    "finishes on its own.",
+    "▶ TOUT FAIRE — pipeline complet (6 etapes)": "▶ DO EVERYTHING — full pipeline (6 steps)",
+    "🌐 Télécharge JobHunterSetup.exe sur la page ouverte, puis lance-le.": "🌐 Download "
+    "JobHunterSetup.exe from the page that opened, then run it.",
+    "⏳ Mise à jour : elle démarre dès que le travail en cours est fini.": "⏳ Update: it "
+    "starts as soon as the current job is done.",
+    "▶ Mise à jour de JobHunter": "▶ Updating JobHunter",
+    "✅ TOUT FAIRE terminé.": "✅ DO EVERYTHING finished.",
+    "(aucune tache en cours)": "(no task running)",
+    "trace complète : Scripts/_logs/app_erreurs.log": "full trace: Scripts/_logs/app_erreurs.log",
+    "Retour : aucune disposition à rétablir.": "Back: no layout to restore.",
+    "✗ pas d'URL http pour récupérer la description": "✗ no http URL to fetch the description",
+    "✅ description récupérée": "✅ description fetched",
+    "✗ description introuvable (page JS/mur login ?)": "✗ description not found (JS page "
+    "or login wall?)",
+    "(pas d'URL → pas de host)": "(no URL → no host)",
+    "Sélectionne d'abord une source dans la liste.": "Select a source in the list first.",
+    "Selectionne d'abord un site dans la liste.": "Select a site in the list first.",
+    "↪ c'est un site d'offres général → ajoute-le dans « Sites d'offres »": "↪ this is a "
+    "general job site → add it under “Job sites”",
+    "déjà suivi": "already followed",
+    "Sélectionne d'abord une entreprise dans la liste.": "Select a company in the list first.",
+    "✗ colle une URL http d'offre.": "✗ paste an http offer URL.",
+    "Raccourcis : Echap retour · Alt+Gauche annule agrandir/rétrécir · Ctrl+R recharger · "
+    "F5 tout faire · Ctrl+B barre · dans le tableau : Ctrl+Entree postuler, Ctrl+A/D "
+    "cocher/decocher, Ctrl+Z annuler · Ctrl+L coller un lien · Ctrl+W arreter · Suppr pas "
+    "intéressé": "Shortcuts: Esc back · Alt+Left undo enlarge/shrink · Ctrl+R reload · F5 do "
+    "everything · Ctrl+B sidebar · in the table: Ctrl+Enter apply, Ctrl+A/D tick/untick, "
+    "Ctrl+Z undo · Ctrl+L paste a link · Ctrl+W stop · Del not interested",
+    # ── modèles ──
+    "📌 statut: {a} → {b}": "📌 status: {a} → {b}",
+    "! écriture suivi.json KO: {a}": "! writing suivi.json failed: {a}",
+    "⊖ {a} offre(s) « pas intéressé » — masquées, Ctrl+Z pour annuler.": "⊖ {a} offer(s) "
+    "“not interested” — hidden, Ctrl+Z to undo.",
+    "✗ annulation impossible pour l'instant ({a}) — réessaie.": "✗ cannot undo right now "
+    "({a}) — try again.",
+    "↶ annulé ({a} offre(s)).": "↶ undone ({a} offer(s)).",
+    "! écriture sélection KO: {a}": "! writing the selection failed: {a}",
+    "ATTENTION : {a}, pas l'offre elle-meme{b}.": "WARNING: {a}, not the offer itself{b}.",
+    "🔍 recherche web: {a}": "🔍 web search: {a}",
+    "! exclusions.py introuvable: {a}": "! exclusions.py not found: {a}",
+    "! écriture queue KO: {a}": "! writing the queue failed: {a}",
+    "✕ {a} offre(s) écartée(s) — « {b} ». {c} nouvelle(s) exclusion(s) ; elles ne "
+    "reviendront pas au scan.": "✕ {a} offer(s) dismissed — “{b}”. {c} new exclusion(s); "
+    "they will not come back in the scan.",
+    "! copie de sauvegarde KO ({a}) — suppression ANNULÉE.": "! backup copy failed ({a}) — "
+    "deletion CANCELLED.",
+    "🗑 {a} offre(s) supprimée(s) — copie dans Scripts/_corbeille/{b}": "🗑 {a} offer(s) "
+    "deleted — copy in Scripts/_corbeille/{b}",
+    "📮 Candidatures : {a} offre(s), panneau ouvert. Chrome s'ouvre.": "📮 Applications: {a} "
+    "offer(s), panel open. Chrome is opening.",
+    "💾 enregistré : {a}": "💾 saved: {a}",
+    "! sauvegarde KO: {a}": "! save failed: {a}",
+    "📄 PDF resynchronisé : {a}": "📄 PDF resynced: {a}",
+    "✗ {a} : pièce manquante ({b})": "✗ {a}: missing document ({b})",
+    "ℹ {a} description(s) manquante(s) — récupération auto en fond…": "ℹ {a} missing "
+    "description(s) — fetching automatically in the background…",
+    "✅ descriptions: +{a} récupérées ({b} restantes, dont Indeed/anti-bot).": "✅ "
+    "descriptions: +{a} fetched ({b} left, incl. Indeed/anti-bot).",
+    "🔁 sync docs : {a}": "🔁 document sync: {a}",
+    "🔎 scan auto : +{a} offre(s). {b}": "🔎 auto scan: +{a} offer(s). {b}",
+    "🔎 scan auto : {a}": "🔎 auto scan: {a}",
+    "🔔 {a} candidature(s) à relancer : {b}": "🔔 {a} application(s) to follow up: {b}",
+    "📧 brouillon relance ouvert ({a}) — envoie-le puis passe le statut à « relancé ».": "📧 "
+    "follow-up draft opened ({a}) — send it, then set the status to “relancé”.",
+    "▶ {a} — fenêtre CONSOLE ouverte. Chrome s'ouvre ; tape Entrée après chaque envoi. "
+    "Ferme la console pour arrêter.": "▶ {a} — CONSOLE window opened. Chrome is opening; "
+    "press Enter after each submission. Close the console to stop.",
+    "! lancement console KO: {a}": "! console launch failed: {a}",
+    "⏹ arrete (arbre du PID {a}).": "⏹ stopped (PID {a} tree).",
+    "! arret KO ({a}) — repli sur terminate": "! stop failed ({a}) — falling back to terminate",
+    "! panne interne [{a}] — {b}": "! internal error [{a}] — {b}",
+    "－ compte retiré: {a}": "－ account removed: {a}",
+    "Associer un compte ajouté: {a}": "Account link added: {a}",
+    "! écriture comptes_sites.json KO: {a}": "! writing comptes_sites.json failed: {a}",
+    "💾 suivi enregistré: {a} → {b}": "💾 tracking saved: {a} → {b}",
+    "＋ site carrière ajouté, lu par le navigateur : {a}": "＋ careers site added, read by "
+    "the browser: {a}",
+    "✗ {a} : flux introuvable dans sources_config.json": "✗ {a}: feed not found in "
+    "sources_config.json",
+    "－ {a} ne sera plus collectée": "－ {a} will no longer be collected",
+    "＋ ajouté : {a}": "＋ added: {a}",
+    "－ retiré : {a}": "－ removed: {a}",
+    "🔎 analyse de l'offre : {a}": "🔎 analysing the offer: {a}",
+    "＋ flux {a} {b} — lu par API dès la prochaine collecte ({c})": "＋ {a} feed {b} — read "
+    "by API from the next collection ({c})",
+    "＋ flux {a} {b} — lu par API dès la prochaine collecte": "＋ {a} feed {b} — read by API "
+    "from the next collection",
+    "déjà suivi : {a} ({b})": "already followed: {a} ({b})",
+    "déjà suivi : {a}": "already followed: {a}",
 }

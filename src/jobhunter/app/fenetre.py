@@ -508,10 +508,12 @@ def _annonce_mise_a_jour(root: Any, app: Any) -> None:
 
     def proposer(v: Any, installee: Any) -> None:
         if messagebox.askyesno(
-            "JobHunter — mise à jour disponible",
-            f"La version {v} est disponible (installée : {installee}).\n\n"
-            "L'installer maintenant ? Ton profil, ton CV, tes lettres et ton suivi ne "
-            "sont pas touchés, et la version d'avant est sauvegardée.",
+            _t("JobHunter — mise à jour disponible"),
+            _t(
+                "La version {v} est disponible (installée : {installee}).\n\n"
+                "L'installer maintenant ? Ton profil, ton CV, tes lettres et ton suivi ne "
+                "sont pas touchés, et la version d'avant est sauvegardée."
+            ).format(v=v, installee=installee),
             parent=root,
         ):
             app.mettre_a_jour()

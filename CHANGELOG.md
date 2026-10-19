@@ -4,6 +4,17 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.13.0 — 2026-10-19
+
+- **Annuaire de 3 600 entreprises** dans le panneau Entreprises : tape un nom (« Alan »,
+  « Qonto »…) dans le champ d'ajout ou clique « Annuaire », choisis, et l'entreprise est
+  suivie par l'API publique de Lever, Ashby ou Greenhouse dès la prochaine collecte.
+  Aucune recherche sur le web : les annuaires viennent du projet jobsync (licence MIT),
+  livrés avec l'application. Une entreprise déjà suivie est marquée.
+- **Interface en anglais, journal compris** : les messages de l'application (sélection,
+  annulation, sauvegarde, mises à jour, relances…) et ses boîtes de dialogue suivent
+  le réglage de langue. La sortie des programmes lancés reste en français.
+
 ## 2.12.0 — 2026-10-19
 
 - **Clés d'API saisies dans l'application, au bon endroit.** Panneau Accès : choisir

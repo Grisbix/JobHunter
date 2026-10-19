@@ -94,3 +94,40 @@ def test_theme_traduit(monkeypatch):
     monkeypatch.setattr(theme.ctk, "CTkLabel", lambda parent, **kw: vu.setdefault("kw", kw))
     theme.CL(None, text="Mes CV")
     assert vu["kw"]["text"] == "My CVs"
+
+
+def test_journal(monkeypatch):
+    monkeypatch.setattr(langue, "LANGUE", "fr")
+    assert langue.journal("Rien à annuler.\n") == "Rien à annuler.\n"
+    monkeypatch.setattr(langue, "LANGUE", "en")
+    assert langue.journal("Rien à annuler.\n") == "Nothing to undo.\n"
+    assert langue.journal("↶ annulé (3 offre(s)).\n") == "↶ undone (3 offer(s)).\n"
+    assert (
+        langue.journal("x\n   Réessaie dans un instant — il se termine tout seul.\n")
+        == "x\n   Try again in a moment — it finishes on its own.\n"
+    )
+    assert (
+        langue.journal("＋ flux Ashby alan — lu par API dès la prochaine collecte (Alan)\n")
+        == "＋ Ashby feed alan — read by API from the next collection (Alan)\n"
+    )
+    # La sortie d'un programme lancé reste telle quelle.
+    assert langue.journal("Scan : 6 offres uniques\n") == "Scan : 6 offres uniques\n"
+
+
+def test_journal_modeles_coherents():
+    """Même jeu de `{x}` des deux côtés, et chaque modèle vit encore dans l'app."""
+    from jobhunter.app.textes_en import JOURNAL_EN
+
+    source = "\n".join(
+        p.read_text(encoding="utf-8") for p in APP.glob("*.py") if p.name != "textes_en.py"
+    )
+    trous = re.compile(r"\{(\w+)\}")
+    morts = []
+    for fr, en in JOURNAL_EN.items():
+        assert sorted(trous.findall(fr)) == sorted(trous.findall(en)), fr
+        # Le début du plus long morceau fixe doit apparaître dans le code de l'app (le
+        # reste peut y être coupé en plusieurs chaînes).
+        fixe = re.sub(r"^\W+", "", max(trous.split(fr)[::2], key=len))[:18]
+        if fixe not in source:
+            morts.append(fr)
+    assert morts == []

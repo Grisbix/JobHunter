@@ -77,7 +77,7 @@ Décisions de l'utilisateur :
 | F2 ✅ (v2.8.0) | **Panneaux de l'app à jour**, un par un (voir le détail sous le tableau) | chaque chiffre affiché est juste et chaque ligne a une action |
 | F3 ⛔ écarté | **Source HelloWork** : pages publiques de recherche, sans contournement ; robots.txt et conditions vérifiés d'abord | offres HelloWork dans la file, réponse enregistrée et rejouée (B2), verdict dans `rendement` |
 | F4 ✅ (v2.9.0) | **Installateur autonome** `JobHunterSetup.exe` (voir le détail sous le tableau) | sur un Windows sans Python : installation, ouverture, collecte et dossier |
-| F5 ◐ (v2.10.0 : navigation, panneaux, menus ; journal et messages encore en français) | **Français et anglais** : textes de l'interface dans des catalogues, choix dans les réglages ; vitrine du dépôt en anglais (README, docs utilisateur, notes de version), version française à côté | l'app entière en anglais d'un réglage ; README anglais avec le lien français |
+| F5 ✅ (v2.10.0 navigation, panneaux, menus ; v2.13.0 journal et boîtes de dialogue ; la sortie des programmes lancés reste en français) | **Français et anglais** : textes de l'interface dans des catalogues, choix dans les réglages ; vitrine du dépôt en anglais (README, docs utilisateur, notes de version), version française à côté | l'app entière en anglais d'un réglage ; README anglais avec le lien français |
 
 **F1 — faire le tri**
 - Retirer des deux dépôts les programmes morts ou en double, les documents périmés,
@@ -106,6 +106,15 @@ Décisions de l'utilisateur :
 Ordre : **F1 → F2 → F3 → F4 → F5**. On trie d'abord, pour ne pas compiler ni traduire du
 code mort. L'installateur se construit sur une base propre. On traduit en dernier, une
 fois les textes stabilisés.
+
+## Étape G — Idées de la veille GitHub (19/10)
+
+| # | Quoi | Fini quand |
+|---|---|---|
+| G1 ✅ (v2.13.0) | **Annuaires d'entreprises** Lever, Ashby, Greenhouse (jobsync, MIT) dans le panneau Entreprises | taper un nom, choisir, suivre ; `outils/annuaires.py --verifier` en reproduit les fichiers |
+| G2 | **Relecteur des lettres** : une seconde passe, sans le contexte de la rédaction, qui confronte la lettre au guide de style et aux faits ; l'annonce est une entrée non fiable (injection) | chaque défaut signalé est reproduit par un test ; aucune lettre réécrite sans accord |
+| G3 | **Note d'adéquation justifiée** (C1 bis) : chaque point du fit cite le passage de l'annonce qui le donne | `jobhunter evaluation` fait mieux que l'AUC de 0,46 de la 2.5.0, sur les mêmes jugements |
+| G4 | **Statuts depuis Gmail**, lecture seule, propositions validées une à une — seulement si Gabriel le demande | — |
 
 ## Ordre proposé
 

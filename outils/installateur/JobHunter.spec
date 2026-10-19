@@ -15,6 +15,7 @@ cachees = collect_submodules("jobhunter")  # aiguillés par nom (-m module, jobh
 donnees = (
     collect_data_files("customtkinter")
     + collect_data_files("docx")
+    + collect_data_files("jobhunter", includes=["sources/annuaires/*"])
     + [
         (SQUELETTE, "squelette"),
         (os.path.join(RACINE, "VERSION"), "."),

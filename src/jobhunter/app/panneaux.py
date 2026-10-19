@@ -755,7 +755,7 @@ class PanneauxMixin:
         bar.pack(fill="x", padx=28, pady=(0, 10))
         ent = CE(bar, bg=ROW0, fg=TX, insertbackground=TX, relief="flat", width=60)
         ent.configure(
-            placeholder_text=_t("Colle l'adresse de la page carrière d'une entreprise à suivre")
+            placeholder_text=_t("Adresse de sa page carrière, ou nom de l'entreprise (annuaire)")
         )
         ent.pack(side="left", ipady=4, fill="x", expand=True)
         CFG = SCRIPTS / "sources_config.json"
@@ -767,10 +767,29 @@ class PanneauxMixin:
             except Exception:
                 return {}
 
+        def suivis() -> set[tuple[str, str]]:
+            from jobhunter.sources import commun as _src
+
+            _src._load_cfg()
+            return {(o, str(s).lower()) for o, slugs in _src.ATS_SLUGS.items() for s in slugs}
+
+        def suivre_entree(e: Any) -> None:
+            c = _lire_cfg()
+            self._log(_inventaire.ajouter_flux(c, _defauts(), (e.outil, e.jeton)) + f" ({e.nom})\n")
+            self._jwrite(CFG, c)
+            reload()
+
+        def annuaire(texte: str = "") -> None:
+            from jobhunter.app.annuaire import choisir
+
+            choisir(self, texte, suivis, suivre_entree)
+
         def add() -> None:
             v = ent.get().strip()
             if not v.startswith("http"):
-                self._log("✗ colle l'adresse de la page carrière de l'entreprise (http…)\n")
+                # Un nom : on le cherche dans les annuaires Lever, Ashby, Greenhouse.
+                annuaire(v)
+                ent.delete(0, "end")
                 return
             if self._is_board(v):
                 self._log("↪ c'est un site d'offres général → ajoute-le dans « Sites d'offres »\n")
@@ -819,7 +838,17 @@ class PanneauxMixin:
             activebackground=ACC_H,
             relief="flat",
             cursor="hand2",
-        ).pack(side="left", padx=18)
+        ).pack(side="left", padx=(18, 6))
+        CB(
+            bar,
+            text="Annuaire",
+            command=lambda: annuaire(ent.get().strip()),
+            bg=BTN,
+            fg=TX,
+            activebackground=BTN_H,
+            relief="flat",
+            cursor="hand2",
+        ).pack(side="left", padx=(0, 12))
         CB(
             bar,
             text="Ne plus suivre",

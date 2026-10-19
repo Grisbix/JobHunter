@@ -10,9 +10,11 @@ from tkinter import messagebox, scrolledtext, simpledialog
 from typing import Any
 
 from jobhunter import gele as _gele
+from jobhunter.app import langue as _langue
 from jobhunter.app import theme as _theme
 from jobhunter.app._type_app import AppTypee
 from jobhunter.app.commun import INTERACTIVE, PY, QUEUE, ROOT, SCRIPTS, ouvrir
+from jobhunter.app.langue import t as _t
 from jobhunter.app.theme import ACC, CB, CF, DEL, DEL_TX, LOGBG, LOGFG, SIDE, SIDE_H, SIDE_TX
 from jobhunter.liens import existe as _doc_existe
 from jobhunter.stockage import file as queue_io
@@ -49,6 +51,7 @@ class ExecutionMixin:
 
     # ── UI helpers ──
     def _log(self: "AppTypee", txt: Any) -> None:
+        txt = _langue.journal(str(txt))  # les messages de l'app ; F5
         self.log.insert("end", txt)
         self.log.see("end")
         # Meme repli, le journal doit pouvoir se resumer en un coup d'oeil.
@@ -177,17 +180,19 @@ class ExecutionMixin:
     def _apres_mise_a_jour(self: "AppTypee", ok: Any, avant: Any, apres: Any) -> None:
         if not ok:
             messagebox.showwarning(
-                "JobHunter — mise à jour",
-                "La mise à jour n'a pas abouti ; le détail est dans "
-                "le journal. Tes données n'ont pas été touchées.",
+                _t("JobHunter — mise à jour"),
+                _t(
+                    "La mise à jour n'a pas abouti ; le détail est dans "
+                    "le journal. Tes données n'ont pas été touchées."
+                ),
                 parent=self.root,
             )
             return
         if apres == avant:
             return  # deja a jour : rien a relancer
         if messagebox.askyesno(
-            "JobHunter — mise à jour",
-            f"Version {apres} installée. Relancer JobHunter maintenant ?",
+            _t("JobHunter — mise à jour"),
+            _t("Version {v} installée. Relancer JobHunter maintenant ?").format(v=apres),
             parent=self.root,
         ):
             subprocess.Popen([PY, str(ROOT / "JobHunter.pyw")], cwd=str(ROOT))

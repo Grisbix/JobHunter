@@ -13,11 +13,12 @@ et le profil gardent leur langue.
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import overload
 
 from jobhunter import racine as _racine
-from jobhunter.app.textes_en import EN
+from jobhunter.app.textes_en import EN, JOURNAL_EN
 
 LANGUES = ("fr", "en")
 FICHIER = "_interface.json"
@@ -65,3 +66,45 @@ def t(texte: object) -> object:
     if LANGUE == "fr" or not isinstance(texte, str):
         return texte
     return EN.get(texte, texte)
+
+
+def _modele(cle: str) -> "re.Pattern[str]":
+    """« ↶ annulé ({a} offre(s)). » → motif qui capture chaque `{x}`."""
+    morceaux = re.split(r"\{(\w+)\}", cle)
+    motif = "".join(re.escape(m) if i % 2 == 0 else f"(?P<{m}>.*?)" for i, m in enumerate(morceaux))
+    return re.compile(motif)
+
+
+_MODELES = [(_modele(k), v) for k, v in JOURNAL_EN.items() if "{" in k]
+
+
+def _ligne(texte: str) -> str:
+    """Une ligne du journal (sans espaces de bord) en anglais, ou telle quelle."""
+    if texte in JOURNAL_EN:
+        return JOURNAL_EN[texte]
+    for motif, cible in _MODELES:
+        m = motif.fullmatch(texte)
+        if m:
+            return cible.format(**m.groupdict())
+    return texte
+
+
+def journal(texte: str) -> str:
+    """Le texte du journal de l'app, ligne à ligne, dans la langue de l'interface.
+
+    Chaque ligne connue de `JOURNAL_EN` (sans ses espaces de bord) est traduite, y
+    compris celles qui portent un nombre ou un nom (modèles à `{a}`) ; les autres, dont
+    la sortie des programmes lancés, restent telles quelles.
+    """
+    if LANGUE == "fr":
+        return texte
+    sortie = []
+    for ligne in texte.splitlines(keepends=True):
+        corps = ligne.rstrip("\r\n")
+        fin = ligne[len(corps) :]
+        coeur = corps.strip()
+        if coeur:
+            debut = corps[: len(corps) - len(corps.lstrip())]
+            corps = debut + _ligne(coeur)
+        sortie.append(corps + fin)
+    return "".join(sortie)
