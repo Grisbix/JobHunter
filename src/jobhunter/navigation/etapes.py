@@ -40,55 +40,6 @@ _MEESCHAERT_REVEAL_JS = r"""
 """
 
 
-# ── Meeschaert connexion popin : force-show hidden login modal ──
-# ANALYZE_JS détecte hasEmail=True + nPwd=1 mais 0 input visible car le
-# formulaire login est caché dans #popin-moneypitch-form (display:none).
-# Le bouton #btn-customer-area (déclencheur JS) est absent de la page
-# recrutement — on force donc l'affichage directement.
-_MEESCHAERT_CONNEXION_JS = r"""
-(P) => {
-  const popin = document.getElementById('popin-moneypitch-form');
-  if (!popin) return {found: false, reason: 'popin not in DOM'};
-
-  // 1. Force reveal the modal
-  popin.style.display = 'block';
-
-  // 2. Fill login (name="login")
-  const loginInput = popin.querySelector('input[name="login"]');
-  if (loginInput) {
-    loginInput.focus();
-    loginInput.value = P.email;
-    loginInput.dispatchEvent(new Event('input', {bubbles: true}));
-    loginInput.dispatchEvent(new Event('change', {bubbles: true}));
-    loginInput.dispatchEvent(new Event('blur', {bubbles: true}));
-  }
-
-  // 3. Fill password (name="password")
-  const pwdInput = popin.querySelector('input[name="password"]');
-  if (pwdInput) {
-    pwdInput.focus();
-    pwdInput.value = P.password;
-    pwdInput.dispatchEvent(new Event('input', {bubbles: true}));
-    pwdInput.dispatchEvent(new Event('change', {bubbles: true}));
-    pwdInput.dispatchEvent(new Event('blur', {bubbles: true}));
-  }
-
-  // 4. Find and click the Connexion submit button
-  const btn = popin.querySelector('.popin-moneypitch-form_btn-connexion, button[type="submit"]');
-  const filled = !!(loginInput && loginInput.value);
-  const hasPwd = !!(pwdInput && pwdInput.value);
-
-  if (btn) {
-    // Mark button for Playwright locator
-    btn.setAttribute('data-wn-meeschaert-connexion', '1');
-    return {found: true, filled: filled && hasPwd, submitted: false, btn_available: true};
-  }
-
-  return {found: true, filled: filled && hasPwd, submitted: false, reason: 'no submit button found'};
-}
-"""
-
-
 # ── Portail UBS / multi-liens login : détecter page portail → cliquer lien login ──
 _PORTAL_LOGIN_JS = r"""
 () => {
