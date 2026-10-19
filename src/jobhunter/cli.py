@@ -13,7 +13,7 @@ folder. Installed (`pip install -e .`), the `jobhunter` command exists directly.
 
 No command sends an application: the final click stays the user's.
 
-Decision: docs/adr/0008-programmes-dans-le-paquet.md
+Decision: docs/adr/0008-programs-in-the-package.md
 """
 
 import importlib.util

@@ -16,7 +16,7 @@ connection forever (on 2026-09-22, fr.talent.com blocked the scheduled scan for
 job_sources keeps its old names (`_get_borne`...): the test doubles replace them there,
 and job_sources' calls go through them.
 
-Decision: docs/adr/0004-429-attendre-403-arreter.md
+Decision: docs/adr/0004-429-wait-403-stop.md
 """
 
 import collections

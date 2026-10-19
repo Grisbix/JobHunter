@@ -23,7 +23,7 @@ Tout tourne sur ton ordinateur. Ton CV et tes candidatures ne quittent pas ta ma
 
 | Les offres, triées pour ton profil | La lettre préparée pour une offre |
 |---|---|
-| ![Liste des offres](docs/captures/offres.png) | ![Lettre générée](docs/captures/lettre.png) |
+| ![Liste des offres](docs/screenshots/offers.png) | ![Lettre générée](docs/screenshots/letter.png) |
 
 <sub>Captures faites avec un profil et des offres **fictifs** (Léa Martin, chargée de communication à Lyon) : le profil créé par le premier lancement, avant tout complément par Claude.</sub>
 
@@ -125,7 +125,7 @@ Le premier lancement crée un profil **qui marche**, mais sommaire. Pour un prof
 ouvre [Claude Code](https://claude.com/claude-code) dans le dossier JobHunter et tape :
 
 ```
-/configurer-profil Mon_CV\mon_CV.docx
+/configure-profile Mon_CV\mon_CV.docx
 ```
 
 Claude lit ton CV, te pose ses questions en un seul message, puis remplit tout : variantes
@@ -211,7 +211,7 @@ Le second dit, pour chaque intitulé, s'il est collecté ou écarté, son domain
 | Symptôme | Cause probable |
 |---|---|
 | « Python est introuvable » | Python non installé, ou « Add Python to PATH » non coché : réinstaller |
-| « Profil introuvable » | lancer `lancer.bat`, ou `/configurer-profil` dans Claude Code |
+| « Profil introuvable » | lancer `lancer.bat`, ou `/configure-profile` dans Claude Code |
 | Aucune offre ne passe | `filtre_titre.metier` trop étroit, ou `collecte.mots_cles` trop rares |
 | Trop d'offres hors sujet | compléter `filtre_titre.exclus`, resserrer `filtre_titre.metier` |
 | Lettre sans paragraphe de parcours | `domaines[].parcours_fr` vide |

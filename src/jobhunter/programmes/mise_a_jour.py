@@ -245,7 +245,7 @@ def signaler_reglages():
         for k in manque:
             print(f"  - {k}")
         print(
-            f"Pour les régler : demande à Claude « /configurer-profil », ou copie-les "
+            f"Pour les régler : demande à Claude « /configure-profile », ou copie-les "
             f"depuis {EXEMPLE} dans profil/profil.json."
         )
 

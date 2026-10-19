@@ -2,7 +2,7 @@
 
 Part of jobhunter.navigation (formerly Scripts/web_nav.py, phase 3.6).
 
-Decision: docs/adr/0005-aucune-soumission-automatique.md
+Decision: docs/adr/0005-no-automatic-submission.md
 """
 
 from typing import Any

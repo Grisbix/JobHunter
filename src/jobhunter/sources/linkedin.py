@@ -2,7 +2,7 @@
 
 Part of jobhunter.sources (formerly Scripts/job_sources.py, phase 3.4).
 
-Decision: docs/adr/0004-429-attendre-403-arreter.md
+Decision: docs/adr/0004-429-wait-403-stop.md
 """
 
 import re

@@ -1,9 +1,9 @@
 """INTER-PROCESS lock through a .lock file (former section of Scripts/jutil.py).
 
 A program that finds the file busy exits with code 3 without modifying anything; a
-live lock is never broken (detail: .claude/rules/verrous.md).
+live lock is never broken (detail: .claude/rules/locks.md).
 
-Decision: docs/adr/0003-verrou-fichier-code-3.md
+Decision: docs/adr/0003-file-lock-exit-code-3.md
 """
 
 # ── Verrou INTER-PROCESSUS ────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 # 0001 — The old modules become aliases of the package
 
-**Status**: accepted, 2026-10-18 (phases 3.1 to 3.7). The `Scripts/x.py` aliases are removed in 2.0 ([0008](0008-programmes-dans-le-paquet.md)); the package facade (`_facade`) remains.
+**Status**: accepted, 2026-10-18 (phases 3.1 to 3.7). The `Scripts/x.py` aliases are removed in 2.0 ([0008](0008-programs-in-the-package.md)); the package facade (`_facade`) remains.
 
 ## Context
 

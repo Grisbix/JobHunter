@@ -12,7 +12,7 @@ The `Scripts/*.py` facades left in 2.0; this one stays for `sources`, `documents
 (`jobhunter.sources.title_ok`). Removing it would require pointing each caller to the
 submodule that carries the name.
 
-Decision: docs/adr/0001-facades-alias.md
+Decision: docs/adr/0001-facade-aliases.md
 """
 
 import importlib

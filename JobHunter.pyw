@@ -11,7 +11,7 @@ The code lives in src/jobhunter; this file is only the launcher, with no install
 The .bat/.sh files and the scheduled task go through it. It is the only place that adds
 src/ to the import path (installed by pip, the package does not need it). It also sets
 JOBHUNTER_RACINE to its folder when that folder holds the data (Scripts/, profil/):
-a package installed elsewhere thus finds the right data, wherever it is launched from. Decision: docs/adr/0008-programmes-dans-le-paquet.md
+a package installed elsewhere thus finds the right data, wherever it is launched from. Decision: docs/adr/0008-programs-in-the-package.md
 """
 
 import os

@@ -2,7 +2,7 @@
 
 This document describes the state as of 18 October 2026 (version 1.12). Each structuring
 choice has its own ADR in [`docs/adr/`](adr/); the plan that led here is
-[`plan-professionnalisation.md`](plan-professionnalisation.md).
+[`professionalisation-plan.md`](professionalisation-plan.md).
 
 ## Overview
 
@@ -41,7 +41,7 @@ choice has its own ADR in [`docs/adr/`](adr/); the plan that led here is
 |---|---|---|
 | `jobhunter.racine` | installation root (marker `Scripts/` + `profil/`, or `JOBHUNTER_RACINE`) | — |
 | `jobhunter.profil` | reading the profile, patterns compiled from its lists; `utiliser()` injects a profile | racine, paresseux |
-| `jobhunter.paresseux` | module values computed on first read ([ADR 0007](adr/0007-valeurs-du-profil-paresseuses.md)) | — |
+| `jobhunter.paresseux` | module values computed on first read ([ADR 0007](adr/0007-lazy-profile-values.md)) | — |
 | `jobhunter.journal` | the engine's `logging`: console unchanged, one timestamped file per run | — |
 | `jobhunter.reseau` | HTTP requests bounded in total duration, shared client, `INCIDENTS` counter of refusals | — |
 | `jobhunter.texte`, `liens` | text normalisation, paths ↔ `file:///` | — |
@@ -63,12 +63,12 @@ imports towards `jobhunter.programmes` remain, marked `TRANSITION` in the code:
 `python JobHunter.pyw <commande>`; it is the only file that adds `src/` to the import
 path, and the `.bat`/`.sh` files as well as the scheduled task go through it. Installed with
 `pip`, the package finds the data folder through `JOBHUNTER_RACINE` or by walking up
-from the current folder ([ADR 0008](adr/0008-programmes-dans-le-paquet.md)).
+from the current folder ([ADR 0008](adr/0008-programs-in-the-package.md)).
 
 ## The data
 
 Three JSON files in `Scripts/`, three access contracts
-([ADR 0002](adr/0002-trois-fichiers-trois-contrats.md)):
+([ADR 0002](adr/0002-three-files-three-contracts.md)):
 
 - **`apply_queue.json`** — the offers. Identity: `oid = "entreprise|poste"`, never
   the URL. Written only by `stockage.file.transaction()`.
@@ -78,7 +78,7 @@ Three JSON files in `Scripts/`, three access contracts
   file, written entry by entry (`stockage.suivi.poser`) on the state re-read under lock.
 
 A program that finds the queue locked exits with **code 3** without modifying anything
-([ADR 0003](adr/0003-verrou-fichier-code-3.md)).
+([ADR 0003](adr/0003-file-lock-exit-code-3.md)).
 
 ## The daily pipeline
 
@@ -105,15 +105,15 @@ command output (`main()`); everything else goes through `logging`.
 
 **Public** pages and APIs only. A rate limit (429) is waited out and the pass
 resumes where it stopped; a refusal (403, 999, CAPTCHA) stops the source, with no
-new attempt before 30 days ([ADR 0004](adr/0004-429-attendre-403-arreter.md)).
+new attempt before 30 days ([ADR 0004](adr/0004-429-wait-403-stop.md)).
 No anti-bot circumvention, no stealth engine, no password handled, no automatic
-submission ([ADR 0005](adr/0005-aucune-soumission-automatique.md)).
+submission ([ADR 0005](adr/0005-no-automatic-submission.md)).
 
 ## Split packages: a single namespace
 
 A split package (`sources`, `documents`, `navigation`, `app`) sees the names of all
 its submodules, and an assignment goes to the module that owns the name
-([ADR 0001](adr/0001-facades-alias.md)): `jobhunter.sources.title_ok` and a
+([ADR 0001](adr/0001-facade-aliases.md)): `jobhunter.sources.title_ok` and a
 `monkeypatch` on `jobhunter.sources._get_borne` both work. The old `Scripts/x.py`
 files (aliases of these modules) were removed in 2.0.
 
@@ -121,5 +121,5 @@ files (aliases of these modules) were removed in 2.0.
 
 - `outils/banc.py comparer outils/banc_reference.json`: 384 fictitious offers, every
   decision (title kept, score, domain, triage, zone, country, contract, language, message, letter
-  and CV) compared to the reference. 0 differences expected ([ADR 0006](adr/0006-banc-de-non-regression.md)).
+  and CV) compared to the reference. 0 differences expected ([ADR 0006](adr/0006-non-regression-bench.md)).
 - `pytest`: ~1,450 tests without network; `mypy`: strict on the core.

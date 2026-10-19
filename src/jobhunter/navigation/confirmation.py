@@ -13,7 +13,7 @@ A declaration alone — a click, a key — is never worth "confirmé": an observ
 required. And "incertain" never retries anything; it is up to the user to check (their
 mailbox, the site).
 
-Decision: docs/adr/0009-preuve-distincte-de-la-declaration.md
+Decision: docs/adr/0009-proof-distinct-from-declaration.md
 """
 
 import re

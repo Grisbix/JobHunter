@@ -20,7 +20,7 @@ Sets:
 A difference is not necessarily a bug: if the change is intended, the reference
 is regenerated in the SAME commit, and the message says why.
 
-Decision: docs/adr/0006-banc-de-non-regression.md
+Decision: docs/adr/0006-non-regression-bench.md
 """
 
 import argparse

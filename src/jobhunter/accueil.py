@@ -74,6 +74,6 @@ def assurer_profil() -> None:
             "JobHunter",
             "Profil créé : profil/profil.json.\n\nPour le compléter "
             "(compétences, recherches, lettres), ouvre Claude Code dans ce "
-            "dossier et tape /configurer-profil.",
+            "dossier et tape /configure-profile.",
         )
         _r.destroy()

@@ -1,0 +1,17 @@
+name: Idea
+description: A feature or a new job source.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: besoin
+    attributes:
+      label: What would it change for your search?
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Job site, if any
+      description: >
+        A source is added only through a public API or pages its terms of use and
+        robots.txt allow.

@@ -14,7 +14,7 @@ module): a bare global name does not go through `__getattr__` and would raise
 `oublier()` erases the values already computed; `profil.utiliser()` uses it so that an
 injected profile applies everywhere.
 
-Decision: docs/adr/0007-valeurs-du-profil-paresseuses.md
+Decision: docs/adr/0007-lazy-profile-values.md
 """
 
 import types

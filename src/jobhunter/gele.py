@@ -15,7 +15,7 @@ into `Documents/JobHunter`, or into `JOBHUNTER_RACINE` if the variable is set. A
 launch, this folder receives the shipped skeleton: example profiles, source settings,
 folder for the CV. A file already present is never overwritten.
 
-Decision: docs/adr/0011-application-autonome.md
+Decision: docs/adr/0011-standalone-application.md
 """
 
 import os

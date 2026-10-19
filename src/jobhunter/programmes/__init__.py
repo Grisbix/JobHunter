@@ -2,5 +2,5 @@
 
 Each is run with `python -m jobhunter <command>` (see `jobhunter.cli`) or
 `python -m jobhunter.programmes.<name>`; the data they read and write stays in
-Scripts/ (`jobhunter.racine.scripts()`). Documentation: docs/programmes.md.
+Scripts/ (`jobhunter.racine.scripts()`). Documentation: docs/programs.md.
 """

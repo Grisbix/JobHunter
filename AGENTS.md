@@ -19,7 +19,7 @@ change target, change the profile.
   `test_*.py`, forces `PROFIL_JOBHUNTER` to this file.
 - A word list in the profile accepts `"mot"` (bounded on the left) or `"re:motif"` (taken
   as is). `profil.motif()` compiles them.
-- User guide: `README.md` (English) and `README.fr.md`. Setup through Claude Code: `/configurer-profil` (`.claude/commands/configurer-profil.md`).
+- User guide: `README.md` (English) and `README.fr.md`. Setup through Claude Code: `/configure-profile` (`.claude/commands/configure-profile.md`).
 - Double-click tools (root): `installer.bat`, `lancer.bat` (CV taken from `Mon_CV/`), `planifier.bat`
   (daily scheduled task), `mettre_a_jour.bat` → `src/jobhunter/programmes/mise_a_jour.py` (git pull, or GitHub
   ZIP file by file: data never touched, modified file kept + `.nouveau`,
@@ -34,7 +34,7 @@ change target, change the profile.
 
 ## Read before touching the code
 
-**`docs/programmes.md`** — what each program does, and above all its final section
+**`docs/programs.md`** — what each program does, and above all its final section
 "Code pitfalls, learned the hard way". Each pitfall there is a real, measured bug, with
 its symptom. Do not rediscover these bugs. `README.md` at the root is addressed to the
 user; the history of changes is in the commit messages.
@@ -102,7 +102,7 @@ pattern to `ats_match` raises its count without any test having been written.
 ### The `src/jobhunter` package (2.0: all the code is there)
 
 `Scripts/` keeps only the data; the code lives in `src/jobhunter`
-(`docs/plan-professionnalisation.md`):
+(`docs/professionalisation-plan.md`):
 
 | Package | Contents (former name) |
 |---|---|
@@ -157,7 +157,7 @@ Inter-process exclusion by file (`jutil.prendre_verrou` / `rendre_verrou` / `gar
 **A program that finds the queue busy exits with code 3 without modifying anything.** A
 live lock is never broken; every network request goes through the bounded functions.
 Details (reentrancy, recycled PIDs, double lock of `job_sources`, httpx timeouts):
-`.claude/rules/verrous.md`.
+`.claude/rules/locks.md`.
 
 **The pipeline collection runs in five passes, each merged** (ATS/Workday/V.I.E;
 LinkedIn; eFC/EURES; APEC/France Travail/Adzuna/Jooble; Glassdoor/WTJ last).
@@ -193,16 +193,16 @@ them by following the link.
 | Rule | Triggers on |
 |---|---|
 | `.claude/rules/scoring.md` | `ats_match.py`, `tri_file.py` — `fit_score`, ESG cap, penalty on the title alone |
-| `.claude/rules/motifs.md` | `ats_match.py`, `job_sources.py`, `tri_file.py` — regex, heredoc, substrings, final `\b` |
+| `.claude/rules/patterns.md` | `ats_match.py`, `job_sources.py`, `tri_file.py` — regex, heredoc, substrings, final `\b` |
 | `.claude/rules/documents.md` | `tailor_application.py`, `generate_docs.py`, `regenere_docs.py`, `sync_docs.py`, `chemins.py` |
-| `.claude/rules/navigation-web.md` | `web_nav.py`, `site_strategies.py`, `apply_runner.py`, `acces.py` |
-| `.claude/rules/app-bureau.md` | `JobHunter.pyw` |
-| `.claude/rules/verrous.md` | `jutil.py`, `job_sources.py`, `linkedin_desc.py`, `pipeline_quotidien.py`, `audit_dispo.py` |
+| `.claude/rules/web-navigation.md` | `web_nav.py`, `site_strategies.py`, `apply_runner.py`, `acces.py` |
+| `.claude/rules/desktop-app.md` | `JobHunter.pyw` |
+| `.claude/rules/locks.md` | `jutil.py`, `job_sources.py`, `linkedin_desc.py`, `pipeline_quotidien.py`, `audit_dispo.py` |
 
 ## Limits that are decisions, not gaps
 
 They have held since the start of the project and are not reopened in passing during a task.
-The detail is in `.claude/rules/navigation-web.md`; the short version, which holds everywhere:
+The detail is in `.claude/rules/web-navigation.md`; the short version, which holds everywhere:
 
 - **No automatic submission.** The final click to send is the user's.
   Add no `--auto` / `--submit` flag to `apply_runner.py`, or anywhere else. The
@@ -211,7 +211,7 @@ The detail is in `.claude/rules/navigation-web.md`; the short version, which hol
   "uncertain" never triggers a re-send.
 - **No anti-bot circumvention**, no CAPTCHA solving.
   No stealth engine, no masking of automation, no personal Chrome profile:
-  the browser presents itself as automated (details: `.claude/rules/navigation-web.md`).
+  the browser presents itself as automated (details: `.claude/rules/web-navigation.md`).
 - **No password handled by the programs.**
 - **No automatic account creation**, no reading of a mailbox by a program.
 - The repository is **local, with no remote**, because it contains personal data.
@@ -226,7 +226,7 @@ witness file. `jobhunter.racine` looks for `Scripts/` + `profil/` (or `JOBHUNTER
 and the engine work wherever they are placed.
 
 **Regexes are not written through a shell heredoc** — details and pattern pitfalls in
-`.claude/rules/motifs.md`.
+`.claude/rules/patterns.md`.
 
 **Every automatic deletion must spare the offers present in `suivi.json`.**
 A posting closes *after* one has applied to it: without this guard, the purge deletes first
@@ -252,7 +252,7 @@ exactly what must not be done facing a quota).
 Development: **uv** (`uv sync` creates `.venv` from `pyproject.toml` and `uv.lock`),
 **ruff** (lint and format, rules and exceptions in `pyproject.toml`), **pre-commit**
 (`uv run pre-commit install`, once). Details: `CONTRIBUTING.md`. Roadmap:
-`docs/plan-professionnalisation.md`.
+`docs/professionalisation-plan.md`.
 
 End user: `installer.bat` / `installer.sh` install `requirements.txt` (same
 bounds as `pyproject.toml`) into the system Python. `VERSION` and the version of

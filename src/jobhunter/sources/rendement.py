@@ -14,7 +14,7 @@ ok              offers, without incident
 One line per collection goes into `Scripts/_rendement.jsonl`; `python JobHunter.pyw
 rendement` sums it up over the last days.
 
-Decision: docs/adr/0004-429-attendre-403-arreter.md
+Decision: docs/adr/0004-429-wait-403-stop.md
 """
 
 import collections

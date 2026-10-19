@@ -1,12 +1,11 @@
-name: Bug / Problème
-description: Something does not work as expected. / Quelque chose ne marche pas.
+name: Bug
+description: Something does not work as expected.
 labels: [bug]
 body:
   - type: markdown
     attributes:
       value: >
         **Never paste personal data** (CV, profile, offers, letters, API keys).
-        **Ne colle aucune donnée personnelle** (CV, profil, offres, lettres, clés d'API).
   - type: input
     id: version
     attributes:
@@ -28,7 +27,7 @@ body:
   - type: textarea
     id: quoi
     attributes:
-      label: What happened? / Que s'est-il passé ?
+      label: What happened?
       description: Steps, what you expected, what you got. Error text if any.
     validations:
       required: true

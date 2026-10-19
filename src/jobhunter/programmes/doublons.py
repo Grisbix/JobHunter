@@ -25,7 +25,7 @@ source (employer site > LinkedIn), then French or English (the user's languages)
 the one most recently served again by its source (the current title), then the best
 fit, then the longest description.
 
-Decision: docs/adr/0010-identite-entreprise-poste.md
+Decision: docs/adr/0010-offer-identity-company-job.md
 """
 
 import re

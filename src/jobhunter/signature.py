@@ -16,7 +16,7 @@ and says so. As soon as it is set, a version without a valid signature is refuse
 The algorithm is that of RFC 8032 (section 6), without a dependency: checking a
 signature takes a few milliseconds.
 
-Decision: docs/adr/0012-mises-a-jour-signees.md
+Decision: docs/adr/0012-signed-updates.md
 """
 
 import hashlib

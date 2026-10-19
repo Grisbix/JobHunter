@@ -100,7 +100,7 @@ Verified on 19/10/2026 on Python 3.14: a `time.sleep` triggered in a function
   `profil/profil.json` (see `AGENTS.md`).
 - **Nothing at import**: no reading, no writing, no network (`tests/test_effets_import.py`).
   A value taken from the profile is written `_PARESSEUX["NOM"] = lambda: ...` and read as
-  `_ici.NOM` in its module ([ADR 0007](docs/adr/0007-valeurs-du-profil-paresseuses.md)).
+  `_ici.NOM` in its module ([ADR 0007](docs/adr/0007-lazy-profile-values.md)).
 - **`print` for a command's output (`main()`), `logging` for the rest**:
   `_log = journal.journal(__name__)`.
 - **Non-negotiable limits**: no automatic submission of an application, no anti-bot

@@ -130,7 +130,7 @@ Done when: `pip install -e .` then `jobhunter pipeline` works; no
 `sys.path.insert`; no cycle (checked in CI by `import-linter`); bench 0 differences at each PR.
 *(Correction of 2026-10-19: `import-linter` was never wired in. Cycles are
 checked package by package by the `test_*_paquet.py` tests; the rule "the engine
-does not import the interface" is step B1 of [the roadmap](feuille-de-route.md).)*
+does not import the interface" is step B1 of [the roadmap](roadmap.md).)*
 
 **Criteria met (2026-10-19, v2.4.1)**: the eight transitional `sys.path.insert(Scripts/)`
 calls, forgotten when the facades were removed, are removed (no import went through them any more,
@@ -141,7 +141,7 @@ module touches `sys.path`; only `JobHunter.pyw` adds `src/`, outside the package
 **Done (2026-10-18, v1.15.0 then v2.0.0)**: 3.9 in two stages. The 1.15.0 bridge
 (above) was published and tested on its own (ZIP update 1.14 → 1.15). 2.0.0 moves
 the 57 programs of `Scripts/` into `jobhunter.programmes` (`git mv`, history kept),
-removes the 14 facades; `Scripts/` keeps only the data ([ADR 0008](adr/0008-programmes-dans-le-paquet.md)).
+removes the 14 facades; `Scripts/` keeps only the data ([ADR 0008](adr/0008-programs-in-the-package.md)).
 `JobHunter.pyw` is the only `sys.path.insert` (to launch without installation). Merged
 after a complete cycle of the real pipeline on the previous code.
 
@@ -163,7 +163,7 @@ created at load time) and opens no connection — checked by
 
 **Done (2026-10-18, v1.14.0)**: import no longer reads any file. The ~110 values
 drawn from the profile and from `chemins.json` are computed on first read
-(`jobhunter.paresseux`, [ADR 0007](adr/0007-valeurs-du-profil-paresseuses.md));
+(`jobhunter.paresseux`, [ADR 0007](adr/0007-lazy-profile-values.md));
 `profil.utiliser()` injects an in-memory profile, `profil.recharger()` goes back to the
 file. `logging` (`jobhunter.journal`) replaces the 80 `print` calls in the engine functions,
 with the same console output and one timestamped file per pipeline run.
@@ -298,7 +298,7 @@ ADR decides; the narrative says why a given line exists.
 First workstream of the follow-up proposed by Codex (note of 18/10). The Candidatures panel
 drives `apply_runner --pilote`; after "J'ai envoyé" ("I have sent it"), the page is observed and the tracking
 receives `envoi` (confirmed / uncertain / declared) and `preuve` (proof)
-([ADR 0009](adr/0009-preuve-distincte-de-la-declaration.md)). The send click remains
+([ADR 0009](adr/0009-proof-distinct-from-declaration.md)). The send click remains
 human; no command of the protocol clicks. Possible follow-ups, from the same document:
 ranking evaluated on real judgements, a more robust offer identity, yield per
 source, check of the final PDF.
@@ -317,4 +317,4 @@ limited / partial / refused. Log `Scripts/_rendement.jsonl`, summary
 `jobhunter rendement`. Not measured for now: full descriptions and employer
 links per source (they arrive at later pipeline steps, not at collection).
 
-**Next**: [roadmap after the plan](feuille-de-route.md) (2026-10-19).
+**Next**: [roadmap after the plan](roadmap.md) (2026-10-19).

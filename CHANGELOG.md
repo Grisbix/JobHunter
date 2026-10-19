@@ -4,6 +4,15 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 2.21.1 — 2026-10-20
+
+- **English file names for the documentation**: `docs/programs.md`, `docs/roadmap.md`,
+  `docs/professionalisation-plan.md`, `docs/screenshots/`, the twelve decisions in
+  `docs/adr/`, the agent rules in `.claude/rules/` and the issue templates. Every link and
+  every "Decision:" citation in the code follows.
+- The Claude Code command that sets up your profile is now **`/configure-profile`**
+  (formerly `/configurer-profil`).
+
 ## 2.21.0 — 2026-10-20
 
 - **The repository is in English.** Every comment and docstring of the code, the
@@ -457,7 +466,7 @@ with pytest (1,155 tests).
 ## 1.4.0 — 2026-10-17
 
 "Workshop" release: nothing changes in what JobHunter does, but the code is now checked
-like professional software (see `docs/plan-professionnalisation.md`).
+like professional software (see `docs/professionalisation-plan.md`).
 
 - **Non-regression bench**: 384 fictitious offers whose every decision (score, sorting,
   zone, language, message, letter) is compared with a reference at each change.

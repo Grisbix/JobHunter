@@ -29,9 +29,9 @@ click: the submit button is still the user's.
 
 After "envoyé" (both modes) the page is OBSERVED, never clicked: suivi.json gets
 "postulé" with `envoi` = confirmé | incertain and a `preuve` (excerpt, address,
-screenshot in Scripts/_preuves/). See docs/adr/0009-preuve-distincte-de-la-declaration.md
+screenshot in Scripts/_preuves/). See docs/adr/0009-proof-distinct-from-declaration.md
 
-Decision: docs/adr/0005-aucune-soumission-automatique.md
+Decision: docs/adr/0005-no-automatic-submission.md
 """
 
 import argparse
@@ -439,7 +439,7 @@ def declarer_envoi(page, d):
     """The user says they clicked Send: the page is OBSERVED (nothing is clicked),
     the proof kept, the tracking written in one go. Returns the state and the proof.
 
-    Decision: docs/adr/0009-preuve-distincte-de-la-declaration.md"""
+    Decision: docs/adr/0009-proof-distinct-from-declaration.md"""
     import datetime as _dt
 
     from jobhunter.navigation.confirmation import capturer_preuve, observer_confirmation

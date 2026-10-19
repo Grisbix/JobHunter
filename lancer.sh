@@ -12,6 +12,6 @@ if [ ! -f profil/profil.json ]; then
   echo "Premier lancement : creation du profil a partir de $CV"
   "$PY" JobHunter.pyw profil "$CV" || exit 1
   echo
-  echo "Profil cree dans profil/profil.json. Relis-le, ou demande a Claude Code : /configurer-profil"
+  echo "Profil cree dans profil/profil.json. Relis-le, ou demande a Claude Code : /configure-profile"
 fi
 exec "$PY" JobHunter.pyw

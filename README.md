@@ -23,7 +23,7 @@ Everything runs on your computer. Your CV and your applications never leave your
 
 | Offers, ranked for your profile | The letter prepared for an offer |
 |---|---|
-| ![Offer list](docs/captures/offres.png) | ![Generated letter](docs/captures/lettre.png) |
+| ![Offer list](docs/screenshots/offers.png) | ![Generated letter](docs/screenshots/letter.png) |
 
 <sub>Screenshots use a **fictitious** profile and offers (Léa Martin, communications officer in Lyon). They show the French interface: switch to English in Maintenance → “Langue : English”.</sub>
 
@@ -103,7 +103,7 @@ The first launch creates a profile that **works**, but a basic one. For a comple
 open [Claude Code](https://claude.com/claude-code) in the JobHunter folder and type:
 
 ```
-/configurer-profil Mon_CV\my_CV.docx
+/configure-profile Mon_CV\my_CV.docx
 ```
 
 Claude reads your CV, asks its questions in one message, then fills everything in: job-title
@@ -156,7 +156,7 @@ Check it, offline: `python JobHunter.pyw verifier-profil "Communications officer
 
 | Symptom | Likely cause |
 |---|---|
-| “Profil introuvable” | run `lancer.bat`, or `/configurer-profil` in Claude Code |
+| “Profil introuvable” | run `lancer.bat`, or `/configure-profile` in Claude Code |
 | No offer passes | `filtre_titre.metier` too narrow, or `collecte.mots_cles` too rare |
 | Too many off-target offers | extend `filtre_titre.exclus` |
 | CV not tailored to the offer | CV given as PDF: provide a `.docx` |

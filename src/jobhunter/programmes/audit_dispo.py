@@ -41,7 +41,7 @@ Run:
   python JobHunter.pyw dispo --supprime --age-max 60
   python JobHunter.pyw dispo --rapport          # summary of the state, without network
 
-Decision: docs/adr/0004-429-attendre-403-arreter.md
+Decision: docs/adr/0004-429-wait-403-stop.md
 """
 
 import argparse

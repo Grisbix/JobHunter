@@ -13,7 +13,7 @@ facts.
 
 ## Decision
 
-- The send click remains the user's ([0005](0005-aucune-soumission-automatique.md));
+- The send click remains the user's ([0005](0005-no-automatic-submission.md));
   they then **declare** it ("J'ai envoyé" (I have sent it) button in the app, or keypress in terminal
   mode).
 - After the declaration, the program **observes** the page without clicking or typing anything, and

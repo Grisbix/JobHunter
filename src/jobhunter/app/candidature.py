@@ -10,7 +10,7 @@ Events received (one `@JH {json}` line from the program): offre, pret, bloque, a
 resultat, fin. Commands sent (one line on its input): envoye, saute, reremplir,
 rouvrir, quitter. None of them clicks anything.
 
-Decision: docs/adr/0009-preuve-distincte-de-la-declaration.md
+Decision: docs/adr/0009-proof-distinct-from-declaration.md
 """
 
 import json

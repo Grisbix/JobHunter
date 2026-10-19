@@ -13,7 +13,7 @@ Steps:
      rights in %LOCALAPPDATA%/Programs/JobHunter.
 
 The CI (.github/workflows/installateur.yml) runs it at each release and attaches
-the installer to the release. Decision: docs/adr/0011-application-autonome.md
+the installer to the release. Decision: docs/adr/0011-standalone-application.md
 """
 
 import argparse

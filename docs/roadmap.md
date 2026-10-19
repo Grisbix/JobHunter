@@ -1,6 +1,6 @@
 # Roadmap after the professionalisation plan
 
-The professionalisation plan (`docs/plan-professionnalisation.md`) is finished. Phases 0 to 6 and 8
+The professionalisation plan (`docs/professionalisation-plan.md`) is finished. Phases 0 to 6 and 8
 are done, phase 7 is set aside for lack of need. Three workstreams from Codex's first
 proposals document (18/10) are delivered:
 
@@ -161,7 +161,7 @@ What remains out of reach, whatever happens:
   - **Logical follow-up (C1 bis)**: a one-click reason when discarding an offer (internship,
     language, seniority, job, location…), to know what scoring misses before
     modifying it.
-- **C2** (v2.6.0, [ADR 0010](adr/0010-identite-entreprise-poste.md)): quantified study.
+- **C2** (v2.6.0, [ADR 0010](adr/0010-offer-identity-company-job.md)): quantified study.
   - Findings: 12 offers out of 86 lost as the same job in several cities; 9 URLs
     carry 2 or 3 keys in a queue of 12,169 offers.
   - Decision: the `entreprise|poste` key stays, there is no migration of the tracking.

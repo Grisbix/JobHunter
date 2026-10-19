@@ -26,10 +26,10 @@ midway and kept the values of the old one.
 - `profil.utiliser(donnees)` injects an in-memory profile; `profil.recharger(fichier)`
   goes back to the file. Both forget the values already computed.
 - Names and values do not change: `monkeypatch.setattr(module, "NOM", ...)` and
-  the facades ([ADR 0001](0001-facades-alias.md)) keep working. The facade
+  the facades ([ADR 0001](0001-facade-aliases.md)) keep working. The facade
   knows the lazy names of its submodules.
 - The transformation was GENERATED from the syntax tree, then checked by the bench
-  ([ADR 0006](0006-banc-de-non-regression.md)): 0 differences.
+  ([ADR 0006](0006-non-regression-bench.md)): 0 differences.
 
 ## Consequences
 

@@ -34,7 +34,7 @@ therefore kept. An exception in the function cancels the write.
 
 `charger()` for read-only access.
 
-Decision: docs/adr/0002-trois-fichiers-trois-contrats.md
+Decision: docs/adr/0002-three-files-three-contracts.md
 """
 
 import datetime
@@ -225,7 +225,7 @@ def declarer_envoi(
     Raises:
         VerrouIndisponible: another program holds the tracker too long.
 
-    Decision: docs/adr/0009-preuve-distincte-de-la-declaration.md
+    Decision: docs/adr/0009-proof-distinct-from-declaration.md
     """
 
     def _f(s: Suivi) -> Candidature:

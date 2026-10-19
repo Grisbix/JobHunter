@@ -24,7 +24,7 @@ Record (goes on the network, run on purpose):
     python outils/rejeu.py enregistrer lever fir  # some of them
 The replay is done by tests/test_rejeu_sources.py.
 
-Decision: docs/adr/0006-banc-de-non-regression.md
+Decision: docs/adr/0006-non-regression-bench.md
 """
 
 import hashlib

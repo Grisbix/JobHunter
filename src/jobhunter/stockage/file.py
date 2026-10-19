@@ -19,7 +19,7 @@ FILE NAME. Above all not `queue.py`: `queue` is a standard library module,
 `Scripts/` is in sys.path, and JobHunter.pyw does `import queue`.
 Shadowing it would break the application.
 
-Decision: docs/adr/0002-trois-fichiers-trois-contrats.md
+Decision: docs/adr/0002-three-files-three-contracts.md
 """
 
 import json
