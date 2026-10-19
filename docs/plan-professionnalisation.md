@@ -128,6 +128,9 @@ vers les programmes ; les `.bat`/`.sh` y passeront avec l'installation (phase 6)
 
 Fini quand : `pip install -e .` puis `jobhunter pipeline` fonctionne ; aucun
 `sys.path.insert` ; aucun cycle (vérifié en CI par `import-linter`) ; banc 0 écart à chaque PR.
+*(Correction du 2026-10-19 : `import-linter` n'a jamais été branché. Les cycles sont
+contrôlés paquet par paquet par les tests `test_*_paquet.py` ; la règle « le moteur
+n'importe pas l'interface » est l'étape B1 de [la feuille de route](feuille-de-route.md).)*
 
 **Fait (2026-10-18, v1.15.0 puis v2.0.0)** : 3.9 en deux temps. La passerelle 1.15.0
 (ci-dessus) a été publiée et testée seule (mise à jour ZIP 1.14 → 1.15). La 2.0.0 déplace
@@ -292,3 +295,5 @@ CET appel), la fusion compte nouvelles et pertinentes par source ; verdict ok / 
 prendre / limité / partiel / refusé. Journal `Scripts/_rendement.jsonl`, bilan
 `jobhunter rendement`. Non mesurés pour l'instant : descriptions complètes et liens
 employeur par source (ils arrivent aux étapes suivantes du pipeline, pas à la collecte).
+
+**Suite** : [feuille de route après le plan](feuille-de-route.md) (2026-10-19).
