@@ -87,12 +87,14 @@ def cmd_list():
             f"  {host:<32}{str(e.get('identifiant') or '—')[:24]:<26}"
             f"{str(e.get('session') or '?'):<12}{str(e.get('session_verif') or '—')}"
         )
-    print(f"\nCLES D'API ({KEYS.name}) — valeurs jamais affichees :")
-    if not k:
-        print("  (aucune)")
-    for nom, v in k.items():
-        champs = ", ".join(sorted(v)) if isinstance(v, dict) else "valeur"
-        print(f"  ✓ {nom:<24} [{champs}]")
+    from jobhunter import cles_api
+
+    print("\nCLES DES API DE COLLECTE — valeurs jamais affichees :")
+    for nom, cle in cles_api.CLES.items():
+        etat = "✓ posee" if cles_api.presente(HERE, nom) else "✗ absente"
+        print(f"  {cle.libelle:<16}{cle.fichier:<22}{etat}")
+    if k:
+        print(f"  ({KEYS.name} : {', '.join(sorted(k))} — lu par aucune source de collecte)")
     print("\nLes MOTS DE PASSE restent dans le gestionnaire de Chrome — jamais ici.")
     return 0
 
@@ -450,21 +452,31 @@ def cmd_set_id(host, email):
 
 
 def cmd_set_key(nom):
-    """Saisie MASQUEE d'une cle d'API. Valeur jamais affichee ni journalisee."""
-    print(f"Cle d'API « {nom} » — saisie masquee, valeur jamais reaffichee.")
-    champs = {}
-    while True:
-        c = input("  nom du champ (vide = terminer) : ").strip()
-        if not c:
-            break
-        champs[c] = getpass.getpass(f"  {c} : ").strip()
-    if not champs:
-        print("✗ rien saisi.")
+    """Saisie MASQUEE de la cle d'une API de collecte, dans le fichier que la source lit.
+
+    Avant la 2.12, elle allait dans api_keys.json, qu'aucune source ne lit (cles_api).
+    Valeur jamais affichee ni journalisee ; un champ vide garde la valeur en place.
+    """
+    from jobhunter import cles_api
+
+    cle = cles_api.CLES.get(nom)
+    if cle is None:
+        print(f"✗ source inconnue : {nom} — au choix : {', '.join(cles_api.CLES)}")
         return 1
-    k = _load(KEYS, {})
-    k[nom] = champs
-    _save(KEYS, k)
-    print(f"✓ {nom} enregistre dans {KEYS.name} ({len(champs)} champ(s)) — fichier ignore par git")
+    print(f"Cle {cle.libelle} → {cle.fichier} — saisie masquee, valeur jamais reaffichee.")
+    print(f"  (a creer sur {cle.obtenir} ; champ vide = garder la valeur en place)")
+    valeurs = {}
+    for champ in cle.champs:
+        if champ in cle.secrets:
+            valeurs[champ] = getpass.getpass(f"  {champ} : ").strip()
+        else:
+            valeurs[champ] = input(f"  {champ} : ").strip()
+    try:
+        chemin = cles_api.enregistrer(HERE, nom, valeurs)
+    except (OSError, ValueError) as e:
+        print(f"✗ {e}")
+        return 1
+    print(f"✓ {cle.libelle} enregistre dans {chemin.name} — fichier ignore par git")
     return 0
 
 
@@ -491,7 +503,7 @@ def main():
     )
     ap.add_argument("--set-id", metavar="HOST")
     ap.add_argument("--email")
-    ap.add_argument("--set-key", metavar="NOM")
+    ap.add_argument("--set-key", metavar="SOURCE", help="francetravail, adzuna ou jooble")
     a = ap.parse_args()
     if a.close:
         return cmd_close(a.force)

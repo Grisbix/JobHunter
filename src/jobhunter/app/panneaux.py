@@ -53,7 +53,7 @@ def _t_etat(etat: str) -> str:
     mot à mot.
     """
     tete, sep, reste = etat.partition(" — ")
-    for mot in ("pas avant le", "offres", "offre"):
+    for mot in ("pas avant le", "offres", "offre", "vérifie-la"):
         reste = reste.replace(mot, _t(mot))
     return str(_t(tete)) + sep + reste
 
@@ -295,17 +295,23 @@ class PanneauxMixin:
     def _acces_panel(self: "AppTypee") -> None:
         """ACCÈS : ce dont chaque source de la collecte a besoin, et son dernier état mesuré.
 
-        Deux tableaux. Les sources de la collecte : accès libre ou clé d'API, et le verdict
-        de leur dernière collecte (`_rendement.jsonl`) — refus, limite, rien à prendre.
-        Puis les sites où l'on se connecte soi-même pour candidater.
-        AUCUN mot de passe ni aucune clé n'est lu ici : seule la présence du fichier de
-        clé compte, et les mots de passe restent dans le gestionnaire de Chrome."""
+        Deux onglets. « Collecte des offres » : accès libre ou clé d'API, et le verdict
+        de la dernière collecte de chaque source (`_rendement.jsonl`) — refus, limite,
+        rien à prendre ; on y saisit les clés et on y collecte une source seule.
+        « Connexions pour candidater » : les sites où l'on se connecte soi-même.
+        Aucune clé n'est relue ici : seule sa présence compte (jobhunter.cles_api), et
+        les mots de passe restent dans le gestionnaire de Chrome."""
         self._hide_all()
         if "acces" in self._panels:
             w = self._panels["acces"]
             w._reload()
             w.pack(fill="both", expand=True)
             return
+        import customtkinter as ctk
+
+        from jobhunter import cles_api
+        from jobhunter.app.cles import saisir_cle
+
         w = CF(self.main, bg=WORK)
         self._panels["acces"] = w
         top = CF(w, bg=BG)
@@ -334,19 +340,48 @@ class PanneauxMixin:
             cursor="hand2",
         ).pack(side="right", padx=24)
 
-        CL(
+        pages: dict[str, Any] = {}
+        onglets = (_t("Collecte des offres"), _t("Connexions pour candidater"))
+
+        def montrer(nom: str) -> None:
+            for cle_, page in pages.items():
+                if cle_ == nom:
+                    page.pack(fill="both", expand=True)
+                else:
+                    page.pack_forget()
+
+        choix = ctk.CTkSegmentedButton(
             w,
-            text="Collecte des offres — état de la dernière collecte de chaque source. "
-            "Un refus n'est pas réessayé avant 30 jours.",
+            values=list(onglets),
+            command=montrer,
+            selected_color=ACC,
+            selected_hover_color=ACC_H,
+            font=(_theme.FONT_UI, 13),
+        )
+        choix.pack(anchor="w", padx=28, pady=(10, 4))
+
+        # ── Onglet 1 : la collecte ────────────────────────────────────────────
+        col = CF(w, bg=WORK)
+        pages[onglets[0]] = col
+        CL(
+            col,
+            text="État de la dernière collecte de chaque source. Un refus n'est pas "
+            "réessayé avant 30 jours. Double-clic sur une source à clé : saisir sa clé.",
             bg=BG,
             fg=MUT,
             font=(_theme.FONT_UI, 13),
             anchor="w",
             justify="left",
-            wraplength=760,
+            wraplength=900,
         ).pack(fill="x", padx=28, pady=(4, 0))
         cols_s = ("src", "acces", "etat", "le")
-        tvs = ttk.Treeview(w, columns=cols_s, show="headings", selectmode="browse", height=13)
+        tvs = ttk.Treeview(
+            col,
+            columns=cols_s,
+            show="headings",
+            selectmode="browse",
+            height=len(_inventaire.SOURCES_COLLECTE),
+        )
         for k, lbl, wd in (
             ("src", "Source", 420),
             ("acces", "Accès", 80),
@@ -356,24 +391,69 @@ class PanneauxMixin:
             tvs.heading(k, text=_t(lbl))
             tvs.column(k, width=wd, anchor="w", stretch=(k == "etat"))
         tvs.pack(fill="x", padx=28, pady=(0, 6))
-        for tv_ in (tvs,):
-            tv_.tag_configure("ok", foreground=TX_OK)
-            tv_.tag_configure("ko", foreground=TX_BAD)
-            tv_.tag_configure("ancien", foreground=TX_AMBRE)
-        bar_s = CF(w, bg=BG)
+        tvs.tag_configure("ok", foreground=TX_OK)
+        tvs.tag_configure("ko", foreground=TX_BAD)
+        tvs.tag_configure("ancien", foreground=TX_AMBRE)
+        etats: dict[str, _inventaire.EtatSource] = {}
+
+        def choisie() -> str | None:
+            sel = tvs.selection()
+            if not sel:
+                self._log("Sélectionne d'abord une source dans la liste.\n")
+                return None
+            return str(sel[0])
+
+        def saisir(nom: str | None = None) -> None:
+            nom = nom or choisie()
+            if nom is None:
+                return
+            if nom not in cles_api.CLES:
+                self._log(
+                    f"{_t(etats[nom].libelle)} : " + _t("accès libre, aucune clé à saisir.") + "\n"
+                )
+                return
+            saisir_cle(self, nom, lambda: w._reload())
+
+        def collecter() -> None:
+            nom = choisie()
+            if nom is None:
+                return
+            e = etats[nom]
+            if e.bloque:
+                # Un refus d'entrée s'arrête : pas de nouvel essai avant 30 jours (ADR 0004).
+                self._log(f"⛔ {_t(e.libelle)} : {_t_etat(e.etat)}\n")
+                return
+            if nom in cles_api.CLES and not cles_api.presente(SCRIPTS, nom):
+                self._log(f"{_t(e.libelle)} : " + _t("saisis d'abord sa clé.") + "\n")
+                return
+            self.run_step(
+                [PY, "-m", "jobhunter.sources", _inventaire.DRAPEAUX_COLLECTE[nom]],
+                f"Collecte {_t(e.libelle)}",
+            )
+
+        tvs.bind("<Double-1>", lambda e: saisir(tvs.identify_row(e.y) or None))
+        bar_s = CF(col, bg=BG)
         bar_s.pack(fill="x", padx=28, pady=(0, 10))
         CB(
             bar_s,
-            text="Saisir la clé France Travail",
-            command=lambda: self.run_step(
-                [PY, "-m", "jobhunter.programmes.acces", "--set-key", "francetravail"], "Clé API"
-            ),
+            text="Saisir la clé",
+            command=saisir,
+            bg=ACC,
+            fg=ACC_TX,
+            activebackground=ACC_H,
+            relief="flat",
+            cursor="hand2",
+        ).pack(side="left")
+        CB(
+            bar_s,
+            text="Collecter cette source",
+            command=collecter,
             bg=BTN,
             fg=TX,
             activebackground=BTN_H,
             relief="flat",
             cursor="hand2",
-        ).pack(side="left")
+        ).pack(side="left", padx=18)
         CB(
             bar_s,
             text="Rendement des sources",
@@ -385,28 +465,23 @@ class PanneauxMixin:
             activebackground=BTN_H,
             relief="flat",
             cursor="hand2",
-        ).pack(side="left", padx=18)
-        CL(
-            bar_s,
-            text="Adzuna, Jooble : clé gratuite sur leur site → Scripts/adzuna.json, jooble.json",
-            bg=BG,
-            fg=MUT,
-            font=(_theme.FONT_UI, 12),
-        ).pack(side="left", padx=6)
+        ).pack(side="left")
 
+        # ── Onglet 2 : les connexions pour candidater ─────────────────────────
+        cnx = CF(w, bg=WORK)
+        pages[onglets[1]] = cnx
         CL(
-            w,
-            text="Connexions pour candidater — tu te connectes toi-même ; "
-            "les mots de passe restent dans Chrome.",
+            cnx,
+            text="Tu te connectes toi-même ; les mots de passe restent dans Chrome.",
             bg=BG,
             fg=MUT,
             font=(_theme.FONT_UI, 13),
             anchor="w",
             justify="left",
-            wraplength=760,
-        ).pack(fill="x", padx=28, pady=(0, 0))
+            wraplength=900,
+        ).pack(fill="x", padx=28, pady=(4, 0))
         cols = ("site", "id", "sess", "date")
-        tv = ttk.Treeview(w, columns=cols, show="headings", selectmode="browse", height=6)
+        tv = ttk.Treeview(cnx, columns=cols, show="headings", selectmode="browse", height=8)
         for k, lbl, wd in (
             ("site", "Site", 300),
             ("id", "Identifiant (email)", 260),
@@ -415,12 +490,12 @@ class PanneauxMixin:
         ):
             tv.heading(k, text=_t(lbl))
             tv.column(k, width=wd, anchor="w", stretch=(k == "id"))
-        tv.pack(fill="both", expand=True, padx=28, pady=(0, 6))
+        tv.pack(fill="x", padx=28, pady=(0, 6))
         tv.tag_configure("ok", foreground=TX_OK)
         tv.tag_configure("ko", foreground=TX_BAD)
         tv.tag_configure("ancien", foreground=TX_AMBRE)
         w._tv = tv
-        bar = CF(w, bg=BG)
+        bar = CF(cnx, bg=BG)
         bar.pack(fill="x", padx=28, pady=(0, 10))
         CB(
             bar,
@@ -449,12 +524,19 @@ class PanneauxMixin:
             from jobhunter.programmes import acces as m
             from jobhunter.sources import rendement as _rendement
 
+            sel = tvs.selection()
             tvs.delete(*tvs.get_children())
+            etats.clear()
             journal = _rendement.lire_journal(SCRIPTS / "_rendement.jsonl")
-            for etat in _inventaire.etat_sources(journal, lambda f: (SCRIPTS / f).exists()):
+            fichiers = {c.fichier: c.nom for c in cles_api.CLES.values()}
+            for etat in _inventaire.etat_sources(
+                journal, lambda f: cles_api.presente(SCRIPTS, fichiers[f])
+            ):
+                etats[etat.source] = etat
                 tvs.insert(
                     "",
                     "end",
+                    iid=etat.source,
                     values=(
                         _t(etat.libelle),
                         _t(etat.acces),
@@ -463,6 +545,8 @@ class PanneauxMixin:
                     ),
                     tags=(etat.gravite,),
                 )
+            if sel and tvs.exists(sel[0]):
+                tvs.selection_set(sel[0])
             try:
                 comptes = json.loads((SCRIPTS / "comptes.json").read_text(encoding="utf-8"))
             except Exception:
@@ -489,6 +573,8 @@ class PanneauxMixin:
 
         w._reload = reload_
         reload_()
+        choix.set(onglets[0])
+        montrer(onglets[0])
         w.pack(fill="both", expand=True)
 
     def _acces_open(self: "AppTypee", w: Any) -> None:
@@ -575,8 +661,14 @@ class PanneauxMixin:
             font=(_theme.FONT_UI, 13),
             anchor="w",
             justify="left",
-            wraplength=760,
+            wraplength=900,
         ).pack(fill="x", padx=28)
+        barre_f = CF(w, bg=BG)
+        barre_f.pack(fill="x", padx=28, pady=(10, 0))
+        filtre = CE(barre_f, bg=ROW0, fg=TX, insertbackground=TX, relief="flat", width=40)
+        filtre.configure(placeholder_text=_t("Filtrer : entreprise, outil ou adresse"))
+        filtre.pack(side="left", ipady=2)
+        filtre.bind("<KeyRelease>", lambda e: w._reload())
         cols = ("ent", "outil", "offres", "fit", "derniere", "url")
         tv = ttk.Treeview(w, columns=cols, show="headings", selectmode="browse")
         for k, lbl, wd, anc in (
@@ -617,6 +709,14 @@ class PanneauxMixin:
             )
             comptes = _inventaire.compter(self.offers, flux)
             ordre = sorted(flux, key=lambda f: (-comptes[f].offres, f.nom.lower()))
+            cherche = filtre.get().strip().lower()
+            if cherche:
+                ordre = [
+                    f
+                    for f in ordre
+                    if cherche
+                    in f"{f.nom} {_inventaire.NOMS_OUTILS.get(f.outil, f.outil)} {f.lien}".lower()
+                ]
             for i, f in enumerate(ordre):
                 c = comptes[f]
                 iid = tv.insert(
@@ -635,9 +735,10 @@ class PanneauxMixin:
                 lignes[iid] = f
             total = sum(c.offres for c in comptes.values())
             vides = sum(1 for c in comptes.values() if not c.offres)
-            w._count.configure(
-                text=f"{len(flux)} entreprises · {total} offres en file · {vides} sans offre en file"
-            )
+            texte = f"{len(flux)} entreprises · {total} offres en file · {vides} sans offre en file"
+            if cherche:
+                texte = f"{len(ordre)} / " + texte
+            w._count.configure(text=texte)
 
         w._reload = reload
 
@@ -653,6 +754,9 @@ class PanneauxMixin:
         bar = CF(w, bg=BG)
         bar.pack(fill="x", padx=28, pady=(0, 10))
         ent = CE(bar, bg=ROW0, fg=TX, insertbackground=TX, relief="flat", width=60)
+        ent.configure(
+            placeholder_text=_t("Colle l'adresse de la page carrière d'une entreprise à suivre")
+        )
         ent.pack(side="left", ipady=4, fill="x", expand=True)
         CFG = SCRIPTS / "sources_config.json"
 

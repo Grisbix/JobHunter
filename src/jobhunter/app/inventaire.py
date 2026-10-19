@@ -226,6 +226,23 @@ SOURCES_COLLECTE = (
     ("wtj", "Welcome to the Jungle", ""),
 )
 
+# Le drapeau de `python -m jobhunter.sources` qui collecte cette source seule.
+DRAPEAUX_COLLECTE = {
+    "ats": "--ats",
+    "workday": "--workday",
+    "linkedin": "--linkedin",
+    "efc": "--efc",
+    "eures": "--eures",
+    "vie": "--vie",
+    "fir": "--fir",
+    "francetravail": "--ft",
+    "adzuna": "--adzuna",
+    "jooble": "--jooble",
+    "apec": "--apec",
+    "glassdoor": "--glassdoor",
+    "wtj": "--wtj",
+}
+
 # Une source refusée n'est pas réessayée avant ce délai (ADR 0004).
 ATTENTE_REFUS_JOURS = 30
 
@@ -240,6 +257,7 @@ class EtatSource:
     etat: str  # verdict lisible
     le: str  # date de la dernière collecte mesurée, ou ""
     gravite: str  # "ok", "ko", "ancien" ou "" (couleur de la ligne)
+    bloque: bool = False  # refusée il y a moins de 30 jours : pas de nouvel essai
 
 
 def etat_sources(
@@ -276,6 +294,10 @@ def etat_sources(
         etat, gravite = verdict, "ok"
         if verdict == "ok":
             etat = f"ok — {n} offre{'s' if n > 1 else ''}"
+        elif verdict == "refusé" and fichier:
+            # Une API officielle qui refuse (401/403) refuse NOTRE clé : ce n'est pas un
+            # anti-bot. On corrige la clé et on réessaie, sans attendre 30 jours.
+            etat, gravite = "clé refusée — vérifie-la", "ko"
         elif verdict == "refusé":
             gravite = "ko"
             try:
@@ -284,6 +306,8 @@ def etat_sources(
                 )
                 if reprise > jour:
                     etat = f"refusé — pas avant le {reprise:%d/%m}"
+                    sortie.append(EtatSource(nom, libelle, acces, etat, le[:10], gravite, True))
+                    continue
             except ValueError:
                 pass
         elif verdict in ("limité", "partiel"):

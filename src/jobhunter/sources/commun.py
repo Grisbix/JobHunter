@@ -36,7 +36,9 @@ def __getattr__(nom: str) -> Any:
     return _paresseux.lire(_ici, _PARESSEUX, nom)
 
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
+# pythonw n'a pas de console ; les panneaux bureau importent aussi ce module.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 # Les donnees restent dans Scripts/ (racine trouvee par marqueur, JOBHUNTER_RACINE).
 HERE = _racine.scripts()

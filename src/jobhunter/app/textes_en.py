@@ -98,16 +98,31 @@ EN: dict[str, str] = {
     # Accès
     "Accès aux sources": "Access to sources",
     "Rafraîchir": "Refresh",
-    "Collecte des offres — état de la dernière collecte de chaque source. "
-    "Un refus n'est pas réessayé avant 30 jours.": "Offer collection — state of each source's "
-    "last run. A refusal is not retried for 30 days.",
-    "Saisir la clé France Travail": "Enter the France Travail key",
+    "Collecte des offres": "Offer collection",
+    "Connexions pour candidater": "Sign-ins for applying",
+    "État de la dernière collecte de chaque source. Un refus n'est pas "
+    "réessayé avant 30 jours. Double-clic sur une source à clé : saisir sa clé.": "State of "
+    "each source's last run. A refusal is not retried for 30 days. Double-click a source "
+    "that needs a key to enter it.",
+    "Saisir la clé": "Enter key",
+    "Collecter cette source": "Collect this source",
     "Rendement des sources": "Source yield",
-    "Adzuna, Jooble : clé gratuite sur leur site → Scripts/adzuna.json, jooble.json": "Adzuna, "
-    "Jooble: free key on their site → Scripts/adzuna.json, jooble.json",
-    "Connexions pour candidater — tu te connectes toi-même ; "
-    "les mots de passe restent dans Chrome.": "Sign-ins for applying — you sign in yourself; "
-    "passwords stay in Chrome.",
+    "accès libre, aucune clé à saisir.": "open access, no key needed.",
+    "saisis d'abord sa clé.": "enter its key first.",
+    "Tu te connectes toi-même ; les mots de passe restent dans Chrome.": "You sign in "
+    "yourself; passwords stay in Chrome.",
+    "Clé": "Key",
+    "Enregistrée dans Scripts/{f}, sur ce PC seulement (ignoré par git).": "Saved in "
+    "Scripts/{f}, on this PC only (ignored by git).",
+    "Une clé est déjà posée : un champ laissé vide la garde.": "A key is already set: a "
+    "field left empty keeps it.",
+    "Afficher la saisie": "Show input",
+    "Elle sert dès la prochaine collecte ; « Collecter cette source » l'essaie.": "It is "
+    "used from the next collection; “Collect this source” tries it.",
+    "Obtenir une clé": "Get a key",
+    "Filtrer : entreprise, outil ou adresse": "Filter: company, tool or address",
+    "Colle l'adresse de la page carrière d'une entreprise à suivre": "Paste the careers "
+    "page address of a company to follow",
     "Ouvrir la connexion": "Open sign-in page",
     "Vérifier les sessions": "Check sessions",
     "Source": "Source",
@@ -195,6 +210,8 @@ EN: dict[str, str] = {
     "clé": "key",
     "pas encore mesurée": "not measured yet",
     "clé à créer": "key to create",
+    "clé refusée": "key refused",
+    "vérifie-la": "check it",
     "ok": "ok",
     "refusé": "refused",
     "limité": "rate-limited",

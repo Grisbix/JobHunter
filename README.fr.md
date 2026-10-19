@@ -191,8 +191,9 @@ Le second dit, pour chaque intitulé, s'il est collecté ou écarté, son domain
   corps de la lettre générée.
 - **Entreprises suivies directement** : `Scripts/sources_config.json` ;
   `python JobHunter.pyw probe_ats` trouve le flux carrière d'une entreprise.
-- **Adzuna, Jooble** : crée toi-même une clé d'API gratuite et mets-la dans
-  `Scripts/adzuna.json` / `Scripts/jooble.json` (jamais publiés). Sans clé, sources ignorées.
+- **France Travail, Adzuna, Jooble** : crée toi-même une clé d'API gratuite, puis
+  panneau Accès → « Saisir la clé ». Elle va dans `Scripts/francetravail.json`,
+  `adzuna.json` ou `jooble.json`, sur ton PC seulement. Sans clé, source ignorée.
 - **Lettres par IA locale** : installe [Ollama](https://ollama.com/), puis `ollama pull llama3.1:8b`.
 
 ## Règles du projet

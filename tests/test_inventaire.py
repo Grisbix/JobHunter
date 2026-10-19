@@ -101,6 +101,8 @@ def test_etat_sources():
     }
     assert etats["apec"].etat == "refusé — pas avant le 14/11"
     assert etats["apec"].gravite == "ko"
+    assert etats["apec"].bloque  # pas de nouvel essai avant 30 jours (ADR 0004)
+    assert not etats["linkedin"].bloque
     assert etats["apec"].le == "2026-10-15"
     assert etats["linkedin"].etat == "ok — 1 offre"
     assert etats["efc"].gravite == "ancien"
@@ -114,6 +116,30 @@ def test_etat_sources_refus_ancien_ne_dit_plus_d_attendre():
     journal = [{"le": "2026-08-01T07:00:00", "sources": {"apec": {"verdict": "refusé"}}}]
     (e,) = [x for x in inv.etat_sources(journal, lambda f: True) if x.source == "apec"]
     assert e.etat == "refusé"
+    assert not e.bloque
+
+
+def test_cle_refusee_ne_bloque_pas():
+    """Un 401 d'une API officielle vise notre clé : on la corrige et on réessaie."""
+    journal = [{"le": "2026-10-19T19:00:00", "sources": {"adzuna": {"verdict": "refusé"}}}]
+    etats = {
+        e.source: e for e in inv.etat_sources(journal, lambda f: True, datetime.date(2026, 10, 19))
+    }
+    assert etats["adzuna"].etat == "clé refusée — vérifie-la"
+    assert etats["adzuna"].gravite == "ko"
+    assert not etats["adzuna"].bloque
+
+
+def test_chaque_source_se_collecte_seule():
+    """« Collecter cette source » (panneau Accès) a un drapeau pour chaque ligne."""
+    import inspect
+
+    from jobhunter.sources import cli
+
+    assert {s for s, _, _ in inv.SOURCES_COLLECTE} == set(inv.DRAPEAUX_COLLECTE)
+    source = inspect.getsource(cli)
+    for drapeau in inv.DRAPEAUX_COLLECTE.values():
+        assert f'"{drapeau}"' in source, drapeau
 
 
 def test_dossiers(tmp_path):

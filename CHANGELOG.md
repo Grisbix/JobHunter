@@ -4,6 +4,26 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.12.0 — 2026-10-19
+
+- **Clés d'API saisies dans l'application, au bon endroit.** Panneau Accès : choisir
+  France Travail, Adzuna ou Jooble, puis « Saisir la clé » (ou double-clic). Une petite
+  fenêtre demande les champs, masque le secret, et écrit le fichier que la source lit
+  vraiment (`Scripts/francetravail.json`, `adzuna.json`, `jooble.json`). Avant, le
+  bouton France Travail rangeait la clé dans `api_keys.json`, qu'aucune source ne lit :
+  elle n'était jamais utilisée. `jobhunter acces --set-key francetravail` suit la même
+  règle.
+- **Collecter une source seule** depuis le panneau Accès, pour essayer une clé tout de
+  suite. Une source refusée il y a moins de 30 jours reste bloquée ; une API officielle
+  qui refuse la clé affiche « clé refusée — vérifie-la » et se réessaie dès la clé
+  corrigée.
+- Panneau Accès en deux onglets, « Collecte des offres » et « Connexions pour
+  candidater » : le second tableau ne sort plus de l'écran.
+- Panneau Entreprises : un filtre (nom, outil, adresse) et un champ d'ajout qui dit quoi
+  coller.
+- L'application sans console (`JobHunter.pyw`, l'exe) ne peut plus tomber sur un module
+  qui règle l'encodage de la console au chargement.
+
 ## 2.11.0 — 2026-10-19
 
 - **Lever en Europe.** Certaines entreprises sont hébergées dans la région européenne de

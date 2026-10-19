@@ -4,6 +4,7 @@ Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
 
 import os
 import queue
+import sys
 import threading
 import tkinter as tk
 from tkinter import messagebox
@@ -530,6 +531,12 @@ def _annonce_mise_a_jour(root: Any, app: Any) -> None:
 
 
 def main() -> None:
+    # Sans console (JobHunter.pyw, l'exe fenêtré), sys.stdout vaut None ; une
+    # cinquantaine de modules font `sys.stdout.reconfigure(...)` à leur import, et
+    # le panneau qui en chargeait un tombait. Un puits nul les rend inoffensifs.
+    for nom in ("stdout", "stderr"):
+        if getattr(sys, nom) is None:
+            setattr(sys, nom, open(os.devnull, "w", encoding="utf-8"))  # noqa: SIM115
     _racine.exporter_paquet()  # les etapes lancent `python -m jobhunter...`
     r = ctk.CTk()
     a = App(r)
