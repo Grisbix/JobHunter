@@ -4,6 +4,18 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.3.0 — 2026-10-19
+
+- **Chaque dossier est contrôlé avant de partir.** Pour le CV et la lettre qui seront
+  vraiment joints : le fichier existe, s'ouvre, contient du texte, tient sur une page,
+  porte ton nom, ton courriel et ton téléphone, et aucun gabarit n'est resté vide
+  (« [nom du poste] »…). Le panneau Candidatures l'affiche pour chaque offre, la fiche
+  aussi ; un dossier à revoir ne bloque rien, c'est toi qui décides.
+- **Le bon fichier est joint** : quand une offre pointait sur la lettre en .docx alors que
+  son PDF à jour existait à côté, c'est désormais le PDF qui part.
+- `python JobHunter.pyw controle` : bilan de tous les dossiers, sans rien modifier. La
+  routine quotidienne le fait aussi après les dossiers et t'alerte s'il y en a à revoir.
+
 ## 2.2.0 — 2026-10-19
 
 - **Postuler depuis l'application, sans console.** Coche des offres, « Postuler la
