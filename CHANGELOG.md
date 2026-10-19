@@ -4,6 +4,13 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.4.1 — 2026-10-19
+
+- En coulisse : le dossier de tes données (`Scripts/`) n'est plus ajouté au chemin
+  d'import de Python. C'était un reste de l'ancienne organisation : un fichier `.py`
+  déposé là pouvait passer avant un module du programme portant le même nom. Rien ne
+  change à l'usage.
+
 ## 2.4.0 — 2026-10-19
 
 - **Ce que rapporte chaque source.** À la fin de chaque collecte, une ligne par source :
