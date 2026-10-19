@@ -5,7 +5,6 @@ Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
 import importlib
 import json
 import subprocess
-import sys
 import threading
 import webbrowser
 from tkinter import ttk
@@ -685,7 +684,6 @@ class PanneauxMixin:
                 return json.loads(CFG.read_text(encoding="utf-8"))
             except Exception:
                 # seed depuis les défauts du module
-                sys.path.insert(0, str(SCRIPTS))
                 try:
                     from jobhunter import sources as js
 

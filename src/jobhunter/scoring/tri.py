@@ -61,11 +61,6 @@ from jobhunter import racine as _racine
 from jobhunter.types import Offre
 
 HERE = _racine.scripts()
-# TRANSITION (phase 3) : imports differes de modules encore dans Scripts/
-# (job_sources, doublons, rejets_tri). A retirer quand ils auront rejoint le paquet.
-_SCRIPTS = _racine.scripts()
-if str(_SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(_SCRIPTS))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
 QUEUE = HERE / "apply_queue.json"

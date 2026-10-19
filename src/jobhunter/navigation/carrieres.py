@@ -3,15 +3,9 @@
 Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
 
 import importlib
-import sys
 from typing import Any
 
 from jobhunter import racine as _racine
-
-# TRANSITION (phase 3) : homepage_fallback importe enrich_homepages, encore dans Scripts/.
-if str(_racine.scripts()) not in sys.path:
-    sys.path.insert(0, str(_racine.scripts()))
-
 from jobhunter.navigation import navigateur as _navigateur
 from jobhunter.navigation.compte import react_submit
 from jobhunter.navigation.etapes import (

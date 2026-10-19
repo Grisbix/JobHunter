@@ -83,14 +83,6 @@ COMPTES = SCRIPTS / "comptes_sites.json"
 PROFILE = SCRIPTS / "apply_profile.json"
 
 
-# Helpers PARTAGES (chemins file:///, normalisation de texte). Import en tete
-# plutot que differe : l'app lit apply_queue.json dans Scripts/ et lance les 48
-# programmes qui s'y trouvent — sans ce dossier elle n'a de toute facon rien a
-# faire. Mieux vaut echouer ici, clairement, qu'a la 3e ouverture d'un document.
-if str(SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS))
-
-
 CV_ATS_DIR = chemins.CV_MODELES  # 5 CV variants (source, dans le depot)
 
 

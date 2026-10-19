@@ -5,7 +5,6 @@ Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
 import datetime
 import json
 import os
-import sys
 import tkinter as tk
 import webbrowser
 from tkinter import messagebox
@@ -539,13 +538,10 @@ class ActionsMixin:
     def _verrou_queue(prendre: Any, _attente: Any = 20) -> Any:
         """Prend / rend le verrou inter-processus de la queue. True si obtenu.
 
-        `jutil` vit dans Scripts/ : import differe, pour que l'app demarre meme si
-        ce dossier bouge. Attente courte (20 s) : c'est une action interactive,
-        mieux vaut dire « reessaie » que figer la fenetre 3 minutes.
+        Attente courte (20 s) : c'est une action interactive, mieux vaut dire
+        « reessaie » que figer la fenetre 3 minutes.
         """
         try:
-            if str(SCRIPTS) not in sys.path:
-                sys.path.insert(0, str(SCRIPTS))
             from jobhunter.programmes import jutil
         except Exception:
             return True  # jutil introuvable : on n'empeche pas d'agir

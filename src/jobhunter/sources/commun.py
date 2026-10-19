@@ -40,10 +40,6 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union
 # Les donnees restent dans Scripts/ (racine trouvee par marqueur, JOBHUNTER_RACINE).
 HERE = _racine.scripts()
 
-# TRANSITION (phase 3) : imports differes de modules encore dans Scripts/
-# (exclusions, rejets_tri, wtj_desc). A retirer quand ils auront rejoint le paquet.
-if str(HERE) not in sys.path:
-    sys.path.insert(0, str(HERE))
 
 QUEUE = HERE / "apply_queue.json"
 

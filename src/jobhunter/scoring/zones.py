@@ -32,7 +32,6 @@ from collections.abc import Iterable
 from typing import Any
 
 from jobhunter import paresseux as _paresseux
-from jobhunter import racine as _racine
 from jobhunter.texte import sans_accent
 
 _ici = sys.modules[__name__]
@@ -47,11 +46,6 @@ def __getattr__(nom: str) -> Any:
 
 Secteur = dict[str, Any]  # cle, libelle, lieux, communes, departements, wtj
 
-# TRANSITION (phase 3) : imports differes de modules encore dans Scripts/
-# (doublons, rejets_tri, depuis tri). A retirer quand ils auront rejoint le paquet.
-_SCRIPTS = _racine.scripts()
-if str(_SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(_SCRIPTS))
 
 PRIORITAIRE = "prioritaire"  # secteurs prioritaires du profil
 SECONDAIRE = "secondaire"  # secteurs secondaires du profil
