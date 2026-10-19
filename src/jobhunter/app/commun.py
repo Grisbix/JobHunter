@@ -275,6 +275,7 @@ MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
                 [PY, "-m", "jobhunter.programmes.test_live_nav"],
             ),
             ("Mettre à jour JobHunter", "maj"),  # "maj" = mise a jour + relance (App.mettre_a_jour)
+            ("Collecte chaque matin…", "planifier"),  # tâche Windows (App._planifier)
             ("Langue : English", "langue"),  # bascule l'interface FR <-> EN (app.langue)
         ],
     ),

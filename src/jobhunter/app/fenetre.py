@@ -226,6 +226,8 @@ class App(
                         if c == "maj"
                         else self._basculer_langue()
                         if c == "langue"
+                        else self._planifier()
+                        if c == "planifier"
                         else self.run_step(c, l)
                     ),
                     font=(_theme.FONT_UI, 12),
@@ -406,6 +408,36 @@ class App(
             if autre == "en"
             else "Relance JobHunter pour retrouver l'interface en français.",
             parent=self.root,
+        )
+
+    def _planifier(self) -> None:
+        """La collecte chaque matin : crée la tâche Windows à l'heure choisie, ou la retire."""
+        from tkinter import simpledialog
+
+        from jobhunter import planification as _plan
+        from jobhunter.app import langue as _langue
+
+        if _plan.planifiee():
+            if not messagebox.askyesno(
+                "JobHunter",
+                _t("La collecte quotidienne est déjà planifiée. La retirer ?"),
+                parent=self.root,
+            ):
+                return
+            ok, msg = _plan.supprimer()
+        else:
+            heure = simpledialog.askstring(
+                "JobHunter",
+                _t("Collecter les offres chaque jour à quelle heure ? (format 08:00)"),
+                initialvalue="08:00",
+                parent=self.root,
+            )
+            if not heure:
+                return
+            ok, msg = _plan.creer(heure.strip())
+        self._log(msg + "\n")
+        (messagebox.showinfo if ok else messagebox.showwarning)(
+            "JobHunter", _langue.journal(msg), parent=self.root
         )
 
     def _toggle_maint(self) -> None:

@@ -213,6 +213,11 @@ EN: dict[str, str] = {
     "CV/lettres…": "CVs/letters…",
     "Homepages": "Homepages",
     "Mettre à jour JobHunter": "Update JobHunter",
+    "Collecte chaque matin…": "Collect every morning…",
+    "La collecte quotidienne est déjà planifiée. La retirer ?": "The daily collection is "
+    "already scheduled. Remove it?",
+    "Collecter les offres chaque jour à quelle heure ? (format 08:00)": "Collect offers every "
+    "day at what time? (format 08:00)",
     "Scan offres": "Scan offers",
     "Candidatures en lot": "Batch applications",
     "LinkedIn": "LinkedIn",
@@ -503,4 +508,13 @@ SORTIE_EN = {
     "({a}): the releases page opens.",
     "L'installateur s'ouvre : suis ses étapes. Tes données sont gardées.": "The installer "
     "opens: follow its steps. Your data is kept.",
+    # Collecte chaque matin (planification)
+    "Collecte planifiée chaque jour à {a}, si l'ordinateur est allumé. Journaux : {b}.": "Collection "
+    "scheduled every day at {a}, if the computer is on. Logs: {b}.",
+    "Collecte quotidienne retirée.": "Daily collection removed.",
+    "La tâche n'a pas pu être créée : {a}": "The task could not be created: {a}",
+    "La tâche n'a pas pu être retirée : {a}": "The task could not be removed: {a}",
+    "Heure invalide : « {a} » (format 08:00).": "Invalid time: “{a}” (format 08:00).",
+    "Hors Windows : lance ./planifier.sh depuis le dossier de JobHunter.": "Outside Windows: "
+    "run ./planifier.sh from the JobHunter folder.",
 }
