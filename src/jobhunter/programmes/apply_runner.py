@@ -436,8 +436,10 @@ def main():
     queue_done = {}
     import json as _json
 
-    qf = _racine.scripts() / "apply_queue.json"
-    q = _json.load(open(qf, encoding="utf-8"))
+    # La file passe par son contrat d'acces (ADR 0002), jamais par json.load direct.
+    from jobhunter.stockage import file as queue_io
+
+    q = queue_io.charger(descriptions=False)
     if QUEUE_DONE.exists():
         queue_done = _json.load(open(QUEUE_DONE, encoding="utf-8"))
     # --selection : liste explicite d'offres cochées (prioritaire, ignore canal/prio)
