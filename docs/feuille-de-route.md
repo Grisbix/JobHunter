@@ -63,6 +63,50 @@ Règle inchangée : chaque étape livre seule, banc à 0 écart, et ne s'adopte 
 | Modèle d'annulation de confluence-exporter | Le panneau a « Arrêter », le pipeline des budgets de durée et des reprises. |
 | Huey, DurableFlow, spoolctl, outils de distribution en bêta, comparateurs PDF sous GPL/AGPL ou sans Windows | Déjà écartés par Codex, pour les raisons qu'il documente. |
 
+## Étape F — Un produit qu'on télécharge et qu'on comprend (demandée le 2026-10-19)
+
+Décisions de l'utilisateur :
+- **application autonome**, sans Python sur la machine ;
+- **français et anglais** ;
+- **vitrine du dépôt en anglais**, le code gardant ses noms français ;
+- **nettoyage complet**, anciennes releases comprises.
+
+| # | Quoi | Fini quand |
+|---|---|---|
+| F1 | **Faire le tri**, en trois volets (voir le détail sous le tableau) | chaque fichier restant a un rôle écrit ; l'arborescence se lit d'un coup d'œil |
+| F2 | **Panneaux de l'app à jour**, un par un (voir le détail sous le tableau) | chaque chiffre affiché est juste et chaque ligne a une action |
+| F3 | **Source HelloWork** : pages publiques de recherche, sans contournement ; robots.txt et conditions vérifiés d'abord | offres HelloWork dans la file, réponse enregistrée et rejouée (B2), verdict dans `rendement` |
+| F4 | **Installateur autonome** `JobHunterSetup.exe` (voir le détail sous le tableau) | sur un Windows sans Python : installation, ouverture, collecte et dossier |
+| F5 | **Français et anglais** : textes de l'interface dans des catalogues, choix dans les réglages ; vitrine du dépôt en anglais (README, docs utilisateur, notes de version), version française à côté | l'app entière en anglais d'un réglage ; README anglais avec le lien français |
+
+**F1 — faire le tri**
+- Retirer des deux dépôts les programmes morts ou en double, les documents périmés,
+  `Archive/` et les `.bak`.
+- Supprimer les anciennes releases GitHub, sur une liste préparée. La suppression est
+  irréversible : elle est lancée par l'utilisateur, en gardant au minimum la 1.15 (la
+  passerelle) et les 2.x.
+- Ranger l'arborescence.
+
+**F2 — panneaux de l'app à jour, un par un**
+- « Mes CV » : variantes du profil, banque de faits, état des dossiers (2.3), CV par
+  offre retrouvés depuis l'offre plutôt qu'une liste de 1 983.
+- « Entreprises » : les flux réellement collectés (ATS, Workday, autres flux), avec
+  rendement et verdict (2.4) ; comptes d'offres justes.
+- « Accès » : sources actives seulement, état réel (refus, limite, clé manquante),
+  Adzuna et Jooble compris.
+
+**F4 — installateur autonome**
+- Application compilée (PyInstaller) et installateur Windows.
+- Construits par la CI et attachés à chaque release.
+- Deux badges dans le README, comme Ibaraki : « Télécharger l'installeur » et « Code
+  source ».
+- Chrome et LibreOffice détectés, avec un lien s'ils manquent.
+- Mise à jour de l'app installée par la release suivante.
+
+Ordre : **F1 → F2 → F3 → F4 → F5**. On trie d'abord, pour ne pas compiler ni traduire du
+code mort. L'installateur se construit sur une base propre. On traduit en dernier, une
+fois les textes stabilisés.
+
 ## Ordre proposé
 
 **A** (en continu, surtout de l'observation) → **B1** (une heure) → **B2** → **C1** →
