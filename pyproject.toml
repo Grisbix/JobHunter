@@ -128,6 +128,11 @@ module = [
     "jobhunter.cli",
     "jobhunter.accueil",
     "jobhunter.mise_a_jour",
+    "jobhunter.documents.rendu",
+    "jobhunter.documents.llm",
+    "jobhunter.documents.commun",
+    "jobhunter.documents.cv_auto",
+    "jobhunter.documents.cv",
 ]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

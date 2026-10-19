@@ -182,6 +182,8 @@ les `TypedDict` d'`Offre` et `Candidature`, et le durcissement des autres paquet
 file de 12 137 offres et sur les clés que le code lit ou écrit. `cli`, `accueil` et
 `mise_a_jour` rejoignent la liste stricte. Mesuré pour la suite, en erreurs du mode strict :
 `documents` 187, `navigation` 175, `sources` 395, `app` 1 024, les programmes ~85.
+Puis `documents.rendu`, `llm`, `commun`, `cv_auto` et `cv` passent stricts (banc 0 écart) ;
+restent dans `documents` : `lettre` (84) et `message` (57).
 
 ## Phase 6 — Distribution (1 journée) → v2.x
 

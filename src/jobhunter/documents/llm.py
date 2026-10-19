@@ -39,7 +39,7 @@ OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.1:8b")
 
 
-def _llm_prompt(offer):
+def _llm_prompt(offer: dict[str, Any]) -> str:
     return (
         f"Tu es {_ici.PROFILE['nom']}. {_P.get('lettre.presentation_llm', '') or ''} "
         f"Rédige le CORPS (3 paragraphes, français, sobre, factuel, sans clichés ni superlatifs) d'une lettre de motivation "
@@ -51,7 +51,7 @@ def _llm_prompt(offer):
     )
 
 
-def _ollama_generate(prompt):
+def _ollama_generate(prompt: str) -> str | None:
     """Appelle Ollama local (gratuit). Retourne le texte ou None si indispo."""
     import json as _json
     import urllib.request
@@ -64,7 +64,8 @@ def _ollama_generate(prompt):
             f"{OLLAMA_URL}/api/generate", data=body, headers={"Content-Type": "application/json"}
         )
         with urllib.request.urlopen(req, timeout=120) as r:
-            return _json.loads(r.read()).get("response", "").strip()
+            reponse: str = _json.loads(r.read()).get("response", "")
+            return reponse.strip()
     except Exception as e:
         _log.info(
             f"  ! Ollama indispo ({type(e).__name__}) — lance `ollama serve` + `ollama pull {OLLAMA_MODEL}`"
@@ -72,7 +73,7 @@ def _ollama_generate(prompt):
         return None
 
 
-def llm_rewrite(offer, cv_docx, letter_docx):
+def llm_rewrite(offer: dict[str, Any], cv_docx: Any, letter_docx: Any) -> bool:
     prompt = _llm_prompt(offer)
     body = None
     # 1) Claude API si clé

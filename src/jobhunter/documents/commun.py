@@ -137,7 +137,7 @@ _SIGLES = {
 }
 
 
-def minuscule_titre(t):
+def minuscule_titre(t: str) -> str:
     """« Contrôleur de Gestion Financier » -> « contrôleur de gestion financier ».
 
     Un sigle reste intact (« Analyste RSE-ESG » garde RSE-ESG), un nom propre
@@ -175,7 +175,7 @@ def minuscule_titre(t):
     return " ".join(sortie)
 
 
-def _de(mot, apostrophe="'"):
+def _de(mot: str, apostrophe: str = "'") -> str:
     """Élision : 'de Amundi' -> \"d'Amundi\".
 
     'h' et 'y' EXCLUS : « de Hollande » et « de Yann » sont corrects, pas « d'Hollande ».
@@ -244,7 +244,7 @@ for _n, _rx in list(globals().items()):
         assert "\x08" not in _rx.pattern, "motif corrompu (backspace littéral) : " + _n
 
 
-def titre_poste(t, maxlen=80):
+def titre_poste(t: str | None, maxlen: int = 80) -> str:
     """Intitulé lisible à partir du titre brut d'une annonce.
 
     Coupe au dernier séparateur AVANT maxlen, jamais au milieu d'un mot.
@@ -282,7 +282,7 @@ def titre_poste(t, maxlen=80):
     return t
 
 
-def _coupe_mot(t, n):
+def _coupe_mot(t: str | None, n: int) -> str:
     """Tronque a n caracteres SANS couper un mot, et sans laisser de ponctuation
     pendante. « …help to build a better wor » est parti dans une vraie lettre :
     une citation coupee en plein mot est plus visible qu'une citation absente."""
@@ -296,13 +296,13 @@ def _coupe_mot(t, n):
     return coupe.rstrip(" ,;:.-") + "…"
 
 
-def company_value(company):
+def company_value(company: str | None) -> str:
     """Accroche connue pour cette entreprise, ou "" : quand l'entreprise est
     inconnue, la lettre ne lui prete AUCUN engagement, elle parle du poste."""
     c = (company or "").lower()
     for k, v in _ici.COMPANY_VALUE.items():
         if k in c:
-            return v
+            return str(v)
     return ""
 
 
@@ -323,7 +323,7 @@ def company_value(company):
 _RX_SLUG = re.compile(r"[^a-z0-9]+")
 
 
-def _slug(s):
+def _slug(s: str | None) -> str:
     return _RX_SLUG.sub("_", (s or "").lower()).strip("_")
 
 
@@ -337,7 +337,7 @@ _PARESSEUX["SKILL_EN"] = lambda: ({lab: v.get("en") or lab for lab, v in _ici._C
 _SKILL_EN_NORM = None
 
 
-def skills_en(labels):
+def skills_en(labels: list[str]) -> list[str]:
     """Libelles traduits. La recherche ignore les ACCENTS : les cles de SKILL_EN
     sont ecrites sans eux, les libelles reels en portent (« Analyse financiere »
     contre « Analyse financiere »). Comparer tels quels ne trouvait rien et la
@@ -363,7 +363,7 @@ def skills_en(labels):
 _PARESSEUX["SKILL_INTERNES"] = lambda: ({lab for lab, v in _ici._COMP.items() if v.get("interne")})
 
 
-def match_skills(offer_text, max_n=8):
+def match_skills(offer_text: str | None, max_n: int = 8) -> list[str]:
     t = (offer_text or "").lower()
     hits = []
     for label in _ici.SKILL_LEX:

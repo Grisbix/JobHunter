@@ -6,6 +6,7 @@ import importlib
 import json
 import shutil
 import sys
+from pathlib import Path
 from typing import Any
 
 from docx import Document
@@ -41,7 +42,7 @@ _PARESSEUX["CV_VARIANT_EN"] = lambda: (
 )
 
 
-def cv_sur_mesure(offer):
+def cv_sur_mesure(offer: dict[str, Any]) -> dict[str, Any] | None:
     """Les retouches de CV ecrites a la main pour cette offre, ou None.
 
     `CV/Sur_mesure/<entreprise>__<poste>.json`, meme nom tolerant que la lettre :
@@ -62,11 +63,12 @@ def cv_sur_mesure(offer):
     vise = _slug(f"{offer.get('company')}__{offer.get('role')}")
     for f in CV_SUR_MESURE.glob("*.json"):
         if _slug(f.stem) == vise:
-            return json.loads(f.read_text(encoding="utf-8"))
+            retouches: dict[str, Any] = json.loads(f.read_text(encoding="utf-8"))
+            return retouches
     return None
 
 
-def appliquer_cv_sur_mesure(doc, retouches):
+def appliquer_cv_sur_mesure(doc: Any, retouches: dict[str, Any]) -> list[str]:
     """Applique les retouches a un Document. Rend la liste des ancres introuvables.
 
     Le remplacement se fait DANS le run qui porte le texte : la ligne d'une
@@ -115,7 +117,13 @@ def appliquer_cv_sur_mesure(doc, retouches):
 
 
 # ---- CV : injecte titre + ligne competences ciblees ----
-def tailor_cv(offer, nom=None, langue="fr", allege=0, auto=True):
+def tailor_cv(
+    offer: dict[str, Any],
+    nom: str | None = None,
+    langue: str = "fr",
+    allege: int = 0,
+    auto: bool = True,
+) -> Path | None:
     """`nom` : stem impose. Sans lui, plusieurs offres au titre voisin
     produisent le MEME fichier et s'ecrasent — voir generate_docs._noms_uniques.
 
@@ -146,7 +154,7 @@ def tailor_cv(offer, nom=None, langue="fr", allege=0, auto=True):
     if src.suffix.lower() == ".pdf":
         # CV fourni en PDF seulement : il part tel quel, sans adaptation.
         # Un modele .docx permet d'y inserer l'intitule du poste.
-        out = _ici.CV_OUT / (
+        out: Path = _ici.CV_OUT / (
             (nom or new_name("CV", offer.get("role") or "", offer["company"])) + ".pdf"
         )
         shutil.copyfile(src, out)
@@ -215,14 +223,14 @@ def tailor_cv(offer, nom=None, langue="fr", allege=0, auto=True):
     elif auto:
         from jobhunter.documents import cv_auto
 
-        r = cv_auto.retouches(
+        faits_auto = cv_auto.retouches(
             offer.get("offer_text") or offer.get("role") or "",
             langue if langue == "en" else "fr",
             allege,
         )
         # Ancres manquees : NORMAL ici. Chaque variante de CV n'a pas les memes
         # lignes, et un fait vise parfois une seule d'entre elles.
-        appliquer_cv_sur_mesure(doc, r)
+        appliquer_cv_sur_mesure(doc, faits_auto)
 
     # 2) SUPPRIMÉ (2026-07-12) : la ligne « Compétences ciblées pour ce poste : … »
     #    trahissait un CV auto-généré auprès des recruteurs. Les skills servent toujours
@@ -232,22 +240,25 @@ def tailor_cv(offer, nom=None, langue="fr", allege=0, auto=True):
         new_name,  # Prenom_Nom_CV_<Poste court>_<Entreprise>
     )
 
-    out = _ici.CV_OUT / ((nom or new_name("CV", role, offer["company"])) + ".docx")
-    doc.save(str(out))
-    return out
+    sortie: Path = _ici.CV_OUT / ((nom or new_name("CV", role, offer["company"])) + ".docx")
+    doc.save(str(sortie))
+    return sortie
 
 
-def _pages_pdf(pdf):
+def _pages_pdf(pdf: Path) -> int:
     try:
         import fitz
 
         with fitz.open(str(pdf)) as d:
-            return d.page_count
+            pages: int = d.page_count
+            return pages
     except Exception:
         return 1  # illisible : on ne boucle pas pour rien
 
 
-def cv_une_page(offer, nom=None, langue="fr"):
+def cv_une_page(
+    offer: dict[str, Any], nom: str | None = None, langue: str = "fr"
+) -> tuple[Path | None, Path | None]:
     """tailor_cv + to_pdf, en garantissant UNE page. Rend (docx, pdf).
 
     Les faits automatiques ajoutent des lignes ; si le PDF deborde, on retire

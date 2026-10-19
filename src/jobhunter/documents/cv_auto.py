@@ -25,30 +25,33 @@ import json
 import re
 import sys
 from functools import lru_cache
+from pathlib import Path
+from typing import Any
 
 from jobhunter import journal as _journal
 
 _log = _journal.journal(__name__)
 
 
-def _chemin():
+def _chemin() -> Path:
     from jobhunter import chemins
 
     return chemins.ROOT / "CV" / "Faits.json"
 
 
 @lru_cache(maxsize=1)
-def banque():
+def banque() -> dict[str, Any]:
     """La banque lue une fois par processus. {} si absente ou illisible : sans
     banque, le CV sort du modele comme avant — jamais d'erreur bloquante."""
     try:
-        return json.loads(_chemin().read_text(encoding="utf-8"))
+        b: dict[str, Any] = json.loads(_chemin().read_text(encoding="utf-8"))
+        return b
     except (OSError, ValueError) as e:
         _log.info(f"  ! CV/Faits.json illisible ({type(e).__name__}) — CV sans faits automatiques")
         return {}
 
 
-def faits_retenus(texte, b=None):
+def faits_retenus(texte: str | None, b: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     """Les faits valides dont un declencheur apparait dans `texte`, par priorite."""
     b = banque() if b is None else b
     t = texte or ""
@@ -62,12 +65,14 @@ def faits_retenus(texte, b=None):
     return out
 
 
-def retouches(texte, langue="fr", allege=0, b=None):
+def retouches(
+    texte: str | None, langue: str = "fr", allege: int = 0, b: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Retouches au format de CV/Sur_mesure pour une annonce.
 
     `allege` : nombre de lignes d'`allegements` a retirer (0 = aucune)."""
     b = banque() if b is None else b
-    r = {"remplace": [], "ajoute_apres": [], "supprime": [], "faits": []}
+    r: dict[str, list[Any]] = {"remplace": [], "ajoute_apres": [], "supprime": [], "faits": []}
     for f in faits_retenus(texte, b):
         ops = f.get(langue) or []
         for op in ops:
@@ -81,15 +86,15 @@ def retouches(texte, langue="fr", allege=0, b=None):
     return r
 
 
-def nb_allegements(langue="fr", b=None):
+def nb_allegements(langue: str = "fr", b: dict[str, Any] | None = None) -> int:
     b = banque() if b is None else b
     return len((b.get("allegements") or {}).get(langue, []))
 
 
-def main():
+def main() -> int:
     import argparse
 
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
     ap = argparse.ArgumentParser()
     ap.add_argument("--essai", default="", help="texte d'annonce a tester")
     ap.add_argument("--langue", default="fr")

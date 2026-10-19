@@ -17,7 +17,7 @@ SOFFICE = [
 ]
 
 
-def to_pdf(docx_path):
+def to_pdf(docx_path: Path) -> Path | None:
     exe = next((s for s in SOFFICE if Path(s).exists()), None)
     if not exe:
         return None
