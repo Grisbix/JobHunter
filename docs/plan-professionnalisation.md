@@ -132,6 +132,12 @@ Fini quand : `pip install -e .` puis `jobhunter pipeline` fonctionne ; aucun
 contrôlés paquet par paquet par les tests `test_*_paquet.py` ; la règle « le moteur
 n'importe pas l'interface » est l'étape B1 de [la feuille de route](feuille-de-route.md).)*
 
+**Critères atteints (2026-10-19, v2.4.1)** : les huit `sys.path.insert(Scripts/)` de
+transition, oubliés au retrait des façades, sont retirés (plus aucun import n'y passait,
+mais ils plaçaient le dossier des DONNÉES en tête du chemin d'import). `tests/test_architecture.py`
+vérifie désormais que le moteur n'importe ni Tkinter ni `jobhunter.app`, et qu'aucun
+module ne touche à `sys.path` ; seul `JobHunter.pyw` ajoute `src/`, hors du paquet.
+
 **Fait (2026-10-18, v1.15.0 puis v2.0.0)** : 3.9 en deux temps. La passerelle 1.15.0
 (ci-dessus) a été publiée et testée seule (mise à jour ZIP 1.14 → 1.15). La 2.0.0 déplace
 les 57 programmes de `Scripts/` dans `jobhunter.programmes` (`git mv`, historique gardé),
