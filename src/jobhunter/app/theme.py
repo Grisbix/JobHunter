@@ -26,6 +26,9 @@ CARD = "#FFFFFF"
 
 LINE = "#D8E2EF"
 
+# Contour d'un champ de saisie : 3:1 au moins sur CARD, BG et WORK (WCAG 1.4.11, E3).
+LINE_SAISIE = "#74869F"
+
 
 TX = "#19283F"
 
@@ -40,6 +43,9 @@ ROW1 = "#F5F8FC"
 
 
 ACC = "#325EDF"
+
+# Anneau de focus clavier (E3) : l'accent, 5,5:1 sur CARD, 4,8:1 sur BG.
+FOCUS = ACC
 
 
 OK = "#25704F"
@@ -285,7 +291,7 @@ def CB(
         kw["anchor"] = anchor
     kw["height"] = (pady * 2 + 16) if pady else 34
     kw["width"] = width if width else max(70, len(str(text)) * 8 + 20)
-    return ctk.CTkButton(parent, **kw)
+    return clavier(ctk.CTkButton(parent, **kw))
 
 
 def CL(
@@ -319,8 +325,9 @@ def CL(
 def CE(
     parent: Any, bg: Any = None, fg: Any = None, width: Any = None, font: Any = None, **_: Any
 ) -> Any:
-    # Focus visible : la bordure suffit, pas besoin d'un halo.
-    kw = {"corner_radius": RAD_BTN, "border_width": 1, "border_color": LINE}
+    # Bordure d'un champ : 3:1 au moins sur tous les fonds (WCAG 1.4.11, E3) ; LINE, à
+    # 1,3:1, laissait le champ invisible. Focus : la bordure passe en FOCUS, 2 px.
+    kw = {"corner_radius": RAD_BTN, "border_width": 1, "border_color": LINE_SAISIE}
     if bg is not None:
         kw["fg_color"] = bg
     if fg:
@@ -329,7 +336,64 @@ def CE(
         kw["width"] = int(width) * 7
     if font:
         kw["font"] = ctk.CTkFont(*font) if isinstance(font, tuple) else font
-    return ctk.CTkEntry(parent, **kw)
+    champ = ctk.CTkEntry(parent, **kw)
+    interieur = getattr(champ, "_entry", None)
+    if interieur is not None:
+        interieur.bind(
+            "<FocusIn>", lambda e: champ.configure(border_color=FOCUS, border_width=2), add="+"
+        )
+        interieur.bind(
+            "<FocusOut>",
+            lambda e: champ.configure(border_color=LINE_SAISIE, border_width=1),
+            add="+",
+        )
+    return champ
+
+
+def anneau_focus(fond: Any) -> str:
+    """La couleur de l'anneau de focus selon le fond du bouton : visible sur chacun.
+
+    Bleu nuit de la barre latérale → texte clair ; bouton d'accent (bleu) → texte foncé ;
+    ailleurs, FOCUS.
+    """
+    if fond in (SIDE, SIDE_CARD, SIDE_H):
+        return SIDE_TX
+    if fond in (ACC, ACC_H):
+        return TX
+    return FOCUS
+
+
+def clavier(bouton: Any) -> Any:
+    """Rend un CTkButton utilisable au clavier (E3) ; le rend.
+
+    CustomTkinter dessine ses boutons sur un canevas que la tabulation saute : sans
+    souris, aucun bouton de l'application n'était atteignable. Le canevas prend le focus
+    dans l'ordre de création (l'ordre visuel, les widgets étant posés de haut en bas),
+    montre un anneau FOCUS de 2 px, et Entrée ou Espace déclenchent le bouton.
+    """
+    canevas = getattr(bouton, "_canvas", None)
+    if canevas is None:
+        return bouton
+    canevas.configure(takefocus=1)
+    largeur, couleur = bouton.cget("border_width"), bouton.cget("border_color")
+    anneau = anneau_focus(bouton.cget("fg_color"))
+
+    def declencher(_e: Any) -> str:
+        if str(bouton.cget("state")) != "disabled":
+            bouton.invoke()
+        return "break"
+
+    for touche in ("<Return>", "<KP_Enter>", "<space>"):
+        canevas.bind(touche, declencher, add="+")
+    canevas.bind(
+        "<FocusIn>", lambda e: bouton.configure(border_width=2, border_color=anneau), add="+"
+    )
+    canevas.bind(
+        "<FocusOut>",
+        lambda e: bouton.configure(border_width=largeur, border_color=couleur),
+        add="+",
+    )
+    return bouton
 
 
 def make_btn(

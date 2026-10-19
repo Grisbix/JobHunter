@@ -215,24 +215,17 @@ def test_gmail_jeton_trop_large_refuse(tmp_path, faux_google):
     assert not (tmp_path / lecture.JETON).exists()  # jamais gardé
 
 
-def test_fenetre_de_l_app_s_ouvre(monkeypatch):
+def test_fenetre_de_l_app_s_ouvre(racine_tk):
     """La fenêtre « Statuts depuis mes courriels » se construit, sans rien lire ni écrire."""
     import queue
     import types
 
-    import customtkinter as ctk
-
     from jobhunter.app import courriels as fenetre
 
-    root = ctk.CTk()
-    root.withdraw()
-    try:
-        fenetre.ouvrir(types.SimpleNamespace(root=root, q=queue.Queue()))
-        root.update()
-        titres = [w.title() for w in root.winfo_children() if hasattr(w, "title")]
-        assert "Statuts depuis mes courriels" in titres
-    finally:
-        root.destroy()
+    fenetre.ouvrir(types.SimpleNamespace(root=racine_tk, q=queue.Queue()))
+    racine_tk.update()
+    titres = [w.title() for w in racine_tk.winfo_children() if hasattr(w, "title")]
+    assert "Statuts depuis mes courriels" in titres
 
 
 # ── écriture : seulement ce qui est validé ──────────────────────────────────

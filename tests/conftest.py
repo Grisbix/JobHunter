@@ -148,3 +148,29 @@ def page(navigateur):
     pg = navigateur.new_page()
     yield pg
     pg.close()
+
+
+@pytest.fixture(scope="session")
+def fenetre_tk():
+    """Une seule fenêtre Tk pour toute la session, transparente mais affichée.
+
+    Créer puis détruire plusieurs racines Tk dans un même processus fait échouer, au
+    bout de quelques-unes, l'initialisation de Tcl sous Windows (« Can't find a usable
+    init.tcl »), avec Python 3.12 comme 3.14. Le focus clavier, lui, n'existe que sur
+    une fenêtre affichée : d'où l'opacité nulle plutôt que withdraw().
+    """
+    import customtkinter as ctk
+
+    r = ctk.CTk()
+    r.attributes("-alpha", 0.0)
+    r.geometry("300x300+0+0")
+    yield r
+    r.destroy()
+
+
+@pytest.fixture
+def racine_tk(fenetre_tk):
+    """La fenêtre de session, vidée après chaque test."""
+    yield fenetre_tk
+    for w in fenetre_tk.winfo_children():
+        w.destroy()

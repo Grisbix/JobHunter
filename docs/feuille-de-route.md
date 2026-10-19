@@ -59,7 +59,7 @@ quitter CustomTkinter, ou de lui ajouter une couche d'accessibilité.
 |---|---|---|
 | E1 ✅ (v2.17.0 `.venv` ; v2.18.0 workflow « installation » : `installer.bat` et `installer.sh` sur des machines GitHub neuves, Windows et Linux) | Environnement Python dédié créé par `installer.bat` (reporté depuis la phase 1) | une installation neuve sur un Windows vierge lance l'app sans toucher au Python système |
 | E2 ✅ (v2.18.0, ADR 0012 : Ed25519 en Python pur, clé privée hors de GitHub, `outils/signature.py` ; l'app télécharge, contrôle et ouvre l'installateur. Actif dès que Gabriel crée sa clé) | Mises à jour **signées** : WinSparkle ou tufup (Codex P2), à choisir sur prototype. Attention : la purge de destination de tufup est incompatible avec un dossier qui contient le profil. | un paquet altéré est refusé ; le profil survit à une mise à jour interrompue |
-| E3 | Accessibilité (axe-windows, Accessibility Insights) | les contrôles principaux ont un nom ; la tabulation suit l'ordre visuel |
+| E3 ◐ (v2.20.0 : chaque bouton se joue au clavier — Tab, Entrée, Espace — avec un anneau de focus visible sur chaque fond ; contour des champs à 3:1 ; contrastes du texte vérifiés en test, WCAG AA. Reste impossible sans quitter CustomTkinter : donner un nom aux contrôles pour un lecteur d'écran, et le focus clavier des onglets segmentés) | Accessibilité (axe-windows, Accessibility Insights) | les contrôles principaux ont un nom ; la tabulation suit l'ordre visuel |
 
 ## Écarté ou différé, avec la raison
 

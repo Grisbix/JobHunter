@@ -7,6 +7,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 os.environ["JOBHUNTER_SANS_FOND"] = "1"
 os.environ.pop("JOBHUNTER_ACTION", None)
 # L'app vit dans jobhunter.app depuis la phase 3.7 ; JobHunter.pyw n'est que le lanceur.
@@ -14,6 +16,12 @@ import jobhunter.app as ui  # noqa: E402  (apres les variables d'environnement)
 
 
 class DesignTests(unittest.TestCase):
+    @pytest.fixture(autouse=True)
+    def _racine(self, racine_tk):
+        # La racine Tk de la session (conftest) : une seconde racine dans le même
+        # processus fait échouer l'initialisation de Tcl par intermittence.
+        self.racine = racine_tk
+
     def test_sessions(self):
         today = datetime.date(2026, 10, 5)
         for verification in ("2026-08-31", None, "invalide", "2026-11-01"):
@@ -61,7 +69,7 @@ class DesignTests(unittest.TestCase):
             patch.object(ui, "COMPTES", Path(directory) / "comptes.json"),
             patch.object(ui, "PROFILE", Path(directory) / "profil.json"),
         ):
-            root = ui.ctk.CTk()
+            root = self.racine
             root.withdraw()
             try:
                 with patch.object(root, "state"):
@@ -114,7 +122,10 @@ class DesignTests(unittest.TestCase):
                     self.assertEqual(len(app._panels["stats"]._cards), 10)
                     self.assertFalse((Path(directory) / "suivi.json").exists())
             finally:
-                root.destroy()
+                for w in root.winfo_children():
+                    w.destroy()
+                root.deiconify()
+                root.attributes("-alpha", 0.0)
 
 
 if __name__ == "__main__":
