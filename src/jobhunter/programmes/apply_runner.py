@@ -21,6 +21,8 @@ the profile dir remembers you for next runs.
 Per offer, console asks:
     [s] = marqué ENVOYÉ   [k] = SAUTÉ   [r] = re-remplir (après navigation manuelle)
     [o] = ré-ouvrir l'URL  [enter] = re-remplir   [q] = quitter (sauvegarde)
+
+Decision : docs/adr/0005-aucune-soumission-automatique.md
 """
 
 import argparse

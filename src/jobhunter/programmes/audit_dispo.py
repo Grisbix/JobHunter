@@ -44,6 +44,8 @@ Run :
   python JobHunter.pyw dispo --supprime         # controle puis retire les fermees
   python JobHunter.pyw dispo --supprime --age-max 60
   python JobHunter.pyw dispo --rapport          # bilan de l'etat, sans reseau
+
+Decision : docs/adr/0004-429-attendre-403-arreter.md
 """
 
 import argparse

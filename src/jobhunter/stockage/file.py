@@ -18,6 +18,8 @@ en puissance. Une séquence recopiée quatorze fois finit toujours par diverger.
 NOM DU FICHIER. Surtout pas `queue.py` : `queue` est un module de la bibliothèque
 standard, `Scripts/` est dans sys.path, et JobHunter.pyw fait `import queue`.
 Le masquer casserait l'application.
+
+Decision : docs/adr/0002-trois-fichiers-trois-contrats.md
 """
 
 import json

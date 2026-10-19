@@ -19,6 +19,8 @@ Jeux :
 
 Un ecart n'est pas forcement un bug : si le changement est voulu, on
 regenere la reference dans le MEME commit, et le message dit pourquoi.
+
+Decision : docs/adr/0006-banc-de-non-regression.md
 """
 
 import argparse

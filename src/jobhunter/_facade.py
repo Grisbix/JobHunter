@@ -9,6 +9,8 @@ part dans les sous-modules qui lient le nom ; les autres le lisent par
 
 A retirer avec les facades `Scripts/*.py` (phase 3.9) : les appelants importeront alors
 le sous-module qui porte le nom.
+
+Decision : docs/adr/0001-facades-alias.md
 """
 
 import importlib

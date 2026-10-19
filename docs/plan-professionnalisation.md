@@ -239,6 +239,12 @@ sur toute l'API publique du socle — `stockage` (file, suivi, verrou, atomique)
 `racine`, `reseau`. Ruff les exige désormais sur ces fichiers (règle `D`, convention
 google) ; un module rejoint la liste quand il est documenté, comme pour mypy strict.
 
+**Avancement (2026-10-19, suite)** : les huit ADR sont cités dans le code, en fin de
+docstring des modules où chaque décision s'applique (14 modules). `tests/test_adr.py`
+garde le lien dans les deux sens : un ADR que rien ne cite, ou une citation vers un ADR
+absent, fait échouer la suite. Reste, au fil de l'eau : raccourcir les récits que l'ADR
+couvre déjà — un passage à la fois, parce que c'est un jugement, pas une substitution.
+
 ---
 
 ## Calendrier indicatif

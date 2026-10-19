@@ -2,6 +2,8 @@
 
 Un programme qui trouve le fichier occupe sort en code 3 sans rien modifier ; un
 verrou vivant ne se casse jamais (detail : .claude/rules/verrous.md).
+
+Decision : docs/adr/0003-verrou-fichier-code-3.md
 """
 
 # ── Verrou INTER-PROCESSUS ────────────────────────────────────────────────────

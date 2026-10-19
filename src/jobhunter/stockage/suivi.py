@@ -33,6 +33,8 @@ sur cet état frais, puis écrit. Ce qu'un autre programme a écrit entre-temps 
 donc conservé. Une exception dans la fonction annule l'écriture.
 
 `charger()` pour la lecture seule.
+
+Decision : docs/adr/0002-trois-fichiers-trois-contrats.md
 """
 
 import json

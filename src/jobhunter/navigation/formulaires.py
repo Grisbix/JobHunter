@@ -1,6 +1,8 @@
 """Formulaires de candidature : assistant multi-ecrans, depot des documents, remplissage.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
+Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+
+Decision : docs/adr/0005-aucune-soumission-automatique.md"""
 
 import random as _rnd
 import re as _re_lex

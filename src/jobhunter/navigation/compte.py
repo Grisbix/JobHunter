@@ -1,6 +1,8 @@
 """Connexion par etapes (le mot de passe n'est JAMAIS tape) et bascule vers l'inscription.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
+Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+
+Decision : docs/adr/0005-aucune-soumission-automatique.md"""
 
 from typing import Any
 

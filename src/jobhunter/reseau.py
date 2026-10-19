@@ -15,6 +15,8 @@ la connexion indefiniment (le 2026-09-22, fr.talent.com a bloque le scan planifi
 `envoi` : le module httpx (on passe alors par le client partage) ou un httpx.Client.
 job_sources garde ses anciens noms (`_get_borne`...) : les doublures des tests les
 remplacent la, et les appels de job_sources passent par eux.
+
+Decision : docs/adr/0004-429-attendre-403-arreter.md
 """
 
 import collections

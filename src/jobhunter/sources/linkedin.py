@@ -1,6 +1,8 @@
 """LinkedIn : la recherche PUBLIQUE (API invite), avec attente sur 429.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
+Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+
+Decision : docs/adr/0004-429-attendre-403-arreter.md"""
 
 import re
 import time

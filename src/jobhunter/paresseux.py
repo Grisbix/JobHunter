@@ -13,6 +13,8 @@ nom global nu ne passe pas par `__getattr__` et leverait `NameError`.
 
 `oublier()` efface les valeurs deja calculees ; `profil.utiliser()` s'en sert pour
 qu'un profil injecte vaille partout.
+
+Decision : docs/adr/0007-valeurs-du-profil-paresseuses.md
 """
 
 import types

@@ -12,6 +12,8 @@ Sans installation : `python JobHunter.pyw <commande> ...` depuis le dossier de
 JobHunter. Installe (`pip install -e .`), la commande `jobhunter` existe directement.
 
 Aucune commande n'envoie de candidature : le clic final reste celui de l'utilisateur.
+
+Decision : docs/adr/0008-programmes-dans-le-paquet.md
 """
 
 import importlib.util
