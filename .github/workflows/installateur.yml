@@ -4,6 +4,8 @@ name: installateur
 # l'attache à la release. Lancé à chaque release publiée, ou à la main (Actions →
 # installateur → Run workflow) ou par une PR qui touche l'empaquetage : l'installateur
 # est alors un artefact du run.
+# Deux jobs : la construction ne fait que lire le dépôt ; seule la publication, et
+# seulement pour une release, reçoit le droit d'écrire.
 # Décision : docs/adr/0011-application-autonome.md
 
 on:
@@ -17,15 +19,17 @@ on:
       - ".github/workflows/installateur.yml"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   windows:
     runs-on: windows-latest
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.12"
           cache: pip
@@ -51,12 +55,38 @@ jobs:
           & "$dest\jobhunter-cli.exe" --help
           if ($LASTEXITCODE -ne 0) { exit 1 }
           if (-not (Test-Path "$env:JOBHUNTER_RACINE\profil\exemple_finance_esg.json")) { exit 1 }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: JobHunterSetup
           path: dist/JobHunterSetup.exe
+          if-no-files-found: error
+
+  publier:
+    # Seul job qui écrit : il attache l'installateur déjà construit et contrôlé.
+    if: github.event_name == 'release'
+    needs: windows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      id-token: write      # attestation de provenance (Sigstore)
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: JobHunterSetup
+      # Preuve vérifiable que l'exécutable sort de CE dépôt et de CE workflow :
+      #   gh attestation verify JobHunterSetup.exe --repo Grisbix/JobHunter
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
+        with:
+          subject-path: JobHunterSetup.exe
+      - name: Empreinte SHA-256
+        run: sha256sum JobHunterSetup.exe > JobHunterSetup.exe.sha256
       - name: Attacher a la release
-        if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" dist/JobHunterSetup.exe --clobber
+          # Jamais d'expression ${{ }} dans le script : le nom vient de l'environnement.
+          TAG: ${{ github.event.release.tag_name }}
+        run: >-
+          gh release upload "$TAG" JobHunterSetup.exe JobHunterSetup.exe.sha256
+          --clobber --repo "$GITHUB_REPOSITORY"

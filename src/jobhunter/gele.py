@@ -108,7 +108,8 @@ def aiguiller(argv: Sequence[str]) -> int:
         return 0
     if len(args) >= 2 and args[0] == "-c":
         sys.argv = ["-c", *args[2:]]
-        exec(compile(args[1], "<-c>", "exec"), {"__name__": "__main__"})  # noqa: S102  # comme python -c
+        # Comme `python -c` : l'appelant est l'application elle-même (mise à jour).
+        exec(compile(args[1], "<-c>", "exec"), {"__name__": "__main__"})  # noqa: S102  # nosec B102
         return 0
     if args:
         from jobhunter.cli import main as commande

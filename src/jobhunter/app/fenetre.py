@@ -11,6 +11,7 @@ from typing import Any
 
 import customtkinter as ctk
 
+from jobhunter import gele as _gele
 from jobhunter import profil as _profil
 from jobhunter import racine as _racine
 from jobhunter.app import theme as _theme
@@ -317,9 +318,12 @@ class App(
         # sync). Pour ouvrir l'app le temps d'une verification visuelle sans
         # declencher un scan au premier retour de focus.
         if os.environ.get("JOBHUNTER_SANS_FOND"):
+            # Crochet des tests visuels (lancés depuis le code source) : jamais dans
+            # l'application installée, où une variable d'environnement ne doit pas
+            # suffire à exécuter du code.
             act = os.environ.get("JOBHUNTER_ACTION")
-            if act:
-                self.root.after(1500, lambda: exec(act, {"app": self, "tk": tk}))
+            if act and not _gele.est_gele():
+                self.root.after(1500, lambda: exec(act, {"app": self, "tk": tk}))  # nosec B102
             return
         # AUTO : dès qu'il y a des offres sans description, on les récupère en fond (au démarrage
         # + après chaque ajout/rebuild). Aucun bouton — silencieux.

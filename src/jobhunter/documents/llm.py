@@ -16,6 +16,7 @@ from jobhunter import journal as _journal
 from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _P
 from jobhunter.documents.commun import _de, titre_poste
+from jobhunter.reseau import exiger_http
 
 _log = _journal.journal(__name__)
 
@@ -62,9 +63,11 @@ def _ollama_generate(prompt: str) -> str | None:
     ).encode()
     try:
         req = urllib.request.Request(
-            f"{OLLAMA_URL}/api/generate", data=body, headers={"Content-Type": "application/json"}
+            exiger_http(f"{OLLAMA_URL}/api/generate"),
+            data=body,
+            headers={"Content-Type": "application/json"},
         )
-        with urllib.request.urlopen(req, timeout=120) as r:
+        with urllib.request.urlopen(req, timeout=120) as r:  # nosec B310 : schéma vérifié par exiger_http
             reponse: str = _json.loads(r.read()).get("response", "")
             return reponse.strip()
     except Exception as e:

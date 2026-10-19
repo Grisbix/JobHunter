@@ -8,6 +8,7 @@ import time
 from typing import Any
 
 from jobhunter import journal as _journal
+from jobhunter.reseau import exiger_http
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.commun import (
     INCIDENTS,
@@ -107,8 +108,8 @@ def _apec_page(mot: str, debut: int) -> tuple[Any, int]:
     tetes["Content-Type"] = "application/json"
     tetes["Accept"] = "application/json"
     try:
-        r = urllib.request.Request(APEC_API, data=corps, headers=tetes, method="POST")
-        with urllib.request.urlopen(r, timeout=30) as f:
+        r = urllib.request.Request(exiger_http(APEC_API), data=corps, headers=tetes, method="POST")
+        with urllib.request.urlopen(r, timeout=30) as f:  # nosec B310 : schéma vérifié par exiger_http
             d = json.loads(_lire_borne(f).decode("utf-8", "replace"))
     except urllib.error.HTTPError as e:
         _log.info(f"    ! {mot} : HTTP {e.code}")

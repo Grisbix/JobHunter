@@ -32,6 +32,7 @@ import urllib.error
 import urllib.request
 
 from jobhunter import racine as _racine
+from jobhunter.reseau import exiger_http
 
 HERE = _racine.scripts()
 
@@ -45,9 +46,10 @@ def fiche(id_):
     from jobhunter import sources as J
 
     r = urllib.request.Request(
-        API.format(id_), headers={"x-api-key": J._vie_key(), "Accept": "application/json"}
+        exiger_http(API.format(id_)),
+        headers={"x-api-key": J._vie_key(), "Accept": "application/json"},
     )
-    with urllib.request.urlopen(r, timeout=25) as f:
+    with urllib.request.urlopen(r, timeout=25) as f:  # nosec B310 : schéma vérifié par exiger_http
         return json.loads(f.read().decode("utf-8", "replace"))
 
 

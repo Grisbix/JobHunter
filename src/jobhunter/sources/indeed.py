@@ -12,6 +12,7 @@ from urllib.parse import quote
 
 from jobhunter import journal as _journal
 from jobhunter import paresseux as _paresseux
+from jobhunter.reseau import exiger_http
 from jobhunter.scoring import zones as _zones
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.commun import (
@@ -201,8 +202,8 @@ def _indeed_cartes(mot: str, lieu: str) -> list[Any]:
     for essai in (1, 2):
         try:
             INDEED_REQUETES += 1
-            with urllib.request.urlopen(
-                urllib.request.Request(url, headers=INDEED_UA), timeout=25
+            with urllib.request.urlopen(  # nosec B310 : schéma vérifié par exiger_http
+                urllib.request.Request(exiger_http(url), headers=INDEED_UA), timeout=25
             ) as f:
                 if "secure.indeed.com" in f.geturl():
                     bloque("connexion requise")

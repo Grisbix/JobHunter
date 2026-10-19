@@ -8,6 +8,7 @@ from typing import Any
 
 from jobhunter.navigation.navigateur import human_click, human_scroll, human_type
 from jobhunter.navigation.page import analyze
+from jobhunter.reseau import exiger_http
 
 # ── FALLBACK VISION (Ollama llava) : screenshot -> label bouton -> clic ────────
 # Couvre canvas / DOM exotique / label hors-regex. Local, gratuit, offline.
@@ -82,9 +83,11 @@ def vision_pick(
     ).encode()
     try:
         req = urllib.request.Request(
-            host + "/api/generate", data=body, headers={"Content-Type": "application/json"}
+            exiger_http(host + "/api/generate"),
+            data=body,
+            headers={"Content-Type": "application/json"},
         )
-        with urllib.request.urlopen(req, timeout=120) as resp:
+        with urllib.request.urlopen(req, timeout=120) as resp:  # nosec B310 : schéma vérifié par exiger_http
             out = json.loads(resp.read().decode())
         label = (out.get("response") or "").strip().strip('"').splitlines()[0][:60]
     except Exception as e:
@@ -121,8 +124,8 @@ def _detect_vision_model(host: str = "http://localhost:11434") -> str | None:
         "moondream",
     ]
     try:
-        req = urllib.request.Request(host + "/api/tags")
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        req = urllib.request.Request(exiger_http(host + "/api/tags"))
+        with urllib.request.urlopen(req, timeout=5) as resp:  # nosec B310 : schéma vérifié par exiger_http
             data = json.loads(resp.read().decode())
         models: list[str] = [m.get("name", "") for m in data.get("models", [])]
         for kw in VISION_KEYWORDS:
@@ -146,8 +149,8 @@ def _detect_text_model(host: str = "http://localhost:11434") -> str | None:
 
     PREF = ["qwen2.5", "llama3", "llama-3", "mistral", "mixtral", "phi", "gemma", "qwen"]
     try:
-        req = urllib.request.Request(host + "/api/tags")
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        req = urllib.request.Request(exiger_http(host + "/api/tags"))
+        with urllib.request.urlopen(req, timeout=5) as resp:  # nosec B310 : schéma vérifié par exiger_http
             models: list[str] = [
                 m.get("name", "") for m in json.loads(resp.read().decode()).get("models", [])
             ]
@@ -255,9 +258,11 @@ def llm_agent(
         ).encode()
         try:
             req = urllib.request.Request(
-                host + "/api/generate", data=body, headers={"Content-Type": "application/json"}
+                exiger_http(host + "/api/generate"),
+                data=body,
+                headers={"Content-Type": "application/json"},
             )
-            with urllib.request.urlopen(req, timeout=90) as resp:
+            with urllib.request.urlopen(req, timeout=90) as resp:  # nosec B310 : schéma vérifié par exiger_http
                 out = json.loads(resp.read().decode())
             act = json.loads(out.get("response") or "{}")
         except Exception as e:

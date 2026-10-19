@@ -26,6 +26,7 @@ from jobhunter.navigation.page import (
     pick_js,
 )
 from jobhunter.navigation.segment import detect_ats
+from jobhunter.reseau import exiger_http
 
 
 def smart_step(
@@ -795,12 +796,18 @@ def fetch_sitemap_careers(page: Any, base_url: str = "") -> list[Any]:
             import urllib.request
             import xml.etree.ElementTree as ET
 
-            req = urllib.request.Request(sitemap_url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=15) as resp:
+            req = urllib.request.Request(
+                exiger_http(sitemap_url), headers={"User-Agent": "Mozilla/5.0"}
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:  # nosec B310 : schéma vérifié par exiger_http
                 data = resp.read()
             # Try XML parse
             try:
-                root = ET.fromstring(data)
+                # Un plan de site n'a pas de DOCTYPE : en refuser un écarte les bombes
+                # d'entités (« billion laughs ») et les entités externes.
+                if b"<!DOCTYPE" in data[:4096].upper() or b"<!ENTITY" in data.upper():
+                    raise ValueError("plan de site avec DOCTYPE ou entité : refusé")
+                root = ET.fromstring(data)  # nosec B314 : DOCTYPE et entités refusés juste avant
                 ns = {"ns": "http://www.sitemaps.org/schemas/sitemap/0.9"}
                 urls = root.findall(".//ns:loc", ns) or root.findall(
                     ".//{http://www.sitemaps.org/schemas/sitemap/0.9}loc"

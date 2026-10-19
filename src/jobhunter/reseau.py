@@ -29,6 +29,28 @@ if TYPE_CHECKING:
 _CLIENT: "httpx.Client | None" = None
 
 
+def exiger_http(url: str) -> str:
+    """Rend `url` si son schéma est http ou https ; lève ValueError sinon.
+
+    `urllib.request.urlopen` ouvre aussi `file://` et d'autres schémas : une adresse venue
+    d'une page ou d'un réglage (plan de site, hôte Ollama) pourrait lui faire lire un
+    fichier local. Tout appel à `urlopen` passe d'abord par ici.
+
+    Args:
+        url: l'adresse à ouvrir.
+
+    Returns:
+        La même adresse.
+
+    Raises:
+        ValueError: schéma autre que http ou https.
+    """
+    schema = url.split(":", 1)[0].lower() if ":" in url else ""
+    if schema not in ("http", "https"):
+        raise ValueError(f"schéma d'URL refusé : {schema or '(aucun)'}")
+    return url
+
+
 class Incidents(collections.defaultdict[str, collections.Counter[str | int]]):
     """Les refus et pannes du run : `INCIDENTS[source][cause] += 1`.
 

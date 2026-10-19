@@ -4,6 +4,19 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.10.1 — 2026-10-19
+
+Sécurité, sans changement visible :
+
+- seules les adresses `http(s)` sont ouvertes : une adresse `file://` venue d'une page ou
+  d'un réglage ne peut plus faire lire un fichier de ta machine ;
+- un plan de site XML avec DOCTYPE ou entités est refusé (bombe XML) ;
+- une archive de mise à jour ne peut plus écrire hors du dossier du programme ;
+- l'application installée ignore le crochet de test `JOBHUNTER_ACTION` ;
+- CI : actions épinglées par empreinte, droits en lecture seule sauf la publication,
+  analyse CodeQL ; l'installateur est publié avec son empreinte SHA-256 et une attestation
+  de provenance signée (`gh attestation verify`). Politique : `SECURITY.md`.
+
 ## 2.10.0 — 2026-10-19
 
 - **L'interface en anglais.** Maintenance → « Langue : English », puis relance

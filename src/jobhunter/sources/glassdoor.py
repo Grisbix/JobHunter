@@ -8,6 +8,7 @@ import time
 from typing import Any
 
 from jobhunter import journal as _journal
+from jobhunter.reseau import exiger_http
 from jobhunter.sources import commun as _commun
 from jobhunter.sources.commun import INCIDENTS, _lire_borne, _mk, contrat_du_titre, title_ok
 from jobhunter.sources.indeed import INDEED_UA, _IndeedBride
@@ -132,8 +133,8 @@ def _gd_cartes(mot: str) -> list[Any]:
     texte = ""
     for essai in (1, 2):
         try:
-            with urllib.request.urlopen(
-                urllib.request.Request(url, headers=GD_UA), timeout=25
+            with urllib.request.urlopen(  # nosec B310 : schéma vérifié par exiger_http
+                urllib.request.Request(exiger_http(url), headers=GD_UA), timeout=25
             ) as f:
                 texte = _lire_borne(f).decode("utf-8", "replace")
             break

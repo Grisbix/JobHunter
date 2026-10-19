@@ -52,6 +52,7 @@ from pathlib import Path
 
 from jobhunter import gele as _gele
 from jobhunter import racine as _racine
+from jobhunter.reseau import exiger_http
 
 # line_buffering : nos lignes s'intercalent dans le bon ordre avec la sortie de git et
 # pip, et s'affichent au fil de l'eau dans le journal de l'application.
@@ -129,8 +130,8 @@ def _cle_version(v):
 
 
 def _get(url, timeout):
-    req = urllib.request.Request(url, headers={"User-Agent": "JobHunter-mise-a-jour"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
+    req = urllib.request.Request(exiger_http(url), headers={"User-Agent": "JobHunter-mise-a-jour"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:  # nosec B310 : schéma vérifié par exiger_http
         return r.read()
 
 
@@ -358,6 +359,17 @@ def telecharger(url=ZIP_URL, timeout=120):
     return _get(url, timeout)
 
 
+def chemin_sur(rel):
+    """Un chemin de ZIP qui reste dans le dossier du programme.
+
+    Refuse les chemins absolus, les lecteurs (« C: »), les remontées (« .. ») et les
+    barres inverses : un ZIP piégé ne doit jamais écrire hors de RACINE.
+    """
+    if not rel or "\\" in rel or rel.startswith("/") or ":" in rel:
+        return False
+    return ".." not in rel.split("/")
+
+
 def fichiers_du_zip(data):
     """{chemin relatif: contenu} ; le dossier racine du ZIP (JobHunter-main/) est retire."""
     out = {}
@@ -366,7 +378,7 @@ def fichiers_du_zip(data):
             if info.is_dir():
                 continue
             rel = info.filename.split("/", 1)[1] if "/" in info.filename else ""
-            if rel:
+            if rel and chemin_sur(rel):
                 out[rel] = z.read(info)
     return out
 
