@@ -4,6 +4,14 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.4.3 — 2026-10-19
+
+- **Configuration d'exemple** : 10 des 16 comptes Greenhouse ne répondaient plus (404 :
+  ces entreprises recrutent ailleurs désormais). Ils sont retirés ; si ta configuration
+  les contient encore, `python JobHunter.pyw rendement` le montrera aussi.
+- En coulisse : les sources sont testées sur de vraies réponses enregistrées, rejouées sans
+  réseau.
+
 ## 2.4.2 — 2026-10-19
 
 - En coulisse, rien de visible : chaque fonction publique du moteur est documentée au même

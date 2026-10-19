@@ -28,7 +28,7 @@ Règle inchangée : chaque étape livre seule, banc à 0 écart, et ne s'adopte 
 | # | Quoi | Pourquoi ici | Fini quand |
 |---|---|---|---|
 | B1 ✅ (v2.4.1) | **Test d'architecture** : le moteur (`jobhunter.*` hors `app`, `accueil`) n'importe ni `tkinter` ni `customtkinter` ni `jobhunter.app` | Le plan dit « vérifié en CI par import-linter », mais rien n'est branché : un test pytest de quelques lignes suffit, sans ArchUnitPython ni import-linter | un import volontaire de Tkinter dans `scoring` fait échouer le test ; le retirer le fait passer |
-| B2 | **Réponses enregistrées des connecteurs** (pytest-recording / VCR.py, dépendance de test seule) : APEC (API), LinkedIn guest, sitemap WTJ, Workday, Greenhouse/Lever | Les doublures actuelles (`faux_reseau`) sont écrites à la main : elles ne disent pas si le parseur lit encore la vraie réponse d'aujourd'hui. Une réponse réelle enregistrée, expurgée (cookies, en-têtes), rend le parseur reproductible | dix réponses rejouées sans réseau donnent les mêmes offres ; un échange manquant fait échouer ; aucun cookie ni identifiant dans les fichiers versionnés |
+| B2 ✅ (v2.4.3) | **Réponses enregistrées des connecteurs** (pytest-recording / VCR.py, dépendance de test seule) : APEC (API), LinkedIn guest, sitemap WTJ, Workday, Greenhouse/Lever | Les doublures actuelles (`faux_reseau`) sont écrites à la main : elles ne disent pas si le parseur lit encore la vraie réponse d'aujourd'hui. Une réponse réelle enregistrée, expurgée (cookies, en-têtes), rend le parseur reproductible | dix réponses rejouées sans réseau donnent les mêmes offres ; un échange manquant fait échouer ; aucun cookie ni identifiant dans les fichiers versionnés |
 | B3 | **Diagnostic de lenteur** : procédure py-spy (outil externe, pas une dépendance) dans `CONTRIBUTING.md` | Utile la prochaine fois qu'une étape dépasse sa durée (collecte, disponibilité) : localiser au lieu de supposer | la procédure retrouve la fonction d'un blocage provoqué exprès, rapport sans données personnelles (`--locals` désactivé) |
 
 ## Étape C — Les deux axes métier restants (Codex 18/10)
@@ -73,3 +73,16 @@ Ce qui reste hors d'atteinte, quoi qu'il arrive :
 - aucune soumission automatique ;
 - aucun contournement anti-bot ;
 - aucun mot de passe manipulé.
+
+## Fait
+
+- **B1** (v2.4.1) : `tests/test_architecture.py`.
+- **B2** (v2.4.3) : `outils/rejeu.py` enregistre une vraie réponse publique de sept sources
+  (Greenhouse, Lever, Ashby, Workday, LinkedIn, EURES, FIR), nettoyée ;
+  `tests/test_rejeu_sources.py` la rejoue sans réseau et exige les mêmes offres.
+  - Pas de VCR.py : toutes les requêtes des sources passent déjà par `_get_borne` et
+    `_post_borne`, c'est là qu'on enregistre et qu'on rejoue.
+  - Un échange manquant fait échouer, même quand la source avale l'exception (le cas de
+    LinkedIn).
+  - Trouvé en route : 10 des 16 comptes Greenhouse de la configuration répondaient 404
+    (entreprises parties de Greenhouse), retirés de la configuration d'exemple.

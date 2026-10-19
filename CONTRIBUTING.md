@@ -14,18 +14,24 @@ Python 3.12 ou plus récent. Sans uv : `python -m venv .venv`, puis
 ## Avant chaque commit
 
 ```bash
-uv run pytest -q                                                   # ~1 450 tests, sans réseau
+uv run pytest -q                                                   # ~1 800 tests, sans réseau
 uv run python outils/banc.py comparer outils/banc_reference.json   # 0 écart attendu
-uv run mypy                                                        # types ; strict sur le socle
+uv run mypy                                                        # types ; strict hors programmes
 ```
 
 pre-commit lance ruff (lint et format), vérifie YAML/TOML, les gros fichiers, les clés
 privées et la cohérence `VERSION` / `pyproject.toml`. La CI GitHub refait tout, sous Windows
 et Linux.
 
-**Types.** Toute fonction nouvelle ou modifiée du socle (`stockage`, `profil`, `reseau`,
-`racine`, `texte`, `liens`, `scoring`) est annotée — mypy y est strict. Ailleurs, annoter en passant ;
-un module entièrement annoté rejoint la liste stricte de `pyproject.toml`.
+**Types et docstrings.** mypy est strict sur tout le paquet sauf les programmes
+(`jobhunter.programmes`), vérifiés en mode normal. Toute fonction publique hors programmes
+et fenêtre (`jobhunter.app`) a une docstring au format Google : ruff (`D`) l'exige.
+
+**Une source change sa réponse ?** `tests/test_rejeu_sources.py` rejoue de vraies réponses
+enregistrées (`tests/reponses/`). Si un site a changé et que le parseur est adapté,
+réenregistrer la source (réseau, à lancer exprès) :
+`uv run python outils/rejeu.py enregistrer lever`. APEC, WTJ et les sources à clé n'y sont
+pas : refus d'entrée, défi anti-bot ou identifiants.
 
 ## Installer le paquet
 
