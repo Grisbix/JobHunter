@@ -10,6 +10,7 @@ from typing import Any
 from jobhunter.app import commun as _commun
 from jobhunter.app._type_app import AppTypee
 from jobhunter.app.commun import PY, QUEUE, SCRIPTS
+from jobhunter.app.langue import t as _t
 from jobhunter.app.theme import ACC, ACC_H, ACC_TX, BG, BTN, BTN_H, CARD, CB, CF, TX
 from jobhunter.stockage import file as queue_io
 from jobhunter.stockage import suivi as suivi_io
@@ -26,7 +27,7 @@ class FicheMixin:
         sv = self.suivi.get(self._oid(o), {})
         acc = self._acct_of(o)
         self.sel.configure(text=f"{o.get('entreprise', '')} — {o.get('poste', '')[:70]}")
-        self.b_acct.configure(text="Retirer le compte" if acc else "Associer un compte")
+        self.b_acct.configure(text=_t("Retirer le compte" if acc else "Associer un compte"))
         self.e_st.set(sv.get("s", ""))
         self.e_note.delete(0, "end")
         self.e_note.insert(0, sv.get("n", ""))
@@ -196,7 +197,7 @@ class FicheMixin:
             self._log("✗ pas d'URL http pour récupérer la description\n")
             return
         try:
-            btn.configure(text="Chargement…", state="disabled")
+            btn.configure(text=_t("Chargement…"), state="disabled")
         except Exception:
             pass
 
@@ -229,7 +230,7 @@ class FicheMixin:
             except Exception:
                 pass
             try:
-                btn.configure(text="Description", state="normal")
+                btn.configure(text=_t("Description"), state="normal")
             except Exception:
                 pass
             self._log(

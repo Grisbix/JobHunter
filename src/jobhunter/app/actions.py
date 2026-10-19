@@ -17,6 +17,7 @@ from jobhunter.app import commun as _commun
 from jobhunter.app import theme as _theme
 from jobhunter.app._type_app import AppTypee
 from jobhunter.app.commun import EXPIRE, PAS_INTERESSE, QUEUE, SCRIPTS, ST_EMOJI
+from jobhunter.app.langue import t as _t
 from jobhunter.app.theme import BG, BTN, BTN_H, CARD, CB, CE, CF, CL, DEL, MUT, TX, WORK
 from jobhunter.stockage import file as queue_io
 from jobhunter.stockage import suivi as suivi_io
@@ -200,11 +201,13 @@ class ActionsMixin:
             borderwidth=1,
             font=(_theme.FONT_UI, 11),
         )
-        m.add_command(label="Confirmer une candidature envoyée…", command=lambda: self._postuler(o))
-        m.add_command(label="🌐 Ouvrir l'offre", command=lambda: self._open_offer(o))
+        m.add_command(
+            label=_t("Confirmer une candidature envoyée…"), command=lambda: self._postuler(o)
+        )
+        m.add_command(label=_t("🌐 Ouvrir l'offre"), command=lambda: self._open_offer(o))
         if self._statut_of(o)[0] == PAS_INTERESSE:
             m.add_command(
-                label="↶ Finalement intéressé (vider le statut)",
+                label=_t("↶ Finalement intéressé (vider le statut)"),
                 command=lambda: self._set_statut(o, ""),
             )
         else:
@@ -214,7 +217,7 @@ class ActionsMixin:
             )
         if self._statut_of(o)[0] in ("postulé", "relancé"):
             m.add_command(
-                label="🔔 Relance (brouillon mail)", command=lambda: self._relance_draft(o)
+                label=_t("🔔 Relance (brouillon mail)"), command=lambda: self._relance_draft(o)
             )
         m.add_separator()
         for s in ("à postuler", "à vérifier", "postulé", "relancé", "entretien", "refus"):
@@ -234,7 +237,7 @@ class ActionsMixin:
             command=lambda: self._set_statut(o, EXPIRE),
         )
         m.add_separator()
-        m.add_command(label="✖ vider le statut", command=lambda: self._set_statut(o, ""))
+        m.add_command(label=_t("✖ vider le statut"), command=lambda: self._set_statut(o, ""))
         try:
             m.tk_popup(e.x_root, e.y_root)
         finally:

@@ -49,7 +49,7 @@ def assurer_profil() -> None:
             messagebox.showinfo(
                 "JobHunter",
                 "Sans CV, pas de profil : relance JobHunter quand tu "
-                "l'auras sous la main. (Voir README.md)",
+                "l'auras sous la main. (Voir README.fr.md)",
             )
             sys.exit(1)
         # pythonw n'a pas de console : premier_lancement a besoin de python.exe (ou de
@@ -67,7 +67,7 @@ def assurer_profil() -> None:
         except _profil.ProfilAbsent:
             messagebox.showerror(
                 "JobHunter",
-                "Le profil n'a pas été créé. Lance lancer.bat ou voir README.md, section Dépannage.",
+                "Le profil n'a pas été créé. Relance JobHunter, ou voir README.fr.md, section Dépannage.",
             )
             sys.exit(1)
         messagebox.showinfo(

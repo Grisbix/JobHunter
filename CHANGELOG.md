@@ -4,6 +4,18 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.10.0 — 2026-10-19
+
+- **L'interface en anglais.** Maintenance → « Langue : English », puis relance
+  JobHunter : la navigation, les boutons, les panneaux et les en-têtes passent en anglais
+  (« Language: français » pour revenir). Le profil, les lettres et les statuts du suivi
+  gardent leur langue. Un texte pas encore traduit reste en français.
+- **Le dépôt GitHub se présente en anglais** (`README.md`) ; la version française est dans
+  `README.fr.md`.
+
+*English: the interface can now be switched to English (Maintenance → “Langue : English”,
+then restart). The repository README is in English; the French one is `README.fr.md`.*
+
 ## 2.9.0 — 2026-10-19
 
 - **JobHunter s'installe sans Python.** `JobHunterSetup.exe`, attaché à chaque version sur

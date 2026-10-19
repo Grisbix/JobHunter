@@ -16,6 +16,7 @@ from jobhunter.app import inventaire as _inventaire
 from jobhunter.app import theme as _theme
 from jobhunter.app._type_app import AppTypee
 from jobhunter.app.commun import CV_ATS_DIR, PY, SCRIPTS, ouvrir
+from jobhunter.app.langue import t as _t
 from jobhunter.app.theme import (
     ACC,
     ACC_H,
@@ -358,7 +359,7 @@ class DetailMixin:
             cursor="hand2",
         ).pack(side="left", padx=6)
         if not (cvp or ltp):
-            rinfo.configure(text="aucun CV/lettre lié à cette offre")
+            rinfo.configure(text=_t("aucun CV/lettre lié à cette offre"))
         body.add(right, minsize=380)
         # ouvre la LETTRE par défaut (éditable), sinon le CV
         if ltp:
@@ -424,7 +425,7 @@ class DetailMixin:
             files.clear()
             base = sorted(CV_ATS_DIR.glob("*.pdf")) if CV_ATS_DIR.exists() else []
             if base and not flt:
-                lb.insert("end", f"── CV de base ({len(base)}) ──")
+                lb.insert("end", f"── {_t('CV de base')} ({len(base)}) ──")
                 files.append(None)
                 for f in base:
                     lb.insert(
@@ -433,15 +434,15 @@ class DetailMixin:
                     files.append(f)
             ds = _inventaire.dossiers(self.offers, flt)
             prets = sum(1 for d in ds if d.etat == "prêt")
-            lb.insert("end", f"── Dossiers par offre ({len(ds)}, {prets} prêts) ──")
+            lb.insert("end", f"── {_t('Dossiers par offre')} ({len(ds)}, {prets} {_t('prêts')}) ──")
             files.append(None)
             marque = {"prêt": "✓", "PDF à refaire": "⚠", "incomplet": "✗"}
             for d in ds[:MAX_LIGNES]:
-                suffixe = "" if d.etat == "prêt" else f"  ({d.etat})"
+                suffixe = "" if d.etat == "prêt" else f"  ({_t(d.etat)})"
                 lb.insert("end", f"  {marque.get(d.etat, '·')} {d.titre}{suffixe}")
                 files.append(d)
             if len(ds) > MAX_LIGNES:
-                lb.insert("end", f"  … {len(ds) - MAX_LIGNES} autres : affine la recherche")
+                lb.insert("end", f"  … {len(ds) - MAX_LIGNES} {_t('autres : affine la recherche')}")
                 files.append(None)
 
         fill()

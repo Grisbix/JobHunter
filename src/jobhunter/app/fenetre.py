@@ -21,6 +21,7 @@ from jobhunter.app.detail import DetailMixin
 from jobhunter.app.donnees import DonneesMixin
 from jobhunter.app.execution import ExecutionMixin
 from jobhunter.app.fiche import FicheMixin
+from jobhunter.app.langue import t as _t
 from jobhunter.app.panneaux import PanneauxMixin
 from jobhunter.app.tableau import TableauMixin
 from jobhunter.app.theme import (
@@ -221,6 +222,8 @@ class App(
                         if c is None
                         else self.mettre_a_jour()
                         if c == "maj"
+                        else self._basculer_langue()
+                        if c == "langue"
                         else self.run_step(c, l)
                     ),
                     font=(_theme.FONT_UI, 12),
@@ -369,14 +372,16 @@ class App(
         contexte = getattr(self, "nav_context", None)
         if contexte is not None:
             contexte.configure(
-                text={
-                    "offres": "Offres",
-                    "cv": "Mes CV",
-                    "entreprises": "Entreprises",
-                    "sites": "Sites d'offres",
-                    "stats": "Statistiques",
-                    "acces": "Accès",
-                }.get(cle, cle)
+                text=_t(
+                    {
+                        "offres": "Offres",
+                        "cv": "Mes CV",
+                        "entreprises": "Entreprises",
+                        "sites": "Sites d'offres",
+                        "stats": "Statistiques",
+                        "acces": "Accès",
+                    }.get(cle, cle)
+                )
             )
         for c, b in getattr(self, "_nav", {}).items():
             if c == cle:
@@ -384,13 +389,27 @@ class App(
             else:
                 b.configure(fg_color=SIDE, text_color=SIDE_MUT, hover_color=SIDE_H)
 
+    def _basculer_langue(self) -> None:
+        """Interface en anglais <-> en français ; elle change au prochain démarrage."""
+        from jobhunter.app import langue as _langue
+
+        autre = "fr" if _langue.LANGUE == "en" else "en"
+        _langue.choisir(autre)
+        messagebox.showinfo(
+            "JobHunter",
+            "Restart JobHunter to use the English interface."
+            if autre == "en"
+            else "Relance JobHunter pour retrouver l'interface en français.",
+            parent=self.root,
+        )
+
     def _toggle_maint(self) -> None:
         if self._maint_on:
             self.maint.pack_forget()
-            self.b_maint.configure(text="Maintenance ▸")
+            self.b_maint.configure(text=_t("Maintenance ▸"))
         else:
             self.maint.pack(fill="x", after=self.b_maint)
-            self.b_maint.configure(text="Maintenance ▾")
+            self.b_maint.configure(text=_t("Maintenance ▾"))
         self._maint_on = not self._maint_on
 
     # ── Retour de disposition ──

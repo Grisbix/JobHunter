@@ -270,6 +270,7 @@ MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
             ),
             ("Tests live (lent, ouvre un navigateur)", [PY, "test_web_nav.py"]),
             ("Mettre à jour JobHunter", "maj"),  # "maj" = mise a jour + relance (App.mettre_a_jour)
+            ("Langue : English", "langue"),  # bascule l'interface FR <-> EN (app.langue)
         ],
     ),
 ]

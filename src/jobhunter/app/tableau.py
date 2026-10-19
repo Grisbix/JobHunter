@@ -33,6 +33,7 @@ from jobhunter.app.commun import (
     _region_lieu,
     _ville_affichee,
 )
+from jobhunter.app.langue import t as _t
 from jobhunter.app.theme import (
     ACC,
     ACC_H,
@@ -277,7 +278,7 @@ class TableauMixin:
                 if key == "_chk"
                 else (lambda k=key: self._col_menu(k))  # type: ignore[misc]  # lambda a parametre par defaut (capture de boucle)
             )
-            self.tree.heading(key, text=lbl, command=cmd, anchor=anc)
+            self.tree.heading(key, text=_t(lbl), command=cmd, anchor=anc)
             compact = {
                 "_chk": 34,
                 "entreprise": 135,
@@ -451,7 +452,7 @@ class TableauMixin:
             self._suivi_fields.grid()
         else:
             self._suivi_fields.grid_remove()
-        self.b_suivi.configure(text="Suivi et note " + ("▾" if self._suivi_open else "▸"))
+        self.b_suivi.configure(text=_t("Suivi et note ") + ("▾" if self._suivi_open else "▸"))
 
     def _zone_texte(self: "AppTypee", parent: Any, height: Any = 7, bg: Any = ROW0) -> Any:
         """Texte en lecture, au theme : tk.Text + barre ttk stylee.
@@ -955,7 +956,7 @@ class TableauMixin:
                 continue  # entête ☐ garde son libellé (cocher/décocher tout)
             arrow = (" ▲" if asc else " ▼") if sk == key else ""
             filt = " ▾" if self.colsel.get(key) is not None else ""
-            self.tree.heading(key, text=lbl + arrow + filt)
+            self.tree.heading(key, text=str(_t(lbl)) + arrow + filt)
         if getattr(self, "lbl_count", None) is not None:
             filtres = sum(1 for v in self.colsel.values() if v is not None)
             if n == 0:

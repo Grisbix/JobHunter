@@ -8,6 +8,8 @@ from typing import Any
 
 import customtkinter as ctk
 
+from jobhunter.app.langue import t as _t
+
 ctk.set_appearance_mode("light")
 
 
@@ -249,6 +251,7 @@ def CB(
     cursor: Any = None,
     **_: Any,
 ) -> Any:
+    text = _t(text)
     kw = {
         "text": text,
         "command": command,
@@ -297,7 +300,7 @@ def CL(
     width: Any = None,
     **_: Any,
 ) -> Any:
-    kw = {"text": text}
+    kw = {"text": _t(text)}
     if bg is not None:
         kw["fg_color"] = _fgcol(bg)
     if fg:

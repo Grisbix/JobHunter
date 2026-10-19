@@ -19,7 +19,7 @@ métier, une ville ou un nom.** Pour changer de cible, on change le profil.
   en tête de chaque `test_*.py`, force `PROFIL_JOBHUNTER` vers ce fichier.
 - Une liste de mots du profil accepte `"mot"` (borné à gauche) ou `"re:motif"` (pris tel
   quel). `profil.motif()` les compile.
-- Guide utilisateur : `README.md`. Paramétrage par Claude Code : `/configurer-profil` (`.claude/commands/configurer-profil.md`).
+- Guide utilisateur : `README.md` (anglais) et `README.fr.md`. Paramétrage par Claude Code : `/configurer-profil` (`.claude/commands/configurer-profil.md`).
 - Outils à double-clic (racine) : `installer.bat`, `lancer.bat` (CV pris dans `Mon_CV/`), `planifier.bat`
   (tâche planifiée quotidienne), `mettre_a_jour.bat` → `src/jobhunter/programmes/mise_a_jour.py` (git pull, ou ZIP
   GitHub fichier par fichier : données jamais touchées, fichier modifié gardé + `.nouveau`,

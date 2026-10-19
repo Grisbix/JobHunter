@@ -23,6 +23,7 @@ from jobhunter.app import commun as _commun
 from jobhunter.app import theme as _theme
 from jobhunter.app._type_app import AppTypee
 from jobhunter.app.commun import PY, SCRIPTS
+from jobhunter.app.langue import t as _t
 from jobhunter.app.theme import (
     ACC,
     ACC_H,
@@ -145,7 +146,7 @@ class CandidatureMixin:
             )
             lbl.pack(fill="x", pady=(0, 10))
             self._cand_lbl[zone] = lbl
-        self._cand_lbl["offre"].configure(text="Ouverture de Chrome…")
+        self._cand_lbl["offre"].configure(text=_t("Ouverture de Chrome…"))
         rangee = CF(carte, bg=BG, plat=True)
         rangee.pack(fill="x", side="bottom")
         self._cand_boutons = []
@@ -233,7 +234,7 @@ class CandidatureMixin:
             return
         if t == "termine":
             self._cand_actif(False)
-            self._cand_lbl["etat"].configure(text="Programme terminé.", text_color=MUT)
+            self._cand_lbl["etat"].configure(text=_t("Programme terminé."), text_color=MUT)
             return
         aff = texte_evenement(ev)
         if aff:

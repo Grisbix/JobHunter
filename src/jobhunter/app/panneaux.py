@@ -16,6 +16,7 @@ from jobhunter.app import inventaire as _inventaire
 from jobhunter.app import theme as _theme
 from jobhunter.app._type_app import AppTypee
 from jobhunter.app.commun import PAS_INTERESSE, PY, QUEUE, SCRIPTS
+from jobhunter.app.langue import t as _t
 from jobhunter.app.theme import (
     ACC,
     ACC_H,
@@ -43,6 +44,18 @@ from jobhunter.app.theme import (
 )
 from jobhunter.liens import existe as _doc_existe
 from jobhunter.stockage import file as queue_io
+
+
+def _t_etat(etat: str) -> str:
+    """Un état de source (« ok — 3 offres », « refusé — pas avant le 14/11 ») traduit.
+
+    Le verdict vient du catalogue ; la suite, faite de nombres et de dates, se traduit
+    mot à mot.
+    """
+    tete, sep, reste = etat.partition(" — ")
+    for mot in ("pas avant le", "offres", "offre"):
+        reste = reste.replace(mot, _t(mot))
+    return str(_t(tete)) + sep + reste
 
 
 def _date_fr(iso: Any) -> str:
@@ -142,7 +155,7 @@ class PanneauxMixin:
             ("n", "Nb", 70, "center"),
             ("bar", "Répartition", 520, "w"),
         ):
-            tv.heading(k, text=lbl)
+            tv.heading(k, text=_t(lbl))
             tv.column(k, width=wd, anchor=anc, stretch=(k == "bar"))  # type: ignore[call-overload]  # typeshed veut un Literal pour anchor
         tv.pack(fill="both", expand=True)
         tv.tag_configure("h", foreground=ACC, font=(_theme.FONT_UI, 13, "bold"))
@@ -340,7 +353,7 @@ class PanneauxMixin:
             ("etat", "Dernier état", 300),
             ("le", "Collecte du", 130),
         ):
-            tvs.heading(k, text=lbl)
+            tvs.heading(k, text=_t(lbl))
             tvs.column(k, width=wd, anchor="w", stretch=(k == "etat"))
         tvs.pack(fill="x", padx=28, pady=(0, 6))
         for tv_ in (tvs,):
@@ -400,7 +413,7 @@ class PanneauxMixin:
             ("sess", "Session", 170),
             ("date", "Vérifiée le", 130),
         ):
-            tv.heading(k, text=lbl)
+            tv.heading(k, text=_t(lbl))
             tv.column(k, width=wd, anchor="w", stretch=(k == "id"))
         tv.pack(fill="both", expand=True, padx=28, pady=(0, 6))
         tv.tag_configure("ok", foreground=TX_OK)
@@ -442,7 +455,12 @@ class PanneauxMixin:
                 tvs.insert(
                     "",
                     "end",
-                    values=(etat.libelle, etat.acces, etat.etat, _date_fr(etat.le) or "—"),
+                    values=(
+                        _t(etat.libelle),
+                        _t(etat.acces),
+                        _t_etat(etat.etat),
+                        _date_fr(etat.le) or "—",
+                    ),
                     tags=(etat.gravite,),
                 )
             try:
@@ -456,6 +474,7 @@ class PanneauxMixin:
                 label, tag = _session_presentation(s, e.get("session_verif"))
                 if not e.get("session_verif"):
                     label, tag = "Jamais vérifié", ""
+                label = _t(label)
                 tv.insert(
                     "",
                     "end",
@@ -568,7 +587,7 @@ class PanneauxMixin:
             ("derniere", "Dernière", 130, "center"),
             ("url", "Page", 340, "w"),
         ):
-            tv.heading(k, text=lbl)
+            tv.heading(k, text=_t(lbl))
             tv.column(k, width=wd, anchor=anc, stretch=(k == "url"))  # type: ignore[call-overload]  # typeshed veut un Literal pour anchor
         tv.pack(fill="both", expand=True, padx=28, pady=18)
         tv.tag_configure("odd", background=ROW1)
@@ -605,7 +624,7 @@ class PanneauxMixin:
                     "end",
                     values=(
                         f.nom,
-                        _inventaire.NOMS_OUTILS.get(f.outil, f.outil),
+                        _t(_inventaire.NOMS_OUTILS.get(f.outil, f.outil)),
                         c.offres,
                         c.meilleur_fit if c.offres else "—",
                         _date_fr(c.derniere) or "—",
@@ -832,7 +851,7 @@ class PanneauxMixin:
             ("offres", "Offres en queue", 100, "center"),
             ("url", "Lien", 420, "w"),
         ):
-            tv.heading(k, text=lbl)
+            tv.heading(k, text=_t(lbl))
             tv.column(k, width=wd, anchor=anc, stretch=(k == "url"))  # type: ignore[call-overload]  # typeshed veut un Literal pour anchor
         tv.pack(fill="both", expand=True, padx=28, pady=18)
         tv.tag_configure("odd", background=ROW1)
@@ -954,7 +973,7 @@ class PanneauxMixin:
         if not url.startswith("http"):
             self._log("✗ colle une URL http d'offre.\n")
             return
-        self.b_addurl.configure(text="Analyse…", state="disabled")
+        self.b_addurl.configure(text=_t("Analyse…"), state="disabled")
         self._log(f"🔎 analyse de l'offre : {url[:70]}…\n")
 
         def work() -> None:
@@ -978,7 +997,7 @@ class PanneauxMixin:
             for line in out.splitlines():
                 if line.strip():
                     self._log("  " + line.strip()[:100] + "\n")
-            self.b_addurl.configure(text="Ajouter une offre", state="normal")
+            self.b_addurl.configure(text=_t("Ajouter une offre"), state="normal")
             self.e_url.delete(0, "end")
             self.load_offers()
 

@@ -75,9 +75,9 @@ Décisions de l'utilisateur :
 |---|---|---|
 | F1 ✅ (v2.7.0) | **Faire le tri**, en trois volets (voir le détail sous le tableau) | chaque fichier restant a un rôle écrit ; l'arborescence se lit d'un coup d'œil |
 | F2 ✅ (v2.8.0) | **Panneaux de l'app à jour**, un par un (voir le détail sous le tableau) | chaque chiffre affiché est juste et chaque ligne a une action |
-| F3 | **Source HelloWork** : pages publiques de recherche, sans contournement ; robots.txt et conditions vérifiés d'abord | offres HelloWork dans la file, réponse enregistrée et rejouée (B2), verdict dans `rendement` |
+| F3 ⛔ écarté | **Source HelloWork** : pages publiques de recherche, sans contournement ; robots.txt et conditions vérifiés d'abord | offres HelloWork dans la file, réponse enregistrée et rejouée (B2), verdict dans `rendement` |
 | F4 ✅ (v2.9.0) | **Installateur autonome** `JobHunterSetup.exe` (voir le détail sous le tableau) | sur un Windows sans Python : installation, ouverture, collecte et dossier |
-| F5 | **Français et anglais** : textes de l'interface dans des catalogues, choix dans les réglages ; vitrine du dépôt en anglais (README, docs utilisateur, notes de version), version française à côté | l'app entière en anglais d'un réglage ; README anglais avec le lien français |
+| F5 ◐ (v2.10.0 : navigation, panneaux, menus ; journal et messages encore en français) | **Français et anglais** : textes de l'interface dans des catalogues, choix dans les réglages ; vitrine du dépôt en anglais (README, docs utilisateur, notes de version), version française à côté | l'app entière en anglais d'un réglage ; README anglais avec le lien français |
 
 **F1 — faire le tri**
 - Retirer des deux dépôts les programmes morts ou en double, les documents périmés,
@@ -152,3 +152,8 @@ Ce qui reste hors d'atteinte, quoi qu'il arrive :
     (`autres_lieux`).
   - `doublons` réunit les offres de même URL d'annonce, en gardant l'offre suivie puis
     l'intitulé actuel.
+- **F3** écarté le 2026-10-19 : les conditions d'utilisation de HelloWork (art. 8.2)
+  interdisent toute extraction automatisée, même non commerciale, sans licence écrite ;
+  robots.txt interdit aussi les pages de recherche. Pistes conformes : Adzuna et Jooble
+  (API officielles, qui reprennent une partie de ces offres), l'ajout d'une offre par son
+  lien, ou une licence demandée à HelloWork.
