@@ -52,6 +52,7 @@ from pathlib import Path
 
 from jobhunter import gele as _gele
 from jobhunter import racine as _racine
+from jobhunter import signature as _sig
 from jobhunter.reseau import exiger_http
 
 # line_buffering : nos lignes s'intercalent dans le bon ordre avec la sortie de git et
@@ -64,6 +65,9 @@ ZIP_URL = f"https://github.com/{DEPOT}/archive/refs/heads/main.zip"
 PAGE_VERSIONS = f"https://github.com/{DEPOT}/releases/latest"
 TAG_URL = f"https://github.com/{DEPOT}/archive/refs/tags/v{{}}.zip"
 VERSION_URL = f"https://raw.githubusercontent.com/{DEPOT}/main/VERSION"
+# Fichiers attachés à la release v<version> : la signature et l'installateur.
+ASSET_URL = f"https://github.com/{DEPOT}/releases/download/v{{}}/{{}}"
+SETUP = "JobHunterSetup.exe"
 MANIFESTE = RACINE / ".maj_manifeste.json"
 SAUVEGARDES = RACINE / "_sauvegarde_maj"
 DERNIERE_VERIF = RACINE / ".maj_derniere_verif"
@@ -390,6 +394,74 @@ def telecharger(url=ZIP_URL, timeout=120):
     return _get(url, timeout)
 
 
+def fichiers_a_installer():
+    """Les fichiers de la version proposée, contrôlés par la signature de l'auteur.
+
+    Sans clé publique dans cette version (`signature.CLE_PUBLIQUE` vide), rien n'est
+    signé : on prend le ZIP de main, comme avant la 2.18, et on le dit. Avec une clé, on
+    prend le ZIP de l'étiquette de la version annoncée, et chacun de ses fichiers doit
+    avoir l'empreinte que le manifeste signé lui donne.
+
+    Raises:
+        signature.SignatureInvalide: version refusée (rien n'a été écrit).
+    """
+    if not _sig.CLE_PUBLIQUE:
+        print("(Versions non signées : la clé de l'auteur n'est pas encore publiée.)")
+        return fichiers_du_zip(telecharger())
+    distante = _get(VERSION_URL, 30)[:64].decode("utf-8").strip()
+    nouveaux = fichiers_du_zip(telecharger(TAG_URL.format(distante)))
+    m = _sig.ouvrir(_get(ASSET_URL.format(distante, _sig.FICHIER), 60), distante)
+    _sig.controler_fichiers(m, nouveaux)
+    print(f"Signature de l'auteur vérifiée : {len(nouveaux)} fichiers de la {distante}.")
+    return nouveaux
+
+
+def maj_application(verifier_seulement):
+    """Application installée : télécharge le nouvel installateur, le contrôle, l'ouvre.
+
+    Avec une clé publique, l'installateur doit avoir l'empreinte du manifeste signé.
+    Sans, on contrôle au moins l'empreinte publiée à côté (`JobHunterSetup.exe.sha256`),
+    qui protège d'un téléchargement abîmé, pas d'une release piégée. L'installateur
+    s'ouvre normalement : c'est l'utilisateur qui le fait avancer ; il ferme
+    JobHunter (CloseApplications) et garde les données (Documents/JobHunter).
+    """
+    v = nouvelle_version(intervalle_h=0)
+    print(
+        f"Version installée : {version_locale()}"
+        + (f" · disponible : {v}" if v else " · c'est la plus récente.")
+    )
+    if not v or verifier_seulement:
+        return 0
+    try:
+        print(f"Téléchargement de {SETUP} {v} …")
+        exe = _get(ASSET_URL.format(v, SETUP), 900)
+        if _sig.CLE_PUBLIQUE:
+            m = _sig.ouvrir(_get(ASSET_URL.format(v, _sig.FICHIER), 60), v)
+            _sig.controler_setup(m, exe)
+            print("Signature de l'auteur vérifiée.")
+        else:
+            publiee = _get(ASSET_URL.format(v, SETUP + ".sha256"), 60).decode().split()[0]
+            if publiee.lower() != hashlib.sha256(exe).hexdigest():
+                raise _sig.SignatureInvalide(f"{SETUP} ne correspond pas à son empreinte publiée")
+            print("(Version non signée : empreinte publiée vérifiée.)")
+    except _sig.SignatureInvalide as e:
+        print(f"! Mise à jour refusée : {e}. Rien n'a été installé.")
+        return 1
+    except Exception as e:
+        print(f"! Téléchargement impossible ({type(e).__name__}) : la page des versions s'ouvre.")
+        import webbrowser
+
+        webbrowser.open(PAGE_VERSIONS)
+        return 1
+    import tempfile
+
+    chemin = Path(tempfile.gettempdir()) / f"JobHunterSetup-{v}.exe"
+    chemin.write_bytes(exe)
+    print("L'installateur s'ouvre : suis ses étapes. Tes données sont gardées.")
+    subprocess.Popen([str(chemin)], close_fds=True)  # nosec B603 : fichier contrôlé ci-dessus
+    return 0
+
+
 def chemin_sur(rel):
     """Un chemin de ZIP qui reste dans le dossier du programme.
 
@@ -524,7 +596,10 @@ def _restaurer(sauvegarde, journal):
 def par_zip(args):
     locale = version_locale()
     try:
-        nouveaux = fichiers_du_zip(telecharger())
+        nouveaux = fichiers_a_installer()
+    except _sig.SignatureInvalide as e:
+        print(f"! Mise à jour refusée : {e}. Rien n'a été modifié.")
+        return 1
     except Exception as e:
         print(f"! Téléchargement impossible : {type(e).__name__}: {e}")
         return 1
@@ -768,17 +843,7 @@ def main():
     if _gele.est_gele():
         # Application installée : pas de fichiers à remplacer un par un, la nouvelle
         # version est un nouvel installateur, qui garde les données (Documents/JobHunter).
-        v = nouvelle_version(intervalle_h=0)
-        print(
-            f"Version installée : {version_locale()}"
-            + (f" · disponible : {v}" if v else " · c'est la plus récente.")
-        )
-        if v and not args.verifier:
-            print("Télécharge JobHunterSetup.exe sur la page qui s'ouvre, puis lance-le.")
-            import webbrowser
-
-            webbrowser.open(PAGE_VERSIONS)
-        return 0
+        return maj_application(args.verifier)
     if args.controler:
         if not controler():
             return 1

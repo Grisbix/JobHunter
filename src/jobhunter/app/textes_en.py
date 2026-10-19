@@ -303,8 +303,6 @@ JOURNAL_EN = {
     "Réessaie dans un instant — il se termine tout seul.": "Try again in a moment — it "
     "finishes on its own.",
     "▶ TOUT FAIRE — pipeline complet (6 etapes)": "▶ DO EVERYTHING — full pipeline (6 steps)",
-    "🌐 Télécharge JobHunterSetup.exe sur la page ouverte, puis lance-le.": "🌐 Download "
-    "JobHunterSetup.exe from the page that opened, then run it.",
     "⏳ Mise à jour : elle démarre dès que le travail en cours est fini.": "⏳ Update: it "
     "starts as soon as the current job is done.",
     "▶ Mise à jour de JobHunter": "▶ Updating JobHunter",
@@ -485,4 +483,24 @@ SORTIE_EN = {
     "{a} marked, history {b}",
     "! toast échoué : {a}": "! toast failed: {a}",
     "! toast impossible : {a}": "! toast unavailable: {a}",
+    # Mise à jour (mise_a_jour)
+    "Version installée : {a} · disponible : {b}": "Installed version: {a} · available: {b}",
+    "Version installée : {a} · c'est la plus récente.": "Installed version: {a} · it is the "
+    "latest.",
+    "Téléchargement de {a} …": "Downloading {a} …",
+    "Signature de l'auteur vérifiée.": "Author's signature verified.",
+    "Signature de l'auteur vérifiée : {a} fichiers de la {b}.": "Author's signature "
+    "verified: {a} files of {b}.",
+    "(Version non signée : empreinte publiée vérifiée.)": "(Unsigned version: published "
+    "checksum verified.)",
+    "(Versions non signées : la clé de l'auteur n'est pas encore publiée.)": "(Unsigned "
+    "versions: the author's key is not published yet.)",
+    "! Mise à jour refusée : {a}. Rien n'a été installé.": "! Update refused: {a}. Nothing "
+    "was installed.",
+    "! Mise à jour refusée : {a}. Rien n'a été modifié.": "! Update refused: {a}. Nothing "
+    "was changed.",
+    "! Téléchargement impossible ({a}) : la page des versions s'ouvre.": "! Download failed "
+    "({a}): the releases page opens.",
+    "L'installateur s'ouvre : suis ses étapes. Tes données sont gardées.": "The installer "
+    "opens: follow its steps. Your data is kept.",
 }

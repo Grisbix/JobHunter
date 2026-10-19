@@ -149,13 +149,27 @@ class ExecutionMixin:
         tourne n'est pas une option."""
         if _gele.est_gele():
             # Application installée : la mise à jour est le nouvel installateur, que
-            # l'utilisateur télécharge et lance ; ses données ne bougent pas.
-            import webbrowser
+            # l'outil télécharge, contrôle (signature de l'auteur) et ouvre ; les données
+            # ne bougent pas. Ses messages vont au journal, ligne à ligne.
+            import contextlib
+            import io
 
             from jobhunter.programmes import mise_a_jour as _maj
 
-            self._log("🌐 Télécharge JobHunterSetup.exe sur la page ouverte, puis lance-le.\n")
-            webbrowser.open(_maj.PAGE_VERSIONS)
+            q = self.q
+
+            class _VersJournal(io.TextIOBase):
+                def write(self, s: str) -> int:
+                    q.put(("line", s))
+                    return len(s)
+
+            self._log(f"\n{'=' * 56}\n▶ Mise à jour de JobHunter\n{'=' * 56}\n")
+
+            def maj_installee() -> None:
+                with contextlib.redirect_stdout(_VersJournal()):
+                    _maj.maj_application(False)
+
+            threading.Thread(target=maj_installee, daemon=True).start()
             return
         if (self.proc and self.proc.poll() is None) or getattr(self, "_bg_busy", False):
             if not en_attente:

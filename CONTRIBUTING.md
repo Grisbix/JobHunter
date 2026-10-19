@@ -112,3 +112,9 @@ Vérifié le 19/10/2026 sur Python 3.14 : un `time.sleep` provoqué dans une fon
 2. Ajouter la section `## X.Y.Z — date` en tête de `CHANGELOG.md`.
 3. CI verte sur `main`, puis `gh release create vX.Y.Z` avec la section du CHANGELOG :
    l'étiquette sert de référence à la mise à jour des installations par ZIP.
+4. **Signer** (ADR 0012), une fois le workflow « installateur » fini, sur l'ordinateur
+   qui détient la clé privée :
+   `uv run python outils/signature.py signer X.Y.Z --publier`. Sans `signature.json`,
+   les installations qui ont la clé publique refusent la version. La toute première
+   fois : `uv run python outils/signature.py cle`, puis commiter `src/jobhunter/signature.py`
+   et sauvegarder `~/.jobhunter/cle_signature` hors de l'ordinateur.

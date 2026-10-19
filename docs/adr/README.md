@@ -16,5 +16,6 @@ lignes et renvoie ici. Vue d'ensemble : [`../architecture.md`](../architecture.m
 | [0009](0009-preuve-distincte-de-la-declaration.md) | La preuve d'envoi est distincte de la déclaration |
 | [0010](0010-identite-entreprise-poste.md) | L'identité d'une offre reste « entreprise\|poste » ; on répare ce qu'elle perd |
 | [0011](0011-application-autonome.md) | Une application autonome pour l'utilisateur, le code source pour qui le modifie |
+| [0012](0012-mises-a-jour-signees.md) | Mises à jour signées par l'auteur, hors de GitHub |
 
 Nouvelle décision : `NNNN-titre-court.md`, numéro suivant, statut et date en tête.
