@@ -14,7 +14,10 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+from jobhunter.stockage import verrou as _verrou
 from jobhunter.stockage.atomique import ecrire_json
+
+ATTENTE = 10  # secondes d'attente du verrou d'un fichier de cle
 
 
 @dataclass(frozen=True)
@@ -93,16 +96,26 @@ def enregistrer(dossier: Path, nom: str, valeurs: dict[str, str]) -> Path:
     """
     cle = CLES[nom]
     chemin = dossier / cle.fichier
+    # Lire, compléter, écrire sous verrou : deux saisies simultanées (l'app et
+    # `jobhunter acces --set-key`) gardaient sinon chacune l'ancien fichier, et la
+    # seconde effaçait le champ changé par la première (audit Codex du 19/10).
+    a_nous = not _verrou.tenu(chemin)
+    if not _verrou.prendre_verrou(chemin, attente=ATTENTE, bavard=False):
+        raise ValueError(f"{chemin.name} est en cours d'écriture ; réessaie dans un instant.")
     try:
-        ancien = _lire(chemin)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"{chemin.name} illisible ; fichier conservé.") from e
-    for k in cle.champs:
-        v = str(valeurs.get(k) or "").strip()
-        if v:
-            ancien[k] = v
-    manquants = [k for k in cle.champs if not str(ancien.get(k) or "").strip()]
-    if manquants:
-        raise ValueError(f"Champ(s) obligatoire(s) : {', '.join(manquants)}.")
-    ecrire_json(chemin, ancien)
+        try:
+            ancien = _lire(chemin)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"{chemin.name} illisible ; fichier conservé.") from e
+        for k in cle.champs:
+            v = str(valeurs.get(k) or "").strip()
+            if v:
+                ancien[k] = v
+        manquants = [k for k in cle.champs if not str(ancien.get(k) or "").strip()]
+        if manquants:
+            raise ValueError(f"Champ(s) obligatoire(s) : {', '.join(manquants)}.")
+        ecrire_json(chemin, ancien)
+    finally:
+        if a_nous:
+            _verrou.rendre_verrou(chemin)
     return chemin

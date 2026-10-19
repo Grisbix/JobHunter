@@ -56,6 +56,24 @@ def test_champs_requis(tmp_path, valeurs):
     assert not (tmp_path / "adzuna.json").exists()
 
 
+def test_cle_en_cours_d_ecriture_ailleurs(tmp_path, monkeypatch):
+    """Audit Codex du 19/10 : sans verrou, deux saisies simultanées perdaient un champ."""
+    import os
+    import time
+
+    monkeypatch.setattr(cles_api, "ATTENTE", 0.3)
+    cles_api.enregistrer(tmp_path, "adzuna", {"app_id": "id", "app_key": "ancienne"})
+    verrou = tmp_path / "adzuna.json.lock"
+    verrou.write_text(f"{os.getppid()} {time.time():.0f}", encoding="utf-8")  # vivant
+    with pytest.raises(ValueError, match="en cours d'écriture"):
+        cles_api.enregistrer(tmp_path, "adzuna", {"app_key": "neuve"})
+    assert _cle(tmp_path / "adzuna.json", "app_id", "app_key") == ("id", "ancienne")
+    verrou.unlink()
+    cles_api.enregistrer(tmp_path, "adzuna", {"app_key": "neuve"})
+    assert _cle(tmp_path / "adzuna.json", "app_id", "app_key") == ("id", "neuve")
+    assert not verrou.exists()
+
+
 def test_presente(tmp_path):
     assert not cles_api.presente(tmp_path, "jooble")
     (tmp_path / "jooble.json").write_text('{"key": ""}', encoding="utf-8")

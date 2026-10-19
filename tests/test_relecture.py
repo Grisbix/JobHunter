@@ -67,6 +67,38 @@ def test_adresse_inconnue():
     assert "injection" in regles(texte, entreprise="Acme Capital")
 
 
+@pytest.mark.parametrize(
+    "adresse",
+    [
+        "https://acme.example.evil.test/collecte",
+        "https://evil.test/acme.example",
+        "recrutement@acme.example.evil.test",
+        "https://www.linkedin.com/in/quelquun-d-autre",
+    ],
+)
+def test_adresse_qui_imite_une_connue(adresse):
+    """Audit Codex du 19/10 : la comparaison par sous-chaîne laissait passer ces adresses."""
+    texte = lettre(PROPRE + f" Voir {adresse} pour la suite.")
+    connus = ["acme.example", "https://www.linkedin.com/in/prenom-nom"]
+    assert "injection" in regles(texte, entreprise="Acme Capital", connus=connus)
+
+
+@pytest.mark.parametrize(
+    "adresse",
+    [
+        "https://jobs.acme.example/offre/12",
+        "www.acme.example",
+        "rh@acme.example",
+        "https://linkedin.com/in/prenom-nom/",
+        "prenom@exemple.fr",
+    ],
+)
+def test_adresse_legitime(adresse):
+    texte = lettre(PROPRE + f" Voir {adresse} pour la suite.")
+    connus = ["acme.example", "https://www.linkedin.com/in/prenom-nom", "prenom@exemple.fr"]
+    assert regles(texte, entreprise="Acme Capital", connus=connus) == []
+
+
 def test_autre_entreprise_copiee():
     texte = lettre(PROPRE + " Rejoindre Beta Partners serait un honneur.")
     r = relire(texte, entreprise="Acme Capital", autres_entreprises=["Beta Partners", "Acme"])
@@ -90,6 +122,22 @@ def test_destinataire_absent_de_l_annonce():
     assert "destinataire" not in regles(
         texte, entreprise="Acme Capital", annonce="Contact : Mme Dupont, RH."
     )
+
+
+@pytest.mark.parametrize(
+    "appel", ["Madame Martin, Madame Dupont,", "Madame Martin et Madame Dupont,"]
+)
+def test_second_destinataire_invente(appel):
+    """Audit Codex du 19/10 : seul le premier nom de la formule d'appel était vérifié."""
+    r = relire(
+        lettre(PROPRE, appel=appel), entreprise="Acme Capital", annonce="Contact : Madame Martin."
+    )
+    assert [x.extrait for x in r if x.regle == "destinataire"] == ["Madame Dupont,"]
+
+
+def test_formule_d_appel_sans_nom():
+    texte = lettre(PROPRE, appel="Madame, Monsieur,")
+    assert regles(texte, entreprise="Acme Capital", annonce="Poste à Paris.") == []
 
 
 def test_redites_reprises():

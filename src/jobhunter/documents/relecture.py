@@ -90,10 +90,15 @@ _MOTIFS: tuple[tuple[str, str, str], ...] = (
 _RX = tuple((r, re.compile(m, re.I), c) for r, m, c in _MOTIFS)
 _RX_URL = re.compile(r"\bhttps?://\S+|\bwww\.\S+", re.I)
 _RX_MAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
-# « Madame Dupont, » / « Dear Ms Smith, » : une civilité suivie d'un nom propre.
+# « Madame Dupont, » / « Dear Ms Smith, » : une civilité suivie d'un nom propre. La
+# formule d'appel peut en nommer plusieurs (« Madame Martin, Madame Dupont, ») : chacun
+# est cherché dans l'annonce, pas seulement le premier (audit Codex du 19/10).
+_CIV = r"(?:Madame|Monsieur|(?:Dear )?(?:Mr|Mrs|Ms|Miss|Dr)\.?)"
+_RX_APPEL = re.compile(_CIV + r"\s")
 _RX_NOMME = re.compile(
-    r"^(?:Madame|Monsieur|Dear (?:Mr|Mrs|Ms|Miss|Dr)\.?)\s+([A-ZÀ-Ý][\w'’-]+(?:\s+[A-ZÀ-Ý][\w'’-]+)*),",
-    re.M,
+    r"(?:^|(?<=, )|(?<= et )|(?<= and ))"
+    + _CIV
+    + r"\s+([A-ZÀ-Ý][\w'’-]+(?:\s+[A-ZÀ-Ý][\w'’-]+)*)(?=\s*,|\s+(?:et|and)\s)"
 )
 
 
@@ -258,11 +263,10 @@ def relire(
         sortie.append(Remarque("redite", d, "Une conjonction par phrase, aucun mot trois fois."))
 
     # Adresses que rien n'explique : la signature et l'entreprise sont « connues ».
-    connus_plats = {_plat(c) for c in connus if c}
+    connus = [c for c in connus if c]
     for rx in (_RX_URL, _RX_MAIL):
         for m in rx.finditer(le_corps):
-            v = _plat(m.group(0).rstrip(".,;)"))
-            if not any(c and (c in v or v in c) for c in connus_plats):
+            if not _legitime(m.group(0), connus):
                 sortie.append(
                     Remarque(
                         "injection",
@@ -293,14 +297,61 @@ def relire(
     if annonce:
         from jobhunter.documents.message import nom_dans_offre
 
-        for m in _RX_NOMME.finditer(lettre):
-            if not nom_dans_offre(m.group(1), annonce):
-                sortie.append(
-                    Remarque(
-                        "destinataire",
-                        m.group(0),
-                        "Nom absent du texte de l'annonce : « Madame, Monsieur, » / "
-                        "« Dear Sir or Madam, ».",
+        for ligne in lettre.splitlines():
+            if not _RX_APPEL.match(ligne.strip()):
+                continue
+            for m in _RX_NOMME.finditer(ligne.strip()):
+                if not nom_dans_offre(m.group(1), annonce):
+                    sortie.append(
+                        Remarque(
+                            "destinataire",
+                            m.group(0) + ",",
+                            "Nom absent du texte de l'annonce : « Madame, Monsieur, » / "
+                            "« Dear Sir or Madam, ».",
+                        )
                     )
-                )
     return sortie
+
+
+def _hote_chemin(adresse: str) -> tuple[str, str]:
+    """« https://www.Acme.fr/a/b?x » → (« acme.fr », « /a/b ») ; un courriel → (domaine, « @local »)."""
+    from urllib.parse import urlsplit
+
+    a = adresse.strip().rstrip(".,;)").casefold()
+    if "@" in a and "://" not in a:
+        local, _, domaine = a.rpartition("@")
+        return domaine, "@" + local
+    p = urlsplit(a if "://" in a else "http://" + a)
+    hote = (p.hostname or "").removeprefix("www.")
+    return hote, p.path.rstrip("/")
+
+
+def _legitime(trouve: str, connus: Iterable[str]) -> bool:
+    """L'adresse trouvée dans la lettre est-elle l'une des connues ?
+
+    Les hôtes se comparent entiers, à une frontière de point : « jobs.acme.fr » va avec
+    « acme.fr », mais « acme.fr.evil.test » et « evil.test/acme.fr » non (audit Codex du
+    19/10 : la comparaison par sous-chaîne les laissait passer). Un connu qui porte un
+    chemin (un profil LinkedIn) n'admet que ce chemin et ce qui le prolonge ; un courriel
+    connu n'admet que lui-même.
+    """
+    hote, chemin = _hote_chemin(trouve)
+    if not hote or "." not in hote:
+        return False
+    for c in connus:
+        if not c:
+            continue
+        kh, kc = _hote_chemin(c)
+        if not kh:
+            continue
+        if kc.startswith("@") or chemin.startswith("@"):
+            if (kh, kc) == (hote, chemin):
+                return True
+            # Un courriel au domaine d'un site connu (rh@acme.fr pour acme.fr).
+            if chemin.startswith("@") and not kc and (hote == kh or hote.endswith("." + kh)):
+                return True
+            continue
+        meme_site = hote == kh or hote.endswith("." + kh) or kh.endswith("." + hote)
+        if meme_site and (not kc or chemin == kc or chemin.startswith(kc + "/")):
+            return True
+    return False

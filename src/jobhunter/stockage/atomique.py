@@ -10,6 +10,7 @@ reessaie quelques fois avant d'abandonner.
 
 import json
 import os
+import threading
 import time
 from os import PathLike
 from pathlib import Path
@@ -26,13 +27,19 @@ def ecrire_json(path: str | PathLike[str], obj: object) -> None:
         obj: ce qui est serialise (UTF-8, indent 1).
     """
     path = Path(path)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
-    for essai in range(6):
-        try:
-            os.replace(str(tmp), str(path))
-            return
-        except PermissionError:
-            if essai == 5:
-                raise
-            time.sleep(0.5 * (essai + 1))
+    # Un temporaire PROPRE à cet écrivain : deux processus qui écrivent le même fichier
+    # au même instant ne se volent plus le leur (audit Codex du 19/10). Le dernier
+    # remplacement gagne ; le verrou de l'appelant, s'il en faut un, décide de l'ordre.
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+    try:
+        tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
+        for essai in range(6):
+            try:
+                os.replace(str(tmp), str(path))
+                return
+            except PermissionError:
+                if essai == 5:
+                    raise
+                time.sleep(0.5 * (essai + 1))
+    finally:
+        tmp.unlink(missing_ok=True)

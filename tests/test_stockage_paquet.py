@@ -72,6 +72,31 @@ def test_ecriture_atomique(tmp_path):
     atomique.ecrire_json(f, {"é": [1, 2]})
     assert f.read_text(encoding="utf-8") == '{\n "é": [\n  1,\n  2\n ]\n}'
     assert not (tmp_path / "x.json.tmp").exists()
+    assert list(tmp_path.glob("*.tmp")) == []
+
+
+def test_ecritures_simultanees_ne_partagent_pas_le_temporaire(tmp_path):
+    """Audit Codex du 19/10 : deux écrivains sur le même `x.json.tmp` s'écrasaient."""
+    import threading
+
+    f = tmp_path / "x.json"
+    erreurs = []
+
+    def ecrire(n):
+        try:
+            for i in range(40):
+                atomique.ecrire_json(f, {"qui": n, "i": i, "bourre": "x" * 5000})
+        except Exception as e:  # noqa: BLE001 — le test veut voir toute erreur
+            erreurs.append(e)
+
+    fils = [threading.Thread(target=ecrire, args=(n,)) for n in range(4)]
+    for t in fils:
+        t.start()
+    for t in fils:
+        t.join()
+    assert erreurs == []
+    assert json.loads(f.read_text(encoding="utf-8"))["bourre"] == "x" * 5000
+    assert list(tmp_path.glob("*.tmp")) == []
 
 
 def test_jwrite_redirige_toujours_la_file_vers_la_separation(file_temporaire):
