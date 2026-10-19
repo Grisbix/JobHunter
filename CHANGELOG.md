@@ -4,6 +4,24 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.18.0 — 2026-10-19
+
+- **Mise à jour de l'application installée en un clic** : le bouton « Mettre à jour »
+  télécharge `JobHunterSetup.exe`, le contrôle, puis l'ouvre (il ferme JobHunter et garde
+  tes données). Avant, il ouvrait la page des versions.
+- **Mises à jour signées par l'auteur** (ADR 0012) : signature Ed25519 faite hors de
+  GitHub, avec une clé qui ne quitte pas l'ordinateur de l'auteur. Une version dont un
+  fichier, ou l'installateur, n'est pas celui que l'auteur a signé est refusée, et rien
+  n'est écrit ; une ancienne signature ne fait pas revenir en arrière. Active dès que la
+  clé publique de l'auteur est dans le code ; d'ici là, la mise à jour se fait comme
+  avant, et l'application contrôle au moins l'empreinte publiée de l'installateur.
+- Outil de l'auteur : `outils/signature.py cle` (une fois) et `signer X.Y.Z --publier`
+  (à chaque version). Procédure dans CONTRIBUTING.
+- **Installation depuis les sources testée sur des machines neuves** : le workflow
+  « installation » lance les vrais `installer.bat` et `installer.sh` (Windows, Linux) et
+  vérifie que les bibliothèques vont dans `.venv`, que le programme se charge et que la
+  mise à jour ignore `.venv`.
+
 ## 2.17.0 — 2026-10-19
 
 - **Le journal de l'app en anglais, programmes compris** : les bilans de la collecte
