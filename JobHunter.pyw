@@ -11,9 +11,7 @@ Le code vit dans src/jobhunter ; ce fichier n'est que le lanceur, sans installat
 Les .bat/.sh et la tache planifiee passent par lui. C'est le seul endroit qui ajoute
 src/ au chemin d'import (installe par pip, le paquet n'en a pas besoin). Pose aussi
 JOBHUNTER_RACINE sur son dossier quand celui-ci tient les donnees (Scripts/, profil/) :
-un paquet installe ailleurs trouve ainsi les bonnes donnees, d'ou qu'on le lance.
-
-Decision : docs/adr/0008-programmes-dans-le-paquet.md
+un paquet installe ailleurs trouve ainsi les bonnes donnees, d'ou qu'on le lance. Decision : docs/adr/0008-programmes-dans-le-paquet.md
 """
 
 import os
