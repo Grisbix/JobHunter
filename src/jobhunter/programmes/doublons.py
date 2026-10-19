@@ -2,7 +2,8 @@
 """doublons.py — La meme annonce publiee deux fois sous deux intitules.
 
 POURQUOI. La fusion de job_sources deduplique sur « entreprise|poste » normalise
-et sur l'URL. Deux cas lui echappent, releves par l'utilisateur le 2026-10-05 :
+et sur l'URL. Les doublons d'avant cette regle (meme URL sous deux cles) sont
+reunis ici aussi. Et deux cas lui echappent, releves par l'utilisateur le 2026-10-05 :
 
   1. LA MEME LANGUE, UN INTITULE A PEINE DIFFERENT : « Consultant en
      Transformation Finance - F/H » et « Consultant Transformation Finance F/H »,
@@ -21,13 +22,19 @@ chaque cote : en dessous, deux descriptions courtes se ressemblent par hasard.
 
 On garde UNE offre par groupe : celle du suivi d'abord (jamais retiree), puis
 la meilleure source (site employeur > LinkedIn), puis le francais ou l'anglais
-(langues de l'utilisateur), puis le meilleur fit, puis la description la plus longue.
+(langues de l'utilisateur), puis la plus recemment resservie par sa source (l'intitule
+actuel), puis le meilleur fit, puis la description la plus longue.
+
+Decision : docs/adr/0010-identite-entreprise-poste.md
 """
 
 import re
 import unicodedata
 
 JACCARD_MIN = 0.6
+# Une URL qui designe UNE annonce : identifiant numerique ou UUID, ou chemin d'offre.
+# Une page carriere generique (meme lien pour dix postes) ne doit jamais unir deux offres.
+_RX_URL_ANNONCE = re.compile(r"\d{5,}|[0-9a-f]{8}-[0-9a-f]{4}-|/jobs?/[^/?#]{6,}", re.I)
 JETONS_MIN = 5
 
 _VIDES = {
@@ -125,6 +132,8 @@ def _rang(o, proteges, rang_source):
         (o.get("_oid") in proteges),
         rang_source(o.get("url")),
         langue(o) in ("fr", "en"),
+        # la version que la source sert ENCORE (intitule actuel), pas l'ancienne
+        str(o.get("vu_le") or ""),
         o.get("fit") or 0,
         len(o.get("description") or ""),
     )
@@ -153,6 +162,24 @@ def doublons(file, proteges=frozenset(), rang_source=None, oid=None):
 
         def unir(a, b):
             parent[racine(id(a))] = racine(id(b))
+
+        # 0. LA MEME URL D'ANNONCE : la meme offre, quels que soient l'intitule ou le nom
+        #    d'entreprise. Mesure du 2026-10-19 : 9 groupes dans la file, nes avant que la
+        #    fusion ne rattache par URL — un employeur qui retouche son intitule (Qonto :
+        #    trois titres pour la meme annonce Lever), un flux renomme (« PwC France »
+        #    puis « PwC », meme lien Workday).
+        from jobhunter.sources.commun import _norm_url
+
+        par_url = {}
+        for o in file:
+            if (o.get("url_type") or "") == "RECHERCHE":
+                continue
+            u = _norm_url(o.get("url"))
+            if u and _RX_URL_ANNONCE.search(u):
+                par_url.setdefault(u, []).append(o)
+        for lot in par_url.values():
+            for b in lot[1:]:
+                unir(lot[0], b)
 
         par_ent = {}
         for o in file:

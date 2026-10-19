@@ -277,14 +277,7 @@ def main() -> int:
         print("── Welcome to the Jungle (sitemap public, débit bridé) ──")
         fresh += _rendement.mesurer("wtj", scan_wtj, pages=a.pages)
 
-    # dédup interne du scan
-    seen, uniq = set(), []
-    for o in fresh:
-        k = _norm(o["entreprise"]) + "|" + _norm(o["titre"])
-        if k in seen:
-            continue
-        seen.add(k)
-        uniq.append(o)
+    uniq = dedoublonner(fresh)
     # --dry n'ecrit RIEN, pas meme le scan : il ne tient pas le verrou de
     # offres_scan.json, et l'ecraser pendant qu'un vrai scan le detient ruinait
     # le `--fusion-seule` de ce dernier. Vu le 2026-09-23 sur un --apec --dry.
@@ -307,6 +300,54 @@ def main() -> int:
     code = _fusionner(uniq, a.dry)
     # La fusion reste prioritaire ; une source Indeed dégradée n'est pas un succès.
     return code or (4 if a.indeed and INCIDENTS.get("indeed") else 0)
+
+
+# Les zones, de la meilleure a la moins bonne pour le profil.
+_ORDRE_ZONES = ("prioritaire", "secondaire", "ailleurs", "international", "inconnu")
+
+
+def dedoublonner(fresh: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Une offre par « entreprise|poste » dans le scan, la ville la plus utile gardée.
+
+    Le MEME poste publié dans plusieurs villes partage la même clé : un seul exemplaire
+    entre dans la file. Mesuré le 2026-10-19 sur de vraies réponses rejouées : 12 offres
+    sur 86 (Forvis Mazars à Düsseldorf, Mannheim, Hambourg, Francfort…). On gardait la
+    PREMIÈRE vue, au hasard de l'ordre ; on garde désormais celle de la meilleure zone
+    du profil (prioritaire, puis secondaire, puis le reste de la France), et les autres
+    villes vont dans `autres_lieux`, que la fiche affiche. À égalité, la première vue
+    l'emporte, comme avant.
+
+    Args:
+        fresh: les offres de toutes les sources de la collecte.
+
+    Returns:
+        Les offres uniques, dans l'ordre de première apparition de leur clé.
+    """
+    from jobhunter.scoring import zones as _zones
+
+    def rang(o: dict[str, Any]) -> int:
+        z = _zones.zone_lieu(o.get("location") or "")
+        return -_ORDRE_ZONES.index(z) if z in _ORDRE_ZONES else -len(_ORDRE_ZONES)
+
+    groupes: dict[str, list[dict[str, Any]]] = {}
+    for o in fresh:
+        groupes.setdefault(_norm(o["entreprise"]) + "|" + _norm(o["titre"]), []).append(o)
+    uniq = []
+    for lot in groupes.values():
+        meilleur = max(lot, key=rang)  # max garde le PREMIER des ex aequo
+        autres = sorted(
+            {
+                str(x.get("location"))
+                for x in lot
+                if x is not meilleur
+                and x.get("location")
+                and _norm(str(x.get("location"))) != _norm(str(meilleur.get("location") or ""))
+            }
+        )
+        if autres:
+            meilleur["autres_lieux"] = autres
+        uniq.append(meilleur)
+    return uniq
 
 
 def _fusionner(uniq: Any, dry: bool) -> int:

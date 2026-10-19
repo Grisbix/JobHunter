@@ -58,6 +58,8 @@ class FicheMixin:
             v = o.get(k)
             if v not in (None, "", "Non précisé"):
                 meta.append(f"{lbl} : {str(v).replace('_', ' ')}")
+        if o.get("autres_lieux"):  # meme poste publie dans d'autres villes
+            meta.append("Aussi à : " + ", ".join(str(x) for x in o["autres_lieux"]))
         yrs = o.get("exp_requise")
         if yrs:  # années d'expérience exigées (l'utilisateur junior → fit pénalisé si ≥3)
             meta.append(f"⚠️ Exp requise: {yrs} ans" if yrs >= 3 else f"Exp requise: {yrs} ans")

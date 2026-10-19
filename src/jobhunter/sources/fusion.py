@@ -350,6 +350,8 @@ def _merge_into_queue(
             "description": desc,
             "vu_le": today,
         }
+        if o.get("autres_lieux"):  # meme poste publie dans d'autres villes (scan)
+            ligne["autres_lieux"] = list(o["autres_lieux"])
         q.append(ligne)
         # INDEXER LA LIGNE, PAS L'OFFRE BRUTE. `idx[key] = o` rangeait le dict
         # du scan, alors que la file recoit un dict DIFFERENT : toute promotion

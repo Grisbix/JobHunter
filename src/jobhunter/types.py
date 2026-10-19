@@ -40,6 +40,7 @@ class Offre(TypedDict, total=False):
     contrat: str
     localisation: str
     localisation_orig: str
+    autres_lieux: list[str]  # meme poste publie ailleurs (dedoublonnage du scan)
     teletravail: str
     salaire: str
     date_publication: str
