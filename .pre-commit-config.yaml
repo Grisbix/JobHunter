@@ -17,6 +17,10 @@ repos:
       - id: detect-private-key
   - repo: local
     hooks:
+      - id: pas-de-donnees-perso
+        name: aucune donnée personnelle (profil, file, suivi, lettres, clés)
+        language: system
+        entry: python outils/donnees_perso.py
       - id: version-coherente
         name: VERSION = version de pyproject.toml
         language: system

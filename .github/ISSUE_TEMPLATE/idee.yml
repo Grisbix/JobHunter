@@ -1,0 +1,17 @@
+name: Idea / Idée
+description: A feature or a new job source. / Une fonction ou une nouvelle source d'offres.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: besoin
+    attributes:
+      label: What would it change for your search? / Qu'est-ce que ça changerait ?
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Job site, if any / Site d'offres concerné
+      description: >
+        A source is added only through a public API or pages its terms of use and
+        robots.txt allow. / Seulement par une API publique ou des pages autorisées.

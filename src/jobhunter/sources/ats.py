@@ -142,9 +142,18 @@ def fetch_ats(kind: str, slug: str) -> list[dict[str, Any]]:
                     )
                 )
         elif kind == "lever":
+            # Lever héberge certaines entreprises dans sa région européenne : leur flux
+            # rend 404 sur api.lever.co et répond sur api.eu.lever.co.
             r = _commun._get_borne(
                 httpx, f"https://api.lever.co/v0/postings/{slug}?mode=json", timeout=15, headers=UA
             )
+            if getattr(r, "status_code", 0) == 404:
+                r = _commun._get_borne(
+                    httpx,
+                    f"https://api.eu.lever.co/v0/postings/{slug}?mode=json",
+                    timeout=15,
+                    headers=UA,
+                )
             if _ats_ko(kind, slug, r):
                 return []
             for j in r.json():

@@ -4,6 +4,17 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.11.0 — 2026-10-19
+
+- **Lever en Europe.** Certaines entreprises sont hébergées dans la région européenne de
+  Lever : leur flux répondait « introuvable » et leurs offres manquaient. La collecte les
+  cherche désormais aussi sur `api.eu.lever.co`.
+- **Aucune donnée personnelle ne peut entrer dans le dépôt public** : un contrôle
+  (`outils/donnees_perso.py`, lancé avant chaque commit et par la CI) refuse profil, file,
+  suivi, lettres, CV et clés d'API, même ajoutés de force.
+- Dépôt : modèles d'issue et de PR, revue des dépendances (une vulnérabilité connue bloque
+  la PR), signalement privé des failles activé.
+
 ## 2.10.1 — 2026-10-19
 
 Sécurité, sans changement visible :

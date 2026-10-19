@@ -1,0 +1,34 @@
+name: Bug / Problème
+description: Something does not work as expected. / Quelque chose ne marche pas.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        **Never paste personal data** (CV, profile, offers, letters, API keys).
+        **Ne colle aucune donnée personnelle** (CV, profil, offres, lettres, clés d'API).
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Shown in the app, or `python JobHunter.pyw maj --verifier`.
+      placeholder: "2.10.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Installation
+      options:
+        - JobHunterSetup.exe (Windows installer)
+        - Source code (Python)
+        - macOS / Linux
+    validations:
+      required: true
+  - type: textarea
+    id: quoi
+    attributes:
+      label: What happened? / Que s'est-il passé ?
+      description: Steps, what you expected, what you got. Error text if any.
+    validations:
+      required: true
