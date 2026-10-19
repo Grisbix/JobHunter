@@ -1,0 +1,77 @@
+name: installation
+
+# Installe JobHunter depuis les sources sur une machine neuve, avec les VRAIS scripts
+# (installer.bat, installer.sh), et vérifie l'étape E1 : les bibliothèques vont dans
+# .venv, pas dans le Python de la machine ; l'installation se charge ; l'empreinte de
+# la mise à jour ignore .venv. Aucune donnée personnelle : profil d'exemple seulement.
+on:
+  pull_request:
+    paths:
+      - "installer.*"
+      - "lancer.*"
+      - "mettre_a_jour.*"
+      - "planifier.*"
+      - "requirements.txt"
+      - "src/jobhunter/programmes/mise_a_jour.py"
+      - ".github/workflows/installation.yml"
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Le Python de la machine n'a pas les bibliothèques
+        shell: bash
+        run: "! python -c 'import customtkinter'"
+      - name: Comme un ZIP téléchargé (sans dépôt git)
+        shell: bash
+        run: rm -rf .git
+      - name: installer.bat (sans clavier)
+        shell: cmd
+        run: installer.bat < NUL
+      - name: Vérifications
+        shell: bash
+        env:
+          PYTHONIOENCODING: utf-8
+        run: |
+          test -x .venv/Scripts/python.exe
+          .venv/Scripts/python.exe -c "import customtkinter, playwright, docx, fitz, httpx"
+          ! python -c 'import customtkinter'
+          .venv/Scripts/python.exe JobHunter.pyw maj --controler
+          python -c "import json,sys; m=json.load(open('.maj_manifeste.json',encoding='utf-8')); bad=[k for k in m if k.startswith('.venv')]; print(len(m),'fichiers'); sys.exit(1 if bad or not m else 0)"
+
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Comme un ZIP téléchargé (sans dépôt git)
+        run: rm -rf .git
+      - name: installer.sh
+        run: ./installer.sh
+      - name: Vérifications
+        env:
+          PYTHONIOENCODING: utf-8
+        run: |
+          test -x .venv/bin/python
+          .venv/bin/python -c "import customtkinter, playwright, docx, fitz, httpx"
+          ! python -c 'import customtkinter'
+          .venv/bin/python JobHunter.pyw maj --controler
+          python -c "import json,sys; m=json.load(open('.maj_manifeste.json',encoding='utf-8')); bad=[k for k in m if k.startswith('.venv')]; print(len(m),'fichiers'); sys.exit(1 if bad or not m else 0)"
