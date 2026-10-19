@@ -86,7 +86,8 @@ def installer(tmp_path, monkeypatch):
         monkeypatch.setattr(maj, "MANIFESTE", tmp_path / ".maj_manifeste.json")
         monkeypatch.setattr(maj, "SAUVEGARDES", tmp_path / "_sauvegarde_maj")
         monkeypatch.setattr(maj, "GIT_AVANT", tmp_path / ".maj_git_avant")
-        monkeypatch.setattr(maj, "apres", lambda changes_requirements: 0)  # ni pip ni profil
+        monkeypatch.setattr(maj, "apres", lambda: 0)  # ni profil
+        monkeypatch.setattr(maj, "installer_dependances", lambda changes: True)  # ni pip
 
         def _get(url, timeout):
             if url not in zips:
@@ -493,3 +494,30 @@ def test_une_tache_planifiee_qui_vise_l_ancien_pipeline_est_signalee(
     )
     assert maj.signaler_tache_ancienne() is attendu
     assert ("Relance" in capsys.readouterr().out) is attendu
+
+
+# ── dépendances : avant le contrôle, et un échec de pip annule (audit du 19/10) ──
+
+
+def test_echec_de_pip_n_annonce_pas_le_succes(monkeypatch, capsys):
+    monkeypatch.setattr(
+        maj.subprocess, "run", lambda *a, **k: maj.subprocess.CompletedProcess(a, 1, "", "")
+    )
+    assert maj.installer_dependances(True) is False
+    assert "échoué" in capsys.readouterr().out
+    assert maj.installer_dependances(False) is True  # rien à installer
+
+
+def test_les_dependances_passent_avant_le_controle(installer, monkeypatch, capsys):
+    """pip avant le contrôle ; s'il échoue, retour à la 1.2.0 et code 1, sans contrôle."""
+    v13 = {**V13, "requirements.txt": "httpx\n"}
+    zips = {maj.ZIP_URL: zip_de(v13), maj.TAG_URL.format("1.2.0"): zip_de(V12, "JobHunter-1.2.0")}
+    installer(V12, zips=zips)
+    ordre: list[str] = []
+    monkeypatch.setattr(maj, "installer_dependances", lambda c: ordre.append(f"pip:{c}") or False)
+    monkeypatch.setattr(maj, "controler_nouveau", lambda: ordre.append("controle") or True)
+    rc, sortie = lancer(capsys)
+    assert rc == 1
+    assert ordre == ["pip:True"]
+    assert maj.version_locale() == "1.2.0"
+    assert "à jour" not in sortie.split("Retour automatique")[-1]

@@ -373,6 +373,7 @@ JOURNAL_EN = {
     "⏹ arrete (arbre du PID {a}).": "⏹ stopped (PID {a} tree).",
     "! arret KO ({a}) — repli sur terminate": "! stop failed ({a}) — falling back to terminate",
     "! panne interne [{a}] — {b}": "! internal error [{a}] — {b}",
+    "✗ TOUT FAIRE interrompu à l'étape « {a} ».": "✗ DO EVERYTHING stopped at step “{a}”.",
     "－ compte retiré: {a}": "－ account removed: {a}",
     "Associer un compte ajouté: {a}": "Account link added: {a}",
     "! écriture comptes_sites.json KO: {a}": "! writing comptes_sites.json failed: {a}",

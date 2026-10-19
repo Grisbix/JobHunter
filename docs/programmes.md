@@ -194,3 +194,24 @@ descriptions que si le chemin reçu valait `CHEMIN` *tel quel* : `Path("apply_qu
 lancé depuis `Scripts/`, rendait les 11 710 offres sans description (le banc réel a vu
 25 461 écarts, tous faux), et `sauver` les aurait réécrites dans la file. Les chemins se
 comparent maintenant résolus (`_est_la_file`).
+
+**Une lecture ratée n'est pas une absence.** `suivi.charger` rendait `{}` pour un fichier
+absent comme pour un JSON tronqué ; la transaction écrivait ensuite ce `{}` plus la
+nouvelle candidature, et toutes les autres disparaissaient. Une écriture part maintenant
+de `_lire`, qui lève `SuiviIllisible` et laisse le fichier tel quel (audit du 19/10).
+
+**Deux fichiers atomiques ne font pas une transaction.** `sauver` purgeait les
+descriptions orphelines puis écrivait la file : une panne entre les deux gardait l'offre
+retirée dans la file, sans son texte. Ordre actuel : ajouts dans l'annexe, file, puis
+purge. Une panne ne laisse que des orphelines (audit du 19/10).
+
+**Un instantané réécrit après du réseau efface ce qui a changé entre-temps.**
+`queue_tools.mark_dead` lisait la file, contrôlait les liens pendant des minutes, puis
+réécrivait sa copie sans verrou : la collecte fusionnée entre-temps était perdue. Le
+réseau se fait hors verrou, et seuls ses résultats s'appliquent à la file relue dans
+`queue_io.transaction` (audit du 19/10).
+
+**Toute purge consulte le suivi, la fusion comprise.** La fusion retirait les lignes
+« Scan » dont l'intitulé échouait à un filtre modifié, sans regarder le suivi : une
+candidature perdait sa fiche. L'invariant d'AGENTS.md valait pour les suppressions
+explicites, pas pour ce nettoyage (audit du 19/10).

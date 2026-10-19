@@ -340,12 +340,32 @@ def controler_nouveau():
     return r.returncode == 0
 
 
-def apres(changes_requirements):
-    if changes_requirements:
-        print("\nLes dépendances ont changé : installation…")
-        subprocess.run(
-            [sys.executable, "-m", "pip", "install", "-q", "-r", str(RACINE / "requirements.txt")]
-        )
+def installer_dependances(changes_requirements):
+    """Installe les dépendances de la nouvelle version, AVANT son contrôle.
+
+    Avant le 19/10/2026, l'installation venait après le contrôle et son code de retour
+    était ignoré : une nouvelle dépendance indispensable à l'import faisait annuler la
+    mise à jour avant d'avoir été installée, et un pip en échec finissait sur « JobHunter
+    est à jour » (audit du 19/10/2026). Le retour arrière ne désinstalle pas une
+    dépendance ajoutée : inoffensif, l'ancienne version ne l'importe pas.
+
+    Returns:
+        False si pip a échoué ; l'appelant revient alors à la version d'avant.
+    """
+    if not changes_requirements:
+        return True
+    print("\nLes dépendances ont changé : installation…")
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "-r", str(RACINE / "requirements.txt")]
+    )
+    if r.returncode:
+        print(f"\n! L'installation des dépendances a échoué (pip, code {r.returncode}).")
+        return False
+    return True
+
+
+def apres():
+    """Le message de fin, une fois la nouvelle version installée ET contrôlée."""
     signaler_reglages()
     print(f"\nJobHunter est à jour (version {version_locale()}). Relance l'application.")
     return 0
@@ -584,7 +604,8 @@ def par_zip(args):
     if plan["refuser"]:
         print(f"\n{len(plan['refuser'])} fichier(s) de données ignorés (jamais remplacés).")
 
-    if not controler_nouveau():
+    deps = "requirements.txt" in plan["remplacer"] + plan["ajouter"]
+    if not installer_dependances(deps) or not controler_nouveau():
         print("\nRetour automatique à la version d'avant…")
         _restaurer(sauvegarde, journal)
         print(
@@ -593,7 +614,7 @@ def par_zip(args):
         )
         return 1
     afficher_nouveautes(changelog, locale, distante)
-    return apres(changes_requirements="requirements.txt" in plan["remplacer"] + plan["ajouter"])
+    return apres()
 
 
 def annuler_zip():
@@ -682,7 +703,8 @@ def par_git(args):
             "pas été perdus : `git status` montre où en est le dossier."
         )
         return 1
-    if not controler_nouveau():
+    changes = _git("diff", "--name-only", avant, "HEAD").stdout.split()
+    if not installer_dependances("requirements.txt" in changes) or not controler_nouveau():
         print("\nRetour automatique à la version d'avant…")
         _git("reset", "--keep", avant)
         print(
@@ -690,9 +712,8 @@ def par_git(args):
             f"https://github.com/{DEPOT}/issues"
         )
         return 1
-    changes = _git("diff", "--name-only", avant, "HEAD").stdout.split()
     afficher_nouveautes(changelog, locale, distante)
-    return apres(changes_requirements="requirements.txt" in changes)
+    return apres()
 
 
 def annuler_git():

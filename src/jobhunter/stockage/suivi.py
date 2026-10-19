@@ -64,12 +64,42 @@ def charger(chemin: Chemin | None = None) -> Suivi:
         Les candidatures par identité d'offre ; dict vide si le fichier manque
         ou est illisible.
     """
-    p = Path(chemin or CHEMIN)
     try:
-        d = json.loads(p.read_text(encoding="utf-8"))
-    except Exception:
+        return _lire(Path(chemin or CHEMIN))
+    except SuiviIllisible:
         return {}
-    return d if isinstance(d, dict) else {}
+
+
+class SuiviIllisible(RuntimeError):
+    """Le fichier du suivi existe mais ne se lit pas : on refuse d'écrire par-dessus."""
+
+
+def _lire(p: Path) -> Suivi:
+    """Le suivi ; {} si le fichier n'existe pas ; SuiviIllisible s'il existe sans se lire.
+
+    Une écriture ne part JAMAIS d'une lecture ratée. `charger` rendait {} pour un
+    fichier absent comme pour un JSON tronqué ; la transaction écrivait ensuite ce {}
+    plus la nouvelle candidature, et toutes les autres disparaissaient (audit du
+    19/10/2026). Le suivi est la donnée la moins reconstituable du projet.
+    """
+    try:
+        brut = p.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return {}
+    except OSError as e:
+        raise SuiviIllisible(
+            f"{p.name} inaccessible ({type(e).__name__}) : rien n'est écrit"
+        ) from e
+    try:
+        d = json.loads(brut)
+    except ValueError as e:
+        raise SuiviIllisible(
+            f"{p.name} illisible (JSON invalide) : rien n'est écrit. Restaurer la dernière "
+            "version (git, ou Scripts/_sauvegardes/) avant de continuer."
+        ) from e
+    if not isinstance(d, dict):
+        raise SuiviIllisible(f"{p.name} : un objet JSON était attendu ; rien n'est écrit.")
+    return d
 
 
 @contextmanager
@@ -88,6 +118,7 @@ def transaction(chemin: Chemin | None = None, attente: float = 30) -> Iterator[S
 
     Raises:
         VerrouIndisponible: un autre programme garde le suivi plus de `attente` s.
+        SuiviIllisible: le fichier existe mais ne se lit pas ; il est laissé tel quel.
     """
     p = Path(chemin or CHEMIN)
     # `prendre_verrou` est reentrant, `rendre_verrou` ne l'est PAS : il libere
@@ -98,7 +129,7 @@ def transaction(chemin: Chemin | None = None, attente: float = 30) -> Iterator[S
             f"{p.name} est modifié par un autre programme (attente {attente}s dépassée)"
         )
     try:
-        suivi = charger(p)
+        suivi = _lire(p)  # lève SuiviIllisible plutôt que de repartir de {}
         yield suivi
         atomique.ecrire_json(p, suivi)  # atteint seulement si le bloc n'a pas levé
     finally:

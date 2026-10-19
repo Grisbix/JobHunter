@@ -4,6 +4,30 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.16.0 — 2026-10-19
+
+Correctifs d'un audit du dépôt (Codex, 19/10) : quatre pertes de données possibles et
+quatre défauts, chacun reproduit puis couvert par un test.
+
+- **Le contrôle des liens n'écrase plus une collecte** qui fusionnait pendant ses
+  vérifications : le réseau se fait hors verrou, puis seuls les résultats sont appliqués
+  à la file relue. La purge des liens morts épargne les offres du suivi.
+- **Un suivi illisible n'est jamais remplacé** : si `suivi.json` existe mais ne se lit
+  pas (fichier tronqué), toute écriture est refusée et le fichier laissé tel quel, au
+  lieu de repartir d'un suivi vide qui effaçait toutes les candidatures.
+- **Une panne pendant l'écriture de la file ne perd plus de description** : les textes
+  orphelins ne sont purgés qu'une fois la file écrite.
+- **La fusion ne retire plus une offre suivie** quand un filtre ou un profil modifié la
+  rejette : une candidature garde sa fiche.
+- Une transaction imbriquée ne rend plus le verrou de son appelant.
+- Une annonce reconnue par son lien, sous un intitulé corrigé, reçoit sa description.
+- La mise à jour installe les dépendances avant de contrôler la nouvelle version, et un
+  échec de pip ramène à la version d'avant au lieu d'annoncer « à jour ».
+- « TOUT FAIRE terminé » ne s'affiche plus après un échec : le journal dit l'étape
+  interrompue.
+- CONTRIBUTING : procédure py-spy pour localiser une lenteur. Feuille de route : le
+  sondage pywinauto conclut que l'interface est invisible pour UI Automation.
+
 ## 2.15.0 — 2026-10-19
 
 - **« Pourquoi ce fit »** dans la fiche de chaque offre : les compétences trouvées par

@@ -136,9 +136,14 @@ def sauver(
         atomique.ecrire_json(p, offres)
         return
 
-    # ORDRE VOLONTAIRE : les descriptions D'ABORD. Si le processus meurt entre
-    # les deux ecritures, le fichier annexe contient des entrees orphelines —
-    # inoffensives — alors que l'inverse perdrait des descriptions.
+    # TROIS TEMPS, pour qu'aucune panne ne fasse perdre une description encore
+    # utilisée. 1) l'annexe reçoit les textes nouveaux, SANS rien retirer ; 2) la
+    # file est publiée ; 3) seulement alors, les orphelines sont purgées. Une panne
+    # entre deux temps ne laisse que des orphelines, inoffensives. L'ordre d'avant
+    # (purge puis file) perdait la description d'une offre retirée si l'écriture de
+    # la file échouait ensuite : la file gardait l'offre, l'annexe n'avait plus son
+    # texte (audit du 19/10/2026). Deux fichiers atomiques ne font pas une
+    # transaction ; cet ordre en tient lieu.
     avant = _lire_descriptions() if _avant is None else _avant
     textes = dict(avant)
     vivants = set()
@@ -148,23 +153,29 @@ def sauver(
         t = (o.pop("description", "") or "").strip()
         if t:
             textes[cle_o] = t
+    purgees = textes
     if _avant is None or avant:
         # purge des orphelines. Sautee quand l'appelant n'a pas lu le fichier
         # annexe (transaction descriptions=False) : on ne saurait pas distinguer
         # « orpheline » de « pas chargee », et on effacerait tout.
-        textes = {k: v for k, v in textes.items() if k in vivants}
+        purgees = {k: v for k, v in textes.items() if k in vivants}
 
     # N'ECRIRE QUE CE QUI A CHANGE. Reecrire systematiquement les 8,8 Mo de
     # descriptions coutait 230 ms a chaque transaction — plus cher que l'ancien
     # fichier unique. Or la quasi-totalite des ecritures ne touche AUCUNE
-    # description : elles changent un fit, un statut, une URL.
-    if textes != avant:
-        atomique.ecrire_json(DESCRIPTIONS, textes)
-    atomique.ecrire_json(p, offres)
-    for o in offres:  # l'appelant garde son objet complet
-        texte = textes.get(oid(o))
-        if texte:
-            o["description"] = texte
+    # description : elles changent un fit, un statut, une URL. La purge, elle,
+    # n'arrive que quand des offres quittent la file.
+    try:
+        if textes != avant:
+            atomique.ecrire_json(DESCRIPTIONS, textes)  # 1) ajouts seulement
+        atomique.ecrire_json(p, offres)  # 2) la file
+        if purgees != textes:
+            atomique.ecrire_json(DESCRIPTIONS, purgees)  # 3) purge
+    finally:
+        for o in offres:  # l'appelant garde son objet complet, même après une panne
+            texte = textes.get(oid(o))
+            if texte:
+                o["description"] = texte
 
 
 class VerrouIndisponible(RuntimeError):
@@ -207,7 +218,12 @@ def transaction(
         VerrouIndisponible: un autre programme garde la file plus de `attente` s.
     """
     p = Path(chemin or CHEMIN)
-    if not verrou.prendre_verrou(p, attente=attente):
+    # `prendre_verrou` est réentrant, `rendre_verrou` ne l'est PAS : il libère pour de
+    # bon. Une transaction imbriquée rendait le verrou de son appelant, qui continuait
+    # sans lui (audit du 19/10/2026). Comme `suivi.transaction` : on ne rend que le
+    # verrou qu'on a pris.
+    a_nous = not verrou.tenu(p)
+    if a_nous and not verrou.prendre_verrou(p, attente=attente):
         raise VerrouIndisponible(
             f"{p.name} est modifié par un autre programme (attente {attente}s dépassée)"
         )
@@ -226,7 +242,8 @@ def transaction(
         yield offres
         sauver(offres, p, _avant=textes)  # atteint seulement si le bloc n'a pas levé
     finally:
-        verrou.rendre_verrou(p)
+        if a_nous:
+            verrou.rendre_verrou(p)
 
 
 def modifier[T](

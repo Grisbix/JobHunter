@@ -63,6 +63,31 @@ file et suivi jetables, navigateur). Jamais d'affectation directe d'une globale 
 autre profil le construit et le passe à `profil.utiliser(donnees)`, puis
 `profil.recharger()` en fin de test.
 
+## Diagnostiquer une lenteur (py-spy)
+
+Quand une étape dépasse sa durée (collecte, disponibilité, documents), on localise avant
+de supposer. [py-spy](https://github.com/benfred/py-spy) lit la pile d'un programme
+Python en cours sans l'arrêter ni le modifier. C'est un outil externe, pas une
+dépendance du projet :
+
+```powershell
+# 1. trouver le PID du programme lent
+Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*jobhunter*' } | Select ProcessId, CommandLine
+
+# 2. la pile de chaque fil, maintenant
+uvx --from py-spy py-spy dump --pid <PID>
+
+# 3. où passe le temps, sur 60 s (fichier SVG à ouvrir dans un navigateur)
+uvx --from py-spy py-spy record --pid <PID> --duration 60 -o lenteur.svg
+```
+
+**Jamais `--locals`** : il imprime les variables de chaque cadre, donc des offres, des
+lettres, des chemins personnels. Sans lui, le rapport ne contient que des noms de
+fonctions et de fichiers du paquet ; on peut le joindre à une issue.
+
+Vérifié le 19/10/2026 sur Python 3.14 : un `time.sleep` provoqué dans une fonction
+`etape_bloquee` sort en tête du `dump`, avec son fichier et sa ligne.
+
 ## Règles
 
 - **Comportement inchangé, sauf intention explicite.** Le banc le prouve. Un changement

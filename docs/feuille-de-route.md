@@ -29,7 +29,7 @@ Règle inchangée : chaque étape livre seule, banc à 0 écart, et ne s'adopte 
 |---|---|---|---|
 | B1 ✅ (v2.4.1) | **Test d'architecture** : le moteur (`jobhunter.*` hors `app`, `accueil`) n'importe ni `tkinter` ni `customtkinter` ni `jobhunter.app` | Le plan dit « vérifié en CI par import-linter », mais rien n'est branché : un test pytest de quelques lignes suffit, sans ArchUnitPython ni import-linter | un import volontaire de Tkinter dans `scoring` fait échouer le test ; le retirer le fait passer |
 | B2 ✅ (v2.4.3) | **Réponses enregistrées des connecteurs** (pytest-recording / VCR.py, dépendance de test seule) : APEC (API), LinkedIn guest, sitemap WTJ, Workday, Greenhouse/Lever | Les doublures actuelles (`faux_reseau`) sont écrites à la main : elles ne disent pas si le parseur lit encore la vraie réponse d'aujourd'hui. Une réponse réelle enregistrée, expurgée (cookies, en-têtes), rend le parseur reproductible | dix réponses rejouées sans réseau donnent les mêmes offres ; un échange manquant fait échouer ; aucun cookie ni identifiant dans les fichiers versionnés |
-| B3 | **Diagnostic de lenteur** : procédure py-spy (outil externe, pas une dépendance) dans `CONTRIBUTING.md` | Utile la prochaine fois qu'une étape dépasse sa durée (collecte, disponibilité) : localiser au lieu de supposer | la procédure retrouve la fonction d'un blocage provoqué exprès, rapport sans données personnelles (`--locals` désactivé) |
+| B3 ✅ (CONTRIBUTING, 19/10) | **Diagnostic de lenteur** : procédure py-spy (outil externe, pas une dépendance) dans `CONTRIBUTING.md` | Utile la prochaine fois qu'une étape dépasse sa durée (collecte, disponibilité) : localiser au lieu de supposer | la procédure retrouve la fonction d'un blocage provoqué exprès, rapport sans données personnelles (`--locals` désactivé) |
 
 ## Étape C — Les deux axes métier restants (Codex 18/10)
 
@@ -42,7 +42,16 @@ Règle inchangée : chaque étape livre seule, banc à 0 écart, et ne s'adopte 
 
 | # | Quoi | Fini quand |
 |---|---|---|
-| D1 | **Sondage pywinauto, borné à une demi-journée** : inspecter l'arbre des contrôles de la fenêtre réelle. CustomTkinter dessine ses widgets sur un canvas : ils peuvent être invisibles pour UI Automation. | décision écrite. Si les contrôles sont visibles : un parcours avec un profil fictif (ouvrir, filtrer, fiche, panneau Candidatures avec le faux programme). Sinon : on garde les tests Tk internes et le smoke du panneau, et on le note. |
+| D1 ✅ (19/10, décision : non) | **Sondage pywinauto, borné à une demi-journée** : inspecter l'arbre des contrôles de la fenêtre réelle. CustomTkinter dessine ses widgets sur un canvas : ils peuvent être invisibles pour UI Automation. | décision écrite. Si les contrôles sont visibles : un parcours avec un profil fictif (ouvrir, filtrer, fiche, panneau Candidatures avec le faux programme). Sinon : on garde les tests Tk internes et le smoke du panneau, et on le note. |
+
+**Résultat de D1 (19/10/2026).** L'app lancée sur un profil fictif, lue par pywinauto
+(backend UIA) : 206 éléments, dont 153 panneaux et 43 images **sans nom**. Les 5 seuls
+boutons nommés sont ceux de la barre de titre de Windows. Aucun bouton, champ ni tableau
+de JobHunter n'est visible : CustomTkinter les dessine sur un canevas. Décision : pas de
+parcours pywinauto. On garde les tests Tk internes (`test_app_design`, panneaux ouverts
+sur une file jetable) et les captures d'écran faites depuis Python. Conséquence pour E3 :
+un lecteur d'écran ne voit pas l'application non plus. Le corriger demanderait de
+quitter CustomTkinter, ou de lui ajouter une couche d'accessibilité.
 
 ## Étape E — Distribution au-delà de Gabriel (quand le PC de l'ami et le Mac reviennent)
 

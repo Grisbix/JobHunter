@@ -201,10 +201,14 @@ class ExecutionMixin:
     def _exec_seq(self: "AppTypee", seq: Any) -> None:
         """seq : liste de (libelle, commande). Le libelle sert au log — cmd[-1]
         affichait le dernier ARGUMENT (« 8 », « linkedin »), pas l'etape."""
+        # L'issue voyage avec l'evenement : None = tout a reussi, sinon l'etape qui a
+        # echoue. « TOUT FAIRE termine » s'affichait meme apres un echec (audit 19/10).
+        echec = None
         for label, cmd in seq:
             if not self._exec(cmd, label, announce=True):
+                echec = label
                 break
-        self.q.put(("done_all", None))
+        self.q.put(("done_all", echec))
 
     def _exec(self: "AppTypee", cmd: Any, label: Any, announce: Any = False) -> Any:
         if announce:
@@ -288,7 +292,10 @@ class ExecutionMixin:
                     self.load_offers()
                     self.root.after(1500, self._auto_enrich)
                 elif kind == "done_all":
-                    self._log("\n✅ TOUT FAIRE terminé.\n")
+                    if val is None:
+                        self._log("\n✅ TOUT FAIRE terminé.\n")
+                    else:
+                        self._log(f"\n✗ TOUT FAIRE interrompu à l'étape « {val} ».\n")
                     self.load_offers()
                     self.root.after(1500, self._auto_enrich)
                 elif kind == "maj_fin":

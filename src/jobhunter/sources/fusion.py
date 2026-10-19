@@ -127,12 +127,19 @@ def _merge_into_queue(
     # QUEUE explicite : les tests remplacent cette constante par un fichier
     # jetable. Sans elle, charger() lirait la vraie file.
     q = queue_io.charger(_commun.QUEUE)  # descriptions reinjectees depuis descriptions.json
-    # PURGE bruit : rows 'Scan' déjà mergées dont le titre échoue le nouveau filtre anti-bruit
+    # PURGE bruit : rows 'Scan' déjà mergées dont le titre échoue le nouveau filtre anti-bruit.
+    # JAMAIS une offre du suivi : un filtre ou un profil modifié ne doit pas priver une
+    # candidature de sa fiche (invariant d'AGENTS.md ; audit du 19/10/2026, « Brand
+    # Design Intern » postulée puis purgée par une fusion vide).
+    from jobhunter.stockage import suivi as suivi_io
+
+    suivies = set(suivi_io.charger())
     before = len(q)
     q = [
         x
         for x in q
-        if not (str(x.get("statut", "")).startswith("Scan ") and not title_ok(x.get("poste", "")))
+        if queue_io.oid(x) in suivies
+        or not (str(x.get("statut", "")).startswith("Scan ") and not title_ok(x.get("poste", "")))
     ]
     purged = before - len(q)
     idx = {_norm(x.get("entreprise", "")) + "|" + _norm(x.get("poste", "")): x for x in q}
@@ -186,7 +193,12 @@ def _merge_into_queue(
         desc = (o.get("description") or "").strip()
         if key in idx or _norm_url(o["url"]) in have_url:
             # déjà en queue : si on a maintenant une description et pas elle → enrichit + re-score
+            # La ligne se retrouve par identité OU par URL, AVANT tout enrichissement : la
+            # même annonce dont la source a corrigé l'intitulé n'avait sinon jamais sa
+            # description (audit du 19/10/2026).
             x = idx.get(key)
+            if x is None:
+                x = par_url.get(_norm_url(o["url"]))
             # PROMOTION D'URL. La meme annonce arrive de plusieurs sources ; la
             # premiere vue gagnait, au hasard de l'ordre des scans. Si celle-ci
             # vient d'une meilleure source, elle remplace l'ancienne : on garde
@@ -259,8 +271,6 @@ def _merge_into_queue(
             # s'en sert pour retirer ce que sa source a cesse de publier.
             # Rattachement par URL aussi : un doublon reconnu au lien seul
             # (meme annonce, intitule retouche) doit compter comme revu.
-            if x is None:
-                x = par_url.get(_norm_url(o["url"]))
             if x is not None:
                 x["vu_le"] = today
             if x is not None:

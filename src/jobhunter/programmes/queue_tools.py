@@ -8,11 +8,13 @@ CLI : python JobHunter.pyw queue_tools mark        # marque les URLs mortes
       python JobHunter.pyw queue_tools test        # auto-test (fichier temporaire)
 """
 
-import json
 import sys
 from pathlib import Path
 
 from jobhunter import racine as _racine
+from jobhunter.stockage import atomique
+from jobhunter.stockage import file as queue_io
+from jobhunter.stockage import suivi as suivi_io
 
 SCRIPTS = _racine.scripts()
 QUEUE = SCRIPTS / "apply_queue.json"
@@ -21,12 +23,16 @@ SIDECAR = SCRIPTS / "link_status.json"
 sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console : TextIOWrapper
 
 
+# TOUTE ECRITURE PASSE PAR queue_io.transaction : verrou, relecture fraiche, ecriture
+# atomique. `mark_dead` lisait la file, controlait les liens (des minutes de reseau),
+# puis reecrivait son instantane avec write_text, sans verrou : une collecte fusionnee
+# pendant ce temps etait perdue (audit du 19/10/2026). Le reseau se fait maintenant hors
+# verrou, et seuls ses RESULTATS sont appliques a la file relue.
+
+
 def load(path=QUEUE):
-    return json.loads(Path(path).read_text(encoding="utf-8"))
-
-
-def save(rows, path=QUEUE):
-    Path(path).write_text(json.dumps(rows, ensure_ascii=False, indent=1), encoding="utf-8")
+    """La file en lecture (sans les descriptions)."""
+    return queue_io.charger(path, descriptions=False)
 
 
 def _tag(res):
@@ -48,8 +54,7 @@ def mark_dead(path=QUEUE, verbose=True, _checker=None, skip_hard=True):
     skip_hard=True : LinkedIn/Indeed/Glassdoor tagués ANTI-BOT sans HTTP (scan inutile, ban).
     _checker : fn(list[url])->{url:res} injectable (tests). Défaut = link_check.batch_check.
     Retour {total, checked, skipped_hard, counts:{tag:n}}."""
-    rows = load(path)
-    all_urls = {r["url"] for r in rows if str(r.get("url") or "").startswith("http")}
+    all_urls = {r["url"] for r in load(path) if str(r.get("url") or "").startswith("http")}
 
     def _hard(u):
         return skip_hard and any(h in u.lower() for h in _HARD_HOSTS)
@@ -67,37 +72,42 @@ def mark_dead(path=QUEUE, verbose=True, _checker=None, skip_hard=True):
     for u in hard:
         tags[u] = "ANTI-BOT"
     counts = {}
-    for r in rows:
-        u = r.get("url") or ""
-        if u in tags:
-            r["link_status"] = tags[u]
-            counts[tags[u]] = counts.get(tags[u], 0) + 1
-    save(rows, path)
+    with queue_io.transaction(path, descriptions=False) as rows:
+        for r in rows:
+            u = r.get("url") or ""
+            if u in tags:
+                r["link_status"] = tags[u]
+                counts[tags[u]] = counts.get(tags[u], 0) + 1
+        total = len(rows)
     # sidecar (survit à un rebuild : référence/inspection)
     try:
-        Path(SIDECAR if path == QUEUE else Path(path).with_name("link_status.json")).write_text(
-            json.dumps(tags, ensure_ascii=False, indent=1), encoding="utf-8"
+        atomique.ecrire_json(
+            SIDECAR if path == QUEUE else Path(path).with_name("link_status.json"), tags
         )
-    except Exception:
+    except OSError:
         pass
     if verbose:
         print(f"URLs vérifiées: {len(urls)} | offres taguées: {sum(counts.values())}")
         for k, v in sorted(counts.items(), key=lambda x: -x[1]):
             print(f"  {v:5}  {k}")
-    return {"total": len(rows), "checked": len(urls), "skipped_hard": len(hard), "counts": counts}
+    return {"total": total, "checked": len(urls), "skipped_hard": len(hard), "counts": counts}
 
 
 def prune(path=QUEUE, drop=("MORT",), verbose=True):
     """Supprime de la queue les offres dont link_status ∈ drop (défaut: MORT seul).
     N'enlève PAS EXPIREE/ANTI-BOT par défaut (récupérables / vivants). Retour nb supprimé.
     Lancer mark_dead AVANT. Réversible : queue régénérable via build_queue + backup git."""
-    rows = load(path)
-    before = len(rows)
-    kept = [r for r in rows if r.get("link_status") not in drop]
-    save(kept, path)
-    n = before - len(kept)
+    # Les offres du suivi ne partent JAMAIS : une annonce ferme apres qu'on y a postule,
+    # et c'est justement celle-la qu'on veut garder (invariant d'AGENTS.md).
+    suivies = set(suivi_io.charger())
+    with queue_io.transaction(path, descriptions=False) as rows:
+        before = len(rows)
+        rows[:] = [
+            r for r in rows if r.get("link_status") not in drop or queue_io.oid(r) in suivies
+        ]
+        n, kept = before - len(rows), len(rows)
     if verbose:
-        print(f"prune: {n} offres supprimées (link_status ∈ {drop}) · {len(kept)} gardées")
+        print(f"prune: {n} offres supprimées (link_status ∈ {drop}) · {kept} gardées")
     return n
 
 
@@ -106,18 +116,16 @@ def writeback(old_url, new_url=None, link_status=None, path=QUEUE):
     + link_status. Retour nb d'offres modifiées. Persiste apply_queue.json."""
     if not old_url:
         return 0
-    rows = load(path)
     n = 0
-    for r in rows:
-        if r.get("url") == old_url:
-            if new_url and new_url != old_url:
-                r.setdefault("url_orig", old_url)
-                r["url"] = new_url
-            if link_status:
-                r["link_status"] = link_status
-            n += 1
-    if n:
-        save(rows, path)
+    with queue_io.transaction(path, descriptions=False) as rows:
+        for r in rows:
+            if r.get("url") == old_url:
+                if new_url and new_url != old_url:
+                    r.setdefault("url_orig", old_url)
+                    r["url"] = new_url
+                if link_status:
+                    r["link_status"] = link_status
+                n += 1
     return n
 
 
@@ -132,7 +140,7 @@ def _selftest():
         {"entreprise": "C", "poste": "z", "url": "https://expired.test/3"},
         {"entreprise": "D", "poste": "w", "url": ""},
     ]
-    save(rows, tf)
+    atomique.ecrire_json(tf, rows)
     fake = {
         "https://live.test/1": {"live": True, "status": 200, "soft_dead": None},
         "https://dead.test/2": {"live": False, "status": 404, "soft_dead": None},
