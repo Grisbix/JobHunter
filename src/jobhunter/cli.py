@@ -1,19 +1,19 @@
-"""`jobhunter <commande> [options]` : une seule entree pour tous les programmes.
+"""`jobhunter <command> [options]`: a single entry for all the programs.
 
-Chaque commande lance le programme d'origine tel quel (memes options, meme `--help`) ;
-ce module ne fait qu'aiguiller. Exemples :
+Each command runs the original program as is (same options, same `--help`);
+this module only dispatches. Examples:
 
-    jobhunter collecte --linkedin --apec      (ancien python Scripts/job_sources.py ...)
-    jobhunter documents --top 30              (ancien python Scripts/generate_docs.py ...)
-    jobhunter postuler --canal linkedin       (DANS UN VRAI TERMINAL : il attend le clavier)
-    jobhunter probe_ats ...                   tout programme de jobhunter.programmes, par son nom
+    jobhunter collecte --linkedin --apec      (formerly python Scripts/job_sources.py ...)
+    jobhunter documents --top 30              (formerly python Scripts/generate_docs.py ...)
+    jobhunter postuler --canal linkedin       (IN A REAL TERMINAL: it waits for the keyboard)
+    jobhunter probe_ats ...                   any program of jobhunter.programmes, by its name
 
-Sans installation : `python JobHunter.pyw <commande> ...` depuis le dossier de
-JobHunter. Installe (`pip install -e .`), la commande `jobhunter` existe directement.
+Without installation: `python JobHunter.pyw <command> ...` from the JobHunter
+folder. Installed (`pip install -e .`), the `jobhunter` command exists directly.
 
-Aucune commande n'envoie de candidature : le clic final reste celui de l'utilisateur.
+No command sends an application: the final click stays the user's.
 
-Decision : docs/adr/0008-programmes-dans-le-paquet.md
+Decision: docs/adr/0008-programmes-dans-le-paquet.md
 """
 
 import importlib.util
@@ -23,7 +23,7 @@ from collections.abc import Sequence
 
 from jobhunter import racine
 
-# commande -> (module, ce qu'elle fait). Les programmes vivent dans jobhunter.programmes.
+# command -> (module, what it does). The programs live in jobhunter.programmes.
 COMMANDES = {
     "app": ("jobhunter.app", "ouvre l'application (comme JobHunter.pyw)"),
     "collecte": ("jobhunter.sources", "collecte les offres et les fusionne dans la file"),
@@ -82,7 +82,7 @@ def aide() -> str:
 
 
 def module_de(cmd: str) -> str | None:
-    """Le module d'une commande : une commande nommee, ou un programme par son nom."""
+    """The module of a command: a named command, or a program by its name."""
     if cmd in COMMANDES:
         return COMMANDES[cmd][0]
     if cmd.isidentifier() and importlib.util.find_spec(f"jobhunter.programmes.{cmd}"):
@@ -91,13 +91,13 @@ def module_de(cmd: str) -> str | None:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Lance une commande : `jobhunter <commande> [options]`.
+    """Runs a command: `jobhunter <command> [options]`.
 
     Args:
-        argv: les arguments, sans le nom du programme ; None = sys.argv.
+        argv: the arguments, without the program name; None = sys.argv.
 
     Returns:
-        Le code de sortie de la commande (2 si elle est inconnue).
+        The exit code of the command (2 if it is unknown).
     """
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv or argv[0] in ("-h", "--help", "aide"):
@@ -112,7 +112,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         from jobhunter.accueil import assurer_profil
 
         assurer_profil()
-    # Les etapes lancees en sous-processus (pipeline, application) font `python -m ...`.
+    # The steps launched as subprocesses (pipeline, application) do `python -m ...`.
     racine.exporter_paquet()
     sys.argv = [f"jobhunter {cmd}", *reste]
     try:
@@ -120,7 +120,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     except SystemExit as e:
         if e.code is None or isinstance(e.code, int):
             return e.code or 0
-        print(e.code, file=sys.stderr)  # sys.exit("message") : l'afficher, comme Python
+        print(e.code, file=sys.stderr)  # sys.exit("message"): display it, like Python
         return 1
     return 0
 

@@ -1,11 +1,11 @@
-"""catalogue_competences.py — bibliotheque GENERIQUE de competences, tous metiers.
+"""catalogue_competences.py — GENERIC library of skills, all professions.
 
-premier_lancement.py y cherche les competences du CV pour construire le profil.
-Chaque entree : famille, synonymes (cherches dans les annonces, minuscules),
-libelle anglais, et la forme qui se dit DANS UNE PHRASE de lettre (avec article).
+premier_lancement.py searches it for the CV's skills to build the profile.
+Each entry: family, synonyms (searched in postings, lower case), English label, and
+the form that is said IN A letter SENTENCE (with article).
 
-Ajouter une competence : une ligne ici, puis relancer premier_lancement.py --maj,
-ou l'ajouter directement dans profil/profil.json (section « competences »).
+Adding a skill: one line here, then rerun premier_lancement.py --maj, or add it
+directly into profil/profil.json ("competences" section).
 """
 
 # famille -> (libelle de famille, mots d'intitule de poste typiques)
@@ -137,7 +137,7 @@ FAMILLES = {
     ),
 }
 
-# libelle -> famille, synonymes, anglais, prose FR, prose EN
+# label -> family, synonyms, English, FR prose, EN prose
 _C = [
     # finance
     (
@@ -599,8 +599,8 @@ _C = [
     ),
 ]
 
-# Competences transverses : reconnues, mais dans AUCUN axe (elles ne font pas
-# monter le score toutes seules) et jamais citees comme termes techniques.
+# Cross-cutting skills: recognised, but in NO axis (they do not raise
+# the score on their own) and never quoted as technical terms.
 _TRANSVERSES = [
     ("Anglais", ["anglais", "english", "toeic", "toefl", "ielts", "bilingue"], "English"),
     ("Allemand", ["allemand", "german", "deutsch"], "German"),
@@ -616,7 +616,7 @@ _TRANSVERSES = [
 
 
 def catalogue():
-    """{libelle: {famille, synonymes, en, prose_fr, prose_en, [technique]}}"""
+    """{label: {famille, synonymes, en, prose_fr, prose_en, [technique]}}"""
     out = {}
     for lab, fam, syn, en, pfr, pen in _C:
         out[lab] = {"famille": fam, "synonymes": syn, "en": en, "prose_fr": pfr, "prose_en": pen}

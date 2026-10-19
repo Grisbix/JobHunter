@@ -1,11 +1,11 @@
-"""Régénère les annuaires d'entreprises Lever, Ashby et Greenhouse du paquet.
+"""Regenerates the package's Lever, Ashby and Greenhouse company directories.
 
-Source : le projet jobsync (github.com/Gsync/jobsync, licence MIT), à un commit épinglé
-pour qu'une régénération donne le même fichier. Chaque entrée est validée (nom non vide,
-identifiant de tableau d'offres sûr pour une URL) ; une entrée douteuse est écartée.
+Source: the jobsync project (github.com/Gsync/jobsync, MIT licence), at a pinned commit
+so that a regeneration gives the same file. Each entry is validated (non-empty name,
+job board identifier safe for a URL); a doubtful entry is dropped.
 
-    uv run python outils/annuaires.py            # régénère src/jobhunter/sources/annuaires/
-    uv run python outils/annuaires.py --verifier # échoue si les fichiers diffèrent
+    uv run python outils/annuaires.py            # regenerates src/jobhunter/sources/annuaires/
+    uv run python outils/annuaires.py --verifier # fails if the files differ
 """
 
 import argparse
@@ -23,13 +23,13 @@ _RX_JETON = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$")
 
 
 def nettoyer(brut: object) -> list[list[str]]:
-    """Garde les entrées valides, sans doublon d'identifiant, triées par nom.
+    """Keeps the valid entries, without duplicate identifiers, sorted by name.
 
     Args:
-        brut: le JSON de jobsync, une liste de {"name", "token"}.
+        brut: the jobsync JSON, a list of {"name", "token"}.
 
     Returns:
-        [[nom, identifiant], ...]
+        [[name, identifier], ...]
     """
     if not isinstance(brut, list):
         raise ValueError("annuaire : une liste était attendue")

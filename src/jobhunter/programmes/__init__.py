@@ -1,6 +1,6 @@
-"""Les programmes de JobHunter (anciens Scripts/*.py, entres dans le paquet en 2.0).
+"""JobHunter's programs (former Scripts/*.py, moved into the package in 2.0).
 
-Chacun se lance par `python -m jobhunter <commande>` (voir `jobhunter.cli`) ou
-`python -m jobhunter.programmes.<nom>` ; les donnees qu'ils lisent et ecrivent restent
-dans Scripts/ (`jobhunter.racine.scripts()`). Documentation : docs/programmes.md.
+Each is run with `python -m jobhunter <command>` (see `jobhunter.cli`) or
+`python -m jobhunter.programmes.<name>`; the data they read and write stays in
+Scripts/ (`jobhunter.racine.scripts()`). Documentation: docs/programmes.md.
 """

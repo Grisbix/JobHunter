@@ -1,8 +1,8 @@
-"""Un lien de remplacement doit mener a L'ANNONCE, pas ailleurs (resolve_offer_links).
+"""A replacement link must lead to THE POSTING, not elsewhere (resolve_offer_links).
 
-Cas reels. Le plus couteux : une page de RESULTATS de Deloitte (`results.htm`)
-acceptee comme annonce, qui avait remplace un lien LinkedIn menant a l'offre.
-Converti depuis Scripts/test_liens.py.
+Real cases. The costliest: a Deloitte RESULTS page (`results.htm`)
+accepted as a posting, which had replaced a LinkedIn link leading to the offer.
+Converted from Scripts/test_liens.py.
 """
 
 import pytest
@@ -11,14 +11,14 @@ from jobhunter.programmes.resolve_offer_links import RX_OFFRE, RX_RECHERCHE, acc
 
 
 def verdict(url):
-    """OFFRE seulement si le lien porte un identifiant ET n'est pas une recherche."""
+    """OFFRE only if the link carries an identifier AND is not a search."""
     return "REJET" if (RX_RECHERCHE.search(url) or not RX_OFFRE.search(url)) else "OFFRE"
 
 
 @pytest.mark.parametrize(
     "url",
     [
-        "https://www.deloitte.com/fr/fr/careers/content/job/results.htm",  # le cas reel
+        "https://www.deloitte.com/fr/fr/careers/content/job/results.htm",  # the real case
         "https://www.deloitte.com/fr/fr/careers/content/job/results",
         "https://x.com/jobs/search",
         "https://x.com/carriere/recherche/",
@@ -26,7 +26,7 @@ def verdict(url):
         "https://samse.fr/catalogsearch/result/?q=analyste",
         "https://effektiv.fr/?search_keyword=esg",
         "https://x.com/jobs?query=esg",
-        # un slug sans chiffre ni tiret n'est pas un identifiant
+        # a slug without digits or hyphen is not an identifier
         "https://x.com/jobs/candidature",
         "https://x.com/offres/spontanee",
     ],

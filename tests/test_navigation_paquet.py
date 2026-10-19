@@ -1,8 +1,8 @@
-"""Le paquet jobhunter.navigation (phase 3.6) : facades, noms conserves, sous-modules autonomes.
+"""The jobhunter.navigation package (phase 3.6): facades, names kept, standalone submodules.
 
-- web_nav EST jobhunter.navigation, site_strategies EST navigation.strategies ;
-- les noms de l'ancien fichier unique restent lisibles (dismiss_cookies, fill_application...) ;
-- chaque sous-module se charge seul : le decoupage n'a laisse aucun cycle d'import.
+- web_nav IS jobhunter.navigation, site_strategies IS navigation.strategies;
+- the names of the old single file remain readable (dismiss_cookies, fill_application...);
+- each submodule loads alone: the split left no import cycle.
 """
 
 import os

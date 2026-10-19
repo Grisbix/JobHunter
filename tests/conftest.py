@@ -1,8 +1,8 @@
-"""Socle commun des tests pytest.
+"""Common base of the pytest tests.
 
-Le profil d'exemple est fixe ici, avant le premier import du moteur (pytest charge
-conftest.py avant les fichiers de test) : `jobhunter.profil` lit la variable
-PROFIL_JOBHUNTER a son chargement. Les tests ne lisent jamais profil/profil.json.
+The example profile is set here, before the first import of the engine (pytest loads
+conftest.py before the test files): `jobhunter.profil` reads the
+PROFIL_JOBHUNTER variable when it loads. The tests never read profil/profil.json.
 """
 
 import os
@@ -18,12 +18,12 @@ EXEMPLE = RACINE / "profil" / "exemple_finance_esg.json"
 
 os.environ["PROFIL_JOBHUNTER"] = str(EXEMPLE)
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
-if str(SRC) not in sys.path:  # sans installation (pip install -e .), le paquet est la
+if str(SRC) not in sys.path:  # without installation (pip install -e .), the package is there
     sys.path.insert(0, str(SRC))
 
 
 class Reponse:
-    """Reponse HTTP minimale, au contrat de ce que lit le moteur."""
+    """Minimal HTTP response, matching what the engine reads."""
 
     def __init__(self, corps="", statut=200, entetes=None):
         import json
@@ -39,11 +39,11 @@ class Reponse:
 
 
 class FauxReseau:
-    """Remplace job_sources._get_borne / _post_borne.
+    """Replaces job_sources._get_borne / _post_borne.
 
-    `routes` : {motif d'URL: Reponse | corps} — premier motif contenu dans l'URL.
-    `sequence(...)` : reponses rendues dans l'ordre, la derniere ensuite pour toujours.
-    Toutes les URL demandees sont gardees dans `appels`.
+    `routes`: {URL pattern: Reponse | body} — first pattern contained in the URL.
+    `sequence(...)`: responses returned in order, the last one then forever.
+    All the URLs requested are kept in `appels`.
     """
 
     def __init__(self):
@@ -74,7 +74,7 @@ class FauxReseau:
 
 @pytest.fixture
 def faux_reseau(monkeypatch):
-    """Aucun appel reseau reel : job_sources passe par la doublure."""
+    """No real network call: job_sources goes through the double."""
     from jobhunter import sources as job_sources
 
     f = FauxReseau()
@@ -86,7 +86,7 @@ def faux_reseau(monkeypatch):
 
 
 class Horloge:
-    """Temps simule : `dormir` avance l'horloge au lieu d'attendre."""
+    """Simulated time: `dormir` advances the clock instead of waiting."""
 
     def __init__(self):
         self.t = 0.0
@@ -112,7 +112,7 @@ def horloge(monkeypatch):
 
 @pytest.fixture
 def file_temporaire(tmp_path, monkeypatch):
-    """apply_queue.json (et descriptions.json) jetables : queue_io y ecrit."""
+    """Throwaway apply_queue.json (and descriptions.json): queue_io writes there."""
     from jobhunter.stockage import file as queue_io
 
     chemin = tmp_path / "apply_queue.json"
@@ -133,7 +133,7 @@ def suivi_temporaire(tmp_path, monkeypatch):
 
 @pytest.fixture(scope="session")
 def navigateur():
-    """Un seul Chromium (headless) pour toute la session de tests."""
+    """A single Chromium (headless) for the whole test session."""
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as p:
@@ -144,7 +144,7 @@ def navigateur():
 
 @pytest.fixture
 def page(navigateur):
-    """Une page neuve par test : aucun etat ne passe d'un test a l'autre."""
+    """A new page per test: no state passes from one test to another."""
     pg = navigateur.new_page()
     yield pg
     pg.close()
@@ -152,12 +152,12 @@ def page(navigateur):
 
 @pytest.fixture(scope="session")
 def fenetre_tk():
-    """Une seule fenêtre Tk pour toute la session, transparente mais affichée.
+    """A single Tk window for the whole session, transparent but displayed.
 
-    Créer puis détruire plusieurs racines Tk dans un même processus fait échouer, au
-    bout de quelques-unes, l'initialisation de Tcl sous Windows (« Can't find a usable
-    init.tcl »), avec Python 3.12 comme 3.14. Le focus clavier, lui, n'existe que sur
-    une fenêtre affichée : d'où l'opacité nulle plutôt que withdraw().
+    Creating then destroying several Tk roots in one process makes Tcl
+    initialisation fail under Windows after a few of them ("Can't find a usable
+    init.tcl"), with Python 3.12 as with 3.14. Keyboard focus only exists on
+    a displayed window: hence zero opacity rather than withdraw().
     """
     import customtkinter as ctk
 

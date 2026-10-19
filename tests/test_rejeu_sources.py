@@ -1,10 +1,10 @@
-"""Les sources relisent de VRAIES réponses enregistrées, sans réseau (outils/rejeu.py).
+"""The sources reread REAL recorded responses, without network (outils/rejeu.py).
 
-Chaque enregistrement de tests/reponses/ contient la réponse publique d'une source
-(nettoyée) et les offres qu'elle donnait le jour où on l'a prise. Le rejeu doit
-retrouver exactement les mêmes : un changement du parseur qui perd une offre, en ajoute
-une ou change une description est vu ici. Un site qui change SA réponse, lui, se voit
-à la prochaine collecte (verdicts de `jobhunter rendement`) ; on réenregistre alors.
+Each recording in tests/reponses/ contains the public response of a source
+(cleaned) and the offers it gave on the day it was taken. The replay must
+find exactly the same ones: a parser change that loses an offer, adds
+one or changes a description is seen here. A site that changes ITS response, on the other hand, shows
+at the next collection (`jobhunter rendement` verdicts); we then re-record.
 """
 
 import importlib.util

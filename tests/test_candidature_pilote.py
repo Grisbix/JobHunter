@@ -1,9 +1,9 @@
-"""Candidature pilotée par l'application (apply_runner --pilote) et preuve d'envoi.
+"""Application driven by the application (apply_runner --pilote) and proof of sending.
 
-Le protocole (événements `@JH {json}`, commandes sur stdin), la déclaration d'envoi
-qui observe la page et écrit le suivi (ADR 0009), et le garde-fou : le programme ne
-clique JAMAIS le bouton d'envoi. Bout en bout sur des pages locales : c'est le TEST qui
-clique Envoyer, à la place de l'humain ; aucune vraie candidature n'est envoyée.
+The protocol (`@JH {json}` events, commands on stdin), the sending declaration
+that observes the page and writes the tracker (ADR 0009), and the safeguard: the program
+NEVER clicks the send button. End to end on local pages: it is the TEST that
+clicks Send, in place of the human; no real application is sent.
 """
 
 import functools
@@ -17,8 +17,8 @@ from jobhunter.programmes import apply_runner as ar
 
 OFFRE = {"comp": "Acme", "role": "Analyste ESG", "url": "https://ats.example/job/1"}
 
-# Un faux formulaire de candidature : l'envoi remplace la page par un message de merci.
-# Chaque clic sur le bouton est compté dans window.__clics.
+# A fake application form: sending replaces the page with a thank-you message.
+# Each click on the button is counted in window.__clics.
 FORMULAIRE = """
 <form id=f onsubmit="event.preventDefault();
     document.body.innerHTML = '<h1>Merci pour votre candidature !</h1>';">
@@ -30,7 +30,7 @@ FORMULAIRE = """
 """
 
 
-# ── le protocole ──────────────────────────────────────────────────────────────
+# ── the protocol ──────────────────────────────────────────────────────────────
 def test_evenement_ligne_json(capsys):
     ar._Pilote().evenement("offre", i=1, total=3, entreprise="Acme")
     ligne = capsys.readouterr().out.strip()
@@ -53,7 +53,7 @@ def test_evenement_ligne_json(capsys):
 def test_commandes(monkeypatch, capsys, ligne, touche):
     monkeypatch.setattr(ar.sys, "stdin", io.StringIO(ligne))
     assert ar._Pilote().commande("invite ignorée") == touche
-    assert '"attente"' in capsys.readouterr().out  # l'app sait qu'on l'attend
+    assert '"attente"' in capsys.readouterr().out  # the app knows it is being waited for
 
 
 def test_aucune_commande_n_envoie():
@@ -61,7 +61,7 @@ def test_aucune_commande_n_envoie():
     assert set(ar._COMMANDES) == {"envoye", "saute", "reremplir", "rouvrir", "quitter"}
 
 
-# ── déclaration d'envoi, bout en bout sur une page locale ─────────────────────────
+# ── sending declaration, end to end on a local page ─────────────────────────
 @pytest.fixture
 def preuves(tmp_path, monkeypatch, suivi_temporaire):
     monkeypatch.setattr(ar, "_chemin_preuve", lambda d: tmp_path / "preuves" / "p.png")
@@ -79,7 +79,7 @@ def lire(chemin):
 
 def test_envoi_confirme(page, preuves, tmp_path):
     page.set_content(FORMULAIRE)
-    page.click("button")  # L'HUMAIN clique Envoyer (ici, le test)
+    page.click("button")  # The HUMAN clicks Send (here, the test)
     res = ar.declarer_envoi(page, OFFRE)
     rec = lire(preuves)["Acme|Analyste ESG"]
     assert res["etat"] == rec["envoi"] == "confirmé"
@@ -88,21 +88,21 @@ def test_envoi_confirme(page, preuves, tmp_path):
 
 
 def test_envoi_non_fait_incertain(page, preuves):
-    page.set_content(FORMULAIRE)  # personne n'a cliqué : le formulaire est toujours là
+    page.set_content(FORMULAIRE)  # nobody clicked: the form is still there
     res = ar.declarer_envoi(page, OFFRE)
     assert res["etat"] == lire(preuves)["Acme|Analyste ESG"]["envoi"] == "incertain"
 
 
-# ── le garde-fou : le programme ne clique jamais Envoyer ─────────────────────────
+# ── the safeguard: the program never clicks Send ─────────────────────────
 def test_le_programme_ne_clique_jamais_envoyer(page, preuves, monkeypatch):
     page.set_content(FORMULAIRE)
-    assert ar.highlight_submit(page) == "Envoyer ma candidature"  # surligné, pas cliqué
+    assert ar.highlight_submit(page) == "Envoyer ma candidature"  # highlighted, not clicked
     monkeypatch.setattr(ar.sys, "stdin", io.StringIO("envoye\n"))
     marques = []
     assert ar._decision_pilote(ar._Pilote(), page, OFFRE, marques.append) == "s"
     assert page.evaluate("window.__clics || 0") == 0
     assert marques == ["ENVOYÉ"]
-    # personne n'a cliqué : la déclaration reste sans confirmation
+    # nobody clicked: the declaration stays without confirmation
     assert lire(preuves)["Acme|Analyste ESG"]["envoi"] == "incertain"
 
 

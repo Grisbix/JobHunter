@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-relances.py — Genere des mails de relance J+7 / J+10 personnalises par offre.
+relances.py — Generates personalised D+7 / D+10 follow-up emails per offer.
 
-Lit apply_queue.json, prend les offres 'prio' (ou --all), ecrit un .txt de relance
-pret a copier-coller dans Lettres/Relances/. La relance ~double le taux de reponse.
+Reads apply_queue.json, takes the 'prio' offers (or --all), writes a follow-up .txt
+ready to copy and paste into Lettres/Relances/. A follow-up roughly doubles the
+response rate.
 
-Run: python JobHunter.pyw relances            # toutes les offres 'prio'
+Run: python JobHunter.pyw relances            # all the 'prio' offers
      python JobHunter.pyw relances --company Amundi
-     python JobHunter.pyw relances --jours 10 # variante J+10 (defaut J+7)
+     python JobHunter.pyw relances --jours 10 # D+10 variant (default D+7)
 """
 
 import argparse
@@ -32,7 +33,7 @@ OUT.mkdir(parents=True, exist_ok=True)
 from jobhunter import profil as _P
 
 NOM = _P.identite()["nom"]
-# Accords et resume du profil : « — diplome, stage… — » vient de message.diplome_fr.
+# Agreements and profile summary: "— diplome, stage… —" comes from message.diplome_fr.
 _DIPLOME = (_P.get("message.diplome_fr", "") or "").strip()
 _ACCORDS = {
     "motive": _P.accord("motivé", "motivée"),
@@ -153,13 +154,13 @@ def make_draft(key, j=7, open_mailto=True):
 
 
 def preparer_brouillons(lst, dossier=None):
-    """Brouillons de la semaine pour la tâche Windows `Relances` (2026-10-08).
+    """Drafts of the week for the Windows task `Relances` (2026-10-08).
 
-    Rend un bilan Markdown que publier.py range dans le vault. N'envoie rien,
-    n'ouvre aucun client mail, ne marque rien dans le suivi : l'utilisateur relit,
-    envoie lui-même, puis lance --mark. Une candidature déjà relancée une fois
-    reçoit le modèle J+10 (« dernière relance ») ; un brouillon déjà présent
-    n'est pas réécrit, pour ne pas écraser une version retouchée à la main.
+    Returns a Markdown summary that publier.py stores in the vault. Sends nothing,
+    opens no mail client, marks nothing in the tracking: the user reviews, sends
+    themselves, then runs --mark. An application already followed up once receives
+    the D+10 template ("dernière relance"); a draft already present is not
+    rewritten, so as not to overwrite a version edited by hand.
     """
     from datetime import date
 
@@ -186,12 +187,11 @@ def preparer_brouillons(lst, dossier=None):
 
 
 def mark(key):
-    """Note la relance. Sous verrou : l'app ecrit le meme fichier.
+    """Records the follow-up. Under lock: the app writes the same file.
 
-    Lire puis ecrire sans verrou, c'est ce qui faisait disparaitre des
-    candidatures — l'app reecrivait tout son instantane par-dessus. `suivi_io`
-    relit le disque a l'interieur du verrou, donc chacun garde le travail de
-    l'autre.
+    Reading then writing without a lock is what made applications disappear — the
+    app rewrote its whole snapshot over it. `suivi_io` re-reads the disk inside the
+    lock, so each keeps the other's work.
     """
     from datetime import date
 
@@ -240,7 +240,7 @@ def main():
         for x in [x for x in q if a.company.lower() in (x["entreprise"] or "").lower()]:
             make_draft(_oid(x), j=a.jours, open_mailto=False)
         return
-    # défaut : liste ce qui est À RELANCER d'après le suivi
+    # default: lists what is TO FOLLOW UP according to the tracking
     lst = a_relancer(a.days)
     if not lst:
         print(f"Rien à relancer (aucune candidature « postulé » depuis ≥ {a.days} j).")

@@ -1,9 +1,9 @@
-"""Le paquet jobhunter.sources (phase 3.4) : facade, routage des affectations, cycle casse.
+"""The jobhunter.sources package (phase 3.4): facade, routing of assignments, cycle broken.
 
-- `job_sources` EST jobhunter.sources (alias) et voit les noms de tous les sous-modules ;
-- une affectation sur la facade va au sous-module proprietaire, que les autres lisent ;
-- `unittest.mock.patch` ressort sans effacer le nom du sous-module ;
-- la collecte se charge sans scrape_jobs, et classify_domaine vit dans le scoring.
+- `job_sources` IS jobhunter.sources (alias) and sees the names of all submodules;
+- an assignment on the facade goes to the owning submodule, which the others read;
+- `unittest.mock.patch` comes out without erasing the submodule's name;
+- the collection loads without scrape_jobs, and classify_domaine lives in the scoring.
 """
 
 import json

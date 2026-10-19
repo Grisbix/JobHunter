@@ -1,4 +1,4 @@
-"""`python -m jobhunter.sources ...` : la collecte (meme interface que Scripts/job_sources.py)."""
+"""`python -m jobhunter.sources ...`: the collection (same interface as Scripts/job_sources.py)."""
 
 import sys
 

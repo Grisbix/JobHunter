@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
-"""resolve_offer_links.py — Remplace les liens « page carriere » par le lien de
-L'OFFRE elle-meme.
+"""resolve_offer_links.py — Replaces the "career page" links with the link of THE OFFER
+itself.
 
-Pourquoi : dans l'app, cliquer le lien d'une offre curatee ouvrait la page
-d'accueil ou le portail carrieres de la societe, pas l'annonce. Le lien direct
-n'a jamais existe pour ces entrees : elles ont ete creees a partir du nom de la
-societe. Ce programme va le CHERCHER, en naviguant le site comme le ferait un
-humain — via web_nav.find_offer, qui detecte l'ATS, utilise le champ de
-recherche puis fouille les listes.
+Why: in the app, clicking the link of a curated offer opened the company's home page or
+careers portal, not the posting. The direct link never existed for these entries: they
+were created from the company's name. This program goes LOOKING for it, navigating the
+site as a human would — through web_nav.find_offer, which detects the ATS, uses the
+search field then digs through the lists.
 
-Le nouveau lien n'est ecrit que s'il est PLUS PRECIS que l'ancien (segment de
-chemin en plus, identifiant, ou requete). L'ancien est conserve dans `url_home`
-pour pouvoir revenir en arriere.
+The new link is only written if it is MORE PRECISE than the old one (an extra path
+segment, an identifier, or a query). The old one is kept in `url_home` so as to be
+able to go back.
 
-CAPTCHA : jamais contourne. Une page qui en presente un est notee et sautee.
+CAPTCHA: never bypassed. A page that presents one is noted and skipped.
 
-Run :
-  python JobHunter.pyw resolve_offer_links --dry              # montre sans rien ecrire
+Run:
+  python JobHunter.pyw resolve_offer_links --dry              # shows without writing anything
   python JobHunter.pyw resolve_offer_links --limit 20
-  python JobHunter.pyw resolve_offer_links --headed           # navigateur visible
+  python JobHunter.pyw resolve_offer_links --headed           # visible browser
 """
 
 import argparse
@@ -37,8 +36,8 @@ HERE = _racine.scripts()
 QUEUE = HERE / "apply_queue.json"
 PROFIL = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "apply_runner_chrome"
 
-# Meme regle que l'app (JobHunter._marque_lien) : un lien d'offre porte toujours
-# un identifiant, et ne se termine jamais par un mot de rubrique.
+# Same rule as the app (JobHunter._marque_lien): an offer link always carries
+# an identifier, and never ends with a section word.
 PAS_DIRECT = {"HOMEPAGE", "CAREERS_PORTAL", "OTHER", "RECHERCHE", "BOARD_SEARCH"}
 RUBRIQUES = {
     "careers",
@@ -65,7 +64,7 @@ def specificite(u):
     return len(seg) + (2 if d.query else 0) + (1 if any(c.isdigit() for c in "".join(seg)) else 0)
 
 
-# Hotes d'ATS : un lien vers eux reste legitime meme si le domaine change.
+# ATS hosts: a link to them stays legitimate even if the domain changes.
 ATS_HOTES = (
     "lever.co",
     "greenhouse.io",
@@ -86,38 +85,38 @@ ATS_HOTES = (
     "flatchr.io",
     "jobaffinity.fr",
 )
-# Motifs de page de RECHERCHE : elles paraissent precises (elles ont une
-# requete) alors qu'elles n'ouvrent aucune offre.
-# (\.\w+)? : l'extension comptait. « /job/results.htm » echappait a ce motif
-# faute du point, et etait pris pour une annonce — le lien LinkedIn DIRECT se
-# faisait remplacer par une page de resultats de recherche.
+# SEARCH page patterns: they look precise (they have a
+# query) while they open no offer.
+# (\.\w+)?: the extension counted. "/job/results.htm" escaped this pattern
+# for lack of the dot, and was taken for a posting — the DIRECT LinkedIn link
+# got replaced by a search results page.
 RX_RECHERCHE = re.compile(
     r"[?&](q|s|search|keyword|query|search_keyword)=|"
     r"/(catalogsearch|search|recherche|results?|listing|liste)"
     r"(\.\w+)?(/|$|\?)",
     re.I,
 )
-# Un lien d'offre porte un identifiant : un nombre long, ou un segment de slug
-# assez long apres /job|/offre|/poste.
-# Le slug d'une annonce porte un chiffre ou des tirets : « analyste-esg-h-f-12345 ».
-# Sans cette exigence, « /job/results.htm » (11 caracteres) passait pour un
-# identifiant d'offre.
+# An offer link carries an identifier: a long number, or a slug segment
+# long enough after /job|/offre|/poste.
+# A posting's slug carries a digit or dashes: "analyste-esg-h-f-12345".
+# Without this requirement, "/job/results.htm" (11 characters) passed for an
+# offer identifier.
 RX_OFFRE = re.compile(
     r"/\d{4,}|\d{6,}"
     r"|/(jobs?|offres?|postes?|vacancy|vacature)/(?=[^/?#]{8,})[^/?#]*[-_\d][^/?#]*"
-    # Lever et Ashby identifient l'annonce par un UUID, sans segment « /jobs/ » :
-    # jobs.lever.co/agicap/97f57bd6-c156-42cd-… — 20 vraies annonces de la file
-    # etaient rejetees faute de ce cas.
+    # Lever and Ashby identify the posting by a UUID, without a "/jobs/" segment:
+    # jobs.lever.co/agicap/97f57bd6-c156-42cd-… — 20 real postings of the queue
+    # were rejected for lack of this case.
     r"|/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-    # Recruitee : /o/<slug-de-l-offre>
+    # Recruitee: /o/<slug-of-the-offer>
     r"|/o/[a-z0-9][a-z0-9-]{7,}",
     re.I,
 )
 
 
 def racine(host):
-    """Domaine enregistrable approximatif : deux derniers labels, trois pour
-    les suffixes composes (.co.uk, .com.au)."""
+    """Approximate registrable domain: last two labels, three for compound suffixes
+    (.co.uk, .com.au)."""
     h = (host or "").lower().replace("www.", "")
     parts = [x for x in h.split(".") if x]
     if len(parts) >= 3 and parts[-2] in ("co", "com", "org", "gov", "ac"):
@@ -126,25 +125,24 @@ def racine(host):
 
 
 def accepte(depart, arrivee, titre, texte):
-    """Le lien d'arrivee ouvre-t-il VRAIMENT l'offre attendue ?
+    """Does the arrival link REALLY open the expected offer?
 
-    Le seul test de « plus precis » laissait passer : une page catalogue
-    produits (samse.fr/catalogsearch/result/?q=…), une page de recherche
-    (effektiv.fr/?search_keyword=…), une page de marque, et surtout un SAUT
-    VERS UNE AUTRE SOCIETE — la navigation depuis AXA IM avait atterri sur
-    group.bnpparibas.
+    The "more precise" test alone let through: a product catalogue page
+    (samse.fr/catalogsearch/result/?q=…), a search page
+    (effektiv.fr/?search_keyword=…), a brand page, and above all a JUMP TO ANOTHER
+    COMPANY — the navigation from AXA IM had landed on group.bnpparibas.
     """
     if RX_RECHERCHE.search(arrivee):
         return False, "page de recherche"
     ha, hd = urlparse(arrivee).netloc, urlparse(depart).netloc
     meme_maison = racine(ha) == racine(hd) or any(x in ha.lower() for x in ATS_HOTES)
-    # UN SITE CARRIERE VIT SOUVENT SUR UN AUTRE DOMAINE. Groupama recrute sur
-    # groupama-gan-recrute.com, Bpifrance sur talents.bpifrance.fr : comparer
-    # les domaines enregistrables rejetait ces sauts pourtant legitimes, et
-    # c'etait la deuxieme cause d'echec mesuree. On accepte quand le domaine
-    # d'arrivee reprend le nom de la maison de depart — « groupama » est dans
-    # « groupama-gan-recrute ». Le saut AXA IM -> group.bnpparibas, lui, reste
-    # refuse : « axa » n'apparait nulle part dans « bnpparibas ».
+    # A CAREER SITE OFTEN LIVES ON ANOTHER DOMAIN. Groupama recruits on
+    # groupama-gan-recrute.com, Bpifrance on talents.bpifrance.fr: comparing
+    # the registrable domains rejected these jumps, which are legitimate, and
+    # it was the second measured cause of failure. We accept when the arrival
+    # domain contains the name of the starting company — "groupama" is in
+    # "groupama-gan-recrute". The jump AXA IM -> group.bnpparibas, on the other hand, stays
+    # refused: "axa" appears nowhere in "bnpparibas".
     if not meme_maison:
         marque = racine(hd).split(".")[0]
         if len(marque) >= 4 and marque in ha.lower().replace("-", ""):
@@ -153,11 +151,11 @@ def accepte(depart, arrivee, titre, texte):
         return False, f"autre societe ({racine(ha)})"
     if not RX_OFFRE.search(arrivee):
         return False, "pas d'identifiant d'offre"
-    # La page doit parler du poste : au moins deux mots significatifs du titre.
+    # The page must talk about the job: at least two significant words of the title.
     mots = [m for m in re.findall(r"[a-zA-ZÀ-ÿ]{4,}", titre.lower())][:6]
     if mots:
-        # Le slug de l'URL est un indice aussi fort que le corps de la page, et
-        # il survit a un rendu JS incomplet.
+        # The URL slug is a clue as strong as the page body, and
+        # it survives an incomplete JS render.
         bas = ((texte or "") + " " + arrivee.replace("-", " ").replace("_", " ")).lower()
         trouves = sum(1 for m in mots if m in bas)
         if trouves < min(2, len(mots)):
@@ -165,8 +163,8 @@ def accepte(depart, arrivee, titre, texte):
     return True, "ok"
 
 
-# Page qui LISTE les offres de la societe : pas l'annonce, mais un clic au lieu
-# d'un site entier a explorer.
+# Page that LISTS the company's offers: not the posting, but one click instead
+# of a whole site to explore.
 RX_BOARD = re.compile(r"^jobs\.|^careers\.|^recrutement\.|^emploi\.", re.I)
 RX_CHEMIN_BOARD = re.compile(
     r"/(jobs?|careers?|carrieres|recrutement|offres|emplois|nous-rejoindre)(/|$)", re.I
@@ -174,7 +172,7 @@ RX_CHEMIN_BOARD = re.compile(
 
 
 def est_board(depart, arrivee):
-    """Vrai si l'arrivee est le tableau d'offres de LA MEME societe."""
+    """True if the arrival is the job board of THE SAME company."""
     ha, hd = urlparse(arrivee).netloc, urlparse(depart).netloc
     if racine(ha) != racine(hd) and not any(x in ha.lower() for x in ATS_HOTES):
         return False
@@ -184,9 +182,9 @@ def est_board(depart, arrivee):
     seg = [c for c in chemin.split("/") if c]
     if RX_CHEMIN_BOARD.search(chemin):
         return True
-    # Un hote de recrutement ne suffit pas : recrutement.<x>/le-groupe/
-    # nos-entreprises/... est une page corporate, pas un tableau d'offres.
-    # On ne l'accepte que si le chemin reste court, donc proche de la racine.
+    # A recruiting host is not enough: recrutement.<x>/le-groupe/
+    # nos-entreprises/... is a corporate page, not a job board.
+    # We only accept it if the path stays short, hence close to the root.
     return bool(RX_BOARD.search(ha.replace("www.", ""))) and len(seg) <= 1
 
 
@@ -260,17 +258,17 @@ def main():
                 page.goto(depart, timeout=25000, wait_until="domcontentloaded")
                 dismiss_cookies(page)
                 x = analyze(page)
-                # On ne force RIEN : une page protegee est notee et sautee.
+                # We force NOTHING: a protected page is noted and skipped.
                 if x.get("captcha") or x.get("blocked"):
                     captcha += 1
                     print(f"  [{i}/{len(cibles)}] BLOQUE   {ent:<28}{depart[:44]}")
                     continue
-                # Depuis une home corporate, atteindre d'abord la section carrieres.
+                # From a corporate home, first reach the careers section.
                 if str(o.get("url_type") or "") == "HOMEPAGE":
                     goto_careers(page)
                     dismiss_cookies(page)
-                # max_tries=1 : les reprises _unstick (cookies, scroll, reload)
-                # triplaient le temps sans rien changer au resultat sur ces sites.
+                # max_tries=1: the _unstick retries (cookies, scroll, reload)
+                # tripled the time without changing anything to the result on these sites.
                 find_offer(page, role_hint=role, max_tries=1)
                 arrivee = page.url
             except Exception as e:
@@ -302,10 +300,10 @@ def main():
                     o["url"] = arrivee
                     o["url_type"] = "OFFRE_DIRECTE"
             elif arrivee != depart and est_board(depart, arrivee):
-                # L'annonce precise n'existe souvent plus : ces entrees ont ete
-                # creees a partir d'un NOM DE SOCIETE, pas d'une offre reelle.
-                # Le tableau d'offres de la societe reste bien meilleur que sa
-                # page d'accueil : un clic, au lieu d'un site a explorer.
+                # The precise posting often no longer exists: these entries were
+                # created from a COMPANY NAME, not from a real offer.
+                # The company's job board is still much better than its
+                # home page: one click, instead of a site to explore.
                 boards += 1
                 print(f"  [{i}/{len(cibles)}] board    {ent:<28}{arrivee[:60]}")
                 if not a.dry:

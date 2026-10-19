@@ -1,26 +1,25 @@
-"""jobhunter.documents.message — Le message COURT que demandent les formulaires.
+"""jobhunter.documents.message — The SHORT message that forms ask for.
 
-Ancien Scripts/message_offre.py.
+Formerly Scripts/message_offre.py.
 
-POURQUOI. Business France, LinkedIn Easy Apply et beaucoup d'ATS demandent,
-EN PLUS du CV et de la lettre, un message libre de quelques lignes. Coller la
-lettre entiere dans ce champ ne marche pas : elle est trop longue, et sa mise
-en page (objet, formule d'appel, salutations) n'a aucun sens dans une zone de
-saisie.
+WHY. Business France, LinkedIn Easy Apply and many ATS ask, IN ADDITION to the CV
+and the letter, for a free message of a few lines. Pasting the whole letter into
+this field does not work: it is too long, and its layout (subject, salutation,
+closing) makes no sense in an input box.
 
-Ce message dit trois choses, dans cet ordre, et rien d'autre :
-  1. ce que je suis et ce que je vise,
-  2. le fait precis qui me rattache a CETTE mission,
-  3. ma disponibilite.
+This message says three things, in this order, and nothing else:
+  1. what I am and what I am aiming for,
+  2. the precise fact that ties me to THIS mission,
+  3. my availability.
 
-Il s'appuie sur le meme socle que la lettre (SOCLE_FR / SOCLE_EN), donc il
-raconte le meme parcours que le CV joint — mais resserre a l'essentiel.
+It relies on the same base as the letter (SOCLE_FR / SOCLE_EN), so it tells the
+same story as the attached CV — but tightened to the essentials.
 
-Le fichier va a cote de la lettre, en .txt : c'est du texte a copier-coller,
-pas un document a joindre.
+The file goes next to the letter, as .txt: it is text to copy and paste, not a
+document to attach.
 
-Run :
-  python JobHunter.pyw message --url https://...      # une offre
+Run:
+  python JobHunter.pyw message --url https://...      # one offer
   python JobHunter.pyw message --contient Nexans
 """
 
@@ -35,15 +34,15 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union
 
 MSG_OUT = _racine.racine() / "Lettres" / "Messages"
 
-# Tous les textes viennent du profil : domaines[] (accroche, preuve par
-# domaine) et la section « message » (diplome, langues, faits, sources).
+# All the texts come from the profile: domaines[] (hook, proof per
+# domain) and the "message" section (degree, languages, facts, sources).
 
 from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _P
 
 _ici = sys.modules[__name__]
-# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
-# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+# Values taken from the profile: computed on first read, not at import
+# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -58,11 +57,11 @@ def _dom(cle: str, champ: str) -> str:
     return _P.domaine_par_cle(cle).get(champ) or ""
 
 
-# Un FAIT du CV par competence demandee, en proposition NUE : le lieu et le
-# contexte sont ajoutes une seule fois a la composition, sinon deux faits du
-# meme stage repetent le nom de l'employeur dans la meme phrase. Chaque fait
-# porte sa SOURCE (une experience, un memoire, un projet perso…), introduite
-# une fois par `message.sources`. L'ordre des sources est l'ordre de PRIORITE.
+# One CV FACT per requested skill, as a BARE clause: the place and the
+# context are added only once in the composition, otherwise two facts from the
+# same internship repeat the employer's name in the same sentence. Each fact
+# carries its SOURCE (an experience, a thesis, a personal project…), introduced
+# once through `message.sources`. The order of the sources is the order of PRIORITY.
 _PARESSEUX["FAITS_FR"] = lambda: (
     {
         lab: (v.get("source", ""), v.get("fr", ""))
@@ -87,11 +86,11 @@ _PARESSEUX["_TETE_EN"] = lambda: (
 
 
 def preuve(offre: dict[str, Any], langue: str, ton: str = "sobre") -> str:
-    """Les faits du CV qui repondent le mieux a CETTE annonce.
+    """The CV facts that best answer THIS posting.
 
-    Groupes par source pour ne nommer le stage ou le memoire qu'une fois.
-    Se rabat sur la phrase par domaine quand l'annonce ne demande rien qu'on
-    sache illustrer : mieux vaut une phrase generique mais vraie qu'un silence.
+    Grouped by source so as to name the internship or the thesis only once.
+    Falls back on the per-domain sentence when the posting asks for nothing we can
+    illustrate: a generic but true sentence is better than silence.
     """
     from jobhunter.documents.commun import match_skills
     from jobhunter.scoring.lexique import cv_variant_key
@@ -104,8 +103,8 @@ def preuve(offre: dict[str, Any], langue: str, ton: str = "sobre") -> str:
     for lab, (src, clause) in table.items():
         if lab not in demandees:
             continue
-        # Deux competences peuvent pointer le meme fait (SFDR et Analyse ESG) :
-        # on ne l'ecrit pas deux fois.
+        # Two skills may point to the same fact (SFDR and ESG analysis):
+        # it is not written twice.
         if clause not in groupes.setdefault(src, []):
             groupes[src].append(clause)
     if not groupes:
@@ -114,8 +113,8 @@ def preuve(offre: dict[str, Any], langue: str, ton: str = "sobre") -> str:
             p = _dom(cle, "preuve_en")
         else:
             p = (ton == "detente" and _dom(cle, "preuve_detente_fr")) or _dom(cle, "preuve_fr")
-        # Profil sans preuve ecrite : la PREMIERE phrase du parcours, qui dit
-        # deja un fait du CV. Mieux qu'un paragraphe vide.
+        # Profile without a written proof: the FIRST sentence of the background, which
+        # already states a CV fact. Better than an empty paragraph.
         if not p:
             parcours = _dom(cle, "parcours_en" if langue == "en" else "parcours_fr")
             p = (parcours.split(". ")[0].rstrip(".") + ".") if parcours else ""
@@ -123,41 +122,41 @@ def preuve(offre: dict[str, Any], langue: str, ton: str = "sobre") -> str:
 
     lien = " and " if langue == "en" else " et "
     phrases: list[str] = []
-    # Deux sources au plus : trois font une enumeration, pas une phrase.
+    # Two sources at most: three make an enumeration, not a sentence.
     for src in _ici._SOURCES:
         if src not in groupes or len(phrases) >= 2:
             continue
-        # UN SEUL fait par source. Deux faits du meme stage se telescopaient :
-        # « j'ai prepare des projections financieres et suivi des ecarts ET
-        # construit des modeles financiers ET des projections » — deux « et »
-        # d'affilee, le verbe repete, « projections » deux fois. Chaque clause
-        # porte deja son propre « et » la ou il est utile.
+        # ONE SINGLE fact per source. Two facts from the same internship collided:
+        # "j'ai prepare des projections financieres et suivi des ecarts ET
+        # construit des modeles financiers ET des projections" — two "et"
+        # in a row, the verb repeated, "projections" twice. Each clause
+        # already carries its own "et" where it is useful.
         p = tete[src] + groupes[src][0]
         phrases.append(p[0].upper() + p[1:])
     return ". ".join(phrases) + "."
 
 
-# L'ASPECT ENVIRONNEMENTAL, quand l'employeur travaille dedans. Meme regle que
-# dans la lettre : le domaine du poste dit le METIER, pas le secteur de la
-# maison. Albioma recrute en corporate finance et produit de l'energie
-# renouvelable ; le message n'en disait rien.
+# THE ENVIRONMENTAL ASPECT, when the employer works in it. Same rule as
+# in the letter: the job's domain says the PROFESSION, not the sector of the
+# company. Albioma recruits in corporate finance and produces renewable
+# energy; the message said nothing about it.
 #
-# La phrase est choisie selon la source DEJA employee par la preuve. Sans cela,
-# un message dont la preuve vient du memoire enchainait « Dans mon mémoire,
-# j'ai… » puis « Mon mémoire a porté sur… » — deux phrases de suite sur le meme
+# The sentence is chosen according to the source ALREADY used by the proof. Without that,
+# a message whose proof comes from the thesis chained "Dans mon mémoire,
+# j'ai…" then "Mon mémoire a porté sur…" — two sentences in a row about the same
 # objet.
-# Phrase de contexte (message.phrase_contexte_fr/en), quand la lettre ajoute
-# elle-meme un contexte a son parcours. Elle est choisie selon la source DEJA
-# citee par la preuve, sinon deux phrases de suite parlent du meme objet :
-#   - la preuve cite UNE source presente dans la table -> la phrase de cette cle
-#   - la preuve cite plusieurs sources                  -> rien, elle se suffit
-#   - sinon                                             -> la phrase « autre »
+# Context sentence (message.phrase_contexte_fr/en), when the letter itself
+# adds a context to its background. It is chosen according to the source ALREADY
+# quoted by the proof, otherwise two sentences in a row talk about the same thing:
+#   - the proof quotes ONE source present in the table -> that key's sentence
+#   - the proof quotes several sources                   -> nothing, it is enough
+#   - otherwise                                          -> the "autre" sentence
 _PARESSEUX["_CONTEXTE_FR"] = lambda: dict(_ici._MSG.get("phrase_contexte_fr") or {})
 _PARESSEUX["_CONTEXTE_EN"] = lambda: dict(_ici._MSG.get("phrase_contexte_en") or {})
 
 
 def _phrase_durable(offre: dict[str, Any], langue: str, preuve_texte: str) -> str:
-    """La phrase de contexte, ou "" si l'annonce n'y appelle pas."""
+    """The context sentence, or "" if the posting does not call for it."""
     from jobhunter.documents.lettre import contexte_durable
 
     if not contexte_durable(
@@ -182,55 +181,53 @@ def _phrase_durable(offre: dict[str, Any], langue: str, preuve_texte: str) -> st
 
 
 def _intro_role(offre: dict[str, Any], langue: str, ton: str = "sobre") -> str:
-    """Les faits du CV qui repondent a l'annonce. Rien d'autre.
+    """The CV facts that answer the posting. Nothing else.
 
-    Une phrase nommait auparavant le quotidien decrit par l'offre :
+    A sentence used to name the daily work described by the offer:
 
-        « Cette mission m'interesse : elle porte sur la cloture mensuelle, le
-          budget et le suivi des ecarts. »
+        "Cette mission m'interesse : elle porte sur la cloture mensuelle, le
+          budget et le suivi des ecarts."
 
-    Elle expliquait au recruteur en quoi consiste son propre poste, apres avoir
-    annonce qu'on s'y interessait. C'est pompeux dans les deux moities : il a
-    ecrit l'annonce, il sait ce qu'il y a dedans, et l'interet se demontre au
-    lieu de se declarer.
+    It explained to the recruiter what their own job consists of, after announcing
+    that we were interested in it. It is pompous in both halves: they wrote the
+    posting, they know what is in it, and interest is shown rather than declared.
 
-    Le lien avec l'annonce n'est pas perdu pour autant : les faits sont
-    CHOISIS sur les competences qu'elle demande. Chez Elior, « suivi des
-    ecarts » repond a leur « identifier les principaux ecarts » sans avoir a le
-    souligner. Montrer, pas annoncer.
+    The link with the posting is not lost for all that: the facts are CHOSEN on the
+    skills it asks for. At Elior, "suivi des ecarts" answers their "identifier les
+    principaux ecarts" without having to point it out. Show, do not announce.
 
-    Corollaire : plus de doublon a eviter, donc le parametre `sauf` de
-    preuve() disparait — le meilleur fait n'est plus ecarte au motif que la
-    phrase supprimee le citait deja.
+    Corollary: no more duplicate to avoid, so the `sauf` parameter of preuve()
+    disappears — the best fact is no longer set aside on the grounds that the removed
+    sentence already quoted it.
 
-    S'y ajoute, chez un employeur qui travaille dans la durabilite, une phrase
-    sur l'investissement durable — voir _phrase_durable().
+    Added to it, at an employer working in sustainability, is a sentence on
+    sustainable investment — see _phrase_durable().
     """
     p = preuve(offre, langue, ton)
     return p + _phrase_durable(offre, langue, p)
 
 
-# ── La formule d'appel, nominative quand on sait a qui l'on parle ───────────
+# ── The salutation, named when we know who we are talking to ──────────────────
 #
-# LE CHAMP `rh` EST SURCHARGE, et c'est la premiere chose a savoir. Mesure sur
-# la file du 21/09/2026, 4917 offres :
+# THE `rh` FIELD IS OVERLOADED, and it is the first thing to know. Measured on
+# the queue of 21/09/2026, 4917 offers:
 #
 #     4501  vide
-#      413  une URL de RECHERCHE LinkedIn, pas une personne :
+#      413  a LinkedIn SEARCH URL, not a person:
 #           « https://www.linkedin.com/search/results/people/?keywords=... »
-#        3  une vraie civilite suivie d'un nom
+#        3  a real title followed by a name
 #
-# Ecrire « Bonjour https://www.linkedin.com/search... » serait pire que la
-# formule generique. On n'utilise donc ce champ que s'il PARSE comme un nom.
+# Writing "Bonjour https://www.linkedin.com/search..." would be worse than the
+# generic formula. So this field is only used if it PARSES as a name.
 #
-# Les trois vrais noms viennent tous de l'API detail des V.I.E, la seule source
-# qui rende `contactName`. Leur nombre grandira a mesure que les V.I.E passent
-# par `ajoute_vie.py`.
+# The three real names all come from the V.I.E detail API, the only source
+# that returns `contactName`. Their number will grow as the V.I.E go
+# through `ajoute_vie.py`.
 _RX_CIVILITE = re.compile(r"^\s*(monsieur|madame|mr|mrs|ms|mme|m)\.?\s+(.{2,})$", re.I)
 
-# Particules NOBILIAIRES : minuscules meme en tete de patronyme. « Monsieur de
-# Gaulle », jamais « Monsieur De Gaulle ». Valable aussi pour les formes
-# neerlandaises et ibero-portugaises : « van den Berg », « dos Santos ».
+# NOBILIARY particles: lower case even at the head of a surname. "Monsieur de
+# Gaulle", never "Monsieur De Gaulle". Also valid for the Dutch and
+# Ibero-Portuguese forms: "van den Berg", "dos Santos".
 _PARTICULES = {
     "de",
     "du",
@@ -254,13 +251,13 @@ _PARTICULES = {
     "ben",
 }
 
-# « Le » et « La » NE SONT PAS dans cette liste : en francais ils portent la
-# majuscule quand ils font corps avec le nom — « Monsieur Le Pen », « Madame
-# La Rochelle ». Les confondre avec « de » ecorcherait un nom sur deux.
+# "Le" and "La" are NOT in this list: in French they carry a
+# capital when they are part of the name — "Monsieur Le Pen", "Madame
+# La Rochelle". Mixing them up with "de" would mangle one name in two.
 
-# Ce qui ressemble a un nom mais designe un SERVICE. Sans ce garde-fou, un
+# What looks like a name but designates a DEPARTMENT. Without this safeguard, a
 # champ « Service Recrutement » produisait « Dear Service Recrutement, » —
-# plus ridicule que la formule generique qu'il remplace.
+# more ridiculous than the generic formula it replaces.
 _RX_GUICHET = re.compile(
     r"\b(?:service|recrutement|recruitment|recruiting|talent|acquisition|"
     r"ressources?\s+humaines?|\brh\b|\bhr\b|human\s+resources|people|equipe|"
@@ -271,22 +268,22 @@ _RX_GUICHET = re.compile(
 
 
 def _nom_propre(s: str) -> str:
-    """« SILVA PEREIRA » -> « Silva Pereira ».
+    """“SILVA PEREIRA” -> "Silva Pereira".
 
-    Gere traits d'union et apostrophes : « JEAN-PIERRE » -> « Jean-Pierre », « O'BRIEN »
-    -> « O'Brien ».
+    Handles hyphens and apostrophes: "JEAN-PIERRE" -> "Jean-Pierre", "O'BRIEN"
+    -> "O'Brien".
 
-    Un nom deja correctement casse n'est PAS retouche : « McDonald » et
-    « van Gogh » perdraient leur forme a passer dans un title() aveugle.
+    A name already correctly cased is NOT touched: "McDonald" and "van Gogh" would
+    lose their shape going through a blind title().
     """
 
     def _mot(m: str, premier: bool) -> str:
-        # `premier` ne protege PAS les particules nobiliaires : un patronyme
-        # peut commencer par elles, et « Monsieur De Gaulle » est une faute.
+        # `premier` does NOT protect the nobiliary particles: a surname
+        # may start with them, and "Monsieur De Gaulle" is a mistake.
         if m.lower().rstrip(".'’") in _PARTICULES:
             return m.lower()
         if not m.isupper() and not m.islower():
-            return m  # deja casse a la main : on respecte
+            return m  # already cased by hand: we respect it
         out = []
         for morceau in re.split(r"([-'’])", m.lower()):
             out.append(morceau if morceau in "-'’" else morceau.capitalize())
@@ -297,13 +294,13 @@ def _nom_propre(s: str) -> str:
 
 
 def _patronyme(nom: str) -> str:
-    """Le NOM DE FAMILLE seul, depuis « Prenom NOM » ou « PRENOM NOM NOM ».
+    """The SURNAME alone, from "Firstname SURNAME" or "FIRSTNAME SURNAME SURNAME".
 
-    Deux formes rencontrees dans l'API Business France :
-      « Awa MOUSSA »            -> casse MIXTE : les capitales sont le nom
-      « KEVIN SILVA PEREIRA »   -> TOUT en capitales : convention
-                                     administrative francaise « Prenom NOM »,
-                                     donc le premier mot est le prenom
+    Two forms met in the Business France API:
+      "Awa MOUSSA"             -> MIXED case: the capitals are the surname
+      "KEVIN SILVA PEREIRA"    -> ALL in capitals: French administrative
+                                     convention "Firstname SURNAME",
+                                     so the first word is the first name
     """
     mots = [w for w in nom.split() if w]
     if not mots:
@@ -314,10 +311,10 @@ def _patronyme(nom: str) -> str:
     return _nom_propre(" ".join(mots[1:])) or _nom_propre(mots[0])
 
 
-# UNE ANNONCE PEUT EN NOMMER DEUX. Mirova ecrit « adressez votre CV et votre
-# lettre a Louis Mac Arthur et Clement Lebrun ». Sans decoupe, `_patronyme`
-# lisait la chaine entiere comme un seul nom et rendait « Monsieur Mac
-# Arthur et Monsieur Clement Lebrun » — la conjonction promue patronyme.
+# A POSTING MAY NAME TWO. Mirova writes "adressez votre CV et votre
+# lettre a Louis Mac Arthur et Clement Lebrun". Without splitting, `_patronyme`
+# read the whole string as a single name and returned "Monsieur Mac
+# Arthur et Monsieur Clement Lebrun" — the conjunction promoted to surname.
 _RX_SEPARE = re.compile(r"\s+(?:et|and)\s+|\s*[&;+/]\s*", re.I)
 GENERIQUES = ("Madame, Monsieur,", "Dear Sir or Madam,", "Bonjour,")
 
@@ -326,13 +323,12 @@ _CIVILITES = {"madame", "monsieur", "mme", "mr", "mrs", "ms", "m", "dr", "mlle",
 
 
 def nom_dans_offre(rh: str | None, texte: str | None) -> str:
-    """`rh` si l'un de ses noms (hors civilite, 3 lettres au moins) figure dans le TEXTE de l'annonce, "" sinon.
+    """`rh` if one of its names (excluding the title, at least 3 letters) appears in the TEXT of the posting, "" otherwise.
 
-    l'utilisateur, 2026-10-07 : on ne nomme pas un destinataire que l'annonce ne
-    nomme pas. Business France transmet un « contactName » (Madame Rossi chez
-    Meridiam, Madame Lopez chez Schneider) qui n'apparait nulle part dans le
-    texte publie : s'adresser a cette personne trahit qu'on a lu un champ
-    technique, pas l'offre.
+    The user, 2026-10-07: we do not name a recipient the posting does not name.
+    Business France passes a "contactName" (Madame Rossi at Meridiam, Madame Lopez
+    at Schneider) that appears nowhere in the published text: addressing that person
+    gives away that we read a technical field, not the offer.
     """
     import unicodedata
 
@@ -348,18 +344,18 @@ def nom_dans_offre(rh: str | None, texte: str | None) -> str:
 
 
 def appel(offre: dict[str, Any], langue: str = "fr", ton: str = "sobre") -> str:
-    """La formule d'appel.
+    """The salutation.
 
-    Nominative si `rh` porte une civilite et un nom, generique sinon. Plusieurs noms
-    separes par « et » sont tous repris.
+    Named if `rh` carries a title and a name, generic otherwise. Several names
+    separated by "et" are all used.
 
-    LE GENRE NE SE DEVINE PAS D'UN PRENOM. Sans civilite explicite dans le
-    champ, on ne choisit pas entre « Monsieur » et « Madame » : en anglais on
-    s'adresse au nom complet, ce qui se dit parfaitement ; en francais aucune
-    formule nominative n'est neutre, donc on garde la generique.
+    GENDER IS NOT GUESSED FROM A FIRST NAME. Without an explicit title in the field,
+    we do not choose between "Monsieur" and "Madame": in English we address the full
+    name, which is perfectly fine; in French no named formula is neutral, so we keep
+    the generic one.
     """
     rh = (offre.get("rh") or "").strip()
-    # Une offre complete (avec son texte) : le nom doit y figurer.
+    # A complete offer (with its text): the name must appear in it.
     if "description" in offre:
         rh = nom_dans_offre(rh, f"{offre.get('poste', '')} {offre.get('description') or ''}")
     generique = (
@@ -369,20 +365,20 @@ def appel(offre: dict[str, Any], langue: str = "fr", ton: str = "sobre") -> str:
         if ton == "detente"
         else "Madame, Monsieur,"
     )
-    # Ni une URL, ni un guichet, ni une adresse mail : on veut une PERSONNE.
-    # URL et adresse mail se testent AVANT la decoupe : une URL contient des
-    # barres obliques, qui sont un separateur, et s'y faire hacher en dix
-    # fragments ne mene nulle part. Le GUICHET, lui, se teste APRES : dans
-    # « Monsieur Martin / Service Recrutement » il ne disqualifie que la
-    # seconde moitie, et rejeter le champ entier perdait un nom exploitable.
+    # Neither a URL, nor a department, nor an email address: we want a PERSON.
+    # URL and email address are tested BEFORE the split: a URL contains
+    # slashes, which are a separator, and being chopped into ten
+    # fragments leads nowhere. The DEPARTMENT, on the other hand, is tested AFTER: in
+    # "Monsieur Martin / Service Recrutement" it only disqualifies the
+    # second half, and rejecting the whole field lost a usable name.
     if not rh or rh.lower().startswith(("http://", "https://", "www.")) or "@" in rh:
         return generique
 
-    # Plusieurs destinataires. ON NE GARDE QUE LES MORCEAUX QUI SONT DES
-    # PERSONNES, et on ne retombe jamais sur la chaine entiere : « Monsieur
-    # Jean et Marie Dupont » y redonnerait « Monsieur Et Marie Dupont ».
-    # Ecarter le morceau muet sert aussi « Monsieur Martin / RH », dont la
-    # premiere moitie reste exploitable.
+    # Several recipients. WE ONLY KEEP THE PIECES THAT ARE
+    # PEOPLE, and we never fall back on the whole string: "Monsieur
+    # Jean et Marie Dupont" would give back "Monsieur Et Marie Dupont".
+    # Setting aside the silent piece also serves "Monsieur Martin / RH", whose
+    # first half stays usable.
     morceaux = [x.strip() for x in _RX_SEPARE.split(rh) if x.strip()]
     if len(morceaux) > 1:
         noms = [appel({"rh": x}, langue, ton) for x in morceaux]
@@ -398,7 +394,7 @@ def appel(offre: dict[str, Any], langue: str = "fr", ton: str = "sobre") -> str:
 
     m = _RX_CIVILITE.match(rh)
     if not m:
-        # Un nom sans civilite : exploitable en anglais, pas en francais.
+        # A name without a title: usable in English, not in French.
         nom = _nom_propre(rh)
         if langue == "en" and 1 < len(nom.split()) < 6:
             return f"Dear {nom},"
@@ -416,15 +412,15 @@ def appel(offre: dict[str, Any], langue: str = "fr", ton: str = "sobre") -> str:
 
 
 def message(offre: dict[str, Any], langue: str | None = None, ton: str = "sobre") -> str:
-    """Le texte a coller dans le formulaire.
+    """The text to paste into the form.
 
-    `ton` : sobre | detente. Un champ vide du profil ne laisse pas de paragraphe vide.
+    `ton`: sobre | detente. An empty field of the profile does not leave an empty paragraph.
     """
     return re.sub(r"\n{3,}", "\n\n", _message(offre, langue, ton)).strip()
 
 
 def _message(offre: dict[str, Any], langue: str | None = None, ton: str = "sobre") -> str:
-    """Le texte a coller dans le formulaire. `ton` : sobre | detente."""
+    """The text to paste into the form. `ton`: sobre | detente."""
     from jobhunter.documents.commun import minuscule_titre, titre_poste
     from jobhunter.scoring.langue import langue_offre
     from jobhunter.scoring.lexique import cv_variant_key
@@ -434,14 +430,14 @@ def _message(offre: dict[str, Any], langue: str | None = None, ton: str = "sobre
     )
     cle = cv_variant_key(offre.get("domaine"))
     titre = titre_poste(offre.get("poste") or "") or ""
-    # Meme regle que dans la lettre : en francais un intitule de poste est un
-    # nom commun, et une annonce en capitales ne doit pas faire crier le
-    # message. « je postule au poste de CORPORATE FINANCE HF chez ALBIOMA »
-    # etait la citation exacte d'une annonce, recopiee sans egard.
+    # Same rule as in the letter: in French a job title is a
+    # common noun, and a posting in capitals must not make the message
+    # shout. "je postule au poste de CORPORATE FINANCE HF chez ALBIOMA"
+    # was the exact quotation of a posting, copied without regard.
     if lg != "en":
         titre = minuscule_titre(titre)
-    # Le titre entier alourdit un message de cinq lignes : on garde le premier
-    # segment, comme sur le CV.
+    # The whole title weighs down a five-line message: we keep the first
+    # segment, as on the CV.
     tete = titre.split(" - ")[0].strip()
     if 12 <= len(tete) < len(titre):
         titre = tete
@@ -450,8 +446,8 @@ def _message(offre: dict[str, Any], langue: str | None = None, ton: str = "sobre
     nom = _P.identite()["nom"]
 
     def lien(diplome: str) -> str:
-        # « Je suis analyste ESG, diplômé de …, et je postule » : le diplome
-        # est optionnel dans le profil, la phrase doit tenir sans lui.
+        # "Je suis analyste ESG, diplômé de …, et je postule": the degree
+        # is optional in the profile, the sentence must stand without it.
         return f", {diplome}," if diplome else ""
 
     if lg == "en":
@@ -467,7 +463,7 @@ def _message(offre: dict[str, Any], langue: str | None = None, ton: str = "sobre
             f"Kind regards,\n{nom}"
         )
     if ton == "detente":
-        # Un parcours a l'etranger se raconte sans bravade : le fait suffit.
+        # A background abroad is told without bravado: the fact is enough.
         dip = _ici._MSG.get("diplome_detente_fr") or _ici._MSG.get("diplome_fr", "")
         langues = _ici._MSG.get("langues_detente_fr") or _ici._MSG.get("langues_fr", "")
         return (
@@ -514,10 +510,10 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--url", default="", help="fragment de l'URL de l'offre")
     ap.add_argument("--contient", default="", help="fragment du nom de l'entreprise")
-    # TotalEnergies Congo publie en francais mais demande « Merci de candidater
-    # en anglais » : la detection lit la langue du TEXTE, pas cette consigne.
-    # Sans ce drapeau, le message serait francais alors que le CV et la lettre
-    # sont anglais — trois pieces, deux langues.
+    # TotalEnergies Congo publishes in French but asks "Merci de candidater
+    # en anglais": the detection reads the language of the TEXT, not this instruction.
+    # Without this flag, the message would be French while the CV and the letter
+    # are English — three documents, two languages.
     ap.add_argument(
         "--langue",
         choices=("fr", "en"),
@@ -549,7 +545,7 @@ def main() -> int:
         return 1
     for o in cibles:
         txt = message(cast(dict[str, Any], o), langue=a.langue, ton=a.ton)
-        MSG_OUT.mkdir(parents=True, exist_ok=True)  # au moment d'ecrire, pas a l'import
+        MSG_OUT.mkdir(parents=True, exist_ok=True)  # at write time, not at import
         f = MSG_OUT / (new_name("Message", o.get("poste", ""), o.get("entreprise", "")) + ".txt")
         f.write_text(txt, encoding="utf-8")
         print(f"\n=== {o.get('entreprise')} — {(o.get('poste') or '')[:50]} ===")

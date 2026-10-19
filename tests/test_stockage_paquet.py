@@ -1,9 +1,9 @@
-"""Le paquet jobhunter.stockage (phase 3) : facades, independance, racine.
+"""The jobhunter.stockage package (phase 3): facades, independence, root.
 
-- `queue_io` / `suivi_io` SONT les modules du paquet (alias), pas des copies :
-  sinon un monkeypatch de leur CHEMIN ne toucherait pas le code reel.
-- Le stockage se charge SANS Scripts/ sur le chemin : plus de cycle jutil <-> queue_io.
-- La racine se trouve par marqueur, ou par JOBHUNTER_RACINE.
+- `queue_io` / `suivi_io` ARE the package's modules (aliases), not copies:
+  otherwise a monkeypatch of their CHEMIN would not touch the real code.
+- Storage loads WITHOUT Scripts/ on the path: no more jutil <-> queue_io cycle.
+- The root is found by marker, or by JOBHUNTER_RACINE.
 """
 
 import json
@@ -86,7 +86,7 @@ def test_ecritures_simultanees_ne_partagent_pas_le_temporaire(tmp_path):
         try:
             for i in range(40):
                 atomique.ecrire_json(f, {"qui": n, "i": i, "bourre": "x" * 5000})
-        except Exception as e:  # noqa: BLE001 — le test veut voir toute erreur
+        except Exception as e:  # noqa: BLE001 — the test wants to see any error
             erreurs.append(e)
 
     fils = [threading.Thread(target=ecrire, args=(n,)) for n in range(4)]
@@ -100,8 +100,8 @@ def test_ecritures_simultanees_ne_partagent_pas_le_temporaire(tmp_path):
 
 
 def test_jwrite_redirige_toujours_la_file_vers_la_separation(file_temporaire):
-    """Garde-fou historique : ecrire apply_queue.json en direct ne remet jamais les
-    descriptions dans la file."""
+    """Historical safeguard: writing apply_queue.json directly never puts the
+    descriptions back into the queue."""
     jutil.jwrite(file_temporaire, [{"entreprise": "A", "poste": "B", "description": "texte"}])
     assert "description" not in file_temporaire.read_text(encoding="utf-8")
     assert file.charger()[0]["description"] == "texte"
@@ -109,8 +109,8 @@ def test_jwrite_redirige_toujours_la_file_vers_la_separation(file_temporaire):
 
 @pytest.mark.parametrize("module", ["jobhunter.stockage.verrou", "jobhunter.stockage.atomique"])
 def test_couches_basses_sans_dependance_au_moteur(module):
-    """atomique et verrou n'importent rien d'autre du projet, sauf le journal (sans
-    dependance lui-meme)."""
+    """atomique and verrou import nothing else from the project, except the log (itself
+    without dependency)."""
     code = (
         f"import json, sys, {module}; "
         "print(json.dumps([m for m in sys.modules if m.startswith('jobhunter')]))"
@@ -129,7 +129,7 @@ def test_couches_basses_sans_dependance_au_moteur(module):
     ],
 )
 def test_module_lance_directement_affiche_son_bilan(tmp_path, script, donnee, attendu):
-    """`python -m jobhunter.stockage.file` affiche le nombre d'offres (ancien
+    """`python -m jobhunter.stockage.file` displays the number of offers (formerly
     `python Scripts/queue_io.py`)."""
     (tmp_path / "Scripts").mkdir()
     (tmp_path / "profil").mkdir()
@@ -151,8 +151,8 @@ def test_module_lance_directement_affiche_son_bilan(tmp_path, script, donnee, at
 
 
 def test_racine_trouvee_depuis_le_dossier_courant(tmp_path, monkeypatch):
-    # Paquet installe par pip (site-packages) : le marqueur se cherche aussi en
-    # remontant depuis le dossier courant.
+    # Package installed by pip (site-packages): the marker is also searched
+    # going up from the current folder.
     from jobhunter import racine
 
     (tmp_path / "Scripts").mkdir()

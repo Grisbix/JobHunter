@@ -1,33 +1,33 @@
 #!/usr/bin/env python3
-"""Refuse qu'une donnée personnelle entre dans le dépôt public.
+"""Refuses that any personal data enter the public repository.
 
-Le dépôt est public ; le dossier de travail de l'utilisateur, lui, contient son profil,
-ses offres, son suivi, ses lettres, ses CV et ses clés d'API. `.gitignore` les écarte,
-mais un `git add -f`, un fichier renommé ou une copie dans un autre dossier passeraient.
-Ce contrôle regarde les fichiers suivis (ou ceux passés en arguments, pour pre-commit)
-et échoue sur tout chemin de la couche « utilisateur ».
+The repository is public; the user's working folder contains their profile, offers,
+tracking, letters, CVs and API keys. `.gitignore` keeps them out, but a `git add -f`,
+a renamed file or a copy in another folder would get through. This check looks at the
+tracked files (or those given as arguments, for pre-commit) and fails on any path of
+the "user" layer.
 
-    python outils/donnees_perso.py            # tous les fichiers suivis
-    python outils/donnees_perso.py a.json b   # ces fichiers (hook pre-commit)
+    python outils/donnees_perso.py            # all tracked files
+    python outils/donnees_perso.py a.json b   # these files (pre-commit hook)
 
-Lancé par pre-commit avant chaque commit et par les tests (donc par la CI).
+Run by pre-commit before each commit and by the tests (hence by the CI).
 """
 
 import re
 import subprocess
 import sys
 
-# Ce qui ne doit jamais être publié : données de l'utilisateur et secrets.
+# What must never be published: user data and secrets.
 INTERDITS = [
-    r"^profil/(?!exemple_)[^/]+$",  # profil.json et toute copie ; seuls les exemples
-    r"^Scripts/(?!sources_config\.json$)[^/]+\.(json|jsonl|csv|txt|log)$",  # file, suivi, clés…
-    r"^Scripts/_",  # sauvegardes, journaux, états (_logs/, _preuves/, _rendement.jsonl…)
-    r"^(CV|Lettres)/",  # documents générés
-    r"^Mon_CV/(?!LISEZ-MOI\.txt$)",  # le CV de l'utilisateur
+    r"^profil/(?!exemple_)[^/]+$",  # profil.json and any copy; only the examples
+    r"^Scripts/(?!sources_config\.json$)[^/]+\.(json|jsonl|csv|txt|log)$",  # queue, tracking, keys…
+    r"^Scripts/_",  # backups, logs, states (_logs/, _preuves/, _rendement.jsonl…)
+    r"^(CV|Lettres)/",  # generated documents
+    r"^Mon_CV/(?!LISEZ-MOI\.txt$)",  # the user's CV
     r"(^|/)\.env($|\.)",
     r"(^|/)(adzuna|jooble|francetravail|api_keys|mail_config|comptes|apply_profile)\.json$",
     r"(^|/)\.ats_password$",
-    r"\.(docx|pdf|xlsx)$",  # documents personnels ; les captures du README sont des .png
+    r"\.(docx|pdf|xlsx)$",  # personal documents; the README screenshots are .png files
 ]
 _RX = [re.compile(m) for m in INTERDITS]
 

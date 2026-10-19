@@ -1,32 +1,32 @@
 #!/usr/bin/env python3
-"""acces.py — Gere les ACCES aux sites, SANS jamais stocker de mot de passe.
+"""acces.py — Manages ACCESS to sites, WITHOUT ever storing a password.
 
-POURQUOI PAS DE MOTS DE PASSE ICI
-Un fichier de mots de passe en clair a cote du code, c'est le pire endroit
-possible : synchronise par OneDrive, lisible par tout programme du PC, et un
-jour commite par erreur. Chrome a deja un gestionnaire de mots de passe
-chiffre par le systeme — c'est LUI qui doit remplir les formulaires.
+WHY NO PASSWORDS HERE
+A file of plain-text passwords next to the code is the worst possible place: synced by
+OneDrive, readable by any program on the PC, and one day committed by mistake. Chrome
+already has a password manager encrypted by the system — IT is the one that must fill
+the forms.
 
-COMMENT LES PROGRAMMES "OUVRENT TOUT"
-acces.py et apply_runner partagent un profil Chrome dedie et persistant.
-Tu te connectes a la main via --open ; apply_runner reutilise ensuite ce
-profil, avec ou sans --chrome, sans le remplacer par ton Chrome quotidien.
-Les autres collecteurs ont leurs propres options de profil.
-Aucun mot de passe ne transite par le code.
+HOW THE PROGRAMS "OPEN EVERYTHING"
+acces.py and apply_runner share a dedicated, persistent Chrome profile.
+You log in by hand through --open; apply_runner then reuses that profile, with or
+without --chrome, without replacing it with your everyday Chrome.
+The other collectors have their own profile options.
+No password goes through the code.
 
-CE QUE CE FICHIER GARDE
-  - l'URL de connexion de chaque site
-  - l'identifiant (email) utilise — pas le mot de passe
-  - l'etat de la session vu au dernier controle
-  - les CLES D'API (secrets non-mots-de-passe : France Travail...), saisies
-    masquees et jamais affichees
+WHAT THIS FILE KEEPS
+  - the login URL of each site
+  - the identifier (email) used — not the password
+  - the session state seen at the last check
+  - the API KEYS (non-password secrets: France Travail...), entered masked and
+    never displayed
 
-Run :
-  python JobHunter.pyw acces --list                    # etat des acces
-  python JobHunter.pyw acces --open linkedin.com       # ouvre la page de connexion dans TON Chrome
-  python JobHunter.pyw acces --check                   # teste quelles sessions sont encore actives
-  python JobHunter.pyw acces --set-id linkedin.com --email moi@x.fr
-  python JobHunter.pyw acces --set-key francetravail   # saisie masquee d'une cle d'API
+Run:
+  python JobHunter.pyw acces --list                    # state of the accesses
+  python JobHunter.pyw acces --open linkedin.com       # opens the login page in YOUR Chrome
+  python JobHunter.pyw acces --check                   # tests which sessions are still active
+  python JobHunter.pyw acces --set-id linkedin.com --email me@x.fr
+  python JobHunter.pyw acces --set-key francetravail   # masked entry of an API key
 """
 
 import argparse
@@ -45,17 +45,17 @@ if hasattr(sys.stdout, "reconfigure"):
 
 HERE = _racine.scripts()
 COMPTES = HERE / "comptes.json"
-KEYS = HERE / "api_keys.json"  # gitignore : contient des secrets
+KEYS = HERE / "api_keys.json"  # gitignore: contains secrets
 
-# MEME profil que apply_runner : les sessions ouvertes ici sont celles que les
-# scripts retrouveront. Pointer sur la racine « User Data » de Chrome ne marche
-# PAS — Chrome relance une autre instance et lache Playwright (TargetClosedError).
-# Un profil dedie evite aussi d'avoir a fermer le Chrome de tous les jours.
+# SAME profile as apply_runner: the sessions opened here are the ones the
+# scripts will find. Pointing to Chrome's "User Data" root does NOT
+# work — Chrome starts another instance and drops Playwright (TargetClosedError).
+# A dedicated profile also avoids having to close the everyday Chrome.
 import os as _os
 
 PROFIL = Path(_os.environ.get("LOCALAPPDATA", str(Path.home()))) / "apply_runner_chrome"
 
-# Sites ou une session connectee change ce qu'on peut faire.
+# Sites where a logged-in session changes what can be done.
 SITES_CONNEXION = {
     "linkedin.com": "https://www.linkedin.com/login",
     "welcometothejungle.com": "https://www.welcometothejungle.com/fr/signin",
@@ -99,16 +99,16 @@ def cmd_list():
     return 0
 
 
-# Duree max d'attente d'une connexion manuelle, en minutes.
+# Maximum wait for a manual login, in minutes.
 ATTENTE_MIN = 15
 
 
 def _procs_profil():
-    """(pid, ppid) des Chrome lances sur LE profil dedie, et eux seuls.
+    """(pid, ppid) of the Chrome processes started on THE dedicated profile, and only them.
 
-    On filtre sur --user-data-dir dans la ligne de commande : tuer chrome.exe
-    en masse fermerait le navigateur personnel de l'utilisateur, avec ses
-    onglets et ses formulaires en cours. Jamais.
+    We filter on --user-data-dir in the command line: killing chrome.exe en masse
+    would close the user's personal browser, with its tabs and its forms in
+    progress. Never.
     """
     import subprocess
 
@@ -136,13 +136,12 @@ def _pids_profil():
 
 
 def _racines_profil():
-    """Les processus Chrome RACINE du profil (parent hors Chrome).
+    """The ROOT Chrome processes of the profile (parent outside Chrome).
 
-    Seule la racine possede une fenetre. taskkill sans /F envoie WM_CLOSE, qui
-    n'atteint que les processus a fenetre : viser les enfants (renderers, GPU)
-    ne ferme rien du tout. C'est la racine qu'il faut prier de se fermer, et
-    elle entraine ses enfants en s'arretant proprement — donc en ecrivant ses
-    cookies sur disque.
+    Only the root owns a window. taskkill without /F sends WM_CLOSE, which only
+    reaches processes with a window: targeting the children (renderers, GPU) closes
+    nothing at all. It is the root that must be asked to close, and it takes its
+    children with it when it stops cleanly — hence writing its cookies to disk.
     """
     procs = _procs_profil()
     connus = {pid for pid, _ in procs}
@@ -150,13 +149,12 @@ def _racines_profil():
 
 
 def cmd_close(force=False):
-    """Ferme les Chrome restes ouverts sur le profil dedie.
+    """Closes the Chrome processes left open on the dedicated profile.
 
-    Sert a deverrouiller le profil : tant qu'un Chrome le tient, --check ne peut
-    pas le lire et les cookies ne sont pas garantis ecrits sur disque.
-    On envoie d'abord une fermeture NORMALE (taskkill sans /F ferme les fenetres
-    proprement, Chrome vide alors ses caches). /F seulement en dernier recours,
-    et uniquement sur --force.
+    Used to unlock the profile: as long as a Chrome holds it, --check cannot read it
+    and the cookies are not guaranteed to be written to disk.
+    We first send a NORMAL close (taskkill without /F closes the windows cleanly,
+    Chrome then flushes its caches). /F only as a last resort, and only with --force.
     """
     import subprocess
 
@@ -200,15 +198,15 @@ def cmd_close(force=False):
 
 
 def cmd_open(host):
-    """Ouvre la page de connexion dans TON Chrome. Tu te connectes a la main ;
-    Chrome retient, et --chrome reutilisera la session."""
+    """Opens the login page in YOUR Chrome. You log in by hand;
+    Chrome remembers, and --chrome will reuse the session."""
     url = SITES_CONNEXION.get(host)
     if not url:
         print(f"✗ site inconnu. Connus : {', '.join(SITES_CONNEXION)}")
         return 1
-    # Ouvrir dans le navigateur PAR DEFAUT enregistrerait la session dans le
-    # profil de tous les jours — invisible pour les scripts. On ouvre donc le
-    # profil dedie, celui que apply_runner et --check utilisent.
+    # Opening in the DEFAULT browser would store the session in the
+    # everyday profile — invisible to the scripts. So we open the
+    # dedicated profile, the one that apply_runner and --check use.
     try:
         from jobhunter.navigation import get_sync_playwright
 
@@ -237,15 +235,15 @@ def cmd_open(host):
             page.goto(url, timeout=45000)
         except Exception:
             pass
-        # Attente ACTIVE : on relit l'etat de session toutes les 2 s et on ferme
-        # des que la connexion est faite. Plus besoin d'un humain pour fermer la
-        # fenetre, ni d'un stdin utilisable (input() leve EOFError sous un agent,
-        # et isatty() ment : il renvoie True alors que stdin est deja ferme).
+        # ACTIVE wait: we re-read the session state every 2 s and close
+        # as soon as the login is done. No more need for a human to close the
+        # window, nor for a usable stdin (input() raises EOFError under an agent,
+        # and isatty() lies: it returns True while stdin is already closed).
         print(f"  Attente de la connexion (jusqu a {ATTENTE_MIN} min)...")
         fin = time.time() + ATTENTE_MIN * 60
         connecte = False
         while time.time() < fin:
-            if not ctx.pages:  # fenetre fermee a la main = fini
+            if not ctx.pages:  # window closed by hand = done
                 break
             try:
                 if ctx.pages[0].evaluate(_SESSION_JS):
@@ -253,8 +251,8 @@ def cmd_open(host):
                     break
                 ctx.pages[0].wait_for_timeout(2000)
             except Exception:
-                # Une redirection OAuth détruit temporairement le contexte JS.
-                # Attendre le prochain tour, sans fermer la connexion en cours.
+                # An OAuth redirect temporarily destroys the JS context.
+                # Wait for the next round, without closing the login in progress.
                 if not ctx.pages:
                     break
                 time.sleep(2)
@@ -293,10 +291,10 @@ _SESSION_JS = r"""
 
 
 def cmd_check(limit_hosts=None):
-    """Ouvre chaque site avec le profil Chrome reel et regarde si on est connecte.
-    Ne saisit RIEN : lecture seule de l'etat de session."""
-    # Un Chrome encore ouvert TIENT le profil : launch_persistent_context echoue
-    # ou demarre sur un profil incomplet. On libere d'abord, proprement.
+    """Opens each site with the real Chrome profile and looks whether we are logged in.
+    Types NOTHING: read-only check of the session state."""
+    # A Chrome still open HOLDS the profile: launch_persistent_context fails
+    # or starts on an incomplete profile. We release it first, cleanly.
     if _pids_profil():
         print("→ profil occupe par un Chrome ouvert : fermeture prealable")
         cmd_close(force=False)
@@ -313,9 +311,9 @@ def cmd_check(limit_hosts=None):
     today = datetime.date.today().isoformat()
     with sp() as p:
         try:
-            # PAS de --disable-blink-features ici : ce flag declenche la banniere
-            # « Vous utilisez un indicateur de ligne de commande non pris en
-            # charge ». Ce script ne fait que LIRE un etat de session, il n'a
+            # NO --disable-blink-features here: this flag triggers the banner
+            # "Vous utilisez un indicateur de ligne de commande non pris en
+            # charge". This script only READS a session state, it does not
             # aucun besoin de furtivite.
             ctx = p.chromium.launch_persistent_context(
                 user_data_dir=str(PROFIL),
@@ -326,8 +324,8 @@ def cmd_check(limit_hosts=None):
                 timeout=90000,
             )
         except Exception as e:
-            # Distinguer les deux causes : le message precedent annoncait
-            # « profil verrouille » meme sur un simple depassement de delai.
+            # Tell the two causes apart: the previous message announced
+            # "profil verrouillé" even on a simple timeout.
             n = type(e).__name__
             if "Timeout" in n:
                 print("✗ Chrome trop lent a demarrer (90 s depasses).")
@@ -341,9 +339,9 @@ def cmd_check(limit_hosts=None):
         for h in hosts:
             try:
                 page.goto(SITES_CONNEXION[h], timeout=25000, wait_until="domcontentloaded")
-                # La banniere de consentement masque la page et fausse analyze().
-                # COOKIE_JS cherche « Tout refuser » en priorite (OneTrust, Didomi,
-                # Axeptio, tarteaucitron) : option la plus respectueuse de la vie privee.
+                # The consent banner hides the page and skews analyze().
+                # COOKIE_JS looks for "Tout refuser" first (OneTrust, Didomi,
+                # Axeptio, tarteaucitron): the most privacy-respecting option.
                 try:
                     dismiss_cookies(page)
                     page.wait_for_timeout(700)
@@ -351,15 +349,15 @@ def cmd_check(limit_hosts=None):
                     pass
                 a = analyze(page)
                 kind = str(a.get("kind") or "?")
-                # Un formulaire de connexion OU d'inscription = pas connecte.
-                # (« register » etait compte comme connecte : LinkedIn et Indeed
-                # ressortaient « connecte » alors qu'ils affichaient une inscription.)
+                # A login OR sign-up form = not logged in.
+                # ("register" was counted as logged in: LinkedIn and Indeed
+                # came out "connecté" while they displayed a sign-up.)
                 if a.get("blocked") or a.get("captcha"):
                     etat = "bloque"
                 elif kind in ("login", "register"):
                     etat = "deconnecte"
                 else:
-                    # Absence de formulaire ne prouve rien : on cherche un signe
+                    # The absence of a form proves nothing: we look for a sign
                     # POSITIF de session (deconnexion, avatar, espace perso).
                     etat = "connecte" if page.evaluate(_SESSION_JS) else "indetermine"
             except Exception as ex:
@@ -377,13 +375,13 @@ def cmd_check(limit_hosts=None):
 
 
 def cmd_open_all(only=None):
-    """Ouvre CHAQUE page de connexion dans son propre onglet, sur le profil dedie,
-    et laisse le navigateur ouvert pour que tu te connectes site par site.
+    """Opens EACH login page in its own tab, on the dedicated profile,
+    and leaves the browser open so that you log in site by site.
 
-    Pas d'input() ici : lance en tache de fond, stdin est ferme et un input()
-    provoquerait un EOFError qui refermerait aussitot le navigateur. On attend
-    donc que TU fermes les onglets — le script se termine quand il n'en reste
-    plus, et Chrome a alors ecrit les sessions sur disque.
+    No input() here: run in the background, stdin is closed and an input() would
+    cause an EOFError that would immediately close the browser again. So we wait for
+    YOU to close the tabs — the script ends when none are left, and Chrome has then
+    written the sessions to disk.
     """
     import time as _t
 
@@ -415,8 +413,8 @@ def cmd_open_all(only=None):
             page = first if (i == 0 and first) else ctx.new_page()
             try:
                 page.goto(u, timeout=45000, wait_until="domcontentloaded")
-                # Ecarte le bandeau cookies (refus prioritaire) pour que tu arrives
-                # directement sur le formulaire de connexion.
+                # Sets aside the cookie banner (refusal first) so that you land
+                # directly on the login form.
                 try:
                     from jobhunter.navigation import dismiss_cookies as _dc
 
@@ -431,7 +429,7 @@ def cmd_open_all(only=None):
         print("\nNavigateur ouvert. Connecte-toi dans chaque onglet.")
         print("Quand tu fermes le dernier onglet, la session est enregistree.")
         try:
-            while ctx.pages:  # tient tant qu'un onglet reste ouvert
+            while ctx.pages:  # holds as long as a tab stays open
                 _t.sleep(3)
         except Exception:
             pass
@@ -452,10 +450,10 @@ def cmd_set_id(host, email):
 
 
 def cmd_set_key(nom):
-    """Saisie MASQUEE de la cle d'une API de collecte, dans le fichier que la source lit.
+    """MASKED entry of the key of a collection API, in the file the source reads.
 
-    Avant la 2.12, elle allait dans api_keys.json, qu'aucune source ne lit (cles_api).
-    Valeur jamais affichee ni journalisee ; un champ vide garde la valeur en place.
+    Before 2.12, it went into api_keys.json, which no source reads (cles_api).
+    Value never displayed nor logged; an empty field keeps the value in place.
     """
     from jobhunter import cles_api
 
@@ -481,7 +479,7 @@ def cmd_set_key(nom):
 
 
 def get_key(nom):
-    """Lecture programmatique d'une cle (pour les autres scripts)."""
+    """Programmatic read of a key (for the other scripts)."""
     return (_load(KEYS, {}) or {}).get(nom)
 
 

@@ -5,8 +5,8 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
-    # Bornes deja ouvertes jusqu'a la prochaine majeure : une PR seulement quand une
-    # version en sort (customtkinter 6), pas pour remonter le plancher a chaque version.
+    # Bounds already open up to the next major: a PR only when a
+    # version falls outside them (customtkinter 6), not to raise the floor at every release.
     versioning-strategy: increase-if-necessary
   - package-ecosystem: github-actions
     directory: /

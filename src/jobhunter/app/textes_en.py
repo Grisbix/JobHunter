@@ -1,11 +1,11 @@
-"""Textes de l'interface en anglais, indexés par le texte français affiché.
+"""English interface texts, indexed by the displayed French text.
 
-Partie de jobhunter.app (étape F5). Le texte français reste la source : un texte absent
-d'ici s'affiche en français. `python outils/textes_interface.py` liste ceux qui manquent.
+Part of jobhunter.app (step F5). The French text stays the source: a text missing
+from here is displayed in French. `python outils/textes_interface.py` lists the missing ones.
 """
 
 EN: dict[str, str] = {
-    # navigation et en-tête
+    # navigation and header
     "JOBHUNTER": "JOBHUNTER",
     "RECHERCHE D'EMPLOI": "JOB SEARCH",
     "Offres": "Offers",
@@ -25,7 +25,7 @@ EN: dict[str, str] = {
     "Dossier": "Folder",
     "Arrêter": "Stop",
     "Langue : English": "Language: français",
-    # tableau des offres
+    # offers table
     "OFFRES EN FILE": "OFFERS IN QUEUE",
     "FIT ≥ 8": "FIT ≥ 8",
     "CANDIDATURES ENVOYÉES": "APPLICATIONS SENT",
@@ -63,7 +63,7 @@ EN: dict[str, str] = {
     "Garder": "Keep",
     "Exclure": "Exclude",
     "Tout": "All",
-    # fiche et suivi
+    # card and tracking
     "Envoi confirmé": "Sending confirmed",
     "Ouvrir l'offre": "Open offer",
     "Pas intéressé": "Not interested",
@@ -82,7 +82,7 @@ EN: dict[str, str] = {
     "Annuler": "Cancel",
     "Écarter": "Dismiss",
     "ou une autre raison :": "or another reason:",
-    # candidature
+    # application
     "Ouverture de Chrome…": "Opening Chrome…",
     "Observation de la page…": "Watching the page…",
     "Programme terminé.": "Program finished.",
@@ -95,7 +95,7 @@ EN: dict[str, str] = {
     "Renommer (mon nom)": "Rename (my name)",
     "↑ Haut": "↑ Top",
     "↓ Bas": "↓ Bottom",
-    # Accès
+    # Access
     "Accès aux sources": "Access to sources",
     "Rafraîchir": "Refresh",
     "Collecte des offres": "Offer collection",
@@ -163,7 +163,7 @@ EN: dict[str, str] = {
     "Suivre": "Follow",
     "Ne plus suivre": "Unfollow",
     "Lire les sites carrière": "Read careers sites",
-    # Sites d'offres
+    # Job sites
     "Sites d'offres généraux": "General job sites",
     "Ajouter": "Add",
     "Retirer": "Remove",
@@ -181,7 +181,7 @@ EN: dict[str, str] = {
     "Nb": "Count",
     "Répartition": "Breakdown",
     "Type": "Type",
-    # menus Maintenance et étapes
+    # Maintenance menus and steps
     "Scrape les sites": "Scrape sites",
     "Rattrapage 31 j": "31-day catch-up",
     "Sonder flux ATS": "Probe ATS feeds",
@@ -244,7 +244,7 @@ EN: dict[str, str] = {
     "Scan offres": "Scan offers",
     "Candidatures en lot": "Batch applications",
     "LinkedIn": "LinkedIn",
-    # cellules des panneaux
+    # panel cells
     "libre": "free",
     "clé": "key",
     "pas encore mesurée": "not measured yet",
@@ -271,7 +271,7 @@ EN: dict[str, str] = {
     "PDF à refaire": "PDF to redo",
     "incomplet": "incomplete",
     "autres : affine la recherche": "more: refine the search",
-    # Boîtes de dialogue
+    # Dialog boxes
     "Confirmer l'envoi": "Confirm submission",
     "As-tu envoyé cette candidature ?": "Did you submit this application?",
     "Supprimer les offres": "Delete offers",
@@ -300,9 +300,9 @@ EN: dict[str, str] = {
 }
 
 
-# Journal de l'app (langue.journal) : une ligne affichée → sa traduction. Une clé avec
-# des `{a}`, `{b}` est un modèle : chaque `{x}` reprend tel quel le morceau variable de la
-# ligne. La sortie des programmes lancés n'est pas traduite (le moteur parle français).
+# App log (langue.journal): a displayed line → its translation. A key with
+# `{a}`, `{b}` is a template: each `{x}` takes the variable part of the line as
+# is. The launched programs' summaries are in SORTIE_EN, below.
 JOURNAL_EN = {
     # ── lignes fixes ──
     "Sélectionne d'abord une offre.": "Select an offer first.",
@@ -356,7 +356,7 @@ JOURNAL_EN = {
     "intéressé": "Shortcuts: Esc back · Alt+Left undo enlarge/shrink · Ctrl+R reload · F5 do "
     "everything · Ctrl+B sidebar · in the table: Ctrl+Enter apply, Ctrl+A/D tick/untick, "
     "Ctrl+Z undo · Ctrl+L paste a link · Ctrl+W stop · Del not interested",
-    # ── modèles ──
+    # ── templates ──
     "📌 statut: {a} → {b}": "📌 status: {a} → {b}",
     "! écriture suivi.json KO: {a}": "! writing suivi.json failed: {a}",
     "⊖ {a} offre(s) « pas intéressé » — masquées, Ctrl+Z pour annuler.": "⊖ {a} offer(s) "
@@ -420,10 +420,10 @@ JOURNAL_EN = {
     "déjà suivi : {a}": "already followed: {a}",
 }
 
-# La sortie des programmes que l'app lance (collecte, « TOUT FAIRE »), traduite ligne à
-# ligne comme JOURNAL_EN : les bilans et les en-têtes, pas le détail offre par offre
-# (noms d'entreprise et de poste, qui ne se traduisent pas). Chaque modèle doit vivre dans
-# le code du paquet (test_langue).
+# The output of the programs the app launches (collection, "TOUT FAIRE"), translated line
+# by line like JOURNAL_EN: summaries and headers, not the offer-by-offer detail
+# (company and job names, which are not translated). Each template must live in
+# the package's code (test_langue).
 SORTIE_EN = {
     # Collecte (jobhunter.sources)
     "── recherche restreinte à la FRANCE ──": "── search restricted to FRANCE ──",
@@ -511,7 +511,7 @@ SORTIE_EN = {
     "{a} marked, history {b}",
     "! toast échoué : {a}": "! toast failed: {a}",
     "! toast impossible : {a}": "! toast unavailable: {a}",
-    # Mise à jour (mise_a_jour)
+    # Update (mise_a_jour)
     "Version installée : {a} · disponible : {b}": "Installed version: {a} · available: {b}",
     "Version installée : {a} · c'est la plus récente.": "Installed version: {a} · it is the "
     "latest.",
@@ -531,7 +531,7 @@ SORTIE_EN = {
     "({a}): the releases page opens.",
     "L'installateur s'ouvre : suis ses étapes. Tes données sont gardées.": "The installer "
     "opens: follow its steps. Your data is kept.",
-    # Collecte chaque matin (planification)
+    # Collect every morning (planification)
     "Collecte planifiée chaque jour à {a}, si l'ordinateur est allumé. Journaux : {b}.": "Collection "
     "scheduled every day at {a}, if the computer is on. Logs: {b}.",
     "Collecte quotidienne retirée.": "Daily collection removed.",

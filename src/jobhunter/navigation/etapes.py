@@ -1,13 +1,13 @@
-"""Etapes intermediaires : boutons en deux temps, portails, menus, nouvelles tentatives.
+"""Intermediate steps: two-step buttons, portals, menus, retries.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+Part of jobhunter.navigation (formerly Scripts/web_nav.py, phase 3.6).
 """
 
 from typing import Any
 
 from jobhunter.navigation.page import dismiss_cookies
 
-# ── Wizbii 2-step : clic "Continuer avec email" avant que le form n'apparaisse ──
+# ── Wizbii 2-step: click "Continuer avec email" before the form appears ──
 _WIZBII_EMAIL_BTN_JS = r"""
 () => {
   const _deep=(root,acc)=>{root.querySelectorAll('a,button,[role=button],input[type=button],input[type=submit],[onclick]').forEach(e=>acc.push(e));root.querySelectorAll('*').forEach(e=>{if(e.shadowRoot)_deep(e.shadowRoot,acc);});return acc;};
@@ -25,7 +25,7 @@ _WIZBII_EMAIL_BTN_JS = r"""
 """
 
 
-# ── Meeschaert 2-step : clic "Candidature spontanée"/"Postuler"/"Nous rejoindre" ──
+# ── Meeschaert 2-step: click "Candidature spontanée"/"Postuler"/"Nous rejoindre" ──
 _MEESCHAERT_REVEAL_JS = r"""
 () => {
   const _deep=(root,acc)=>{root.querySelectorAll('a,button,[role=button],input[type=button],input[type=submit],div[onclick],div[class*="btn" i],div[class*="cta" i]').forEach(e=>acc.push(e));root.querySelectorAll('*').forEach(e=>{if(e.shadowRoot)_deep(e.shadowRoot,acc);});return acc;};
@@ -43,7 +43,7 @@ _MEESCHAERT_REVEAL_JS = r"""
 """
 
 
-# ── Portail UBS / multi-liens login : détecter page portail → cliquer lien login ──
+# ── UBS portal / multiple login links: detect a portal page → click the login link ──
 _PORTAL_LOGIN_JS = r"""
 () => {
   const RE=/(log ?in|sign ?in|se connecter|connexion|identifiez-vous|access|espace (candidat|recrutement|personnel)|my account|mon compte|portal|existing user|compte existant)/i;
@@ -65,9 +65,9 @@ _PORTAL_LOGIN_JS = r"""
 
 
 def click_portal_login(page: Any) -> bool:
-    """Page portail (UBS, etc.) : liste de liens vers différents espaces login.
+    """Portal page (UBS, etc.): list of links to different login areas.
 
-    Clique le premier lien de connexion pertinent. Retour True si cliqué.
+    Clicks the first relevant login link. Returns True if clicked.
     """
     try:
         r = page.evaluate(_PORTAL_LOGIN_JS)
@@ -80,7 +80,7 @@ def click_portal_login(page: Any) -> bool:
     return False
 
 
-# Marque les déclencheurs de menu (aria-haspopup, caret, items de nav) pour hover.
+# Marks the menu triggers (aria-haspopup, caret, nav items) for hovering.
 _HOVERTRIG_JS = r"""
 () => {
   const vh = window.innerHeight || 800;
@@ -93,9 +93,9 @@ _HOVERTRIG_JS = r"""
 """
 
 
-# ── HAMBURGER MENU EXPANSION : clique ☰/menu icon avant de scanner ──
-# v5.1: les sites responsive cachent la nav derrière une icône hamburger.
-# Le headless browser (1366×768) reçoit souvent le layout mobile.
+# ── HAMBURGER MENU EXPANSION: clicks the ☰/menu icon before scanning ──
+# v5.1: responsive sites hide the nav behind a hamburger icon.
+# The headless browser (1366×768) often receives the mobile layout.
 _HAMBURGER_JS = r"""
 () => {
   const _vis = el => { try { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.width < 100 && r.height < 100; } catch(e) { return false; } };
@@ -136,9 +136,9 @@ _HAMBURGER_JS = r"""
 
 
 def expand_hamburger_menu(page: Any) -> dict[str, Any]:
-    """Détecte et clique l'icône hamburger (☰) pour révéler la navigation cachée.
+    """Detects and clicks the hamburger icon (☰) to reveal the hidden navigation.
 
-    À appeler AVANT tout scan de liens carrière/login. Retour {expanded, label,
+    To call BEFORE any scan for career/login links. Returns {expanded, label,
     selector}.
     """
     try:
@@ -168,9 +168,9 @@ def expand_hamburger_menu(page: Any) -> dict[str, Any]:
 
 
 def hover_menus(page: Any) -> int:
-    """Survole les déclencheurs de menu (dérouler panneau/sous-menu) pour révéler le bon bouton caché.
+    """Hovers the menu triggers (unfold panel/submenu) to reveal the right hidden button.
 
-    Retour nb de triggers survolés.
+    Returns the number of triggers hovered.
     """
     try:
         n = page.evaluate(_HOVERTRIG_JS)
@@ -188,9 +188,9 @@ def hover_menus(page: Any) -> int:
 
 
 def _unstick(page: Any, i: int) -> None:
-    """Action de « déblocage » escaladante entre 2 essais d'un finder qui a raté : cookies → scroll → attente → hover sous-menus → reload.
+    """Escalating "unblocking" action between 2 attempts of a finder that missed: cookies → scroll → wait → hover submenus → reload.
 
-    Idempotent, silencieux.
+    Idempotent, silent.
     """
     try:
         if i <= 0:
@@ -214,9 +214,9 @@ def _unstick(page: Any, i: int) -> None:
 
 
 def retry(page: Any, fn: Any, is_ok: Any, max_tries: int = 3) -> Any:
-    """Relance `fn()` tant que `is_ok(result)` est faux, en appliquant _unstick (cookies/scroll/wait/hover/reload) entre chaque essai raté.
+    """Runs `fn()` again as long as `is_ok(result)` is false, applying _unstick (cookies/scroll/wait/hover/reload) between each failed attempt.
 
-    Retour dernier result. Usage: retry(page, lambda: goto_careers(page), lambda r:
+    Returns the last result. Usage: retry(page, lambda: goto_careers(page), lambda r:
     r.get('clicked')).
     """
     result = None
@@ -226,7 +226,7 @@ def retry(page: Any, fn: Any, is_ok: Any, max_tries: int = 3) -> Any:
         except Exception:
             result = None
         if result and is_ok(result):
-            if i:  # marque le nb d'essais si dispo
+            if i:  # records the number of attempts if available
                 try:
                     result["tries"] = i + 1
                 except Exception:

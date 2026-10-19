@@ -1,17 +1,17 @@
-"""Essai de l'application installée, sur des données jetables (étape F4, critère de fin).
+"""Trial of the installed application, on throwaway data (step F4, end criterion).
 
-Lancé PAR l'exécutable compilé, avec son Python embarqué, après l'installation
-silencieuse de la CI, sans Python sur le PATH :
+Run BY the compiled executable, with its embedded Python, after the CI's silent
+installation, with no Python on the PATH:
 
     jobhunter-cli.exe -c "exec(open(r'outils/installateur/essai_installe.py', encoding='utf-8').read())"
 
-`JOBHUNTER_RACINE` désigne un dossier de données jetable : jamais celui d'un utilisateur.
-Rien ne sort sur le web : le navigateur ouvre une page écrite en mémoire, et la collecte
-fusionne un scan fictif. Chaque étape affiche « ok » ; la première qui échoue lève.
+`JOBHUNTER_RACINE` points to a throwaway data folder: never a user's.
+Nothing goes out to the web: the browser opens a page written in memory, and the
+collection merges a fictitious scan. Each step prints "ok"; the first that fails raises.
 
-Étapes : profil d'exemple → navigateur (Chromium de Playwright, sinon Chrome ou Edge du
-système, comme chez l'utilisateur) → fusion d'un scan dans la file → CV et lettre d'une
-offre → mise à jour (l'installateur suivant téléchargé, contrôlé, prêt à s'ouvrir).
+Steps: example profile → browser (Playwright's Chromium, otherwise the system's Chrome
+or Edge, as on the user's machine) → merge of a scan into the queue → CV and letter of
+an offer → update (the next installer downloaded, checked, ready to open).
 """
 
 import hashlib
@@ -28,13 +28,13 @@ def etape(nom: str) -> None:
     print(f"ok  {nom}", flush=True)
 
 
-# 1. Un profil configuré : celui d'exemple, comme après « premier lancement ».
+# 1. A configured profile: the example one, as after "first launch".
 profil = RACINE / "profil" / "profil.json"
 if not profil.exists():
     shutil.copy2(RACINE / "profil" / "exemple_finance_esg.json", profil)
 etape("profil d'exemple en place")
 
-# 2. Le navigateur : Playwright embarqué, navigateur du système si Chromium manque.
+# 2. The browser: embedded Playwright, the system's browser if Chromium is missing.
 from playwright.sync_api import sync_playwright  # noqa: E402
 
 from jobhunter.navigation.navigateur import lancer  # noqa: E402
@@ -47,7 +47,7 @@ with sync_playwright() as pw:
     etape(f"navigateur {nav.version}")
     nav.close()
 
-# 3. La collecte, sans réseau : un scan fictif fusionné dans la file.
+# 3. The collection, without network: a fictitious scan merged into the queue.
 from jobhunter.cli import main as jobhunter  # noqa: E402
 
 scan = [
@@ -73,15 +73,15 @@ file = queue_io.charger()
 assert any(o.get("entreprise") == "Exemple Gestion" for o in file), "offre absente de la file"
 etape(f"fusion dans la file ({len(file)} offre(s))")
 
-# 4. Le dossier de candidature : CV et lettre de cette offre.
+# 4. The application folder: CV and letter for this offer.
 code = jobhunter(["documents", "--url", "analyste-esg"])
 assert code in (0, None), f"documents : code {code}"
 docs = [p for p in RACINE.rglob("*.docx") if "Exemple" in p.name or "EXEMPLE" in p.name]
 assert docs, "aucun CV ni lettre écrit"
 etape(f"dossier : {', '.join(sorted(p.parent.name + '/' + p.name for p in docs))}")
 
-# 5. La mise à jour de l'application installée, réseau simulé : la version suivante
-#    est l'installateur qui vient d'être construit, avec son empreinte publiée.
+# 5. The update of the installed application, simulated network: the next version
+#    is the installer that was just built, with its published checksum.
 from jobhunter.programmes import mise_a_jour as maj  # noqa: E402
 
 setup = Path(os.environ["ESSAI_SETUP"]).read_bytes()

@@ -15,11 +15,11 @@ _log = _journal.journal(__name__)
 
 
 # ═══════════════ 4. V.I.E / V.I.A — Business France (civiweb) ═══════════════
-# Le site mon-vie-via est une SPA Nuxt : le HTML brut est une coquille vide, mais
-# sa config publique (window.__NUXT__.config) livre l'endpoint et une clé d'API
-# expédiée à TOUT visiteur. Elle ne donne accès qu'aux offres PUBLIQUES, les mêmes
-# que la page affiche sans compte — pas de login, pas de données personnelles.
-# En-tête attendu : x-api-key (Authorization et apikey renvoient 401).
+# The mon-vie-via site is a Nuxt SPA: the raw HTML is an empty shell, but
+# its public config (window.__NUXT__.config) delivers the endpoint and an API key
+# shipped to EVERY visitor. It only gives access to the PUBLIC offers, the same ones
+# the page displays without an account — no login, no personal data.
+# Expected header: x-api-key (Authorization and apikey return 401).
 VIE_API = "https://civiweb-api-prd.azurewebsites.net/api/Offers/search"
 
 VIE_SITE = "https://mon-vie-via.businessfrance.fr/offres/recherche"
@@ -30,11 +30,11 @@ _VIE_KEY_FALLBACK = "l+KwpoLPiXlsjxNT/NQ2iOFz8+iuygxAODs9FeAEWYM="
 
 
 def _vie_key() -> str:
-    r"""Clé lue en direct dans la config publique du site ; le fallback évite de tout casser si la page change, mais une clé figée finira par tourner.
+    r"""Key read live in the site's public config; the fallback avoids breaking everything if the page changes, but a frozen key will end up rotating.
 
-    Deux pièges vérifiés :
-      - la clé est échappée dans le HTML (`\\u002F` pour `/`) → à décoder, sinon 401 ;
-      - « API_KEY » matche aussi GMAPS_API_KEY (clé Google Maps) → ancrer le nom.
+    Two traps checked:
+      - the key is escaped in the HTML (`\\u002F` for `/`) → to be decoded, otherwise 401;
+      - "API_KEY" also matches GMAPS_API_KEY (Google Maps key) → anchor the name.
     """
     import httpx
 
@@ -43,7 +43,7 @@ def _vie_key() -> str:
         m = re.search(r'(?:^|[^_A-Z])API_KEY\s*:\s*"([^"]{20,})"', r.text)
         if m:
             k = m.group(1).encode().decode("unicode_escape")
-            if k.endswith("="):  # la clé civiweb est du base64
+            if k.endswith("="):  # the civiweb key is base64
                 return k
     except Exception:
         pass
@@ -51,10 +51,10 @@ def _vie_key() -> str:
 
 
 def fetch_vie(limit: int = 1000) -> list[dict[str, Any]]:
-    """Offres V.I.E/V.I.A.
+    """V.I.E/V.I.A offers.
 
-    Intérêt pour un profil junior : contrat 12-24 mois, indemnité nette, et beaucoup de
-    postes finance/ESG en filiale à l'étranger.
+    Interest for a junior profile: 12-24 month contract, net allowance, and many
+    finance/ESG jobs in a subsidiary abroad.
     """
     import httpx
 
@@ -95,10 +95,10 @@ def fetch_vie(limit: int = 1000) -> list[dict[str, Any]]:
                     ],
                 )
             )
-            # Lien PROFOND vers l'offre. `{VIE_SITE}?id=<id>` menait a la page de
-            # RECHERCHE generique : le bouton Postuler n'ouvrait pas l'offre.
-            # Le site lui-meme pointe vers /offres/<id> (verifie : la page rend
-            # bien l'offre et son bouton POSTULER).
+            # DEEP link to the offer. `{VIE_SITE}?id=<id>` led to the generic
+            # SEARCH page: the Apply button did not open the offer.
+            # The site itself points to /offres/<id> (checked: the page does render
+            # the offer and its POSTULER button).
             out.append(
                 _mk(
                     titre,
@@ -118,10 +118,10 @@ def fetch_vie(limit: int = 1000) -> list[dict[str, Any]]:
 
 
 def scan_vie() -> list[dict[str, Any]]:
-    """Collecte les V.I.E et V.I.A de Business France, filtrés par métier.
+    """Collects Business France's V.I.E and V.I.A, filtered by profession.
 
     Returns:
-        Les offres.
+        The offers.
     """
     o = fetch_vie()
     _log.info(f"  ✓ V.I.E/V.I.A Business France → {len(o)} offres (après filtre métier)")

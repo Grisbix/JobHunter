@@ -1,6 +1,6 @@
-"""Adzuna et Jooble : API officielles (cle requise).
+"""Adzuna and Jooble: official APIs (key required).
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+Part of jobhunter.sources (formerly Scripts/job_sources.py, phase 3.4).
 """
 
 import time
@@ -22,27 +22,27 @@ from jobhunter.sources.commun import (
 _log = _journal.journal(__name__)
 
 
-# ═══════════════ 8. Adzuna et Jooble — agregateurs, API officielles (cle requise) ═══
-# POURQUOI. Indeed refuse tout depuis le 24/09 (403 a la premiere requete) et
-# l'APEC est derriere DataDome depuis le 02/10. Adzuna et Jooble agregent les
-# memes viviers — et beaucoup de petits sites — par une API officielle, avec
-# une cle gratuite. Ce ne sont pas des sources nouvelles : ce sont des voies
-# d'acces LEGITIMES a ce qu'Indeed ne laisse plus voir.
+# ═══════════════ 8. Adzuna and Jooble — aggregators, official APIs (key required) ═══
+# WHY. Indeed refuses everything since 24/09 (403 at the first request) and
+# APEC has been behind DataDome since 02/10. Adzuna and Jooble aggregate the
+# same pools — and many small sites — through an official API, with
+# a free key. They are not new sources: they are LEGITIMATE ways of
+# access to what Indeed no longer lets us see.
 #
-# ⚠ CLES A CREER PAR L'UTILISATEUR (je ne cree pas de comptes) :
+# ⚠ KEYS TO BE CREATED BY THE USER (I do not create accounts):
 #   Adzuna : https://developer.adzuna.com -> Scripts/adzuna.json
 #            {"app_id": "...", "app_key": "..."}
 #   Jooble : https://jooble.org/api/about -> Scripts/jooble.json
 #            {"key": "..."}
-# Fichiers ignores par git. Sans eux, la source se desactive en le disant.
+# Files ignored by git. Without them, the source deactivates itself and says so.
 #
-# LA CLE NE S'AFFICHE JAMAIS. Adzuna la porte dans l'URL, Jooble dans le
-# chemin : un message d'exception httpx contient l'URL. On n'imprime donc que
-# le TYPE de l'exception, jamais son texte.
+# THE KEY IS NEVER DISPLAYED. Adzuna carries it in the URL, Jooble in the
+# path: an httpx exception message contains the URL. So we only print
+# the TYPE of the exception, never its text.
 #
-# LIMITES. Descriptions = extraits (desc_partielle : une meilleure source les
-# remplace a la fusion). Liens = pages de redirection de l'agregateur, que la
-# promotion d'URL remplace quand le vrai site arrive par une autre source.
+# LIMITS. Descriptions = excerpts (desc_partielle: a better source replaces
+# them at merge). Links = the aggregator's redirect pages, which the
+# URL promotion replaces when the real site arrives through another source.
 ADZUNA_CFG = HERE / "adzuna.json"
 
 JOOBLE_CFG = HERE / "jooble.json"
@@ -51,8 +51,8 @@ ADZUNA_API = "https://api.adzuna.com/v1/api/jobs/{pays}/search/1"
 
 JOOBLE_API = "https://jooble.org/api/{cle}"
 
-# Peu de mots, choisis : le quota gratuit d'Adzuna se compte en appels par jour,
-# et un mot-cle x un pays = un appel. 12 + 6 x 7 = 54 appels par passe.
+# Few words, chosen: Adzuna's free quota is counted in calls per day,
+# and one keyword x one country = one call. 12 + 6 x 7 = 54 calls per pass.
 AGREG_MOTS_FR = [
     "analyste ESG",
     "finance durable",
@@ -83,11 +83,11 @@ AGREG_PAUSE = 1.0
 
 AGREG_ABANDON = 3  # refus d'entree d'affilee (cle refusee, blocage)
 
-AGREG_REPOS_429 = 60  # une limite de debit s'attend ; deux fois au plus
+AGREG_REPOS_429 = 60  # a rate limit is waited out; twice at most
 
 
 def _cle(chemin: Path, *champs: str) -> tuple[str, ...] | None:
-    """Les champs du fichier de cle, ou None. Ne leve jamais, n'affiche rien de la cle."""
+    """The fields of the key file, or None. Never raises, displays nothing of the key."""
     import json as _json
 
     if not chemin.exists():
@@ -103,13 +103,13 @@ def _cle(chemin: Path, *champs: str) -> tuple[str, ...] | None:
 
 
 class _Garde:
-    """Compte les refus d'une source : 429 -> pause puis reprise, refus d'entree -> arret."""
+    """Counts a source's refusals: 429 -> pause then resume, refused entry -> stop."""
 
     def __init__(self, nom: str) -> None:
         self.nom, self.refus, self.repos, self.fini = nom, 0, 0, False
 
     def reponse(self, r: Any) -> bool:
-        """True si la reponse est exploitable. Gere pauses et abandon."""
+        """True if the response is usable. Handles pauses and giving up."""
         if r.status_code == 429:
             INCIDENTS[self.nom]["HTTP 429"] += 1
             if self.repos >= 2:
@@ -173,10 +173,10 @@ def _agreg_offre(
 
 
 def scan_adzuna() -> list[dict[str, Any]]:
-    """Collecte Adzuna (API officielle, France et sept pays).
+    """Adzuna collection (official API, France and seven countries).
 
     Returns:
-        Les offres ; [] si la clé (Scripts/adzuna.json) est absente.
+        The offers; [] if the key (Scripts/adzuna.json) is missing.
     """
     import httpx
 
@@ -244,10 +244,10 @@ def scan_adzuna() -> list[dict[str, Any]]:
 
 
 def scan_jooble() -> list[dict[str, Any]]:
-    """Collecte Jooble (API officielle).
+    """Jooble collection (official API).
 
     Returns:
-        Les offres ; [] si la clé (Scripts/jooble.json) est absente.
+        The offers; [] if the key (Scripts/jooble.json) is missing.
     """
     import httpx
 

@@ -1,6 +1,6 @@
-"""La ligne de commande de la collecte (python Scripts/job_sources.py ...).
+"""The collection's command line (python Scripts/job_sources.py ...).
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+Part of jobhunter.sources (formerly Scripts/job_sources.py, phase 3.4).
 """
 
 import argparse
@@ -31,8 +31,8 @@ from jobhunter.sources.wtj import scan_wtj
 from jobhunter.texte import cle as _norm
 
 _ici = sys.modules[__name__]
-# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
-# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+# Values taken from the profile: computed on first read, not at import
+# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -46,12 +46,12 @@ _PARESSEUX["INDEED_LIEUX"] = lambda: (
 
 
 def main() -> int:
-    """Ligne de commande de la collecte : sources choisies, dédoublonnage, fusion.
+    """The collection's command line: chosen sources, deduplication, merge.
 
     Returns:
-        0, 3 si la file est verrouillée par un autre programme, 4 si Indeed a été bridé.
+        0, 3 if the queue is locked by another program, 4 if Indeed was throttled.
     """
-    _load_cfg()  # sources éditées depuis l'app
+    _load_cfg()  # sources edited from the app
     ap = argparse.ArgumentParser()
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--ats", action="store_true")
@@ -146,24 +146,24 @@ def main() -> int:
         help="refusionne le dernier scan (offres_scan.json) sans rien collecter",
     )
     a = ap.parse_args()
-    _rendement.MESURES.clear()  # une mesure par collecte, meme appelee plusieurs fois
+    _rendement.MESURES.clear()  # one measurement per collection, even if called several times
 
-    # DEUX VERROUS, DEUX ROLES. Il n'y en avait qu'un, sur la FILE, pris au
-    # demarrage et garde toute la collecte — plus d'une heure en --all. Le
-    # 2026-09-22 au soir, le scan planifie a ainsi bloque une purge deja
-    # verifiee pendant toute sa duree, alors qu'il n'ecrit dans la file qu'a la
-    # toute fin. Ce verrou jouait en fait deux roles :
+    # TWO LOCKS, TWO ROLES. There used to be only one, on the QUEUE, taken at
+    # start-up and kept for the whole collection — more than an hour with --all. On the
+    # evening of 2026-09-22, the scheduled scan thus blocked an already verified
+    # purge for its whole duration, while it only writes into the queue at the
+    # very end. This lock actually played two roles:
     #
-    #   1. proteger la file — c'est le travail de merge_into_queue, qui prend
-    #      lui-meme le verrou et relit la file A L'INTERIEUR. Quelques secondes.
-    #   2. empecher deux scans en parallele — ils se partageraient le quota des
-    #      sources et s'ecraseraient mutuellement offres_scan.json.
+    #   1. protect the queue — that is the job of merge_into_queue, which takes
+    #      the lock itself and re-reads the queue INSIDE it. A few seconds.
+    #   2. prevent two scans in parallel — they would share the sources' quota
+    #      and overwrite each other's offres_scan.json.
     #
-    # Le role 2 passe sur un verrou a part, pose sur offres_scan.json. La file
-    # reste libre pendant la collecte.
+    # Role 2 moves to a separate lock, set on offres_scan.json. The queue
+    # stays free during the collection.
     #
-    # APRES argparse, et pas avant : `--help` et `--dry`, qui n'ecrivent rien,
-    # ne doivent rien bloquer.
+    # AFTER argparse, and not before: `--help` and `--dry`, which write nothing,
+    # must block nothing.
     from jobhunter.stockage import verrou
 
     if not a.dry and not verrou.garder(FRESH):
@@ -174,9 +174,9 @@ def main() -> int:
     if a.france:
         _commun.MONDE = False
         print("── recherche restreinte à la FRANCE ──")
-    # --efc et --efc-tout comptent comme une source demandee. Sans eux dans
-    # cette liste, `--efc` seul retombait sur a.all = True et relancait TOUT le
-    # scan quotidien avant d'arriver a eFC.
+    # --efc and --efc-tout count as a requested source. Without them in
+    # this list, `--efc` alone fell back on a.all = True and started the WHOLE
+    # daily scan again before reaching eFC.
     if not (
         a.all
         or a.ats
@@ -216,10 +216,10 @@ def main() -> int:
     if a.all or a.fir:
         print("── FIR / French SIF (100 % ISR-ESG) ──")
         fresh += _rendement.mesurer("fir", scan_fir)
-    # TALENT ET INDEED HORS DE --all (2026-10-03). Talent : 0 offre en 30 min le
-    # 30/09, 3 le 27/09. Indeed : 403 a la premiere requete depuis le 24/09.
-    # Ils restent lancables a la main (--talent, --indeed) pour verifier s'ils
-    # reviennent ; Adzuna et Jooble couvrent le meme vivier par une API.
+    # TALENT AND INDEED OUT OF --all (2026-10-03). Talent: 0 offers in 30 min on
+    # 30/09, 3 on 27/09. Indeed: 403 at the first request since 24/09.
+    # They can still be run by hand (--talent, --indeed) to check whether they
+    # come back; Adzuna and Jooble cover the same pool through an API.
     if a.talent:
         print("── Talent.com (agrégateur) ──")
         fresh += _rendement.mesurer("talent", scan_talent)
@@ -237,10 +237,10 @@ def main() -> int:
     if a.all or a.glassdoor:
         print("── Glassdoor (page 1 de la recherche, France entière) ──")
         fresh += _rendement.mesurer("glassdoor", scan_glassdoor)
-    # eFC dans --all, mais BORNE : filtre ESG, les neuf sites, 30 fiches au
-    # plus (les fiches deja en file sont sautees, donc chaque jour avance dans
-    # le reste). Neuf sitemaps + 30 fiches a 10 s font ~6 min. Les filtres
-    # larges (--efc-metier, --efc-tout) restent a lancer a part, par passes.
+    # eFC in --all, but BOUNDED: ESG filter, the nine sites, 30 postings at
+    # most (the postings already in the queue are skipped, so each day moves forward in
+    # the rest). Nine sitemaps + 30 postings at 10 s make ~6 min. The wide
+    # filters (--efc-metier, --efc-tout) are still run separately, in passes.
     if a.all or a.efc or a.efc_tout or a.efc_graduate or a.efc_metier:
         filtre = (
             "tout"
@@ -278,9 +278,9 @@ def main() -> int:
         fresh += _rendement.mesurer("wtj", scan_wtj, pages=a.pages)
 
     uniq = dedoublonner(fresh)
-    # --dry n'ecrit RIEN, pas meme le scan : il ne tient pas le verrou de
-    # offres_scan.json, et l'ecraser pendant qu'un vrai scan le detient ruinait
-    # le `--fusion-seule` de ce dernier. Vu le 2026-09-23 sur un --apec --dry.
+    # --dry writes NOTHING, not even the scan: it does not hold the lock of
+    # offres_scan.json, and overwriting it while a real scan held it ruined
+    # the latter's `--fusion-seule`. Seen on 2026-09-23 on an --apec --dry.
     if not a.dry:
         FRESH.write_text(json.dumps(uniq, ensure_ascii=False, indent=1), encoding="utf-8")
     print(
@@ -288,9 +288,9 @@ def main() -> int:
         + (" (non ecrit : --dry)" if a.dry else f" (→ {FRESH.name})")
     )
 
-    # LES REFUS, AVANT LE BILAN. Sans ca, un scan bride de bout en bout affiche
-    # le meme « 0 offres » qu'une journee sans nouveaute, et on relance — ce qui
-    # est exactement ce qu'il ne faut pas faire face a un quota.
+    # THE REFUSALS, BEFORE THE SUMMARY. Without that, a scan throttled from start to end
+    # shows the same "0 offres" as a day with nothing new, and it is run again — which
+    # is exactly what must not be done against a quota.
     refus = incidents_resume()
     if refus:
         print("\nRefus rencontrés (une collecte vide peut venir de là) :")
@@ -298,30 +298,30 @@ def main() -> int:
             print(l)
 
     code = _fusionner(uniq, a.dry)
-    # La fusion reste prioritaire ; une source Indeed dégradée n'est pas un succès.
+    # The merge stays the priority; a degraded Indeed source is not a success.
     return code or (4 if a.indeed and INCIDENTS.get("indeed") else 0)
 
 
-# Les zones, de la meilleure a la moins bonne pour le profil.
+# The zones, from the best to the worst for the profile.
 _ORDRE_ZONES = ("prioritaire", "secondaire", "ailleurs", "international", "inconnu")
 
 
 def dedoublonner(fresh: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Une offre par « entreprise|poste » dans le scan, la ville la plus utile gardée.
+    """One offer per "entreprise|poste" in the scan, the most useful city kept.
 
-    Le MEME poste publié dans plusieurs villes partage la même clé : un seul exemplaire
-    entre dans la file. Mesuré le 2026-10-19 sur de vraies réponses rejouées : 12 offres
-    sur 86 (Forvis Mazars à Düsseldorf, Mannheim, Hambourg, Francfort…). On gardait la
-    PREMIÈRE vue, au hasard de l'ordre ; on garde désormais celle de la meilleure zone
-    du profil (prioritaire, puis secondaire, puis le reste de la France), et les autres
-    villes vont dans `autres_lieux`, que la fiche affiche. À égalité, la première vue
-    l'emporte, comme avant.
+    The SAME job published in several cities shares the same key: a single copy gets
+    into the queue. Measured on 2026-10-19 on real replayed responses: 12 offers out
+    of 86 (Forvis Mazars in Düsseldorf, Mannheim, Hamburg, Frankfurt…). We kept the
+    FIRST one seen, by chance of the order; we now keep the one in the profile's best
+    zone (priority, then secondary, then the rest of France), and the other cities go
+    into `autres_lieux`, which the card displays. On a tie, the first one seen wins,
+    as before.
 
     Args:
-        fresh: les offres de toutes les sources de la collecte.
+        fresh: the offers of all the collection's sources.
 
     Returns:
-        Les offres uniques, dans l'ordre de première apparition de leur clé.
+        The unique offers, in the order of first appearance of their key.
     """
     from jobhunter.scoring import zones as _zones
 
@@ -334,7 +334,7 @@ def dedoublonner(fresh: list[dict[str, Any]]) -> list[dict[str, Any]]:
         groupes.setdefault(_norm(o["entreprise"]) + "|" + _norm(o["titre"]), []).append(o)
     uniq = []
     for lot in groupes.values():
-        meilleur = max(lot, key=rang)  # max garde le PREMIER des ex aequo
+        meilleur = max(lot, key=rang)  # max keeps the FIRST of the ties
         autres = sorted(
             {
                 str(x.get("location"))
@@ -351,13 +351,13 @@ def dedoublonner(fresh: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _fusionner(uniq: Any, dry: bool) -> int:
-    """Fusionne le scan dans la file. Rend un code de sortie.
+    """Merges the scan into the queue. Returns an exit code.
 
-    Le verrou de la file n'est pris QU'ICI. Si un autre programme l'occupe, on
-    attend jusqu'a 30 minutes : ce qui precede a coute une heure de reseau, et
-    abandonner au bout de 3 minutes, comme par defaut, le jetterait. Si
-    l'attente echoue quand meme, rien n'est perdu — le scan est deja dans
-    offres_scan.json, et `--fusion-seule` le refusionne sans rien recollecter.
+    The queue lock is ONLY taken HERE. If another program holds it, we wait up to 30
+    minutes: what came before cost an hour of network, and giving up after 3 minutes,
+    as by default, would throw it away. If the wait still fails, nothing is lost —
+    the scan is already in offres_scan.json, and `--fusion-seule` merges it again
+    without collecting anything.
     """
     from jobhunter.stockage import file as queue_io
 
@@ -370,7 +370,7 @@ def _fusionner(uniq: Any, dry: bool) -> int:
             f"`jobhunter collecte --fusion-seule` le fusionnera."
         )
         return 3
-    # RENDEMENT PAR SOURCE : ce que chacune a rapporte, et pourquoi pas plus.
+    # YIELD PER SOURCE: what each one brought back, and why not more.
     _rendement.completer(uniq, r.get("par_source") or {})
     if _rendement.MESURES:
         print("\nRendement par source :")

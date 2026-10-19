@@ -1,6 +1,6 @@
-"""Importe EN TETE des programmes de test en direct (test_live_nav, test_acces_sites) :
-ils tournent sur le profil d'EXEMPLE (profil/exemple_finance_esg.json), jamais sur le
-profil reel. Ancien Scripts/_profil_test.py."""
+"""Imported AT THE TOP of the live test programs (test_live_nav, test_acces_sites):
+they run on the EXAMPLE profile (profil/exemple_finance_esg.json), never on the real
+profile. Formerly Scripts/_profil_test.py."""
 
 import os
 

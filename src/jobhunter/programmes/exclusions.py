@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""exclusions.py — Les offres que l'utilisateur a ecartees, et POURQUOI.
+"""exclusions.py — The offers the user set aside, and WHY.
 
-DEUX ROLES, et le second est le plus utile.
+TWO ROLES, and the second is the most useful.
 
-1. Empecher le retour. Supprimer une offre de la file ne la tue pas : le scan
-   suivant la retrouve a la source et la reajoute. Ecarter, c'est memoriser le
-   refus pour que la reponse tienne.
+1. Prevent the return. Deleting an offer from the queue does not kill it: the next
+   scan finds it again at the source and re-adds it. Setting aside means remembering
+   the refusal so that the answer holds.
 
-2. Mesurer ce que la notation rate. Chaque motif est un desaccord entre le
-   score et le jugement de l'utilisateur. « fit 10 mais dix ans d'experience » a
-   revele trois bugs d'un coup : la description qui ne suivait pas le lien
-   promu, les retours chariot qui cachaient l'exigence, « EXPERT » absent des
-   malus de seniorite. Un refus est un cas de test offert.
+2. Measure what the scoring misses. Each reason is a disagreement between the score
+   and the user's judgement. "fit 10 but ten years of experience" revealed three bugs
+   at once: the description that did not follow the promoted link, the carriage
+   returns that hid the requirement, "EXPERT" missing from the seniority penalties.
+   A refusal is a test case offered.
 
-La cle est l'`oid` de queue_io — « entreprise|poste » — et surtout pas l'URL,
-qui change des qu'un doublon mieux classe la promeut.
+The key is queue_io's `oid` — "entreprise|poste" — and above all not the URL, which
+changes as soon as a better-ranked duplicate promotes it.
 
-Run :
-  python JobHunter.pyw exclusions                 # rapport : ce que la notation rate
+Run:
+  python JobHunter.pyw exclusions                 # report: what the scoring misses
   python JobHunter.pyw exclusions --liste
 """
 
@@ -34,8 +34,8 @@ HERE = _racine.scripts()
 
 FICHIER = HERE / "exclusions.json"
 
-# Motifs proposes dans l'app. Le texte libre reste possible : ces cinq-la sont
-# ceux qui reviennent, et les figer permet de les compter.
+# Reasons offered in the app. Free text stays possible: these five are
+# the ones that come back, and fixing them allows counting them.
 MOTIFS = [
     "Trop d'expérience demandée",
     "Poste trop senior",
@@ -60,11 +60,11 @@ def est_exclu(offre, table=None):
 
 
 def ajouter(offres, motif, note=""):
-    """Ecarte des offres. Rend le nombre de NOUVELLES exclusions.
+    """Sets offers aside. Returns the number of NEW exclusions.
 
-    On garde fit et exp_requise TELS QU'ILS ETAIENT au moment du refus : c'est
-    la matiere du rapport. Sans eux on saurait que l'utilisateur a dit non, pas ce que
-    le score en pensait.
+    We keep fit and exp_requise AS THEY WERE at the time of the refusal: they are the
+    material of the report. Without them we would know that the user said no, not
+    what the score thought of it.
     """
     from jobhunter.programmes import jutil
     from jobhunter.stockage import file as queue_io
@@ -94,7 +94,7 @@ def ajouter(offres, motif, note=""):
 
 
 def retirer(cles):
-    """Annule des exclusions. Rend le nombre retire."""
+    """Cancels exclusions. Returns the number removed."""
     from jobhunter.programmes import jutil
 
     t = charger()
@@ -121,8 +121,8 @@ def _rapport():
     print("=== ce que la notation rate ===")
     for motif, lot in sorted(par_motif.items(), key=lambda x: -len(x[1])):
         fits = [v["fit"] for v in lot if isinstance(v.get("fit"), int)]
-        # Un refus sur une offre a fit eleve est un DESACCORD : le score la
-        # recommandait. C'est celui-la qui apprend quelque chose.
+        # A refusal on a high-fit offer is a DISAGREEMENT: the score
+        # recommended it. That is the one that teaches something.
         hauts = [f for f in fits if f >= 8]
         moy = f"{sum(fits) / len(fits):.1f}" if fits else "—"
         print(f"\n  {len(lot):3} × {motif}")

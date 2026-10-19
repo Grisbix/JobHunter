@@ -1,14 +1,14 @@
-"""Langue de l'interface : français (source) ou anglais.
+"""Interface language: French (source) or English.
 
-Partie de jobhunter.app (étape F5). Le texte français écrit dans le code reste la
-référence ; en anglais, `t()` le remplace par sa traduction du catalogue
-(`textes_en.EN`), et le laisse tel quel s'il n'y en a pas. Les boutons et étiquettes de
-`theme` passent tous par `t()` : traduire un texte, c'est l'ajouter au catalogue, sans
-toucher à l'endroit où il s'affiche.
+Part of jobhunter.app (step F5). The French text written in the code stays the
+reference; in English, `t()` replaces it with its translation from the catalogue
+(`textes_en.EN`), and leaves it as is if there is none. The buttons and labels of
+`theme` all go through `t()`: translating a text means adding it to the catalogue,
+without touching the place where it is displayed.
 
-Le choix vit dans `Scripts/_interface.json` (`{"langue": "en"}`), ou dans la variable
-`JOBHUNTER_LANGUE`. Il vaut pour l'interface seulement : les statuts du suivi, les lettres
-et le profil gardent leur langue.
+The choice lives in `Scripts/_interface.json` (`{"langue": "en"}`), or in the
+`JOBHUNTER_LANGUE` variable. It applies to the interface only: the tracking statuses,
+the letters and the profile keep their language.
 """
 
 import json
@@ -62,7 +62,7 @@ def t(texte: str) -> str: ...
 @overload
 def t(texte: object) -> object: ...
 def t(texte: object) -> object:
-    """Le texte dans la langue de l'interface ; tout autre objet, tel quel."""
+    """The text in the interface language; any other object, as is."""
     if LANGUE == "fr" or not isinstance(texte, str):
         return texte
     return EN.get(texte, texte)
@@ -75,13 +75,13 @@ def _modele(cle: str) -> "re.Pattern[str]":
     return re.compile(motif)
 
 
-# Les messages de l'app, puis la sortie des programmes qu'elle lance.
+# The app's messages, then the output of the programs it launches.
 _LIGNES = {**JOURNAL_EN, **SORTIE_EN}
 _MODELES = [(_modele(k), v) for k, v in _LIGNES.items() if "{" in k]
 
 
 def _ligne(texte: str) -> str:
-    """Une ligne du journal (sans espaces de bord) en anglais, ou telle quelle."""
+    """A log line (without edge spaces) in English, or as is."""
     if texte in _LIGNES:
         return _LIGNES[texte]
     for motif, cible in _MODELES:
@@ -92,11 +92,11 @@ def _ligne(texte: str) -> str:
 
 
 def journal(texte: str) -> str:
-    """Le texte du journal de l'app, ligne à ligne, dans la langue de l'interface.
+    """The app's log text, line by line, in the interface language.
 
-    Chaque ligne connue de `JOURNAL_EN` (sans ses espaces de bord) est traduite, y
-    compris celles qui portent un nombre ou un nom (modèles à `{a}`), et les bilans des
-    programmes lancés (`SORTIE_EN`) ; les autres lignes restent telles quelles.
+    Each line known to `JOURNAL_EN` (without its edge spaces) is translated,
+    including those carrying a number or a name (`{a}` templates), and the summaries
+    of the launched programs (`SORTIE_EN`); the other lines stay as they are.
     """
     if LANGUE == "fr":
         return texte

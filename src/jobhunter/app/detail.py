@@ -1,6 +1,6 @@
-"""Detail plein ecran d'une offre et visionneuse de CV et lettre.
+"""Full-screen detail of an offer and CV and letter viewer.
 
-Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
+Part of jobhunter.app (former JobHunter.pyw, phase 3.7)."""
 
 import importlib
 import subprocess
@@ -38,8 +38,8 @@ from jobhunter.app.theme import (
 from jobhunter.liens import chemin_de
 
 _ici = sys.modules[__name__]
-# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
-# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+# Values taken from the profile: computed on first read, not at import
+# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -64,11 +64,11 @@ class DetailMixin:
         if not o:
             self._log("Sélectionne d'abord une offre.\n")
             return
-        self._dispo_memo()  # « ↶ Retour » ramene au tableau tel qu'il etait
+        self._dispo_memo()  # "↶ Retour" goes back to the table as it was
         self._hide_all()
         if self._dv is None:
             self._dv = CF(self.main, bg=WORK)
-        for c in self._dv.winfo_children():  # reconstruit par offre
+        for c in self._dv.winfo_children():  # rebuilt per offer
             c.destroy()
         w = self._dv
         top = CF(w, bg=BG)
@@ -94,7 +94,7 @@ class DetailMixin:
         body = tk.PanedWindow(w, orient="horizontal", bg=LINE, sashwidth=5, bd=0)
         body.pack(fill="both", expand=True, padx=24, pady=(4, 4))
 
-        # ── GAUCHE : infos de l'offre + actions ──
+        # ── LEFT: offer information + actions ──
         left = CF(body, bg=BG)
         dtxt = scrolledtext.ScrolledText(
             left,
@@ -147,7 +147,7 @@ class DetailMixin:
         self._fill_detail(dtxt, o)
         body.add(left, minsize=320)
 
-        # ── DROITE : CV / lettre liés (PDF aperçu ; lettre docx = ÉDITABLE) ──
+        # ── RIGHT: linked CV / letter (PDF preview; docx letter = EDITABLE) ──
         right = CF(body, bg=BG)
         rbar = CF(right, bg=BG)
         rbar.pack(fill="x")
@@ -183,7 +183,7 @@ class DetailMixin:
 
         def load(path: Any) -> None:
             """Charge le doc à droite. Lettre .docx → texte ÉDITABLE ; sinon PDF empilé."""
-            # pour l'édition : préfère le .docx jumeau des lettres
+            # for editing: prefers the letters' twin .docx
             if (
                 path.suffix.lower() == ".pdf"
                 and _ici.LETTRES_DIR in path.parents
@@ -217,7 +217,7 @@ class DetailMixin:
                     rinfo.configure(
                         text=f"{path.name} · {doc.page_count} p. · lecture (PDF) — molette pour dérouler"
                     )
-                    doc.close()  # libère le fichier (images déjà rendues)
+                    doc.close()  # releases the file (images already rendered)
                 except Exception as ex:
                     surface("txt")
                     rtxt.delete("1.0", "end")
@@ -361,7 +361,7 @@ class DetailMixin:
         if not (cvp or ltp):
             rinfo.configure(text=_t("aucun CV/lettre lié à cette offre"))
         body.add(right, minsize=380)
-        # ouvre la LETTRE par défaut (éditable), sinon le CV
+        # opens the LETTER by default (editable), otherwise the CV
         if ltp:
             load(ltp)
         elif cvp:
@@ -370,7 +370,7 @@ class DetailMixin:
 
     def _cv_viewer(self: "AppTypee", preselect: Any = None) -> None:
         self._hide_all()
-        if self.viewer is not None:  # déjà construit → réaffiche
+        if self.viewer is not None:  # already built → shown again
             self.viewer.pack(fill="both", expand=True)
             if preselect:
                 p = Path(preselect)
@@ -416,7 +416,7 @@ class DetailMixin:
         lb.pack(side="left", fill="both", expand=True, padx=(8, 0), pady=8)
         sb.pack(side="right", fill="y", pady=24)
 
-        files: list[Any] = []  # aligné avec lb : Path, Dossier ou None (titre de groupe)
+        files: list[Any] = []  # aligned with lb: Path, Folder or None (group title)
         MAX_LIGNES = 300
 
         def fill(flt: Any = "") -> None:
@@ -463,7 +463,7 @@ class DetailMixin:
         pginfo = CL(bar, text="", bg=BG, fg=MUT)
         pginfo.pack(side="right", padx=12)
 
-        # deux surfaces d'aperçu : canvas (PDF, scrollable) / texte (docx-txt, scrollable)
+        # two preview surfaces: canvas (PDF, scrollable) / text (docx-txt, scrollable)
         state: dict[str, Any] = {"doc": None, "path": None, "imgs": [], "zoom": 1.4}
         holder = CF(right, bg=BG)
         holder.pack(fill="both", expand=True, pady=(4, 4))
@@ -523,7 +523,7 @@ class DetailMixin:
                 )
 
         def show(path: Any) -> None:
-            # ferme le doc PDF précédent (sinon fichier verrouillé → regen LibreOffice impossible)
+            # closes the previous PDF doc (otherwise file locked → LibreOffice regeneration impossible)
             if state.get("doc") is not None:
                 try:
                     state["doc"].close()
@@ -601,7 +601,7 @@ class DetailMixin:
 
         lb.bind("<<ListboxSelect>>", on_sel)
 
-        # ── ÉDITION intégrée : lettres (.docx) + .txt. CV .docx = mise en page complexe → Word.
+        # ── Built-in EDITING: letters (.docx) + .txt. CV .docx = complex layout → Word.
         def save_doc() -> None:
             p = state["path"]
             if not p:
@@ -626,21 +626,21 @@ class DetailMixin:
                     lines = txt.split("\n")
                     paras = doc.paragraphs
                     if len(lines) == len(paras):
-                        # 1 ligne = 1 paragraphe → in-place (styles conservés)
+                        # 1 line = 1 paragraph → in place (styles kept)
                         for para, line in zip(paras, lines):
                             if para.text != line:
                                 for r in para.runs:
                                     r.text = ""
                                 (para.runs[0] if para.runs else para.add_run("")).text = line
                     else:
-                        # structure changée → reconstruit (lettre = layout simple)
+                        # structure changed → rebuilt (letter = simple layout)
                         for para in list(paras):
                             para._element.getparent().remove(para._element)
                         for line in lines:
                             np = doc.add_paragraph(line)
                             if len(line.strip()) > 90:
                                 np.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-                    s = doc.settings.element  # césure auto (justifié sans trous)
+                    s = doc.settings.element  # automatic hyphenation (justified without gaps)
                     if s.find(qn("w:autoHyphenation")) is None:
                         s.append(s.makeelement(qn("w:autoHyphenation"), {qn("w:val"): "true"}))
                     doc.save(str(p))
@@ -648,7 +648,7 @@ class DetailMixin:
             except Exception as ex:
                 self._log(f"! sauvegarde KO: {type(ex).__name__}\n")
                 return
-            # PDF jumeau régénéré en fond (LibreOffice) pour rester synchro
+            # twin PDF regenerated in the background (LibreOffice) to stay in sync
             tw = p.with_suffix(".pdf")
             if ext == ".docx" and tw.exists():
 
@@ -721,7 +721,7 @@ class DetailMixin:
             relief="flat",
             cursor="hand2",
         ).pack(side="left", padx=6)
-        # dans la barre du titre : la barre du bas est déjà pleine
+        # in the title bar: the bottom bar is already full
         CB(
             bar,
             text="CV ⇄ lettre",
@@ -743,7 +743,7 @@ class DetailMixin:
             cursor="hand2",
         ).pack(side="right", padx=6, before=pginfo)
 
-        # outils de masse : MAJ date/ordre/destinataire des lettres · renommage à mon nom
+        # bulk tools: UPDATE date/order/recipient of the letters · rename to my name
         def _tool(script: Any, label: Any, btn: Any) -> None:
             btn.configure(state="disabled", text="En cours : " + label)
 
@@ -799,7 +799,7 @@ class DetailMixin:
         )
         cv_canvas.bind("<Prior>", lambda e: cv_canvas.yview_scroll(-1, "pages"))
         cv_canvas.bind("<Next>", lambda e: cv_canvas.yview_scroll(1, "pages"))
-        self._viewer_show = show  # réutilisé quand le panneau est réaffiché avec preselect
+        self._viewer_show = show  # reused when the panel is shown again with preselect
 
         def _close_doc() -> None:
             if state.get("doc") is not None:
@@ -809,7 +809,7 @@ class DetailMixin:
                     pass
                 state["doc"] = None
 
-        self._viewer_close = _close_doc  # appelé par _show_dash (déverrouille le pdf)
+        self._viewer_close = _close_doc  # called by _show_dash (unlocks the pdf)
 
         if preselect:
             p = Path(preselect)

@@ -1,9 +1,9 @@
-"""Le fit, l'experience requise et les pieges du scoring (ats_match).
+"""The fit, the required experience and the traps of the scoring (ats_match).
 
-`ats_match` decide quelles offres recoivent un CV et une lettre. Sa regle
-principale a tourne MORTE : `_ESG_TITLE_RX` commencait par un backspace, donc
-« un intitule ESG leve le plafond a 10 » ne s'appliquait jamais, sans erreur.
-Converti depuis Scripts/test_scoring.py.
+`ats_match` decides which offers receive a CV and a letter. Its main
+rule ran DEAD: `_ESG_TITLE_RX` started with a backspace, so
+"an ESG title lifts the cap to 10" never applied, without error.
+Converted from Scripts/test_scoring.py.
 """
 
 import re
@@ -22,7 +22,7 @@ from jobhunter.scoring.fit import (
     fit_score,
 )
 
-# Un texte long et creux, pour que la densite ESG soit calculee sur du volume.
+# A long, hollow text, so that the ESG density is computed on volume.
 REMPLISSAGE = "Nous accompagnons nos clients dans leurs projets. " * 60
 ESG_PUR = (
     "Analyste ESG. Missions : analyse extra-financière, reporting CSRD, "
@@ -47,9 +47,9 @@ def fit(texte, titre):
     return fit_score(texte, titre)[0]
 
 
-# ── A. les motifs ne sont pas corrompus ────────────────────────────────────────
-# Un \b devient \x08 (heredoc) ou un antislash litteral : le motif compile et ne
-# matche plus rien.
+# ── A. the patterns are not corrupted ────────────────────────────────────────
+# A \b becomes \x08 (heredoc) or a literal backslash: the pattern compiles and
+# no longer matches anything.
 def test_tous_les_motifs_sont_sains():
     assert jutil.verifier_motifs(vars(ats_match), minimum=4) >= 4
 
@@ -62,7 +62,7 @@ def test_motif_sans_backspace(nom):
     assert "\x08" not in getattr(ats_match, nom).pattern
 
 
-# ── B. l'intitule ESG leve le plafond (la regle qui etait morte) ───────────────
+# ── B. the ESG title lifts the cap (the rule that was dead) ───────────────
 @pytest.mark.parametrize(
     ("titre", "esg"),
     [
@@ -74,7 +74,7 @@ def test_motif_sans_backspace(nom):
         ("E&S Analyst", True),
         ("Analyste CSRD", True),
         ("Responsable décarbonation", True),
-        # les bornes \b servent a ca : sans elles, « rse » matche « diveRSE »
+        # that is what the \b boundaries are for: without them, "rse" matches "diveRSE"
         ("Diverse Talent Partner", False),
         ("Sparse Data Engineer", False),
         ("Trading Market Risk Analyst", False),
@@ -85,9 +85,9 @@ def test_intitule_esg(titre, esg):
     assert bool(_ESG_TITLE_RX.search(titre.lower())) is esg
 
 
-# ── C. une offre ESG franche score haut ────────────────────────────────────────
+# ── C. a clear ESG offer scores high ────────────────────────────────────────
 def test_offre_esg_pure_au_maximum():
-    # l'axe ESG sature vaut 3.0 ; la cible etait 4.0 et l'offre plafonnait a 8
+    # the saturated ESG axis is worth 3.0; the target was 4.0 and the offer capped at 8
     assert fit(ESG_PUR, "Analyste ESG") == 10
 
 
@@ -107,8 +107,8 @@ def test_sans_esg_le_plafond_tient():
     assert 1 <= fit(texte, "Financial Analyst") <= 8
 
 
-# ── D. le boilerplate RSE ne fait pas un poste ESG ─────────────────────────────
-# ExxonMobil « Trading Market Risk Analyst » : 3 marqueurs dans 7940 caracteres, fit 10.
+# ── D. CSR boilerplate does not make an ESG job ─────────────────────────────
+# ExxonMobil "Trading Market Risk Analyst": 3 markers in 7940 characters, fit 10.
 NOYE = (
     "Trading Market Risk Analyst. "
     + REMPLISSAGE
@@ -141,7 +141,7 @@ def test_vraie_annonce_esg_au_dessus_du_seuil():
     assert densite_esg(dense.lower()) >= _ESG_DENSITE_MIN
 
 
-# ── E, F. le plafond tient avec le bonus junior ; junior se lit dans l'INTITULE ─
+# ── E, F. the cap holds with the junior bonus; junior is read in the TITLE ─
 def test_junior_sans_esg_reste_sous_le_plafond():
     texte = (
         "Auditeur junior. Analyse financière, modélisation financière, valorisation DCF, "
@@ -161,7 +161,7 @@ def test_alternant_dans_le_corps_ne_donne_pas_le_bonus():
     )
 
 
-# ── G, H. malus de seniorite et de role hors cible ─────────────────────────────
+# ── G, H. seniority and off-target role penalties ─────────────────────────────
 def f_titre(titre):
     return fit(f"{titre} {BASE}", titre)
 
@@ -191,8 +191,8 @@ def test_role_commercial_penalise():
         ("5 years of experience required", 5),
         ("expérience professionnelle antérieure de 3 à 5 ans", 5),  # fenetre large a gauche
         ("Niveau d'expérience \r\n \r\n \r\n Plus de 10 ans", 10),  # blancs ecrases
-        ("Alternance. Société fondée il y a 10 ans.", 0),  # un « 10 ans » isole est du bruit
-        ("40 ans d'expérience de notre société", 0),  # au-dela de 15 : age ou anciennete
+        ("Alternance. Société fondée il y a 10 ans.", 0),  # an isolated "10 ans" is noise
+        ("40 ans d'expérience de notre société", 0),  # beyond 15: age or seniority
         ("Poste ouvert à tous profils", 0),
     ],
 )
@@ -200,7 +200,7 @@ def test_experience_years(texte, ans):
     assert experience_years(texte) == ans
 
 
-# ── J. le malus experience ecrase le fit ───────────────────────────────────────
+# ── J. the experience penalty crushes the fit ───────────────────────────────────────
 def test_dix_ans_detectes():
     assert fit_score(f"Analyste ESG {BASE} 10 ans d'expérience exigée", "Analyste ESG")[1] == 10
 
@@ -218,7 +218,7 @@ def test_trois_ans_coutent_moins_que_dix():
     )
 
 
-# ── K. bornes et robustesse ────────────────────────────────────────────────────
+# ── K. bounds and robustness ────────────────────────────────────────────────────
 VIDES = [("", ""), (None, None), ("x", "x"), ("   ", "   ")]
 
 
@@ -236,7 +236,7 @@ def test_competences_generiques_insuffisantes():
     assert fit("Excel, Anglais, Communication", "Assistant administratif") <= 3
 
 
-# ── L. l'axe ESG est le seul attenue par la densite ────────────────────────────
+# ── L. the ESG axis is the only one dampened by density ────────────────────────────
 def test_axe_finance_non_attenue():
     texte = (
         "Analyse financière, modélisation financière, valorisation DCF, audit et "
@@ -245,7 +245,7 @@ def test_axe_finance_non_attenue():
     assert axis_scores(texte.lower())["finance"] > 0.5
 
 
-# ── M. qui leve le plafond : ESG-finance oui, HSE et technique non ─────────────
+# ── M. who lifts the cap: ESG-finance yes, HSE and technical no ─────────────
 @pytest.mark.parametrize(
     "titre",
     [
@@ -260,7 +260,7 @@ def test_hse_plafonne_a_6(titre):
     assert fit(f"{titre} {ESG_PUR}", titre) <= 6
 
 
-# LE TEXTE EST FIXE, SEUL L'INTITULE VARIE : la levee du plafond par le titre.
+# THE TEXT IS FIXED, ONLY THE TITLE VARIES: lifting the cap through the title.
 MENTION = (
     "Missions : analyse financière, modélisation financière, valorisation DCF, "
     "analyse sectorielle, suivi du bilan carbone du site."
@@ -293,7 +293,7 @@ def test_intitule_technique_n_apporte_rien(titre):
         "Associate, Investment Stewardship",
         "Analyste ISR",
         "Ingénieur financier ESG",
-        # N. ce qui DOIT rester dans la cible
+        # N. what MUST stay in the target
         "ESG Research Analyst",
         "Sustainable Procurement ESG Analyst",
         "Research Analyst - Sustainable Investing",
@@ -314,7 +314,7 @@ def test_mot_isole_echappe_au_veto_hse(titre):
     assert ats_match._titre_hse(titre.lower()) is False
 
 
-# ── N. metiers hors cible : le vocabulaire vert ne les porte plus a 10 ─────────
+# ── N. off-target professions: green vocabulary no longer carries them to 10 ─────────
 @pytest.mark.parametrize(
     "titre",
     [
@@ -342,7 +342,7 @@ def test_pas_hors_cible(titre):
     assert ats_match._titre_hors_cible(titre.lower()) is False
 
 
-# Analyste financier classique (2026-10-07) : au-dessus de l'ancien plafond de 6.
+# Classic financial analyst (2026-10-07): above the old cap of 6.
 @pytest.mark.parametrize(
     "titre",
     [
@@ -371,7 +371,7 @@ def test_ai_engineer_garde_le_plafond_ia():
     assert fit(f"AI Engineer {IA}", "AI Engineer") >= 7
 
 
-# ── fit_fin (2026-10-09) : departage les ex aequo sans deplacer aucun fit ──────
+# ── fit_fin (2026-10-09): breaks ties without moving any fit ──────
 TEXTES = [
     ("Analyste ESG", f"Analyste ESG {ESG_PUR}"),
     ("Financial Analyst", f"Financial Analyst {FIN}"),
@@ -400,8 +400,8 @@ def test_a_fit_egal_la_densite_esg_passe_devant():
     assert dense[0] == maigre[0] and dense[2] > maigre[2]
 
 
-# ── langue : annonce illisible ou langue exigee non parlee ─────────────────────
-# Profil d'exemple : francais, anglais, allemand. Une offre en neerlandais sortait a 10.
+# ── language: unreadable posting or required language not spoken ─────────────────────
+# Example profile: French, English, German. An offer in Dutch came out at 10.
 def test_annonce_en_neerlandais_plafond_2():
     nl = (
         "Wij zoeken een ESG analist voor ons team. Je bent verantwoordelijk voor de "
@@ -459,7 +459,7 @@ def test_langue_parlee_sans_plafond(texte):
     assert ats_match.plafond_langue(texte)[0] == 10.0
 
 
-# ── expliquer : le calcul en clair, sans changer le calcul (G3) ────────────────
+# ── expliquer: the calculation in clear, without changing the calculation (G3) ────────────────
 
 
 def test_raisons_ne_changent_pas_le_fit():

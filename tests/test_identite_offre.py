@@ -1,9 +1,9 @@
-"""Identité d'une offre (ADR 0010) : la clé « entreprise|poste » reste, ses pertes sont réparées.
+"""Identity of an offer (ADR 0010): the "entreprise|poste" key stays, its losses are repaired.
 
-1. Même poste dans plusieurs villes : le dédoublonnage du scan garde la ville de la
-   meilleure zone du profil et note les autres (`autres_lieux`).
-2. Même URL d'annonce sous deux clés (intitulé retouché, flux renommé) : `doublons`
-   les réunit, en gardant l'offre suivie puis la version la plus récemment servie.
+1. Same job in several cities: the scan's dedup keeps the city of the
+   profile's best zone and records the others (`autres_lieux`).
+2. Same posting URL under two keys (retouched title, renamed feed): `doublons`
+   merges them, keeping the tracked offer then the most recently served version.
 """
 
 import pytest
@@ -50,7 +50,7 @@ def test_meme_ville_pas_d_autres_lieux(zones_fixes):
     assert "autres_lieux" not in uniq[0]
 
 
-# ── même URL d'annonce sous deux clés ──────────────────────────────────────────
+# ── same posting URL under two keys ──────────────────────────────────────────
 def ligne(entreprise, poste, url, vu_le=""):
     return {"entreprise": entreprise, "poste": poste, "url": url, "vu_le": vu_le}
 

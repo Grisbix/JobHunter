@@ -1,8 +1,8 @@
-"""CV automatique depuis une banque de faits (cv_auto), sans reseau ni LLM.
+"""Automatic CV from a fact bank (cv_auto), without network or LLM.
 
-Seuls les faits VALIDES sont utilises ; declencheurs et faux positifs ; application
-a des modeles .docx construits a la volee ; le sur-mesure l'emporte sur
-l'automatique. Banques SYNTHETIQUES. Converti depuis Scripts/test_cv_auto.py.
+Only VALIDATED facts are used; triggers and false positives; application
+to .docx templates built on the fly; tailor-made wins over
+automatic. SYNTHETIC banks. Converted from Scripts/test_cv_auto.py.
 """
 
 import pytest
@@ -12,7 +12,7 @@ from jobhunter import chemins
 from jobhunter import documents as ta
 from jobhunter.documents import cv_auto
 
-# ── la banque minimale : un fait valide, un fait NON valide ────────────────────
+# ── the minimal bank: one validated fact, one NON-validated fact ────────────────────
 B = {
     "faits": [
         {
@@ -61,7 +61,7 @@ def test_fait_sans_version_anglaise():
     assert cv_auto.retouches("solaire", "en", b=B)["faits"] == []
 
 
-# ── une banque realiste : un fait de secteur, de langue, un fait desactive ─────
+# ── a realistic bank: a sector fact, a language fact, a disabled fact ─────
 BANQUE = {
     "faits": [
         {
@@ -134,7 +134,7 @@ def test_espanol_declenche_espagnol_avance():
     assert "espagnol_avance" in ids("Langues : Español avanzado requis")
 
 
-# ── application a des modeles .docx construits a la volee ──────────────────────
+# ── application to .docx templates built on the fly ──────────────────────
 ANNONCE = "Analyste en investissement photovoltaïque, espagnol B2/C1"
 
 
@@ -235,7 +235,7 @@ def test_allegements_deux_lignes_retirees(banque, modele_fr):
     assert avant - len([p for p in d.paragraphs if p.text.strip()]) == 2
 
 
-# ── le sur-mesure l'emporte sur l'automatique ──────────────────────────────────
+# ── tailor-made wins over automatic ──────────────────────────────────
 @pytest.fixture
 def sur_mesure(tmp_path, monkeypatch):
     monkeypatch.setattr(chemins, "CV_SUR_MESURE", tmp_path)

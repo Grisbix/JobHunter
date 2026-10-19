@@ -14,16 +14,16 @@ _log = _journal.journal(__name__)
 
 
 # ═══════════════ 7. France Travail — API OFFICIELLE (identifiants requis) ═══════
-# Ex-Pole emploi : le plus gros gisement d'offres en France, API publique, gratuite,
-# legale. Couvre tres largement ce qu'Indeed agrege, sans aucun contournement.
+# Formerly Pole emploi: the biggest deposit of offers in France, public API, free,
+# legal. Covers very broadly what Indeed aggregates, without any workaround.
 #
-# ⚠ IDENTIFIANTS A CREER PAR L'UTILISATEUR (je ne cree pas de comptes) :
-#   1. https://francetravail.io  ->  creer un compte, puis une application
-#   2. souscrire a l'API « Offres d'emploi v2 »
-#   3. copier client_id / client_secret dans Scripts/francetravail.json :
+# ⚠ CREDENTIALS TO BE CREATED BY THE USER (I do not create accounts):
+#   1. https://francetravail.io  ->  create an account, then an application
+#   2. subscribe to the "Offres d'emploi v2" API
+#   3. copy client_id / client_secret into Scripts/francetravail.json:
 #        {"client_id": "...", "client_secret": "..."}
-#      (fichier ignore par git : il contient un secret)
-# Sans ce fichier, la source se desactive silencieusement.
+#      (file ignored by git: it contains a secret)
+# Without this file, the source disables itself silently.
 FT_CFG = HERE / "francetravail.json"
 
 FT_TOKEN_URL = (
@@ -64,13 +64,13 @@ def _ft_token() -> str | None:
 
 
 def fetch_france_travail(par_mot: int = 50) -> list[dict[str, Any]]:
-    """Les offres France Travail (API officielle), par mot-clé.
+    """The France Travail offers (official API), by keyword.
 
     Args:
-        par_mot: nombre maximal d'offres par mot-clé.
+        par_mot: maximum number of offers per keyword.
 
     Returns:
-        Les offres ; [] sans jeton (identifiants absents ou refusés).
+        The offers; [] without a token (credentials missing or refused).
     """
     import httpx
 
@@ -88,7 +88,7 @@ def fetch_france_travail(par_mot: int = 50) -> list[dict[str, Any]]:
                 headers=H,
                 params={"motsCles": kw, "range": f"0-{par_mot - 1}"},
             )
-            # 204 = aucun resultat, 206 = resultat partiel (pagination) : les deux OK
+            # 204 = no result, 206 = partial result (pagination): both OK
             if r.status_code not in (200, 206):
                 continue
             res = r.json().get("resultats") or []
@@ -126,10 +126,10 @@ def fetch_france_travail(par_mot: int = 50) -> list[dict[str, Any]]:
 
 
 def scan_france_travail() -> list[dict[str, Any]]:
-    """Collecte France Travail ; signale si les identifiants ne sont pas configurés.
+    """France Travail collection; reports when the credentials are not configured.
 
     Returns:
-        Les offres.
+        The offers.
     """
     o = fetch_france_travail()
     if not o and not FT_CFG.exists():

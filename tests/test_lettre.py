@@ -1,13 +1,13 @@
-"""Ce que la lettre decide seule (tailor_application, verifie_redites, langue), sans reseau.
+"""What the letter decides on its own (tailor_application, verifie_redites, langue), without network.
 
-1. La reprise de cloture repond a l'appel et s'accorde (« Messieurs » a deux hommes).
-2. Le paragraphe agricole : une MENTION ne vaut pas un SUJET, et « CREDIT AGRICOLE »
-   contient « agricol » (91 offres retenues a tort a la premiere mesure).
-3. Le titre perd le nom de la societe.
-4. Le corps ecrit a la main se retrouve par son nom (l'echec etait SILENCIEUX).
-5. verifie_redites coupe l'en-tete quelle que soit la formule d'appel.
-6. La langue du document suit le LIEU quand le texte est muet.
-Converti depuis Scripts/test_lettre.py.
+1. The closing echo answers the greeting and agrees ("Messieurs" for two men).
+2. The agricultural paragraph: a MENTION is not a SUBJECT, and "CREDIT AGRICOLE"
+   contains "agricol" (91 offers wrongly kept in the first measurement).
+3. The title loses the company's name.
+4. The hand-written body is found by its name (the failure was SILENT).
+5. verifie_redites cuts the header whatever the greeting.
+6. The document's language follows the PLACE when the text is silent.
+Converted from Scripts/test_lettre.py.
 """
 
 import pytest
@@ -28,7 +28,7 @@ AGRI_FR, AGRI_EN = _AGRI["fr"], _AGRI["en"]
 GENERIQUE = "Madame, Monsieur"
 
 
-# ── la reprise de cloture repond a l'appel ─────────────────────────────────────
+# ── the closing echo answers the greeting ─────────────────────────────────────
 @pytest.mark.parametrize(
     ("rh", "langue", "attendu"),
     [
@@ -39,7 +39,7 @@ GENERIQUE = "Madame, Monsieur"
         ("Madame Awa MOUSSA", "fr", "Madame"),
         ("", "fr", GENERIQUE),
         ("Service Recrutement", "fr", GENERIQUE),
-        # l'anglais ne reprend pas la civilite : il ferme sur « Yours sincerely »
+        # English does not echo the title of address: it closes with "Yours sincerely"
         ("Monsieur Louis Mac Arthur", "en", "Sir or Madam"),
     ],
 )
@@ -47,8 +47,8 @@ def test_reprise_de_cloture(rh, langue, attendu):
     assert salutation({"rh": rh}, langue)[1] == attendu
 
 
-# « Yours faithfully » si le destinataire est inconnu, « Yours sincerely » s'il est
-# nomme ; la lettre anglaise ecrivait « faithfully » en dur.
+# "Yours faithfully" if the recipient is unknown, "Yours sincerely" if they are
+# named; the English letter hard-coded "faithfully".
 @pytest.mark.parametrize(
     ("rh", "langue", "attendu"),
     [
@@ -62,7 +62,7 @@ def test_nomme(rh, langue, attendu):
     assert salutation({"rh": rh}, langue)[2] is attendu
 
 
-# ── le paragraphe agricole ─────────────────────────────────────────────────────
+# ── the agricultural paragraph ─────────────────────────────────────────────────────
 def agri(role="", texte="", societe="", langue="fr"):
     offre = dict(company=societe, role=role, offer_text=texte, missions="", profil="")
     return contexte_agricole(offre, langue)
@@ -78,13 +78,13 @@ CREDIT_AGRICOLE = (
 )
 
 AGRI = [
-    # l'intitule est souverain
+    # the title is sovereign
     ("Analyste Investissement - Capital Naturel", "", "", "fr", AGRI_FR),
     ("Investment Analyst - Natural Capital", "", "", "en", AGRI_EN),
     ("Analyste Agroalimentaire", "", "", "fr", AGRI_FR),
     ("Specialist - Regenerative Agriculture", "", "", "fr", AGRI_FR),
     ("Analyste Risques Engagements", "", "", "fr", ""),
-    # une mention ne vaut pas un sujet
+    # a mention is not a subject
     (
         "Contrôleur de gestion",
         "Nos clients vont de l'agroalimentaire à l'aéronautique.",
@@ -112,7 +112,7 @@ def test_paragraphe_agricole(role, texte, societe, langue, attendu):
     assert agri(role, texte, societe, langue) == attendu
 
 
-# ── le titre perd le nom de la societe ─────────────────────────────────────────
+# ── the title loses the company's name ─────────────────────────────────────────
 @pytest.mark.parametrize(
     ("titre", "societe", "attendu"),
     [
@@ -129,9 +129,9 @@ def test_paragraphe_agricole(role, texte, societe, langue, attendu):
         ),
         ("Data Scientist - tiktok", "TikTok", "Data Scientist"),
         ("Analyste ESG / Impact ESG", "Mirova", "Analyste ESG / Impact ESG"),
-        ("Mirova", "Mirova", "Mirova"),  # un titre reduit au nom ne devient pas vide
+        ("Mirova", "Mirova", "Mirova"),  # a title reduced to the name does not become empty
         ("Analyste - Mirova", "", "Analyste - Mirova"),
-        # un tiret dans un mot n'est pas un separateur (« F - Gas » chez Aggreko)
+        # a hyphen in a word is not a separator ("F - Gas" at Aggreko)
         (
             "F-Gas & Sustainability Analyst (H/F)",
             "AGGREKO FRANCE",
@@ -144,9 +144,9 @@ def test_sans_societe(titre, societe, attendu):
     assert _sans_societe(titre, societe) == attendu
 
 
-# ── le corps ecrit a la main se retrouve par son nom ───────────────────────────
-# La cle doit passer par _slug EN ENTIER, comme le nom du fichier : deux slugs
-# autour d'un « __ » litteral ne retrouvaient jamais le fichier, sans erreur.
+# ── the hand-written body is found by its name ───────────────────────────
+# The key must go through _slug ENTIRELY, like the file name: two slugs
+# around a literal "__" never found the file, without error.
 def cle(societe, poste):
     return _slug(f"{societe}__{poste}")
 
@@ -171,7 +171,7 @@ def test_sans_fichier_le_gabarit_reprend_la_main():
     assert corps_sur_mesure(offre) == []
 
 
-# ── verifie_redites coupe l'en-tete, quelle que soit la formule ────────────────
+# ── verifie_redites cuts the header, whatever the greeting ────────────────
 EN_TETE = (
     "Camille Exemple\ncamille.exemple@example.com\n+33 6 00 00 00 00\n"
     "Le 21 septembre 2026\nObjet : Candidature au poste d'analyste\n"
@@ -195,12 +195,12 @@ def test_en_tete_coupe(appel):
 
 
 def test_formule_inconnue_on_ne_perd_pas_le_corps():
-    # mieux vaut trop de texte qu'un corps vide, qui ferait passer toute redite
+    # better too much text than an empty body, which would let any repetition through
     assert "Le corps commence ici." in corps(EN_TETE + "Salut,\nLe corps commence ici.")
 
 
-# ── la langue suit le LIEU quand le texte est muet ─────────────────────────────
-# 1 809 offres etrangeres sur 1 814 etaient classees « fr » (2026-09-22).
+# ── the language follows the PLACE when the text is silent ─────────────────────────────
+# 1,809 foreign offers out of 1,814 were classified "fr" (2026-09-22).
 @pytest.mark.parametrize(
     ("titre", "lieu", "attendu"),
     [
@@ -213,11 +213,11 @@ def test_formule_inconnue_on_ne_perd_pas_le_corps():
         ("ESG Analyst", "Luxembourg", "fr"),
         ("Analyste ESG", "Grenoble (38) · Auvergne-Rhône-Alpes", "fr"),
         ("Gestionnaire des risques", "33700 Mérignac · Nouvelle-Aquitaine", "fr"),
-        # la Suisse n'a pas une seule langue de travail : le lieu decide
+        # Switzerland does not have a single working language: the place decides
         ("ESG Analyst", "Geneva, Switzerland", "fr"),
         ("ESG Analyst", "Zurich, Switzerland", "en"),
         ("ESG Analyst", "Basel, Switzerland", "en"),
-        ("ESG Analyst", "", "fr"),  # sans lieu, le doute profite au francais
+        ("ESG Analyst", "", "fr"),  # without a place, French gets the benefit of the doubt
     ],
 )
 def test_langue_par_le_lieu(titre, lieu, attendu):

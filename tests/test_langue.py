@@ -1,4 +1,4 @@
-"""Langue de l'interface (jobhunter.app.langue) et catalogue anglais."""
+"""Interface language (jobhunter.app.langue) and English catalogue."""
 
 import importlib
 import json
@@ -70,9 +70,9 @@ def test_navigation_et_panneaux_traduits():
 
 
 def test_chaque_cle_courte_existe_dans_l_app():
-    """Une clé du catalogue que l'app n'affiche plus est une traduction morte.
+    """A catalogue key the app no longer displays is a dead translation.
 
-    Les textes longs, écrits en plusieurs morceaux dans le code, ne se vérifient pas ici.
+    Long texts, written in several pieces in the code, are not checked here.
     """
     source = "\n".join(
         p.read_text(encoding="utf-8") for p in APP.glob("*.py") if p.name != "textes_en.py"
@@ -110,7 +110,7 @@ def test_journal(monkeypatch):
         langue.journal("＋ flux Ashby alan — lu par API dès la prochaine collecte (Alan)\n")
         == "＋ Ashby feed alan — read by API from the next collection (Alan)\n"
     )
-    # Une ligne inconnue reste telle quelle.
+    # An unknown line stays as is.
     assert langue.journal("→ [3/9] Amundi|Analyste\n") == "→ [3/9] Amundi|Analyste\n"
 
 
@@ -151,8 +151,8 @@ def test_sortie_modeles_vivent_dans_le_paquet():
     morts = []
     for fr, en in SORTIE_EN.items():
         assert sorted(trous.findall(fr)) == sorted(trous.findall(en)), fr
-        # Le code coupe souvent ces lignes en plusieurs chaînes : on cherche le début de
-        # CHAQUE morceau fixe, assez court pour tenir dans une seule.
+        # The code often splits these lines into several strings: we look for the start of
+        # EACH fixed piece, short enough to fit in a single one.
         for morceau in trous.split(fr)[::2]:
             debut = re.sub(r"^\W+", "", morceau)[:8]
             if len(debut) >= 4 and debut not in source:
@@ -171,8 +171,8 @@ def test_journal_modeles_coherents():
     morts = []
     for fr, en in JOURNAL_EN.items():
         assert sorted(trous.findall(fr)) == sorted(trous.findall(en)), fr
-        # Le début du plus long morceau fixe doit apparaître dans le code de l'app (le
-        # reste peut y être coupé en plusieurs chaînes).
+        # The start of the longest fixed piece must appear in the app's code (the
+        # rest may be split there into several strings).
         fixe = re.sub(r"^\W+", "", max(trous.split(fr)[::2], key=len))[:18]
         if fixe not in source:
             morts.append(fr)

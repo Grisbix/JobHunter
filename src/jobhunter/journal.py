@@ -1,18 +1,17 @@
-"""Journaux du moteur : `logging`, un format commun, un fichier par execution.
+"""Engine logs: `logging`, a common format, one file per run.
 
     _log = journal.journal(__name__)
     _log.info("LinkedIn : %d offres", n)
 
-Tout le moteur ecrit sous le logger `jobhunter`. Sa console affiche le message seul,
-sur la sortie standard du moment : ce que les programmes affichaient par `print`
-s'affiche a l'identique, et le pipeline, qui capture la sortie de chaque etape, le
-garde dans son journal comme avant.
+The whole engine writes under the `jobhunter` logger. Its console shows the message
+alone, on the current standard output: what the programs displayed through `print`
+is displayed identically, and the pipeline, which captures the output of each step,
+keeps it in its log as before.
 
-`JOBHUNTER_JOURNAL=<fichier>` ajoute un fichier horodate (niveau, module) : le
-pipeline le pose pour avoir un fichier par execution. `configurer()` fait la meme
-chose depuis le code.
+`JOBHUNTER_JOURNAL=<file>` adds a timestamped file (level, module): the pipeline sets
+it to have one file per run. `configurer()` does the same from the code.
 
-Rien n'est ouvert a l'import : le fichier l'est au premier message.
+Nothing is opened at import: the file is opened at the first message.
 """
 
 import logging
@@ -26,7 +25,7 @@ FORMAT_FICHIER = "%(asctime)s %(levelname)-7s %(name)s : %(message)s"
 
 
 class _Console(logging.StreamHandler[TextIO]):
-    """La sortie standard DU MOMENT : un test (capsys) ou une redirection la remplace."""
+    """The CURRENT standard output: a test (capsys) or a redirection replaces it."""
 
     def __init__(self) -> None:
         super().__init__(sys.stdout)
@@ -53,13 +52,13 @@ def _installer() -> logging.Logger:
 
 
 def journal(nom: str) -> logging.Logger:
-    """Le logger d'un module du moteur (`journal(__name__)`)."""
+    """The logger of an engine module (`journal(__name__)`)."""
     _installer()
     return logging.getLogger(nom if nom.startswith(RACINE) else f"{RACINE}.{nom}")
 
 
 def configurer(niveau: int | None = None, fichier: Path | None = None) -> None:
-    """Regle le niveau, et ajoute un fichier horodate (ouvert au premier message)."""
+    """Sets the level, and adds a timestamped file (opened at the first message)."""
     racine = _installer()
     if niveau is not None:
         racine.setLevel(niveau)

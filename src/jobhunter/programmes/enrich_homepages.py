@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""enrich_homepages.py — Trouve l'URL page d'accueil des entreprises SANS URL offre.
-Devine le domaine depuis le nom (slug + .com/.fr) et VALIDE par HTTP (200, host cohérent).
-Écrit Scripts/homepages.json {entreprise: url}. build_queue l'utilise en fallback
-(url_type=HOMEPAGE, canal=auto) → le runner navigue home → goto_careers → offre.
+"""enrich_homepages.py — Finds the home page URL of companies WITHOUT an offer URL.
+Guesses the domain from the name (slug + .com/.fr) and VALIDATES over HTTP (200, consistent host).
+Writes Scripts/homepages.json {company: url}. build_queue uses it as a fallback
+(url_type=HOMEPAGE, canal=auto) → the runner navigates home → goto_careers → offer.
 
-Run: python JobHunter.pyw enrich_homepages        (toutes les entreprises sans URL du queue)
-     python JobHunter.pyw enrich_homepages --force (revalide même celles déjà en cache)
+Run: python JobHunter.pyw enrich_homepages        (all the companies without a URL in the queue)
+     python JobHunter.pyw enrich_homepages --force (revalidates even those already cached)
 """
 
 import concurrent.futures as cf
@@ -28,7 +28,7 @@ UA = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
 }
 
-# tokens juridiques/génériques à retirer du slug
+# legal/generic tokens to remove from the slug
 STOP = {
     "sa",
     "sas",
@@ -65,9 +65,9 @@ STOP = {
 
 
 def _ascii(s):
-    """Volontairement PLUS agressif que jutil.sans_accent : ici on fabrique des
-    slugs de nom de domaine, donc tout caractere non-ASCII doit DISPARAITRE, pas
-    seulement perdre son accent. Ce n'est pas un doublon a factoriser."""
+    """Deliberately MORE aggressive than jutil.sans_accent: here we build domain name
+    slugs, so any non-ASCII character must DISAPPEAR, not only lose its accent. It
+    is not a duplicate to factor out."""
     return unicodedata.normalize("NFD", s or "").encode("ascii", "ignore").decode()
 
 
@@ -96,7 +96,7 @@ def candidates(name):
         for tld in ("com", "fr", "io", "co"):
             for pre in ("https://www.", "https://"):
                 urls.append(f"{pre}{s}.{tld}")
-    # dédup en gardant l'ordre
+    # dedup keeping the order
     seen, out = set(), []
     for u in urls:
         if u not in seen:
@@ -106,9 +106,9 @@ def candidates(name):
 
 
 def valid(url, name):
-    """URL valide si : répond (<400) ET host recoupe le nom ET la page montre un
-    signal 'carrières' (lien/texte). Le signal évite d'accepter un domaine générique
-    (ex: simc.com au hasard) qui n'est pas le bon employeur."""
+    """URL valid if: answers (<400) AND the host matches the name AND the page shows a
+    'careers' signal (link/text). The signal avoids accepting a generic domain (e.g.
+    simc.com by chance) that is not the right employer."""
     try:
         r = requests.get(url, headers=UA, timeout=8, allow_redirects=True)
         if r.status_code >= 400:
@@ -127,15 +127,15 @@ def valid(url, name):
             host_match = bool(first and len(first) >= 3 and first in host)
         if not host_match:
             return None
-        # note : PAS de garde "carrières visible" — trop de sites corporate chargent
-        # le lien carrières en JS (faux négatifs Schneider/Allianz). Le runner (goto_careers
-        # + sitemap + robots) trouve la section carrières lui-même.
+        # note: NO "careers visible" guard — too many corporate sites load
+        # the careers link in JS (Schneider/Allianz false negatives). The runner (goto_careers
+        # + sitemap + robots) finds the careers section itself.
         return r.url.rstrip("/")
     except Exception:
         return None
 
 
-# agrégateurs / annuaires à ignorer dans les résultats de recherche (pas la homepage)
+# aggregators / directories to ignore in the search results (not the homepage)
 _AGG = re.compile(
     r"(linkedin|wikipedia|societe\.com|pappers|verif\.com|infogreffe|"
     r"facebook|twitter|x\.com|instagram|youtube|indeed|glassdoor|"
@@ -158,7 +158,7 @@ def _ddg_results(query):
                 continue
             for m in re.findall(r'href="(https?://[^"]+)"', r.text):
                 u = m
-                if "duckduckgo.com/l/?uddg=" in u:  # lien redirect DDG -> extrait la vraie URL
+                if "duckduckgo.com/l/?uddg=" in u:  # DDG redirect link -> extracts the real URL
                     qs = parse_qs(urlparse(u).query)
                     if "uddg" in qs:
                         u = unquote(qs["uddg"][0])
@@ -183,7 +183,7 @@ def search_homepage(name):
             got = valid(u, name)  # revalide (HTTP + host-match)
             if got:
                 return got
-        # fallback souple : accepte le 1er résultat propre même sans host-match strict
+        # loose fallback: accepts the 1st clean result even without a strict host match
     for q in (f"{name} site officiel",):
         for u in _ddg_results(q)[:5]:
             try:
@@ -203,15 +203,15 @@ def resolve(name):
         got = valid(u, name)
         if got:
             return name, got
-    # 2) recherche moteur (les noms complexes/acronymes)
+    # 2) search engine (complex names/acronyms)
     got = search_homepage(name)
     return name, got
 
 
 def main():
-    # Verrou inter-processus : ce programme reecrit la queue ENTIERE. Si un
-    # autre le fait en meme temps (tache planifiee vs app), le dernier qui
-    # ecrit efface le travail de l'autre.
+    # Inter-process lock: this program rewrites the ENTIRE queue. If
+    # another one does it at the same time (scheduled task vs app), the last one
+    # to write erases the other's work.
     if not importlib.import_module("jobhunter.programmes.jutil").garder(QUEUE):
         return 3
     force = "--force" in sys.argv
@@ -221,9 +221,9 @@ def main():
     for o in Q:
         if (o.get("url") or "").startswith("http"):
             continue
-        # Filtrait sur priorite == "stage", qui melangeait un TYPE DE CONTRAT
-        # avec une priorite. Le type vit maintenant dans `contrat`, seul champ
-        # qui dise la verite (LinkedIn etiquette « CDI » les alternances).
+        # Filtered on priorite == "stage", which mixed a CONTRACT TYPE
+        # with a priority. The type now lives in `contrat`, the only field
+        # that tells the truth (LinkedIn labels work-study contracts "CDI").
         if str(o.get("contrat") or "") in ("Stage", "Alternance"):
             continue
         ent = (o.get("entreprise") or "").strip()
@@ -233,7 +233,7 @@ def main():
     found = 0
     with cf.ThreadPoolExecutor(max_workers=12) as ex:
         for name, url in ex.map(resolve, need):
-            # ne JAMAIS écraser une homepage déjà trouvée (ex: WebSearch manuel) par None
+            # NEVER overwrite a homepage already found (e.g. manual WebSearch) with None
             if url or not cache.get(name):
                 cache[name] = url
             if url:

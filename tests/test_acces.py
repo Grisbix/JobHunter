@@ -41,11 +41,11 @@ class AccesTest(unittest.TestCase):
                 patch.object(shutil, "rmtree") as supprimer,
                 patch.object(shutil, "copytree") as copier,
                 patch.object(shutil, "copy2") as copier_fichier,
-                # la file se lit par queue_io (ADR 0002) : on s'arrete la, avant tout navigateur
+                # the queue is read through queue_io (ADR 0002): we stop there, before any browser
                 patch("jobhunter.stockage.file.charger", side_effect=FinDuTest),
                 redirect_stdout(io.StringIO()),
             ):
-                # Arrêt avant lecture de la file et avant tout navigateur réel.
+                # Stop before reading the queue and before any real browser.
                 with self.assertRaises(FinDuTest):
                     apply_runner.main()
                 supprimer.assert_not_called()

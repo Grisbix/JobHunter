@@ -1,25 +1,25 @@
-"""Navigation web (Playwright) : du site d'une societe jusqu'au formulaire rempli.
+"""Web navigation (Playwright): from a company's site to the filled-in form.
 
-Ancien Scripts/web_nav.py (3 864 lignes), decoupe en phase 3.6 du plan :
+Formerly Scripts/web_nav.py (3,864 lines), split in phase 3.6 of the plan:
 
-page          bandeau cookies (REFUS d'abord), analyse de la page, attente du formulaire
-etapes        boutons en deux temps, portails, menus, nouvelles tentatives
-carrieres     page carriere d'une societe, puis l'offre dedans ; repli par la page d'accueil
-formulaires   assistant multi-ecrans, depot des documents, remplissage de la candidature
-segment       parties d'une page, ATS reconnu, bouton d'envoi SURLIGNE
-compte        connexion par etapes (mot de passe JAMAIS tape), bascule vers l'inscription
-linkedin      Easy Apply : remplit, l'humain envoie
-llm           repli par modele local (Ollama) : vision, agent pas a pas
-otp           code recu par courriel : colle, surligne Verifier, l'humain clique
-navigateur    Playwright standard seul, aides de saisie, chargement robuste, session
-categories    strategies par categorie de site ; leurs tableaux sont dans strategies
-confirmation  apres l'envoi (fait par l'humain) : la page confirme-t-elle ? preuve
+page          cookie banner (REFUSE first), page analysis, waiting for the form
+etapes        two-step buttons, portals, menus, retries
+carrieres     a company's career page, then the offer in it; fallback through the home page
+formulaires   multi-screen wizard, document upload, filling in the application
+segment       parts of a page, recognised ATS, send button HIGHLIGHTED
+compte        step-by-step login (password NEVER typed), switch to sign-up
+linkedin      Easy Apply: fills in, the human sends
+llm           fallback through a local model (Ollama): vision, step-by-step agent
+otp           code received by email: pastes, highlights Verify, the human clicks
+navigateur    standard Playwright only, typing helpers, robust loading, session
+categories    strategies per site category; their tables are in strategies
+confirmation  after the send (done by the human): does the page confirm? proof
 
-Captcha et anti-bot sont DETECTES pour passer la main a l'humain, jamais contournes ;
-aucun moteur furtif. Le clic final d'envoi est toujours celui de l'utilisateur.
+Captcha and anti-bot are DETECTED to hand over to the human, never bypassed;
+no stealth engine. The final send click is always the user's.
 
-FACADE (jobhunter._facade) : `import web_nav` donne ce paquet, qui voit les noms de tous
-les sous-modules comme l'ancien fichier unique.
+FACADE (jobhunter._facade): `import web_nav` gives this package, which sees the names
+of all the submodules like the old single file.
 """
 
 from jobhunter import _facade

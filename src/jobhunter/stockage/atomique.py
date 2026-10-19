@@ -1,11 +1,11 @@
-"""Ecriture JSON atomique : on ecrit a cote, puis on bascule d'un seul coup.
+"""Atomic JSON writing: we write alongside, then switch in one go.
 
-Un crash ou un kill au milieu d'une ecriture ne corrompt jamais le fichier : il voit
-soit l'ancienne version, soit la nouvelle.
+A crash or a kill in the middle of a write never corrupts the file: it sees
+either the old version or the new one.
 
-os.replace echoue en PermissionError sous Windows quand OneDrive, un antivirus ou
-l'application tient encore un handle sur le fichier. L'echec est transitoire : on
-reessaie quelques fois avant d'abandonner.
+os.replace fails with PermissionError under Windows when OneDrive, an antivirus or
+the application still holds a handle on the file. The failure is transient: we
+retry a few times before giving up.
 """
 
 import json
@@ -17,19 +17,19 @@ from pathlib import Path
 
 
 def ecrire_json(path: str | PathLike[str], obj: object) -> None:
-    """Ecrit `obj` en JSON de facon atomique : fichier temporaire puis os.replace.
+    """Writes `obj` as JSON atomically: temporary file then os.replace.
 
-    Une lecture concurrente voit l'ancien fichier ou le nouveau, jamais un fichier
-    a moitie ecrit. Le remplacement est retente si Windows le refuse un instant.
+    A concurrent read sees the old file or the new one, never a half-written
+    file. The replacement is retried if Windows refuses it for a moment.
 
     Args:
-        path: le fichier a ecrire.
-        obj: ce qui est serialise (UTF-8, indent 1).
+        path: the file to write.
+        obj: what is serialised (UTF-8, indent 1).
     """
     path = Path(path)
-    # Un temporaire PROPRE à cet écrivain : deux processus qui écrivent le même fichier
-    # au même instant ne se volent plus le leur (audit Codex du 19/10). Le dernier
-    # remplacement gagne ; le verrou de l'appelant, s'il en faut un, décide de l'ordre.
+    # A temporary file OWN to this writer: two processes writing the same file
+    # at the same moment no longer steal each other's (Codex audit of 19/10). The last
+    # replacement wins; the caller's lock, if one is needed, decides the order.
     tmp = path.with_name(f"{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
     try:
         tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")

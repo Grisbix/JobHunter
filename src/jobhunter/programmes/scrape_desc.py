@@ -17,15 +17,15 @@ import time
 from jobhunter import racine as _racine
 from jobhunter.navigation.navigateur import lancer as _lancer
 
-# line_buffering : sinon rien ne sort quand la sortie est redirigée (run en fond = aveugle)
+# line_buffering: otherwise nothing comes out when the output is redirected (background run = blind)
 sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
 HERE = _racine.scripts()
 QUEUE = HERE / "apply_queue.json"
 
-CAP = 30000  # description COMPLÈTE (pas de coupe à 8000)
+CAP = 30000  # FULL description (no cut at 8000)
 
-# Déplie les boutons « voir plus / see more / afficher plus / lire la suite » (LinkedIn/Indeed/WTJ tronquent).
+# Unfolds the "voir plus / see more / afficher plus / lire la suite" buttons (LinkedIn/Indeed/WTJ truncate).
 _EXPAND_JS = r"""
 () => {
   const RX = /(voir plus|afficher plus|lire la suite|see more|show more|read more|plus de détails|développer)/i;
@@ -37,7 +37,7 @@ _EXPAND_JS = r"""
   return n;
 }"""
 
-# Extraction du bloc description : conteneurs connus (ATS/jobboards) puis fallback <main>/body.
+# Extraction of the description block: known containers (ATS/job boards) then fallback <main>/body.
 _DESC_JS = r"""
 (CAP) => {
   const clean = s => (s||'').replace(/\r/g,'').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
@@ -78,7 +78,7 @@ def fetch_one(page, url):
     except Exception:
         pass
     time.sleep(1.5)
-    # déplie « voir plus » (2 passes : certains toggles apparaissent après le 1er clic)
+    # unfolds "voir plus" (2 passes: some toggles appear after the 1st click)
     for _ in range(2):
         try:
             if not page.evaluate(_EXPAND_JS):
@@ -94,7 +94,7 @@ def fetch_one(page, url):
     via = r.get("via", "?")
     if len(txt) < 120:
         return {"ok": False, "note": "description introuvable (page JS/mur login ?)"}
-    # garde anti-bot : page challenge captée à la place de la description (Indeed/Cloudflare)
+    # anti-bot guard: challenge page caught instead of the description (Indeed/Cloudflare)
     low = txt.lower()[:600]
     ANTI = (
         "vérifi",
@@ -113,12 +113,12 @@ def fetch_one(page, url):
 
 
 def fetch_api(url):
-    """Description par l'API publique quand l'ATS en a une, sans navigateur.
+    """Description through the public API when the ATS has one, without a browser.
 
-    Workday : la page d'offre est une SPA, le navigateur headless n'y lit rien
-    (2026-10-08 : 0 sur ~200 fiches BlackRock / Deutsche Bank / Citi). L'API
-    CXS que la page appelle elle-meme rend la fiche complete. None si l'URL
-    n'est pas concernee ou si l'API ne repond pas : on retombe sur la page."""
+    Workday: the offer page is a SPA, the headless browser reads nothing there
+    (2026-10-08: 0 out of ~200 BlackRock / Deutsche Bank / Citi postings). The CXS
+    API that the page calls itself returns the full posting. None if the URL is not
+    concerned or if the API does not answer: we fall back on the page."""
     from urllib.parse import urlsplit
 
     u = urlsplit(url or "")
@@ -126,7 +126,7 @@ def fetch_api(url):
         return None
     tenant, hote = u.netloc.split(".")[:2]
     avant, chemin = u.path.split("/job/", 1)
-    site = [p for p in avant.split("/") if p][-1:]  # « /en-US/Site » -> Site
+    site = [p for p in avant.split("/") if p][-1:]  # "/en-US/Site" -> Site
     if not site:
         return None
     import httpx
@@ -147,9 +147,9 @@ def save(q, key, text):
 
 
 def main():
-    # Verrou inter-processus : ce programme reecrit la queue ENTIERE. Si un
-    # autre le fait en meme temps (tache planifiee vs app), le dernier qui
-    # ecrit efface le travail de l'autre.
+    # Inter-process lock: this program rewrites the ENTIRE queue. If
+    # another one does it at the same time (scheduled task vs app), the last one
+    # to write erases the other's work.
     if not importlib.import_module("jobhunter.programmes.jutil").garder(QUEUE):
         return 3
     ap = argparse.ArgumentParser()
@@ -174,8 +174,8 @@ def main():
 
     from jobhunter.stockage import file as queue_io
 
-    # QUEUE explicite : les tests remplacent cette constante par un fichier
-    # jetable. Sans elle, charger() lirait la vraie file.
+    # Explicit QUEUE: the tests replace this constant with a throwaway
+    # file. Without it, charger() would read the real queue.
     q = queue_io.charger(QUEUE)  # descriptions reinjectees depuis descriptions.json
     targets = []
     if args.key:
@@ -218,11 +218,11 @@ def main():
                 r = None
             if r:
                 x["description"] = r["text"]
-                ok += 1  # x est l'objet de q
+                ok += 1  # x is the object of q
             if i % 25 == 0 or i == len(targets):
                 importlib.import_module("jobhunter.programmes.jutil").jwrite(
                     QUEUE, q
-                )  # par lots : la file pese lourd
+                )  # in batches: the queue is heavy
                 print(f"   ── {i}/{len(targets)} — {ok} ok")
             time.sleep(0.3)
         print(f"\n=== {ok}/{len(targets)} descriptions enregistrées (API) ===")
@@ -238,8 +238,8 @@ def main():
             """(ctx, page) neufs. Rappelé si le navigateur meurt en cours de lot."""
             b = _lancer(p.chromium, headless=True)
             pg = b.new_page()
-            c = pg.context  # gardé : pg.context est inutilisable après pg.close()
-            # TURBO : pas besoin d'images/polices pour lire le texte → 2-5× plus rapide
+            c = pg.context  # kept: pg.context is unusable after pg.close()
+            # TURBO: no need for images/fonts to read the text → 2-5× faster
             try:
                 from jobhunter.navigation import block_resources
 
@@ -256,7 +256,7 @@ def main():
             print(f"→ [{i}/{len(targets)}] {key[:55]}")
             try:
                 r = fetch_api(url) or fetch_one(page, url)
-            except Exception as e:  # un lien qui explose ne tue pas le lot
+            except Exception as e:  # a link that blows up does not kill the batch
                 r = {"ok": False, "note": f"erreur: {type(e).__name__}"}
                 if "TargetClosed" in type(e).__name__ or "Closed" in str(e):
                     try:
@@ -270,7 +270,7 @@ def main():
                         print(f"   ✖ relance navigateur impossible : {e2}")
                         break
             if r["ok"]:
-                save(q, key, r["text"])  # sauvegarde immédiate : rien ne se perd
+                save(q, key, r["text"])  # immediate save: nothing is lost
                 ok += 1
                 print(f"   ✅ {len(r['text'])} car. (via {r['via']})")
             else:
@@ -281,8 +281,8 @@ def main():
                     f"   ── {i}/{len(targets)} — {ok} ok — {rate:.1f}s/offre, "
                     f"reste ~{rate * (len(targets) - i) / 60:.0f} min"
                 )
-            # onglet recyclé (fuite mémoire). Nouvelle page AVANT de fermer l'ancienne :
-            # fermer la dernière page du contexte arrête le navigateur.
+            # recycled tab (memory leak). New page BEFORE closing the old one:
+            # closing the last page of the context stops the browser.
             if i % 40 == 0:
                 try:
                     old_page = page

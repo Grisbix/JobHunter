@@ -1,10 +1,10 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
-rem Cree (ou supprime) la tache planifiee qui lance la collecte chaque matin.
-rem   planifier.bat            -> tous les jours a 08:00
-rem   planifier.bat 07:30      -> tous les jours a 07:30
-rem   planifier.bat supprimer  -> retire la tache
+rem Creates (or removes) the scheduled task that runs the collection every morning.
+rem   planifier.bat            -> every day at 08:00
+rem   planifier.bat 07:30      -> every day at 07:30
+rem   planifier.bat supprimer  -> removes the task
 set "TACHE=JobHunter - collecte quotidienne"
 
 if /i "%~1"=="supprimer" (

@@ -1,8 +1,8 @@
-"""Premier lancement : sans profil, proposer de choisir son CV (aucun terminal requis).
+"""First launch: without a profile, offer to pick one's CV (no terminal needed).
 
-Ancien debut de JobHunter.pyw (phase 3.7). S'executait a l'IMPORT du .pyw ; c'est
-maintenant une fonction, appelee par le lanceur AVANT de charger jobhunter.app (qui lit
-le profil des son chargement) -- d'ou ce module hors du paquet app.
+Former start of JobHunter.pyw (phase 3.7). It ran at IMPORT of the .pyw; it is now a
+function, called by the launcher BEFORE loading jobhunter.app (which reads the profile
+as soon as it loads) -- hence this module outside the app package.
 """
 
 import sys
@@ -16,16 +16,16 @@ from jobhunter import racine as _rac
 
 
 def assurer_profil() -> None:
-    """Garantit un profil avant d'ouvrir l'application.
+    """Guarantees a profile before opening the application.
 
-    Sans profil, propose de choisir son CV, puis lance la création du profil dans une
-    console (premier lancement guidé) ; l'application démarre ensuite normalement.
+    Without a profile, offers to pick one's CV, then runs the profile creation in a
+    console (guided first launch); the application then starts normally.
     """
     try:
         _profil.charger()
     except _profil.ProfilAbsent as _e:
-        # PREMIER LANCEMENT GUIDE : choisir son CV ici, sans terminal. Le profil se
-        # cree dans une console (premier_lancement pose ses questions au clavier),
+        # GUIDED FIRST LAUNCH: pick one's CV here, without a terminal. The profile is
+        # created in a console (premier_lancement asks its questions at the keyboard),
         # puis l'application demarre normalement.
         import subprocess
         from tkinter import filedialog
@@ -52,8 +52,8 @@ def assurer_profil() -> None:
                 "l'auras sous la main. (Voir README.fr.md)",
             )
             sys.exit(1)
-        # pythonw n'a pas de console : premier_lancement a besoin de python.exe (ou de
-        # jobhunter-cli.exe dans l'application installée).
+        # pythonw has no console: premier_lancement needs python.exe (or
+        # jobhunter-cli.exe in the installed application).
         _py = _gele.interpreteur()
         _racine = _rac.racine()
         _rac.exporter_paquet()

@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""setup_francetravail.py — Installe et VERIFIE les identifiants de l'API
-France Travail, sans que le secret transite par ailleurs.
+"""setup_francetravail.py — Installs and CHECKS the France Travail API credentials,
+without the secret going anywhere else.
 
-Le secret n'est jamais affiche, jamais journalise, jamais commite
-(Scripts/francetravail.json est dans .gitignore). Il est saisi en local, ecrit
-dans le fichier, puis immediatement teste contre l'API.
+The secret is never displayed, never logged, never committed
+(Scripts/francetravail.json is in .gitignore). It is entered locally, written to the
+file, then immediately tested against the API.
 
-Ou obtenir les identifiants :
-  1. https://francetravail.io  ->  creer un compte
-  2. creer une application, souscrire a « Offres d'emploi v2 »
-  3. relever client_id et client_secret
+Where to get the credentials:
+  1. https://francetravail.io  ->  create an account
+  2. create an application, subscribe to "Offres d'emploi v2"
+  3. note client_id and client_secret
 
-Run :
-  python JobHunter.pyw setup_francetravail            # saisie masquee + test
-  python JobHunter.pyw setup_francetravail --test     # teste les identifiants deja en place
+Run:
+  python JobHunter.pyw setup_francetravail            # masked entry + test
+  python JobHunter.pyw setup_francetravail --test     # tests the credentials already in place
 """
 
 import argparse
@@ -30,7 +30,7 @@ CFG = HERE / "francetravail.json"
 
 
 def test():
-    """Verifie que les identifiants obtiennent un jeton ET ramenent des offres."""
+    """Checks that the credentials get a token AND bring back offers."""
     from jobhunter import sources as js
 
     tok = js._ft_token()
@@ -66,7 +66,7 @@ def main():
 
     print("Identifiants API France Travail (francetravail.io > ton application) :")
     cid = input("  client_id     : ").strip()
-    # getpass : la frappe n'apparait pas a l'ecran et ne part pas dans l'historique shell
+    # getpass: typing does not appear on screen and does not go into the shell history
     secret = getpass.getpass("  client_secret : (saisie masquee) ").strip()
 
     if not cid or not secret:

@@ -1,15 +1,15 @@
-"""Documents de candidature : CV, lettre, message court (phase 3.5 du plan).
+"""Application documents: CV, letter, short message (phase 3.5 of the plan).
 
-commun    intitule nettoye, competences, valeurs d'entreprise (partages)
-cv        CV par offre (ancien tailor_application.tailor_cv, cv_une_page...)
-lettre    lettre de motivation (ancien tailor_application.tailor_letter...)
-llm       reecriture optionnelle par un modele local
+commun    cleaned title, skills, company values (shared)
+cv        CV per offer (formerly tailor_application.tailor_cv, cv_une_page...)
+lettre    cover letter (formerly tailor_application.tailor_letter...)
+llm       optional rewriting by a local model
 rendu     .docx -> .pdf
-message   message court des formulaires (ancien Scripts/message_offre.py)
-cv_auto   retouches de CV depuis la banque de faits (ancien Scripts/cv_auto.py)
+message   short message for forms (formerly Scripts/message_offre.py)
+cv_auto   CV touch-ups from the fact bank (formerly Scripts/cv_auto.py)
 
-FACADE (jobhunter._facade) : `import tailor_application` donne ce paquet, qui voit les
-noms de commun, cv, lettre, llm et rendu comme l'ancien fichier unique.
+FACADE (jobhunter._facade): `import tailor_application` gives this package, which sees
+the names of commun, cv, lettre, llm and rendu like the old single file.
 """
 
 from jobhunter import _facade

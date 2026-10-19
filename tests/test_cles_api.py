@@ -26,7 +26,7 @@ def test_jooble_lu_par_la_source(tmp_path):
 
 
 def test_france_travail_dans_son_fichier(tmp_path, monkeypatch):
-    """Avant la 2.12, la saisie allait dans api_keys.json, qu'aucune source ne lit."""
+    """Before 2.12, the input went into api_keys.json, which no source reads."""
     cles_api.enregistrer(tmp_path, "francetravail", {"client_id": "i", "client_secret": "s"})
     c = json.loads((tmp_path / "francetravail.json").read_text(encoding="utf-8"))
     assert c == {"client_id": "i", "client_secret": "s"}

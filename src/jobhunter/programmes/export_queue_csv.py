@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""export_queue_csv.py — Sauvegarde lisible de la queue (CSV Excel-compatible).
+"""export_queue_csv.py — Readable backup of the queue (Excel-compatible CSV).
 
-apply_queue.json est le SEUL dépôt des offres. S'il est corrompu ou écrasé, il
-n'existe aucune copie exploitable hors git. Ce script produit un CSV ouvrable
-dans Excel/LibreOffice, avec rotation (garde les N derniers).
+apply_queue.json is the ONLY store of the offers. If it is corrupted or overwritten,
+there is no usable copy outside git. This script produces a CSV that opens in
+Excel/LibreOffice, with rotation (keeps the last N).
 
-Encodage : utf-8-sig (BOM) — sans le BOM, Excel affiche « CharlesÃ© » au lieu
-de « Charles é » sur les accents.
-Séparateur : ';' — Excel en locale FR découpe sur ';', pas sur ','.
+Encoding: utf-8-sig (BOM) — without the BOM, Excel shows "CharlesÃ©" instead of
+"Charles é" on accents.
+Separator: ';' — Excel in a French locale splits on ';', not on ','.
 
-Run :
-  python JobHunter.pyw export_queue_csv                 # export du jour dans _exports/
-  python JobHunter.pyw export_queue_csv --keep 8        # ne garde que les 8 plus récents
-  python JobHunter.pyw export_queue_csv --out chemin.csv
+Run:
+  python JobHunter.pyw export_queue_csv                 # today's export in _exports/
+  python JobHunter.pyw export_queue_csv --keep 8        # only keeps the 8 most recent
+  python JobHunter.pyw export_queue_csv --out path.csv
 """
 
 import argparse
@@ -31,7 +31,7 @@ HERE = _racine.scripts()
 QUEUE = HERE / "apply_queue.json"
 EXPORTS = HERE / "_exports"
 
-# (clé queue, entête CSV) — colonnes utiles à la relecture humaine
+# (queue key, CSV header) — columns useful for human review
 COLS = [
     ("entreprise", "Entreprise"),
     ("poste", "Poste"),
@@ -96,7 +96,7 @@ def main():
     out.parent.mkdir(parents=True, exist_ok=True)
 
     head = [label for _, label in COLS] + ["Suivi statut", "Suivi note", "Suivi date"]
-    # écrit à côté puis remplace : un plantage en cours n'écrase pas l'export précédent
+    # written next to it then replaced: a crash in progress does not overwrite the previous export
     tmp = out.with_suffix(".csv.tmp")
     with tmp.open("w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=head, delimiter=";", quoting=csv.QUOTE_MINIMAL)

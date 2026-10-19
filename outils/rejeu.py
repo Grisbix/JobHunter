@@ -1,29 +1,30 @@
 #!/usr/bin/env python3
-"""Réponses réelles des sources, enregistrées une fois, rejouées sans réseau.
+"""Real responses of the sources, recorded once, replayed without network.
 
-Les doublures de `tests/conftest.py` (faux_reseau) sont écrites à la main : elles disent
-que le code sait lire la réponse qu'on IMAGINE, pas celle que le site renvoie
-aujourd'hui. Ici, une vraie réponse publique est enregistrée (une requête par source,
-réglages réduits), nettoyée, puis rejouée par les tests : le parseur doit retrouver
-exactement les mêmes offres. Un échange non enregistré fait échouer le test.
+The doubles in `tests/conftest.py` (faux_reseau) are hand-written: they say that the
+code can read the response we IMAGINE, not the one the site returns today. Here, a real
+public response is recorded (one request per source, reduced settings), cleaned, then
+replayed by the tests: the parser must find exactly the same offers. An exchange that
+was not recorded makes the test fail.
 
-Tout passe par la frontière réseau unique des sources, `sources.commun._get_borne` et
-`_post_borne` : c'est elle qu'on enregistre, puis qu'on remplace au rejeu.
+Everything goes through the single network boundary of the sources,
+`sources.commun._get_borne` and `_post_borne`: that is what is recorded, then replaced
+on replay.
 
-Nettoyage : aucun en-tête de requête n'est gardé, et de la réponse seulement le code,
-le type de contenu, l'adresse finale et le corps. Les listes JSON longues sont
-réduites à 5 éléments quand le rejeu reste complet sans le reste.
+Cleaning: no request header is kept, and from the response only the status code,
+the content type, the final address and the body. Long JSON lists are reduced to 5
+items when the replay stays complete without the rest.
 
-Sources choisies selon les règles du projet : pas d'APEC (refus d'entrée, pas de
-nouvel essai avant 30 jours), pas de WTJ (défi anti-bot), ni de source à clé (France
-Travail, Adzuna, Jooble).
+Sources chosen according to the project rules: no APEC (refused entry, no new attempt
+before 30 days), no WTJ (anti-bot challenge), and no key-based source (France Travail,
+Adzuna, Jooble).
 
-Enregistrer (va sur le réseau, à lancer exprès) :
-    python outils/rejeu.py enregistrer            # toutes les sources
-    python outils/rejeu.py enregistrer lever fir  # certaines
-Le rejeu est fait par tests/test_rejeu_sources.py.
+Record (goes on the network, run on purpose):
+    python outils/rejeu.py enregistrer            # all sources
+    python outils/rejeu.py enregistrer lever fir  # some of them
+The replay is done by tests/test_rejeu_sources.py.
 
-Decision : docs/adr/0006-banc-de-non-regression.md
+Decision: docs/adr/0006-banc-de-non-regression.md
 """
 
 import hashlib
@@ -40,7 +41,7 @@ RACINE = Path(__file__).resolve().parent.parent
 CASSETTES = RACINE / "tests" / "reponses"
 MAX_ELEMENTS = 5
 
-# nom : (module, fonction, arguments, réglages {module:NOM -> valeur})
+# name: (module, function, arguments, settings {module:NAME -> value})
 SCENARIOS: dict[str, tuple[str, str, list[Any], dict[str, Any]]] = {
     "greenhouse": ("jobhunter.sources.ats", "fetch_ats", ["greenhouse", "forvismazars"], {}),
     "lever": ("jobhunter.sources.ats", "fetch_ats", ["lever", "agicap"], {}),
@@ -60,8 +61,8 @@ SCENARIOS: dict[str, tuple[str, str, list[Any], dict[str, Any]]] = {
         "jobhunter.sources.linkedin",
         "linkedin_guest_search",
         ["analyste esg", 1, 7],
-        # etat de passe neuf : un arret (« stop ») laisse par une autre collecte ou un
-        # autre test ferait rendre une liste vide sans aucune requete
+        # fresh pass state: a stop left by another collection or another
+        # test would make it return an empty list without any request
         {
             "jobhunter.sources.linkedin:_LI": {
                 "stop": None,
@@ -81,7 +82,7 @@ SCENARIOS: dict[str, tuple[str, str, list[Any], dict[str, Any]]] = {
 }
 
 
-# ── la réponse rejouée : ce que les sources lisent d'une httpx.Response ──────────
+# ── the replayed response: what the sources read from an httpx.Response ──────────
 class Reponse:
     """Réponse rejouée : code, en-têtes réduits, adresse finale, corps."""
 
@@ -118,11 +119,11 @@ class EchangeManquant(AssertionError):
 def rejoueur(
     echanges: list[dict[str, Any]], manquants: list[str]
 ) -> tuple[Callable[..., Any], Callable[..., Any]]:
-    """Les remplaçants de `_get_borne` et `_post_borne`, servis depuis l'enregistrement.
+    """The stand-ins for `_get_borne` and `_post_borne`, served from the recording.
 
-    Un échange absent est NOTÉ dans `manquants` avant de lever : certaines sources
-    attrapent toute exception autour de leur requête et rendraient une liste vide en
-    silence ; `rejouer` vérifie la liste après l'appel.
+    A missing exchange is NOTED in `manquants` before raising: some sources catch
+    any exception around their request and would silently return an empty list;
+    `rejouer` checks the list after the call.
     """
     table = {e["cle"]: e for e in echanges}
 
@@ -165,7 +166,7 @@ def appeler(nom: str) -> list[dict[str, Any]]:
 
 
 def empreinte(offres: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Ce qui doit rester identique au rejeu : champs utiles, description par empreinte."""
+    """What must stay identical on replay: useful fields, description by fingerprint."""
     sortie = []
     for o in offres:
         desc = str(o.get("description") or "")
@@ -194,12 +195,12 @@ def rejouer(cassette: dict[str, Any]) -> list[dict[str, Any]]:
     get, post = rejoueur(cassette["echanges"], manquants)
     vrai_get, vrai_post, vrai_sleep = commun._get_borne, commun._post_borne, time.sleep
     commun._get_borne, commun._post_borne = get, post
-    time.sleep = lambda s: None  # type: ignore[assignment]  # les pauses polies ne servent pas hors réseau
+    time.sleep = lambda s: None  # type: ignore[assignment]  # polite pauses are useless off the network
     INCIDENTS.clear()
     try:
         with reglages(SCENARIOS[cassette["scenario"]][3]):
             offres = appeler(cassette["scenario"])
-        if manquants:  # meme si la source a avale l'exception
+        if manquants:  # even if the source swallowed the exception
             raise EchangeManquant("échange(s) non enregistré(s) : " + " ; ".join(manquants))
         return offres
     finally:
@@ -265,12 +266,12 @@ def enregistrer(nom: str) -> dict[str, Any]:
         commun._get_borne, commun._post_borne = vrai_get, vrai_post
 
     cassette = {"scenario": nom, "le": time.strftime("%Y-%m-%d"), "echanges": echanges}
-    # L'enregistrement complet doit redonner EXACTEMENT les offres vues en direct.
+    # The full recording must give back EXACTLY the offers seen live.
     offres = rejouer(cassette)
     if empreinte(offres) != empreinte(en_direct):
         raise AssertionError(f"{nom} : le rejeu ne redonne pas les offres vues en direct")
-    # Réduire les listes JSON longues aux éléments utiles ; gardé seulement si le rejeu
-    # redonne EXACTEMENT les mêmes offres (sinon le corps complet reste).
+    # Reduce long JSON lists to the useful items; kept only if the replay
+    # gives back EXACTLY the same offers (otherwise the full body stays).
     titres = {str(o.get("titre") or "") for o in en_direct}
     reduite = dict(
         cassette,

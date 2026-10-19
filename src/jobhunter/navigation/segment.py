@@ -1,12 +1,12 @@
-"""Reconnaissance des parties d'une page, ATS detecte, bouton d'envoi SURLIGNE (jamais clique).
+"""Recognising the parts of a page, ATS detected, send button HIGHLIGHTED (never clicked).
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+Part of jobhunter.navigation (formerly Scripts/web_nav.py, phase 3.6).
 """
 
 from typing import Any
 
-# JS : reconnait la PLATEFORME/ATS (URL host + signatures DOM) et renvoie
-# {name, jobLinkRx (regex liens d'offre), searchSel (champ recherche), note}.
+# JS: recognises the PLATFORM/ATS (URL host + DOM signatures) and returns
+# {name, jobLinkRx (offer link regex), searchSel (search field), note}.
 _ATS_DETECT_JS = r"""
 (() => {
   const u = location.href.toLowerCase();
@@ -54,9 +54,9 @@ _ATS_DETECT_JS = r"""
 
 
 def detect_ats(page: Any) -> Any:
-    """Reconnait la plateforme/ATS du site d'entreprise (Workday, iCIMS, TalentSoft, SmartRecruiters, Greenhouse, Lever, Taleo, SuccessFactors, Teamtailor, Breezy, Recruitee, Workable, WTTJ, … + 'generic').
+    """Recognises the platform/ATS of the company site (Workday, iCIMS, TalentSoft, SmartRecruiters, Greenhouse, Lever, Taleo, SuccessFactors, Teamtailor, Breezy, Recruitee, Workable, WTTJ, … + 'generic').
 
-    Retour {name, jobLinkRx, searchSel}.
+    Returns {name, jobLinkRx, searchSel}.
     """
     try:
         r = page.evaluate(_ATS_DETECT_JS)
@@ -65,9 +65,9 @@ def detect_ats(page: Any) -> Any:
         return {"name": "generic"}
 
 
-# ── SEGMENTEUR DE PAGE : reconnait TOUTES les parties du site ──────────────────
+# ── PAGE SEGMENTER: recognises ALL the parts of the site ─────────────────────
 # regions (header/nav/main/footer/aside/modales/iframes) + overlays (cookie/captcha/
-# chat/newsletter) + chaque bouton classé par rôle + chaque form + offres + signaux.
+# chat/newsletter) + each button classified by role + each form + offers + signals.
 _SEGMENT_JS = r"""
 (() => {
   const N=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
@@ -149,9 +149,9 @@ _SEGMENT_JS = r"""
 
 
 def segment_page(page: Any) -> Any:
-    """RECONNAISSANCE COMPLÈTE : mappe toutes les parties de la page — régions (header/nav/main/footer/aside/iframes), overlays (cookie/captcha/chat/ modal/newsletter), chaque bouton classé par rôle (cookie/login/register/apply/ submit/careers/search/social/menu/lang), chaque formulaire + son but, nb d'offres, signaux (mdp/fichier/email).
+    """FULL RECOGNITION: maps all the parts of the page — regions (header/nav/main/footer/aside/iframes), overlays (cookie/captcha/chat/ modal/newsletter), each button classified by role (cookie/login/register/apply/ submit/careers/search/social/menu/lang), each form + its purpose, number of offers, signals (password/file/email).
 
-    Retour dict complet (base des décisions nav).
+    Returns a full dict (basis of the navigation decisions).
     """
     try:
         return page.evaluate(_SEGMENT_JS)
@@ -167,11 +167,11 @@ def segment_page(page: Any) -> Any:
 
 
 def plan_action(page: Any, goal: str = "apply") -> dict[str, Any]:
-    """CERVEAU déterministe : lit la carte complète (segment_page) et renvoie la MEILLEURE action suivante — {action, role, reason, seg}.
+    """Deterministic BRAIN: reads the full map (segment_page) and returns the BEST next action — {action, role, reason, seg}.
 
-    Actions : stop(captcha) / cookies / ready / drill / careers / click / auth /
-    register / search / none. Gratuit, hors-ligne, sans LLM. Complète smart_step (qui
-    exécute).
+    Actions: stop(captcha) / cookies / ready / drill / careers / click / auth /
+    register / search / none. Free, offline, without an LLM. Complements smart_step
+    (which executes).
     """
     s = segment_page(page)
     ov = s.get("overlays", {})
@@ -257,7 +257,7 @@ def describe_page(page: Any) -> str:
     )
 
 
-# JS : scanne TOUS les champs du formulaire (input, textarea, select) avec leur contexte
+# JS: scans ALL the form fields (input, textarea, select) with their context
 _SCAN_FORM_FIELDS_JS = r"""
 (() => {
   const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -324,10 +324,10 @@ _SUBMIT_RX = r"(envoyer ma candidature|soumettre|submit application|submit your 
 
 
 def try_open_form(page: Any) -> Any:
-    """Clique un bouton 'Postuler/Apply' pour ouvrir le formulaire.
+    """Clicks a 'Postuler/Apply' button to open the form.
 
-    JAMAIS un submit final. Retour label cliqué ou ''. (Défini dans web_nav pour
-    apply_to_offer — était absent → NameError).
+    NEVER a final submit. Returns the clicked label or ''. (Defined in web_nav for
+    apply_to_offer — was missing → NameError).
     """
     js = r"""
     ([openRx, submitRx]) => {
@@ -354,10 +354,10 @@ def try_open_form(page: Any) -> Any:
 
 
 def highlight_submit(page: Any) -> Any:
-    """Surligne le bouton d'envoi final en ROUGE + scroll.
+    """Highlights the final send button in RED + scroll.
 
-    Ne clique PAS (l'humain clique). Retour label ou ''. (Défini dans web_nav pour
-    apply_to_offer — était absent → NameError).
+    Does NOT click (the human clicks). Returns the label or ''. (Defined in web_nav for
+    apply_to_offer — was missing → NameError).
     """
     js = r"""
     (submitRx) => {

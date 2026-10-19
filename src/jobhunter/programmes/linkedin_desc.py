@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
-"""linkedin_desc.py — Recupere la DESCRIPTION des offres LinkedIn depuis l'API invite.
+"""linkedin_desc.py — Fetches the DESCRIPTION of LinkedIn offers from the guest API.
 
-POURQUOI. Le fit se calcule sur « intitule + description ». Une offre sans
-description est notee sur huit mots de titre : fit moyen 2.9 contre 5.6 pour une
-offre lue. 228 offres LinkedIn de la queue n'avaient pas de description, et
-scrape_desc.py echoue dessus (mur de connexion) : 5 succes sur 200.
+WHY. The fit is computed on "title + description". An offer without a description is
+scored on eight title words: average fit 2.9 against 5.6 for an offer that was read.
+228 LinkedIn offers of the queue had no description, and scrape_desc.py fails on them
+(login wall): 5 successes out of 200.
 
-L'API invite `jobs-guest/jobs/api/jobPosting/<id>` est PUBLIQUE, sans
-authentification, et sert la description complete. C'est le meme point d'acces que
-linkedin_closed.py — on reutilise son outillage plutot que de le dupliquer.
-Aucun contournement de protection : c'est l'endpoint que LinkedIn expose aux
-visiteurs non connectes.
+The guest API `jobs-guest/jobs/api/jobPosting/<id>` is PUBLIC, without
+authentication, and serves the full description. It is the same access point as
+linkedin_closed.py — we reuse its tooling rather than duplicating it. No protection
+bypass: it is the endpoint LinkedIn exposes to visitors who are not logged in.
 
-Re-score le fit ET exp_requise dans la foulee : une description ajoutee sans
-re-scoring laisse l'offre a son ancien fit, calcule sans elle.
+Re-scores the fit AND exp_requise at the same time: a description added without
+re-scoring leaves the offer at its old fit, computed without it.
 
-Run :
-  python JobHunter.pyw linkedin_desc --dry              # compte, n'ecrit rien
+Run:
+  python JobHunter.pyw linkedin_desc --dry              # counts, writes nothing
   python JobHunter.pyw linkedin_desc --limit 100
-  python JobHunter.pyw linkedin_desc                    # toutes les offres concernees
+  python JobHunter.pyw linkedin_desc                    # all the offers concerned
 """
 
 import argparse
@@ -38,7 +37,7 @@ QUEUE = HERE / "apply_queue.json"
 
 from jobhunter.programmes.linkedin_closed import API, RX_FERME, UA, job_id  # meme endpoint, meme UA
 
-# La description vit dans un bloc `description__text` ; repli sur <section>.
+# The description lives in a `description__text` block; fallback on <section>.
 RX_DESC = [
     re.compile(r'<div class="[^"]*description__text[^"]*">(.*?)</div>\s*</div>', re.S),
     re.compile(r'<section class="[^"]*description[^"]*">(.*?)</section>', re.S),
@@ -47,22 +46,22 @@ RX_BALISE = re.compile(r"<[^>]+>")
 RX_SCRIPT = re.compile(r"<(script|style)\b.*?</\1>", re.S | re.I)
 
 
-# Compteur de bridages, partage par les threads. Sert a DISTINGUER « LinkedIn
-# nous coupe » de « cette annonce n'a pas de description » — la premiere passe
-# a rendu 1031 textes sur 2653 et les 1622 echecs ont ete pris pour des annonces
-# vides, alors qu'un simple reessai les lisait toutes. Un bridage silencieux
-# ressemble a un resultat.
+# Counter of throttlings, shared by the threads. It serves to TELL APART "LinkedIn
+# is cutting us off" from "this posting has no description" — the first pass
+# returned 1031 texts out of 2653 and the 1622 failures were taken for empty
+# postings, while a simple retry read them all. A silent throttling
+# looks like a result.
 BRIDAGES = {"n": 0}
 
-# Offres dont la fiche porte le marqueur de fermeture. On lit deja la page pour
-# sa description : y voir « No longer accepting applications » ne coute rien, et
-# evite a audit_dispo une requete de plus sur le meme endpoint.
+# Offers whose posting carries the closing marker. We already read the page for
+# its description: seeing "No longer accepting applications" there costs nothing, and
+# saves audit_dispo one more request on the same endpoint.
 FERMEES: set[str] = set()
 
 
 def description(jid, client, essais=4):
-    """Texte de l'annonce, ou "" si illisible. Ne leve jamais : un echec laisse
-    l'offre telle quelle, aucune donnee n'est degradee."""
+    """Text of the posting, or "" if unreadable. Never raises: a failure leaves
+    the offer as it is, no data is degraded."""
     for n in range(essais):
         try:
             r = client.get(API.format(jid), headers=UA, timeout=20)
@@ -85,7 +84,7 @@ def description(jid, client, essais=4):
                 continue
             t = html.unescape(RX_BALISE.sub(" ", m.group(1)))
             t = re.sub(r"\s+", " ", t).strip()
-            # Sous 200 caracteres c'est un fragment d'interface, pas une annonce
+            # Below 200 characters it is an interface fragment, not a posting
             if len(t) >= 200:
                 return t
         return ""
@@ -96,16 +95,16 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--limit", type=int, default=0)
-    # 6 threads bridaient LinkedIn des les premieres centaines : 1622 echecs sur
-    # 2653, tous lisibles au reessai. Mieux vaut lire moins vite et tout lire.
+    # 6 threads got LinkedIn throttling from the first few hundred: 1622 failures out of
+    # 2653, all readable on retry. Better read more slowly and read everything.
     ap.add_argument("--workers", type=int, default=3)
-    # PAR LOTS, ET LE VERROU SEULEMENT POUR ECRIRE. Le 2026-09-22, la premiere
-    # version a lu 6438 descriptions en trois heures a l'interieur d'UNE SEULE
-    # transaction : verrou tenu trois heures, application bloquee, et tout le
-    # travail en memoire jusqu'a la derniere seconde — un plantage a 2 h 50
-    # perdait 2 h 50 de reseau. Maintenant : on lit un instantane sans verrou,
-    # on collecte hors verrou, et chaque lot s'ecrit en quelques secondes sur une
-    # file RELUE dans le verrou. Un arret ne coute que le lot en cours.
+    # IN BATCHES, AND THE LOCK ONLY FOR WRITING. On 2026-09-22, the first
+    # version read 6438 descriptions in three hours inside ONE SINGLE
+    # transaction: lock held three hours, application blocked, and all the
+    # work in memory until the last second — a crash at 2 h 50
+    # lost 2 h 50 of network. Now: we read a snapshot without a lock,
+    # we collect outside the lock, and each batch is written in a few seconds on a
+    # queue RE-READ inside the lock. A stop only costs the batch in progress.
     ap.add_argument("--lot", type=int, default=500)
     a = ap.parse_args()
 
@@ -122,7 +121,7 @@ def main():
 
 
 def _cibles(q, limite=0):
-    """Les id LinkedIn des offres sans description, sans doublon."""
+    """The LinkedIn ids of the offers without a description, without duplicates."""
     vus, cibles = set(), []
     for o in q:
         if "linkedin.com" not in (o.get("url") or ""):
@@ -137,12 +136,12 @@ def _cibles(q, limite=0):
 
 
 def _ecrire(textes, queue_io, attente=180):
-    """Pose les textes dans la file, sous verrou, sur l'etat RELU.
+    """Puts the texts into the queue, under lock, on the RE-READ state.
 
-    L'offre est retrouvee par son id LinkedIn, jamais par sa position : entre
-    l'instantane et l'ecriture, un scan a pu inserer, supprimer ou reordonner.
-    Une offre qui a recu une description entre-temps n'est pas ecrasee. Une
-    offre disparue est simplement ignoree."""
+    The offer is found by its LinkedIn id, never by its position: between the
+    snapshot and the write, a scan may have inserted, deleted or reordered. An
+    offer that received a description in the meantime is not overwritten. An offer
+    that disappeared is simply ignored."""
     import datetime
 
     from jobhunter.scoring.fit import fit_detail
@@ -152,8 +151,8 @@ def _ecrire(textes, queue_io, attente=180):
         for o in q:
             if "linkedin.com" not in (o.get("url") or ""):
                 continue
-            # Marquee, pas retiree : la suppression reste a audit_dispo, qui
-            # epargne le suivi (motif « deja marquee morte »).
+            # Marked, not removed: the deletion stays with audit_dispo, which
+            # spares the tracking (reason "déjà marquée morte").
             if job_id(o.get("url")) in FERMEES and o.get("link_status") != "EXPIREE":
                 o["link_status"] = "EXPIREE"
                 o["ls_check"] = datetime.date.today().isoformat()
@@ -165,7 +164,7 @@ def _ecrire(textes, queue_io, attente=180):
                 continue
             avant = o.get("fit")
             o["description"] = t
-            # re-score OBLIGATOIRE : sans lui l'offre garde le fit calcule sans description
+            # MANDATORY re-score: without it the offer keeps the fit computed without a description
             o["fit"], o["exp_requise"], o["fit_fin"] = fit_detail(
                 f"{o.get('poste', '')} {t}", o.get("poste", "")
             )
@@ -187,8 +186,8 @@ def _travail(cibles, a, queue_io):
     import httpx
 
     ecrites, delta = 0, []
-    # Textes lus mais pas encore poses. Si la file est occupee au moment
-    # d'ecrire un lot, ils attendent le suivant au lieu d'etre perdus.
+    # Texts read but not yet placed. If the queue is busy at the time
+    # of writing a batch, they wait for the next one instead of being lost.
     en_attente = {}
     faits = 0
     with httpx.Client(follow_redirects=True) as client:
@@ -213,8 +212,8 @@ def _travail(cibles, a, queue_io):
             en_attente = {}
             print(f"  ✓ lot ecrit · {ecrites} descriptions posees au total")
     if en_attente:
-        # Derniere chance, avec une attente longue : c'est le seul moment ou
-        # un refus perdrait vraiment du travail.
+        # Last chance, with a long wait: it is the only moment when
+        # a refusal would really lose work.
         try:
             n, d = _ecrire(en_attente, queue_io, attente=900)
             ecrites += n
@@ -229,8 +228,8 @@ def _travail(cibles, a, queue_io):
     )
     if FERMEES:
         print(f"  {len(FERMEES)} offre(s) fermee(s) reperee(s) au passage — marquees EXPIREE")
-    # Un echec n'est pas un verdict : dire combien de fois LinkedIn nous a
-    # brides evite de conclure « ces annonces n'ont pas de description ».
+    # A failure is not a verdict: saying how many times LinkedIn
+    # throttled us avoids concluding "these postings have no description".
     if BRIDAGES["n"]:
         print(f"   ({BRIDAGES['n']} bridage(s) 429 rencontre(s) — relancer ramassera le reste)")
     manquantes = len(cibles) - ecrites

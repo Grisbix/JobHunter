@@ -1,22 +1,21 @@
-"""JobHunter installé sans Python : l'application compilée (PyInstaller) et son interpréteur.
+"""JobHunter installed without Python: the compiled application (PyInstaller) and its interpreter.
 
-L'installateur Windows (`JobHunterSetup.exe`, outils/installateur/) pose deux exécutables
-dans le même dossier, compilés depuis ce paquet :
+The Windows installer (`JobHunterSetup.exe`, outils/installateur/) puts two executables
+in the same folder, compiled from this package:
 
-- `JobHunter.exe`, sans console : l'application ;
-- `jobhunter-cli.exe`, avec console : tout ce que l'application lance en sous-processus.
-  L'app appelle ses programmes par `[PY, "-m", module, ...]` ; ici PY est cet exécutable,
-  qui comprend `-m module` comme `python -m module`. Une console est nécessaire : le
-  premier lancement pose ses questions au clavier, et un exécutable sans console n'a pas
-  de sortie standard à lire pour le journal de l'app.
+- `JobHunter.exe`, without a console: the application;
+- `jobhunter-cli.exe`, with a console: everything the application launches as a
+  subprocess. The app calls its programs with `[PY, "-m", module, ...]`; here PY is
+  this executable, which understands `-m module` like `python -m module`. A console
+  is necessary: the first launch asks its questions at the keyboard, and an
+  executable without a console has no standard output to read for the app's log.
 
-Les données de l'utilisateur ne vivent jamais dans le dossier du programme (remplacé à
-chaque mise à jour) : elles vont dans `Documents/JobHunter`, ou dans `JOBHUNTER_RACINE`
-si la variable est posée. Au premier lancement, ce dossier reçoit le squelette livré :
-profils d'exemple, réglages des sources, dossier pour le CV. Un fichier déjà présent n'est
-jamais écrasé.
+The user's data never lives in the program's folder (replaced at each update): it goes
+into `Documents/JobHunter`, or into `JOBHUNTER_RACINE` if the variable is set. At first
+launch, this folder receives the shipped skeleton: example profiles, source settings,
+folder for the CV. A file already present is never overwritten.
 
-Décision : docs/adr/0011-application-autonome.md
+Decision: docs/adr/0011-application-autonome.md
 """
 
 import os
@@ -27,7 +26,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 CONSOLE = "jobhunter-cli.exe"
-SQUELETTE = "squelette"  # dossier livré à côté du code compilé
+SQUELETTE = "squelette"  # folder shipped next to the compiled code
 
 
 def est_gele() -> bool:
@@ -36,10 +35,10 @@ def est_gele() -> bool:
 
 
 def interpreteur() -> str:
-    """L'exécutable qui lance `-m module` dans une console.
+    """The executable that runs `-m module` in a console.
 
-    Compilé : `jobhunter-cli.exe`, à côté de l'exécutable courant. Sous Python : le
-    `python.exe` qui tourne, jamais `pythonw.exe` (sans console ni sortie standard).
+    Compiled: `jobhunter-cli.exe`, next to the current executable. Under Python: the
+    running `python.exe`, never `pythonw.exe` (no console nor standard output).
     """
     exe = Path(sys.executable or "python")
     if est_gele():
@@ -50,9 +49,9 @@ def interpreteur() -> str:
 
 
 def dossier_donnees() -> Path:
-    """Où vivent les données de l'application installée.
+    """Where the installed application's data lives.
 
-    `JOBHUNTER_RACINE` si elle est posée, sinon `Documents/JobHunter` de l'utilisateur.
+    `JOBHUNTER_RACINE` if it is set, otherwise the user's `Documents/JobHunter`.
     """
     env = os.environ.get("JOBHUNTER_RACINE")
     if env:
@@ -61,14 +60,14 @@ def dossier_donnees() -> Path:
 
 
 def preparer_donnees(dest: Path, squelette: Path) -> list[Path]:
-    """Copie dans `dest` les fichiers du squelette qui y manquent.
+    """Copies into `dest` the skeleton files that are missing there.
 
     Args:
-        dest: le dossier des données.
-        squelette: le squelette livré (profil/, Scripts/, Mon_CV/…).
+        dest: the data folder.
+        squelette: the shipped skeleton (profil/, Scripts/, Mon_CV/…).
 
     Returns:
-        Les fichiers copiés ; un fichier déjà présent n'est jamais remplacé.
+        The files copied; a file already present is never replaced.
     """
     copies: list[Path] = []
     for d in ("Scripts", "profil", "Mon_CV", "CV", "Lettres"):
@@ -88,15 +87,15 @@ def preparer_donnees(dest: Path, squelette: Path) -> list[Path]:
 
 
 def aiguiller(argv: Sequence[str]) -> int:
-    """Ce que fait l'exécutable selon ses arguments, comme `python` ou `JobHunter.pyw`.
+    """What the executable does depending on its arguments, like `python` or `JobHunter.pyw`.
 
-    - `-m module args…` : lance le module comme `python -m` ;
-    - `-c code` : exécute le code (contrôles de la mise à jour) ;
-    - `commande args…` : une commande de `jobhunter` (collecte, documents…) ;
-    - rien : l'application.
+    - `-m module args…`: runs the module like `python -m`;
+    - `-c code`: executes the code (update checks);
+    - `command args…`: a `jobhunter` command (collecte, documents…);
+    - nothing: the application.
 
     Returns:
-        Le code de sortie.
+        The exit code.
     """
     args = list(argv)
     if len(args) >= 2 and args[0] == "-m":
@@ -108,15 +107,15 @@ def aiguiller(argv: Sequence[str]) -> int:
         return 0
     if len(args) >= 2 and args[0] == "-c":
         sys.argv = ["-c", *args[2:]]
-        # Comme `python -c` : l'appelant est l'application elle-même (mise à jour).
+        # Like `python -c`: the caller is the application itself (update).
         exec(compile(args[1], "<-c>", "exec"), {"__name__": "__main__"})  # noqa: S102  # nosec B102
         return 0
     if args:
         from jobhunter.cli import main as commande
 
         return commande(args)
-    # Par son nom, comme `jobhunter app` : le moteur n'importe pas l'interface.
-    # jobhunter.app.__main__ assure le profil, puis ouvre la fenêtre.
+    # By its name, like `jobhunter app`: the engine does not import the interface.
+    # jobhunter.app.__main__ ensures the profile, then opens the window.
     runpy.run_module("jobhunter.app", run_name="__main__", alter_sys=True)
     return 0
 
@@ -130,7 +129,7 @@ def main() -> int:
     preparer_donnees(dest, Path(getattr(sys, "_MEIPASS", ".")) / SQUELETTE)
     os.environ["JOBHUNTER_RACINE"] = str(dest)
     if len(sys.argv) == 1:
-        # L'application part du dossier des données, comme depuis un dossier cloné.
-        # Un sous-processus garde le dossier que son appelant a choisi (cwd=Scripts/…).
+        # The application starts from the data folder, as from a cloned folder.
+        # A subprocess keeps the folder its caller chose (cwd=Scripts/…).
         os.chdir(dest)
     return aiguiller(sys.argv[1:])

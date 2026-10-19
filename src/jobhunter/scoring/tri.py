@@ -1,54 +1,52 @@
-"""jobhunter.scoring.tri — Separe ce qui colle au profil de ce qui n'y colle pas, et purge.
+"""jobhunter.scoring.tri — Separates what matches the profile from what does not, and purges.
 
-Ancien Scripts/tri_file.py.
+Formerly Scripts/tri_file.py.
 
-POURQUOI PAS LE FIT. Le fit mesure la DENSITE DE VOCABULAIRE ESG et finance,
-pas l'adequation d'un poste a un candidat junior. Mesure sur la file du
-18/09/2026 (9492 offres) :
+WHY NOT THE FIT. The fit measures the DENSITY OF ESG and finance VOCABULARY, not how
+well a job suits a junior candidate. Measured on the queue of 18/09/2026 (9492 offers):
 
-    fit 6 : « JPMorganChase — 2027 Corporate & Investment Bank, Global
-             Investment Banking »          -> exactement la cible
-    fit 7 : « septeo — AI Tech Lead »       -> ni junior, ni finance
-    fit 7 : « talan — Data Engineer Confirme / Senior »
-    fit 1 : « Coca-Cola HBC — Financial Analyst »
+    fit 6: "JPMorganChase — 2027 Corporate & Investment Bank, Global
+            Investment Banking"          -> exactly the target
+    fit 7: "septeo — AI Tech Lead"       -> neither junior nor finance
+    fit 7: "talan — Data Engineer Confirme / Senior"
+    fit 1: "Coca-Cola HBC — Financial Analyst"
 
-Trier au fit supprimerait le premier et garderait les deux suivants. Le fit
-sert a CLASSER ce qui reste ; il ne sert pas a jeter.
+Sorting by fit would delete the first and keep the next two. The fit serves to RANK
+what remains; it does not serve to throw away.
 
-CE QUI TRANCHE, c'est l'INTITULE et l'EXPERIENCE EXIGEE. Un intitule dit ce
-qu'est le poste et a quel niveau ; l'annee d'experience dit si la porte est
-ouverte. l'utilisateur sort d'un BBA avec un stage : au-dela de cinq ans exiges,
-l'offre n'est pas refusable, elle est inaccessible.
+WHAT DECIDES is the TITLE and the REQUIRED EXPERIENCE. A title says what the job is
+and at what level; the years of experience say whether the door is open. The user is
+just out of a BBA with an internship: beyond five years required, the offer is not
+refusable, it is out of reach.
 
-QUATRE MOTIFS DE SUPPRESSION, du plus sur au plus discutable :
+FOUR DELETION REASONS, from the surest to the most debatable:
 
-  lien_mort   le lien ne mene plus a rien (MORT / EXPIREE / FERMEE)
-  experience  exp_requise >= 5 ans
-  seniorite   l'intitule dit senior, confirme, director, head of, VP...
-  metier      l'intitule designe un metier hors profil (dev, vente, RH,
-              sante, logistique, restauration, enseignement...)
+  lien_mort   the link no longer leads anywhere (MORT / EXPIREE / FERMEE)
+  experience  exp_requise >= 5 years
+  seniorite   the title says senior, confirmé, director, head of, VP...
+  metier      the title designates a profession outside the profile (dev, sales, HR,
+              health, logistics, catering, teaching...)
 
-CE QUI N'EST JAMAIS SUPPRIME :
-  - les lignes de RECHERCHE enregistrees (url_type == RECHERCHE)
-  - toute offre presente dans suivi.json (candidature envoyee ou suivie)
+WHAT IS NEVER DELETED:
+  - the saved SEARCH rows (url_type == RECHERCHE)
+  - any offer present in suivi.json (application sent or tracked)
 
-NI `action`, NI `statut` NE PROTEGENT. Les deux ressemblent a des marques
-manuelles et n'en sont pas. `action == "1"` porte sur 629 lignes, toutes
-importees en juillet : AUCUN programme ne l'ecrit, et le lot contient
-« Manager SAP FICO S/4HANA ». `statut == "Oui"` (523 lignes) vient du meme
-import. Le vrai suivi est dans suivi.json, ecrit par _set_statut de l'app —
-c'est donc lui, et lui seul, qui protege.
+NEITHER `action` NOR `statut` PROTECTS. Both look like manual marks and are not.
+`action == "1"` is on 629 rows, all imported in July: NO program writes it, and the
+batch contains "Manager SAP FICO S/4HANA". `statut == "Oui"` (523 rows) comes from the
+same import. The real tracking is in suivi.json, written by the app's _set_statut — so
+it is that, and that alone, which protects.
 
-L'IA ET LA DATA RESTENT. Le profil les vise explicitement (axe « ia » du
-scoring, competences « vibe coding », « agents IA », « Python / SQL »). On ne
-supprime que l'INGENIERIE logicielle — ML engineer, data engineer, devops,
-architecte — pas les postes d'analyse ou de conseil qui portent « IA ».
+AI AND DATA STAY. The profile explicitly targets them (the scoring's "ia" axis, skills
+"vibe coding", "agents IA", "Python / SQL"). Only software ENGINEERING is deleted — ML
+engineer, data engineer, devops, architect — not the analysis or consulting jobs that
+carry "IA".
 
-Run :
-  python JobHunter.pyw tri                 # inspection seule, rien n'est ecrit
-  python JobHunter.pyw tri --motifs        # + echantillon de 20 titres par motif
-  python JobHunter.pyw tri --garde         # + echantillon de ce qui est CONSERVE
-  python JobHunter.pyw tri --supprime      # ecrit, apres sauvegarde horodatee
+Run:
+  python JobHunter.pyw tri                 # inspection only, nothing is written
+  python JobHunter.pyw tri --motifs        # + sample of 20 titles per reason
+  python JobHunter.pyw tri --garde         # + sample of what is KEPT
+  python JobHunter.pyw tri --supprime      # writes, after a timestamped backup
 """
 
 import argparse
@@ -57,7 +55,7 @@ import re
 import shutil
 import sys
 import time
-from pathlib import Path  # noqa: F401  (annotations et appelants)
+from pathlib import Path  # noqa: F401  (annotations and callers)
 
 from jobhunter import racine as _racine
 from jobhunter.types import Offre
@@ -69,11 +67,11 @@ QUEUE = HERE / "apply_queue.json"
 SUIVI = HERE / "suivi.json"
 
 # ── 1. SENIORITE ────────────────────────────────────────────────────────────
-# Deux listes, parce que deux niveaux de certitude.
+# Two lists, because two levels of certainty.
 #
-# DUR : le mot ne veut rien dire d'autre que « pas pour un debutant ».
-#   « sr » est borne des deux cotes : sans bornes il attrape « sRisque ».
-#   « vp » de meme : « vp » dans « vpn ».
+# HARD: the word means nothing other than "not for a beginner".
+#   "sr" is bounded on both sides: without boundaries it catches "sRisque".
+#   "vp" likewise: "vp" in "vpn".
 _RX_SENIOR_DUR = re.compile(
     r"\b(?:senior|sr|confirm[ée]{1,2}s?|exp[ée]riment[ée]{1,2}s?"
     r"|director|directeur|directrice|head\s+of|vice[\s-]?pr[ée]sident"
@@ -81,33 +79,33 @@ _RX_SENIOR_DUR = re.compile(
     re.I,
 )
 
-# MOU : le mot dit souvent la seniorite, mais pas toujours. Neutralise quand
-# l'intitule porte par ailleurs une marque de debutant — « Management Trainee »
-# contient « manage », « Graduate Programme Manager » est deja exclu ailleurs.
+# SOFT: the word often says seniority, but not always. Neutralised when
+# the title also carries a beginner mark — "Management Trainee"
+# contains "manage", "Graduate Programme Manager" is already excluded elsewhere.
 #
-#   « lead » : « Lead Generation » est du commercial, pas de la seniorite. Ce
-#   faux positif a deja ete corrige une fois dans ats_match._RX_SENIOR_FIN ; on
-#   reprend la meme negation ici plutot que de la redecouvrir.
-#   « expert » : « expert comptable » part de toute facon par le motif metier.
+#   "lead": "Lead Generation" is sales, not seniority. This
+#   false positive was already fixed once in ats_match._RX_SENIOR_FIN; we
+#   reuse the same negation here rather than rediscovering it.
+#   "expert": "expert comptable" goes anyway through the profession reason.
 _RX_SENIOR_MOU = re.compile(
     r"\b(?:manager|managing|lead(?!\s+(?:generation|gen)\b)|responsable"
     r"|expert[e]?s?|chef\s+de|g[ée]rant[e]?|superviseur)\b",
     re.I,
 )
 
-# « RESPONSABLE » EST DEUX MOTS. Le nom designe un chef de service — « Responsable
-# Tresorerie », a jeter. L'adjectif qualifie une demarche — « Conseiller en
-# Epargne Responsable », qui est exactement la cible, et que le filtre de
-# seniorite supprimait. « Investissement responsable » est un terme standard du
-# metier : le cas est rare dans la file du jour (1 offre) mais revient a chaque
+# "RESPONSABLE" IS TWO WORDS. The noun designates a head of department — "Responsable
+# Tresorerie", to throw away. The adjective qualifies an approach — "Conseiller en
+# Epargne Responsable", which is exactly the target, and which the
+# seniority filter deleted. "Investissement responsable" is a standard term of the
+# trade: the case is rare in today's queue (1 offer) but comes back at each
 # scan.
 #
-# Une negation dans `_RX_SENIOR_MOU` demanderait un lookbehind de largeur
-# variable, que Python refuse. On retire donc l'emploi adjectival du titre AVANT
-# de chercher la seniorite — meme procede que `_sans_marque` dans
-# tailor_application, qui efface « Credit Agricole » avant de compter l'agricole.
+# A negation in `_RX_SENIOR_MOU` would require a variable-width lookbehind,
+# which Python refuses. So we remove the adjectival use from the title BEFORE
+# looking for seniority — same method as `_sans_marque` in
+# tailor_application, which erases "Credit Agricole" before counting the agricultural.
 #
-# Pas de \b final sur « responsable » : il doit voir « responsables » au pluriel.
+# No final \b on "responsable": it must see "responsables" in the plural.
 _RX_RESP_ADJ = re.compile(
     r"\b(?:[eé]pargnes?|investissements?|financements?|finance|placements?|gestion"
     r"|achats?|approvisionnements?|consommation|croissance|entreprises?|num[eé]rique"
@@ -122,14 +120,14 @@ def _sans_resp_adjectif(titre: str | None) -> str:
     return _RX_RESP_ADJ.sub(" ", titre or "")
 
 
-# Marques de debutant. Neutralisent la liste MOU, jamais la liste DUR.
+# Beginner marks. They neutralise the SOFT list, never the HARD list.
 #
-# PAS DE \b FINAL sur les radicaux. « alternan[ct]\b » ne voyait PAS
-# « Alternance » : apres « alternanc » vient « e », donc pas de frontiere de mot.
-# « Alternance – Chef de Projet IA & Data » partait comme poste de seniorite.
-# C'est le meme defaut que le \b final de _RX_DURABLE, corrige ce matin dans
-# tailor_application. Les sigles courts, eux, GARDENT leurs bornes : « jr »
-# sans borne droite attraperait « jrXXX », « vie » attraperait « vieillissement ».
+# NO FINAL \b on the stems. "alternan[ct]\b" did NOT see
+# "Alternance": after "alternanc" comes "e", hence no word boundary.
+# "Alternance – Chef de Projet IA & Data" went out as a seniority job.
+# It is the same defect as the final \b of _RX_DURABLE, fixed this morning in
+# tailor_application. The short acronyms, on the other hand, KEEP their boundaries: "jr"
+# without a right boundary would catch "jrXXX", "vie" would catch "vieillissement".
 _RX_JUNIOR = re.compile(
     r"\b(?:jr|intern|stage|entry[\s-]level|v\.?i\.?e)\b"
     r"|\b(?:junior|graduate|trainee|stagiaire|internship"
@@ -139,18 +137,18 @@ _RX_JUNIOR = re.compile(
 )
 
 # ── 2. METIERS HORS PROFIL ──────────────────────────────────────────────────
-# Un dictionnaire motif -> famille, pour pouvoir dire POURQUOI une offre part
-# et verifier chaque famille separement. Chaque motif a ete relu contre le
-# piege des sous-chaines, qui a produit huit bugs sur ce projet :
+# A dictionary pattern -> family, to be able to say WHY an offer leaves
+# and check each family separately. Each pattern was re-read against the
+# substring trap, which produced eight bugs on this project:
 # « sinGAPore », « diveRSE », « CLIMATisation », « transVERSE », « POWER
-# Platform », « BP dans BPCE ». Tout est borne.
-_METIERS_CATALOGUE = {  # toutes les familles connues
-    # QUANT ET INGENIERIE DATA : hors cible meme avec « ESG » dans le titre
-    # (l'utilisateur, 2026-10-05). « Analyste Climate Finance / ESG Quant » ou « ESG
-    # Data Engineer » sortaient a fit 10 : le mot ESG levait le sauvetage, alors
-    # que le metier reste du calcul quantitatif ou de la tuyauterie de donnees.
-    # D'ou leur place dans _METIERS_DURS. « quantity » (surveyor) et
-    # « quantification » ne sont pas pris : seules les formes du metier.
+# Platform", "BP in BPCE". Everything is bounded.
+_METIERS_CATALOGUE = {  # all the known families
+    # QUANT AND DATA ENGINEERING: off target even with "ESG" in the title
+    # (the user, 2026-10-05). "Analyste Climate Finance / ESG Quant" or "ESG
+    # Data Engineer" came out at fit 10: the word ESG triggered the rescue, while
+    # the profession stays quantitative computation or data plumbing.
+    # Hence their place in _METIERS_DURS. "quantity" (surveyor) and
+    # "quantification" are not taken: only the forms of the profession.
     "quant": re.compile(r"\b(?:quants?|quantitati(?:ve|ves|f|fs)|structur(?:er|eur)s?)\b", re.I),
     "ingenierie_data": re.compile(
         r"\b(?:data\s+engineer(?:ing|s)?|big\s+data\s+engineer|analytics\s+engineer"
@@ -158,12 +156,12 @@ _METIERS_CATALOGUE = {  # toutes les familles connues
         r"|ingenier[oa]\s+de\s+datos|engenheir[oa]\s+de\s+dados)\b",
         re.I,
     ),
-    # Ingenierie logicielle et infrastructure. L'ANALYSE data reste (voir plus
-    # bas _RX_DATA_GARDE) ; c'est le metier de DEVELOPPEUR qui part.
+    # Software engineering and infrastructure. Data ANALYSIS stays (see
+    # _RX_DATA_GARDE below); it is the DEVELOPER profession that leaves.
     "informatique": re.compile(
         r"\b(?:d[ée]veloppeur|d[ée]veloppeuse|developer|dev\s+(?:back|front|full)"
-        # « AI engineer » n'est PLUS rejete sur le titre (l'utilisateur, 2026-10-05) :
-        # c'est l'outillage exige qui tranche, voir OUTILS_MAX plus bas.
+        # "AI engineer" is NO LONGER rejected on the title (the user, 2026-10-05):
+        # it is the tooling required that decides, see OUTILS_MAX below.
         r"|software\s+engineer"
         r"|ing[ée]nieur\s+(?:logiciel|informatique|syst[eè]me|r[ée]seau|cloud"
         r"|d[ée]veloppement|[ée]tude|data|donn[ée]es)"
@@ -179,20 +177,20 @@ _METIERS_CATALOGUE = {  # toutes les familles connues
         r"|webmaster|int[ée]grateur\s+web|ui\s?/?\s?ux|designer)\b",
         re.I,
     ),
-    # Vente. « commercial » seul est trop large — « banque commerciale »,
-    # « immobilier commercial », « credit commercial » sont de la finance. On
-    # ne prend donc QUE les formes ou il designe la personne.
+    # Sales. "commercial" alone is too wide — "banque commerciale",
+    # "immobilier commercial", "credit commercial" are finance. So we
+    # ONLY take the forms where it designates the person.
     #
-    # « business development » NON PLUS n'est pas pris seul. Sur les vingt
-    # premieres prises du motif, sept etaient des « Business Development
-    # Analyst » — chez TotalEnergies Singapour (fit 8), au CEO Office de Telco OI
-    # (fit 9), en graduate programme chez Sibelco. C'est un poste d'analyse
-    # strategique, pas un poste de vendeur. Seuls partent le DEVELOPPEUR
-    # commercial et ses titres explicites.
+    # "business development" is NOT taken alone EITHER. Of the first twenty
+    # matches of the pattern, seven were "Business Development
+    # Analyst" — at TotalEnergies Singapore (fit 8), at Telco OI's CEO Office
+    # (fit 9), in a graduate programme at Sibelco. It is a strategic analysis
+    # job, not a sales job. Only the sales DEVELOPER and its explicit
+    # titles leave.
     #
-    # « negociateur » est parti de la liste : il designe l'agent immobilier,
-    # mais aussi le NEGOCIATEUR DE MARCHE — « Negociateur Credit » chez Natixis
-    # Investment Managers est une table de trading, pas une agence.
+    # "negociateur" left the list: it designates the estate agent,
+    # but also the MARKET DEALER — "Negociateur Credit" at Natixis
+    # Investment Managers is a trading desk, not an agency.
     "vente": re.compile(
         r"\b(?:(?:attach[ée]|ing[ée]nieur|conseiller|conseill[eè]re|charg[ée]|d[ée]l[ée]gu[ée])"
         r"\s*\(?e?\)?\s*commercial"
@@ -248,12 +246,12 @@ _METIERS_CATALOGUE = {  # toutes les familles connues
         r"|r[ée]ceptionniste|femme\s+de\s+chambre|gouvernant[e]?)\b",
         re.I,
     ),
-    # SEULEMENT les titres academiques, et ils ne sont PAS rattrapables : un
-    # post-doctorat « AI for Sustainable Energy » coche tous les mots-cles ESG
-    # et reste inaccessible a un BBA. « formateur », « animateur » et
-    # « educateur » ont quitte cette liste — ce sont des mots de contexte, pas
-    # des metiers : « Comptable ECF - Cabinet Formateur » decrit un cabinet,
-    # « Animateur securite environnement » est un poste HSE.
+    # ONLY the academic titles, and they CANNOT be rescued: a
+    # post-doctorate "AI for Sustainable Energy" ticks all the ESG keywords
+    # and stays out of reach for a BBA. "formateur", "animateur" and
+    # "educateur" left this list — they are context words, not
+    # professions: "Comptable ECF - Cabinet Formateur" describes a firm,
+    # "Animateur securite environnement" is an HSE job.
     "enseignement": re.compile(
         r"\b(?:professeur|enseignant[e]?|instituteur|ma[iî]tre\s+de\s+conf[ée]rence"
         r"|teacher|lecturer|post[\s-]?doc|post[\s-]?doctora\w*|doctorant[e]?"
@@ -276,23 +274,23 @@ _METIERS_CATALOGUE = {  # toutes les familles connues
     ),
 }
 
-# ── CE QUI RESTE MALGRE UN MOTIF METIER ─────────────────────────────────────
-# Trois intitules reels que les motifs ci-dessus attrapaient a tort :
-#   « Analyste RH et controle de gestion sociale »  -> le cœur est le controle
+# ── WHAT STAYS DESPITE A PROFESSION REASON ───────────────────────────────────
+# Three real titles that the patterns above wrongly caught:
+#   "Analyste RH et controle de gestion sociale"  -> the core is the control
 #   « Sustainable Procurement Analyst »             -> achats responsables, ESG
-#   « Business Analyst Finance »                    -> « business » n'est pas
+#   "Business Analyst Finance"                    -> "business" is not
 #                                                      « business developer »
-# La regle : un intitule qui porte un marqueur ESG ou un metier finance FRANC
-# n'est pas jete par un mot de metier isole.
-# DEUX GROUPES, parce que deux comportements de bornes opposes.
+# The rule: a title that carries an ESG marker or a CLEAR finance profession
+# is not thrown away because of an isolated profession word.
+# TWO GROUPS, because two opposite boundary behaviours.
 #
-#   Les SIGLES gardent leurs deux bornes. « rse » sans borne droite matche
-#   « diveRSE », « esg » matcherait « esgXXX » — c'est la famille de bugs qui
-#   a deja donne « sinGAPore », « CLIMATisation » et « BP dans BPCE ».
-#   Les RADICAUX perdent la borne droite, sinon ils ne voient pas leurs propres
+#   The ACRONYMS keep both boundaries. "rse" without a right boundary matches
+#   "diveRSE", "esg" would match "esgXXX" — it is the family of bugs that
+#   already gave "sinGAPore", "CLIMATisation" and "BP in BPCE".
+#   The STEMS lose the right boundary, otherwise they do not see their own
 #   flexions : « sustainab\b » rate « Sustainability », « durabilit\b » rate
-#   « durabilite ». Deux offres a fit 10 partaient ainsi au motif « logistique »
-#   — « Trainee Sustainability & Strategic Regulatory » chez PwC et « Working
+#   "durabilite". Two fit-10 offers thus left under the "logistique" reason
+#   — "Trainee Sustainability & Strategic Regulatory" at PwC and "Working
 #   Student Sustainable Procurement » chez Sika.
 from typing import Any
 
@@ -300,8 +298,8 @@ from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _P
 
 _ici = sys.modules[__name__]
-# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
-# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+# Values taken from the profile: computed on first read, not at import
+# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -310,19 +308,19 @@ def __getattr__(nom: str) -> Any:
 
 
 _PARESSEUX["_TRI"] = lambda: _P.get("tri", {}) or {}
-# Mots de la CIBLE qui sauvent un intitule d'une famille ecartee (profil,
-# tri.sauvetage) : « Sustainable Procurement » reste pour un profil durable.
+# Words of the TARGET that rescue a title from a family set aside (profile,
+# tri.sauvetage): "Sustainable Procurement" stays for a sustainability profile.
 _PARESSEUX["_RX_SAUVETAGE"] = lambda: _P.motif(_ici._TRI.get("sauvetage"))
 
-# FAMILLES QUE LE SAUVETAGE NE RATTRAPE PAS. Un mot ESG dans l'intitule ne
-# rend pas le poste accessible : un post-doctorat « AI for Sustainable Energy »
-# demande un doctorat, une « Analyse environnementale en salle blanche » demande
-# un diplome d'ingenieur, un poste de soignant demande un diplome d'Etat. Le
-# sauvetage sert a ne pas jeter un poste de FINANCE sur un mot de contexte ; il
-# ne sert pas a ouvrir des metiers fermes.
+# FAMILIES THAT THE RESCUE DOES NOT CATCH. An ESG word in the title does not
+# make the job accessible: a post-doctorate "AI for Sustainable Energy"
+# requires a doctorate, an "Analyse environnementale en salle blanche" requires
+# an engineering degree, a care job requires a state diploma. The
+# rescue serves not to throw away a FINANCE job because of a context word; it
+# does not serve to open closed professions.
 _PARESSEUX["_METIERS_DURS"] = lambda: set(_ici._TRI.get("metiers_durs", []) or [])
-# Familles RETIREES pour ce profil (tri.metiers_exclus) ; le catalogue
-# _METIERS_CATALOGUE ci-dessus reste la bibliotheque. Absent du profil = toutes.
+# Families REMOVED for this profile (tri.metiers_exclus); the catalogue
+# _METIERS_CATALOGUE above stays the library. Missing from the profile = all.
 _PARESSEUX["_EXCLUS"] = lambda: _ici._TRI.get("metiers_exclus")
 _PARESSEUX["_METIERS"] = lambda: (
     dict(_METIERS_CATALOGUE)
@@ -331,19 +329,19 @@ _PARESSEUX["_METIERS"] = lambda: (
 )
 
 # ── 2 bis. TROP D'OUTILS DE DEVELOPPEMENT ───────────────────────────────────
-# « Garde AI engineer, mais quand il faut trop d'outils techniques pour coder,
-# supprime » (l'utilisateur, 2026-10-05). L'intitule ne suffit pas : « Consultant
+# "Keep AI engineer, but when too many technical tools are needed to code,
+# delete" (the user, 2026-10-05). The title is not enough: a "Consultant
 # Business & AI Insights » chez Deloitte demande Databricks, Snowflake,
-# Kubernetes et CI/CD ; un « AI Analyst » peut ne demander que Python.
+# Kubernetes and CI/CD; an "AI Analyst" may only ask for Python.
 #
-# On compte des FAMILLES d'outils d'ingenieur dans la description. Ne comptent
-# pas : Python, SQL, Excel, VBA, Power BI, Tableau, R (outils d'analyste, ceux
-# du profil) ni git (trop banal). AWS, GCP et Azure ne font qu'UNE famille :
-# « AWS, GCP ou Azure » est une alternative, pas trois exigences.
-# Mesure sur la file (7336 offres) : seuil 4 -> 189 offres, dont 2 a fit >= 9
-# (« ESG Data Engineer », un « Data & AI Solutions Analyst » qui demande FastAPI,
-# Postgres, CI/CD et le cloud). Seuil 3 en prenait 313, dont de vrais postes
-# d'analyse qui citent un cloud et deux bases.
+# We count FAMILIES of engineer tools in the description. Not counted:
+# Python, SQL, Excel, VBA, Power BI, Tableau, R (analyst tools, those
+# of the profile) nor git (too common). AWS, GCP and Azure are only ONE family:
+# "AWS, GCP ou Azure" is an alternative, not three requirements.
+# Measured on the queue (7336 offers): threshold 4 -> 189 offers, 2 of them at fit >= 9
+# ("ESG Data Engineer", a "Data & AI Solutions Analyst" that asks for FastAPI,
+# Postgres, CI/CD and the cloud). Threshold 3 took 313, including real
+# analysis jobs that cite one cloud and two databases.
 _OUTILS = {
     "spark": r"\b(?:py)?spark\b",
     "hadoop": r"\bhadoop\b",
@@ -388,11 +386,11 @@ _OUTILS = {
     "graphql": r"\bgraphql\b",
     "matlab": r"\bmatlab\b",
     "kdb": r"\bkdb\b",
-    # LE LANGAGE C (l'utilisateur, 2026-10-05 : « juste C et d'autres termes techniques
-    # pour le code »). La lettre seule ne suffit pas : \bC\b matche « C'est »,
-    # « catégorie C », « Pôle C ». On ne le reconnait qu'annonce comme langage
-    # (« langage C ») ou dans une liste de langages (« Python, C », « C/C++ »).
-    # C et C++ ne font qu'UNE famille : « C/C++ » est une competence, pas deux.
+    # THE C LANGUAGE (the user, 2026-10-05: "juste C et d'autres termes techniques
+    # pour le code"). The letter alone is not enough: \bC\b matches "C'est",
+    # "catégorie C", "Pôle C". We only recognise it announced as a language
+    # ("langage C") or in a list of languages ("Python, C", "C/C++").
+    # C and C++ are only ONE family: "C/C++" is one skill, not two.
     "c": r"\bc\+\+"
     r"|\b(?:langage|language|programming\s+in|programmation\s+en)\s+C\b(?![+#'’])"
     r"|\b(?:python|java|rust|fortran|go|matlab|julia|c\+\+|c#)\s*[,/]\s*C\b(?![+#'’])"
@@ -403,8 +401,8 @@ _OUTILS = {
     "hdl": r"\b(?:vhdl|verilog|fpga)\b",
     "perl": r"\bperl\b",
     "php": r"\bphp\b",
-    # SWIFT est d'abord le reseau de paiement en finance : le langage ne compte
-    # qu'a cote de Kotlin, iOS ou Objective-C.
+    # SWIFT is first of all the payment network in finance: the language only counts
+    # next to Kotlin, iOS or Objective-C.
     "ruby": r"\bruby\b",
     "swift": r"\bswiftui\b|\bswift\s*(?:,|/|et|and|ou|or)\s*(?:kotlin|objective|ios)"
     r"|\b(?:kotlin|ios|objective-c)\s*(?:,|/|et|and|ou|or)\s*swift\b",
@@ -418,38 +416,38 @@ _OUTILS = {
     "shell": r"\b(?:bash|shell\s+script\w*|powershell)\b",
 }
 _RX_OUTILS = {k: re.compile(v, re.I) for k, v in _OUTILS.items()}
-_PARESSEUX["OUTILS_MAX"] = lambda: int(_ici._TRI.get("outils_max", 4) or 0)  # 0 = pas de limite
+_PARESSEUX["OUTILS_MAX"] = lambda: int(_ici._TRI.get("outils_max", 4) or 0)  # 0 = no limit
 
 
 def outils_techniques(desc: str | None) -> set[str]:
-    """Familles d'outils d'ingenieur citees dans la description."""
+    """Families of engineer tools cited in the description."""
     t = str(desc or "")
     return {k for k, rx in _RX_OUTILS.items() if rx.search(t)}
 
 
 # ── 3. EXPERIENCE ───────────────────────────────────────────────────────────
-# Cinq ans. En dessous, une candidature junior se defend ; au-dessus, l'annonce
-# demande un parcours qui n'existe pas encore.
+# Five years. Below that, a junior application can hold its own; above, the posting
+# asks for a background that does not exist yet.
 _PARESSEUX["EXP_MAX"] = lambda: int(_P.get("niveau.experience_max", 5) or 99)
 _PARESSEUX["_SENIORITE"] = lambda: bool(_ici._TRI.get("retirer_seniors", True))
 _PARESSEUX["_ETUDIANT"] = lambda: bool(_ici._TRI.get("retirer_etudiants", True))
 
 # ── 4. LIENS MORTS ──────────────────────────────────────────────────────────
-# ANTI-BOT n'est PAS un lien mort : c'est une page qu'on n'a pas pu lire, pas
-# une offre qui n'existe plus. 312 offres sont dans ce cas ; les jeter ferait
-# perdre des offres vivantes pour un defaut de lecture.
+# ANTI-BOT is NOT a dead link: it is a page that could not be read, not
+# an offer that no longer exists. 312 offers are in this case; throwing them away would
+# lose live offers because of a reading failure.
 LIENS_MORTS = {"MORT", "EXPIREE", "FERMEE"}
 
 
-# ── 5. CE QUI N'EST PAS UNE OFFRE ───────────────────────────────────────────
-# L'import de juillet a laisse des lignes qui ne menent a aucune annonce : une
-# page d'accueil (« ecocert.com/fr-FR/home »), un portail carriere generique
-# (« careers.societegenerale.com »), une page de RECHERCHE (« indeed.com/q-…-
-# emplois »), ou rien du tout. « Amundi — Analyste ESG / Sustainable Product /
-# Climate », fit 10, n'avait meme pas d'URL : seulement un lien de recherche de
-# recruteurs dans le champ rh, et des champs remplis a la main (« #1 EU AM… »).
-# l'utilisateur, le 2026-10-05 : « n'existe pas ». Mesure : 34 lignes.
-# Le suivi les protege toujours (une candidature y est notee meme sans lien).
+# ── 5. WHAT IS NOT AN OFFER ─────────────────────────────────────────────────
+# The July import left rows that lead to no posting: a
+# home page ("ecocert.com/fr-FR/home"), a generic careers portal
+# ("careers.societegenerale.com"), a SEARCH page ("indeed.com/q-…-
+# emplois"), or nothing at all. "Amundi — Analyste ESG / Sustainable Product /
+# Climate", fit 10, did not even have a URL: only a recruiter search link
+# in the rh field, and fields filled by hand ("#1 EU AM…").
+# The user, on 2026-10-05: "n'existe pas". Measured: 34 rows.
+# The tracking still protects them (an application is noted there even without a link).
 _RX_PORTAIL = re.compile(
     r"^/?(?:[a-z]{2}(?:-[a-z]{2})?/)?(?:home|accueil|careers?|carrieres?(?:/recrutement)?"
     r"|jobs?|emplois?|offres?|recrutement|join-us|why-join-us|nous-rejoindre)?/?$",
@@ -464,7 +462,7 @@ _RX_PAGE_RECHERCHE = re.compile(
 
 
 def pas_une_offre(o: Offre) -> str | None:
-    """Motif si la ligne ne mene a aucune annonce precise, sinon None."""
+    """Reason if the row leads to no specific posting, otherwise None."""
     from urllib.parse import urlsplit
 
     u = (o.get("url") or "").strip()
@@ -485,11 +483,11 @@ def _oid(o: Offre) -> str:
 
 
 def motif(o: Offre, proteges: set[str]) -> str | None:
-    """Motif de suppression, ou None si l'offre est conservee."""
+    """Deletion reason, or None if the offer is kept."""
     if _oid(o) in proteges:
         return None
-    # AVANT la garde RECHERCHE : les trois lignes RECHERCHE de la file n'avaient
-    # pas d'URL du tout, la garde protegeait des lignes vides.
+    # BEFORE the SEARCH guard: the three SEARCH rows of the queue had
+    # no URL at all, the guard protected empty rows.
     m = pas_une_offre(o)
     if m:
         return m
@@ -505,11 +503,11 @@ def motif(o: Offre, proteges: set[str]) -> str | None:
     if isinstance(exp, int) and exp >= _ici.EXP_MAX:
         return "experience"
 
-    # Une annonce qui demande un candidat ENCORE etudiant n'est pas pour un
-    # diplome, quel que soit le contrat affiche : Euronext « VIE - ESG &
-    # Sustainable Finance Analyst » veut un « final or penultimate year
-    # student » (l'utilisateur, 2026-10-07). Le contrat venu de l'intitule (V.I.E)
-    # passait avant la description, l'offre restait a fit 10.
+    # A posting that asks for a candidate STILL a student is not for a
+    # graduate, whatever contract is shown: Euronext "VIE - ESG &
+    # Sustainable Finance Analyst" wants a "final or penultimate year
+    # student" (the user, 2026-10-07). The contract taken from the title (V.I.E)
+    # came before the description, the offer stayed at fit 10.
     from jobhunter.sources.commun import demande_etudiant
 
     if _ici._ETUDIANT and demande_etudiant(o.get("description")):
@@ -534,7 +532,7 @@ def motif(o: Offre, proteges: set[str]) -> str | None:
 
 
 def main() -> int:
-    """Ligne de commande : tri de la file (inspection, ou purge avec --supprime)."""
+    """Command line: sorting of the queue (inspection, or purge with --supprime)."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--supprime", action="store_true", help="ecrit la file purgee")
     ap.add_argument("--motifs", action="store_true", help="echantillon par motif")
@@ -544,7 +542,7 @@ def main() -> int:
 
     q = importlib.import_module("jobhunter.stockage.file").charger(
         QUEUE
-    )  # descriptions : outils_techniques les lit
+    )  # descriptions: outils_techniques reads them
     proteges = (
         set(importlib.import_module("jobhunter.stockage.suivi").charger(SUIVI))
         if SUIVI.exists()
@@ -556,9 +554,9 @@ def main() -> int:
     for o in q:
         m = motif(o, proteges)
         (jette if m else garde).append((m, o))
-    # Doublons parmi ce qui reste : meme annonce sous deux intitules ou dans
-    # deux langues (doublons.py). Apres les motifs, pour ne garder que des
-    # offres qui survivent de toute facon.
+    # Duplicates among what remains: same posting under two titles or in
+    # two languages (doublons.py). After the reasons, so as to keep only
+    # offers that survive anyway.
     from jobhunter.programmes import doublons
 
     dbl = doublons.doublons([o for _, o in garde], proteges)
@@ -607,9 +605,9 @@ def main() -> int:
     sauv = QUEUE.with_suffix(f".json.avant_tri_{time.strftime('%Y%m%d_%H%M%S')}")
     shutil.copy2(QUEUE, sauv)
     print(f"\nsauvegarde : {sauv.name}")
-    # UNE PAR JOUR DEPUIS QUE LE PIPELINE TRIE. 9 Mo chacune, sans fin : on garde
-    # les cinq dernieres. Le nom porte l'horodatage, donc l'ordre alphabetique
-    # est l'ordre chronologique.
+    # ONE PER DAY SINCE THE PIPELINE SORTS. 9 MB each, endlessly: we keep
+    # the last five. The name carries the timestamp, so alphabetical order
+    # is chronological order.
     for vieille in sorted(QUEUE.parent.glob(QUEUE.name + ".avant_tri_*"))[:-5]:
         try:
             vieille.unlink()
@@ -618,10 +616,10 @@ def main() -> int:
 
     from jobhunter.stockage import file as queue_io
 
-    # LE MOTIF EST RECALCULE ICI, dans le verrou, sur la file RELUE. Les objets
-    # de l'inspection viennent d'une autre lecture : leur identite Python ne dit
-    # rien de ceux-ci, et un `id(o)` d'un lot ne retrouverait rien dans l'autre.
-    # transaction() purge d'elle-meme les descriptions devenues orphelines.
+    # THE REASON IS RECOMPUTED HERE, inside the lock, on the RE-READ queue. The objects
+    # of the inspection come from another read: their Python identity says
+    # nothing about these, and an `id(o)` of one batch would find nothing in the other.
+    # transaction() purges on its own the descriptions that became orphaned.
     try:
         with queue_io.transaction() as file:
             avant = len(file)
@@ -636,19 +634,19 @@ def main() -> int:
             dbl = doublons.doublons(gardes, proteges)
             retires.update(dbl)
             file[:] = [o for o in gardes if queue_io.oid(o) not in dbl]
-            # Les rangs se renumerotent : « n » sert d'identifiant d'affichage dans
-            # l'app, et des trous de plusieurs milliers n'aident personne.
+            # The ranks are renumbered: "n" serves as a display identifier in
+            # the app, and gaps of several thousand help nobody.
             for i, o in enumerate(file, 1):
                 o["n"] = i
             restant = len(file)
     except queue_io.VerrouIndisponible as e:
-        # Convention du projet : file occupee = code 3, rien de modifie. Sans
-        # ceci, un traceback et un code 1 — le pipeline ne distinguait pas
-        # « quelqu'un ecrit » de « le tri a plante ».
+        # Project convention: queue busy = code 3, nothing changed. Without
+        # this, a traceback and code 1 — the pipeline could not tell
+        # "someone is writing" from "the sorting crashed".
         print(f"! {e}")
         return 3
     print(f"file purgee : {avant} → {restant} offres ({avant - restant} supprimees)")
-    # La collecte ne doit pas les reprendre demain : voir rejets_tri.py.
+    # The collection must not take them back tomorrow: see rejets_tri.py.
     from jobhunter.programmes import rejets_tri
 
     n = rejets_tri.ajouter(retires)

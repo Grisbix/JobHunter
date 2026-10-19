@@ -1,18 +1,18 @@
-"""Facade de paquet : un ancien gros module decoupe garde UN espace de noms.
+"""Package facade: a large old module that was split keeps ONE namespace.
 
-`installer(paquet, sous_modules)` fait du paquet un module qui voit TOUS les noms de
-ses sous-modules, comme l'ancien fichier unique (`job_sources.title_ok`,
-`tailor_application.tailor_cv`). Une affectation (`pkg.NOM = ...`, un monkeypatch)
-part dans les sous-modules qui lient le nom ; les autres le lisent par
-`_proprietaire.NOM`, jamais par copie. Sans ce routage, un test qui remplace
-`_get_borne` laisserait la collecte sortir sur le vrai reseau.
+`installer(paquet, sous_modules)` makes the package a module that sees ALL the names of
+its submodules, like the old single file (`job_sources.title_ok`,
+`tailor_application.tailor_cv`). An assignment (`pkg.NAME = ...`, a monkeypatch)
+goes to the submodules that bind the name; the others read it through
+`_proprietaire.NAME`, never by copy. Without this routing, a test that replaces
+`_get_borne` would let the collection go out on the real network.
 
-Les facades `Scripts/*.py` sont parties en 2.0 ; celle-ci reste pour `sources`,
-`documents`, `navigation` et `app`, dont les programmes et les tests lisent encore des
-noms par le paquet (`jobhunter.sources.title_ok`). La retirer demanderait de pointer
-chaque appelant vers le sous-module qui porte le nom.
+The `Scripts/*.py` facades left in 2.0; this one stays for `sources`, `documents`,
+`navigation` and `app`, whose programs and tests still read names through the package
+(`jobhunter.sources.title_ok`). Removing it would require pointing each caller to the
+submodule that carries the name.
 
-Decision : docs/adr/0001-facades-alias.md
+Decision: docs/adr/0001-facades-alias.md
 """
 
 import importlib
@@ -23,21 +23,21 @@ from typing import Any
 
 
 def installer(paquet: str, sous_modules: Sequence[str]) -> list[types.ModuleType]:
-    """Charge `sous_modules` de `paquet` et fait du paquet leur facade. Rend les modules."""
+    """Loads `sous_modules` of `paquet` and makes the package their facade. Returns the modules."""
     modules = [importlib.import_module(f"{paquet}.{m}") for m in sous_modules]
-    # Les liaisons d'origine : `unittest.mock.patch` sort par un `delattr` sur la
-    # facade (le nom n'est pas dans SON dict) ; on remet alors la valeur d'origine au
-    # lieu d'effacer la fonction du sous-module.
+    # The original bindings: `unittest.mock.patch` exits through a `delattr` on the
+    # facade (the name is not in ITS dict); we then put the original value back instead
+    # of erasing the submodule's function.
     origine = {m: dict(vars(m)) for m in modules}
     noms_sous_modules = set(sous_modules)
 
     def paresseux(m: types.ModuleType) -> dict[str, Any]:
-        """Fabriques des valeurs calculees a la premiere lecture (jobhunter.paresseux)."""
+        """Factories of values computed on first read (jobhunter.paresseux)."""
         fabriques: dict[str, Any] = vars(m).get("_PARESSEUX", {})
         return fabriques
 
     def tenants(nom: str) -> list[types.ModuleType]:
-        """Sous-modules ou `nom` est lie. Le proprietaire (celui qui le DEFINIT) en tete."""
+        """Submodules where `nom` is bound. The owner (the one that DEFINES it) first."""
         t = [m for m in modules if nom in vars(m) or nom in origine[m] or nom in paresseux(m)]
         t.sort(key=lambda m: getattr(origine[m].get(nom), "__module__", None) != m.__name__)
         return t
@@ -56,8 +56,8 @@ def installer(paquet: str, sous_modules: Sequence[str]) -> list[types.ModuleType
             if not t:
                 super().__setattr__(nom, valeur)
                 return
-            # Tous les sous-modules qui lient le nom : le proprietaire, et ceux qui
-            # l'ont importe tel quel — un remplacement doit valoir partout ou on le lit.
+            # All the submodules that bind the name: the owner, and those that
+            # imported it as is — a replacement must apply wherever it is read.
             for m in t:
                 setattr(m, nom, valeur)
 

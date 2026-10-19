@@ -33,7 +33,7 @@ def test_cle_creee_hors_depot_jamais_affichee(outil, tmp_path, capsys):
     publique = sig.publique(secret).hex()
     assert f'CLE_PUBLIQUE = "{publique}"' in outil.MODULE.read_text(encoding="utf-8")
     assert secret.hex() not in capsys.readouterr().out
-    assert outil.creer_cle() == 1  # jamais remplacée
+    assert outil.creer_cle() == 1  # never replaced
 
 
 def test_signer_une_version(outil, tmp_path, monkeypatch):

@@ -1,11 +1,11 @@
-"""Garde-fou : plus aucune suite « historique », et plus aucun programme dans Scripts/.
+"""Safeguard: no more "historical" suites, and no more programs in Scripts/.
 
-Les 27 suites autonomes de Scripts/test_*.py (qui comptaient leurs ✅/❌ et sortaient
-en code non nul) ont toutes ete converties en tests pytest dans tests/ (phase 2 du
-plan, 2026-10-18). Un nouveau Scripts/test_*.py ne serait lance par personne : les
-tests s'ecrivent dans tests/. Seules restent les deux suites qui sortent vraiment
-sur le web et ne doivent pas tourner machinalement. Depuis la 2.0, les programmes
-vivent dans jobhunter.programmes ; Scripts/ ne garde que les donnees.
+The 27 standalone suites of Scripts/test_*.py (which counted their ✅/❌ and exited
+with a non-zero code) have all been converted to pytest tests in tests/ (phase 2 of the
+plan, 2026-10-18). A new Scripts/test_*.py would be run by nobody: the
+tests are written in tests/. Only the two suites that really go out
+on the web and must not run mechanically remain. Since 2.0, the programs
+live in jobhunter.programmes; Scripts/ only keeps the data.
 """
 
 from pathlib import Path

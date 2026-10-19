@@ -1,6 +1,6 @@
-"""Fiche d'une offre : edition du suivi (statut, note, date), description, comptes.
+"""Card of an offer: editing the tracking (status, note, date), description, accounts.
 
-Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
+Part of jobhunter.app (former JobHunter.pyw, phase 3.7)."""
 
 import subprocess
 import threading
@@ -17,7 +17,7 @@ from jobhunter.stockage import suivi as suivi_io
 
 
 class FicheMixin:
-    # ── édition suivi (écrit suivi.json direct) ──
+    # ── tracking editing (writes suivi.json directly) ──
     def _load_edit(self: "AppTypee", e: Any = None) -> None:
         it = self.tree.focus()
         o = self.rowmap.get(it)
@@ -59,10 +59,10 @@ class FicheMixin:
             v = o.get(k)
             if v not in (None, "", "Non précisé"):
                 meta.append(f"{lbl} : {str(v).replace('_', ' ')}")
-        if o.get("autres_lieux"):  # meme poste publie dans d'autres villes
+        if o.get("autres_lieux"):  # same job published in other cities
             meta.append("Aussi à : " + ", ".join(str(x) for x in o["autres_lieux"]))
         yrs = o.get("exp_requise")
-        if yrs:  # années d'expérience exigées (l'utilisateur junior → fit pénalisé si ≥3)
+        if yrs:  # years of experience required (junior user → fit penalised if ≥3)
             meta.append(f"⚠️ Exp requise: {yrs} ans" if yrs >= 3 else f"Exp requise: {yrs} ans")
         meta.extend(self._etat_candidature(o))
         meta.extend(self._etat_dossier(o))
@@ -96,10 +96,10 @@ class FicheMixin:
         d.see("1.0")
 
     def _raisons_fit(self: "AppTypee", o: Any) -> list[str]:
-        """Le calcul du fit en clair (scoring.fit.expliquer) ; [] sans texte ou en cas d'erreur.
+        """The fit computation in plain words (scoring.fit.expliquer); [] without text or on error.
 
-        Recalculé sur le texte de l'offre : si le fit de la file diffère (profil modifié
-        depuis), la dernière ligne le dit.
+        Recomputed on the offer's text: if the queue's fit differs (profile changed
+        since), the last line says so.
         """
         texte = f"{o.get('poste', '')} {o.get('description', '')}".strip()
         if not texte:
@@ -108,7 +108,7 @@ class FicheMixin:
             from jobhunter.scoring.fit import expliquer
 
             raisons = expliquer(texte, o.get("poste", ""))
-        except Exception:  # la fiche s'affiche même si le profil est incomplet
+        except Exception:  # the card is displayed even if the profile is incomplete
             return []
         if raisons and str(o.get("fit")) not in ("", "None") and raisons[-1] != f"fit {o['fit']}":
             raisons[-1] += f" (file : {o['fit']}, recalcul au prochain re-score)"
@@ -176,7 +176,7 @@ class FicheMixin:
         CB(
             btn,
             text="Pas intéressé",
-            command=lambda: (self._pas_interesse(o), w.destroy()),  # type: ignore[func-returns-value]  # lambda Tk qui enchaine des appels sans valeur
+            command=lambda: (self._pas_interesse(o), w.destroy()),  # type: ignore[func-returns-value]  # Tk lambda chaining calls without a value
             bg=BTN,
         ).pack(side="left", padx=(12, 0))
         CB(
@@ -196,7 +196,7 @@ class FicheMixin:
             CB(
                 btn,
                 text="Voir CV",
-                command=lambda: (w.destroy(), self._cv_viewer(str(cvp))),  # type: ignore[func-returns-value]  # lambda Tk qui enchaine des appels sans valeur
+                command=lambda: (w.destroy(), self._cv_viewer(str(cvp))),  # type: ignore[func-returns-value]  # Tk lambda chaining calls without a value
                 bg=BTN,
                 fg=TX,
                 relief="flat",
@@ -206,7 +206,7 @@ class FicheMixin:
             CB(
                 btn,
                 text="Voir lettre",
-                command=lambda: (w.destroy(), self._cv_viewer(str(ltp))),  # type: ignore[func-returns-value]  # lambda Tk qui enchaine des appels sans valeur
+                command=lambda: (w.destroy(), self._cv_viewer(str(ltp))),  # type: ignore[func-returns-value]  # Tk lambda chaining calls without a value
                 bg=BTN,
                 fg=TX,
                 relief="flat",
@@ -265,7 +265,7 @@ class FicheMixin:
         threading.Thread(target=work, daemon=True).start()
 
     def _toggle_account(self: "AppTypee") -> None:
-        """Marque/retire un compte pour ce site (comptes_sites.json)."""
+        """Marks/unmarks an account for this site (comptes_sites.json)."""
         o = self._cur
         if not o:
             return
@@ -314,17 +314,17 @@ class FicheMixin:
         self.refresh_table()
 
     def _ecrire_suivi(self: "AppTypee", oid: Any, rec: Any) -> Any:
-        """UNE candidature, écrite sous verrou sur l'état frais du disque.
+        """ONE application, written under lock on the fresh state of the disk.
 
-        L'app écrivait `self.suivi`, son instantané mémoire : un clic « postulé »
-        réécrivait tout le fichier et effaçait ce que `relances.py` y avait mis
-        entre-temps. Reproduit — deux relances perdues sans un mot. On n'écrit
-        plus qu'une entrée, et `suivi_io` relit le disque à l'intérieur du
-        verrou : le travail des autres est conservé.
+        The app used to write `self.suivi`, its in-memory snapshot: a "postulé" click
+        rewrote the whole file and erased what `relances.py` had put there in the
+        meantime. Reproduced — two follow-ups lost without a word. Only one entry is
+        written now, and `suivi_io` re-reads the disk inside the lock: the others'
+        work is kept.
         """
         try:
-            # Attente COURTE : Tkinter est mono-fil, une attente longue dans un
-            # gestionnaire de clic fige la fenetre et l'app parait plantee.
+            # SHORT wait: Tkinter is single-threaded, a long wait in a
+            # click handler freezes the window and the app looks crashed.
             suivi_io.poser(oid, rec, _commun.SUIVI, attente=4)
         except suivi_io.VerrouIndisponible:
             self._log("✗ un autre programme écrit suivi.json — réessaie dans un instant.\n")
@@ -332,7 +332,7 @@ class FicheMixin:
         except Exception as ex:
             self._log(f"! écriture suivi.json KO: {ex}\n")
             return False
-        # On recharge depuis le disque plutot que de patcher la memoire : c'est
-        # le seul etat qui tienne compte des autres ecrivains.
+        # We reload from disk rather than patching memory: it is
+        # the only state that accounts for the other writers.
         self.suivi = suivi_io.charger(_commun.SUIVI)
         return True

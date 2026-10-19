@@ -1,6 +1,6 @@
-"""Contrôle du dossier final (documents.controle) : ce qui partira vraiment.
+"""Check of the final file (documents.controle): what will really be sent.
 
-PDF fabriqués à la volée (PyMuPDF) : un bon dossier, puis chaque défaut seul.
+PDFs made on the fly (PyMuPDF): a good file, then each defect alone.
 """
 
 import fitz
@@ -78,14 +78,14 @@ def test_dossier_sans_lettre(tmp_path):
     assert controle.controler_dossier(offre, IDENT) == ["lettre absent"]
 
 
-# ── la pièce qui part vraiment : le PDF à jour plutôt que son .docx ─────────────
+# ── the document actually sent: the up-to-date PDF rather than its .docx ─────────────
 def test_pdf_a_jour_prefere_au_docx(tmp_path):
     import os
 
     docx = tmp_path / "lettre.docx"
     docx.write_bytes(b"PK")
     pdf(tmp_path / "lettre.pdf", CORPS)
-    os.utime(docx, (1_000_000, 1_000_000))  # le .docx est plus ancien que son PDF
+    os.utime(docx, (1_000_000, 1_000_000))  # the .docx is older than its PDF
     assert controle.piece_finale(docx) == tmp_path / "lettre.pdf"
     assert controle.controler_dossier({"cv": None, "lettre": str(docx)}, IDENT) == ["CV absent"]
 
@@ -96,6 +96,6 @@ def test_pdf_perime_signale(tmp_path):
     docx = tmp_path / "lettre.docx"
     pdf(tmp_path / "lettre.pdf", CORPS)
     docx.write_bytes(b"PK")
-    os.utime(tmp_path / "lettre.pdf", (1_000_000, 1_000_000))  # retouche du .docx apres le PDF
+    os.utime(tmp_path / "lettre.pdf", (1_000_000, 1_000_000))  # .docx retouched after the PDF
     assert controle.piece_finale(docx) == docx
     assert "relancer sync_docs" in controle.controler_piece(docx, "lettre", IDENT)[0]

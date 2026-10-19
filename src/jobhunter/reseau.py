@@ -1,22 +1,22 @@
-"""Requetes HTTP BORNEES en duree totale, sur des connexions reutilisees.
+"""HTTP requests BOUNDED in total duration, on reused connections.
 
-Ancien bloc de Scripts/job_sources.py (phase 3.2 du plan). `timeout=` d'httpx borne
-chaque paquet, pas la requete : un serveur qui distille un octet toutes les 19 s tient
-la connexion indefiniment (le 2026-09-22, fr.talent.com a bloque le scan planifie
-12 h 25). Ici le temps ecoule est verifie a chaque paquet recu.
+Former block of Scripts/job_sources.py (phase 3.2 of the plan). httpx's `timeout=`
+bounds each packet, not the request: a server that drips one byte every 19 s holds the
+connection forever (on 2026-09-22, fr.talent.com blocked the scheduled scan for
+12 h 25). Here the elapsed time is checked at each packet received.
 
-    get_borne(envoi, url, **kw)     GET, rend une vraie httpx.Response
+    get_borne(envoi, url, **kw)     GET, returns a real httpx.Response
     post_borne(envoi, url, **kw)    POST
     req_borne(envoi, methode, url, total=..., max_octets=...)
-    lire_borne(f, total, max_octets)  f.read() d'un urlopen, borne aussi
-    client_partage()                le httpx.Client unique qui garde ses connexions
-    INCIDENTS                       les refus et pannes du run, par source et par cause
+    lire_borne(f, total, max_octets)  f.read() of an urlopen, also bounded
+    client_partage()                the single httpx.Client that keeps its connections
+    INCIDENTS                       the run's refusals and failures, per source and per cause
 
-`envoi` : le module httpx (on passe alors par le client partage) ou un httpx.Client.
-job_sources garde ses anciens noms (`_get_borne`...) : les doublures des tests les
-remplacent la, et les appels de job_sources passent par eux.
+`envoi`: the httpx module (we then go through the shared client) or an httpx.Client.
+job_sources keeps its old names (`_get_borne`...): the test doubles replace them there,
+and job_sources' calls go through them.
 
-Decision : docs/adr/0004-429-attendre-403-arreter.md
+Decision: docs/adr/0004-429-attendre-403-arreter.md
 """
 
 import collections
@@ -30,20 +30,20 @@ _CLIENT: "httpx.Client | None" = None
 
 
 def exiger_http(url: str) -> str:
-    """Rend `url` si son schéma est http ou https ; lève ValueError sinon.
+    """Returns `url` if its scheme is http or https; raises ValueError otherwise.
 
-    `urllib.request.urlopen` ouvre aussi `file://` et d'autres schémas : une adresse venue
-    d'une page ou d'un réglage (plan de site, hôte Ollama) pourrait lui faire lire un
-    fichier local. Tout appel à `urlopen` passe d'abord par ici.
+    `urllib.request.urlopen` also opens `file://` and other schemes: an address coming
+    from a page or a setting (sitemap, Ollama host) could make it read a local file.
+    Every call to `urlopen` goes through here first.
 
     Args:
-        url: l'adresse à ouvrir.
+        url: the address to open.
 
     Returns:
-        La même adresse.
+        The same address.
 
     Raises:
-        ValueError: schéma autre que http ou https.
+        ValueError: scheme other than http or https.
     """
     schema = url.split(":", 1)[0].lower() if ":" in url else ""
     if schema not in ("http", "https"):
@@ -52,28 +52,28 @@ def exiger_http(url: str) -> str:
 
 
 class Incidents(collections.defaultdict[str, collections.Counter[str | int]]):
-    """Les refus et pannes du run : `INCIDENTS[source][cause] += 1`.
+    """The run's refusals and failures: `INCIDENTS[source][cause] += 1`.
 
-    Une collecte vide a deux causes opposees, rien a prendre ou un refus d'entree ;
-    ce compteur les distingue, et `resume()` les affiche en fin de scan pour qu'un
-    scan entierement bride ne ressemble pas a une journee calme.
+    An empty collection has two opposite causes, nothing to take or a refused entry;
+    this counter tells them apart, and `resume()` displays them at the end of the scan
+    so that an entirely throttled scan does not look like a quiet day.
     """
 
     def __init__(self) -> None:
-        """Un compteur vide."""
+        """An empty counter."""
         super().__init__(collections.Counter)
 
     def noter(self, source: str, cause: str | int) -> None:
-        """Compte un refus ou une panne.
+        """Counts a refusal or a failure.
 
         Args:
-            source: la source concernee (« linkedin », « apec »…).
-            cause: le code HTTP ou le nom de l'exception.
+            source: the source concerned ("linkedin", "apec"…).
+            cause: the HTTP code or the name of the exception.
         """
         self[source][cause] += 1
 
     def resume(self) -> list[str]:
-        """Une ligne par source, causes les plus frequentes d'abord. Vide si rien."""
+        """One line per source, most frequent causes first. Empty if nothing."""
         lignes = []
         for source, par_cause in sorted(self.items()):
             detail = ", ".join(
@@ -83,19 +83,18 @@ class Incidents(collections.defaultdict[str, collections.Counter[str | int]]):
         return lignes
 
 
-# Un seul compteur par processus, a cote du client qui fait les requetes.
+# A single counter per process, next to the client that makes the requests.
 INCIDENTS = Incidents()
 
 
 def client_partage() -> "httpx.Client":
-    """Un httpx.Client unique, qui GARDE SES CONNEXIONS OUVERTES.
+    """A single httpx.Client, which KEEPS ITS CONNECTIONS OPEN.
 
-    POURQUOI. Appeler `httpx.get` rouvre une connexion TLS a chaque requete.
-    Mesure le 2026-10-02 : 4 appels SmartRecruiters en 13,7 s par le module,
-    4,5 s par un client ; Workday 14,3 s contre 5,4. Sur une collecte de
-    plusieurs centaines d'appels, c'etait l'essentiel du temps : talan seul
-    prenait 8 min (69 fiches), chaque flux Workday 6 a 8 — et la passe a
-    depassait ses 60 min avant d'atteindre LinkedIn.
+    WHY. Calling `httpx.get` reopens a TLS connection at each request. Measured on
+    2026-10-02: 4 SmartRecruiters calls in 13.7 s through the module, 4.5 s through a
+    client; Workday 14.3 s versus 5.4. On a collection of several hundred calls, it was
+    most of the time: talan alone took 8 min (69 postings), each Workday feed 6 to 8 —
+    and pass a exceeded its 60 min before reaching LinkedIn.
     """
     global _CLIENT
     if _CLIENT is None:
@@ -113,34 +112,34 @@ def req_borne(
     max_octets: int = 20_000_000,
     **kw: Any,
 ) -> "httpx.Response":
-    """Requete httpx avec une duree TOTALE maximale. Rend une vraie httpx.Response.
+    """Httpx request with a maximum TOTAL duration. Returns a real httpx.Response.
 
-    Voir `get_borne` pour le pourquoi. Generalisee le 2026-09-23 a toutes les
-    sources : la premiere version ne protegeait que Talent.com, et rendait un
-    objet sans `.json()`, ce qui interdisait de l'employer ailleurs.
+    See `get_borne` for the why. Generalised on 2026-09-23 to all the sources: the
+    first version only protected Talent.com, and returned an object without
+    `.json()`, which prevented using it elsewhere.
 
-    La Response est reconstruite SANS content-encoding : `iter_bytes` a deja
-    decompresse le corps, et le laisser annonce gzip ferait decompresser deux
-    fois.
+    The Response is rebuilt WITHOUT content-encoding: `iter_bytes` has already
+    decompressed the body, and leaving it announced as gzip would make it decompress
+    twice.
 
     Args:
-        envoi: le module httpx ou un httpx.Client — les deux ont `.stream()`.
-        methode: « GET », « POST »…
-        url: l'adresse demandee.
-        total: duree maximale de toute la requete, en secondes ; None = trois fois
-            le delai par operation, 60 s au moins.
-        max_octets: taille maximale du corps.
-        **kw: transmis a `envoi.stream` (headers, params, json, timeout…).
+        envoi: the httpx module or an httpx.Client — both have `.stream()`.
+        methode: "GET", "POST"…
+        url: the requested address.
+        total: maximum duration of the whole request, in seconds; None = three times
+            the per-operation delay, at least 60 s.
+        max_octets: maximum size of the body.
+        **kw: passed to `envoi.stream` (headers, params, json, timeout…).
 
     Returns:
-        Une vraie httpx.Response, corps deja lu.
+        A real httpx.Response, body already read.
 
     Raises:
-        httpx.TimeoutException: duree totale ou taille maximale depassee.
+        httpx.TimeoutException: total duration or maximum size exceeded.
     """
     import httpx as _hx
 
-    if envoi is _hx:  # le module : pas de connexion reutilisee
+    if envoi is _hx:  # the module: no reused connection
         envoi = client_partage()
     kw.setdefault("timeout", 20)
     t = kw["timeout"] if isinstance(kw["timeout"], (int, float)) else 20
@@ -167,33 +166,33 @@ def req_borne(
 
 
 def post_borne(envoi: Any, url: str, **kw: Any) -> "httpx.Response":
-    """POST borne en duree totale : `req_borne(envoi, "POST", url, **kw)`."""
+    """POST bounded in total duration: `req_borne(envoi, "POST", url, **kw)`."""
     return req_borne(envoi, "POST", url, **kw)
 
 
 def lire_borne(f: BinaryIO, total: float = 60, max_octets: int = 20_000_000) -> bytes:
-    """`f.read()` d'un urlopen, mais borne en duree TOTALE.
+    """`f.read()` of an urlopen, but bounded in TOTAL duration.
 
-    `urlopen(timeout=25)` borne chaque operation de socket, exactement comme
-    httpx : un serveur qui distille ses octets le tient indefiniment.
+    `urlopen(timeout=25)` bounds each socket operation, exactly like httpx: a server
+    that drips its bytes holds it forever.
 
     Args:
-        f: la reponse ouverte par urlopen.
-        total: duree maximale de la lecture, en secondes.
-        max_octets: taille maximale lue.
+        f: the response opened by urlopen.
+        total: maximum duration of the read, in seconds.
+        max_octets: maximum size read.
 
     Returns:
-        Le corps lu.
+        The body read.
 
     Raises:
-        TimeoutError: lecture plus longue que `total`.
+        TimeoutError: read longer than `total`.
     """
     debut, taille = time.time(), 0
     blocs: list[bytes] = []
-    # read1, PAS read(n) : read(65536) attend que les 64 Ko soient arrives avant
-    # de rendre la main, donc la duree n'etait controlee qu'a la toute fin —
-    # mesure : un serveur a un octet toutes les 0,3 s tenait la lecture 60 s
-    # malgre total=3. read1 rend ce qui est deja la.
+    # read1, NOT read(n): read(65536) waits for the 64 KB to have arrived before
+    # giving control back, so the duration was only checked at the very end —
+    # measured: a server at one byte every 0.3 s held the read for 60 s
+    # despite total=3. read1 returns what is already there.
     lire = getattr(f, "read1", f.read)
     while True:
         bloc = lire(65536)
@@ -206,29 +205,28 @@ def lire_borne(f: BinaryIO, total: float = 60, max_octets: int = 20_000_000) -> 
 
 
 def get_borne(envoi: Any, url: str, **kw: Any) -> "httpx.Response":
-    """GET avec une duree TOTALE maximale. Rend une vraie httpx.Response.
+    """GET with a maximum TOTAL duration. Returns a real httpx.Response.
 
-    POURQUOI. `timeout=20` dans httpx borne CHAQUE operation — connexion,
-    lecture d'un paquet — pas la requete entiere. Un serveur qui envoie un
-    octet toutes les 19 secondes garde donc la connexion ouverte pour toujours.
-    Le 2026-09-22 a 22h49, le scan planifie s'est bloque ainsi sur fr.talent.com
-    (3.175.86.19, CloudFront) : 12 h 25 de connexion etablie, 149 s de CPU, le
-    verrou de la file tenu tout du long, et le delai de 90 min du pipeline, qui
-    devait le tuer, n'a rien tue.
+    WHY. `timeout=20` in httpx bounds EACH operation — connection, reading a packet —
+    not the whole request. A server that sends one byte every 19 seconds therefore
+    keeps the connection open forever. On 2026-09-22 at 22:49, the scheduled scan got
+    stuck that way on fr.talent.com (3.175.86.19, CloudFront): 12 h 25 of established
+    connection, 149 s of CPU, the queue lock held all along, and the pipeline's 90-min
+    delay, which was supposed to kill it, killed nothing.
 
-    Ici le temps ecoule est verifie a chaque paquet recu : au pire, total + 20 s.
-    Leve httpx.TimeoutException au-dela, comme un delai ordinaire — les appelants
-    qui attrapent deja `Exception` n'ont rien a changer.
+    Here the elapsed time is checked at each packet received: at worst, total + 20 s.
+    Raises httpx.TimeoutException beyond that, like an ordinary timeout — the callers
+    that already catch `Exception` have nothing to change.
 
     Args:
-        envoi: le module httpx ou un httpx.Client.
-        url: l'adresse demandee.
-        **kw: comme `req_borne` (total, max_octets, headers, params…).
+        envoi: the httpx module or an httpx.Client.
+        url: the requested address.
+        **kw: like `req_borne` (total, max_octets, headers, params…).
 
     Returns:
-        Une vraie httpx.Response.
+        A real httpx.Response.
 
     Raises:
-        httpx.TimeoutException: duree totale depassee.
+        httpx.TimeoutException: total duration exceeded.
     """
     return req_borne(envoi, "GET", url, **kw)

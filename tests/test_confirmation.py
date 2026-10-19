@@ -1,7 +1,7 @@
-"""Preuve d'envoi (navigation.confirmation) : la page confirme-t-elle la candidature ?
+"""Proof of sending (navigation.confirmation): does the page confirm the application?
 
-« Confirmé » exige une phrase ou une adresse de confirmation ET un formulaire disparu ;
-tout le reste est « incertain » (ADR 0009). Rien n'est jamais cliqué.
+"Confirmé" requires a confirmation sentence or address AND a form that has disappeared;
+everything else is "incertain" (ADR 0009). Nothing is ever clicked.
 """
 
 import pytest
@@ -21,7 +21,7 @@ CONFIRMEES = [
     "Ihre Bewerbung wurde erfolgreich übermittelt.",
 ]
 INCERTAINES = [
-    # le formulaire d'avant l'envoi parle de candidature, sans la confirmer
+    # the form before sending talks about the application, without confirming it
     "Déposez votre candidature : CV, lettre de motivation.",
     "Postuler à cette offre — Envoyer ma candidature",
     "Merci de remplir tous les champs.",
@@ -68,16 +68,16 @@ def test_adresse_de_confirmation(url):
 @pytest.mark.parametrize(
     "url",
     [
-        "https://thank-you-corp.example.com/jobs/42",  # le domaine ne compte pas
-        "https://jobs.example.com/apply?next=/thank-you",  # la requete non plus
-        "https://jobs.example.com/successful-careers/42",  # mot plus long
+        "https://thank-you-corp.example.com/jobs/42",  # the domain does not count
+        "https://jobs.example.com/apply?next=/thank-you",  # nor does the query
+        "https://jobs.example.com/successful-careers/42",  # longer word
     ],
 )
 def test_adresse_sans_confirmation(url):
     assert c.analyser_confirmation("Acme", url, False)[0] == c.INCERTAIN
 
 
-# ── sur une vraie page (navigateur local, set_content : aucun reseau) ───────────────
+# ── on a real page (local browser, set_content: no network) ───────────────
 FORMULAIRE = (
     "<form><input name=nom><input name=mail type=email><input type=file>"
     "<button type=submit>Envoyer ma candidature</button></form>"

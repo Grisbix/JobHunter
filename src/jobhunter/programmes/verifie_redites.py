@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
-"""verifie_redites.py — Cherche les repetitions dans les lettres generees.
+"""verifie_redites.py — Looks for repetitions in the generated letters.
 
-POURQUOI. Les defauts de redite se voient a la lecture, jamais a l'ecriture du
-generateur : chaque morceau est correct isolement, c'est leur assemblage qui
-begaie. Trois exemples releves a la main sur une seule lettre :
+WHY. Repetition defects are seen when reading, never when the generator writes: each
+piece is correct in isolation, it is their assembly that stammers. Three examples
+spotted by hand on a single letter:
 
-    « la trésorerie et le financement, l'analyse financière, la modélisation
-      financière et le contrôle de gestion, et je pratique… »   trois « et »
-    « l'analyse financière, la modélisation financière »         meme fin
-    « Ma formation correspond…, et j'y ajoute…, et une bonne… »  deux « et »
+    "la trésorerie et le financement, l'analyse financière, la modélisation
+      financière et le contrôle de gestion, et je pratique…"   three "et"
+    "l'analyse financière, la modélisation financière"         same ending
+    "Ma formation correspond…, et j'y ajoute…, et une bonne…"  two "et"
 
-Relire une lettre a la main les trouve. Relire 3900 lettres, non. Ce programme
-les compte.
+Re-reading one letter by hand finds them. Re-reading 3900 letters, no. This program
+counts them.
 
-CE QU'IL SIGNALE :
-  - une phrase qui porte deux « et » (ou « and ») ou plus ;
-  - deux elements d'enumeration qui finissent par le meme mot ;
-  - un mot de contenu employe trois fois ou plus dans le corps.
+WHAT IT REPORTS:
+  - a sentence carrying two "et" (or "and") or more;
+  - two enumeration items ending with the same word;
+  - a content word used three times or more in the body.
 
-Il ne corrige rien : il rend la liste, a corriger dans tailor_application.py.
+It corrects nothing: it returns the list, to be fixed in tailor_application.py.
 
-Run :
-  python JobHunter.pyw verifie_redites                    # 40 lettres au hasard
+Run:
+  python JobHunter.pyw verifie_redites                    # 40 letters at random
   python JobHunter.pyw verifie_redites --toutes
   python JobHunter.pyw verifie_redites --fichier "Lettres/Par_offre/xxx.docx"
 """
@@ -41,7 +41,7 @@ from jobhunter import chemins
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
-from jobhunter.documents.relecture import (  # noqa: E402  (deplace en 2.13, relecture)
+from jobhunter.documents.relecture import (  # noqa: E402  (moved in 2.13, relecture)
     defauts,
     texte,
 )

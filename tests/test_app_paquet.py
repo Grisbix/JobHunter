@@ -1,8 +1,8 @@
-"""Le paquet jobhunter.app (phase 3.7) : App assemblee de mixins, lanceur minimal.
+"""The jobhunter.app package (phase 3.7): App assembled from mixins, minimal launcher.
 
-- App herite de chaque mixin et garde toutes ses methodes (aucune perdue ni doublee) ;
-- les reglages rebindus par le theme (polices, espacements) sont lus via le module ;
-- JobHunter.pyw ne fait que lancer : il se compile et n'importe pas l'app a l'import.
+- App inherits from each mixin and keeps all its methods (none lost or doubled);
+- the settings rebound by the theme (fonts, spacings) are read through the module;
+- JobHunter.pyw only launches: it compiles and does not import the app at import time.
 """
 
 import ast

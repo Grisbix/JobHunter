@@ -1,7 +1,7 @@
-"""Chemins de documents <-> URL file:/// (venus de Scripts/jutil.py, phase 3.7).
+"""Document paths <-> file:/// URLs (from Scripts/jutil.py, phase 3.7).
 
-Une seule implementation : les six copies d'avant divergeaient (casse, accents,
-`file://` oublie). jutil les re-exporte.
+A single implementation: the six previous copies diverged (case, accents, forgotten
+`file://`). jutil re-exports them.
 """
 
 from os import PathLike
@@ -11,11 +11,10 @@ from urllib.parse import quote, unquote
 
 # ── Chemins ↔ URL file:/// ───────────────────────────────────────────────────
 def chemin_de(u: str | PathLike[str] | None) -> Path | None:
-    """URL `file:///…` (ou chemin nu) → Path. None si vide.
+    """`file:///…` URL (or bare path) → Path. None if empty.
 
-    Gere `file:///` ET `file://` : trois des six copies precedentes ne
-    traitaient que la premiere forme et rendaient un chemin commencant par
-    « / », donc introuvable.
+    Handles `file:///` AND `file://`: three of the six previous copies only handled
+    the first form and returned a path starting with "/", hence not found.
     """
     if not u:
         return None
@@ -37,5 +36,5 @@ def existe(u: str | PathLike[str] | None) -> bool:
     p = chemin_de(u)
     try:
         return bool(p and p.exists())
-    except OSError:  # chemin invalide pour l'OS (trop long, caracteres interdits)
+    except OSError:  # path invalid for the OS (too long, forbidden characters)
         return False

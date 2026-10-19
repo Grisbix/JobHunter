@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""probe_ats.py — Teste des slugs candidats sur les 5 API ATS publiques.
+"""probe_ats.py — Tests candidate slugs on the 5 public ATS APIs.
 
-But : trouver quelles sociétés (boutiques AM / ESG françaises) exposent un flux
-d'offres LISIBLE PAR MACHINE. Celles qui répondent peuvent être ajoutées à
-ATS_SLUGS dans job_sources.py → scannées chaque jour, sans navigateur, sans
-anti-bot, avec la description fournie d'office.
+Goal: find which companies (French AM / ESG boutiques) expose a MACHINE-READABLE feed
+of offers. Those that answer can be added to ATS_SLUGS in job_sources.py → scanned
+every day, without a browser, without anti-bot, with the description provided as
+standard.
 
-Ne modifie RIEN : affiche seulement ce qui répond. Sortie triée par nb d'offres.
+Changes NOTHING: only displays what answers. Output sorted by number of offers.
 
-Run :
-  python JobHunter.pyw probe_ats                        # liste candidate intégrée
-  python JobHunter.pyw probe_ats --slugs dnca,comgest   # teste des slugs precis
+Run:
+  python JobHunter.pyw probe_ats                        # built-in candidate list
+  python JobHunter.pyw probe_ats --slugs dnca,comgest   # tests specific slugs
   python JobHunter.pyw probe_ats --json out.json
 """
 
@@ -27,10 +27,10 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True) 
 HERE = _racine.scripts()
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
-# Boutiques AM + acteurs ESG/climat FR. Variantes de slug : les ATS n'imposent
-# aucune convention (tiret, casse, nom court…), donc on tente plusieurs formes.
+# AM boutiques + French ESG/climate players. Slug variants: the ATS impose
+# no convention (dash, case, short name…), so we try several forms.
 CANDIDATS = [
-    # ── Sociétés de gestion / AM françaises ──
+    # ── French asset management companies ──
     "lazard",
     "lazardfreresgestion",
     "lfde",

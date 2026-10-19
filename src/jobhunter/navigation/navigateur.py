@@ -1,15 +1,15 @@
-"""Navigateur : Playwright standard seul, aides de saisie, chargement robuste, session.
+"""Browser: standard Playwright only, typing helpers, robust loading, session.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+Part of jobhunter.navigation (formerly Scripts/web_nav.py, phase 3.6).
 """
 
 import random as _rnd
 import re as _re_block
 from typing import Any
 
-# Navigateurs du système essayés quand le Chromium de Playwright n'est pas installé :
-# l'application installée (jobhunter.gele) ne l'embarque pas, et Edge est présent sur
-# tout Windows 10/11.
+# System browsers tried when Playwright's Chromium is not installed:
+# the installed application (jobhunter.gele) does not ship it, and Edge is present on
+# every Windows 10/11.
 CANAUX_SYSTEME = ("chrome", "msedge")
 
 
@@ -19,18 +19,18 @@ def _manque_navigateur(e: Exception) -> bool:
 
 
 def lancer(chromium: Any, **options: Any) -> Any:
-    """`chromium.launch(**options)`, puis Chrome ou Edge du système si Chromium manque.
+    """`chromium.launch(**options)`, then the system's Chrome or Edge if Chromium is missing.
 
     Args:
         chromium: `playwright.chromium`.
-        **options: les options de `launch` (headless, args…).
+        **options: the `launch` options (headless, args…).
 
     Returns:
-        Le navigateur lancé.
+        The launched browser.
 
     Raises:
-        Exception: l'erreur d'origine si aucun navigateur ne démarre, ou si l'échec
-            n'est pas un navigateur absent.
+        Exception: the original error if no browser starts, or if the failure is not
+            a missing browser.
     """
     try:
         return chromium.launch(**options)
@@ -46,7 +46,7 @@ def lancer(chromium: Any, **options: Any) -> Any:
 
 
 def human_pause(page: Any, lo: int = 350, hi: int = 1100) -> None:
-    """Pause fixe (moyenne de lo et hi), pour ne pas marteler le site."""
+    """Fixed pause (average of lo and hi), so as not to hammer the site."""
     try:
         page.wait_for_timeout((lo + hi) // 2)
     except Exception:
@@ -54,7 +54,7 @@ def human_pause(page: Any, lo: int = 350, hi: int = 1100) -> None:
 
 
 def human_type(page: Any, selector: str, text: str, click_first: bool = True) -> bool:
-    """Remplit le champ. Retour True si champ trouve."""
+    """Fills the field. Returns True if the field was found."""
     try:
         loc = page.locator(selector).first
         if click_first:
@@ -66,7 +66,7 @@ def human_type(page: Any, selector: str, text: str, click_first: bool = True) ->
 
 
 def human_click(page: Any, selector: str, steps: int | None = None, timeout: int = 4000) -> bool:
-    """Clique l'element. Retour True si clique."""
+    """Clicks the element. Returns True if clicked."""
     try:
         page.locator(selector).first.click(timeout=timeout)
         return True
@@ -75,7 +75,7 @@ def human_click(page: Any, selector: str, steps: int | None = None, timeout: int
 
 
 def human_scroll(page: Any, steps: int | None = None) -> None:
-    """Fait defiler la page de quelques ecrans."""
+    """Scrolls the page by a few screens."""
     for _ in range(steps or 3):
         try:
             page.mouse.wheel(0, 500)
@@ -84,7 +84,7 @@ def human_scroll(page: Any, steps: int | None = None) -> None:
             break
 
 
-# domaines pubs/analytics/tags : inutiles pour postuler, ralentissent → bloqués
+# ads/analytics/tags domains: useless for applying, they slow things down → blocked
 _AD_RX = _re_block.compile(
     r"(doubleclick|googlesyndication|google-analytics|googletagmanager|/gtag/|/gtm\.js"
     r"|facebook\.net|connect\.facebook|hotjar|mouseflow|fullstory|segment\.(io|com)"
@@ -93,7 +93,7 @@ _AD_RX = _re_block.compile(
 )
 
 
-# captcha/anti-bot : JAMAIS bloqué (l'humain doit VOIR la grille d'images pour résoudre)
+# captcha/anti-bot: NEVER blocked (the human must SEE the image grid to solve it)
 _CAPTCHA_OK_RX = _re_block.compile(
     r"(recaptcha|gstatic\.com/recaptcha|hcaptcha|turnstile|challenges\.cloudflare"
     r"|arkoselabs|funcaptcha|geo\.captcha|captcha-delivery)",
@@ -102,10 +102,10 @@ _CAPTCHA_OK_RX = _re_block.compile(
 
 
 def block_resources(ctx: Any, images: bool = False) -> None:
-    """TURBO : abandonne les requêtes lourdes/inutiles (media, fonts, pubs, analytics ; images aussi si images=False).
+    """TURBO: drops heavy/useless requests (media, fonts, ads, analytics; images too if images=False).
 
-    Accélère 2-5× le chargement. CSS gardé (layout/clics). Les ressources CAPTCHA
-    passent toujours (sinon grille invisible = insoluble).
+    Speeds up loading 2-5×. CSS kept (layout/clicks). CAPTCHA resources always go
+    through (otherwise invisible grid = unsolvable).
     """
     heavy = {"media", "font"} | (set() if images else {"image"})
 
@@ -132,9 +132,9 @@ def block_resources(ctx: Any, images: bool = False) -> None:
 def robust_goto(
     page: Any, url: str, tries: int = 3, wait_until: str = "domcontentloaded"
 ) -> dict[str, Any]:
-    """Goto avec retry + backoff sur erreurs réseau/timeout transitoires.
+    """Goto with retry + backoff on transient network/timeout errors.
 
-    Retour {ok, status, note}. Ne contourne pas captcha (détecté ailleurs).
+    Returns {ok, status, note}. Does not bypass captcha (detected elsewhere).
     """
     last = ""
     for i in range(tries):
@@ -159,15 +159,15 @@ def robust_goto(
 
 
 def apply_stealth(context_or_page: Any) -> bool:
-    """RETIRE. Masquer l'automatisation au site (navigator.webdriver, empreinte WebGL...) est un contournement anti-bot, contraire aux regles du projet.
+    """REMOVED. Hiding automation from the site (navigator.webdriver, WebGL fingerprint...) is an anti-bot bypass, against the project rules.
 
-    Garde pour les appelants ; ne fait rien.
+    Kept for the callers; does nothing.
     """
     return False
 
 
 def available_engines() -> list[str]:
-    """Moteurs installes : Playwright seul."""
+    """Installed engines: Playwright only."""
     try:
         import playwright.sync_api  # noqa: F401
 
@@ -177,28 +177,28 @@ def available_engines() -> list[str]:
 
 
 def get_sync_playwright(engine: str = "auto") -> tuple[Any, str]:
-    """Retourne (sync_playwright, "playwright"), quel que soit engine."""
+    """Returns (sync_playwright, "playwright"), whatever engine is."""
     from playwright.sync_api import sync_playwright
 
     return sync_playwright, "playwright"
 
 
 class BrowserSession:
-    """Gère le cycle de vie du navigateur avec recovery automatique.
+    """Manages the browser's life cycle with automatic recovery.
 
     Usage:
         bs = BrowserSession()
         page = bs.start()
-        # ... si crash ...
-        page = bs.recover()  # relance navigateur + contexte + page fluo
+        # ... if crash ...
+        page = bs.recover()  # restarts browser + context + fresh page
     """
 
     def __init__(self, headless: bool = False, engine: str = "playwright") -> None:
-        """Prépare la session sans lancer le navigateur (voir `start`).
+        """Prepares the session without launching the browser (see `start`).
 
         Args:
-            headless: navigateur sans fenêtre.
-            engine: moteur de navigation (Playwright standard seul).
+            headless: browser without a window.
+            engine: navigation engine (standard Playwright only).
         """
         self.headless = headless
         self.engine = engine
@@ -213,7 +213,7 @@ class BrowserSession:
         return sp
 
     def start(self) -> Any:
-        """Lance le navigateur et retourne la page active."""
+        """Launches the browser and returns the active page."""
         SyncPlaywright = self._get_playwright()
         self._playwright = SyncPlaywright().start()
         self._browser = lancer(
@@ -277,7 +277,7 @@ class BrowserSession:
             return False
 
     def close(self) -> None:
-        """Ferme la page, le contexte, le navigateur et Playwright, sans lever."""
+        """Closes the page, the context, the browser and Playwright, without raising."""
         try:
             if self._page and not self._page.is_closed():
                 self._page.close()

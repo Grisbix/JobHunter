@@ -1,9 +1,9 @@
-"""`python -m jobhunter.app` : lance l'application (comme JobHunter.pyw)."""
+"""`python -m jobhunter.app`: launches the application (like JobHunter.pyw)."""
 
 from jobhunter.accueil import assurer_profil
 
 assurer_profil()
 
-from jobhunter.app.fenetre import main  # noqa: E402  (l'app lit le profil au chargement)
+from jobhunter.app.fenetre import main  # noqa: E402  (the app reads the profile when loaded)
 
 main()

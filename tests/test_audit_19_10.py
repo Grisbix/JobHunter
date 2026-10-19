@@ -1,7 +1,7 @@
-"""Les défauts de l'audit du 19/10/2026 (dépôt figé en 2.10.1), un test chacun.
+"""The defects of the audit of 19/10/2026 (repo frozen at 2.10.1), one test each.
 
-Chaque test reproduit le scénario de l'audit sur des fichiers jetables et vérifie que
-la donnée survit. Les quatre premiers sont des pertes de données (P1).
+Each test reproduces the audit's scenario on throwaway files and checks that
+the data survives. The first four are data losses (P1).
 """
 
 import json
@@ -14,7 +14,7 @@ from jobhunter.stockage import atomique, verrou
 from jobhunter.stockage import file as queue_io
 from jobhunter.stockage import suivi as suivi_io
 
-# ── P1 — le contrôle des liens n'écrase plus une collecte concurrente ─────────
+# ── P1 — the link check no longer overwrites a concurrent collection ─────────
 
 
 def test_controle_des_liens_garde_un_ajout_concurrent(tmp_path):
@@ -50,7 +50,7 @@ def test_purge_des_liens_morts_epargne_le_suivi(tmp_path, suivi_temporaire):
     assert [r["entreprise"] for r in json.loads(f.read_text(encoding="utf-8"))] == ["A"]
 
 
-# ── P1 — un suivi illisible n'est jamais remplacé ─────────────────────────────
+# ── P1 — an unreadable tracker is never replaced ─────────────────────────────
 
 
 @pytest.mark.parametrize("contenu", ['{"A|x": {"s": "postulé"}', "[]"])
@@ -59,7 +59,7 @@ def test_suivi_illisible_refuse_l_ecriture(suivi_temporaire, contenu):
     with pytest.raises(suivi_io.SuiviIllisible):
         suivi_io.poser("B|y", {"s": "postulé"})
     assert suivi_temporaire.read_text(encoding="utf-8") == contenu
-    assert suivi_io.charger() == {}  # la lecture seule reste tolérante
+    assert suivi_io.charger() == {}  # read-only access stays tolerant
 
 
 def test_suivi_absent_se_cree(suivi_temporaire):
@@ -67,7 +67,7 @@ def test_suivi_absent_se_cree(suivi_temporaire):
     assert suivi_io.charger() == {"B|y": {"s": "postulé"}}
 
 
-# ── P1 — une panne entre deux écritures ne perd aucune description ────────────
+# ── P1 — a failure between two writes loses no description ────────────
 
 
 def test_panne_pendant_l_ecriture_de_la_file_garde_les_descriptions(file_temporaire, monkeypatch):
@@ -85,9 +85,9 @@ def test_panne_pendant_l_ecriture_de_la_file_garde_les_descriptions(file_tempora
 
     monkeypatch.setattr(atomique, "ecrire_json", panne_sur_la_file)
     with pytest.raises(PermissionError), queue_io.transaction() as rows:
-        rows[:] = [r for r in rows if r["entreprise"] == "A"]  # B retirée
+        rows[:] = [r for r in rows if r["entreprise"] == "A"]  # B removed
     monkeypatch.setattr(atomique, "ecrire_json", vrai)
-    # La file n'a pas changé : B y est encore, et sa description aussi.
+    # The queue has not changed: B is still there, and its description too.
     textes = {o["entreprise"]: o.get("description") for o in queue_io.charger()}
     assert textes == {"A": "texte A", "B": "texte B"}
 
@@ -104,7 +104,7 @@ def test_retrait_reussi_purge_l_orpheline(file_temporaire, tmp_path):
     assert annexe == {"A|x": "texte A"}
 
 
-# ── P1 — la fusion ne retire pas une offre du suivi ───────────────────────────
+# ── P1 — the merge does not remove an offer of the tracker ───────────────────────────
 
 
 @pytest.fixture
@@ -117,7 +117,7 @@ def file_de_fusion(tmp_path, monkeypatch, suivi_temporaire):
 
 def test_fusion_garde_une_offre_suivie_que_le_filtre_rejette(file_de_fusion):
     titre = "Brand Design Intern"
-    assert not J.title_ok(titre)  # le filtre d'intitulé la rejette bien
+    assert not J.title_ok(titre)  # the title filter does reject it
     atomique.ecrire_json(
         file_de_fusion,
         [
@@ -132,7 +132,7 @@ def test_fusion_garde_une_offre_suivie_que_le_filtre_rejette(file_de_fusion):
     assert bilan["purged"] == 1
 
 
-# ── P2 — une transaction imbriquée ne rend pas le verrou de son appelant ──────
+# ── P2 — a nested transaction does not release its caller's lock ──────
 
 
 def test_transaction_imbriquee_garde_le_verrou(file_temporaire):
@@ -143,7 +143,7 @@ def test_transaction_imbriquee_garde_le_verrou(file_temporaire):
     assert not verrou.tenu(file_temporaire)
 
 
-# ── P2 — une annonce reconnue par son URL reçoit sa description ───────────────
+# ── P2 — a posting recognised by its URL receives its description ───────────────
 
 
 def test_offre_reconnue_par_url_est_enrichie(file_de_fusion):
@@ -161,7 +161,7 @@ def test_offre_reconnue_par_url_est_enrichie(file_de_fusion):
     assert bilan["updated"] == 1
 
 
-# ── P2 — « TOUT FAIRE terminé » seulement si tout a réussi ────────────────────
+# ── P2 — "TOUT FAIRE terminé" only if everything succeeded ────────────────────
 
 
 class _FausseApp:

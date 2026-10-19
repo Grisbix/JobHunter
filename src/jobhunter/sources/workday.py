@@ -1,6 +1,6 @@
-"""Workday : l'API publique des grands groupes.
+"""Workday: the public API of large groups.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+Part of jobhunter.sources (formerly Scripts/job_sources.py, phase 3.4).
 """
 
 import time
@@ -13,8 +13,8 @@ from jobhunter.sources.commun import INCIDENTS, UA, _mk, _strip_html, title_ok
 _log = _journal.journal(__name__)
 
 
-# Court a dessein. Les 55 mots-cles de KEYWORDS viseraient LinkedIn, pas un flux
-# d'entreprise ou l'on cherche un METIER dans un catalogue deja restreint.
+# Short on purpose. The 55 keywords of KEYWORDS would target LinkedIn, not a company
+# feed where we look for a PROFESSION in an already narrow catalogue.
 WORKDAY_MOTS = [
     "ESG",
     "durable",
@@ -26,17 +26,19 @@ WORKDAY_MOTS = [
     "risque",
 ]
 
-WORKDAY_PAGES = 2  # pages de 20 par mot-cle
+WORKDAY_PAGES = 2  # pages of 20 per keyword
 
 WORKDAY_PAUSE = 0.6
 
-WORKDAY_DETAILS = 25  # fiches detaillees par flux, au plus
+WORKDAY_DETAILS = 25  # detailed postings per feed, at most
 
-WORKDAY_PARALLELE = 6  # flux lus en meme temps (un tenant = un site) ; 42 flux au 2026-10-08
+WORKDAY_PARALLELE = (
+    6  # feeds read at the same time (one tenant = one site); 42 feeds as of 2026-10-08
+)
 
 
 def _workday_detail(httpx: Any, base: str, tenant: str, site: str, chemin: str) -> dict[str, Any]:
-    """La fiche d'une offre : description, date reelle, pays, temps de travail."""
+    """An offer's posting: description, real date, country, working time."""
     try:
         r = _commun._post_borne(
             httpx,
@@ -62,14 +64,14 @@ def _workday_detail(httpx: Any, base: str, tenant: str, site: str, chemin: str) 
         "date": str(ji.get("startDate") or "")[:10],
         "location": ji.get("location") or "",
         "pays": pays,
-        # « Full time » / « Part time » est un temps de travail, pas un contrat :
-        # on ne le laisse pas remplir la colonne `contrat`, qui sert a filtrer.
+        # "Full time" / "Part time" is a working time, not a contract:
+        # we do not let it fill the `contrat` column, which is used for filtering.
         "temps": ji.get("timeType") or "",
     }
 
 
 def fetch_workday(tenant: str, host: str, site: str, nom: str) -> list[dict[str, Any]]:
-    """Les offres d'un flux Workday qui passent title_ok, descriptions comprises."""
+    """The offers of a Workday feed that pass title_ok, descriptions included."""
     import httpx
 
     base = f"https://{tenant}.{host}.myworkdayjobs.com"
@@ -109,8 +111,8 @@ def fetch_workday(tenant: str, host: str, site: str, nom: str) -> list[dict[str,
     out = []
     for titre, chemin, lieu in retenues[:WORKDAY_DETAILS]:
         d = _workday_detail(httpx, base, tenant, site, chemin)
-        # Le PAYS est servi en clair par l'API. C'est plus sur que de deviner
-        # depuis un nom de ville, et en_france() sait lire « France ».
+        # The COUNTRY is served in clear by the API. It is safer than guessing
+        # from a city name, and en_france() can read "France".
         lieu_final = ", ".join(x for x in (d.get("location") or lieu, d.get("pays")) if x)
         o = _mk(
             titre,
@@ -123,19 +125,19 @@ def fetch_workday(tenant: str, host: str, site: str, nom: str) -> list[dict[str,
         )
         out.append(o)
         time.sleep(WORKDAY_PAUSE)
-    # Les offres sans fiche detaillee entrent quand meme : le titre et le lien
-    # suffisent a les faire exister, l'auto-enrichissement fera le reste.
+    # Offers without a detailed posting get in anyway: the title and the link
+    # are enough to make them exist, auto-enrichment will do the rest.
     for titre, chemin, lieu in retenues[WORKDAY_DETAILS:]:
         out.append(_mk(titre, f"{base}/{site}{chemin}", nom, lieu, "", f"workday:{tenant}"))
     return [o for o in out if o["titre"] and o["url"]]
 
 
 def scan_workday() -> list[dict[str, Any]]:
-    """Les flux en parallele, WORKDAY_PARALLELE a la fois.
+    """The feeds in parallel, WORKDAY_PARALLELE at a time.
 
-    Chaque tenant est un site distinct : la pause par flux tient toujours, aucun n'est
-    sollicite plus vite qu'avant. En serie, 27 flux a ~70 s depassaient le plafond de 30
-    min de la passe 1a (2026-10-08).
+    Each tenant is a distinct site: the per-feed pause still holds, none is
+    hit faster than before. In series, 27 feeds at ~70 s exceeded the 30
+    min cap of pass 1a (2026-10-08).
     """
     import concurrent.futures as cf
 

@@ -1,8 +1,8 @@
-"""Fenêtre « Annuaire » du panneau Entreprises : taper un nom, choisir, suivre.
+"""The "Directory" window of the Companies panel: type a name, pick, follow.
 
-Partie de jobhunter.app. Cherche dans les annuaires Lever, Ashby et Greenhouse du moteur
-(jobhunter.sources.annuaire) ; aucune requête web. Une entreprise déjà suivie est
-marquée comme telle.
+Part of jobhunter.app. Searches the engine's Lever, Ashby and Greenhouse directories
+(jobhunter.sources.annuaire); no web request. A company already followed is marked
+as such.
 """
 
 from collections.abc import Callable
@@ -24,13 +24,13 @@ def choisir(
     suivis: Callable[[], set[tuple[str, str]]],
     suivre: Callable[[annuaire.Entree], None],
 ) -> None:
-    """Ouvre la recherche dans l'annuaire, pré-remplie avec `texte`.
+    """Opens the directory search, pre-filled with `texte`.
 
     Args:
-        app: l'application (fenêtre parente).
-        texte: le nom déjà tapé dans le panneau.
-        suivis: rend les flux déjà suivis, {(outil, identifiant en minuscules)}.
-        suivre: appelé avec l'entreprise choisie.
+        app: the application (parent window).
+        texte: the name already typed in the panel.
+        suivis: returns the feeds already followed, {(tool, lowercase identifier)}.
+        suivre: called with the chosen company.
     """
     win = ctk.CTkToplevel(app.root)
     win.title(_t("Annuaire des entreprises"))

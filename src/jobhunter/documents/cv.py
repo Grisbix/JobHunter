@@ -1,6 +1,6 @@
-"""CV par offre : copie de la variante, titre, competences ciblees, retouches sur mesure.
+"""CV per offer: copy of the variant, title, targeted skills, tailor-made touch-ups.
 
-Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5).
+Part of jobhunter.documents (formerly Scripts/tailor_application.py, phase 3.5).
 """
 
 import importlib
@@ -23,8 +23,8 @@ _log = _journal.journal(__name__)
 
 
 _ici = sys.modules[__name__]
-# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
-# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+# Values taken from the profile: computed on first read, not at import
+# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -44,19 +44,19 @@ _PARESSEUX["CV_VARIANT_EN"] = lambda: (
 
 
 def cv_sur_mesure(offer: dict[str, Any]) -> dict[str, Any] | None:
-    """Les retouches de CV ecrites a la main pour cette offre, ou None.
+    """The CV touch-ups written by hand for this offer, or None.
 
-    `CV/Sur_mesure/<entreprise>__<poste>.json`, meme nom tolerant que la lettre :
-        {"remplace":    [["texte du modele", "texte pour cette offre"], ...],
-         "ajoute_apres": [["texte d'un paragraphe du modele", "nouveau paragraphe"], ...],
-         "supprime":    ["texte d'un paragraphe a retirer", ...]}
+    `CV/Sur_mesure/<entreprise>__<poste>.json`, same tolerant name as the letter:
+        {"remplace":    [["template text", "text for this offer"], ...],
+         "ajoute_apres": [["text of a template paragraph", "new paragraph"], ...],
+         "supprime":    ["text of a paragraph to remove", ...]}
 
-    `supprime` existe pour la page : ajouter une ligne propre a l'offre fait
-    souvent passer le CV a deux pages, et la place se reprend sur ce que cette
-    offre-la ne lit pas.
+    `supprime` exists for the page: adding a line specific to the offer often pushes
+    the CV to two pages, and the space is taken back from what that particular offer
+    does not read.
 
-    Le modele reste la source : on ne retouche que ce que l'offre demande, et la
-    regeneration reprend les retouches au lieu de les ecraser.
+    The template stays the source: only what the offer asks for is touched up, and
+    regeneration takes the touch-ups back instead of overwriting them.
     """
     from jobhunter.chemins import CV_SUR_MESURE
 
@@ -71,13 +71,13 @@ def cv_sur_mesure(offer: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def appliquer_cv_sur_mesure(doc: Any, retouches: dict[str, Any]) -> list[str]:
-    """Applique les retouches a un Document. Rend la liste des ancres introuvables.
+    """Applies the touch-ups to a Document. Returns the list of anchors not found.
 
-    Le remplacement se fait DANS le run qui porte le texte : la ligne d'une
-    experience melange un intitule gras et une date tabulee, et reecrire le
-    paragraphe entier perdrait cette mise en forme. Une ancre introuvable est
-    SIGNALEE, jamais ignoree : le modele a pu changer, et une retouche qui ne
-    s'applique plus enverrait le CV generique sans un mot.
+    The replacement is done INSIDE the run that carries the text: an experience line
+    mixes a bold title and a tabbed date, and rewriting the whole paragraph would
+    lose that formatting. An anchor that cannot be found is REPORTED, never ignored:
+    the template may have changed, and a touch-up that no longer applies would send
+    the generic CV without a word.
     """
     import copy
 
@@ -119,7 +119,7 @@ def appliquer_cv_sur_mesure(doc: Any, retouches: dict[str, Any]) -> list[str]:
     return manquees
 
 
-# ---- CV : injecte titre + ligne competences ciblees ----
+# ---- CV: injects title + targeted skills line ----
 def tailor_cv(
     offer: dict[str, Any],
     nom: str | None = None,
@@ -127,22 +127,21 @@ def tailor_cv(
     allege: int = 0,
     auto: bool = True,
 ) -> Path | None:
-    """`nom` : stem impose.
+    """`nom`: imposed stem.
 
-    Sans lui, plusieurs offres au titre voisin produisent le MEME fichier et s'ecrasent
-    — voir generate_docs._noms_uniques.
+    Without it, several offers with a similar title produce the SAME file and overwrite
+    each other — see generate_docs._noms_uniques.
 
-    `langue` : 'en' choisit le modele anglais quand il existe. 1525 offres de la
-    file sont redigees en anglais ; leur envoyer un CV francais, c'est se
-    disqualifier avant lecture. Le repli sur le francais est SILENCIEUX quand le
-    modele anglais manque (toutes les variantes ne sont pas encore traduites) —
-    un CV francais vaut mieux que pas de CV.
+    `langue`: 'en' picks the English template when it exists. 1525 offers of the
+    queue are written in English; sending them a French CV disqualifies you before
+    reading. The fallback to French is SILENT when the English template is missing
+    (not all variants are translated yet) — a French CV is better than no CV.
     """
-    chemins.preparer()  # dossiers de sortie, au moment d'ecrire
+    chemins.preparer()  # output folders, at write time
     key = cv_variant_key(offer["domaine"])
     src = CV_ATS / (_ici.CV_VARIANT.get(key) or "")
     if not _ici.CV_VARIANT.get(key):
-        # Variante sans fichier : le premier CV du profil qui existe.
+        # Variant without a file: the first CV of the profile that exists.
         src = next(
             (CV_ATS / f for f in _ici.CV_VARIANT.values() if f and (CV_ATS / f).exists()), src
         )
@@ -158,57 +157,57 @@ def tailor_cv(
     from jobhunter.programmes.rename_docs import new_name
 
     if src.suffix.lower() == ".pdf":
-        # CV fourni en PDF seulement : il part tel quel, sans adaptation.
-        # Un modele .docx permet d'y inserer l'intitule du poste.
+        # CV provided as PDF only: it goes as is, without adaptation.
+        # A .docx template allows inserting the job title into it.
         out: Path = _ici.CV_OUT / (
             (nom or new_name("CV", offer.get("role") or "", offer["company"])) + ".pdf"
         )
         shutil.copyfile(src, out)
         return out
     doc = Document(str(src))
-    # Le marqueur est dans le PROFIL : « je suis a la recherche d'un poste de
-    # [nom du poste] ». Y coller l'intitule BRUT donnait « d'ACTUAIRE (F/H) » ou
-    # « d'Adjoint Risque Clients (F/H) - CDD » : la mention de genre et le type de
-    # contrat n'ont rien a faire dans une phrase ecrite a la premiere personne.
-    # Sur un CV le titre entre DANS une phrase : il doit se lire, pas seulement
-    # etre exact. « …a la recherche d'un poste d'Analyste RSE-ESG - Analyste
-    # Credit et ESG. » ou « …a position as Consultant, Climate Change and
-    # Sustainability Services Financial Services. » trainent le titre d'annonce
-    # entier, tiret de separation compris. On garde le premier segment quand il
-    # suffit a nommer le metier ; l'objet de la LETTRE, lui, conserve le titre
-    # complet, parce qu'il doit correspondre exactement a l'annonce.
+    # The marker is in the PROFILE: "je suis a la recherche d'un poste de
+    # [nom du poste]". Pasting the RAW title there gave "d'ACTUAIRE (F/H)" or
+    # "d'Adjoint Risque Clients (F/H) - CDD": the gender mention and the contract
+    # type have nothing to do in a sentence written in the first person.
+    # On a CV the title goes INTO a sentence: it must read well, not only
+    # be exact. "…a la recherche d'un poste d'Analyste RSE-ESG - Analyste
+    # Credit et ESG." or "…a position as Consultant, Climate Change and
+    # Sustainability Services Financial Services." drag along the whole posting
+    # title, separating dash included. We keep the first segment when it
+    # is enough to name the job; the LETTER's subject, on the other hand, keeps the full
+    # title, because it must match the posting exactly.
     role = titre_poste(offer.get("role") or "") or "ce poste"
-    # UN TITRE TROP LONG FAIT DEBORDER LE CV SUR DEUX PAGES. Il s'insere DANS
-    # une phrase du profil, qui tient sur trois lignes et n'a qu'un point de
-    # marge. Mesure du 2026-09-22 sur les intitules ESG de la file : deux des
-    # trois plus longs passaient le CV a deux pages, en silence.
+    # A TITLE THAT IS TOO LONG PUSHES THE CV ONTO TWO PAGES. It goes INTO
+    # a sentence of the profile, which fits on three lines and has only one point of
+    # margin. Measured on 2026-09-22 on the queue's ESG titles: two of the
+    # three longest pushed the CV to two pages, silently.
     #
-    # On ne coupe donc pas seulement sur « - » : les annonces empilent aussi
-    # des virgules, des parentheses et des barres obliques. « Investment
+    # So we do not only cut on "-": postings also stack
+    # commas, parentheses and slashes. "Investment
     # Banking, Natural Resources & Energy Transition (Power/Energy) » devient
-    # « Investment Banking », qui se lit et tient.
+    # "Investment Banking", which reads well and fits.
     #
-    # Le seuil de 12 caracteres protege les tetes trop courtes pour nommer un
-    # metier : « Stage » ou « VIE » seuls ne disent rien.
+    # The 12-character threshold protects heads too short to name a
+    # job: "Stage" or "VIE" alone say nothing.
     for sep in (" - ", " – ", ", ", " (", " / ", " | "):
         tete = role.split(sep)[0].strip()
         if 12 <= len(tete) < len(role):
             role = tete
-    # Dernier filet, si aucun separateur n'apparait : on coupe sur un mot.
+    # Last safety net, if no separator appears: we cut on a word.
     if len(role) > 46:
         coupe = role[:46]
         i = coupe.rfind(" ")
         role = (coupe[:i] if i > 28 else coupe).rstrip(" ,;:.-&")
 
-    # 1) remplace le titre [nom du poste], avec l'elision de _de() (h et y exclus)
-    #    Le modele anglais porte « [job title] » et ne demande AUCUNE elision :
-    #    « as [job title] » se construit sans article contracte.
+    # 1) replaces the title [nom du poste], with the elision of _de() (h and y excluded)
+    #    The English template carries "[job title]" and needs NO elision:
+    #    "as [job title]" is built without a contracted article.
     for p in doc.paragraphs:
         if "[job title]" in p.text:
             txt = p.text.replace("[job title]", role)
         elif "[nom du poste]" in p.text:
             if "de [nom du poste]" in p.text:
-                # Apostrophe TYPOGRAPHIQUE : le gabarit ecrit « d’un poste ».
+                # TYPOGRAPHIC apostrophe: the template writes "d’un poste".
                 txt = p.text.replace("de [nom du poste]", _de(role, "’"))
             else:
                 txt = p.text.replace("[nom du poste]", role)
@@ -218,9 +217,9 @@ def tailor_cv(
             r.text = ""
         (p.runs[0] if p.runs else p.add_run("")).text = txt
 
-    # 1 bis) Retouches ecrites a la main pour CETTE offre (CV/Sur_mesure).
-    #       Sans elles, les faits automatiques de CV/Faits.json (cv_auto) :
-    #       le sur-mesure, relu par l'utilisateur, l'emporte toujours.
+    # 1 bis) Touch-ups written by hand for THIS offer (CV/Sur_mesure).
+    #       Without them, the automatic facts of CV/Faits.json (cv_auto):
+    #       the tailor-made version, reviewed by the user, always wins.
     retouches = cv_sur_mesure(offer)
     if retouches:
         manquees = appliquer_cv_sur_mesure(doc, retouches)
@@ -234,13 +233,13 @@ def tailor_cv(
             langue if langue == "en" else "fr",
             allege,
         )
-        # Ancres manquees : NORMAL ici. Chaque variante de CV n'a pas les memes
-        # lignes, et un fait vise parfois une seule d'entre elles.
+        # Missed anchors: NORMAL here. Each CV variant does not have the same
+        # lines, and a fact sometimes targets only one of them.
         appliquer_cv_sur_mesure(doc, faits_auto)
 
-    # 2) SUPPRIMÉ (2026-07-12) : la ligne « Compétences ciblées pour ce poste : … »
-    #    trahissait un CV auto-généré auprès des recruteurs. Les skills servent toujours
-    #    au scoring (fit/ATS) et à la LETTRE, mais ne sont plus injectés dans le CV.
+    # 2) REMOVED (2026-07-12): the line "Compétences ciblées pour ce poste : …"
+    #    gave away an auto-generated CV to recruiters. The skills still serve
+    #    the scoring (fit/ATS) and the LETTER, but are no longer injected into the CV.
 
     from jobhunter.programmes.rename_docs import (
         new_name,  # Prenom_Nom_CV_<Poste court>_<Entreprise>
@@ -259,21 +258,21 @@ def _pages_pdf(pdf: Path) -> int:
             pages: int = d.page_count
             return pages
     except Exception:
-        return 1  # illisible : on ne boucle pas pour rien
+        return 1  # unreadable: no point looping
 
 
 def cv_une_page(
     offer: dict[str, Any], nom: str | None = None, langue: str = "fr"
 ) -> tuple[Path | None, Path | None]:
-    """tailor_cv + to_pdf, en garantissant UNE page. Rend (docx, pdf).
+    """tailor_cv + to_pdf, guaranteeing ONE page. Returns (docx, pdf).
 
-    Les faits automatiques ajoutent des lignes ; si le PDF deborde, on retire
-    les `allegements` de CV/Faits.json un par un. En dernier recours, le CV
-    repart du modele sans fait automatique : un CV generique d'une page vaut
-    mieux qu'un CV adapte de deux. Un CV/Sur_mesure n'est jamais allege : il a
-    ete relu, sa page aussi.
+    The automatic facts add lines; if the PDF overflows, the `allegements` of
+    CV/Faits.json are removed one by one. As a last resort, the CV starts again from
+    the template without any automatic fact: a one-page generic CV is better than a
+    two-page tailored one. A CV/Sur_mesure is never lightened: it was reviewed, and
+    so was its page.
     """
-    chemins.preparer()  # dossiers de sortie, au moment d'ecrire
+    chemins.preparer()  # output folders, at write time
     from jobhunter.documents import cv_auto
 
     lg = langue if langue == "en" else "fr"

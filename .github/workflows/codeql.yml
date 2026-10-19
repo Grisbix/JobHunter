@@ -1,7 +1,7 @@
 name: codeql
 
-# Analyse de sécurité du code (CodeQL) : le Python du paquet et les workflows eux-mêmes.
-# Les alertes s'affichent dans l'onglet Security du dépôt.
+# Code security analysis (CodeQL): the package's Python and the workflows themselves.
+# Alerts show up in the repository's Security tab.
 on:
   push:
     branches: [main]

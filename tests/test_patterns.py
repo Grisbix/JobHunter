@@ -1,14 +1,14 @@
-"""Reconnaissance et remplissage des formulaires (web_nav, apply_runner), sans reseau,
-dans un vrai Chromium headless.
+"""Recognition and filling of forms (web_nav, apply_runner), without network,
+in a real headless Chromium.
 
-A. connexion / inscription (FR/EN/DE/ES/IT, deux etapes, bascules) ;
-B. recherche d'offres (structures Workday, Greenhouse, Lever, SmartRecruiters, TalentSoft) ;
-C. remplissage de tous les motifs de formulaire (libelles, placeholder, aria, autocomplete,
-   radio, select, date, nombre, televersements, CGU, shadow DOM, iframe) ;
-D. code recu par mail : colle et surligne, ne clique JAMAIS ;
-E. bugs releves (recherche et newsletter non remplies, SuccessFactors, anti-bot, consentement,
-   bon bouton d'envoi surligne).
-Converti depuis Scripts/test_patterns.py.
+A. login / sign-up (FR/EN/DE/ES/IT, two steps, toggles);
+B. offer search (Workday, Greenhouse, Lever, SmartRecruiters, TalentSoft structures);
+C. filling of all form patterns (labels, placeholder, aria, autocomplete,
+   radio, select, date, number, uploads, terms, shadow DOM, iframe);
+D. code received by email: pastes and highlights, NEVER clicks;
+E. bugs found (search and newsletter not filled, SuccessFactors, anti-bot, consent,
+   right send button highlighted).
+Converted from Scripts/test_patterns.py.
 """
 
 import pytest
@@ -127,14 +127,14 @@ def test_pick_trouve_le_bouton(page, html, tache):
     assert page.evaluate(w.pick_js(tache)).get("found") is True
 
 
-# ══ B. recherche d'offres ══════════════════════════════════════════════════════
+# ══ B. offer search ══════════════════════════════════════════════════════
 APPLY_FORM = (
     "<form><input type=email placeholder=Email><input type=file><button>Postuler</button></form>"
 )
 
 
 def avec_clic(listing):
-    """Un clic sur l'offre remplace la page par un formulaire (simule la navigation)."""
+    """A click on the offer replaces the page with a form (simulates navigation)."""
     return listing.replace("HREF", f'"#" onclick="document.body.innerHTML=\'{APPLY_FORM}\'"')
 
 
@@ -366,7 +366,7 @@ def test_champ_pre_rempli_preserve(page, pieces):
     assert valeur(page, "input[name=e]") == "deja@rempli.fr"
 
 
-# ══ D. code recu par mail : colle et surligne, ne clique JAMAIS ════════════════
+# ══ D. code received by email: pastes and highlights, NEVER clicks ════════════════
 @pytest.fixture
 def otp_unique(page):
     page.set_content(

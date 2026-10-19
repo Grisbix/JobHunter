@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""probe_workday.py — Trouve les flux Workday publics des grands groupes.
+"""probe_workday.py — Finds the public Workday feeds of large groups.
 
-Pourquoi : les sites carriere de ces groupes (careers.axa.com, allianz.com,
-group.bnpparibas...) sont derriere un anti-bot et ne s'ouvrent pas. Mais leurs
-offres sont servies par Workday sur *.myworkdayjobs.com, qui n'est PAS protege
-et expose une API JSON publique et non authentifiee (celle que leur propre page
-appelle). On lit la source officielle au lieu de forcer la vitrine.
+Why: the career sites of these groups (careers.axa.com, allianz.com,
+group.bnpparibas...) are behind an anti-bot and do not open. But their offers are
+served by Workday on *.myworkdayjobs.com, which is NOT protected and exposes a public,
+unauthenticated JSON API (the one their own page calls). We read the official source
+instead of forcing the shop window.
 
-Deux etapes, pour ne pas marteler :
-  1. le tenant existe-t-il ?   GET https://{tenant}.{host}.myworkdayjobs.com/
-  2. quel est le nom du site ? POST /wday/cxs/{tenant}/{site}/jobs
+Two steps, so as not to hammer:
+  1. does the tenant exist?    GET https://{tenant}.{host}.myworkdayjobs.com/
+  2. what is the site's name?  POST /wday/cxs/{tenant}/{site}/jobs
 
-Ne modifie RIEN : affiche les flux qui repondent.
+Changes NOTHING: displays the feeds that answer.
 
-Run :
+Run:
   python JobHunter.pyw probe_workday
   python JobHunter.pyw probe_workday --tenants axa,allianz --json out.json
 """
@@ -32,7 +32,7 @@ UA = {
     "Content-Type": "application/json",
 }
 
-# Groupes dont la page carriere est bloquee par anti-bot (test_acces_sites.py)
+# Groups whose career page is blocked by anti-bot (test_acces_sites.py)
 TENANTS = [
     "axa",
     "axaim",
@@ -65,7 +65,7 @@ TENANTS = [
     "legalandgeneral",
 ]
 HOSTS = ["wd1", "wd2", "wd3", "wd5", "wd12", "wd103"]
-# Workday n'impose aucune convention pour le nom du site : on tente les formes vues
+# Workday imposes no convention for the site's name: we try the forms seen
 SITES = [
     "careers",
     "Careers",

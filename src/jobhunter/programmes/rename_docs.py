@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""rename_docs.py — Renomme CV + lettres au format « Prenom_Nom_CV/Lettre_<Poste>_<Entreprise> » (nom lu dans le profil).
-Nom prénom D'ABORD (le recruteur voit ton nom), puis le POSTE NETTOYÉ (sans H/F, durée,
-contrat, parenthèses…), puis l'entreprise courte (anti-collision).
+"""rename_docs.py — Renames CVs + letters in the "Firstname_Name_CV/Lettre_<Job>_<Company>" format (name read from the profile).
+Name FIRST (the recruiter sees your name), then the CLEANED JOB (without H/F, duration,
+contract, parentheses…), then the short company (anti-collision).
 
-Source de vérité = apply_queue.json (champs cv/lettre) → renomme docx + PDF jumeau
-+ MET À JOUR les liens file:/// dans la queue. Idempotent.
+Source of truth = apply_queue.json (cv/lettre fields) → renames docx + twin PDF
++ UPDATES the file:/// links in the queue. Idempotent.
 
-Run : python JobHunter.pyw rename_docs [--dry]"""
+Run: python JobHunter.pyw rename_docs [--dry]"""
 
 import argparse
 import importlib
@@ -35,7 +35,7 @@ def clean_poste(p, maxlen=48):
     """Nom du poste SEUL : vire parenthèses, H/F, contrat, durée, ville…"""
     p = re.sub(r"\(.*?\)|\[.*?\]", " ", p or "")
     p = NOISE.sub(" ", p)
-    # coupe aux séparateurs : garde le 1er segment substantiel
+    # cuts at the separators: keeps the 1st substantial segment
     segs = [s.strip(" .,-") for s in re.split(r"[-–—:|•]| / ", p)]
     segs = [s for s in segs if len(s.split()) >= 2 or (s and len(segs) == 1)]
     p = segs[0] if segs else (p.strip() or "Poste")
@@ -50,7 +50,7 @@ def _safe(s, maxlen=40):
 
 from jobhunter import profil as _P
 
-PREFIXE = _P.prefixe_fichier()  # « Prenom_Nom », lu dans le profil
+PREFIXE = _P.prefixe_fichier()  # "Firstname_Name", read from the profile
 
 
 def new_name(kind, poste, entreprise):
@@ -87,7 +87,7 @@ def rename_orphans(dry=False):
             if not dry:
                 try:
                     f.rename(d / f"{cand}{f.suffix}")
-                    # jumeau (pdf/docx) suit avec le MÊME cand → paire conservée
+                    # twin (pdf/docx) follows with the SAME cand → pair kept
                     for ext in (".pdf", ".docx"):
                         tw = f.with_suffix(ext)
                         if ext != f.suffix and tw.exists() and not (d / f"{cand}{ext}").exists():
@@ -99,9 +99,9 @@ def rename_orphans(dry=False):
 
 
 def main():
-    # Verrou inter-processus : ce programme reecrit la queue ENTIERE. Si un
-    # autre le fait en meme temps (tache planifiee vs app), le dernier qui
-    # ecrit efface le travail de l'autre.
+    # Inter-process lock: this program rewrites the ENTIRE queue. If
+    # another one does it at the same time (scheduled task vs app), the last one
+    # to write erases the other's work.
     if not importlib.import_module("jobhunter.programmes.jutil").garder(QUEUE):
         return 3
     ap = argparse.ArgumentParser()
@@ -132,12 +132,12 @@ def main():
             if old is None:
                 continue
             if old.name.startswith(f"{PREFIXE}_CV_ESG") or "Modèles" in str(old):
-                continue  # CV ATS génériques : on ne touche pas
+                continue  # generic ATS CVs: we do not touch them
             base = new_name(kind, x.get("poste", ""), x.get("entreprise", ""))
             if old.stem == base or old.stem.startswith(base + "_"):
-                continue  # déjà renommé
+                continue  # already renamed
             if not old.exists():
-                # crash précédent : fichier déjà renommé mais lien pas mis à jour
+                # previous crash: file already renamed but link not updated
                 for candp in sorted(old.parent.glob(base + "*" + old.suffix)):
                     if not a.dry:
                         x[key] = _url_of(candp)

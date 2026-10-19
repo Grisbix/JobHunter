@@ -1,6 +1,6 @@
-"""La fenetre principale : App assemble les mixins ; main() lance l'application.
+"""The main window: App assembles the mixins; main() launches the application.
 
-Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
+Part of jobhunter.app (former JobHunter.pyw, phase 3.7)."""
 
 import os
 import queue
@@ -59,22 +59,22 @@ class App(
     ExecutionMixin,
     CandidatureMixin,
 ):
-    """La fenetre JobHunter. Chaque mixin porte un domaine ; ils ne se partagent que `self`."""
+    """The JobHunter window. Each mixin carries a domain; they share nothing but `self`."""
 
     def __init__(self, root: Any) -> None:
-        _resoudre_polices()  # une fenetre existe : on sait quelles familles sont installees
+        _resoudre_polices()  # a window exists: we know which font families are installed
         _resoudre_espacements(root)
         self.root = root
         self.proc: Any = None
-        # panneau Candidatures (app/candidature.py) : programme pilote et ses widgets
+        # Candidatures panel (app/candidature.py): piloted program and its widgets
         self._cand_proc: Any = None
         self._cand_win: Any = None
         self._cand_lbl: dict[str, Any] = {}
         self._cand_boutons: list[Any] = []
         self.q: Any = queue.Queue()
-        # Une exception dans un rappel Tk s'imprime sur stderr. Dans un .pyw il
-        # n'y a pas de console : elle part dans le vide, le bouton ne fait rien
-        # et rien ne le dit. On la range dans un fichier et on l'affiche.
+        # An exception in a Tk callback is printed on stderr. In a .pyw there
+        # is no console: it goes into the void, the button does nothing
+        # and nothing says so. We store it in a file and display it.
         root.report_callback_exception = self._panne_tk
         self.offers = []
         self.suivi = {}
@@ -82,16 +82,16 @@ class App(
         self.comptes = {}
         self._search_cache: dict[
             str, Any
-        ] = {}  # oid -> texte cherchable (vide a chaque load_offers)
-        self._search_termes_actifs = []  # termes REELLEMENT appliques au tableau
-        self._search_job = None  # after() en attente (anti-saccade)
+        ] = {}  # oid -> searchable text (emptied at each load_offers)
+        self._search_termes_actifs = []  # terms REALLY applied to the table
+        self._search_job = None  # pending after() (anti-stutter)
         try:
             self.myemail = _profil.identite()["email"]
         except Exception:
             self.myemail = ""
         root.title("Offres — suivi candidatures")
-        # 1320x840 n'est PAS la taille d'ouverture : c'est celle qu'on retrouve en
-        # de-maximisant. La fenetre s'ouvre maximisee.
+        # 1320x840 is NOT the opening size: it is the one found again when
+        # un-maximising. The window opens maximised.
         root.geometry("1320x840")
         root.minsize(1080, 680)
         root.configure(fg_color=BG)
@@ -106,18 +106,18 @@ class App(
                     pass
 
         _maximiser()
-        # CustomTkinter re-applique SA geometrie apres __init__ (suivi du facteur
-        # d'echelle DPI), ce qui de-maximisait la fenetre juste apres l'ouverture.
-        # On re-affirme donc une fois la boucle d'evenements demarree. Deux
-        # rappels : le premier suffit d'ordinaire, le second couvre un demarrage
-        # lent. « zoomed » garde la barre de titre et les controles systeme —
-        # c'est bien maximise, pas du plein ecran sans bordure.
+        # CustomTkinter re-applies ITS geometry after __init__ (tracking of the DPI
+        # scaling factor), which un-maximised the window just after opening.
+        # So we re-assert it once the event loop has started. Two
+        # callbacks: the first is usually enough, the second covers a slow
+        # start. "zoomed" keeps the title bar and the system controls —
+        # it is indeed maximised, not borderless full screen.
         root.after(80, _maximiser)
         root.after(400, _maximiser)
 
         body = CF(root, bg=BG)
         body.pack(fill="both", expand=True, padx=0, pady=0)
-        # Recruitment CRM : navigation permanente, outils secondaires défilants.
+        # Recruitment CRM: permanent navigation, scrolling secondary tools.
         self.sidebar = CF(body, bg=SIDE, width=238, corner_radius=0)
         self.sidebar.pack(side="left", fill="y", padx=0)
         self.sidebar.pack_propagate(False)
@@ -144,7 +144,7 @@ class App(
             b = CB(
                 self.sidebar,
                 text=texte,
-                command=lambda c=cle, f=fn: (f(), self._nav_actif(c)),  # type: ignore[func-returns-value]  # lambda Tk qui enchaine des appels sans valeur
+                command=lambda c=cle, f=fn: (f(), self._nav_actif(c)),  # type: ignore[func-returns-value]  # Tk lambda chaining calls without a value
                 bg=SIDE,
                 fg=SIDE_MUT,
                 activebackground=SIDE_H,
@@ -190,7 +190,7 @@ class App(
                 pady=5,
                 anchor="w",
             ).pack(fill="x", padx=10, pady=3)
-        # section MAINTENANCE pliée : boutons rarement utiles
+        # MAINTENANCE section folded: buttons rarely useful
         self._maint_on = False
         self.b_maint = CB(
             outils,
@@ -206,7 +206,7 @@ class App(
             pady=4,
         )
         self.b_maint.pack(fill="x", padx=10, pady=(6, 0))
-        self.maint = CF(outils, bg=SIDE, plat=True)  # rempli, affiché à la demande
+        self.maint = CF(outils, bg=SIDE, plat=True)  # filled in, displayed on demand
         for groupe, items in MAINT:
             CL(
                 self.maint,
@@ -261,11 +261,11 @@ class App(
             padx=_theme.PAD_PAGE,
             pady=(_theme.GAP // 2, _theme.GAP // 2),
         )
-        # UNE SEULE REGLE DE NAVIGATION, faute de quoi rien ne dit ou chercher
-        # quoi : la barre du haut ne porte que des DESTINATIONS (ou je vais),
-        # la barre laterale que des ACTIONS (ce que je fais). « Fermer Chrome »
-        # etait une action posee parmi les destinations, et doublonnait deja
-        # avec Maintenance > Acces & diagnostic.
+        # ONE SINGLE NAVIGATION RULE, otherwise nothing says where to look for
+        # what: the top bar only carries DESTINATIONS (where I go),
+        # the sidebar only ACTIONS (what I do). "Fermer Chrome"
+        # was an action placed among the destinations, and already duplicated
+        # Maintenance > Access & diagnostics.
         tp = CF(self.main, bg=BG)
         tp.pack(fill="x", pady=(0, _theme.GAP))
         CB(
@@ -293,83 +293,82 @@ class App(
             font=(_theme.FONT_UI, 13),
         )
         self.b_dispo.pack(side="left", padx=(8, 0), pady=2)
-        # La navigation principale habite la colonne gauche, pas en doublon
-        # dans l'en-tête. Cette barre ne garde que le contexte du travail.
-        # Le titre suit la page ouverte (_nav_actif) : un titre fixe « Suivi des
-        # candidatures » coiffait aussi Mes CV, Entreprises et Accès.
+        # The main navigation lives in the left column, not duplicated
+        # in the header. This bar only keeps the context of the work.
+        # The title follows the open page (_nav_actif): a fixed title "Suivi des
+        # candidatures" also topped Mes CV, Entreprises and Accès.
         self.nav_context = CL(tp, text="Offres", bg=BG, fg=TX, font=(_theme.FONT_UI, 17, "bold"))
         self.nav_context.pack(side="left", padx=(20, 0))
-        # Le journal vit dans la barre laterale, REPLIEE au demarrage : tout le
+        # The log lives in the sidebar, FOLDED at start-up: everything the
         # travail de fond (auto-enrichissement, relances dues, taches lancees
-        # depuis la barre du haut) s'ecrivait dans un panneau que personne ne
-        # voit. Cette ligne rend la derniere information toujours lisible.
+        # from the top bar) was written into a panel nobody
+        # sees. This line keeps the latest information always readable.
         footer = CF(self.main, bg=BG, plat=True)
         footer.pack(side="bottom", fill="x", pady=(8, 0))
         self.status = CL(footer, text="", bg=BG, fg=MUT, font=(_theme.FONT_UI, 12), anchor="e")
         self.status.pack(side="left", fill="x", expand=True)
-        # dashboard et visionneuse = 2 panneaux DANS la même fenêtre (pas de popup)
+        # dashboard and viewer = 2 panels INSIDE the same window (no popup)
         self.dash = CF(self.main, bg=WORK)
         self.dash.pack(fill="both", expand=True)
         self._build_dash(self.dash)
-        self.viewer = None  # panneau CV & Lettres, construit au 1er usage
-        self._dv = None  # panneau détail offre plein écran
-        self._panels: dict[str, Any] = {}  # panneaux Entreprises / Sites d'offres
-        # Navigation CRM visible au démarrage ; Outils / Ctrl+B la replie
-        # pour les écrans plus étroits. La ligne d'état reste visible.
+        self.viewer = None  # CV & Letters panel, built on first use
+        self._dv = None  # full-screen offer detail panel
+        self._panels: dict[str, Any] = {}  # Companies / Job sites panels
+        # CRM navigation visible at start-up; Outils / Ctrl+B folds it
+        # for narrower screens. The status line stays visible.
         self._desc_busy = False
         self.load_offers()
         self.root.after(100, self._drain)
         self._raccourcis()
         # JOBHUNTER_SANS_FOND=1 : aucun travail de fond (scan, descriptions,
-        # sync). Pour ouvrir l'app le temps d'une verification visuelle sans
-        # declencher un scan au premier retour de focus.
+        # sync). To open the app for a visual check without
+        # triggering a scan at the first return of focus.
         if os.environ.get("JOBHUNTER_SANS_FOND"):
-            # Crochet des tests visuels (lancés depuis le code source) : jamais dans
-            # l'application installée, où une variable d'environnement ne doit pas
-            # suffire à exécuter du code.
+            # Hook of the visual tests (run from the source code): never in
+            # the installed application, where an environment variable must not be
+            # enough to execute code.
             act = os.environ.get("JOBHUNTER_ACTION")
             if act and not _gele.est_gele():
                 self.root.after(1500, lambda: exec(act, {"app": self, "tk": tk}))  # nosec B102
             return
-        # AUTO : dès qu'il y a des offres sans description, on les récupère en fond (au démarrage
-        # + après chaque ajout/rebuild). Aucun bouton — silencieux.
+        # AUTO: as soon as there are offers without a description, they are fetched in the background (at start-up
+        # + after each addition/rebuild). No button — silent.
         self.root.after(2500, self._auto_enrich)
-        # AUTO : sync docx→pdf + liens (un docx modifié quelque part = pdf/liens réalignés)
+        # AUTO: docx→pdf sync + links (a docx modified somewhere = pdf/links realigned)
         self.root.after(6000, self._auto_sync)
         self.root.after(4000, self._check_relances)  # relances dues → log
-        # AUTO : scan des sites entreprises, 2 min apres le lancement puis toutes les 3 h
+        # AUTO: scan of company sites, 2 min after launch then every 3 h
         self.root.after(120000, self._auto_scrape)
         self.root.bind("<FocusIn>", self._on_focus_scrape, add="+")
 
     def _raccourcis(self) -> None:
-        """Couche clavier sur les actions DEJA existantes — aucune nouvelle.
+        """Keyboard layer over ALREADY existing actions — no new ones.
 
-        448 offres a traiter une par une : chaque aller-retour a la souris est
-        un cout paye 448 fois. Les liaisons existantes etaient toutes locales a
-        un widget (Entree dans un champ, clic sur le tableau) ; il n'y avait
-        aucun raccourci global.
+        448 offers to process one by one: every round trip to the mouse is a cost
+        paid 448 times. The existing bindings were all local to a widget (Enter in
+        a field, click on the table); there was no global shortcut.
         """
         for touches, action in (
-            ("<Escape>", self._show_dash),  # revenir au tableau
+            ("<Escape>", self._show_dash),  # back to the table
             ("<Control-r>", self.load_offers),  # recharger
-            ("<F5>", self.run_all),  # TOUT FAIRE
-            ("<Control-b>", self._toggle_sidebar),  # replier/ouvrir la barre
+            ("<F5>", self.run_all),  # DO EVERYTHING
+            ("<Control-b>", self._toggle_sidebar),  # fold/open the bar
             ("<Control-l>", lambda: self.e_url.focus_set()),
-            ("<Control-w>", self.stop),  # arreter la tache
-            ("<Control-f>", self._focus_search),  # rechercher dans les offres
+            ("<Control-w>", self.stop),  # stop the task
+            ("<Control-f>", self._focus_search),  # search the offers
             ("<Alt-Left>", self._dispo_retour),  # annuler agrandir/retrecir
         ):
             self.root.bind_all(touches, lambda e, f=action: (f(), "break")[1])
-        # Raccourcis métier réservés au tableau. bind_all() interceptait aussi
-        # Ctrl+A et Ctrl+Z dans les champs de recherche, note et URL : la
-        # sélection/annulation native du texte déclenchait une action métier.
+        # Business shortcuts reserved for the table. bind_all() also intercepted
+        # Ctrl+A and Ctrl+Z in the search, note and URL fields: the native
+        # text selection/undo triggered a business action.
         for touches, action in (
             ("<Control-Return>", self._apply_checked),
             ("<Control-a>", lambda: self._check_all(True)),
             ("<Control-d>", lambda: self._check_all(False)),
             ("<Control-z>", self._annuler_dernier),
         ):
-            self.tree.bind(touches, lambda e, f=action: (f(), "break")[1])  # type: ignore[misc]  # lambda a parametre par defaut (capture de boucle)
+            self.tree.bind(touches, lambda e, f=action: (f(), "break")[1])  # type: ignore[misc]  # lambda with a default parameter (loop capture)
         self._log(
             "Raccourcis : Echap retour · Alt+Gauche annule agrandir/rétrécir · "
             "Ctrl+R recharger · F5 tout faire · "
@@ -453,12 +452,12 @@ class App(
         self._maint_on = not self._maint_on
 
     # ── Retour de disposition ──
-    # l'utilisateur, 2026-10-07 : un panneau elargi, une colonne etiree, la fiche
-    # agrandie ou la barre Outils repliee n'avaient aucun retour arriere — il
-    # fallait refaire le geste a la main, au pixel pres. On memorise donc la
-    # disposition AVANT chaque geste ; « ↶ Retour » (Alt+Gauche) la remet, et
-    # chaque appui remonte d'un geste. Le contenu (suivi, statuts) n'y est
-    # pas : c'est Ctrl+Z, dans le tableau.
+    # the user, 2026-10-07: a widened panel, a stretched column, an enlarged
+    # card or a folded Outils bar had no way back — the gesture
+    # had to be redone by hand, to the pixel. So we remember the
+    # layout BEFORE each gesture; "↶ Retour" (Alt+Left) restores it, and
+    # each press goes back one gesture. The content (tracking, statuses) is
+    # not in it: that is Ctrl+Z, in the table.
     def _dispo_etat(self) -> Any:
         etat = {
             "dash": self.dash.winfo_manager() == "pack",
@@ -475,7 +474,7 @@ class App(
         return etat
 
     def _dispo_memo(self, etat: Any = None) -> None:
-        """Empile la disposition `etat` (par defaut : l'actuelle)."""
+        """Pushes the layout `etat` (by default: the current one)."""
         etat = etat or self._dispo_etat()
         if not self._dispo_pile or self._dispo_pile[-1] != etat:
             self._dispo_pile.append(etat)
@@ -497,7 +496,7 @@ class App(
             self._show_dash()
         if e.get("barre") != self._sidebar_on:
             self._toggle_sidebar(memo=False)
-        # Le tableau doit etre affiche et mesure avant de replacer le separateur.
+        # The table must be displayed and measured before putting the separator back.
         self.root.update_idletasks()
         if "split" in e:
             try:
@@ -512,8 +511,8 @@ class App(
         self._dispo_maj_bouton()
 
     def _dispo_suivre(self, widget: Any) -> None:
-        """Memorise la disposition d'avant tout glisser sur `widget`
-        (separateur de panneaux, bord d'une colonne)."""
+        """Remembers the layout before any drag on `widget`
+        (panel separator, edge of a column)."""
 
         def _avant(_e: Any) -> None:
             self._dispo_avant = self._dispo_etat()
@@ -538,8 +537,8 @@ class App(
 
 
 def _annonce_mise_a_jour(root: Any, app: Any) -> None:
-    """Au demarrage, en arriere-plan : une version plus recente sur GitHub ?
-    Au plus une verification par jour ; hors ligne, rien ne s'affiche."""
+    """At start-up, in the background: a more recent version on GitHub?
+    At most one check per day; offline, nothing is displayed."""
 
     def proposer(v: Any, installee: Any) -> None:
         if messagebox.askyesno(
@@ -568,13 +567,13 @@ def _annonce_mise_a_jour(root: Any, app: Any) -> None:
 
 
 def main() -> None:
-    # Sans console (JobHunter.pyw, l'exe fenêtré), sys.stdout vaut None ; une
-    # cinquantaine de modules font `sys.stdout.reconfigure(...)` à leur import, et
-    # le panneau qui en chargeait un tombait. Un puits nul les rend inoffensifs.
+    # Without a console (JobHunter.pyw, the windowed exe), sys.stdout is None; some
+    # fifty modules call `sys.stdout.reconfigure(...)` at import, and
+    # the panel that loaded one of them crashed. A null sink makes them harmless.
     for nom in ("stdout", "stderr"):
         if getattr(sys, nom) is None:
             setattr(sys, nom, open(os.devnull, "w", encoding="utf-8"))  # noqa: SIM115
-    _racine.exporter_paquet()  # les etapes lancent `python -m jobhunter...`
+    _racine.exporter_paquet()  # the steps run `python -m jobhunter...`
     r = ctk.CTk()
     a = App(r)
     _annonce_mise_a_jour(r, a)

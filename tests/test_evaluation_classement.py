@@ -16,8 +16,8 @@ def test_jugements():
         "C|3": {"s": "pas intéressé"},
         "D|4": {"s": "expiré"},
         "E|5": {"s": "à vérifier"},
-        "F|6": {"s": "mauvaise", "n": "pourvu"},  # un fait, pas un jugement
-        "G|7": {"s": "mauvaise", "n": "stage"},  # un vrai jugement
+        "F|6": {"s": "mauvaise", "n": "pourvu"},  # a fact, not a judgement
+        "G|7": {"s": "mauvaise", "n": "stage"},  # a real judgement
         "H|8": {"s": "refus"},
     }
     assert E.jugements(suivi) == {

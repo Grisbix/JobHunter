@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Collecte quotidienne via cron (macOS, Linux). Equivalent de planifier.bat.
-#   ./planifier.sh            -> tous les jours a 08:00
-#   ./planifier.sh 07:30      -> tous les jours a 07:30
-#   ./planifier.sh supprimer  -> retire la ligne
+# Daily collection through cron (macOS, Linux). Equivalent of planifier.bat.
+#   ./planifier.sh            -> every day at 08:00
+#   ./planifier.sh 07:30      -> every day at 07:30
+#   ./planifier.sh supprimer  -> removes the line
 cd "$(dirname "$0")"
 DOSSIER=$(pwd)
 MARQUE="# JobHunter - collecte quotidienne"

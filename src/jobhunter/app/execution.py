@@ -1,6 +1,6 @@
-"""Journal et execution des programmes (etapes, maintenance, mise a jour).
+"""Log and execution of the programs (steps, maintenance, update).
 
-Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
+Part of jobhunter.app (former JobHunter.pyw, phase 3.7)."""
 
 import datetime
 import queue
@@ -51,17 +51,17 @@ class ExecutionMixin:
 
     # ── UI helpers ──
     def _log(self: "AppTypee", txt: Any) -> None:
-        txt = _langue.journal(str(txt))  # les messages de l'app ; F5
+        txt = _langue.journal(str(txt))  # the app's messages; F5
         self.log.insert("end", txt)
         self.log.see("end")
-        # Meme repli, le journal doit pouvoir se resumer en un coup d'oeil.
+        # Same fallback, the log must be summarisable at a glance.
         ligne = next((l.strip() for l in reversed(str(txt).split(chr(10))) if l.strip()), "")
         if ligne and getattr(self, "status", None) is not None:
             self.status.configure(text=ligne[:96])
 
-    # ── exécution ──
+    # ── execution ──
     def run_step(self: "AppTypee", cmd: Any, label: Any) -> None:
-        # scripts interactifs OU réutilisant Chrome (--chrome) -> nouvelle console (Chrome visible)
+        # interactive scripts OR ones reusing Chrome (--chrome) -> new console (Chrome visible)
         if any(s in cmd for s in INTERACTIVE) or "--chrome" in cmd:
             self.run_console(cmd, label)
             return
@@ -71,12 +71,12 @@ class ExecutionMixin:
         threading.Thread(target=self._exec, args=(cmd, cmd[-1]), daemon=True).start()
 
     def _occupe(self: "AppTypee") -> Any:
-        """Quelque chose écrit-il déjà la file ? Le dit, et rend True si oui.
+        """Is something already writing the queue? Says so, and returns True if yes.
 
-        `_bg_busy` couvrait les deux jobs automatiques entre eux, mais PAS les
-        boutons : lancer « TOUT FAIRE » pendant que l'auto-enrichissement
-        tournait faisait tomber l'un des deux sur le verrou, après avoir
-        démarré. Le scan peut durer trente minutes — autant le dire avant.
+        `_bg_busy` covered the two automatic jobs between themselves, but NOT the
+        buttons: starting "TOUT FAIRE" while the auto-enrichment was running made
+        one of the two hit the lock, after having started. The scan can last thirty
+        minutes — better to say so beforehand.
         """
         if self.proc and self.proc.poll() is None:
             self._log("⏳ tâche en cours.\n")
@@ -105,10 +105,10 @@ class ExecutionMixin:
     def run_all(self: "AppTypee") -> None:
         if self._occupe():
             return
-        # Version COURTE du pipeline : six etapes, a la main. La tache planifiee
-        # lance pipeline_quotidien.py, qui en fait davantage (collecte en cinq
+        # SHORT version of the pipeline: six steps, by hand. The scheduled task
+        # runs pipeline_quotidien.py, which does more (collection in five
         # passes fusionnees chacune, sauvegarde, sites carriere, dossiers).
-        # L'ancien enchainement s'arretait au re-score : ni descriptions, ni
+        # The old sequence stopped at the re-score: no descriptions, no
         # export CSV, ni alerte.
         seq = [
             ("1/6 Scan offres (ATS + LinkedIn + V.I.E)", [PY, "-m", "jobhunter.sources", "--all"]),
@@ -140,17 +140,17 @@ class ExecutionMixin:
         threading.Thread(target=self._exec_seq, args=(seq,), daemon=True).start()
 
     def mettre_a_jour(self: "AppTypee", en_attente: Any = False) -> None:
-        """mise_a_jour.py dans le journal de l'app, puis propose de relancer
-        JobHunter sur la nouvelle version (le code deja charge reste l'ancien).
+        """mise_a_jour.py in the app's log, then offers to restart JobHunter on the
+        new version (the code already loaded stays the old one).
 
-        Au demarrage, l'annonce arrive souvent pendant un travail de fond (scan
-        auto, sync docs) : `_occupe()` refusait alors le « Oui » en silence. On
-        attend la fin de ce travail — remplacer les scripts sous un programme qui
-        tourne n'est pas une option."""
+        At start-up, the announcement often arrives during background work (auto
+        scan, docs sync): `_occupe()` then silently refused the "Oui". We wait for
+        that work to finish — replacing the scripts under a running program is not
+        an option."""
         if _gele.est_gele():
-            # Application installée : la mise à jour est le nouvel installateur, que
-            # l'outil télécharge, contrôle (signature de l'auteur) et ouvre ; les données
-            # ne bougent pas. Ses messages vont au journal, ligne à ligne.
+            # Installed application: the update is the new installer, which
+            # the tool downloads, checks (author's signature) and opens; the data
+            # does not move. Its messages go to the log, line by line.
             import contextlib
             import io
 
@@ -181,7 +181,7 @@ class ExecutionMixin:
 
             avant = mise_a_jour.version_locale()
         except Exception:
-            mise_a_jour, avant = None, "?"  # type: ignore[assignment]  # module absent : None, teste plus bas
+            mise_a_jour, avant = None, "?"  # type: ignore[assignment]  # module missing: None, tested below
         self._log(f"\n{'=' * 56}\n▶ Mise à jour de JobHunter\n{'=' * 56}\n")
 
         def tache() -> None:
@@ -203,7 +203,7 @@ class ExecutionMixin:
             )
             return
         if apres == avant:
-            return  # deja a jour : rien a relancer
+            return  # already up to date: nothing to restart
         if messagebox.askyesno(
             _t("JobHunter — mise à jour"),
             _t("Version {v} installée. Relancer JobHunter maintenant ?").format(v=apres),
@@ -215,8 +215,8 @@ class ExecutionMixin:
     def _exec_seq(self: "AppTypee", seq: Any) -> None:
         """seq : liste de (libelle, commande). Le libelle sert au log — cmd[-1]
         affichait le dernier ARGUMENT (« 8 », « linkedin »), pas l'etape."""
-        # L'issue voyage avec l'evenement : None = tout a reussi, sinon l'etape qui a
-        # echoue. « TOUT FAIRE termine » s'affichait meme apres un echec (audit 19/10).
+        # The outcome travels with the event: None = everything succeeded, otherwise the step
+        # that failed. "TOUT FAIRE terminé" was displayed even after a failure (audit 19/10).
         echec = None
         for label, cmd in seq:
             if not self._exec(cmd, label, announce=True):
@@ -246,9 +246,9 @@ class ExecutionMixin:
             self.q.put(("line", line))
         code = self.proc.wait()
         self.q.put(("line", f"[exit {code}]\n"))
-        # Code 3 = un autre programme tient le verrou de la queue (jutil.garder).
-        # « [exit 3] » seul n'apprend rien : on dit ce qui s'est passe, et surtout
-        # que rien n'a ete modifie.
+        # Code 3 = another program holds the queue lock (jutil.garder).
+        # "[exit 3]" alone tells nothing: we say what happened, and above all
+        # that nothing was changed.
         if code == 3:
             self.q.put(
                 (
@@ -260,14 +260,14 @@ class ExecutionMixin:
         self.q.put(("reload", None))
         return code == 0
 
-    # ── journal des pannes ───────────────────────────────────────────────────
+    # ── crash log ────────────────────────────────────────────────────────────
     JOURNAL = SCRIPTS / "_logs" / "app_erreurs.log"
 
     def _journal_panne(self: "AppTypee", contexte: Any, exc: Any = None) -> None:
-        """Range une trace dans _logs/app_erreurs.log et la résume dans l'UI.
+        """Stores a trace in _logs/app_erreurs.log and summarises it in the UI.
 
-        Sans ça, une panne dans un rappel Tk est invisible : `.pyw` n'a pas de
-        console, stderr ne va nulle part, et l'app garde l'air vivante.
+        Without it, a failure in a Tk callback is invisible: `.pyw` has no
+        console, stderr goes nowhere, and the app still looks alive.
         """
         import traceback
 
@@ -280,7 +280,7 @@ class ExecutionMixin:
                     f"[{contexte}]\n{trace}"
                 )
         except Exception:
-            pass  # journaliser ne doit jamais devenir la panne suivante
+            pass  # logging must never become the next failure
         resume = (
             f"{type(exc).__name__}: {exc}" if exc is not None else trace.strip().split("\n")[-1]
         )
@@ -319,24 +319,24 @@ class ExecutionMixin:
         except queue.Empty:
             pass
         except Exception as ex:
-            # UNE SEULE LIGNE FAUTIVE TUAIT L'APP. Seul queue.Empty etait
-            # rattrape : toute autre panne sortait AVANT le `after` de la
-            # derniere ligne, et plus rien ne se reprogrammait. Mesure : 1 tour
-            # de boucle au lieu de 20, et zero rechargement — la table ne se
-            # rafraichissait plus jamais apres un scan, sans le moindre signe.
+            # ONE FAULTY LINE KILLED THE APP. Only queue.Empty was
+            # caught: any other failure exited BEFORE the `after` of the
+            # last line, and nothing rescheduled itself any more. Measured: 1 loop
+            # iteration instead of 20, and zero reloads — the table never
+            # refreshed again after a scan, without the slightest sign.
             self._journal_panne("_drain", ex)
         finally:
-            # Le `finally` est le correctif : la boucle se reprogramme QUOI QU'IL
-            # ARRIVE. Une ligne perdue vaut mieux qu'une application figee.
+            # The `finally` is the fix: the loop reschedules itself WHATEVER
+            # HAPPENS. A lost line is better than a frozen application.
             self.root.after(100, self._drain)
 
     def stop(self: "AppTypee") -> None:
-        """Arrete la tache en cours, ENFANTS COMPRIS.
+        """Stops the current task, CHILDREN INCLUDED.
 
-        proc.terminate() ne tue que le Python lance ; Playwright et Chrome sont
-        ses petits-enfants et survivent. On en a retrouve 14 orphelins tenant le
-        profil dedie, ce qui empechait ensuite toute relance. taskkill /T coupe
-        l'arbre entier."""
+        proc.terminate() only kills the Python that was started; Playwright and
+        Chrome are its grandchildren and survive. We found 14 orphans holding the
+        dedicated profile, which then prevented any restart. taskkill /T cuts the
+        whole tree."""
         if not (self.proc and self.proc.poll() is None):
             self._log("(aucune tache en cours)\n")
             return
@@ -358,10 +358,10 @@ class ExecutionMixin:
                 pass
 
     def _gen_docs(self: "AppTypee") -> None:
-        """Genere CV + lettre pour les N offres les mieux notees qui n'en ont pas.
+        """Generates CV + letter for the N best-scored offers that do not have them.
 
-        Le nombre etait fige a 30 : avec 284 offres sans documents, il fallait
-        cliquer dix fois. On le demande, en proposant le compte reel a faire."""
+        The number was fixed at 30: with 284 offers without documents, one had to
+        click ten times. We ask for it, offering the real count to do."""
         try:
             q = queue_io.charger(QUEUE)
         except Exception:

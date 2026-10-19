@@ -1,11 +1,11 @@
-"""La mise a jour ne doit jamais perdre ce que l'utilisateur a fait (mise_a_jour).
+"""The update must never lose what the user did (mise_a_jour).
 
-Hors reseau : les ZIP « GitHub » sont fabriques en memoire et servis a la place du
-telechargement, l'installation vit dans un dossier temporaire. Un fichier modifie
-n'est pas ecrase, meme a la premiere mise a jour (trou de la 1.2.0, mesure sur une
-vraie installation) ; un fichier retire part s'il est intact ; les donnees ne sont
-jamais ecrites ; un controle rate remet la version d'avant, comme --annuler.
-Converti depuis Scripts/test_mise_a_jour.py.
+Offline: the "GitHub" ZIPs are made in memory and served instead of the
+download, the installation lives in a temporary folder. A modified file
+is not overwritten, even on the first update (gap in 1.2.0, measured on a
+real installation); a removed file goes if it is intact; the data is
+never written; a failed check puts back the previous version, like --annuler.
+Converted from Scripts/test_mise_a_jour.py.
 """
 
 import argparse
@@ -115,7 +115,7 @@ def lancer(capsys, verifier=False, forcer=False):
         ("1.2.0", None, [], ["plafond"]),
         ("1.1.0", None, ["bouton", "plafond"], []),
         ("1.1.0", "1.2.0", [], ["bouton"]),
-        ("0", None, [], ["# Nouveautés"]),  # le titre du fichier n'est jamais repris
+        ("0", None, [], ["# Nouveautés"]),  # the file's title is never taken over
     ],
     ids=[
         "voit la suivante",
@@ -176,7 +176,7 @@ def test_profil_complet_rien():
         ("Scripts/apply_queue.json", True),
         ("Scripts/adzuna.json", True),
         ("Scripts/francetravail.json", True),
-        # l'environnement d'installer.bat : jamais dans le manifeste, jamais retiré
+        # installer.bat's environment: never in the manifest, never removed
         (".venv/Lib/site-packages/httpx/__init__.py", True),
         (".venv/Scripts/python.exe", True),
         ("profil/exemple_finance_esg.json", False),
@@ -188,7 +188,7 @@ def test_protection_des_donnees(rel, protege):
     assert maj.protege(rel) is protege
 
 
-# ── premiere mise a jour, sans manifeste ───────────────────────────────────────
+# ── first update, without manifest ───────────────────────────────────────
 @pytest.fixture
 def premiere(installer, capsys):
     d = installer()
@@ -264,7 +264,7 @@ def test_forcer_garde_toujours_la_modif(premiere, capsys):
     assert lire(premiere[0], "Scripts/b.py") == "B = 1  # ma modif\n"
 
 
-# ── VERSION retouche a la main : remplace quand meme ───────────────────────────
+# ── VERSION retouched by hand: replaced anyway ───────────────────────────
 @pytest.fixture
 def version_retouchee(installer, capsys):
     d = installer()
@@ -281,7 +281,7 @@ def test_pas_de_version_nouveau(version_retouchee):
     assert not (version_retouchee / "VERSION.nouveau").exists()
 
 
-# ── sans reference (etiquette absente) : ancienne regle ────────────────────────
+# ── without reference (tag missing): old rule ────────────────────────
 @pytest.fixture
 def sans_reference(installer, capsys):
     d = installer(zips={maj.ZIP_URL: zip_de(V13)})
@@ -323,14 +323,14 @@ def test_controle_rate_retour_automatique(controle_rate, verif):
     assert verif(*controle_rate)
 
 
-# ── panne en pleine ecriture -> retour automatique ─────────────────────────────
+# ── failure in the middle of writing -> automatic rollback ─────────────────────────────
 @pytest.fixture
 def panne_ecriture(installer, capsys, monkeypatch):
     d = installer()
     vrai = Path.write_bytes
 
     def panne(self, data):
-        if self.name == "nouveau.py":  # ajoute apres les remplacements
+        if self.name == "nouveau.py":  # added after the replacements
             raise PermissionError("verrouillé")
         return vrai(self, data)
 
@@ -390,12 +390,12 @@ def test_la_mise_a_jour_se_refait_apres_annulation(annulee, capsys):
     assert maj.version_locale() == "1.3.0"
 
 
-# ── installe depuis le ZIP de main (≠ etiquette) : l'empreinte de l'installeur ─
+# ── installed from main's ZIP (≠ tag): the installer's fingerprint ─
 @pytest.fixture
 def main_entre_deux(installer):
-    d = installer({**V12, "Scripts/a.py": "A = 1.5\n"})  # main a bouge apres la 1.2.0
+    d = installer({**V12, "Scripts/a.py": "A = 1.5\n"})  # main moved after 1.2.0
     ecrire(d, "Scripts/_logs/x.log", "log\n")
-    ecrire(d, ".venv/Lib/site-packages/paquet.py", "X = 1\n")  # créé par installer.bat
+    ecrire(d, ".venv/Lib/site-packages/paquet.py", "X = 1\n")  # created by installer.bat
     return d, maj.initialiser()
 
 
@@ -440,7 +440,7 @@ def test_initialiser_ne_fait_rien_dans_un_depot_git(installer):
     assert maj.initialiser() is False
 
 
-# ── sans VERSION (copie de developpement) : rien n'est tente ───────────────────
+# ── without VERSION (development copy): nothing is attempted ───────────────────
 @pytest.fixture
 def sans_version(installer, capsys, monkeypatch):
     d = installer({k: v for k, v in V12.items() if k != "VERSION"}, zips={})
@@ -461,7 +461,7 @@ def test_sans_version_aucun_fichier_ecrit(sans_version):
     assert sorted(p.name for p in sans_version[0].iterdir()) == ["Mon_CV", "Scripts"]
 
 
-# ── verification seule ─────────────────────────────────────────────────────────
+# ── check only ─────────────────────────────────────────────────────────
 @pytest.fixture
 def verification(installer, capsys):
     installer()
@@ -480,14 +480,14 @@ def test_verifier_ne_touche_a_rien(verification):
     assert maj.version_locale() == "1.2.0"
 
 
-# ── controle reel sur ce depot ─────────────────────────────────────────────────
+# ── real check on this repo ─────────────────────────────────────────────────
 def test_tous_les_scripts_se_chargent(capsys):
     assert maj.controler()
 
 
 def test_le_controle_du_nouvel_arbre_passe_par_son_propre_code(capsys):
-    # `python -m jobhunter maj --controler` : l'entree stable que l'ancienne version
-    # appelle apres avoir remplace les fichiers.
+    # `python -m jobhunter maj --controler`: the stable entry point the old version
+    # calls after replacing the files.
     assert maj.controler_nouveau()
     assert "tous les scripts se chargent" in capsys.readouterr().out
 
@@ -508,7 +508,7 @@ def test_une_tache_planifiee_qui_vise_l_ancien_pipeline_est_signalee(
     assert ("Relance" in capsys.readouterr().out) is attendu
 
 
-# ── dépendances : avant le contrôle, et un échec de pip annule (audit du 19/10) ──
+# ── dependencies: before the check, and a pip failure cancels (audit of 19/10) ──
 
 
 def test_echec_de_pip_n_annonce_pas_le_succes(monkeypatch, capsys):
@@ -517,7 +517,7 @@ def test_echec_de_pip_n_annonce_pas_le_succes(monkeypatch, capsys):
     )
     assert maj.installer_dependances(True) is False
     assert "échoué" in capsys.readouterr().out
-    assert maj.installer_dependances(False) is True  # rien à installer
+    assert maj.installer_dependances(False) is True  # nothing to install
 
 
 def test_les_dependances_passent_avant_le_controle(installer, monkeypatch, capsys):

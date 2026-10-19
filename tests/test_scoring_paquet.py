@@ -1,9 +1,9 @@
-"""Le paquet jobhunter.scoring (phase 3.3) : facades, cycle casse, noms conserves.
+"""The jobhunter.scoring package (phase 3.3): facades, cycle broken, names kept.
 
-- ats_match, langue, zones, tri_file, chemins SONT les modules du paquet (alias) ;
-- le scoring se charge sans tailor_application : le cycle ats_match <-> tailor est casse ;
-- les noms historiques restent importables (tailor_application.cv_variant_key,
-  jutil.sans_accent...) : message_offre et les tests s'en servent.
+- ats_match, langue, zones, tri_file, chemins ARE the package's modules (aliases);
+- the scoring loads without tailor_application: the ats_match <-> tailor cycle is broken;
+- the historical names remain importable (tailor_application.cv_variant_key,
+  jutil.sans_accent...): message_offre and the tests use them.
 """
 
 import json

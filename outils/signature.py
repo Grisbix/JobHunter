@@ -1,20 +1,20 @@
-"""Signer une version publiée de JobHunter, avec la clé privée de l'auteur.
+"""Sign a published version of JobHunter, with the author's private key.
 
-    uv run python outils/signature.py cle              # une fois : crée la paire de clés
-    uv run python outils/signature.py signer 2.18.0    # après la CI de la release
-    uv run python outils/signature.py signer 2.18.0 --publier   # et l'attache à la release
+    uv run python outils/signature.py cle              # once: creates the key pair
+    uv run python outils/signature.py signer 2.18.0    # after the release CI
+    uv run python outils/signature.py signer 2.18.0 --publier   # and attaches it to the release
 
-`cle` crée la clé privée dans `~/.jobhunter/cle_signature`, HORS du dépôt, et écrit la
-clé publique dans `src/jobhunter/signature.py` (à commiter, et à publier dans une
-release). La clé privée ne s'affiche jamais. **Sauvegarde-la** (clé USB, gestionnaire de
-mots de passe) : perdue, plus aucune version ne pourra être signée, et chaque
-installation devra être refaite à la main avec la nouvelle clé publique.
+`cle` creates the private key in `~/.jobhunter/cle_signature`, OUTSIDE the repository,
+and writes the public key into `src/jobhunter/signature.py` (to commit, and to publish
+in a release). The private key is never displayed. **Back it up** (USB key, password
+manager): if lost, no version can be signed any more, and every installation will have
+to be redone by hand with the new public key.
 
-`signer` télécharge ce que les installations téléchargeront — le ZIP de l'étiquette
-`v<version>` et `JobHunterSetup.exe` attaché par la CI —, en fait le manifeste, le signe
-et écrit `signature.json`. `--publier` l'attache à la release (`gh release upload`).
-À lancer **après** la fin du workflow « installateur » de la release : sans
-l'installateur, l'application installée refuserait la mise à jour.
+`signer` downloads what the installations will download — the ZIP of the
+`v<version>` tag and the `JobHunterSetup.exe` attached by the CI —, builds the manifest,
+signs it and writes `signature.json`. `--publier` attaches it to the release
+(`gh release upload`). Run it **after** the release's "installateur" workflow has
+finished: without the installer, the installed application would refuse the update.
 """
 
 import argparse
@@ -40,7 +40,7 @@ MODULE = RACINE / "src" / "jobhunter" / "signature.py"
 
 def _get(url: str) -> bytes:
     req = urllib.request.Request(exiger_http(url), headers={"User-Agent": "JobHunter-signature"})
-    with urllib.request.urlopen(req, timeout=600) as r:  # nosec B310 : schéma vérifié
+    with urllib.request.urlopen(req, timeout=600) as r:  # nosec B310 : scheme checked
         return bytes(r.read())
 
 
@@ -87,7 +87,7 @@ def signer(version: str, publier: bool) -> int:
         print("! Le VERSION de l'étiquette n'est pas cette version : rien n'est signé.")
         return 1
     contenu = sig.emballer(secret, sig.manifeste(version, fichiers, setup))
-    m = sig.ouvrir(contenu, version)  # relu comme le fera chaque installation
+    m = sig.ouvrir(contenu, version)  # read back as each installation will
     sig.controler_fichiers(m, fichiers)
     sig.controler_setup(m, setup)
     sortie = RACINE / "dist" / sig.FICHIER

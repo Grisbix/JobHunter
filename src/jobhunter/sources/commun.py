@@ -1,6 +1,6 @@
-"""Tronc commun de la collecte : reglages, filtre d'intitule, contrats, pays, fiche d'offre.
+"""Common trunk of the collection: settings, title filter, contracts, countries, offer record.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+Part of jobhunter.sources (formerly Scripts/job_sources.py, phase 3.4).
 """
 
 import json
@@ -14,11 +14,11 @@ from jobhunter import profil as _P
 from jobhunter import racine as _racine
 from jobhunter import reseau as _reseau
 
-# Requetes bornees : jobhunter.reseau (phase 3.2). Les anciens noms restent ici,
-# ce sont eux que les tests remplacent (via la facade jobhunter.sources).
+# Bounded requests: jobhunter.reseau (phase 3.2). The old names stay here,
+# they are the ones the tests replace (through the jobhunter.sources facade).
 
-# Affectations, pas `import … as` : les autres sources les lisent ici
-# (`_commun._get_borne`), et mypy strict n'exporte pas un nom importe.
+# Assignments, not `import … as`: the other sources read them here
+# (`_commun._get_borne`), and strict mypy does not export an imported name.
 _client_partage = _reseau.client_partage
 _get_borne = _reseau.get_borne
 _lire_borne = _reseau.lire_borne
@@ -27,8 +27,8 @@ _req_borne = _reseau.req_borne
 from jobhunter.scoring.domaines import classify_domaine, matches_esg_finance
 
 _ici = sys.modules[__name__]
-# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
-# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+# Values taken from the profile: computed on first read, not at import
+# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -36,29 +36,29 @@ def __getattr__(nom: str) -> Any:
     return _paresseux.lire(_ici, _PARESSEUX, nom)
 
 
-# pythonw n'a pas de console ; les panneaux bureau importent aussi ce module.
+# pythonw has no console; the desktop panels also import this module.
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-# Les donnees restent dans Scripts/ (racine trouvee par marqueur, JOBHUNTER_RACINE).
+# The data stays in Scripts/ (root found by marker, JOBHUNTER_RACINE).
 HERE = _racine.scripts()
 
 
 QUEUE = HERE / "apply_queue.json"
 
-# Fichier PROPRE a ce programme. Il portait le meme nom que la sortie de
-# scrape_jobs.py : le scan ecrasait la recolte des sites carriere, y
-# compris quand il ne ramenait rien (WTJ bride -> 0 offre -> fichier vide).
+# File SPECIFIC to this program. It used to have the same name as the output of
+# scrape_jobs.py: the scan overwrote the harvest of the career sites,
+# including when it brought back nothing (WTJ throttled -> 0 offers -> empty file).
 FRESH = HERE / "offres_scan.json"
 
-REJETS_TRI = HERE / "_rejets_tri.json"  # les tests le remplacent
+REJETS_TRI = HERE / "_rejets_tri.json"  # the tests replace it
 
 _PARESSEUX["KEYWORDS"] = lambda: list(_P.get("collecte.mots_cles", []) or [])
 
-# ── Slugs ATS publics (fintech/climate/finance FR-EU). 404 = ignoré silencieusement. ──
-# Vérifiés avec probe_ats.py (les slugs qui ne répondent pas sont ignorés en 404).
-# ⚠ Ne PAS ajouter "metron" en greenhouse : homonyme = société de défense US
-# (Reston VA, systèmes autonomes), rien à voir avec l'efficacité énergétique FR.
+# ── Public ATS slugs (fintech/climate/finance FR-EU). 404 = silently ignored. ──
+# Checked with probe_ats.py (the slugs that do not answer are ignored as 404).
+# ⚠ Do NOT add "metron" on greenhouse: namesake = US defence company
+# (Reston VA, autonomous systems), nothing to do with French energy efficiency.
 ATS_SLUGS = {
     "greenhouse": [
         "sweep",
@@ -72,14 +72,14 @@ ATS_SLUGS = {
         "swile",
         "pigment",
         "clarityai",
-        # Sonde des cabinets du 2026-10-08 : Forvis Mazars Allemagne
-        # (160 offres), AlixPartners dont Paris (114).
+        # Probe of the consulting firms of 2026-10-08: Forvis Mazars Germany
+        # (160 offers), AlixPartners including Paris (114).
         "forvismazars",
         "alixpartners",
     ],
-    # theodo : retrouve en sondant les societes dont la page carriere renvoie 404.
-    # 141 offres, dont des postes IA — l'axe vibe-coding. Le 404 de la vitrine ne
-    # disait rien du flux, qui lui repond.
+    # theodo: found by probing the companies whose career page returns 404.
+    # 141 offers, including AI jobs — the vibe-coding axis. The shop window's 404
+    # said nothing about the feed, which does answer.
     "lever": [
         "greenly",
         "carbometrix",
@@ -93,8 +93,8 @@ ATS_SLUGS = {
         "theodo",
     ],
     "ashby": ["pigment", "alan", "swan", "defacto", "hero", "altruistiq", "climatiq"],
-    # grantthornton = Grant Thornton France (Neuilly, 60 offres) ; meridiam =
-    # leur vrai site carriere ; forvismazars = Irlande ; bakertilly = Pays-Bas.
+    # grantthornton = Grant Thornton France (Neuilly, 60 offers); meridiam =
+    # their real career site; forvismazars = Ireland; bakertilly = Netherlands.
     "recruitee": [
         "carbo",
         "vertuoza",
@@ -119,16 +119,16 @@ ATS_SLUGS = {
 
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
-# Le compteur des refus vit dans jobhunter.reseau, a cote du client HTTP.
+# The refusal counter lives in jobhunter.reseau, next to the HTTP client.
 INCIDENTS = _reseau.INCIDENTS
 
 
 def incidents_resume() -> list[str]:
-    """Les refus du run, en une ligne par source. Vide si tout s'est bien passe."""
+    """The run's refusals, one line per source. Empty if everything went well."""
     return INCIDENTS.resume()
 
 
-# ── sources éditables depuis l'app (panneau 🌍 Sites d'offres) ──
+# ── sources editable from the app (🌍 Job sites panel) ──
 SOURCES_CFG = HERE / "sources_config.json"
 
 
@@ -182,20 +182,20 @@ def _strip_html(h: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", re.sub(r"[ \t]+", " ", t)).strip()
 
 
-# ── Anti-bruit : le titre doit contenir un mot-clé MÉTIER (pas juste 'intern'/'h/f'),
-#    et ne pas être un rôle hors-cible (design, sales, marketing, RH…). ──
-# NB : sans csr|transition|environnement|hse, de vrais postes ESG étaient jetés —
-# « VIE Transition Énergétique Corporate » (Crédit Agricole) et « CSR & HR Officer »
-# (ODDO BHF) passaient matches_esg_finance mais échouaient ici, faute de mot métier.
+# ── Anti-noise: the title must contain a PROFESSION keyword (not just 'intern'/'h/f'),
+#    and not be an off-target role (design, sales, marketing, HR…). ──
+# NB: without csr|transition|environnement|hse, real ESG jobs were thrown away —
+# "VIE Transition Énergétique Corporate" (Crédit Agricole) and "CSR & HR Officer"
+# (ODDO BHF) passed matches_esg_finance but failed here, for lack of a profession word.
 _PARESSEUX["_FT"] = lambda: _P.get("filtre_titre", {}) or {}
 
-# Mot METIER requis dans l'intitule (vide = pas d'exigence).
+# PROFESSION word required in the title (empty = no requirement).
 _PARESSEUX["_DOMAIN_RX"] = lambda: _P.motif(_ici._FT.get("metier"))
 
-# Roles jamais voulus, quel que soit le domaine.
+# Roles never wanted, whatever the domain.
 _PARESSEUX["_HARD_NEG_RX"] = lambda: _P.motif(_ici._FT.get("exclus"))
 
-# Roles ecartes SAUF s'ils portent un marqueur de la cible secondaire
+# Roles set aside UNLESS they carry a marker of the secondary target
 # (exemple finance durable : « Developer » non, « AI Engineer » oui).
 _PARESSEUX["_DEV_NEG_RX"] = lambda: _P.motif(_ici._FT.get("exclus_sauf_complement"))
 
@@ -203,12 +203,12 @@ _PARESSEUX["_NEG_TITLE_RX"] = lambda: _P.motif(
     (_ici._FT.get("exclus") or []) + (_ici._FT.get("exclus_sauf_complement") or [])
 )
 
-# Marqueurs de la cible secondaire : passent meme avec un mot de _DEV_NEG_RX.
+# Markers of the secondary target: they pass even with a word of _DEV_NEG_RX.
 _PARESSEUX["_AI_RX"] = lambda: _P.motif(_ici._FT.get("complement"))
 
-# LinkedIn etiquette « CDI » les offres d'alternance et de stage : sa metadonnee
-# est fausse. L'intitule, lui, ne ment pas — « Alternance - Data Analyst » EST
-# une alternance. Le titre fait donc foi quand il est explicite.
+# LinkedIn labels work-study and internship offers "CDI": its metadata
+# is wrong. The title, on the other hand, does not lie — "Alternance - Data Analyst" IS
+# a work-study contract. So the title is authoritative when it is explicit.
 _RX_ALT = re.compile(r"\b(alternan[ct]|apprenti|apprentissage|contrat\s+pro)", re.I)
 
 _RX_STAGE = re.compile(
@@ -219,22 +219,22 @@ _RX_STAGE = re.compile(
 
 _RX_VIE_POINTE = re.compile(r"\bv\.i\.[ea]\b", re.I)
 
-_RX_VIE_MAJ = re.compile(r"\bVIE\b(?=\s*[-–—/:|,(])")  # sans re.I : « vie » est un mot
+_RX_VIE_MAJ = re.compile(r"\bVIE\b(?=\s*[-–—/:|,(])")  # without re.I: "vie" is a word
 
-# Garde-fou. Une frontiere de mot s'ecrit \b et se corrompt de deux facons, toutes
-# deux SILENCIEUSES — le motif compile, ne leve rien, et ne matche plus jamais :
-#   \x08          : un \b passe dans un heredoc shell devient un backspace
-#   \\b (litteral): une "correction" du cas precedent qui echappe l'antislash
-# Les deux se sont produits ici. On refuse de demarrer plutot que de laisser
-# passer des offres qui auraient du etre exclues.
-# (le controle lui-meme est en FIN de module : voir _verifier_motifs)
+# Safeguard. A word boundary is written \b and gets corrupted in two ways, both
+# SILENT — the pattern compiles, raises nothing, and never matches again:
+#   \x08          : a \b passed through a shell heredoc becomes a backspace
+#   \\b (literal) : a "fix" of the previous case that escapes the backslash
+# Both happened here. We refuse to start rather than let through
+# offers that should have been excluded.
+# (the check itself is at the END of the module: see _verifier_motifs)
 
 
 def contrats_exclus() -> set[str]:
-    """Types de contrat que l'utilisateur ne veut pas voir.
+    """Contract types the user does not want to see.
 
-    Regle dans sources_config.json, pas en dur : il n'est pas etudiant aujourd'hui, il
-    pourrait vouloir les revoir un jour. Liste vide = tout est affiche.
+    Set in sources_config.json, not hard-coded: they are not a student today, they
+    might want to see them again some day. Empty list = everything is displayed.
     """
     try:
         import json as _j
@@ -245,15 +245,15 @@ def contrats_exclus() -> set[str]:
 
 
 def pays_exclus() -> list[str]:
-    """Pays dont on ne veut plus aucune offre, par MOTIF applique au lieu.
+    """Countries from which no offer is wanted any more, by PATTERN applied to the place.
 
-    POURQUOI UN FILTRE ET PAS UNE PURGE. Supprimer 937 offres britanniques et
-    belges de la file ne les tue pas : le scan les retrouve a la source et les
-    reajoute le lendemain. C'est la meme lecon que `exclusions.py`, qui existe
-    pour les refus a l'unite — ici le refus porte sur une geographie entiere.
+    WHY A FILTER AND NOT A PURGE. Deleting 937 British and Belgian offers from the
+    queue does not kill them: the scan finds them again at the source and re-adds them
+    the next day. It is the same lesson as `exclusions.py`, which exists for one-off
+    refusals — here the refusal covers an entire geography.
 
-    Regle dans sources_config.json. Liste vide = aucun pays ecarte, ce qui est
-    le comportement historique.
+    Set in sources_config.json. Empty list = no country set aside, which is the
+    historical behaviour.
     """
     try:
         import json as _j
@@ -264,10 +264,10 @@ def pays_exclus() -> list[str]:
 
 
 def _est_vie(o: Any) -> bool:
-    """L'offre vient-elle de Business France ?
+    """Does the offer come from Business France?
 
-    On regarde la SOURCE et l'URL, pas le nom de l'employeur : « ARCELORMITTAL
-    FRANCE » a Bruxelles est un V.I.E, « Mirova » a Paris n'en est pas un.
+    We look at the SOURCE and the URL, not at the employer's name: "ARCELORMITTAL
+    FRANCE" in Brussels is a V.I.E, "Mirova" in Paris is not one.
     """
     return "businessfrance" in str(o.get("url") or "").lower() or str(
         o.get("source") or ""
@@ -275,16 +275,16 @@ def _est_vie(o: Any) -> bool:
 
 
 def _rx_pays_exclus() -> re.Pattern[str] | None:
-    r"""Le motif compile, ou None si rien n'est exclu.
+    r"""The compiled pattern, or None if nothing is excluded.
 
-    Les motifs viennent du reglage et sont assembles tels quels : c'est la
-    configuration qui decide, pas le code.
+    The patterns come from the setting and are assembled as they are: it is the
+    configuration that decides, not the code.
 
-    PAS DE re.I GLOBAL. Il rendrait `\\bUK\\b` insensible a la casse, et « uk »
-    apparait dans des mots ordinaires. Chaque motif porte donc son propre
-    `(?i:...)` quand la casse lui est indifferente : les noms de pays en sont
-    pourvus, le sigle non. C'est la famille de bugs de sous-chaine deja payee
-    sur sinGAPore, diveRSE et CLIMATisation, deplacee d'un cran.
+    NO GLOBAL re.I. It would make `\\bUK\\b` case-insensitive, and "uk" appears in
+    ordinary words. Each pattern therefore carries its own `(?i:...)` when case does
+    not matter to it: the country names have one, the acronym does not. It is the
+    family of substring bugs already paid for on sinGAPore, diveRSE and
+    CLIMATisation, moved one notch.
     """
     motifs = pays_exclus()
     if not motifs:
@@ -292,21 +292,21 @@ def _rx_pays_exclus() -> re.Pattern[str] | None:
     return re.compile("|".join(motifs))
 
 
-# Lire le contrat dans une description demande de la PRUDENCE : le mot seul se
-# trompe souvent. Mesure sur la file : « 6 mois minimum, en alternance ou en
-# poste » decrit une EXPERIENCE ; « early stage a PME mature » est de l'anglais ;
-# « chez un prestataire de service » decrit les CLIENTS ; « recrutement en CDI,
-# en interim » enumere les services d'une agence. D'ou deux passes.
+# Reading the contract in a description requires CAUTION: the word alone is
+# often wrong. Measured on the queue: "6 mois minimum, en alternance ou en
+# poste" describes an EXPERIENCE; "early stage a PME mature" is English;
+# "chez un prestataire de service" describes the CLIENTS; "recrutement en CDI,
+# en interim" lists an agency's services. Hence two passes.
 #
-# PASSE 1 — le libelle structure, presque toujours juste :
-#   « Type de contrat : CDI », « Contrat : Alternance », « Poste en CDI »
-# Sur une fiche en TABLEAU le libelle n'a pas de deux-points :
-# eFinancialCareers ecrit « Type de contrat <blancs> Stage ». La passe 1 ne
-# matchait donc rien, et la passe 2 ramassait le « CDD » d'une phrase de
-# boilerplate — quatre STAGES du Credit Agricole se retrouvaient etiquetes
-# CDD, en tete du classement. On accepte desormais un simple blanc apres la
-# forme longue « type de … » ; la forme nue « contrat » garde son
-# deux-points, sinon n'importe quelle phrase contenant le mot ferait libelle.
+# PASS 1 — the structured label, almost always right:
+#   "Type de contrat : CDI", "Contrat : Alternance", "Poste en CDI"
+# On a posting laid out as a TABLE the label has no colon:
+# eFinancialCareers writes "Type de contrat <blanks> Stage". Pass 1
+# therefore matched nothing, and pass 2 picked up the "CDD" of a
+# boilerplate sentence — four Credit Agricole INTERNSHIPS ended up labelled
+# CDD, at the top of the ranking. We now accept a simple blank after the
+# long form "type de …"; the bare form "contrat" keeps its
+# colon, otherwise any sentence containing the word would act as a label.
 _RX_LABEL = re.compile(
     r"type\s+de\s+(?:contrat|recrutement)s?\s*(?:de\s+travail)?\s*(?:[:\-–]|\s)\s*"
     r"|(?:contrat|recrutement)s?\s*(?:de\s+travail)?\s*[:\-–]\s*"
@@ -314,13 +314,13 @@ _RX_LABEL = re.compile(
     re.I,
 )
 
-# valeurs acceptees juste apres ce libelle
+# values accepted just after that label
 _RX_VALEUR = re.compile(
     r"^\W{0,3}(CDI|CDD|alternance|apprentissage|stage|int[e\u00e9]rim|freelance|V\.?I\.?E|contrat \u00e0 dur\u00e9e (?:in)?d\u00e9termin\u00e9e)",
     re.I,
 )
 
-# Tous les types de contrat, pour reperer les ENUMERATIONS (voir passe 2).
+# All the contract types, to spot the ENUMERATIONS (see pass 2).
 _RX_TOUS_CONTRATS = re.compile(
     r"\bCDI\b|\bCDD\b|\balternance\b|\bapprentissage\b|\bstages?\b"
     r"|\bV\.?I\.?E\b|\bint[eé]rim\b|\bfreelance\b",
@@ -328,8 +328,8 @@ _RX_TOUS_CONTRATS = re.compile(
 )
 
 # PASSE 2 — mots NON AMBIGUS seulement. « stage », « alternance », « interim »,
-# « prestataire » et « freelance » nus sont ecartes : ils designent aussi bien
-# une phase, une experience passee ou l'activite de l'employeur.
+# Bare "prestataire" and "freelance" are set aside: they designate just as well
+# a phase, a past experience or the employer's activity.
 _DESC_CONTRAT = [
     (
         "Alternance",
@@ -356,20 +356,20 @@ _DESC_CONTRAT = [
     ),
 ]
 
-# UN POSTE QUI DEMANDE UN ETUDIANT EST UN STAGE (l'utilisateur, 2026-10-04). Beaucoup
-# d'annonces ne disent jamais « stage » dans leur titre ni leur libelle : la
-# Societe Generale ecrit « Charge de mission ESG » puis « Vous etes etudiant en
-# Bac +4/5 », et l'offre sortait notee 10. Mesure sur la file : 121 descriptions.
+# A JOB THAT ASKS FOR A STUDENT IS AN INTERNSHIP (the user, 2026-10-04). Many
+# postings never say "stage" in their title or their label: the
+# Societe Generale writes "Charge de mission ESG" then "Vous etes etudiant en
+# Bac +4/5", and the offer came out scored 10. Measured on the queue: 121 descriptions.
 #
-# Trois familles de faux positifs, toutes rencontrees dans ces 121 :
+# Three families of false positives, all met in those 121:
 #   - l'ALTERNATIVE : « currently pursuing (or already holding) a master's »,
-#     « final-year students or recent graduates » — un diplome est accepte,
-#     ce n'est pas un stage. Voir _RX_OU_DIPLOME, cherche dans la phrase.
+#     "final-year students or recent graduates" — a graduate is accepted,
+#     it is not an internship. See _RX_OU_DIPLOME, searched in the sentence.
 #   - l'EXPERIENCE : « Praktika oder Werkstudententatigkeiten », « internships,
-#     working student roles » — un passe demande, pas un statut. D'ou « working
-#     student » / « Werkstudent » reconnus dans le TITRE seulement (_RX_STAGE).
-#   - le hors-sujet : « currently pursuing certification », « for each degree
-#     received or currently enrolled in » (consigne de CV d'un doctorat).
+#     working student roles" — a past asked for, not a status. Hence "working
+#     student" / "Werkstudent" recognised in the TITLE only (_RX_STAGE).
+#   - the off-topic: "currently pursuing certification", "for each degree
+#     received or currently enrolled in" (CV instruction of a doctorate).
 _A = "[’']"
 
 _RX_ETUDIANT = re.compile(
@@ -389,30 +389,30 @@ _RX_ETUDIANT = re.compile(
     re.I,
 )
 
-# Une porte ouverte aux diplomes, DANS LA MEME PHRASE, annule la demande.
+# A door open to graduates, IN THE SAME SENTENCE, cancels the request.
 _RX_OU_DIPLOME = re.compile(
     r"recent(?:ly)?\s+grad|fresh\s+grad|graduated|already\s+hold|\bor\s+hold|\bhold(?:ing)?\s+or\b"
-    # Au passe : « Tu étais étudiant(e) en école… » (Mister IA, CDI junior).
+    # In the past tense: "Tu étais étudiant(e) en école…" (Mister IA, junior CDI).
     r"|\btu\s+[ée]tais\b|\bvous\s+[ée]tiez\b"
     r"|completed|possess|\breceived\b|\bor\s+(?:a\s+)?(?:recent\s+)?graduate"
-    # Le diplome AVANT l'alternative : « Master's degree (or final-year student
+    # The degree BEFORE the alternative: "Master's degree (or final-year student
     # status) » (L'Oreal), « Higher education or currently studying » (Sii).
     r"|(?:degree|education|Bac\s*\+\s*\d)\s*(?:\([^)]{0,20}\)\s*)?\(?\s*or\s+(?:a\s+)?(?:final|current|penultimate)"
-    # « diplômé », pas « diplôme » : « en vue de l'obtention du diplôme » est une
-    # demande d'etudiant, pas une porte ouverte.
+    # "diplômé", not "diplôme": "en vue de l'obtention du diplôme" is a
+    # request for a student, not an open door.
     r"|jeunes?\s+dipl[ôo]m|\bdipl[ôo]m(?:é|ée|és|ées)(?!\w)|titulaire",
     re.I,
 )
 
 
 def demande_etudiant(desc: str | None) -> bool:
-    """True si l'annonce demande un candidat ENCORE ETUDIANT, sans alternative pour un diplome.
+    """True if the posting asks for a candidate STILL A STUDENT, without an alternative for a graduate.
 
-    Un tel poste est un stage, quel que soit son intitule.
+    Such a job is an internship, whatever its title.
     """
     t = str(desc or "")
     for m in _RX_ETUDIANT.finditer(t):
-        # La phrase qui porte la demande : du point precedent au suivant.
+        # The sentence that carries the request: from the previous full stop to the next one.
         deb = max(t.rfind(".", 0, m.start()), t.rfind("\n", 0, m.start())) + 1
         fins = [i for i in (t.find(".", m.end()), t.find("\n", m.end())) if i >= 0]
         phrase = t[deb : min(fins) if fins else len(t)]
@@ -422,17 +422,17 @@ def demande_etudiant(desc: str | None) -> bool:
 
 
 def contrat_de_la_description(desc: str, defaut: str = "") -> str:
-    """Type de contrat lu dans le CORPS de l'annonce, en deux passes.
+    """Contract type read in the posting's BODY, in two passes.
 
-    Un contrat FAUX est pire qu'un contrat vide : la colonne sert a filtrer.
-    On privilegie donc le libelle structure, et on ne retombe sur les mots-cles
-    que pour ceux qui ne peuvent rien designer d'autre.
+    A WRONG contract is worse than an empty contract: the column serves to filter.
+    So we favour the structured label, and only fall back on the keywords for those
+    that cannot designate anything else.
     """
     t = str(desc or "")
     if len(t) < 60:
         return defaut
-    # Avant tout libelle : « Contrat : CDD » sur un poste reserve aux etudiants
-    # reste un emploi etudiant, pas un poste pour un diplome.
+    # Before any label: "Contrat : CDD" on a job reserved for students
+    # stays a student job, not a job for a graduate.
     if demande_etudiant(t):
         return "Stage"
     for m in _RX_LABEL.finditer(t):
@@ -457,11 +457,11 @@ def contrat_de_la_description(desc: str, defaut: str = "") -> str:
         trouve = motif.search(t)
         if not trouve:
             continue
-        # UNE ENUMERATION N'EST PAS UNE DECLARATION. « …et d'opportunites en
-        # alternance, VIE, CDD et CDI » decrit ce qui vient APRES le stage, pas
-        # le contrat propose. C'est ce CDD-la qui a fait remonter quatre stages
-        # du Credit Agricole en tete de liste. Quand plusieurs types se pressent
-        # dans la meme phrase, aucun ne fait foi.
+        # AN ENUMERATION IS NOT A DECLARATION. "…et d'opportunites en
+        # alternance, VIE, CDD et CDI" describes what comes AFTER the internship, not
+        # the contract offered. It is that CDD which brought four Credit Agricole
+        # internships to the top of the list. When several types crowd
+        # into the same sentence, none is authoritative.
         autour = t[max(0, trouve.start() - 90) : trouve.end() + 90]
         if len(_RX_TOUS_CONTRATS.findall(autour)) > 1:
             continue
@@ -469,11 +469,11 @@ def contrat_de_la_description(desc: str, defaut: str = "") -> str:
     return defaut
 
 
-# Mentions de contrat dans l'INTITULE. Les acronymes francais sont non ambigus
-# des lors qu'ils sont ancres sur des frontieres de mot. « permanent » et
-# « fixed term » sont les libelles anglais equivalents, courants sur LinkedIn.
-# On ne retient PAS « full-time » / « temps plein » : c'est un rythme de travail,
-# pas un type de contrat — un CDD peut etre a temps plein.
+# Contract mentions in the TITLE. The French acronyms are unambiguous
+# as long as they are anchored on word boundaries. "permanent" and
+# "fixed term" are the equivalent English labels, common on LinkedIn.
+# We do NOT keep "full-time" / "temps plein": it is a working pattern,
+# not a contract type — a CDD can be full-time.
 _TITRE_CONTRAT = [
     (
         "CDD",
@@ -489,14 +489,14 @@ _TITRE_CONTRAT = [
 
 
 def contrat_du_titre(titre: str, source: str = "", defaut: str = "") -> str:
-    """Type de contrat deduit de l'intitule, sinon `defaut`.
+    """Contract type deduced from the title, otherwise `defaut`.
 
-    Ordre voulu : les contrats etudiants d'abord. Un titre « Stage puis CDI »
-    designe un stage — la mention la plus engageante pour le candidat prime.
+    Intended order: the student contracts first. A title "Stage puis CDI" designates
+    an internship — the mention most binding for the candidate prevails.
     """
     t = str(titre or "")
-    # Alternance et stage AVANT V.I.E : « Stage Analyste M&A (puis VIE/CDI) »
-    # est un stage, meme si le titre evoque la suite du parcours.
+    # Work-study and internship BEFORE V.I.E: "Stage Analyste M&A (puis VIE/CDI)"
+    # is an internship, even if the title mentions the next step of the path.
     if _RX_ALT.search(t):
         return "Alternance"
     if _RX_STAGE.search(t):
@@ -510,10 +510,10 @@ def contrat_du_titre(titre: str, source: str = "", defaut: str = "") -> str:
 
 
 def title_ok(t: str) -> bool:
-    """Filtre titre : mot-clé métier requis + pas un rôle hors-cible + lexique global.
+    """Title filter: profession keyword required + not an off-target role + global lexicon.
 
-    Exception IA : un titre estampillé IA passe même s'il contient « engineer »/ «
-    développeur », car c'est le marché visé en complément de l'ESG.
+    AI exception: a title stamped AI passes even if it contains "engineer"/
+    "développeur", because it is the market targeted as a complement to ESG.
     """
     if not t:
         return False
@@ -527,15 +527,15 @@ def title_ok(t: str) -> bool:
 
 
 # ═══════════════ 1 ter. Autres API publiques de recrutement ═══════════════
-# Trouvees le 2026-10-08 en suivant le lien « Carrieres » des sites de ~150
-# societes (probe_carrieres.sonde_site, puis les iframes/scripts de la page
-# carriere). Chacune est l'API JSON/RSS que la page carriere appelle elle-meme.
+# Found on 2026-10-08 by following the "Careers" link of the sites of ~150
+# companies (probe_carrieres.sonde_site, then the iframes/scripts of the career
+# page). Each is the JSON/RSS API that the career page calls itself.
 #   workable   apply.workable.com/api/v1/widget/accounts/{slug}
 #   pinpoint   {slug}.pinpointhq.com/postings.json
 #   eightfold  {hote}/api/apply/v2/jobs?domain={domaine}&query=   (BCG)
 #   sfrss      {hote}/services/rss/job/?keywords=   (SAP SuccessFactors, site carriere)
 #   oracle     {hote}/hcmRestApi/.../recruitingCEJobRequisitions   (Oracle Recruiting)
-# Les trois dernieres cherchent cote serveur : une requete par mot de WORKDAY_MOTS.
+# The last three search server side: one request per word of WORKDAY_MOTS.
 AUTRES_FLUX = [
     ("workable", "quantis", "Quantis"),
     ("pinpoint", "cinven", "Cinven"),
@@ -547,8 +547,8 @@ AUTRES_FLUX = [
     ("sfrss", "careers.capgemini.com", "Capgemini"),
     ("talentsoft", "jobs.amundi.com", "Amundi"),  # CPR AM compris
     ("talentsoft", "jobs.candriam.com", "Candriam"),
-    # Phenom (resultats embarques en JSON), iCIMS (liste HTML), Cornerstone
-    # (jeton anonyme de la page publique) : ajoutes le 2026-10-08.
+    # Phenom (results embedded as JSON), iCIMS (HTML list), Cornerstone
+    # (anonymous token of the public page): added on 2026-10-08.
     ("phenom", "jobs.bureauveritas.com/gb/en", "Bureau Veritas"),
     ("phenom", "careers.allianz.com/global/en", "Allianz"),
     ("phenom", "orange.jobs/fr/fr", "Orange"),
@@ -578,7 +578,7 @@ AUTRES_FLUX = [
     ("oracle", "enlc.fa.ap1.oraclecloud.com|CX", "IFM Investors"),
     ("oracle", "ehjd.fa.em2.oraclecloud.com|fabCareers", "First Abu Dhabi Bank"),
     ("oracle", "fa-evlo-saasfaprod1.fa.ocs.oraclecloud.com|CX_1", "Emirates NBD"),
-    # Vitrine en 403, ATS public a cote (2026-10-08) : PNUD sur Oracle Quantum.
+    # Shop window in 403, public ATS next to it (2026-10-08): UNDP on Oracle Quantum.
     ("oracle", "estm.fa.em2.oraclecloud.com|CX_1", "PNUD (UNDP)"),
     ("jibe", "careers.se.com", "Schneider Electric"),
     ("sfrss", "careers.swissre.com", "Swiss Re"),
@@ -598,36 +598,36 @@ AUTRES_FLUX = [
     ("oracle", "ekbq.fa.em2.oraclecloud.com|CX_1", "Schroders"),
 ]
 
-# ═══════════════ 1 bis. Workday — l'API publique des grands groupes ═══════════════
-# POURQUOI. Les pages carriere de ces groupes sont des SPA derriere un anti-bot :
-# scrape_jobs.py les ouvre et n'y lit rien (mesure : 11 sites, 0 offre). Mais
-# leurs offres sont servies par Workday sur *.myworkdayjobs.com, dont l'API JSON
-# est publique et non authentifiee — c'est celle que leur propre page appelle.
-# On lit la source au lieu de forcer la vitrine.
+# ═══════════════ 1 bis. Workday — the public API of large groups ═══════════════
+# WHY. The career pages of these groups are SPAs behind an anti-bot:
+# scrape_jobs.py opens them and reads nothing there (measured: 11 sites, 0 offers). But
+# their offers are served by Workday on *.myworkdayjobs.com, whose JSON API
+# is public and unauthenticated — it is the one their own page calls.
+# We read the source instead of forcing the shop window.
 #
-# Les flux ci-dessous ont ete trouves par probe_carrieres.py (lien « Carrieres »
-# de la page d'accueil -> hote ATS) et VERIFIES : Eiffage 2000 offres, Ardian 74,
-# Lombard Odier 35. 2109 offres la ou le scraper DOM en ramene zero.
+# The feeds below were found by probe_carrieres.py ("Careers" link
+# of the home page -> ATS host) and VERIFIED: Eiffage 2000 offers, Ardian 74,
+# Lombard Odier 35. 2109 offers where the DOM scraper brings back zero.
 #
-# DEUX LIMITES DE L'API, mesurees :
-#   - `limit` plafonne a 20. Au-dela la reponse est VIDE, pas tronquee : demander
-#     100 rend 0 offre. Eiffage en entier ferait donc 100 requetes.
-#   - `searchText` filtre cote serveur et ramene 2000 a 70-500. Le tri est par
-#     pertinence, les premieres pages portent les bonnes offres.
-# D'ou la strategie : quelques mots-cles, peu de pages chacun, union et dedup.
+# TWO LIMITS OF THE API, measured:
+#   - `limit` caps at 20. Beyond that the response is EMPTY, not truncated: asking
+#     for 100 returns 0 offers. All of Eiffage would therefore take 100 requests.
+#   - `searchText` filters server side and brings 2000 down to 70-500. The sort is by
+#     relevance, the first pages carry the good offers.
+# Hence the strategy: a few keywords, few pages each, union and dedup.
 WORKDAY_FLUX = [
     # (tenant, host, site, nom lisible)
     ("eiffage", "wd3", "Eiffage_Careers", "Eiffage"),
     ("ardian", "wd103", "ArdianCareers", "Ardian"),
     ("lombardodier", "wd3", "Lombard_Odier_Careers", "Lombard Odier"),
-    # PwC, tous pays dont la France (Neuilly) : 3897 offres experimentees et
-    # 1359 campus (2026-10-07). Les Big 4 n'arrivaient que par LinkedIn ; le
-    # nom de site ne suit aucune forme que site_final sait deviner.
+    # PwC, all countries including France (Neuilly): 3897 experienced offers and
+    # 1359 campus ones (2026-10-07). The Big 4 only came through LinkedIn; the
+    # site name follows no form that site_final can guess.
     ("pwc", "wd3", "Global_Experienced_Careers", "PwC"),
     ("pwc", "wd3", "Global_Campus_Careers", "PwC"),
-    # Sonde des cabinets du 2026-10-08 (site_final.flux_workday, identite
-    # verifiee sur la vitrine). Environ 70 s par flux, lus 4 a la fois
-    # (scan_workday). Les flux surtout americains (RSM, Crowe, Vanguard, State
+    # Probe of the consulting firms of 2026-10-08 (site_final.flux_workday, identity
+    # verified on the shop window). About 70 s per feed, read 4 at a time
+    # (scan_workday). The mostly American feeds (RSM, Crowe, Vanguard, State
     # Street...) restent a site_final.
     ("erm", "wd3", "erm_Careers", "ERM"),
     ("juliusbaer", "wd3", "External", "Julius Baer"),
@@ -640,8 +640,8 @@ WORKDAY_FLUX = [
     ("santander", "wd3", "santanderCareers", "Santander"),
     ("rabobank", "wd3", "Jobs", "Rabobank"),
     ("accenture", "wd103", "accentureCareers", "Accenture"),
-    # Sites dont le nom ne se devine pas : testes un a un le 2026-10-08.
-    # MMC = Marsh McLennan, donc aussi Oliver Wyman et Mercer.
+    # Sites whose name cannot be guessed: tested one by one on 2026-10-08.
+    # MMC = Marsh McLennan, hence also Oliver Wyman and Mercer.
     ("blackrock", "wd1", "BlackRock_Professional", "BlackRock"),
     ("db", "wd3", "DBWebsite", "Deutsche Bank"),
     ("barclays", "wd3", "External_Career_Site_Barclays", "Barclays"),
@@ -652,18 +652,18 @@ WORKDAY_FLUX = [
     ("invesco", "wd1", "IVZ", "Invesco"),
     ("pimco", "wd1", "pimco-careers", "PIMCO"),
     ("ntrs", "wd1", "northerntrust", "Northern Trust"),
-    # Trouves par le lien « Carrieres » de leur site (2026-10-08).
+    # Found through the "Careers" link of their site (2026-10-08).
     ("issgovernance", "wd1", "ISScareers", "ISS"),
     ("rothschildandco", "wd3", "Rothschildandco_Lateral", "Rothschild & Co"),
     ("vontobel", "wd3", "Vontobel_External_Career", "Vontobel"),
     ("cip", "wd103", "CIP_Careers", "Copenhagen Infrastructure Partners"),
     ("aviva", "wd1", "Aviva_Investors_External", "Aviva Investors"),
     ("mgpru", "wd3", "mandgprudential", "M&G"),
-    # Deloitte France : lien de sa page « rejoindre », trouve par recherche web
-    # « Deloitte carriere » — la page d'accueil ne le donnait pas (556 offres).
+    # Deloitte France: link from its "join us" page, found by web search
+    # "Deloitte carriere" — the home page did not give it (556 offers).
     ("fina", "wd103", "DeloitteRecrute", "Deloitte"),
-    # International, sonde du 2026-10-08 (lien « Careers » de ~130 sites) :
-    # Asie, Canada. Les flux surtout americains restent a site_final.
+    # International, probe of 2026-10-08 ("Careers" link of ~130 sites):
+    # Asia, Canada. The mostly American feeds stay with site_final.
     ("dbs", "wd3", "DBS_Careers", "DBS"),
     ("aia", "wd3", "External", "AIA"),
     ("prudential", "wd3", "prudential", "Prudential / Eastspring"),
@@ -674,22 +674,22 @@ WORKDAY_FLUX = [
     ("bci", "wd10", "BCI_Careers", "BCI"),
     ("td", "wd3", "TD_Bank_Careers", "TD"),
     ("desjardins", "wd10", "Desjardins", "Desjardins"),
-    # Employeurs a fit >= 8 qui n'arrivaient que par LinkedIn (2026-10-08).
+    # Employers with fit >= 8 that only came through LinkedIn (2026-10-08).
     ("onepoint", "wd3", "OnepointFR", "Onepoint"),
     ("bdf", "wd103", "recrutement-banque-de-France", "Banque de France"),
     ("ayvens", "wd3", "AyvensCareers", "Ayvens"),
     ("airliquidehr", "wd3", "AirLiquideExternalCareer", "Air Liquide"),
-    # Vitrine en 403, flux Workday public trouve par le nom (2026-10-08).
+    # Shop window in 403, public Workday feed found by name (2026-10-08).
     ("brookfield", "wd5", "brookfield", "Brookfield"),
-    # Portails « JS seul » : le site vitrine renvoie a ces flux (2026-10-08)
+    # "JS only" portals: the shop-window site points to these feeds (2026-10-08)
     ("ocbc", "wd102", "External", "OCBC"),
     ("bis", "wd3", "External", "BRI (BIS)"),
 ]
 
-# Paramètres de tracking : présents ou non selon d'où vient le lien, ils ne
-# changent PAS l'offre. Sans les retirer, la dédup par URL exacte est inopérante
-# dès qu'on colle un lien LinkedIn (…/jobs/view/123?refId=X&trackingId=Y) déjà
-# présent en queue → doublon.
+# Tracking parameters: present or not depending on where the link comes from, they do
+# NOT change the offer. Without removing them, dedup by exact URL does not work
+# as soon as one pastes a LinkedIn link (…/jobs/view/123?refId=X&trackingId=Y) already
+# present in the queue → duplicate.
 _URL_JUNK = {
     "refid",
     "trackingid",
@@ -711,9 +711,9 @@ _URL_JUNK = {
 
 
 def _norm_url(u: str | None) -> str:
-    """Clé de dédup d'URL : hôte sans www, chemin sans / final, params de tracking retirés et reste trié.
+    """URL dedup key: host without www, path without a final /, tracking params removed and the rest sorted.
 
-    Les vrais identifiants (?jk=, ?id=) restent.
+    The real identifiers (?jk=, ?id=) stay.
     """
     from urllib.parse import parse_qsl, urlencode, urlsplit
 
@@ -727,7 +727,7 @@ def _norm_url(u: str | None) -> str:
     host = s.netloc.lower()
     if host.startswith("www."):
         host = host[4:]
-    if host.endswith("linkedin.com"):  # fr./be./lu. linkedin = même site
+    if host.endswith("linkedin.com"):  # fr./be./lu. linkedin = same site
         host = "linkedin.com"
     qs = [(k, v) for k, v in parse_qsl(s.query) if k.lower() not in _URL_JUNK]
     tail = "?" + urlencode(sorted(qs)) if qs else ""
@@ -735,12 +735,12 @@ def _norm_url(u: str | None) -> str:
 
 
 # ── Filtre geographique ──────────────────────────────────────────────────────
-# Un flux ATS porte le nom de la societe, pas son pays. « Forvis Mazars » sur
-# greenhouse est l'entite ALLEMANDE (« Einstieg als », « Rechtsanwalt ») et sur
-# recruitee l'entite IRLANDAISE : zero poste en France sur 19. La verification
-# d'identite ne peut pas le voir — le nom est le meme. Seul le LIEU tranche.
+# An ATS feed carries the company's name, not its country. "Forvis Mazars" on
+# greenhouse is the GERMAN entity ("Einstieg als", "Rechtsanwalt") and on
+# recruitee the IRISH entity: zero jobs in France out of 19. The identity
+# check cannot see it — the name is the same. Only the PLACE decides.
 #
-# l'utilisateur habite en Gironde. Une offre a Hanoi ou Dresde n'a pas a entrer.
+# The user lives in Gironde. An offer in Hanoi or Dresden has no business getting in.
 _RX_FR = re.compile(
     r"\bfr\b|france|paris|lyon|lille|nantes|bordeaux|toulouse|marseille|nice"
     r"|rennes|strasbourg|montpellier|grenoble|rouen|reims|dijon|angers|tours"
@@ -748,20 +748,20 @@ _RX_FR = re.compile(
     r"|le mans|saint.etienne|toulon|villeurbanne|nimes|aix.en.provence"
     r"|ile.de.france|hauts.de.seine|gironde|remote|teletravail|t[ée]l[ée]travail"
     r"|hybrid|anywhere"
-    # LE NUMERO DE DEPARTEMENT. L'APEC ecrit « Nanterre - 92 »,
-    # « Issy-les-Moulineaux - 92 », « Marseille 01 - 13 ». Aucune de ces villes
-    # n'etait dans la liste ci-dessus, et la regle de repli refusait tout lieu
-    # de plus d'un mot : 341 offres sur 653 partaient donc comme etrangeres,
-    # dont toute La Defense — le coeur de l'emploi financier francais.
-    # Un numero a deux chiffres isole, ou 2A/2B, ou un code d'outre-mer a trois
-    # chiffres, ne s'ecrit comme cela qu'en France. La plage monte a 98x :
-    # arretee a 976, elle laissait « Noumea - 98 » dehors, la Nouvelle-Caledonie
-    # etant 988 — comme Wallis 986 et la Polynesie 987.
+    # THE DEPARTMENT NUMBER. APEC writes "Nanterre - 92",
+    # "Issy-les-Moulineaux - 92", "Marseille 01 - 13". None of these cities
+    # was in the list above, and the fallback rule refused any place
+    # of more than one word: 341 offers out of 653 thus left as foreign,
+    # including all of La Défense — the heart of French financial employment.
+    # An isolated two-digit number, or 2A/2B, or a three-digit overseas code,
+    # is only written that way in France. The range goes up to 98x:
+    # stopped at 976, it left "Noumea - 98" out, New Caledonia
+    # being 988 — like Wallis 986 and Polynesia 987.
     r"|(?:^|[\s,;-])(?:0[1-9]|[1-8]\d|9[0-5]|2[AB]|9[78]\d?)(?:$|[\s,;-])",
     re.I,
 )
 
-# Pays explicitement AILLEURS : le lieu est renseigne et ne parle pas de France.
+# Countries explicitly ELSEWHERE: the place is filled in and does not talk about France.
 _RX_ETRANGER = re.compile(
     r"\b(de|be|lu|es|it|uk|gb|us|ca|ch|nl|pl|ro|pt|ie|dk|se|no|fi|at|cz|gr|tr"
     r"|ma|tn|sn|cn|jp|sg|in|au|nz|br|ar|cl|mx|py|uy|hk|ae|za|vn|ph|id|th)\b"
@@ -774,46 +774,45 @@ _RX_ETRANGER = re.compile(
     re.I,
 )
 
-# Etat americain en fin de lieu : « Reston, VA », « Aurora, CO ». Sans ce motif
-# ils passaient pour la France — aucun des deux codes n'etait dans la liste des
-# pays, et un lieu non reconnu etait accepte par defaut.
+# American state at the end of a place: "Reston, VA", "Aurora, CO". Without this pattern
+# they passed for France — neither code was in the list of
+# countries, and an unrecognised place was accepted by default.
 _RX_ETAT_US = re.compile(
     r",\s*(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|MA|MD|ME|MI"
     r"|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA"
     r"|VT|WA|WI|WV|WY|DC)\b"
 )
 
-# RECHERCHE MONDIALE. Le filtre geographique est un CHOIX, pas une loi : il a
-# ecarte 179 offres au seul scan du 8 septembre. Quand l'utilisateur veut chercher
-# partout, on ne le desactive PAS en modifiant chaque appelant — il y en a
-# plusieurs — mais ici, a la source. `zones.py` range
-# ensuite ces offres dans une zone « international » a part, pour qu'elles ne
-# se melangent pas a ses cibles francaises.
-# DEFAUT : on garde le monde entier. l'utilisateur a tranche le 17/09 — les offres
-# hors de France sont voulues. Le scan DEMANDAIT deja huit pays a LinkedIn
-# (LIEUX_MONDE) pour en jeter sept au merge, et ses propres programmes plus
-# recents, scan_graduate et scan_secteurs, posent tous deux `J.MONDE = True`.
-# Le defaut inverse etait le dernier endroit a ne pas suivre.
-# `zones.py` range ces offres dans une zone « international » a part, pour
-# qu'elles ne se melangent pas aux cibles francaises a l'affichage.
-# `--france` restreint quand il veut le contraire.
+# WORLDWIDE SEARCH. The geographic filter is a CHOICE, not a law: it
+# set aside 179 offers in the scan of 8 September alone. When the user wants to search
+# everywhere, we do NOT disable it by changing each caller — there are
+# several — but here, at the source. `zones.py` then stores
+# these offers in a separate "international" zone, so that they do not
+# mix with the French targets.
+# DEFAULT: we keep the whole world. The user decided on 17/09 — the offers
+# outside France are wanted. The scan ALREADY ASKED LinkedIn for eight countries
+# (LIEUX_MONDE) to throw seven of them away at merge, and its own more recent
+# programs, scan_graduate and scan_secteurs, both set `J.MONDE = True`.
+# The opposite default was the last place not to follow.
+# `zones.py` stores these offers in a separate "international" zone, so
+# that they do not mix with the French targets on display.
+# `--france` restricts when the opposite is wanted.
 MONDE = True
 
 
 def en_france(lieu: str | None) -> bool:
-    """Le poste est-il en France (ou a distance) ?
+    """Is the job in France (or remote)?
 
-    Rend toujours True quand MONDE est actif : la recherche mondiale ne filtre
-    plus sur le lieu.
+    Always returns True when MONDE is active: the worldwide search no longer filters
+    on the place.
 
-    Un lieu VIDE passe : beaucoup d'annonces francaises n'en renseignent aucun,
-    et refuser sur une absence d'information ecarterait de vraies offres.
+    An EMPTY place passes: many French postings fill in none, and refusing on a lack
+    of information would set aside real offers.
 
-    Un lieu RENSEIGNE qui ne parle ni de France ni d'un pays connu passait aussi,
-    par defaut. C'etait trop permissif : « Mexico City », « Reston, VA » et
-    « Aurora, CO » entraient. Un lieu explicite doit desormais porter un signal
-    francais ou rester tres court (« fr », un code postal, un nom de ville isole
-    qu'on ne saurait pas classer).
+    A FILLED-IN place that talks neither about France nor about a known country also
+    passed, by default. It was too permissive: "Mexico City", "Reston, VA" and
+    "Aurora, CO" got in. An explicit place must now carry a French signal or stay
+    very short ("fr", a postcode, an isolated city name that could not be classified).
     """
     if MONDE:
         return True
@@ -824,7 +823,7 @@ def en_france(lieu: str | None) -> bool:
         return True
     if _RX_ETAT_US.search(t) or _RX_ETRANGER.search(t):
         return False
-    # Lieu explicite, non reconnu : on ne l'accepte que s'il est trop court pour
-    # designer un pays etranger (« 33 », « Sud-Ouest »). Un « Mexico City » ou un
-    # « Reston, VA » comporte une virgule ou plusieurs mots : on refuse.
+    # Explicit, unrecognised place: we only accept it if it is too short to
+    # designate a foreign country ("33", "Sud-Ouest"). A "Mexico City" or a
+    # "Reston, VA" has a comma or several words: we refuse.
     return not ("," in t or len(t.split()) > 1)

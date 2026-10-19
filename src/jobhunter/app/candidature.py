@@ -1,16 +1,16 @@
-"""Panneau « Candidatures » : postuler depuis l'application, sans console.
+"""The "Candidatures" panel: apply from the application, without a console.
 
-Partie de jobhunter.app (2.2.0). Le panneau lance `apply_runner --pilote` en
-sous-processus et dialogue avec lui : le programme ouvre chaque offre dans Chrome,
-remplit le formulaire, joint CV et lettre, surligne le bouton d'envoi, puis attend. C'est
-l'utilisateur qui vérifie et clique Envoyer DANS CHROME, puis « J'ai envoyé » ici. Le
-programme observe alors la page et écrit le suivi avec l'état de la preuve.
+Part of jobhunter.app (2.2.0). The panel runs `apply_runner --pilote` as a subprocess
+and talks to it: the program opens each offer in Chrome, fills in the form, attaches
+CV and letter, highlights the send button, then waits. It is the user who checks and
+clicks Send IN CHROME, then "J'ai envoyé" here. The program then observes the page and
+writes the tracking with the state of the proof.
 
-Événements reçus (une ligne `@JH {json}` du programme) : offre, pret, bloque, attente,
-resultat, fin. Commandes envoyées (une ligne sur son entrée) : envoye, saute, reremplir,
-rouvrir, quitter. Aucune ne clique quoi que ce soit.
+Events received (one `@JH {json}` line from the program): offre, pret, bloque, attente,
+resultat, fin. Commands sent (one line on its input): envoye, saute, reremplir,
+rouvrir, quitter. None of them clicks anything.
 
-Decision : docs/adr/0009-preuve-distincte-de-la-declaration.md
+Decision: docs/adr/0009-preuve-distincte-de-la-declaration.md
 """
 
 import json
@@ -44,7 +44,7 @@ from jobhunter.stockage import suivi as suivi_io
 
 PREFIXE = "@JH "
 
-# Ce que dit le panneau après chaque offre, selon l'état de la preuve (ADR 0009).
+# What the panel says after each offer, depending on the state of the proof (ADR 0009).
 RESULTATS = {
     "confirmé": ("✅ Envoi confirmé par le site.", OK),
     "incertain": (
@@ -69,10 +69,10 @@ def lire_evenement(ligne: str) -> dict[str, Any] | None:
 
 
 def texte_evenement(ev: dict[str, Any]) -> tuple[str, str, str] | None:
-    """(zone, texte, couleur) à afficher pour un événement, ou None s'il n'affiche rien.
+    """(zone, text, colour) to display for an event, or None if it displays nothing.
 
-    Zones : « offre » (l'offre en cours), « dossier » (CV et lettre contrôlés), « etat »
-    (ce qui se passe), « resultat » (l'issue de l'offre précédente).
+    Zones: "offre" (the current offer), "dossier" (CV and letter checked), "etat"
+    (what is happening), "resultat" (the outcome of the previous offer).
     """
     t = ev.get("type")
     if t == "offre":
@@ -208,12 +208,12 @@ class CandidatureMixin:
             b.configure(state="normal" if actif else "disabled")
 
     def _cand_commande(self: "AppTypee", cmd: str) -> None:
-        """Transmet une commande au programme, s'il attend."""
+        """Passes a command on to the program, if it is waiting."""
         proc = self._cand_proc
         if proc is None or proc.poll() is not None or proc.stdin is None:
             return
         if str(self._cand_boutons[0].cget("state")) == "disabled":
-            return  # le programme travaille : la commande attendra le prochain « attente »
+            return  # the program is working: the command will wait for the next "attente"
         self._cand_actif(False)
         self._cand_lbl["etat"].configure(
             text="Observation de la page…" if cmd == "envoye" else "…", text_color=MUT
@@ -244,7 +244,7 @@ class CandidatureMixin:
             except tk.TclError:
                 return  # panneau ferme entre-temps
         if t == "resultat" and ev.get("etat") in ("confirmé", "incertain"):
-            self.suivi = suivi_io.charger(_commun.SUIVI)  # le programme vient de l'écrire
+            self.suivi = suivi_io.charger(_commun.SUIVI)  # the program has just written it
             self.refresh_table()
 
     def _cand_arreter(self: "AppTypee") -> None:

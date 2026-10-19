@@ -1,22 +1,22 @@
-"""Relecture d'une lettre : une seconde passe qui signale, sans jamais réécrire.
+"""Proofreading of a letter: a second pass that reports, without ever rewriting.
 
-Partie de jobhunter.documents. Le générateur assemble des morceaux corrects un à un ;
-ce qui cloche se voit à la lecture de l'ensemble, confronté à l'annonce. Cette passe
-part de zéro, sans le contexte de la rédaction, et rend une liste de remarques. C'est
-l'utilisateur qui corrige (`Lettres/Sur_mesure/`).
+Part of jobhunter.documents. The generator assembles pieces that are correct one by
+one; what is wrong shows when reading the whole, set against the posting. This pass
+starts from scratch, without the context of the writing, and returns a list of remarks.
+It is the user who corrects (`Lettres/Sur_mesure/`).
 
-Ce qu'elle cherche, en plus des redites de `verifie_redites` :
-- le candidat qui se dévalorise (« encore court », « malgré », « je suis junior ») — la
-  règle qui prime sur toutes — et son inverse, le superlatif creux ;
-- « excellent » pour un niveau de langue (on écrit « courant » / « fluent ») ;
-- tiret cadratin et barre oblique au fil du texte ;
-- une autre entreprise que celle de l'offre nommée dans la lettre (copier-coller) ;
-- un destinataire nommé que l'annonce ne nomme pas ;
-- ce qu'une annonce piégée aurait pu glisser dans une lettre écrite par IA : consigne
-  au modèle, adresse web ou courriel inconnus. L'annonce est une entrée non fiable.
-- un gabarit non rempli.
+What it looks for, in addition to the repetitions of `verifie_redites`:
+- the candidate who undersells themselves ("encore court", "malgré", "je suis junior")
+  — the rule that comes before all others — and its opposite, the hollow superlative;
+- "excellent" for a language level (one writes "courant" / "fluent");
+- em dash and slash in the running text;
+- a company other than the offer's named in the letter (copy-paste);
+- a named recipient that the posting does not name;
+- what a booby-trapped posting could have slipped into a letter written by AI:
+  instruction to the model, unknown web or email address. The posting is untrusted input.
+- an unfilled template.
 
-Les motifs sont en français et en anglais. Une remarque est un indice, pas un verdict.
+The patterns are in French and in English. A remark is a clue, not a verdict.
 """
 
 import collections
@@ -28,15 +28,15 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
-from jobhunter.documents.controle import _RX_GABARIT  # le même motif que le contrôle
+from jobhunter.documents.controle import _RX_GABARIT  # the same pattern as the check
 
 
 @dataclass(frozen=True)
 class Remarque:
     """Un point à relire dans la lettre."""
 
-    regle: str  # « dévalorisation », « superlatif », « langue », …
-    extrait: str  # le passage concerné, court
+    regle: str  # "dévalorisation", "superlatif", "langue", …
+    extrait: str  # the passage concerned, short
     conseil: str
 
 
@@ -50,7 +50,7 @@ def _extrait(texte: str, debut: int, fin: int, marge: int = 40) -> str:
     return ("…" if a else "") + " ".join(texte[a:b].split()) + ("…" if b < len(texte) else "")
 
 
-# (règle, motif, conseil). Motifs cherchés sur le texte tel quel, insensibles à la casse.
+# (rule, pattern, advice). Patterns searched on the text as is, case-insensitive.
 _MOTIFS: tuple[tuple[str, str, str], ...] = (
     (
         "dévalorisation",
@@ -90,9 +90,9 @@ _MOTIFS: tuple[tuple[str, str, str], ...] = (
 _RX = tuple((r, re.compile(m, re.I), c) for r, m, c in _MOTIFS)
 _RX_URL = re.compile(r"\bhttps?://\S+|\bwww\.\S+", re.I)
 _RX_MAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
-# « Madame Dupont, » / « Dear Ms Smith, » : une civilité suivie d'un nom propre. La
-# formule d'appel peut en nommer plusieurs (« Madame Martin, Madame Dupont, ») : chacun
-# est cherché dans l'annonce, pas seulement le premier (audit Codex du 19/10).
+# "Madame Dupont," / "Dear Ms Smith,": a title followed by a proper noun. The
+# salutation may name several ("Madame Martin, Madame Dupont,"): each one
+# is searched in the posting, not only the first (Codex audit of 19/10).
 _CIV = r"(?:Madame|Monsieur|(?:Dear )?(?:Mr|Mrs|Ms|Miss|Dr)\.?)"
 _RX_APPEL = re.compile(_CIV + r"\s")
 _RX_NOMME = re.compile(
@@ -102,9 +102,9 @@ _RX_NOMME = re.compile(
 )
 
 
-# ── Redites (ancien verifie_redites, déplacé en 2.13) ─────────────────────────
+# ── Repetitions (formerly verifie_redites, moved in 2.13) ─────────────────────
 
-# Mots vides et formules de politesse : leur repetition ne dit rien.
+# Stop words and polite formulas: their repetition says nothing.
 _BANALS_BASE = {
     "votre",
     "notre",
@@ -146,33 +146,33 @@ def _banals() -> set[str]:
         from jobhunter.profil import identite
 
         nom = {m.lower() for m in identite()["nom"].split()}
-    except Exception:  # profil absent : on compte sans son nom
+    except Exception:  # profile missing: we count without its name
         nom = set()
     return _BANALS_BASE | nom
 
 
 def texte(chemin: Path | str) -> str:
-    """Le texte affiche d'un .docx, paragraphes separes."""
+    """The displayed text of a .docx, paragraphs separated."""
     x = zipfile.ZipFile(chemin).read("word/document.xml").decode("utf-8", "replace")
     x = re.sub(r"</w:p>", "\n", x)
     return html.unescape(re.sub(r"<[^>]+>", "", x)).strip()
 
 
-# La formule d'appel, quelle qu'elle soit. Ce reperage cherchait « Madame, »
-# ou « Dear  » en debut de ligne, ce qui couvrait les deux seules formules que
-# la lettre savait ecrire. Depuis qu'elle nomme le recruteur, elle ouvre sur
-# « Monsieur Mac Arthur, » ou « Madame Moussa, Madame Girard, » — et l'en-tete
-# n'etait plus coupe du tout. Le nom, le courriel, le telephone et l'objet
-# entraient alors dans le comptage : la lettre Mirova s'est vu reprocher
-# « 2 conjonctions » dans un bloc qui commencait par son propre nom.
+# The salutation, whatever it is. This spotting looked for "Madame,"
+# or "Dear " at the start of a line, which covered the only two formulas that
+# the letter could write. Since it names the recruiter, it opens with
+# "Monsieur Mac Arthur," or "Madame Moussa, Madame Girard," — and the header
+# was no longer cut at all. The name, the email, the phone and the subject
+# then entered the count: the Mirova letter was blamed for
+# "2 conjonctions" in a block that started with its own name.
 #
-# On reconnait donc une LIGNE COURTE finissant par une virgule, ce qu'aucune
-# ligne d'en-tete ne fait et ce que toute formule d'appel fait.
+# So we recognise a SHORT LINE ending with a comma, which no
+# header line does and which every salutation does.
 _RX_APPEL = re.compile(r"^(?:Madame|Monsieur|Mesdames|Messieurs|Bonjour|Dear)\b.{0,60},$")
 
 
 def corps(t: str) -> str:
-    """Le corps, sans l'en-tete (nom, courriel, telephone, date, objet)."""
+    """The body, without the header (name, email, phone, date, subject)."""
     lignes = [l for l in t.split("\n") if l.strip()]
     for i, l in enumerate(lignes):
         if _RX_APPEL.match(l.strip()):
@@ -181,7 +181,7 @@ def corps(t: str) -> str:
 
 
 def defauts(t: str) -> list[str]:
-    """La liste des redites d'une lettre. Vide = rien a signaler."""
+    """The list of a letter's repetitions. Empty = nothing to report."""
     c = corps(t)
     trouves: list[str] = []
     banals = _banals()
@@ -191,17 +191,17 @@ def defauts(t: str) -> list[str]:
         if n >= 2:
             trouves.append(f"{n} conjonctions : {ph[:88]}…")
 
-    # PAS DE POINT-VIRGULE. Demande de l'utilisateur, 2026-09-21. Il joint deux
-    # propositions que le point separe mieux : la seconde se lit seule, et une
-    # lettre de candidature gagne a etre faite de phrases courtes. Dans une
-    # enumeration de CV, il fait le travail du «  ·  » que ces documents
-    # emploient deja ailleurs — un seul separateur vaut mieux que deux.
+    # NO SEMICOLON. The user's request, 2026-09-21. It joins two
+    # clauses that the full stop separates better: the second reads on its own, and a
+    # cover letter gains from being made of short sentences. In a
+    # CV enumeration, it does the job of the " · " that these documents
+    # already use elsewhere — a single separator is better than two.
     for m in re.finditer(r"[^.!?]*;[^.!?]*", c):
         trouves.append(f"point-virgule : {m.group(0).strip()[:82]}…")
 
-    # Elements d'enumeration : on decoupe sur les virgules ET sur la
-    # conjonction finale, sinon « l'analyse financière et la modélisation
-    # financière » compte pour un seul element et la repetition passe.
+    # Enumeration items: we split on the commas AND on the
+    # final conjunction, otherwise "l'analyse financière et la modélisation
+    # financière" counts as a single item and the repetition goes through.
     for ph in re.split(r"(?<=[.!?])\s+", c):
         elems = [e.strip() for e in re.split(r",|\bet\b|\band\b", ph) if e.strip()]
         fins = [e.rsplit(" ", 1)[-1].lower().strip(".:;") for e in elems if len(e.split()) >= 2]
@@ -209,11 +209,11 @@ def defauts(t: str) -> list[str]:
             if n >= 2 and len(mot) >= 5 and mot not in banals:
                 trouves.append(f"« {mot} » finit {n} elements : {ph[:78]}…")
 
-    # Les mots en MINUSCULE seulement. « Master en Finance », « Acme Finance »
-    # et « corporate finance » comptaient pour trois repetitions du meme mot,
-    # alors que les deux premiers sont des noms propres — un diplome et une
-    # societe — qu'on ne peut ni renommer ni eviter. Ne restent que les mots
-    # que la redaction choisit vraiment.
+    # LOWER-CASE words only. "Master en Finance", "Acme Finance"
+    # and "corporate finance" counted as three repetitions of the same word,
+    # while the first two are proper nouns — a degree and a
+    # company — that can neither be renamed nor avoided. Only the words
+    # that the writing really chooses remain.
     mots = re.findall(r"\b[a-zà-ÿ]{5,}\b", c)
     for mot, n in collections.Counter(mots).items():
         if n >= 3 and mot not in banals:
@@ -229,15 +229,15 @@ def relire(
     autres_entreprises: Iterable[str] = (),
     connus: Iterable[str] = (),
 ) -> list[Remarque]:
-    """Les remarques sur une lettre ; vide = rien à signaler.
+    """The remarks on a letter; empty = nothing to report.
 
     Args:
-        lettre: le texte de la lettre (en-tête compris : il est écarté ici).
-        entreprise: l'entreprise de l'offre.
-        annonce: le texte de l'annonce (pour le nom du destinataire).
-        autres_entreprises: les autres entreprises de la file ; une seule nommée dans la
-            lettre trahit un copier-coller.
-        connus: adresses web et courriels légitimes (ceux du profil, de l'entreprise).
+        lettre: the text of the letter (header included: it is set aside here).
+        entreprise: the offer's company.
+        annonce: the text of the posting (for the recipient's name).
+        autres_entreprises: the other companies of the queue; a single one named in
+            the letter gives away a copy-paste.
+        connus: legitimate web and email addresses (the profile's, the company's).
     """
     le_corps = corps(lettre)
     sortie: list[Remarque] = []
@@ -249,7 +249,7 @@ def relire(
             Remarque("gabarit", _extrait(lettre, m.start(), m.end()), "Champ non rempli.")
         )
 
-    # Ponctuation de la règle mécanique : tiret cadratin, barre oblique hors adresses.
+    # Punctuation of the mechanical rule: em dash, slash outside addresses.
     sans_liens = _RX_URL.sub(" ", le_corps)
     for m in re.finditer(r"—|(?<![\d\s])/(?![\d\s])", sans_liens):
         sortie.append(
@@ -262,7 +262,7 @@ def relire(
     for d in defauts(lettre):
         sortie.append(Remarque("redite", d, "Une conjonction par phrase, aucun mot trois fois."))
 
-    # Adresses que rien n'explique : la signature et l'entreprise sont « connues ».
+    # Addresses that nothing explains: the signature and the company are "known".
     connus = [c for c in connus if c]
     for rx in (_RX_URL, _RX_MAIL):
         for m in rx.finditer(le_corps):
@@ -276,7 +276,7 @@ def relire(
                     )
                 )
 
-    # Copier-coller : une autre entreprise de la file nommée dans le corps.
+    # Copy-paste: another company of the queue named in the body.
     mien = _plat(entreprise)
     texte_plat = f" {_plat(le_corps)} "
     for autre in {a for a in autres_entreprises if a}:
@@ -293,7 +293,7 @@ def relire(
                 )
             )
 
-    # Destinataire nommé : seulement si l'annonce le nomme.
+    # Named recipient: only if the posting names them.
     if annonce:
         from jobhunter.documents.message import nom_dans_offre
 
@@ -327,13 +327,13 @@ def _hote_chemin(adresse: str) -> tuple[str, str]:
 
 
 def _legitime(trouve: str, connus: Iterable[str]) -> bool:
-    """L'adresse trouvée dans la lettre est-elle l'une des connues ?
+    """Is the address found in the letter one of the known ones?
 
-    Les hôtes se comparent entiers, à une frontière de point : « jobs.acme.fr » va avec
-    « acme.fr », mais « acme.fr.evil.test » et « evil.test/acme.fr » non (audit Codex du
-    19/10 : la comparaison par sous-chaîne les laissait passer). Un connu qui porte un
-    chemin (un profil LinkedIn) n'admet que ce chemin et ce qui le prolonge ; un courriel
-    connu n'admet que lui-même.
+    Hosts are compared whole, on a dot boundary: "jobs.acme.fr" goes with
+    "acme.fr", but "acme.fr.evil.test" and "evil.test/acme.fr" do not (Codex audit of
+    19/10: the substring comparison let them through). A known entry that carries a
+    path (a LinkedIn profile) only admits that path and what extends it; a known
+    email only admits itself.
     """
     hote, chemin = _hote_chemin(trouve)
     if not hote or "." not in hote:
@@ -347,7 +347,7 @@ def _legitime(trouve: str, connus: Iterable[str]) -> bool:
         if kc.startswith("@") or chemin.startswith("@"):
             if (kh, kc) == (hote, chemin):
                 return True
-            # Un courriel au domaine d'un site connu (rh@acme.fr pour acme.fr).
+            # An email at the domain of a known site (rh@acme.fr for acme.fr).
             if chemin.startswith("@") and not kc and (hote == kh or hote.endswith("." + kh)):
                 return True
             continue

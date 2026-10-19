@@ -1,5 +1,5 @@
-"""Motifs de retrait de tri_file : quant, ingenierie data, outillage lourd, doublons,
-non-offres, etudiant ; et la protection du suivi. Converti depuis Scripts/test_tri_file.py.
+"""tri_file's removal reasons: quant, data engineering, heavy tooling, duplicates,
+non-offers, student; and the tracker's protection. Converted from Scripts/test_tri_file.py.
 """
 
 import pytest
@@ -9,7 +9,7 @@ from jobhunter.scoring import tri as T
 
 
 def m(titre, desc="", **kw):
-    # Un lien d'offre par defaut : sans lui, toute ligne serait « sans lien ».
+    # A default offer link: without it, every row would be "sans lien".
     kw.setdefault("url", "https://www.linkedin.com/jobs/view/1")
     return T.motif({"poste": titre, "description": desc, **kw}, set())
 
@@ -17,7 +17,7 @@ def m(titre, desc="", **kw):
 LOURD = "Stack : Kubernetes, Terraform, CI/CD, PyTorch, LangChain, AWS."
 
 MOTIFS = [
-    # quant : retire, meme avec ESG dans le titre
+    # quant: removed, even with ESG in the title
     ("Analyste Climate Finance / Green Bonds / ESG Quant", "", "metier:quant"),
     ("Quantitative Risk Analyst", "", "metier:quant"),
     ("Analyste Quantitatif Risques (F/H)", "", "metier:quant"),
@@ -33,7 +33,7 @@ MOTIFS = [
     ("Ingénieur Data Climat (H/F)", "", "metier:ingenierie_data"),
     ("Analytics Engineer Sustainability", "", "metier:ingenierie_data"),
     ("Data Analyst ESG", "", None),
-    # AI engineer garde, sauf outillage lourd
+    # AI engineer kept, except heavy tooling
     ("AI Engineer", "Python, LLM, agents, prompts.", None),
     ("AI Engineer", LOURD, "outils_techniques"),
     (
@@ -41,8 +41,8 @@ MOTIFS = [
         "FastAPI, PostgreSQL, CI/CD, AWS",
         "outils_techniques",
     ),
-    ("AI Analyst", "Databricks, Snowflake, Azure", None),  # 3 familles : sous le seuil
-    # etudiant demande : retire, meme en V.I.E ; un diplome accepte : garde
+    ("AI Analyst", "Databricks, Snowflake, Azure", None),  # 3 families: below the threshold
+    # student asked for: removed, even as a V.I.E; a degree accepted: kept
     (
         "Finance Leadership Development Program",
         "Are you a fresh graduate or final-year student in Finance?",
@@ -69,15 +69,15 @@ def test_vie_pour_etudiant_retire():
 @pytest.mark.parametrize(
     ("texte", "attendu"),
     [
-        ("AWS, GCP ou Azure", {"cloud"}),  # une seule famille
+        ("AWS, GCP ou Azure", {"cloud"}),  # a single family
         ("Python, SQL, Excel, VBA, Power BI, Tableau, git", set()),  # outils d'analyste
-        ("JavaScript", {"javascript"}),  # pas Java
+        ("JavaScript", {"javascript"}),  # not Java
         ("git, GitHub, Python, Excel, Power BI, PowerPoint, VBA, Power Automate", set()),
         ("Maîtrise du langage C", {"c"}),
         ("Python, C, Rust", {"c", "rust"}),
         ("C/C++", {"c"}),
-        ("C'est un poste ESG, catégorie C.", set()),  # « C'est » n'est pas le langage
-        (".NET, voir www.acme.net", {"dotnet"}),  # un domaine en .net non
+        ("C'est un poste ESG, catégorie C.", set()),  # "C'est" is not the language
+        (".NET, voir www.acme.net", {"dotnet"}),  # a .net domain is not
         ("messages SWIFT et paiements", set()),  # SWIFT bancaire
     ],
 )
@@ -85,7 +85,7 @@ def test_outils_techniques(texte, attendu):
     assert T.outils_techniques(texte) == attendu
 
 
-# ── le suivi protege toujours ──────────────────────────────────────────────────
+# ── the tracker always protects ──────────────────────────────────────────────────
 @pytest.mark.parametrize(
     ("offre", "suivi"),
     [
@@ -185,7 +185,7 @@ def test_le_suivi_garde_son_offre():
     assert dbl(ONEPOINT_LI, ONEPOINT_SITE, proteges={_oid(ONEPOINT_LI)}) == {_oid(ONEPOINT_SITE)}
 
 
-# ── ce qui n'est pas une offre ─────────────────────────────────────────────────
+# ── what is not an offer ─────────────────────────────────────────────────
 @pytest.mark.parametrize(
     ("url", "attendu"),
     [

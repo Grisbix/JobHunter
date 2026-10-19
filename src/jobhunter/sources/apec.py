@@ -24,75 +24,75 @@ from jobhunter.sources.commun import (
 _log = _journal.journal(__name__)
 
 
-# ═══════════════ APEC — le remplacant d'Indeed ═══════════════
+# ═══════════════ APEC — Indeed's replacement ═══════════════
 #
-# POURQUOI. Indeed a rendu 0 offre le 17/09 : 184 requetes en un apres-midi ont
-# epuise la tolerance, et douze sondes etalees sur cinq heures n'ont pas obtenu
-# une seule reponse. Il fallait une source qui couvre le meme besoin — le
-# marche francais large, avec contrat, date de parution et salaire.
+# WHY. Indeed returned 0 offers on 17/09: 184 requests in one afternoon
+# exhausted the tolerance, and twelve probes spread over five hours did not get
+# a single answer. A source covering the same need was needed — the
+# wide French market, with contract, publication date and salary.
 #
-# L'APEC est le site d'emploi des CADRES en France, et c'est la route la plus
-# propre rencontree dans ce projet :
+# APEC is France's job site for MANAGERS AND PROFESSIONALS, and it is the cleanest
+# route met in this project:
 #
-#   robots.txt        309 octets, AUCUN Disallow pour « User-agent: * »
-#   sitemap declare   sitemap_offres_search_engine.xml.gz, dedie aux offres
-#   API               cms/webservices/rechercheOffre, sans cle ni compte
+#   robots.txt        309 bytes, NO Disallow for "User-agent: *"
+#   declared sitemap  sitemap_offres_search_engine.xml.gz, dedicated to the offers
+#   API               cms/webservices/rechercheOffre, without a key or an account
 #
-# CE QU'ELLE DONNE, EXACTEMENT. Une requete rend 50 offres d'un coup, chacune
-# avec un extrait de 283 caracteres — mesure : min 283, median 283, max 283,
-# c'est une troncature nette. Plus long que les 160 d'Indeed et les 159 de
-# Glassdoor, mais ce n'est PAS l'annonce entiere : j'avais ecrit le contraire
-# ici avant de mesurer.
+# WHAT IT GIVES, EXACTLY. A request returns 50 offers at once, each
+# with an excerpt of 283 characters — measured: min 283, median 283, max 283,
+# it is a clean truncation. Longer than Indeed's 160 and
+# Glassdoor's 159, but it is NOT the whole posting: I had written the opposite
+# here before measuring.
 #
-# La fiche complete n'est pas accessible : l'API de detail
-# (cms/webservices/offre/...) repond 401, et la page HTML est une coquille
-# Angular de 53 ko sans une ligne de l'annonce, ni ld+json. On s'arrete donc a
-# l'extrait — le lien, lui, s'ouvre normalement dans le navigateur de l'utilisateur.
+# The full posting is not accessible: the detail API
+# (cms/webservices/offre/...) answers 401, and the HTML page is a 53 KB
+# Angular shell without a line of the posting, nor ld+json. So we stop at
+# the excerpt — the link, for its part, opens normally in the user's browser.
 #
-# En revanche, et c'est ce qui la rend precieuse : la date de publication est
-# horodatee, le salaire est en clair (« A partir de 50 k€ brut annuel », 23 sur
-# 23 renseignes a la mesure), et `indicateurFaibleCandidature` signale les
-# offres peu concurrencees — personne d'autre ne publie cela.
+# On the other hand, and it is what makes it precious: the publication date is
+# timestamped, the salary is in plain text ("A partir de 50 k€ brut annuel", 23 out of
+# 23 filled in when measured), and `indicateurFaibleCandidature` flags the
+# offers with little competition — nobody else publishes that.
 #
-# Le sitemap, lui, ne liste que 1288 URL de RECHERCHE par fonction et secteur,
-# pas les offres. C'est l'API qui sert, et le sitemap qui atteste qu'elle est
-# faite pour etre lue.
+# The sitemap only lists 1288 SEARCH URLs by function and sector,
+# not the offers. It is the API that serves, and the sitemap that attests it is
+# made to be read.
 APEC_API = "https://www.apec.fr/cms/webservices/rechercheOffre"
 
 APEC_FICHE = "https://www.apec.fr/candidat/recherche-emploi.html/emploi/detail-offre/"
 
-APEC_PAUSE = 2  # aucun crawl-delay annonce ; on reste courtois
+APEC_PAUSE = 2  # no crawl-delay announced; we stay courteous
 
 APEC_PAR_PAGE = 50
 
-# LES CODES DE CONTRAT, ETABLIS PAR RECOUPEMENT — pas devines. L'API rend un
-# identifiant de referentiel sans libelle. On a donc croise le code avec les
-# titres qui nomment le contrat en clair, sur sept requetes :
+# THE CONTRACT CODES, ESTABLISHED BY CROSS-CHECKING — not guessed. The API returns a
+# reference identifier without a label. So we crossed the code with the
+# titles that name the contract in plain text, over seven requests:
 #
-#   101888   303 offres, 3 titres explicites, TOUS « CDI »
-#   101887    30 offres, 6 titres explicites, TOUS « CDD »
-#   597137     2 offres, 2 titres explicites, TOUS « Alternance »
-#   101889    21 offres, AUCUN titre explicite  -> non mappe
+#   101888   303 offers, 3 explicit titles, ALL "CDI"
+#   101887    30 offers, 6 explicit titles, ALL "CDD"
+#   597137     2 offers, 2 explicit titles, ALL "Alternance"
+#   101889    21 offers, NO explicit title     -> not mapped
 #
-# Aucun code ne se partage entre deux contrats. Les codes sans preuve restent
-# dehors : mieux vaut « non precise » qu'une colonne fausse — c'est elle qui
-# sert a filtrer, et quatre stages du Credit Agricole etiquetes CDD avaient
-# deja remonte en tete du classement.
+# No code is shared between two contracts. The codes without proof stay
+# out: better "non précisé" than a wrong column — it is the one that
+# serves to filter, and four Credit Agricole internships labelled CDD had
+# already risen to the top of the ranking.
 #
-# Ce mapping n'intervient qu'en DERNIER RECOURS : un titre qui dit « CDD 8
-# mois » l'emporte toujours sur le code.
+# This mapping only comes in as a LAST RESORT: a title that says "CDD 8
+# mois" always wins over the code.
 _APEC_CONTRAT = {101888: "CDI", 101887: "CDD", 597137: "Alternance"}
 
-# REFUS D'AFFILEE AU-DELA DESQUELS ON ARRETE. L'APEC est derriere DataDome : le
-# 2026-10-02 au soir, apres ~540 requetes d'un audit de liens, ses 55 recherches
-# ont toutes rendu 403. Insister sur les 52 suivantes ne rapporte rien et
-# prolonge la mise a l'ecart. Trois refus d'affilee : la source est fermee
-# pour aujourd'hui.
+# REFUSALS IN A ROW BEYOND WHICH WE STOP. APEC is behind DataDome: on the
+# evening of 2026-10-02, after ~540 requests from a link audit, its 55 searches
+# all returned 403. Insisting on the next 52 brings nothing and
+# prolongs the exclusion. Three refusals in a row: the source is closed
+# for today.
 APEC_ABANDON = 3
 
 
 def _apec_page(mot: str, debut: int) -> tuple[Any, int]:
-    """Une page de resultats APEC. Liste vide en cas de refus."""
+    """An APEC results page. Empty list on refusal."""
     import urllib.error
     import urllib.request
 
@@ -109,7 +109,7 @@ def _apec_page(mot: str, debut: int) -> tuple[Any, int]:
     tetes["Accept"] = "application/json"
     try:
         r = urllib.request.Request(exiger_http(APEC_API), data=corps, headers=tetes, method="POST")
-        with urllib.request.urlopen(r, timeout=30) as f:  # nosec B310 : schéma vérifié par exiger_http
+        with urllib.request.urlopen(r, timeout=30) as f:  # nosec B310 : scheme checked by exiger_http
             d = json.loads(_lire_borne(f).decode("utf-8", "replace"))
     except urllib.error.HTTPError as e:
         _log.info(f"    ! {mot} : HTTP {e.code}")
@@ -122,12 +122,12 @@ def _apec_page(mot: str, debut: int) -> tuple[Any, int]:
 
 
 def scan_apec(mots: list[str] | None = None, pages: int = 2) -> list[dict[str, Any]]:
-    """Offres APEC : titre, societe, lieu, date, salaire, extrait de 283 car.
+    """APEC offers: title, company, place, date, salary, 283-character excerpt.
 
-    `pages` : pages de 50 par mot-cle. Une page coute UNE requete, d'ou le
-    meilleur rendement de toutes nos sources — mais l'extrait reste un extrait,
-    et les offres partent avec `desc_partielle` pour que la promotion d'URL ne
-    remplace jamais une annonce complete par ces 283 caracteres.
+    `pages`: pages of 50 per keyword. A page costs ONE request, hence the best yield
+    of all our sources — but the excerpt stays an excerpt, and the offers go with
+    `desc_partielle` so that URL promotion never replaces a complete posting with
+    these 283 characters.
     """
     mots = mots or _commun.KEYWORDS
     _EX = _commun.contrats_exclus()
@@ -164,11 +164,11 @@ def scan_apec(mots: list[str] | None = None, pages: int = 2) -> list[dict[str, A
                 if not titre or not title_ok(titre):
                     continue
                 desc = _strip_html(o.get("texteOffre") or "")
-                # Le titre d'abord, puis l'extrait, puis le code de l'APEC.
-                # Dans cet ordre : un titre qui dit « CDD 8 mois » est plus sur
-                # qu'un identifiant de referentiel, et 283 caracteres ne
-                # suffisent pas a trancher — 583 offres sur 654 sortaient en
-                # « non precise » avant que le code ne soit exploite.
+                # The title first, then the excerpt, then APEC's code.
+                # In this order: a title that says "CDD 8 mois" is surer
+                # than a reference identifier, and 283 characters are not
+                # enough to decide — 583 offers out of 654 came out as
+                # "non précisé" before the code was used.
                 ctr = (
                     contrat_du_titre(titre)
                     or contrat_de_la_description(desc, "")
@@ -187,12 +187,12 @@ def scan_apec(mots: list[str] | None = None, pages: int = 2) -> list[dict[str, A
                 )
                 x["contrat"] = ctr
                 x["salaire"] = (o.get("salaireTexte") or "").strip()
-                # 283 caracteres ne sont pas une annonce : sans ce drapeau, la
-                # promotion d'URL remplacerait une description complete par cet
-                # extrait. Meme garde que pour Indeed et Glassdoor.
+                # 283 characters are not a posting: without this flag, the
+                # URL promotion would replace a complete description with this
+                # excerpt. Same guard as for Indeed and Glassdoor.
                 x["desc_partielle"] = True
-                # Peu de candidats : l'APEC est seule a le publier, et c'est
-                # exactement ce qui fait la difference sur une candidature.
+                # Few candidates: APEC is the only one to publish it, and it is
+                # exactly what makes the difference on an application.
                 if o.get("indicateurFaibleCandidature"):
                     x["peu_de_candidats"] = True
                 offers.append(x)

@@ -1,11 +1,11 @@
-"""Code recu par courriel : colle le code, surligne Verifier, l'humain clique.
+"""Code received by email: pastes the code, highlights Verify, the human clicks.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+Part of jobhunter.navigation (formerly Scripts/web_nav.py, phase 3.6).
 """
 
 from typing import Any
 
-# ── OTP / code email (SEMI-AUTO : colle le code, surligne Verify, l'humain clique) ──
+# ── OTP / email code (SEMI-AUTOMATIC: pastes the code, highlights Verify, the human clicks) ──
 _OTP_RX_ATTR = r"(otp|passcode|one.?time|verification|verif|\bcode\b|s[eé]cur|security|token|\bpin\b|2fa|mfa|activation|confirm)"
 
 
@@ -77,7 +77,7 @@ def otp_present(page: Any) -> bool:
 
 
 def paste_otp(page: Any, code: Any) -> Any:
-    """Colle le code OTP dans le(s) champ(s). NE soumet PAS. Retour {filled, mode}."""
+    """Pastes the OTP code into the field(s). Does NOT submit. Returns {filled, mode}."""
     if not code:
         return {"filled": 0, "mode": "no_code"}
     try:
@@ -87,9 +87,9 @@ def paste_otp(page: Any, code: Any) -> Any:
 
 
 def highlight_otp_verify(page: Any) -> Any:
-    """Surligne en ROUGE le bouton Vérifier/Valider (data-wn-otp=verify).
+    """Highlights in RED the Verify/Validate button (data-wn-otp=verify).
 
-    NE clique PAS. Retour le libellé du bouton, ou '' si introuvable.
+    Does NOT click. Returns the button's label, or '' if not found.
     """
     try:
         return page.evaluate(_OTP_VERIFY_JS)
@@ -98,9 +98,9 @@ def highlight_otp_verify(page: Any) -> Any:
 
 
 def otp_flow(page: Any, code: Any) -> dict[str, Any]:
-    """SEMI-AUTO : colle le code + surligne le bouton de validation.
+    """SEMI-AUTOMATIC: pastes the code + highlights the validation button.
 
-    L'HUMAIN clique. Retour {pasted, mode, verify}.
+    The HUMAN clicks. Returns {pasted, mode, verify}.
     """
     r = paste_otp(page, code)
     v = highlight_otp_verify(page) if r.get("filled") else ""

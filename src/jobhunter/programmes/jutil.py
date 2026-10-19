@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""jutil.py — utilitaires partagés : écriture ATOMIQUE, verrou, chemins, texte.
+"""jutil.py — shared utilities: ATOMIC writing, lock, paths, text.
 
-Un crash/kill au milieu d'une écriture ne corrompt jamais apply_queue.json.
+A crash/kill in the middle of a write never corrupts apply_queue.json.
 
-Ce module existe aussi pour héberger les helpers que chaque programme réécrivait
-de son côté. Ce n'est pas de l'esthétique : les copies DIVERGENT, et cette
-divergence a déjà produit des bugs réels — une comparaison sensible à la casse
-d'un côté et insensible de l'autre, une normalisation d'accents présente ici et
-absente là, deux décodages `file:///` dont l'un oubliait la forme `file://`.
+This module also exists to host the helpers that each program rewrote on its own.
+It is not aesthetics: the copies DIVERGE, and that divergence has already produced
+real bugs — a case-sensitive comparison on one side and insensitive on the other, an
+accent normalisation present here and missing there, two `file:///` decodings of which
+one forgot the `file://` form.
 """
 
 from pathlib import Path
 
-# Le verrou vit dans jobhunter.stockage.verrou ; ces noms restent ceux de toujours.
+# The lock lives in jobhunter.stockage.verrou; these names stay the usual ones.
 # Chemins <-> URL file:/// : jobhunter.liens (phase 3.7), noms inchanges.
 from jobhunter.liens import chemin_de, existe, url_de  # noqa: E402, F401
 from jobhunter.stockage import atomique as _atomique  # noqa: E402
@@ -29,27 +29,27 @@ from jobhunter.texte import cle, sans_accent, verifier_motifs  # noqa: E402, F40
 
 
 def jwrite(path, obj, _brut=False):
-    """Ecriture atomique : on ecrit a cote, puis on bascule d'un seul coup.
+    """Atomic write: we write next to it, then switch in one go.
 
-    DEUX GARDES, chacune pour une panne observee.
+    TWO GUARDS, each for an observed failure.
 
-    1. La QUEUE ne doit jamais reprendre les descriptions en ligne. Elles vivent
-       dans descriptions.json depuis la separation ; queue_io.charger() les
-       reinjecte en memoire pour le travail, et queue_io.sauver() les ressort
-       avant d'ecrire. Onze programmes appellent jwrite(QUEUE, ...) en direct :
-       chacun d'eux remettait les textes dans le fichier, et la queue etait
-       repassee de 2,9 Mo a 15,9 Mo sans que rien ne signale la regression.
-       Plutot que de compter sur onze appelants pour y penser, on redirige ici.
+    1. The QUEUE must never take the descriptions back inline. They live in
+       descriptions.json since the separation; queue_io.charger() re-injects them
+       in memory for the work, and queue_io.sauver() moves them out before writing.
+       Eleven programs call jwrite(QUEUE, ...) directly: each of them put the texts
+       back into the file, and the queue had grown back from 2.9 MB to 15.9 MB
+       without anything reporting the regression. Rather than counting on eleven
+       callers to think of it, we redirect here.
 
-    2. os.replace echoue en PermissionError sous Windows quand OneDrive, un
-       antivirus ou l'app tient encore un handle sur le fichier. L'echec est
-       transitoire : on reessaie quelques fois avant d'abandonner.
+    2. os.replace fails with PermissionError on Windows when OneDrive, an antivirus
+       or the app still holds a handle on the file. The failure is transient: we
+       retry a few times before giving up.
     """
     path = Path(path)
-    # _brut : queue_io a DEJA fait la separation et nous redonne la main pour
-    # l'ecriture. Sans ce drapeau, sa propre ecriture repassait par la garde et
-    # se rappelait a l'infini (RecursionError) des que le chemin n'etait pas le
-    # fichier canonique — un fichier de test, par exemple.
+    # _brut: queue_io has ALREADY done the separation and hands control back to us for
+    # the write. Without this flag, its own write went through the guard again and
+    # called itself forever (RecursionError) as soon as the path was not the
+    # canonical file — a test file, for example.
     if (
         not _brut
         and path.name == "apply_queue.json"

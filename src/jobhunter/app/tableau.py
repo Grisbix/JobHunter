@@ -1,6 +1,6 @@
-"""Le tableau des offres : construction, filtres type Excel, recherche, tri, rafraichissement.
+"""The offers table: construction, Excel-style filters, search, sorting, refresh.
 
-Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
+Part of jobhunter.app (former JobHunter.pyw, phase 3.7)."""
 
 import json
 import tkinter as tk
@@ -61,7 +61,7 @@ from jobhunter.texte import sans_accent
 
 
 class TableauMixin:
-    # ── dashboard plein écran : filtres Excel (clic entête) + table + détail + édition ──
+    # ── full-screen dashboard: Excel filters (header click) + table + detail + editing ──
     def _build_dash(self: "AppTypee", parent: Any) -> None:
         self.colsel: dict[str, Any] = {}  # key -> ("keep"|"excl", set) | None (None = toutes)
         self._colidx = {k: i for i, (k, _, _) in enumerate(COLS)}
@@ -79,8 +79,8 @@ class TableauMixin:
             lightcolor=WORK,
             darkcolor=WORK,
         )
-        # Entete : plan 3 (widgets), texte attenue en capitales de fait — la
-        # donnee doit peser plus lourd que son etiquette.
+        # Header: layer 3 (widgets), dimmed text, effectively in capitals — the
+        # data must weigh more than its label.
         style.configure(
             "Treeview.Heading",
             background=CARD,
@@ -92,7 +92,7 @@ class TableauMixin:
         )
         style.map("Treeview.Heading", background=[("active", BTN_H)], foreground=[("active", TX)])
         style.map("Treeview", background=[("selected", BTN_H)], foreground=[("selected", TX)])
-        # Barres de defilement : celles de clam sont grises et claires, seules
+        # Scrollbars: clam's are grey and light, only
         # taches blanches de toute l'application.
         for orient in ("Vertical", "Horizontal"):
             style.configure(
@@ -107,19 +107,21 @@ class TableauMixin:
                 relief="flat",
             )
             style.map(f"{orient}.TScrollbar", background=[("active", BTN_H)])
-        self.checked: set[Any] = set()  # oids des offres cochées (à postuler en lot)
+        self.checked: set[Any] = set()  # oids of the ticked offers (to apply to in a batch)
         self._voir_masquees = False
-        self._annuler: list[Any] = []  # pile Ctrl+Z : [(oid, entree de suivi AVANT), ...] par geste
+        self._annuler: list[
+            Any
+        ] = []  # Ctrl+Z stack: [(oid, tracking entry BEFORE), ...] per gesture
 
-        # ── ligne 1 : chercher · voir masquées ········· coller un lien ──
-        # Deux lignes au lieu d'une : sur une seule, les cinq boutons de
-        # selection repoussaient la recherche et le champ « coller un lien »
-        # HORS de la fenetre — ils existaient sans qu'on puisse les voir.
+        # ── row 1: search · show hidden ········· paste a link ──
+        # Two rows instead of one: on a single one, the five selection
+        # buttons pushed the search and the "coller un lien" field
+        # OUT of the window — they existed without anyone being able to see them.
         heading = CF(parent, bg=WORK, plat=True)
         heading.pack(fill="x", padx=18, pady=(4, 12))
         CL(heading, text="Offres", fg=TX, font=(_theme.FONT_UI, 26, "bold")).pack(side="left")
-        # CRM : trois indicateurs de travail, pas dix cartes décoratives. Ils
-        # restent synchronisés avec la file chargée et le suivi manuel.
+        # CRM: three work indicators, not ten decorative cards. They
+        # stay in sync with the loaded queue and the manual tracking.
         kpis = CF(parent, bg=WORK, plat=True)
         kpis.pack(fill="x", padx=18, pady=(0, 6))
         self._offer_kpis = {}
@@ -160,7 +162,7 @@ class TableauMixin:
             fg_color=LINE,
         )
         self.sw_masq.pack(side="left", padx=(18, 0))
-        # ＋ coller un lien d'offre → analyse (titre/entreprise/description) + queue + CV/lettre
+        # ＋ paste an offer link → analysis (title/company/description) + queue + CV/letter
         importbar = CF(parent, bg=WORK, plat=True)
         importbar.pack(fill="x", padx=18, pady=(8, 0))
         self.b_addurl = CB(importbar, text="Ajouter une offre", command=self._add_offer_url, bg=BTN)
@@ -174,12 +176,12 @@ class TableauMixin:
         )
         self.e_url.bind("<Return>", lambda e: self._add_offer_url())
 
-        # ── ligne 2 : compteur ········· actions sur la sélection (si cochées) ──
+        # ── row 2: counter ········· actions on the selection (if ticked) ──
         bar2 = CF(parent, bg=WORK, plat=True)
         bar2.pack(fill="x", padx=18, pady=(10, 0))
-        # Sans compteur, rien ne distingue « 12 offres apres filtre » de « 2879 »,
-        # ni un filtre trop strict d'une queue vide : le tableau restait blanc et
-        # muet dans les deux cas.
+        # Without a counter, nothing tells "12 offers after filter" from "2879",
+        # nor a filter that is too strict from an empty queue: the table stayed blank and
+        # silent in both cases.
         self.lbl_count = CL(bar2, text="", bg=WORK, fg=MUT, font=(_theme.FONT_UI, 12), anchor="w")
         self.lbl_count.pack(side="left")
         CB(
@@ -191,9 +193,9 @@ class TableauMixin:
             width=80,
             font=(_theme.FONT_UI, 12),
         ).pack(side="right", padx=(8, 0))
-        # Les actions de lot n'apparaissent QUE s'il y a une selection : quatre
-        # boutons « (0) » permanents etaient du bruit, et le plus dangereux
-        # (Supprimer) attirait l'oeil en rouge sans rien avoir a faire.
+        # Batch actions appear ONLY if there is a selection: four permanent
+        # "(0)" buttons were noise, and the most dangerous one
+        # (Delete) caught the eye in red while having nothing to do.
         self.selbar = CF(bar2, bg=WORK, plat=True)
         self.lbl_sel = CL(self.selbar, text="", bg=WORK, fg=TX, font=(_theme.FONT_UI, 12, "bold"))
         self.lbl_sel.pack(side="left", padx=(0, 10))
@@ -247,9 +249,9 @@ class TableauMixin:
             anchor="e",
         )
 
-        # Le bas (detail + suivi) est place AVANT le tableau, cote bas : le
-        # packer sert les widgets dans l'ordre, et le tableau extensible,
-        # place en premier, prenait toute la hauteur — le suivi etait coupe.
+        # The bottom (detail + tracking) is placed BEFORE the table, bottom side: the
+        # packer serves the widgets in order, and the expandable table,
+        # placed first, took the whole height — the tracking was cut off.
         split = tk.PanedWindow(
             parent,
             orient="horizontal",
@@ -272,11 +274,11 @@ class TableauMixin:
         )
         for key, lbl, wdt in COLS:
             anc = "center" if key in ("fit", "_chk") else "w"
-            # entête _chk = cocher/décocher tout ; autres = menu filtre
+            # _chk header = tick/untick all; others = filter menu
             cmd = (
                 (lambda: self._check_all(None))
                 if key == "_chk"
-                else (lambda k=key: self._col_menu(k))  # type: ignore[misc]  # lambda a parametre par defaut (capture de boucle)
+                else (lambda k=key: self._col_menu(k))  # type: ignore[misc]  # lambda with a default parameter (loop capture)
             )
             self.tree.heading(key, text=_t(lbl), command=cmd, anchor=anc)
             compact = {
@@ -315,30 +317,30 @@ class TableauMixin:
         _hsb.pack(side="bottom", fill="x")
         _vsb.pack(side="right", fill="y")
         self.tree.pack(side="top", fill="both", expand=True)
-        self._urlcol = None  # lien disponible dans la fiche et le menu contextuel
+        self._urlcol = None  # link available in the card and the context menu
         self._chkcol = "#%d" % (1 + [c[0] for c in COLS].index("_chk"))
         self.tree.bind("<Button-1>", self._click_cell, add="+")
         self._dispo_suivre(split)  # separateur tableau | fiche
-        self._dispo_suivre(self.tree)  # largeur des colonnes
-        self.tree.bind("<Double-1>", self._fiche_popup)  # double-clic = fiche complète
+        self._dispo_suivre(self.tree)  # column widths
+        self.tree.bind("<Double-1>", self._fiche_popup)  # double-click = full card
         self.tree.bind("<Return>", self._fiche_popup)
         self.tree.bind("<Button-3>", self._row_menu)  # clic droit = actions (Postuler + statuts)
         self.tree.bind("<<TreeviewSelect>>", self._load_edit)
-        # Suppr sur une ligne = pas intéressé, et le curseur passe a la
-        # suivante : trier 400 offres devient une suite de touches. Lie au
-        # TABLEAU seulement — dans un champ texte, Suppr efface une lettre.
+        # Del on a row = not interested, and the cursor moves to the
+        # next one: sorting 400 offers becomes a series of keystrokes. Bound to the
+        # TABLE only — in a text field, Del erases a letter.
         self.tree.bind("<Delete>", lambda e: (self._pas_interesse(self._cur), "break")[1])
         self.tree.tag_configure("odd", background=ROW1)
         self.tree.tag_configure("even", background=ROW0)
         for ls, col in LS_COLOR.items():
             self.tree.tag_configure("ls_" + ls, foreground=col)
-        # Poses APRES les couleurs de lien : sur une meme ligne, le dernier tag
-        # configure l'emporte, et le jugement de l'utilisateur prime sur l'etat du lien.
+        # Set AFTER the link colours: on the same row, the last configured
+        # tag wins, and the user's judgement takes precedence over the link state.
         for st, col in ST_COULEUR.items():
             self.tree.tag_configure("st_" + st, foreground=col)
         self._sort = (None, False)
 
-        # ── bas : détail de l'offre (gauche) + suivi (droite) ──
+        # ── bottom: offer detail (left) + tracking (right) ──
         dcard = CF(bas, bg=CARD)
         dcard.pack(side="top", fill="both", expand=True)
         dtop = CF(dcard, bg=CARD, plat=True)
@@ -357,10 +359,10 @@ class TableauMixin:
         ).pack(side="right")
         self.detail = self._zone_texte(dcard, height=7, bg=CARD)
         self.detail.master.pack(fill="both", expand=True, padx=(14, 6), pady=(4, 10))
-        self.detail.bind("<Double-1>", lambda e: self._detail_full())  # double-clic = plein écran
+        self.detail.bind("<Double-1>", lambda e: self._detail_full())  # double-click = full screen
         self._detail_vide()
 
-        # ── panneau d'édition du suivi (écrit suivi.json) ──
+        # ── tracking editing panel (writes suivi.json) ──
         ed = CF(bas, bg=CARD)
         ed.pack(side="bottom", fill="x", padx=14, pady=14, before=dcard)
         ed.grid_columnconfigure(1, weight=1)
@@ -389,7 +391,7 @@ class TableauMixin:
             wraplength=320,
             justify="left",
         )
-        # Le titre figure déjà dans la fiche ; conserver le widget pour les mises à jour.
+        # The title already appears in the card; keep the widget for updates.
         CL(fields, text="Statut", fg=MUT).grid(row=2, column=0, sticky="w", padx=(0, 12))
         self.e_st = _ChoixStatut(fields)
         self.e_st.grid(row=2, column=1, sticky="ew", pady=3)
@@ -455,10 +457,10 @@ class TableauMixin:
         self.b_suivi.configure(text=_t("Suivi et note ") + ("▾" if self._suivi_open else "▸"))
 
     def _zone_texte(self: "AppTypee", parent: Any, height: Any = 7, bg: Any = ROW0) -> Any:
-        """Texte en lecture, au theme : tk.Text + barre ttk stylee.
+        """Read-only text, themed: tk.Text + styled ttk bar.
 
-        ScrolledText impose une barre tk que Windows dessine toujours en gris
-        clair. Le cadre porteur est `t.master` — c'est lui qu'on place.
+        ScrolledText imposes a tk bar that Windows always draws in light grey. The
+        carrying frame is `t.master` — that is the one we place.
         """
         fr = tk.Frame(parent, bg=bg)
         t = tk.Text(
@@ -582,7 +584,7 @@ class TableauMixin:
                 shown.append(v)
                 i = lb.size()
                 lb.insert("end", v if v else "(vide)")
-                # coché = valeur retenue à l'affichage (keep→dans set ; excl→hors set)
+                # ticked = value kept on display (keep→in set; excl→out of set)
                 keep = (
                     (cur is None)
                     or (cmode == "keep" and v in cset)
@@ -603,19 +605,19 @@ class TableauMixin:
         def _sel() -> Any:
             return {shown[i] for i in lb.curselection()}  # type: ignore[no-untyped-call]  # curselection : typeshed : non annotee
 
-        def keep() -> None:  # garder seulement la sélection
+        def keep() -> None:  # keep only the selection
             sel = _sel()
             self.colsel[key] = None if len(sel) >= len(vals) else ("keep", sel)
             win.destroy()
             self.refresh_table()
 
-        def excl() -> None:  # exclure la sélection, montrer le reste
+        def excl() -> None:  # exclude the selection, show the rest
             sel = _sel()
             self.colsel[key] = ("excl", sel) if sel else None
             win.destroy()
             self.refresh_table()
 
-        def only(_e: Any) -> None:  # double-clic une valeur → seulement celle-ci
+        def only(_e: Any) -> None:  # double-click a value → only that one
             c = lb.curselection()  # type: ignore[no-untyped-call]  # curselection : typeshed : non annotee
             if not c:
                 return
@@ -648,7 +650,7 @@ class TableauMixin:
                 f = win.focus_get()
             except Exception:
                 f = None
-            # ne ferme QUE si le focus a quitté le popup (pas un clic sur un enfant)
+            # closes ONLY if the focus left the popup (not a click on a child)
             if f is None or not str(f).startswith(str(win)):
                 win.destroy()
 
@@ -666,16 +668,16 @@ class TableauMixin:
         return int(f) if f.isdigit() else -1
 
     def _fitfin(self: "AppTypee", o: Any) -> Any:
-        """Fit decimal (ats_match.fit_detail, 2026-10-09) : departage les ex aequo
-        d'un meme fit entier. Absent sur une offre pas encore rescoree : le fit
-        entier tient lieu."""
+        """Decimal fit (ats_match.fit_detail, 2026-10-09): breaks ties between offers with
+        the same integer fit. Missing on an offer not yet rescored: the integer fit
+        stands in."""
         f = o.get("fit_fin")
         return float(f) if isinstance(f, (int, float)) else float(self._fitnum(o))
 
     def _fit_aff(self: "AppTypee", o: Any) -> Any:
-        """fit_fin a une decimale, SANS plafond : il va de fit - 0,45 a fit + 0,45,
-        donc jusqu'a 10,4 au sommet. Plafonne a 10, tout le haut de la file
-        affichait 10.0 et le tri ne se voyait plus."""
+        """fit_fin has one decimal, WITHOUT a cap: it goes from fit - 0.45 to fit + 0.45,
+        hence up to 10.4 at the top. Capped at 10, the whole top of the queue
+        displayed 10.0 and the sort could no longer be seen."""
         f = o.get("fit_fin")
         return f"{f:.1f}" if isinstance(f, (int, float)) else o.get("fit", "")
 
@@ -697,10 +699,10 @@ class TableauMixin:
         v = o.get(key)
         return v if v is not None else ""
 
-    # Types d'URL qui ne menent PAS a une offre precise : page d'accueil,
-    # portail carrieres, page de resultats. Les ouvrir donne l'impression que
-    # l'app se trompe, alors que le lien direct etait mort et a ete remplace
-    # a dessein (queue_tools.writeback garde l'original dans url_orig).
+    # URL types that do NOT lead to a specific offer: home page,
+    # careers portal, results page. Opening them gives the impression that
+    # the app is wrong, while the direct link was dead and was replaced
+    # on purpose (queue_tools.writeback keeps the original in url_orig).
     _PAS_DIRECT = {
         "HOMEPAGE": "⌂",
         "CAREERS_PORTAL": "⌂",
@@ -710,30 +712,30 @@ class TableauMixin:
     }
 
     def _marque_lien(self: "AppTypee", o: Any) -> Any:
-        """Glyphe d'avertissement, ou '' si le lien ouvre bien une offre."""
+        """Warning glyph, or '' if the link does open an offer."""
         g = self._PAS_DIRECT.get(str(o.get("url_type") or ""), "")
         if g:
             return g
-        # Le type ne suffit pas : jobs.smartrecruiters.com/<Societe> etait classe
-        # OFFRE_DIRECTE alors qu'il ouvre le tableau d'offres de la societe, pas
-        # une offre. Un lien d'offre porte toujours un identifiant — un segment
-        # de chemin supplementaire, un nombre, ou une requete.
+        # The type is not enough: jobs.smartrecruiters.com/<Company> was classified
+        # OFFRE_DIRECTE while it opens the company's job board, not
+        # an offer. An offer link always carries an identifier — an extra path
+        # segment, a number, or a query.
         u = str(o.get("url") or "")
         if not u.startswith("http"):
             return ""
         d = urlparse(u)
         seg = [c for c in (d.path or "").split("/") if c]
-        # UNE RECHERCHE N'EST PAS UNE OFFRE. Le test `d.query` plus bas prenait
-        # toute chaine de requete pour un identifiant d'offre : les 15 liens
+        # A SEARCH IS NOT AN OFFER. The `d.query` test below took
+        # any query string for an offer identifier: the 15 links
         # `welcometothejungle.com/fr/jobs?query=Amundi+Analyste+ESG` passaient
-        # donc pour des liens directs, sans le moindre avertissement. Quatre
-        # d'entre eux trônaient a fit 10 en tete de liste, et cliquer dessus
-        # ouvrait la page de resultats de WTJ — ce que l'utilisateur a vu comme
-        # « l'accueil ». Ce sont des cibles notees a la main, pas des annonces.
+        # hence for direct links, without the slightest warning. Four
+        # of them sat at fit 10 at the top of the list, and clicking them
+        # opened WTJ's results page — what the user saw as
+        # "the home page". These are targets noted by hand, not postings.
         if _RX_RECHERCHE_Q.search(d.query or ""):
             return "≡"
-        # Un chemin qui SE TERMINE par un mot de rubrique ouvre la liste des
-        # postes, jamais un poste : /careers, /recrutement, /companies/<slug>…
+        # A path that ENDS with a section word opens the list of
+        # jobs, never a job: /careers, /recrutement, /companies/<slug>…
         if seg and seg[-1].lower().strip("-_") in _RUBRIQUES:
             return "⌂"
         if d.query or len(seg) >= 2 or any(c.isdigit() for c in "".join(seg)):
@@ -741,15 +743,15 @@ class TableauMixin:
         return "⌂"
 
     # ── RECHERCHE LIBRE ─────────────────────────────────────────────────────
-    # _sansaccent vivait ici, en 4e copie de la meme normalisation.
+    # _sansaccent lived here, as the 4th copy of the same normalisation.
     _sansaccent = staticmethod(sans_accent)
 
     def _texte_offre(self: "AppTypee", o: Any) -> Any:
-        """Tout le texte cherchable d'une offre, mis en cache par identifiant.
+        """All the searchable text of an offer, cached by identifier.
 
-        Sans cache, chaque frappe reconstruisait la chaine pour 2500 offres dont
-        la description fait plusieurs milliers de caracteres — la saisie devenait
-        saccadee. Le cache est vide a chaque load_offers().
+        Without a cache, each keystroke rebuilt the string for 2500 offers whose
+        description is several thousand characters long — typing became jerky. The
+        cache is emptied at each load_offers().
         """
         oid = self._oid(o)
         t = self._search_cache.get(oid)
@@ -776,7 +778,7 @@ class TableauMixin:
         return t
 
     def _focus_search(self: "AppTypee", e: Any = None) -> None:
-        """Ctrl+F : donne le focus au champ et efface l'invite."""
+        """Ctrl+F: gives the focus to the field and clears the placeholder."""
         self.e_search.focus_set()
         self._search_focus()
 
@@ -785,17 +787,17 @@ class TableauMixin:
             self.e_search.delete(0, "end")
 
     def _search_termes(self: "AppTypee") -> Any:
-        """Termes saisis, ou [] si le champ est vide / affiche l'invite."""
+        """Terms typed, or [] if the field is empty / shows the placeholder."""
         q = self.e_search.get().strip()
         if not q or q == SEARCH_HINT:
             return []
         return [m for m in self._sansaccent(q).split() if m]
 
     def _search_differe(self: "AppTypee", e: Any = None) -> None:
-        """Relance la recherche 300 ms apres la DERNIERE frappe.
+        """Restarts the search 300 ms after the LAST keystroke.
 
-        Sans ce delai, refresh_table() reconstruit les 2500 lignes du tableau a
-        chaque caractere tape : la fenetre se fige entre deux touches.
+        Without this delay, refresh_table() rebuilds the 2500 rows of the table at
+        each character typed: the window freezes between two keys.
         """
         if getattr(self, "_search_job", None):
             try:
@@ -808,14 +810,14 @@ class TableauMixin:
         self._search_job = None
         termes = self._search_termes()
         if termes == self._search_termes_actifs:
-            return  # rien de neuf : on ne redessine pas
+            return  # nothing new: no redraw
         self._search_termes_actifs = termes
         self.refresh_table()
 
     def _search_clear(self: "AppTypee", e: Any = None) -> None:
         self.e_search.delete(0, "end")
         self.e_search.insert(0, SEARCH_HINT)
-        self.root.focus_set()  # sinon l'invite serait effacee par le FocusIn
+        self.root.focus_set()  # otherwise the placeholder would be erased by the FocusIn
         self._search_termes_actifs = []
         self.refresh_table()
 
@@ -828,18 +830,18 @@ class TableauMixin:
         poste = o.get("poste", "")
         if marque and u.startswith("http"):
             host = marque + " " + host
-            # LE MARQUEUR DOIT ETRE LA OU L'OEIL VA. Il ne vivait que dans la
-            # colonne « site », tout a droite : en triant par fit on ne le voit
-            # pas. Quatre lignes dont le lien est une RECHERCHE trônaient a
-            # fit 10, et cliquer dessus ouvrait la page de resultats du site —
-            # « ça m'envoie sur l'accueil ». On le met aussi devant l'intitule.
+            # THE MARKER MUST BE WHERE THE EYE GOES. It only lived in the
+            # "site" column, far right: sorting by fit, one does not see
+            # it. Four rows whose link is a SEARCH sat at
+            # fit 10, and clicking them opened the site's results page —
+            # "it sends me to the home page". We also put it before the title.
             poste = f"{marque} {poste}"
         st_txt = f"{ST_EMOJI.get(stt, '')} {stt}".strip() if stt else DEFAULT_ST
         chk = "☑" if self._oid(o) in self.checked else "☐"
-        # ZONE. Bordeaux et l'Ile-de-France d'abord, le Sud-Est ensuite : c'est
-        # une preference de l'utilisateur, PAS une mesure d'adequation du poste. Elle
-        # vit donc dans sa propre colonne, filtrable, et ne touche pas au fit —
-        # une offre parfaite a Lille reste une offre parfaite, mal placee.
+        # ZONE. Bordeaux and Île-de-France first, the South-East next: it is
+        # a preference of the user, NOT a measure of how well the job fits. It
+        # therefore lives in its own filterable column, and does not touch the fit —
+        # a perfect offer in Lille stays a perfect offer, badly located.
         zone = o.get("zone") or ""
         zone_txt = ZONE_ETIQ.get(zone, zone)
         if zone == "prioritaire":
@@ -848,10 +850,10 @@ class TableauMixin:
                 zone_txt = "1 · " + _libelle_secteur(_sz)
         contrat = o.get("contrat") or ""
         # LIEU : toute l'Ile-de-France s'affiche « Paris » (l'utilisateur, 2026-10-05).
-        # « La Defense - 92 », « Paris, Ile-de-France, France », « Courbevoie »
-        # faisaient chacun une case du filtre. Le lieu exact reste dans la fiche.
-        # PAYS : sa propre colonne, filtrable — 61 pays dans la file.
-        # REGION (2026-10-07) : Europe, Amerique du Nord, Asie... un clic par continent.
+        # "La Defense - 92", "Paris, Ile-de-France, France", "Courbevoie"
+        # each made a box of the filter. The exact place stays in the card.
+        # COUNTRY: its own filterable column — 61 countries in the queue.
+        # REGION (2026-10-07): Europe, North America, Asia... one click per continent.
         lieu = o.get("localisation") or ""
         return [
             chk,
@@ -871,10 +873,10 @@ class TableauMixin:
         ]
 
     def _contrats_exclus(self: "AppTypee") -> Any:
-        """Types de contrat masques, lus dans sources_config.json — le MEME
-        fichier que le scan. Le reglage reste donc dans les parametres : il
-        suffit de vider la liste pour tout revoir, sans toucher au code.
-        Relu a chaque rafraichissement, pour ne pas exiger un redemarrage."""
+        """Hidden contract types, read from sources_config.json — the SAME file as the
+        scan. The setting thus stays in the parameters: emptying the list is enough
+        to see everything again, without touching the code.
+        Re-read at each refresh, so as not to require a restart."""
         try:
             cfg = json.loads((SCRIPTS / "sources_config.json").read_text(encoding="utf-8"))
             return set(cfg.get("contrats_exclus") or [])
@@ -905,8 +907,8 @@ class TableauMixin:
         if sk:
             rows = sorted(self.offers, key=lambda o: self._sortkey(o, sk), reverse=not asc)
         else:
-            # Departage par entreprise : ats_pct servait de second critere, mais
-            # la colonne a ete retiree et le score ne veut plus rien dire ici.
+            # Tie-break by company: ats_pct served as second criterion, but
+            # the column was removed and the score no longer means anything here.
             rows = sorted(
                 self.offers, key=lambda o: (-self._fitnum(o), str(o.get("entreprise") or ""))
             )
@@ -924,7 +926,7 @@ class TableauMixin:
                 pas_int += 1
                 if not self._voir_masquees:
                     continue
-            # tous les termes doivent etre presents (ET), dans n'importe quel champ
+            # all the terms must be present (AND), in any field
             if termes:
                 txt = self._texte_offre(o)
                 if not all(m in txt for m in termes):
@@ -943,9 +945,9 @@ class TableauMixin:
             ls = o.get("link_status", "")
             if ls in LS_COLOR:
                 tags.append("ls_" + ls)
-            # Une offre jugee mauvaise reste visible — l'utilisateur doit pouvoir
-            # revenir sur son verdict — mais grisee, pour que l'oeil la saute.
-            # Les autres statuts colorent la ligne (ST_COULEUR).
+            # An offer judged bad stays visible — the user must be able to
+            # go back on their verdict — but greyed out, so that the eye skips it.
+            # The other statuses colour the row (ST_COULEUR).
             if stt in ST_COULEUR:
                 tags.append("st_" + stt)
             iid = self.tree.insert("", "end", values=vals, tags=tuple(tags))
@@ -953,7 +955,7 @@ class TableauMixin:
             n += 1
         for key, lbl, _ in COLS:
             if key == "_chk":
-                continue  # entête ☐ garde son libellé (cocher/décocher tout)
+                continue  # ☐ header keeps its label (tick/untick all)
             arrow = (" ▲" if asc else " ▼") if sk == key else ""
             filt = " ▾" if self.colsel.get(key) is not None else ""
             self.tree.heading(key, text=str(_t(lbl)) + arrow + filt)

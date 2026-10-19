@@ -1,9 +1,9 @@
-"""Accessibilité de l'interface (E3) : contrastes WCAG, boutons au clavier, focus visible.
+"""Accessibility of the interface (E3): WCAG contrasts, keyboard buttons, visible focus.
 
-CustomTkinter dessine ses widgets sur des canevas : UI Automation ne leur voit pas de
-nom (D1, feuille de route), et ce test ne le prétend pas. Ce qu'il garantit : le texte
-se lit (4,5:1), un contour de champ et un anneau de focus se voient (3:1), et chaque
-bouton se joue au clavier.
+CustomTkinter draws its widgets on canvases: UI Automation sees no name
+for them (D1, roadmap), and this test does not claim otherwise. What it guarantees: the text
+is readable (4.5:1), a field outline and a focus ring are visible (3:1), and each
+button can be operated from the keyboard.
 """
 
 import pytest
@@ -23,7 +23,7 @@ def contraste(a: str, b: str) -> float:
     return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
 
 
-# (texte, fond) réellement employés ensemble dans l'app.
+# (text, background) actually used together in the app.
 TEXTES = [
     ("TX", "BG"), ("TX", "CARD"), ("TX", "WORK"), ("TX", "BTN"), ("TX", "BTN_H"),
     ("MUT", "BG"), ("MUT", "CARD"), ("MUT", "WORK"),
@@ -49,7 +49,7 @@ def test_contour_de_champ_visible(fond):
     "fond", ["BG", "CARD", "WORK", "BTN", "DEL", "ACC", "ACC_H", "SIDE", "SIDE_CARD", "SIDE_H"]
 )
 def test_anneau_de_focus_visible_sur_chaque_fond(fond):
-    """L'anneau tranche sur le bouton qu'il entoure ET sur le fond de page autour."""
+    """The ring stands out on the button it surrounds AND on the page background around it."""
     couleur = getattr(t, fond)
     anneau = t.anneau_focus(couleur)
     autour = t.SIDE if fond.startswith("SIDE") else t.BG

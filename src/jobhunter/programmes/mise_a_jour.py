@@ -1,39 +1,41 @@
 #!/usr/bin/env python3
-"""mise_a_jour.py — Met JobHunter a jour depuis GitHub, sans toucher a tes donnees.
+"""mise_a_jour.py — Updates JobHunter from GitHub, without touching your data.
 
-    python JobHunter.pyw maj            # met a jour si une version plus recente existe
-    python JobHunter.pyw maj --verifier # dit s'il y a une mise a jour, et ce qu'elle apporte
-    python JobHunter.pyw maj --forcer   # reinstalle meme a version egale
-    python JobHunter.pyw maj --annuler  # revient a la version d'avant la derniere mise a jour
+    python JobHunter.pyw maj            # updates if a more recent version exists
+    python JobHunter.pyw maj --verifier # says whether there is an update, and what it brings
+    python JobHunter.pyw maj --forcer   # reinstalls even at an equal version
+    python JobHunter.pyw maj --annuler  # goes back to the version before the last update
 
-Deux chemins :
-  - dossier clone avec git -> `git pull --rebase --autostash` ;
-  - dossier dezippe        -> telecharge le ZIP de la branche main et remplace
-                              les fichiers du programme, un par un.
+Three paths:
+  - folder cloned with git  -> `git pull --rebase --autostash`;
+  - unzipped folder         -> downloads the ZIP (the main branch, or the tag of the
+                               announced version once releases are signed, ADR 0012)
+                               and replaces the program's files, one by one;
+  - installed application   -> downloads, checks and opens the next installer.
 
-Dans les deux cas, la mise a jour :
-  1. affiche les nouveautes (CHANGELOG.md) entre ta version et la nouvelle ;
-  2. installe, puis CONTROLE que le programme se charge (compilation de tous les
-     scripts, import des modules centraux sur le profil d'exemple) ;
-  3. si le controle echoue, revient d'elle-meme a la version d'avant ;
-  4. signale les nouveaux reglages du profil que le tien n'a pas encore.
+In the first two cases, the update:
+  1. displays what is new (CHANGELOG.md) between your version and the new one;
+  2. installs, then CHECKS that the program loads (compilation of all the scripts,
+     import of the core modules on the example profile);
+  3. if the check fails, goes back by itself to the previous version;
+  4. reports the new profile settings that yours does not have yet.
 
-CE QUI N'EST JAMAIS TOUCHE : ton profil, ton CV (Mon_CV, CV), tes lettres, la
-file d'offres, le suivi des candidatures, les cles d'API — tout ce que git
-ignore. Ces fichiers ne sont pas dans le ZIP, et une garde les refuse quand meme.
+WHAT IS NEVER TOUCHED: your profile, your CV (Mon_CV, CV), your letters, the queue of
+offers, the application tracking, the API keys — everything git ignores. These files
+are not in the ZIP, and a guard refuses them anyway.
 
-UN FICHIER DU PROGRAMME QUE TU AS MODIFIE est garde tel quel ; la nouvelle
-version est posee a cote, en `.nouveau`, et le bilan te le signale. « Modifie »
-= different de ce que la version installee contenait : l'empreinte vient du
-manifeste (`.maj_manifeste.json`, ecrit par l'installeur puis par chaque mise a
-jour) ou, a defaut, du ZIP officiel de ta version (etiquette `v<version>`).
+A PROGRAM FILE THAT YOU MODIFIED is kept as is; the new version is put next to it, as
+`.nouveau`, and the summary tells you. "Modified" = different from what the installed
+version contained: the fingerprint comes from the manifest (`.maj_manifeste.json`,
+written by the installer then by each update) or, failing that, from the official ZIP
+of your version (tag `v<version>`).
 
-UN FICHIER RETIRE du programme est enleve s'il n'a pas ete modifie (copie dans
-la sauvegarde), garde sinon. Un fichier que tu as cree n'est jamais touche :
-seuls les fichiers d'une version officielle peuvent etre retires.
+A FILE REMOVED from the program is deleted if it was not modified (copied into the
+backup), kept otherwise. A file you created is never touched: only the files of an
+official version can be removed.
 
-Chaque fichier remplace ou retire est d'abord copie dans
-`_sauvegarde_maj/<date>/`, avec un journal : `--annuler` s'en sert.
+Each file replaced or removed is first copied into `_sauvegarde_maj/<date>/`, with a
+log: `--annuler` uses it.
 """
 
 import argparse
@@ -55,8 +57,8 @@ from jobhunter import racine as _racine
 from jobhunter import signature as _sig
 from jobhunter.reseau import exiger_http
 
-# line_buffering : nos lignes s'intercalent dans le bon ordre avec la sortie de git et
-# pip, et s'affichent au fil de l'eau dans le journal de l'application.
+# line_buffering: our lines interleave in the right order with the output of git and
+# pip, and are displayed as they come in the application's log.
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
 RACINE = _racine.racine()
@@ -65,7 +67,7 @@ ZIP_URL = f"https://github.com/{DEPOT}/archive/refs/heads/main.zip"
 PAGE_VERSIONS = f"https://github.com/{DEPOT}/releases/latest"
 TAG_URL = f"https://github.com/{DEPOT}/archive/refs/tags/v{{}}.zip"
 VERSION_URL = f"https://raw.githubusercontent.com/{DEPOT}/main/VERSION"
-# Fichiers attachés à la release v<version> : la signature et l'installateur.
+# Files attached to the release v<version>: the signature and the installer.
 ASSET_URL = f"https://github.com/{DEPOT}/releases/download/v{{}}/{{}}"
 SETUP = "JobHunterSetup.exe"
 MANIFESTE = RACINE / ".maj_manifeste.json"
@@ -75,9 +77,9 @@ GIT_AVANT = RACINE / ".maj_git_avant"
 JOURNAL = "_journal.json"
 EXEMPLE = "profil/exemple_finance_esg.json"
 
-# Donnees de l'utilisateur : jamais ecrites, meme si un ZIP les contenait.
-# .venv : l'environnement Python cree par installer.bat (2.17) ; hors manifeste, sans
-# quoi une mise a jour en retirerait les fichiers absents de la nouvelle version.
+# User data: never written, even if a ZIP contained it.
+# .venv: the Python environment created by installer.bat (2.17); out of the manifest,
+# otherwise an update would remove from it the files missing from the new version.
 PROTEGES_PREFIXES = (
     "profil/profil",
     "Mon_CV/",
@@ -99,14 +101,14 @@ PROTEGES_NOMS = {
     "Scripts/apply_runner_done.json",
     "Scripts/chemins.json",
 }
-# Ecrits par premier_lancement : presumes modifies quand aucune reference n'existe.
+# Written by premier_lancement: presumed modified when no reference exists.
 REECRITS_AU_PREMIER_LANCEMENT = {"Scripts/sources_config.json"}
-# Jamais « modifies par l'utilisateur » : un VERSION garde tel quel figerait la version
-# installee et la mise a jour se representerait a chaque lancement.
+# Never "modified by the user": a VERSION kept as is would freeze the installed
+# version and the update would come up again at every launch.
 TOUJOURS_REMPLACES = {"VERSION", "CHANGELOG.md"}
-# Modules charges par le controle d'apres mise a jour : le coeur du tri et des documents.
-# Le controle est celui de la version INSTALLEE (controler_nouveau) : cette liste decrit
-# donc toujours l'arbre qui la contient.
+# Modules loaded by the post-update check: the core of sorting and documents.
+# The check is the one of the INSTALLED version (controler_nouveau): this list therefore
+# always describes the tree that contains it.
 MODULES_CENTRAUX = (
     "jobhunter.profil",
     "jobhunter.programmes.jutil",
@@ -118,8 +120,8 @@ MODULES_CENTRAUX = (
     "jobhunter.sources",
     "jobhunter.navigation",
     "jobhunter.programmes.mise_a_jour",
-    # l'application elle-meme (sans ouvrir de fenetre) : une mise a jour qui la casse
-    # serait annulee au lieu de laisser un double-clic sans effet.
+    # the application itself (without opening a window): an update that breaks it
+    # would be cancelled instead of leaving a double-click without effect.
     "jobhunter.app",
 )
 
@@ -135,8 +137,8 @@ def protege(rel):
 
 
 def version_locale():
-    # Application installée : la version livrée avec le programme, pas un fichier des
-    # données de l'utilisateur.
+    # Installed application: the version shipped with the program, not a file of the
+    # user's data.
     base = Path(getattr(sys, "_MEIPASS", RACINE)) if _gele.est_gele() else RACINE
     p = base / "VERSION"
     return p.read_text(encoding="utf-8").strip() if p.exists() else "0"
@@ -148,7 +150,7 @@ def _cle_version(v):
 
 def _get(url, timeout):
     req = urllib.request.Request(exiger_http(url), headers={"User-Agent": "JobHunter-mise-a-jour"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:  # nosec B310 : schéma vérifié par exiger_http
+    with urllib.request.urlopen(req, timeout=timeout) as r:  # nosec B310 : scheme checked by exiger_http
         return r.read()
 
 
@@ -158,8 +160,8 @@ def nouvelle_version(timeout=5, intervalle_h=24):
     Pour l'application, au demarrage : un seul petit fichier (VERSION), au plus
     une fois par jour, et toute erreur (hors ligne, GitHub lent) vaut « rien de
     neuf » — une verification ne doit jamais gener le lancement."""
-    # Sans fichier VERSION, ce n'est pas une installation publiee (copie de
-    # developpement, depot qui synchronise le moteur) : rien a annoncer.
+    # Without a VERSION file, it is not a published installation (development
+    # copy, repository that syncs the engine): nothing to announce.
     if not _gele.est_gele() and not (RACINE / "VERSION").exists():
         return None
     try:
@@ -179,8 +181,8 @@ def nouvelle_version(timeout=5, intervalle_h=24):
 
 
 def nouveautes(changelog, depuis, jusqua=None):
-    """Sections « ## x.y.z » du CHANGELOG plus recentes que `depuis` (et au plus
-    `jusqua`), dans l'ordre du fichier (la plus recente d'abord)."""
+    """The "## x.y.z" sections of the CHANGELOG more recent than `depuis` (and at most
+    `jusqua`), in file order (the most recent first)."""
     out, garde = [], False
     for ligne in (changelog or "").splitlines():
         m = re.match(r"##\s+v?(\d+(?:\.\d+)*)", ligne)
@@ -218,8 +220,8 @@ def _cles(d, prefixe=""):
 
 
 def reglages_manquants(exemple, profil):
-    """Reglages presents dans le profil d'exemple et absents du tien. Une cle dont
-    le parent manque n'est citee qu'une fois (le parent)."""
+    """Settings present in the example profile and missing from yours. A key whose
+    parent is missing is only cited once (the parent)."""
     manque = sorted(_cles(exemple) - _cles(profil))
     return [k for k in manque if k.split(".")[0] == k or k.split(".")[0] not in manque]
 
@@ -248,13 +250,13 @@ def signaler_reglages():
         )
 
 
-# ── Controle d'apres mise a jour ────────────────────────────────────────────
+# ── Post-update check ────────────────────────────────────────────────────────
 
 
 def controler():
-    """True si le programme installe se charge. Compile chaque script, puis
-    importe les modules centraux dans un processus neuf, sur le profil d'exemple
-    (le controle ne depend pas de ton profil et ne le lit pas)."""
+    """True if the installed program loads. Compiles each script, then imports the
+    core modules in a fresh process, on the example profile (the check does not
+    depend on your profile and does not read it)."""
     erreurs = []
     fichiers = [
         *(RACINE / "Scripts").glob("*.py"),
@@ -302,9 +304,9 @@ def controler():
 
 
 def signaler_tache_ancienne():
-    """La 2.0 a range les programmes dans le paquet : une collecte planifiee AVANT vise
-    Scripts/pipeline_quotidien.py, qui n'existe plus, et echouerait chaque matin sans
-    bruit. On le dit (lecture seule : la tache n'est pas modifiee)."""
+    """2.0 moved the programs into the package: a collection scheduled BEFORE targets
+    Scripts/pipeline_quotidien.py, which no longer exists, and would fail every morning
+    silently. We say so (read-only: the task is not changed)."""
     if sys.platform == "win32":
         r = subprocess.run(
             ["schtasks", "/Query", "/TN", "JobHunter - collecte quotidienne", "/XML"],
@@ -326,14 +328,14 @@ def signaler_tache_ancienne():
 
 
 def controler_nouveau():
-    """Le controle de la version qu'on vient d'installer, par SON propre code.
+    """The check of the version just installed, by ITS own code.
 
-    Ce processus est l'ancienne version : sa liste de modules et sa facon de les
-    charger decrivent l'ancien arbre. Une version qui deplace des fichiers (2.0 : les
-    facades de Scripts/ retirees) serait annulee a tort. On lance donc le controle du
-    nouvel arbre, par une entree stable : `python -m jobhunter maj --controler`."""
+    This process is the old version: its list of modules and its way of loading them
+    describe the old tree. A version that moves files (2.0: the Scripts/ facades
+    removed) would be wrongly cancelled. So we run the check of the new tree, through a
+    stable entry: `python -m jobhunter maj --controler`."""
     if not (RACINE / "src" / "jobhunter" / "cli.py").exists():
-        return controler()  # arbre d'avant la 1.12 : pas d'entree unique
+        return controler()  # tree from before 1.12: no single entry
     env = {
         **os.environ,
         "PYTHONPATH": os.pathsep.join(
@@ -358,16 +360,16 @@ def controler_nouveau():
 
 
 def installer_dependances(changes_requirements):
-    """Installe les dépendances de la nouvelle version, AVANT son contrôle.
+    """Installs the new version's dependencies, BEFORE its check.
 
-    Avant le 19/10/2026, l'installation venait après le contrôle et son code de retour
-    était ignoré : une nouvelle dépendance indispensable à l'import faisait annuler la
-    mise à jour avant d'avoir été installée, et un pip en échec finissait sur « JobHunter
-    est à jour » (audit du 19/10/2026). Le retour arrière ne désinstalle pas une
-    dépendance ajoutée : inoffensif, l'ancienne version ne l'importe pas.
+    Before 19/10/2026, the installation came after the check and its return code was
+    ignored: a new dependency required at import made the update be cancelled before
+    it had been installed, and a failed pip ended with "JobHunter est à jour" (audit of
+    19/10/2026). Rolling back does not uninstall an added dependency: harmless, the old
+    version does not import it.
 
     Returns:
-        False si pip a échoué ; l'appelant revient alors à la version d'avant.
+        False if pip failed; the caller then goes back to the previous version.
     """
     if not changes_requirements:
         return True
@@ -397,15 +399,15 @@ def telecharger(url=ZIP_URL, timeout=120):
 
 
 def fichiers_a_installer():
-    """Les fichiers de la version proposée, contrôlés par la signature de l'auteur.
+    """The files of the proposed version, checked by the author's signature.
 
-    Sans clé publique dans cette version (`signature.CLE_PUBLIQUE` vide), rien n'est
-    signé : on prend le ZIP de main, comme avant la 2.18, et on le dit. Avec une clé, on
-    prend le ZIP de l'étiquette de la version annoncée, et chacun de ses fichiers doit
-    avoir l'empreinte que le manifeste signé lui donne.
+    Without a public key in this version (`signature.CLE_PUBLIQUE` empty), nothing is
+    signed: we take the ZIP of main, as before 2.18, and say so. With a key, we take the
+    ZIP of the announced version's tag, and each of its files must have the fingerprint
+    that the signed manifest gives it.
 
     Raises:
-        signature.SignatureInvalide: version refusée (rien n'a été écrit).
+        signature.SignatureInvalide: version refused (nothing was written).
     """
     if not _sig.CLE_PUBLIQUE:
         print("(Versions non signées : la clé de l'auteur n'est pas encore publiée.)")
@@ -419,13 +421,14 @@ def fichiers_a_installer():
 
 
 def maj_application(verifier_seulement):
-    """Application installée : télécharge le nouvel installateur, le contrôle, l'ouvre.
+    """Installed application: downloads the new installer, checks it, opens it.
 
-    Avec une clé publique, l'installateur doit avoir l'empreinte du manifeste signé.
-    Sans, on contrôle au moins l'empreinte publiée à côté (`JobHunterSetup.exe.sha256`),
-    qui protège d'un téléchargement abîmé, pas d'une release piégée. L'installateur
-    s'ouvre normalement : c'est l'utilisateur qui le fait avancer ; il ferme
-    JobHunter (CloseApplications) et garde les données (Documents/JobHunter).
+    With a public key, the installer must have the fingerprint of the signed manifest.
+    Without one, we at least check the fingerprint published next to it
+    (`JobHunterSetup.exe.sha256`), which protects against a damaged download, not
+    against a booby-trapped release. The installer opens normally: it is the user who
+    moves it forward; it closes JobHunter (CloseApplications) and keeps the data
+    (Documents/JobHunter).
     """
     v = nouvelle_version(intervalle_h=0)
     print(
@@ -460,15 +463,15 @@ def maj_application(verifier_seulement):
     chemin = Path(tempfile.gettempdir()) / f"JobHunterSetup-{v}.exe"
     chemin.write_bytes(exe)
     print("L'installateur s'ouvre : suis ses étapes. Tes données sont gardées.")
-    subprocess.Popen([str(chemin)], close_fds=True)  # nosec B603 : fichier contrôlé ci-dessus
+    subprocess.Popen([str(chemin)], close_fds=True)  # nosec B603 : file checked above
     return 0
 
 
 def chemin_sur(rel):
-    """Un chemin de ZIP qui reste dans le dossier du programme.
+    """A ZIP path that stays inside the program's folder.
 
-    Refuse les chemins absolus, les lecteurs (« C: »), les remontées (« .. ») et les
-    barres inverses : un ZIP piégé ne doit jamais écrire hors de RACINE.
+    Refuses absolute paths, drives ("C:"), climbing up ("..") and backslashes: a
+    booby-trapped ZIP must never write outside RACINE.
     """
     if not rel or "\\" in rel or rel.startswith("/") or ":" in rel:
         return False
@@ -476,7 +479,7 @@ def chemin_sur(rel):
 
 
 def fichiers_du_zip(data):
-    """{chemin relatif: contenu} ; le dossier racine du ZIP (JobHunter-main/) est retire."""
+    """{relative path: content}; the ZIP's root folder (JobHunter-main/) is removed."""
     out = {}
     with zipfile.ZipFile(io.BytesIO(data)) as z:
         for info in z.infolist():
@@ -489,13 +492,13 @@ def fichiers_du_zip(data):
 
 
 def initialiser():
-    """Empreinte de l'installation telle que dezippee, AVANT que l'utilisateur ne
-    modifie quoi que ce soit (appele par installer.bat / installer.sh).
+    """Fingerprint of the installation as unzipped, BEFORE the user modifies anything
+    (called by installer.bat / installer.sh).
 
-    Sans elle, la reference est le ZIP de l'etiquette v<version> : exact pour qui a
-    pris une release, faux pour qui a pris le ZIP de main entre deux releases (ses
-    fichiers different de l'etiquette et passeraient pour modifies). Ne fait rien
-    s'il y a deja un manifeste, un depot git ou pas de VERSION."""
+    Without it, the reference is the ZIP of the v<version> tag: exact for those who
+    took a release, wrong for those who took the ZIP of main between two releases (its
+    files differ from the tag and would look modified). Does nothing if there is
+    already a manifest, a git repository or no VERSION."""
     if MANIFESTE.exists() or (RACINE / ".git").exists() or not (RACINE / "VERSION").exists():
         return False
     m = {}
@@ -515,10 +518,9 @@ def initialiser():
 
 
 def reference_installee(version):
-    """Empreintes des fichiers de la version installee : le manifeste s'il existe,
-    sinon le ZIP officiel de cette version (etiquette GitHub). {} si introuvable :
-    on retombe alors sur l'ancienne regle (rien n'est presume modifie, rien n'est
-    retire)."""
+    """Fingerprints of the installed version's files: the manifest if it exists,
+    otherwise the official ZIP of that version (GitHub tag). {} if not found: we then
+    fall back on the old rule (nothing is presumed modified, nothing is removed)."""
     if MANIFESTE.exists():
         try:
             return json.loads(MANIFESTE.read_text(encoding="utf-8")), "manifeste"
@@ -532,12 +534,12 @@ def reference_installee(version):
 
 
 def plan_zip(nouveaux, locaux, reference):
-    """Decide fichier par fichier, sans rien ecrire.
+    """Decides file by file, without writing anything.
 
-    nouveaux  : {rel: contenu} de la nouvelle version
-    locaux    : {rel: empreinte} des fichiers presents sur le disque
-    reference : {rel: empreinte} de la version installee ({} si inconnue)
-    Rend {"remplacer", "ajouter", "garder", "retirer", "garder_retire", "refuser"}."""
+    nouveaux  : {rel: content} of the new version
+    locaux    : {rel: fingerprint} of the files present on disk
+    reference : {rel: fingerprint} of the installed version ({} if unknown)
+    Returns {"remplacer", "ajouter", "garder", "retirer", "garder_retire", "refuser"}."""
     plan = {
         k: []
         for k in (
@@ -560,7 +562,7 @@ def plan_zip(nouveaux, locaux, reference):
         elif h_loc == _sha(contenu):
             plan["identiques"].append(rel)
         elif reference.get(rel) == _sha(contenu):
-            pass  # modifie chez l'utilisateur, inchange en amont : rien a proposer
+            pass  # modified by the user, unchanged upstream: nothing to propose
         else:
             ref = reference.get(rel)
             modifie = (h_loc != ref) if ref else (rel in REECRITS_AU_PREMIER_LANCEMENT)
@@ -574,7 +576,7 @@ def plan_zip(nouveaux, locaux, reference):
 
 
 def _restaurer(sauvegarde, journal):
-    """Defait une mise a jour ZIP d'apres son journal."""
+    """Undoes a ZIP update according to its log."""
     for rel in journal.get("remplaces", []) + journal.get("retires", []):
         src = sauvegarde / rel
         if src.exists():
@@ -583,7 +585,7 @@ def _restaurer(sauvegarde, journal):
     installes = journal.get("manifeste_apres", {})
     for rel in journal.get("ajoutes", []):
         p = RACINE / rel
-        # un fichier ajoute puis modifie par l'utilisateur reste en place
+        # a file added then modified by the user stays in place
         if p.exists() and _sha(p.read_bytes()) == installes.get(rel):
             p.unlink()
     avant = journal.get("manifeste_avant")
@@ -628,16 +630,16 @@ def par_zip(args):
             locaux[rel] = _sha(p.read_bytes())
     plan = plan_zip(nouveaux, locaux, reference)
 
-    # Le manifeste d'apres : ce que la nouvelle version a installe. Un fichier garde
-    # (modifie) conserve l'empreinte de reference : il reste « modifie » ensuite.
+    # The manifest afterwards: what the new version installed. A kept file
+    # (modified) keeps the reference fingerprint: it stays "modified" afterwards.
     manifeste = dict(reference)
     for rel in plan["retirer"] + plan["garder_retire"]:
         manifeste.pop(rel, None)
     for rel in plan["remplacer"] + plan["ajouter"] + plan["identiques"]:
         manifeste[rel] = _sha(nouveaux[rel])
 
-    # Journal ecrit AVANT toute ecriture : une panne au milieu (disque plein,
-    # fichier verrouille) se defait comme un controle rate.
+    # Log written BEFORE any write: a failure in the middle (disk full,
+    # locked file) is undone like a failed check.
     sauvegarde = SAUVEGARDES / time.strftime("%Y-%m-%d_%H%M%S")
     sauvegarde.mkdir(parents=True, exist_ok=True)
     journal = {
@@ -765,7 +767,7 @@ def par_git(args):
             afficher_nouveautes(changelog, locale, distante)
         return 0
     if not lie:
-        # Historique du depot public reecrit : un pull rejouerait tout en conflit.
+        # History of the public repository rewritten: a pull would replay everything in conflict.
         if not args.forcer:
             print(
                 "\n! L'historique du dépôt GitHub a été réécrit depuis ton installation.\n"
@@ -784,7 +786,7 @@ def par_git(args):
         GIT_AVANT.write_text(avant, encoding="utf-8")
         r = subprocess.run(["git", "pull", "--rebase", "--autostash"], cwd=RACINE)
     if r.returncode:
-        GIT_AVANT.unlink(missing_ok=True)  # rien d'installe : rien a annuler
+        GIT_AVANT.unlink(missing_ok=True)  # nothing installed: nothing to cancel
         print((getattr(r, "stderr", "") or "").strip())
         print(
             "\n! La mise à jour git a échoué (voir le message ci-dessus). Tes fichiers n'ont "
@@ -843,8 +845,8 @@ def main():
     )
     args = ap.parse_args()
     if _gele.est_gele():
-        # Application installée : pas de fichiers à remplacer un par un, la nouvelle
-        # version est un nouvel installateur, qui garde les données (Documents/JobHunter).
+        # Installed application: no files to replace one by one, the new
+        # version is a new installer, which keeps the data (Documents/JobHunter).
         return maj_application(args.verifier)
     if args.controler:
         if not controler():
@@ -856,8 +858,8 @@ def main():
             print("Empreinte de l'installation enregistrée (.maj_manifeste.json).")
         return 0
     if not (RACINE / "VERSION").exists():
-        # Copie de developpement, ou depot qui recoit le moteur par copie : il n'y a
-        # pas de version publiee a comparer, et un `git pull` n'aurait pas de sens.
+        # Development copy, or repository that receives the engine by copy: there is
+        # no published version to compare, and a `git pull` would make no sense.
         print(
             "Pas de fichier VERSION : ce dossier n'est pas une installation publiée de "
             "JobHunter (copie de développement ?). Rien à mettre à jour ici."

@@ -1,6 +1,6 @@
-"""Bilan hebdomadaire (metriques_hebdo) : dates du suivi, relances, journaux du pipeline.
+"""Weekly report (metriques_hebdo): tracker dates, follow-ups, pipeline logs.
 
-Converti depuis Scripts/test_metriques_hebdo.py.
+Converted from Scripts/test_metriques_hebdo.py.
 """
 
 from datetime import date
@@ -16,8 +16,8 @@ AUJ = date(2026, 10, 12)
     ("brut", "attendu"),
     [
         ("2026-10-07", date(2026, 10, 7)),
-        ("04/09", date(2026, 9, 4)),  # jj/mm de cette annee
-        ("20/12", date(2025, 12, 20)),  # jj/mm dans le futur = l'an passe
+        ("04/09", date(2026, 9, 4)),  # dd/mm of this year
+        ("20/12", date(2025, 12, 20)),  # dd/mm in the future = last year
         ("", None),
         (None, None),
         ("bientôt", None),
@@ -29,14 +29,14 @@ def test_lire_date(brut, attendu):
 
 
 SUIVI = {
-    "A|Analyste": {"s": "postulé", "d": "2026-10-10"},  # cette semaine
+    "A|Analyste": {"s": "postulé", "d": "2026-10-10"},  # this week
     "B|Chargé": {"s": "postulé", "d": "2026-09-20"},  # a relancer (22 j)
     "C|Consultant": {"s": "relancé", "d": "2026-10-01"},  # a relancer (11 j)
-    "D|Data": {"s": "postulé", "d": ""},  # sans date
+    "D|Data": {"s": "postulé", "d": ""},  # without date
     "E|Entretien": {"s": "entretien", "d": "2026-10-05"},  # reponse < 30 j
     "F|Refus": {"s": "refus", "d": "2026-08-01"},  # reponse > 30 j
-    "G|Mauvaise": {"s": "mauvaise", "d": "2026-10-11"},  # pas envoyee
-    "H|Rien": {"n": "note seule"},  # sans statut
+    "G|Mauvaise": {"s": "mauvaise", "d": "2026-10-11"},  # not sent
+    "H|Rien": {"n": "note seule"},  # without status
     "I|Vide": None,
 }
 
@@ -55,7 +55,7 @@ def bilan():
         ("envoyees_total", 6),
         ("taux_reponse", 2 / 6),
         ("sans_date", 1),
-        ("a_relancer", [("B|Chargé", 22), ("C|Consultant", 11)]),  # plus vieille d'abord
+        ("a_relancer", [("B|Chargé", 22), ("C|Consultant", 11)]),  # oldest first
     ],
 )
 def test_bilan_suivi(bilan, cle, attendu):

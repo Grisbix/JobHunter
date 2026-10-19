@@ -45,7 +45,7 @@ def test_compter_par_marqueur_exact_jamais_par_sous_chaine():
         {"source": "sfrss:careers.ey.com", "fit": 3},
         {"source": "workday:pwc.wd3/Global_Campus_Careers", "fit": 4},  # ancien marqueur
         {"source": "sitemap:www.sia-partners.com", "fit": 2},
-        # « bil » dans « mobilité » : l'ancien panneau la comptait pour Bil
+        # "bil" in "mobilité": the old panel counted it for Bil
         {"source": "linkedin-search:mobilite", "url": "https://x.com/mobilite-bil", "fit": 10},
         {"source": "https://www.bil.com", "url": "https://www.bil.com/fr/carrieres/123", "fit": 6},
     ]
@@ -101,7 +101,7 @@ def test_etat_sources():
     }
     assert etats["apec"].etat == "refusé — pas avant le 14/11"
     assert etats["apec"].gravite == "ko"
-    assert etats["apec"].bloque  # pas de nouvel essai avant 30 jours (ADR 0004)
+    assert etats["apec"].bloque  # no new attempt before 30 days (ADR 0004)
     assert not etats["linkedin"].bloque
     assert etats["apec"].le == "2026-10-15"
     assert etats["linkedin"].etat == "ok — 1 offre"
@@ -109,7 +109,7 @@ def test_etat_sources():
     assert etats["adzuna"].etat == "clé à créer"
     assert etats["jooble"].acces == "clé"
     assert etats["francetravail"].etat == "pas encore mesurée"
-    assert "indeed" not in etats  # hors de la collecte depuis le 2026-10-03
+    assert "indeed" not in etats  # outside the collection since 2026-10-03
 
 
 def test_etat_sources_refus_ancien_ne_dit_plus_d_attendre():
@@ -175,7 +175,7 @@ def test_dossiers(tmp_path):
     assert [d.titre for d in ds] == ["B — Chargé", "A — Analyste", "D — Manquant"]
     assert ds[0].etat == "prêt"
     assert ds[1].etat == "PDF à refaire"
-    assert ds[1].lettre == lettre_pdf  # le PDF à jour est préféré au .docx
+    assert ds[1].lettre == lettre_pdf  # the up-to-date PDF is preferred to the .docx
     assert ds[2].etat == "incomplet"
     assert ds[2].cv is None
     assert [d.titre for d in inv.dossiers(offres, "analy")] == ["A — Analyste"]
@@ -200,7 +200,7 @@ def test_ajouter_flux_seme_les_defauts_sans_les_perdre():
         ["eiffage", "wd3", "externe", "Eiffage"],
     ]
     assert inv.ajouter_flux(cfg, DEFAUTS, ("workday", ("pwc", "wd3", "x"))).startswith("déjà")
-    assert DEFAUTS["ats_slugs"]["lever"] == ["agicap"]  # les défauts ne sont pas modifiés
+    assert DEFAUTS["ats_slugs"]["lever"] == ["agicap"]  # the defaults are not modified
 
 
 def test_retirer_flux():

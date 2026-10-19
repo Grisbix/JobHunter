@@ -1,14 +1,13 @@
-"""Ou vivent les donnees : la racine de l'installation, et son dossier Scripts/.
+"""Where the data lives: the root of the installation, and its Scripts/ folder.
 
-Regle du projet : JAMAIS de racine codee en dur. Les chemins ont bouge quatre fois en
-deux jours, et tout ce qui codait une racine a casse en silence. On detecte donc par
-MARQUEUR : la variable JOBHUNTER_RACINE si elle est posee, sinon le premier dossier,
-en remontant depuis ce fichier, qui contient a la fois Scripts/ et profil/ ; sinon le
-meme marqueur en remontant depuis le dossier courant (paquet installe par pip, hors du
-dossier de l'utilisateur).
+Project rule: NEVER a hard-coded root. The paths moved four times in two days, and
+everything that hard-coded a root broke silently. So we detect by MARKER: the
+JOBHUNTER_RACINE variable if it is set, otherwise the first folder, going up from this
+file, that contains both Scripts/ and profil/; otherwise the same marker going up from
+the current folder (package installed by pip, outside the user's folder).
 
-Les fichiers de donnees (apply_queue.json, descriptions.json, suivi.json) restent dans
-Scripts/ : les y deplacer casserait les installations existantes et la mise a jour.
+The data files (apply_queue.json, descriptions.json, suivi.json) stay in Scripts/:
+moving them would break the existing installations and the update.
 """
 
 import os
@@ -16,16 +15,16 @@ from pathlib import Path
 
 
 def racine() -> Path:
-    """Le dossier des donnees : celui qui contient `Scripts/` et `profil/`.
+    """The data folder: the one that contains `Scripts/` and `profil/`.
 
-    Cherche `JOBHUNTER_RACINE`, puis en remontant depuis ce fichier, puis depuis le
-    dossier courant. Jamais de racine codee en dur.
+    Looks for `JOBHUNTER_RACINE`, then going up from this file, then from the current
+    folder. Never a hard-coded root.
 
     Returns:
-        Le chemin absolu du dossier des donnees.
+        The absolute path of the data folder.
 
     Raises:
-        RuntimeError: aucun dossier candidat ne contient `Scripts/` et `profil/`.
+        RuntimeError: no candidate folder contains `Scripts/` and `profil/`.
     """
     env = os.environ.get("JOBHUNTER_RACINE")
     if env:
@@ -41,10 +40,10 @@ def racine() -> Path:
 
 
 def exporter_paquet() -> None:
-    """Ajoute le dossier qui contient le paquet `jobhunter` a PYTHONPATH.
+    """Adds the folder that contains the `jobhunter` package to PYTHONPATH.
 
-    Herite par les sous-processus : `python -m jobhunter.sources` y marche sans
-    installation. Le chemin vient de ce fichier, jamais d'une racine codee en dur.
+    Inherited by subprocesses: `python -m jobhunter.sources` works there without
+    installation. The path comes from this file, never from a hard-coded root.
     """
     src = str(Path(__file__).resolve().parent.parent)
     deja = os.environ.get("PYTHONPATH", "")
@@ -53,5 +52,5 @@ def exporter_paquet() -> None:
 
 
 def scripts() -> Path:
-    """Le dossier des donnees de travail (file, descriptions, suivi)."""
+    """The working data folder (queue, descriptions, tracking)."""
     return racine() / "Scripts"

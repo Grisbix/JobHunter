@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
-"""notify_matches.py — Alerte Windows quand de NOUVELLES offres à fort fit arrivent.
+"""notify_matches.py — Windows alert when NEW high-fit offers arrive.
 
-Sans ça, rien ne prévient : tout est dans l'app, et si l'app est fermée les
-offres fraîches dorment jusqu'à la prochaine ouverture.
+Without it, nothing warns: everything is in the app, and if the app is closed the
+fresh offers sleep until the next opening.
 
-Toast Windows natif via PowerShell (API Windows.UI.Notifications) — AUCUNE
-dépendance à installer (win10toast/plyer/winotify ne sont pas dans le projet).
+Native Windows toast through PowerShell (Windows.UI.Notifications API) — NO dependency
+to install (win10toast/plyer/winotify are not in the project).
 
-« Nouvelle » = jamais notifiée. L'état est dans _notified.json (clé
-Entreprise|Poste), donc la même offre n'alerte qu'une fois, même si le pipeline
-tourne tous les jours.
+"New" = never notified. The state is in _notified.json (key Entreprise|Poste), so the
+same offer only alerts once, even if the pipeline runs every day.
 
-Run :
-  python JobHunter.pyw notify_matches                  # fit >= 8, offres vivantes
+Run:
+  python JobHunter.pyw notify_matches                  # fit >= 8, live offers
   python JobHunter.pyw notify_matches --min-fit 9
-  python JobHunter.pyw notify_matches --dry            # montre sans notifier ni marquer
-  python JobHunter.pyw notify_matches --reset          # oublie l'historique (tout redevient nouveau)
+  python JobHunter.pyw notify_matches --dry            # shows without notifying or marking
+  python JobHunter.pyw notify_matches --reset          # forgets the history (everything becomes new again)
 """
 
 import argparse
@@ -32,8 +31,8 @@ HERE = _racine.scripts()
 QUEUE = HERE / "apply_queue.json"
 SEEN = HERE / "_notified.json"
 
-# Un toast est ignoré si l'AppID n'est pas enregistré sur la machine ; celui du
-# Terminal l'est toujours sur Win10/11.
+# A toast is ignored if the AppID is not registered on the machine; the
+# Terminal's always is on Win10/11.
 _APPID = "Microsoft.WindowsTerminal_8wekyb3d8bbwe!App"
 
 _PS = r"""
@@ -49,9 +48,9 @@ $n = [Windows.UI.Notifications.ToastNotification]::new($tpl)
 
 
 def toast(title, body):
-    """Titre/corps passés par variables d'environnement : les mettre dans le
-    script PowerShell exposerait à l'injection via un titre d'offre contenant
-    des guillemets ou $( )."""
+    """Title/body passed through environment variables: putting them into the
+    PowerShell script would expose it to injection through an offer title containing
+    quotes or $( )."""
     import os
 
     env = dict(os.environ, JH_TITLE=title, JH_BODY=body, JH_APPID=_APPID)
@@ -108,7 +107,7 @@ def main():
         try:
             seen = set(json.loads(SEEN.read_text(encoding="utf-8")))
         except Exception:
-            pass  # historique illisible : on repart de zéro plutôt que de planter
+            pass  # unreadable history: we start from scratch rather than crash
 
     hits = [
         o
@@ -144,8 +143,8 @@ def main():
         return 0
 
     ok = toast(titre, corps)
-    # On marque même si le toast a échoué : sinon chaque run réessaie tout le lot
-    # et le jour où le toast remarche tu reçois 200 alertes d'un coup.
+    # We mark even if the toast failed: otherwise each run retries the whole batch
+    # and the day the toast works again you get 200 alerts at once.
     seen |= {key_of(o) for o in hits}
     importlib.import_module("jobhunter.programmes.jutil").jwrite(SEEN, sorted(seen))
     print(

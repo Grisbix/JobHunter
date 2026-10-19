@@ -1,7 +1,7 @@
-"""suivi_io.declarer_envoi : une candidature envoyée, avec l'état de sa preuve (ADR 0009).
+"""suivi_io.declarer_envoi: an application sent, with the state of its proof (ADR 0009).
 
-Une seule écriture dans suivi.json ; la note et les relances gardées ; un statut plus
-avancé ne recule pas ; une déclaration sans preuve n'efface jamais une preuve observée.
+A single write in suivi.json; the note and follow-ups kept; a more advanced
+status does not move back; a declaration without proof never erases an observed proof.
 """
 
 import datetime

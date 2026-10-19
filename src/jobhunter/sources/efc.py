@@ -1,6 +1,6 @@
-"""eFinancialCareers : le sitemap public declare dans robots.txt.
+"""eFinancialCareers: the public sitemap declared in robots.txt.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+Part of jobhunter.sources (formerly Scripts/job_sources.py, phase 3.4).
 """
 
 import json
@@ -24,27 +24,27 @@ from jobhunter.sources.commun import (
 _log = _journal.journal(__name__)
 
 
-# ═══════════════ 8. eFinancialCareers — sitemap PUBLIC declare dans robots.txt ═══
-# POURQUOI. Site d'emploi 100 % finance, francais, exactement le marche de l'utilisateur.
-# Il etait deja connu de _SITES_EMPLOI (rang 2) mais JAMAIS scanne : les 5 entrees
-# de la file etaient des pages de categorie ramassees ailleurs, sans description.
+# ═══════════════ 8. eFinancialCareers — PUBLIC sitemap declared in robots.txt ═══
+# WHY. A 100 % finance job site, French, exactly the user's market.
+# It was already known to _SITES_EMPLOI (rank 2) but NEVER scanned: the 5 entries
+# in the queue were category pages picked up elsewhere, without description.
 #
-# CE QUE robots.txt AUTORISE (verifie le 2026-09-04). `/search` est interdit a
-# `User-agent: *` — on n'y touche pas. En revanche le fichier DECLARE lui-meme
-# le sitemap des offres recentes :
+# WHAT robots.txt ALLOWS (checked on 2026-09-04). `/search` is forbidden to
+# `User-agent: *` — we do not touch it. On the other hand the file itself DECLARES
+# the sitemap of recent offers:
 #     Sitemap: https://www.efinancialcareers.fr/sitemap-secure/latestjobs/xml
-# C'est la voie d'acces que le site publie pour etre indexe : 8100 offres, et
-# les pages d'offres ne sont pas interdites. `crawl-delay: 10` est respecte.
+# It is the access path the site publishes to be indexed: 8100 offers, and
+# the offer pages are not forbidden. `crawl-delay: 10` is respected.
 #
-# Chaque fiche porte un <script type="application/ld+json"> de type JobPosting
-# avec intitule, societe, lieu, date et description complete (~10 000 car.).
+# Each posting carries a <script type="application/ld+json"> of type JobPosting
+# with title, company, place, date and full description (~10,000 chars).
 EFC_SITEMAP = "https://www.efinancialcareers.fr/sitemap-secure/latestjobs/xml"
 
-EFC_DELAI = 10  # crawl-delay annonce par robots.txt — ne pas baisser
+EFC_DELAI = 10  # crawl-delay announced by robots.txt — do not lower
 
-# LES AUTRES SITES DU MEME EDITEUR (verifie le 2026-09-24) : meme robots.txt,
-# meme sitemap declare, meme crawl-delay 10, meme ld+json. 48 000 offres de
-# plus, dont 93 intitules ESG absents de la file. Seul le .fr etait lu.
+# THE OTHER SITES OF THE SAME PUBLISHER (checked on 2026-09-24): same robots.txt,
+# same declared sitemap, same crawl-delay 10, same ld+json. 48,000 more
+# offers, including 93 ESG titles missing from the queue. Only the .fr was read.
 EFC_SITES = ("fr", "com", "co.uk", "de", "ch", "nl", "lu", "ie", "sg")
 
 
@@ -59,21 +59,21 @@ EFC_UA = {
     )
 }
 
-# Les URL ont la forme /emploi-<Pays>-<Ville>-<Titre>.id<N>. La ville peut
-# contenir des tirets (« Levallois-Perret »), donc on ne cherche PAS a la
-# separer du titre : decouper au premier tiret donnait ville « Levallois » et
-# titre « Perret-Responsable Projets IA ». Le bloc ville+titre sert seulement au
-# PRE-FILTRE ; les champs exacts viennent du ld+json de la fiche.
+# The URLs have the form /emploi-<Country>-<City>-<Title>.id<N>. The city may
+# contain hyphens ("Levallois-Perret"), so we do NOT try to
+# separate it from the title: splitting at the first hyphen gave city "Levallois" and
+# title "Perret-Responsable Projets IA". The city+title block only serves the
+# PRE-FILTER; the exact fields come from the posting's ld+json.
 _RX_EFC_SLUG = re.compile(r"/(?:emploi|jobs)-[^-]+-(.+)\.id(\d+)$")
 
-# Filtre ESG strict. `responsab` a ete retire apres mesure : il faisait entrer
-# 581 titres dont la quasi-totalite etaient des « Responsable … » sans rapport.
+# Strict ESG filter. `responsab` was removed after measurement: it let in
+# 581 titles, almost all of them unrelated "Responsable …".
 #
-# Les \b sont INDISPENSABLES : sans eux « RSE » matche n'importe quel mot qui
-# contient ces trois lettres. Meme famille de bug que _TITRE_CONTRAT et
-# _RX_STAGE, ou un \b perdu a l'ecriture avait rendu le motif inoperant.
-# « climat » exclut explicitement « climatisation » : deux postes de technicien
-# de zone Climatisation etaient remontes a la mesure.
+# The \b are ESSENTIAL: without them "RSE" matches any word that
+# contains these three letters. Same family of bug as _TITRE_CONTRAT and
+# _RX_STAGE, where a \b lost while writing had made the pattern inoperative.
+# "climat" explicitly excludes "climatisation": two technician jobs
+# in Air-conditioning zones came up in the measurement.
 _RX_EFC_ESG = re.compile(
     r"\bESG\b|\bRSE\b|\bSFDR\b|\bCSRD\b|extra.?financi|durabilit"
     r"|d[ée]veloppement durable|sustainab|climat(?!isation)|carbone|taxonomie"
@@ -89,36 +89,36 @@ _RX_EFC_GRAD = re.compile(
     re.I,
 )
 
-# Le V.I.E se cherche SANS re.I, et c'est indispensable : « vie » insensible a
-# la casse fait entrer toute l'assurance vie, qui pese lourd sur un site
+# The V.I.E is searched WITHOUT re.I, and that is essential: case-insensitive "vie"
+# lets in all of life insurance ("assurance vie"), which weighs heavily on a site
 # finance (« Gestionnaire Assurance Vie », « Middle office Assurance Vie »…).
-# En majuscules, l'acronyme ne se confond avec rien.
+# In capitals, the acronym is not confused with anything.
 _RX_EFC_VIE = re.compile(r"\bV\.?I\.?E\b")
 
 
 def _est_graduate(titre: str) -> bool:
-    """Programme jeune diplome ou V.I.E ?"""
+    """Graduate programme or V.I.E?"""
     return bool(_RX_EFC_GRAD.search(titre) or _RX_EFC_VIE.search(titre))
 
 
-# ── LE FILTRE PAR METIER, et pourquoi pas par secteur ──────────────────────
+# ── THE FILTER BY PROFESSION, and why not by sector ──────────────────────
 #
-# eFinancialCareers EST le site d'emploi de la banque et de la gestion
-# d'actifs : 8478 offres au sitemap, dont 32 seulement etaient en file. C'est
-# de loin la plus grosse source non exploitee, et elle est sanctionnee
+# eFinancialCareers IS the job site of banking and asset
+# management: 8478 offers in the sitemap, only 32 of which were in the queue. It is
+# by far the biggest untapped source, and it is penalised
 # (sitemap declare, crawl-delay 10 s).
 #
-# Premier essai : filtrer par SECTEUR. Echec — le slug du sitemap ne porte que
-# l'intitule, pas l'employeur. « power » y trouvait « Power Platform »,
-# « energie » y trouvait « Consultant transformation numerique Energie ». On
-# remontait des missions de conseil, pas des postes chez un energeticien.
+# First try: filter by SECTOR. Failure — the sitemap slug only carries
+# the title, not the employer. "power" found "Power Platform" there,
+# "energie" found "Consultant transformation numerique Energie". We
+# brought back consulting assignments, not jobs at an energy company.
 #
-# On filtre donc sur le METIER de l'utilisateur. Mesure du 17/09 sur les 8478 :
+# So we filter on the user's PROFESSION. Measurement of 17/09 on the 8478:
 #   7208 hors metier, 217 contrat exclu, 184 trop senior, 869 A LIRE.
 #
-# 869 fiches a 10 s font 144 minutes. Inutile de tenir un index de rotation :
-# scan_efc ecarte deja les URL presentes en file, donc chaque passe avance
-# d'elle-meme dans le reste.
+# 869 postings at 10 s make 144 minutes. No need to keep a rotation index:
+# scan_efc already sets aside the URLs present in the queue, so each pass moves
+# on by itself through the rest.
 _RX_EFC_METIER = re.compile(
     r"analyst|analyste|contr[oô]le de gestion|controlling|FP&A"
     r"|gestion de portefeuille|g[eé]rant|risk|risque|cr[eé]dit|credit"
@@ -128,8 +128,8 @@ _RX_EFC_METIER = re.compile(
     re.I,
 )
 
-# Postes hors de portee d'un profil sorti d'ecole. Les ecarter AVANT de payer
-# 10 s de lecture : c'est le tri le moins cher qu'on puisse faire.
+# Jobs out of reach of a fresh-graduate profile. Set them aside BEFORE paying
+# 10 s of reading: it is the cheapest sort we can make.
 _RX_EFC_SENIOR = re.compile(
     r"senior|directeur|director|head of|responsable|manager|principal"
     r"|associate director|\bVP\b|expert|chef de",
@@ -138,12 +138,12 @@ _RX_EFC_SENIOR = re.compile(
 
 
 def _est_metier(titre: str) -> bool:
-    """Intitule compatible avec le profil, et pas deja trop senior ?"""
+    """Title compatible with the profile, and not already too senior?"""
     return bool(_RX_EFC_METIER.search(titre)) and not _RX_EFC_SENIOR.search(titre)
 
 
 def _efc_urls(client: Any, site: str = "fr") -> list[tuple[Any, str]]:
-    """(url, titre approximatif) de chaque offre du sitemap. Une seule requete."""
+    """(url, approximate title) of each offer of the sitemap. A single request."""
     r = _commun._get_borne(client, _efc_sitemap(site), headers=EFC_UA, timeout=60)
     if r.status_code != 200:
         _log.info(f"  ~ eFC .{site} : sitemap injoignable (statut {r.status_code})")
@@ -158,7 +158,7 @@ def _efc_urls(client: Any, site: str = "fr") -> list[tuple[Any, str]]:
 
 
 def _efc_fiche(url: str, client: Any) -> dict[str, Any] | None:
-    """JobPosting de la fiche, ou None. Ne leve jamais."""
+    """JobPosting of the posting, or None. Never raises."""
     try:
         r = _commun._get_borne(client, url, headers=EFC_UA, timeout=30)
     except Exception:
@@ -178,7 +178,7 @@ def _efc_fiche(url: str, client: Any) -> dict[str, Any] | None:
 
 
 def _efc_lieu(jp: Any) -> str:
-    """Ville du JobPosting. jobLocation peut etre un objet ou une liste."""
+    """City of the JobPosting. jobLocation may be an object or a list."""
     loc = jp.get("jobLocation")
     if isinstance(loc, list):
         loc = loc[0] if loc else None
@@ -193,27 +193,27 @@ def _efc_lieu(jp: Any) -> str:
 def scan_efc(
     limit: int = 40, filtre: str = "esg", sites: tuple[str, ...] = ("fr",)
 ) -> list[dict[str, Any]]:
-    """Offres eFinancialCareers, description comprise.
+    """EFinancialCareers offers, description included.
 
-    filtre :
-      "esg"      — intitules qui parlent d'ESG (43 sur 8100) ;
-      "graduate" — programmes jeunes diplomes et V.I.E ;
-      "metier"   — les intitules compatibles avec le profil, seniors ecartes :
-                   869 sur 8478 a la mesure du 17/09. C'est le gisement des
-                   banques et de la gestion d'actifs, eFC etant leur site
-                   d'emploi. Chaque passe avance dans le reste, les URL deja
-                   en file etant ecartees ;
-      "tout"     — tout ce que title_ok retient, soit ~2400 titres : a 10 s la
-                   fiche c'est presque 7 h, pour un fit calcule sur des postes
-                   bancaires generiques.
+    filtre:
+      "esg"      — titles that talk about ESG (43 out of 8100);
+      "graduate" — graduate programmes and V.I.E;
+      "metier"   — the titles compatible with the profile, seniors set aside:
+                   869 out of 8478 in the measurement of 17/09. It is the deposit of
+                   banks and asset management, eFC being their job
+                   site. Each pass moves on through the rest, the URLs already
+                   in the queue being set aside;
+      "tout"     — everything title_ok keeps, i.e. ~2400 titles: at 10 s per
+                   posting that is almost 7 h, for a fit computed on generic
+                   banking jobs.
     """
     import httpx
 
     _EX = _commun.contrats_exclus()
     offers = []
     with httpx.Client(follow_redirects=True) as client:
-        # Une offre publiee sur deux sites porte le meme identifiant : on ne la
-        # lit qu'une fois.
+        # An offer published on two sites carries the same identifier: we only
+        # read it once.
         toutes, ids = [], set()
         for i, site in enumerate(sites):
             if i:
@@ -241,17 +241,17 @@ def scan_efc(
             elif not title_ok(approx):
                 continue
             cibles.append(url)
-        # Fiches DEJA en file : ne pas les relire. A 10 s chacune, une seconde
-        # passe repayait tout le temps de la premiere pour n'apporter que ce que
+        # Postings ALREADY in the queue: do not read them again. At 10 s each, a second
+        # pass paid again the whole time of the first only to bring what
         # merge_into_queue aurait de toute facon deduplique.
         from jobhunter.stockage import file as queue_io
 
         connues = {_norm_url(x.get("url")) for x in queue_io.charger(_commun.QUEUE) if x.get("url")}
         neuves = [u for u in cibles if _norm_url(u) not in connues]
         deja = len(cibles) - len(neuves)
-        # A TOUR DE ROLE entre les sites. Pris dans l'ordre des sitemaps, les
-        # `limit` places allaient toutes au .fr, lu en premier : a l'essai, 8
-        # fiches sur 8 etaient parisiennes et l'etranger n'etait jamais atteint.
+        # IN TURN between the sites. Taken in the order of the sitemaps, the
+        # `limit` places all went to the .fr, read first: in the trial, 8
+        # postings out of 8 were in Paris and abroad was never reached.
         par_site: dict[str, Any] = {}
         for u in neuves:
             par_site.setdefault(urlparse(u).netloc, []).append(u)
@@ -272,16 +272,16 @@ def scan_efc(
             jp = _efc_fiche(url, client)
             if not jp:
                 continue
-            # Le ld+json porte des entites HTML dans le titre : sans unescape,
-            # « Originateur &laquo; Sustainable banking » finissait tel quel dans
-            # l'objet de la lettre. _strip_html ne s'applique qu'a la description.
+            # The ld+json carries HTML entities in the title: without unescape,
+            # "Originateur &laquo; Sustainable banking" ended up as is in
+            # the subject of the letter. _strip_html only applies to the description.
             titre = __import__("html").unescape(str(jp.get("title") or ""))
-            # eFC suffixe le titre du lieu et du mode de travail :
-            # « … | Paris, FR | Hybride ». On ne garde que l'intitule.
+            # eFC suffixes the title with the place and the work mode:
+            # "… | Paris, FR | Hybride". We only keep the title.
             titre = re.sub(r"\s*\|.*$", "", titre).strip()
             lieu = _efc_lieu(jp)
-            # Le titre exact du ld+json est plus fiable que le slug : on refait
-            # les deux filtres dessus avant de garder l'offre.
+            # The exact title of the ld+json is more reliable than the slug: we redo
+            # both filters on it before keeping the offer.
             if not titre or not title_ok(titre) or contrat_du_titre(titre) in _EX:
                 continue
             if not en_france(lieu):

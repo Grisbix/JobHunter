@@ -1,24 +1,24 @@
-"""Collecte d'offres : une source par module, fusion directe dans apply_queue.json.
+"""Collection of offers: one source per module, merged directly into apply_queue.json.
 
-Ancien Scripts/job_sources.py (4 855 lignes), decoupe en phase 3.4 du plan :
+Formerly Scripts/job_sources.py (4,855 lines), split in phase 3.4 of the plan:
 
-commun         reglages (mots-cles, slugs, flux), filtre d'intitule, contrats, pays, `_mk`
-ats            API publiques d'ATS (Greenhouse, Lever, Ashby...) et autres API de recrutement
+commun         settings (keywords, slugs, feeds), title filter, contracts, countries, `_mk`
+ats            public ATS APIs (Greenhouse, Lever, Ashby...) and other recruiting APIs
 workday        Workday
-linkedin       recherche publique LinkedIn (API invite), attente sur 429
-wtj, efc       Welcome to the Jungle, eFinancialCareers (sitemaps publics)
-eures          portail europeen
-indeed, apec, glassdoor   pages de resultats, arret net sur refus
+linkedin       LinkedIn public search (guest API), waiting on 429
+wtj, efc       Welcome to the Jungle, eFinancialCareers (public sitemaps)
+eures          European portal
+indeed, apec, glassdoor   results pages, hard stop on refusal
 vie, fir, talent, francetravail, agregateurs   V.I.E, FIR, Talent.com, France Travail, Adzuna/Jooble
-fusion         fusion dans la file : dedoublonnage, promotion d'URL, scoring
-cli            la ligne de commande (`python -m jobhunter.sources` ou Scripts/job_sources.py)
+fusion         merge into the queue: deduplication, URL promotion, scoring
+cli            the command line (`python -m jobhunter.sources` or Scripts/job_sources.py)
 
-FACADE (jobhunter._facade). `import jobhunter.sources` (et donc `import job_sources`) donne un module qui
-voit TOUS les noms des sous-modules, comme l'ancien fichier unique : `js.title_ok`,
-`js.scan_linkedin`, `js.MONDE`. Une affectation (`js.KEYWORDS = [...]`, un monkeypatch)
-part dans le sous-module qui POSSEDE le nom ; les autres le lisent par `_commun.KEYWORDS`,
-jamais par copie. Sans ce routage, un test qui remplace `_get_borne` laisserait la
-collecte sortir sur le vrai reseau.
+FACADE (jobhunter._facade). `import jobhunter.sources` (and therefore `import
+job_sources`) gives a module that sees ALL the names of the submodules, like the old
+single file: `js.title_ok`, `js.scan_linkedin`, `js.MONDE`. An assignment
+(`js.KEYWORDS = [...]`, a monkeypatch) goes to the submodule that OWNS the name; the
+others read it through `_commun.KEYWORDS`, never by copy. Without this routing, a test
+that replaces `_get_borne` would let the collection go out on the real network.
 """
 
 import re
@@ -49,7 +49,7 @@ _MODULES = _facade.installer(__name__, _SOUS_MODULES)
 
 
 def _motifs() -> Any:
-    """Toutes les regex compilees des sous-modules : {(module, nom): motif}."""
+    """All the compiled regexes of the submodules: {(module, name): pattern}."""
     return {
         (m.__name__.rsplit(".", 1)[1], n): v
         for m in _MODULES
@@ -59,18 +59,18 @@ def _motifs() -> Any:
 
 
 def _verifier_motifs() -> None:
-    # TOUTE regex compilee de la collecte, quel que soit son nom et son sous-module.
-    # Le controle ne regardait autrefois que le prefixe `_RX_` et laissait passer
-    # _DOMAIN_RX, _HARD_NEG_RX, _AI_RX... — exactement les motifs de title_ok, le filtre
-    # qui decide ce qui entre dans la file. Un garde-fou qui ne couvre pas le code le
-    # plus expose ne garde rien.
+    # EVERY compiled regex of the collection, whatever its name and its submodule.
+    # The check used to only look at the `_RX_` prefix and let through
+    # _DOMAIN_RX, _HARD_NEG_RX, _AI_RX... — exactly the patterns of title_ok, the filter
+    # that decides what enters the queue. A safeguard that does not cover the most
+    # exposed code guards nothing.
     vus = 0
     for (_m, _n), _rx in _motifs().items():
         vus += 1
         assert "\x08" not in _rx.pattern, f"{_m}.{_n} : backspace au lieu de \\b"
         assert "\\\\b" not in _rx.pattern, f"{_m}.{_n} : antislash litteral au lieu de \\b"
-    # La collecte en compte 27. Si ce nombre s'effondre, la selection ci-dessus ne
-    # trouve plus rien — une panne muette de plus.
+    # The collection counts 27 of them. If this number collapses, the selection above
+    # finds nothing any more — one more silent failure.
     assert vus >= 20, f"_verifier_motifs ne voit que {vus} motifs : selection cassee"
 
 

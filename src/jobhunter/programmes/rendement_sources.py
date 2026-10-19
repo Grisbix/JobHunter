@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""rendement_sources.py — Ce que chaque source de collecte a rapporté, et pourquoi.
+"""rendement_sources.py — What each collection source brought back, and why.
 
-Lit le journal `Scripts/_rendement.jsonl` (une ligne par collecte, écrite par
-`jobhunter.sources`) et en fait le bilan par source sur les derniers jours : collectes,
-offres ramenées, nouvelles, pertinentes (fit >= 8), temps passé, et les verdicts —
-« refusé » et « limité » disent qu'une collecte vide ne veut PAS dire « rien de neuf ».
+Reads the log `Scripts/_rendement.jsonl` (one line per collection, written by
+`jobhunter.sources`) and summarises it per source over the last days: collections,
+offers brought back, new, relevant (fit >= 8), time spent, and the verdicts —
+"refusé" and "limité" say that an empty collection does NOT mean "nothing new".
 
-Lecture seule. Une source refusée à chaque collecte se signale : la retirer de --all
-se décide à la main (Talent et Indeed l'ont été le 03/10 sur ce genre de constat).
+Read-only. A source refused at every collection is flagged: removing it from --all is
+decided by hand (Talent and Indeed were on 03/10 on this kind of finding).
 
-Run :
-  python JobHunter.pyw rendement              # 14 derniers jours
+Run:
+  python JobHunter.pyw rendement              # last 14 days
   python JobHunter.pyw rendement --jours 30
 """
 

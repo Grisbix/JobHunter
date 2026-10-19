@@ -1,9 +1,9 @@
 name: installation
 
-# Installe JobHunter depuis les sources sur une machine neuve, avec les VRAIS scripts
-# (installer.bat, installer.sh), et vérifie l'étape E1 : les bibliothèques vont dans
-# .venv, pas dans le Python de la machine ; l'installation se charge ; l'empreinte de
-# la mise à jour ignore .venv. Aucune donnée personnelle : profil d'exemple seulement.
+# Installs JobHunter from source on a fresh machine, with the REAL scripts
+# (installer.bat, installer.sh), and checks step E1: the libraries go into
+# .venv, not into the machine's Python; the installation loads; the update's
+# fingerprint ignores .venv. No personal data: example profile only.
 on:
   pull_request:
     paths:

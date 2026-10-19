@@ -1,8 +1,8 @@
-"""Formulaires de candidature : assistant multi-ecrans, depot des documents, remplissage.
+"""Application forms: multi-screen wizard, document upload, filling in.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+Part of jobhunter.navigation (formerly Scripts/web_nav.py, phase 3.6).
 
-Decision : docs/adr/0005-aucune-soumission-automatique.md
+Decision: docs/adr/0005-aucune-soumission-automatique.md
 """
 
 import random as _rnd
@@ -26,8 +26,8 @@ from jobhunter.navigation.segment import (
     try_open_form,
 )
 
-# ── #3 WIZARD MULTI-ÉCRANS (Workday/iCIMS : apply = 4-6 pages) ────────────────
-# Marque le bouton "étape suivante" (PAS le submit final). Refuse envoyer/soumettre.
+# ── #3 MULTI-SCREEN WIZARD (Workday/iCIMS: apply = 4-6 pages) ─────────────────
+# Marks the "next step" button (NOT the final submit). Refuses send/submit.
 _WIZARD_NEXT_JS = r"""
 () => {
   const _deep=(root,acc)=>{root.querySelectorAll('button,input[type=submit],[role=button],a').forEach(e=>acc.push(e));root.querySelectorAll('*').forEach(e=>{if(e.shadowRoot)_deep(e.shadowRoot,acc);});return acc;};
@@ -48,12 +48,12 @@ _WIZARD_NEXT_JS = r"""
 
 
 def run_wizard(page: Any, fill_fn: Any = None, max_screens: int = 6) -> dict[str, Any]:
-    """#3 Parcourt un formulaire de candidature MULTI-ÉCRANS (Workday/iCIMS/SmartRecruiters).
+    """#3 Goes through a MULTI-SCREEN application form (Workday/iCIMS/SmartRecruiters).
 
-    Boucle : remplit l'écran (fill_fn) + coche CGU + clique "Suivant/Continuer" (jamais
-    le submit final) → écran suivant → répète. S'arrête quand seul le submit final reste
-    (à toi de cliquer Envoyer) ou plus de progression. fill_fn(page)->int : callback de
-    remplissage (autofill du runner). Retour {screens, filled_total, stopped}.
+    Loop: fills the screen (fill_fn) + ticks the T&Cs + clicks "Next/Continue" (never
+    the final submit) → next screen → repeats. Stops when only the final submit
+    remains (up to you to click Send) or there is no more progress. fill_fn(page)->int:
+    filling callback (the runner's autofill). Returns {screens, filled_total, stopped}.
     """
     filled_total, screens = 0, 0
     seen_urls = []
@@ -74,7 +74,7 @@ def run_wizard(page: Any, fill_fn: Any = None, max_screens: int = 6) -> dict[str
             nav = page.evaluate(_WIZARD_NEXT_JS)
         except Exception:
             nav = {"next": "", "final": False}
-        # seul le submit final présent -> stop (l'humain clique Envoyer)
+        # only the final submit present -> stop (the human clicks Send)
         if not nav.get("next"):
             return {
                 "screens": screens,
@@ -91,7 +91,7 @@ def run_wizard(page: Any, fill_fn: Any = None, max_screens: int = 6) -> dict[str
             page.wait_for_timeout(_rnd.randint(1200, 2200))
         except Exception:
             return {"screens": screens, "filled_total": filled_total, "stopped": "click_fail"}
-        # pas de progression (URL + DOM identiques) -> stop
+        # no progress (URL + DOM identical) -> stop
         try:
             if cur and page.url == cur and cur in seen_urls:
                 return {"screens": screens, "filled_total": filled_total, "stopped": "no_progress"}
@@ -101,7 +101,7 @@ def run_wizard(page: Any, fill_fn: Any = None, max_screens: int = 6) -> dict[str
     return {"screens": screens, "filled_total": filled_total, "stopped": "max_screens"}
 
 
-# ── UPLOAD robuste : matche CV vs Lettre par label, gère inputs cachés ────────
+# ── Robust UPLOAD: matches CV vs Letter by label, handles hidden inputs ───────
 _FILEINPUT_JS = r"""
 () => {
   const norm=s=>(s||'').toLowerCase();
@@ -121,9 +121,9 @@ _FILEINPUT_JS = r"""
 
 
 def accept_consent(page: Any) -> Any:
-    """Coche les cases de consentement OBLIGATOIRES (CGU, conditions, politique de confidentialité, traitement des données) nécessaires pour postuler.
+    """Ticks the MANDATORY consent boxes (T&Cs, terms, privacy policy, data processing) needed to apply.
 
-    Ne coche PAS les opt-ins marketing (newsletter, offres commerciales).
+    Does NOT tick marketing opt-ins (newsletter, commercial offers).
     """
     js = r"""
     () => {
@@ -253,15 +253,15 @@ def apply_to_offer(
     lettre_path: Any = None,
     submit_highlight: bool = True,
 ) -> Any:
-    """Navigue vers une offre d'emploi, remplit TOUS les champs du formulaire, upload CV + lettre de motivation, et surligne le bouton de soumission.
+    """Navigates to a job offer, fills ALL the form fields, uploads the CV + cover letter, and highlights the submit button.
 
     Args:
         page: Playwright page object
-        offer_url: URL de l'offre d'emploi
-        profile: dict avec les champs du profil (apply_profile.json)
-        cv_path: chemin absolu vers le CV PDF (optionnel, prioritaire sur profile)
-        lettre_path: chemin absolu vers la lettre PDF (optionnel, prioritaire sur profile)
-        submit_highlight: si True, surligne le bouton submit en rouge (sans cliquer)
+        offer_url: URL of the job offer
+        profile: dict with the profile fields (apply_profile.json)
+        cv_path: absolute path to the PDF CV (optional, takes precedence over profile)
+        lettre_path: absolute path to the PDF letter (optional, takes precedence over profile)
+        submit_highlight: if True, highlights the submit button in red (without clicking)
 
     Returns:
         dict: {success, filled_count, uploaded, submit_found, submit_label, ats_type, errors, steps}
@@ -282,7 +282,7 @@ def apply_to_offer(
         "url": offer_url,
     }
 
-    ROOT = _racine.racine()  # racine du projet (marqueur, JOBHUNTER_RACINE)
+    ROOT = _racine.racine()  # project root (marker, JOBHUNTER_RACINE)
 
     def _resolve_path(p: Any) -> str | None:
         if not p:
@@ -601,9 +601,9 @@ def apply_to_offer(
 
 
 def smart_upload(page: Any, cv: Any, letter: Any) -> Any:
-    """Upload CV + lettre en matchant chaque input[type=file] par label (cv/lettre).
+    """Uploads CV + letter by matching each input[type=file] by label (cv/letter).
 
-    Inputs cachés gérés (set_input_files marche même non visible).
+    Hidden inputs are handled (set_input_files works even when not visible).
     """
     from pathlib import Path as _P
 
@@ -617,7 +617,7 @@ def smart_upload(page: Any, cv: Any, letter: Any) -> Any:
         "letter": letter if letter and _P(letter).exists() else None,
     }
     used = set()
-    # 1) match par label
+    # 1) match by label
     for m in metas:
         f = files.get(m["kind"])
         if f and m["kind"] not in used:
@@ -627,7 +627,7 @@ def smart_upload(page: Any, cv: Any, letter: Any) -> Any:
                 used.add(m["kind"])
             except Exception:
                 pass
-    # 2) fallback : inputs restants -> cv puis letter dans l'ordre d'apparition
+    # 2) fallback: remaining inputs -> cv then letter in order of appearance
     order = [x for x in ("cv", "letter") if x not in used and files.get(x)]
     for m in metas:
         if not order:
@@ -643,8 +643,8 @@ def smart_upload(page: Any, cv: Any, letter: Any) -> Any:
     return done
 
 
-# ── REMPLISSAGE UNIVERSEL DE CANDIDATURE : tous les champs + tous les documents ─
-# Scanne CHAQUE élément saisissable (shadow DOM), le classe, le remplit. Rapport couverture.
+# ── UNIVERSAL APPLICATION FILLING: all the fields + all the documents ─────────
+# Scans EVERY editable element (shadow DOM), classifies it, fills it. Coverage report.
 _FILL_SCAN_JS = r"""
 () => {
   const N=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
@@ -675,7 +675,7 @@ _FILL_SCAN_JS = r"""
 """
 
 
-# lexique riche : (regex sur le contexte du champ) -> clé de profil. Ordre = priorité.
+# rich lexicon: (regex on the field's context) -> profile key. Order = priority.
 _PROFILE_LEX = [
     (r"(e-?mail|courriel|identifiant|username|login|user_?mail)", "email"),
     (r"(first.?name|f.?name|fname|pr[eé]nom|given.?name|vorname|nome)", "prenom"),
@@ -717,7 +717,7 @@ _PROFILE_LEX = [
     (
         r"(full.?name|nom complet|votre nom|\bname\b|vollst[aä]ndiger name)",
         "full",
-    ),  # générique en dernier
+    ),  # generic last
 ]
 
 
@@ -756,10 +756,10 @@ def accept_consent_dialog(page: Any) -> Any:
 
 
 def _best_form_target(page: Any) -> Any:
-    """Renvoie le contexte (page OU iframe) qui contient le vrai formulaire.
+    """Returns the context (page OR iframe) that contains the real form.
 
-    SmartRecruiters/Taleo/SuccessFactors chargent le form dans une iframe : on choisit
-    le frame avec le plus de champs de saisie visibles.
+    SmartRecruiters/Taleo/SuccessFactors load the form in an iframe: we choose the
+    frame with the most visible input fields.
     """
     try:
         best_n = page.evaluate(_COUNT_VISIBLE_INPUTS_JS)
@@ -774,7 +774,7 @@ def _best_form_target(page: Any) -> Any:
         if fr is main:
             continue
         try:
-            if fr.is_detached():  # frame mort (page changée) → jamais cible
+            if fr.is_detached():  # dead frame (page changed) → never a target
                 continue
         except Exception:
             continue
@@ -782,7 +782,7 @@ def _best_form_target(page: Any) -> Any:
             n = fr.evaluate(_COUNT_VISIBLE_INPUTS_JS)
         except Exception:
             continue
-        if n > best_n + 1:  # marge : ne bascule pas pour 1 champ isolé
+        if n > best_n + 1:  # margin: does not switch for 1 isolated field
             best, best_n = fr, n
     return best
 
@@ -790,14 +790,14 @@ def _best_form_target(page: Any) -> Any:
 def fill_application(
     page: Any, profile: dict[str, Any], cv: Any = None, letter: Any = None, docs: Any = None
 ) -> dict[str, Any]:
-    """POSTULER UNIVERSEL : reconnait TOUS les patterns de champs et remplit tout — texte/email/tel/date/select(dropdown)/radio(civilité)/checkbox(CGU)/textarea + upload de TOUS les documents (CV, lettre, + docs extra par label).
+    """UNIVERSAL APPLY: recognises ALL the field patterns and fills everything — text/email/tel/date/select(dropdown)/radio(title)/checkbox(T&Cs)/textarea + upload of ALL the documents (CV, letter, + extra docs by label).
 
-    Cherche le form dans les iframes (SmartRecruiters/Taleo) si la page est vide. Retour
-    {total, filled, uploaded, consent, cover_pct, unmatched:[…]}.
+    Looks for the form in the iframes (SmartRecruiters/Taleo) if the page is empty.
+    Returns {total, filled, uploaded, consent, cover_pct, unmatched:[…]}.
     """
     from pathlib import Path as _P
 
-    page = _best_form_target(page)  # bascule sur l'iframe du form si besoin
+    page = _best_form_target(page)  # switches to the form's iframe if needed
     try:
         fields = page.evaluate(_FILL_SCAN_JS)
     except Exception:
@@ -815,7 +815,7 @@ def fill_application(
     for f in text_fields:
         if f["filled"]:
             filled += 1
-            continue  # déjà rempli
+            continue  # already filled
         pk = _match_profile_key(f["key"])
         val = profile.get(pk) if pk else None
         if not val:
@@ -832,7 +832,7 @@ def fill_application(
                 filled += 1
         except Exception:
             pass
-    # SELECT sans valeur profil : civilité -> Monsieur, pays -> France
+    # SELECT without a profile value: title -> Monsieur, country -> France
     for f in [x for x in fields if x["tag"] == "SELECT" and not x["filled"]]:
         if _re_lex.search(r"(civilit|title|anrede)", f["key"]):
             if _pick_option(
@@ -850,7 +850,7 @@ def fill_application(
                 extra=("fr",),
             ):
                 filled += 1
-    # RADIO civilité (Monsieur / M.)
+    # title RADIO (Monsieur / M.)
     radios = [f for f in fields if f["type"] == "radio"]
     if radios and not any(
         f.get("checked")
@@ -868,7 +868,7 @@ def fill_application(
                     break
                 except Exception:
                     pass
-    # CHECKBOX consentement obligatoire (CGU/RGPD) — pas marketing
+    # mandatory consent CHECKBOX (T&Cs/GDPR) — not marketing
     consent = 0
     for f in [x for x in fields if x["type"] == "checkbox" and not x.get("checked")]:
         if _re_lex.search(
@@ -882,14 +882,14 @@ def fill_application(
                 consent += 1
             except Exception:
                 pass
-    # bug7 : après cochage CGU, un dialogue de consentement (Proceed/Continuer) peut s'ouvrir
-    # (SuccessFactors #dataPrivacyId). Cliquer Proceed = valider la case obligatoire, PAS soumettre.
+    # bug7: after ticking the T&Cs, a consent dialog (Proceed/Continuer) may open
+    # (SuccessFactors #dataPrivacyId). Clicking Proceed = validating the mandatory box, NOT submitting.
     if consent:
         try:
             page.evaluate(_CONSENT_DIALOG_JS)
         except Exception:
             pass
-    # UPLOAD tous documents : CV + lettre par label + docs extra
+    # UPLOAD all documents: CV + letter by label + extra docs
     uploaded = smart_upload(page, cv, letter)
     if docs:  # docs = liste de chemins additionnels -> file inputs restants
         try:
@@ -933,9 +933,9 @@ def _fold(s: str) -> str:
 
 
 def _pick_option(loc: Any, options: Any, val: Any, extra: Any = ()) -> bool:
-    """Sélectionne l'option d'un <select> matchant val (label/valeur), + variantes extra.
+    """Selects the option of a <select> matching val (label/value), + extra variants.
 
-    Accent-insensible + match code ISO (option value='FR' pour 'France').
+    Accent-insensitive + ISO code match (option value='FR' for 'France').
     """
     cands = [_fold(val)] + [_fold(e) for e in extra]
     try:

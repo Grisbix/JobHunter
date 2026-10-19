@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""verify_ats_slugs.py — Le flux ATS appartient-il VRAIMENT a la societe visee ?
+"""verify_ats_slugs.py — Does the ATS feed REALLY belong to the targeted company?
 
-POURQUOI. Un slug se devine a partir du nom : « CIC » -> lever/cic. Mais
-lever/cic est Cambridge Innovation Center, pas le Credit Industriel et
-Commercial ; ses offres sont a Tokyo. `probe_ats.py` documente deja ce piege
-(« ne PAS ajouter metron : homonyme = societe de defense US »). Sans verification
-d'identite, on injecterait dans la file les offres d'une autre entreprise.
+WHY. A slug is guessed from the name: "CIC" -> lever/cic. But lever/cic is the
+Cambridge Innovation Center, not the Crédit Industriel et Commercial; its offers are in
+Tokyo. `probe_ats.py` already documents this trap ("ne PAS ajouter metron : homonyme =
+societe de defense US"). Without an identity check, we would inject into the queue the
+offers of another company.
 
-Ce programme interroge chaque API pour le NOM que la societe se donne, et le
-compare a celui de la file. Ne modifie rien.
+This program asks each API for the NAME the company gives itself, and compares it with
+the one in the queue. Changes nothing.
 
-Run : python JobHunter.pyw verify_ats_slugs [--json _ats_candidats.json]
+Run: python JobHunter.pyw verify_ats_slugs [--json _ats_candidats.json]
 """
 
 import argparse
@@ -32,10 +32,10 @@ from jobhunter.programmes import probe_ats
 
 UA = probe_ats.UA
 
-# Endpoints qui rendent le nom que la SOCIETE se donne.
-# Lever et Ashby n'exposent AUCUN nom dans leur API : lire l'URL d'annonce y
-# revenait a comparer le slug a lui-meme — une verification circulaire qui
-# validait tout. On lit donc le titre de la page du portail.
+# Endpoints that return the name the COMPANY gives itself.
+# Lever and Ashby expose NO name in their API: reading the posting URL there
+# amounted to comparing the slug with itself — a circular check that
+# validated everything. So we read the title of the portal page.
 IDENTITE = {
     "greenhouse": lambda s: f"https://boards-api.greenhouse.io/v1/boards/{s}",
     "smartrecruiters": lambda s: (
@@ -88,7 +88,7 @@ def _cle(s):
 
 
 def nom_du_flux(kind, slug):
-    """Nom que la societe se donne dans son propre flux, ou "" si illisible."""
+    """Name the company gives itself in its own feed, or "" if unreadable."""
     import html as _html
 
     import httpx
@@ -106,7 +106,7 @@ def nom_du_flux(kind, slug):
         if not m:
             return ""
         titre = _html.unescape(re.sub(r"\s+", " ", m.group(1))).strip()
-        # On retire l'habillage pour ne garder que le nom de la societe.
+        # We remove the dressing to keep only the company name.
         titre = re.sub(r"^(jobs? at|careers? at|emplois? chez)\s+", "", titre, flags=re.I)
         titre = re.split(r"\s*[|–—-]\s*(jobs?|careers?|emplois?|recrutement)\b", titre, flags=re.I)[
             0
@@ -121,7 +121,7 @@ def nom_du_flux(kind, slug):
         if kind == "greenhouse":
             return d.get("name") or ""
         if kind == "smartrecruiters":
-            # Le nom vit dans les POSTINGS : content[0].company.name.
+            # The name lives in the POSTINGS: content[0].company.name.
             c = d.get("content") or []
             return ((c[0].get("company") or {}).get("name") or "") if c else ""
         if kind == "recruitee":
@@ -135,30 +135,30 @@ def nom_du_flux(kind, slug):
 def verdict(attendu, trouve):
     """CONFIRME / A VERIFIER / HOMONYME.
 
-    Un nom d'UN SEUL mot ne prouve rien : « bureau » est contenu dans « bureau
-    veritas », mais Bureau (anti-fraude) et Bureau Veritas sont deux societes.
-    Idem pour les sigles — lever/cic rend « CIC », qui designe aussi bien le
-    Credit Industriel et Commercial que le Cambridge Innovation Center. Ces cas
-    reclament un oeil humain, pas une heuristique.
+    A ONE-word name proves nothing: "bureau" is contained in "bureau veritas", but
+    Bureau (anti-fraud) and Bureau Veritas are two companies. Same for acronyms —
+    lever/cic returns "CIC", which designates the Crédit Industriel et Commercial as
+    well as the Cambridge Innovation Center. These cases call for a human eye, not a
+    heuristic.
     """
     a, t = _cle(attendu), _cle(trouve)
     if not t:
-        return "A VERIFIER", 0.0  # identite illisible : ne pas ajouter a l'aveugle
+        return "A VERIFIER", 0.0  # unreadable identity: do not add blindly
     ma, mt = set(a.split()), set(t.split())
     communs = ma & mt
     ratio = difflib.SequenceMatcher(None, a, t).ratio()
-    # EGALITE exacte : bien plus fort qu'une simple inclusion.
+    # EXACT equality: much stronger than a mere inclusion.
     if ma == mt:
-        # Sauf les sigles : « CIC » designe le Credit Industriel et Commercial
-        # comme le Cambridge Innovation Center. Quatre lettres ne prouvent rien.
+        # Except acronyms: "CIC" designates the Crédit Industriel et Commercial
+        # as well as the Cambridge Innovation Center. Four letters prove nothing.
         if len(a) <= 4:
             return "A VERIFIER", ratio
         return "CONFIRME", 1.0
-    # Deux mots significatifs en commun : la coincidence devient improbable.
+    # Two significant words in common: coincidence becomes unlikely.
     if len(communs) >= 2:
         return "CONFIRME", 1.0
-    # Inclusion a un seul mot : « bureau » tient dans « bureau veritas », et
-    # pourtant Bureau (anti-fraude) n'est pas Bureau Veritas.
+    # One-word inclusion: "bureau" fits inside "bureau veritas", and
+    # yet Bureau (anti-fraud) is not Bureau Veritas.
     if communs:
         return "A VERIFIER", ratio
     if ratio >= 0.85:
@@ -200,8 +200,8 @@ def main():
                 f"file={r['entreprise'][:24]:26} flux={r['identite'][:26]}"
             )
             if v == "A VERIFIER":
-                # Les intitules et leur langue tranchent souvent : un poste a
-                # Tokyo sous le sigle « CIC » n'est pas la banque francaise.
+                # The titles and their language often decide: a job in
+                # Tokyo under the acronym "CIC" is not the French bank.
                 for ex in r["pertinents"][:2]:
                     print(f"          · {ex[:70]}")
         print()

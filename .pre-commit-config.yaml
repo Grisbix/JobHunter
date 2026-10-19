@@ -1,4 +1,4 @@
-# Verifications avant chaque commit. Installation, une fois :
+# Checks before each commit. Install once:
 #   uv sync && uv run pre-commit install
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit

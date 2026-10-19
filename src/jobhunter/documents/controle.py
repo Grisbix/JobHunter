@@ -1,17 +1,17 @@
-"""Le dossier d'une offre est-il prêt à partir ? Contrôle des fichiers FINAUX.
+"""Is an offer's folder ready to go? Check of the FINAL files.
 
-Le CV et la lettre ont été générés ; ce module regarde ce qui partira vraiment : les PDF
-référencés par l'offre. Un dossier n'est « prêt » que si aucun problème n'est trouvé :
+The CV and the letter have been generated; this module looks at what will really be
+sent: the PDFs referenced by the offer. A folder is "ready" only if no problem is found:
 
-- chaque pièce existe, s'ouvre et contient du texte (un PDF sans texte est souvent une
-  image, que les ATS lisent mal) ;
-- le CV tient sur UNE page, la lettre aussi ;
-- les coordonnées du profil y figurent : nom, courriel, téléphone ;
-- aucun gabarit n'est resté non rempli (« [nom du poste] », « {entreprise} », « XXX »…).
+- each document exists, opens and contains text (a PDF without text is often an
+  image, which the ATS read badly);
+- the CV fits on ONE page, and so does the letter;
+- the profile's contact details are in it: name, email, phone;
+- no template was left unfilled ("[nom du poste]", "{entreprise}", "XXX"…).
 
-Ce qu'il ne vérifie PAS : la justesse des phrases. Les faits du CV automatique viennent
-de la banque validée (CV/Faits.json) ; un texte sur mesure reste sous la responsabilité de
-son auteur.
+What it does NOT check: the accuracy of the sentences. The facts of the automatic CV
+come from the validated bank (CV/Faits.json); a tailor-made text stays the
+responsibility of its author.
 """
 
 import re
@@ -24,11 +24,11 @@ from jobhunter import profil as _profil
 
 PIECES = (("cv", "CV"), ("lettre", "lettre"))
 
-# Gabarits non remplis : crochets en capitales ou « nom du poste », accolades de format,
-# marqueurs de brouillon. Sensible à la casse, sauf « nom du poste » et « lorem ipsum » :
-# avec re.I sur tout le motif, « crochets en capitales » prenait n'importe quel texte
-# entre crochets — dont l'intitulé « Green Finance Analyst [Open to internal and external
-# applicants] » de l'ONU, signalé à tort comme gabarit oublié (vu le 19/10/2026).
+# Unfilled templates: brackets in capitals or "nom du poste", format braces,
+# draft markers. Case-sensitive, except "nom du poste" and "lorem ipsum":
+# with re.I on the whole pattern, "brackets in capitals" took any text
+# between brackets — including the UN title "Green Finance Analyst [Open to internal and external
+# applicants]", wrongly reported as a forgotten template (seen on 19/10/2026).
 _RX_GABARIT = re.compile(
     r"\[(?i:nom du poste)\]|\[[A-ZÉÈ][A-ZÉÈ _'-]{2,}\]|\{[a-z_]{3,}\}|<(?:DATE|NOM|POSTE)>"
     r"|\bXXX+\b|(?i:lorem ipsum)"
@@ -36,23 +36,23 @@ _RX_GABARIT = re.compile(
 
 
 def _plat(texte: str) -> str:
-    """Minuscules, sans accents ni espaces multiples : pour chercher un nom ou un courriel."""
+    """Lower case, without accents or multiple spaces: to search for a name or an email."""
     t = unicodedata.normalize("NFKD", texte).encode("ascii", "ignore").decode().lower()
     return " ".join(t.split())
 
 
 def piece_finale(chemin: Path | None) -> Path | None:
-    """La pièce qui partira vraiment : le PDF dérivé d'un .docx, s'il existe et est à jour.
+    """The document that will really be sent: the PDF derived from a .docx, if it exists and is up to date.
 
-    22 offres pointaient sur la lettre .docx alors que son PDF existait à côté : le
-    programme de candidature aurait joint le .docx. Le PDF n'est préféré que s'il n'est
-    pas plus ancien que le .docx (sinon il ne reflète pas la dernière retouche).
+    22 offers pointed to the .docx letter while its PDF existed next to it: the
+    application program would have attached the .docx. The PDF is only preferred if
+    it is not older than the .docx (otherwise it does not reflect the last edit).
 
     Args:
-        chemin: le fichier référencé par l'offre, ou None.
+        chemin: the file referenced by the offer, or None.
 
     Returns:
-        Le PDF à jour s'il existe, sinon `chemin` tel quel.
+        The up-to-date PDF if it exists, otherwise `chemin` as is.
     """
     if chemin is None or chemin.suffix.lower() != ".docx":
         return chemin
@@ -66,7 +66,7 @@ def piece_finale(chemin: Path | None) -> Path | None:
 
 
 def lire_pdf(chemin: Path) -> tuple[str, int] | None:
-    """(texte, nombre de pages) d'un PDF, ou None s'il ne s'ouvre pas."""
+    """(text, number of pages) of a PDF, or None if it does not open."""
     try:
         import fitz
 
@@ -78,15 +78,15 @@ def lire_pdf(chemin: Path) -> tuple[str, int] | None:
 
 
 def controler_piece(chemin: Path | None, nom: str, identite: dict[str, str]) -> list[str]:
-    """Problèmes d'une pièce du dossier (vide = rien à redire).
+    """Problems of one document of the folder (empty = nothing to object to).
 
     Args:
-        chemin: le fichier référencé par l'offre, ou None.
-        nom: « CV » ou « lettre », pour les messages.
-        identite: les coordonnées du profil (`profil.identite()`).
+        chemin: the file referenced by the offer, or None.
+        nom: "CV" or "lettre", for the messages.
+        identite: the profile's contact details (`profil.identite()`).
 
     Returns:
-        Les problèmes, en phrases courtes.
+        The problems, in short sentences.
     """
     if chemin is None:
         return [f"{nom} absent"]
@@ -125,14 +125,14 @@ def controler_piece(chemin: Path | None, nom: str, identite: dict[str, str]) -> 
 
 
 def controler_dossier(offre: Any, identite: dict[str, str] | None = None) -> list[str]:
-    """Problèmes du dossier d'une offre : CV et lettre. Vide = dossier prêt.
+    """Problems of an offer's folder: CV and letter. Empty = folder ready.
 
     Args:
-        offre: l'offre (champs `cv` et `lettre` : liens file:/// ou chemins).
-        identite: les coordonnées ; None = celles du profil.
+        offre: the offer (`cv` and `lettre` fields: file:/// links or paths).
+        identite: the contact details; None = the profile's.
 
     Returns:
-        Les problèmes des deux pièces, en phrases courtes.
+        The problems of the two documents, in short sentences.
     """
     ident = identite if identite is not None else _profil.identite()
     problemes: list[str] = []

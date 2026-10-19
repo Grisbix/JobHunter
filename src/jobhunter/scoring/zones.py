@@ -1,29 +1,28 @@
-"""jobhunter.scoring.zones — Ou l'utilisateur veut travailler, et comment le lire dans un lieu.
+"""jobhunter.scoring.zones — Where the user wants to work, and how to read it in a place.
 
-Ancien Scripts/zones.py.
+Formerly Scripts/zones.py.
 
-PREFERENCE DECLAREE (2026-09-08) : Bordeaux et l'Ile-de-France d'abord ; le
-Sud-Est ensuite ; le reste de la France sans grand interet.
+DECLARED PREFERENCE (2026-09-08): Bordeaux and Île-de-France first; the South-East
+next; the rest of France without much interest.
 
-CE QUE CE MODULE NE FAIT PAS : toucher au `fit`. Le fit mesure l'adequation du
-POSTE ; la geographie est une autre question, et les melanger rendrait les deux
-illisibles. Une offre parfaite a Lille reste une offre parfaite — elle est
-simplement mal placee. La zone est donc un champ a part, filtrable et triable
-dans l'app.
+WHAT THIS MODULE DOES NOT DO: touch the `fit`. The fit measures how well the JOB
+fits; geography is another question, and mixing them would make both unreadable. A
+perfect offer in Lille stays a perfect offer — it is simply badly located. The zone is
+therefore a separate field, filterable and sortable in the app.
 
-TROIS PIEGES, tous rencontres dans les donnees reelles :
+THREE TRAPS, all met in the real data:
 
-  1. Les communes d'Ile-de-France apparaissent SEULES. « Courbevoie » (17 fois)
-     ne contient ni « Paris » ni « Ile-de-France ». D'ou la liste _IDF_COMMUNES.
-  2. « France » tout court (74 offres) et le vide (106) ne disent RIEN. Les
-     classer « ailleurs » ecarterait des offres peut-etre parisiennes : ils
-     valent « inconnu », jamais un rejet.
-  3. Les accents et la casse varient (« Île-de-France », « ile de france »,
-     « ILE DE FRANCE »). On compare sans accent ni casse.
+  1. The Île-de-France communes appear ALONE. "Courbevoie" (17 times) contains neither
+     "Paris" nor "Ile-de-France". Hence the _IDF_COMMUNES list.
+  2. "France" on its own (74 offers) and the empty value (106) say NOTHING. Classing
+     them "ailleurs" would set aside offers that may be in Paris: they count as
+     "inconnu", never as a rejection.
+  3. Accents and case vary ("Île-de-France", "ile de france", "ILE DE FRANCE"). We
+     compare without accent or case.
 
-Run :
-  python -m jobhunter.scoring.zones            # repartition de la file
-  python -m jobhunter.scoring.zones --ecrire   # inscrit le champ `zone` dans chaque offre
+Run:
+  python -m jobhunter.scoring.zones            # distribution of the queue
+  python -m jobhunter.scoring.zones --ecrire   # writes the `zone` field into each offer
 """
 
 import argparse
@@ -37,8 +36,8 @@ from jobhunter import paresseux as _paresseux
 from jobhunter.texte import sans_accent
 
 _ici = sys.modules[__name__]
-# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
-# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+# Values taken from the profile: computed on first read, not at import
+# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -49,19 +48,19 @@ def __getattr__(nom: str) -> Any:
 Secteur = dict[str, Any]  # cle, libelle, lieux, communes, departements, wtj
 
 
-PRIORITAIRE = "prioritaire"  # secteurs prioritaires du profil
-SECONDAIRE = "secondaire"  # secteurs secondaires du profil
-AILLEURS = "ailleurs"  # reste de la FRANCE
+PRIORITAIRE = "prioritaire"  # priority sectors of the profile
+SECONDAIRE = "secondaire"  # secondary sectors of the profile
+AILLEURS = "ailleurs"  # rest of FRANCE
 INTERNATIONAL = "international"
 INCONNU = "inconnu"
 
-# « ailleurs » designait jusqu'ici le reste de la France ET l'etranger, ce qui
-# melangeait Lille et Singapour. Depuis la recherche mondiale, l'etranger a sa
-# propre zone : deplacer a Nantes et deplacer a Hong Kong ne se decident pas de
-# la meme facon.
+# "ailleurs" used to designate the rest of France AND abroad, which
+# mixed Lille and Singapore. Since the worldwide search, abroad has its
+# own zone: moving to Nantes and moving to Hong Kong are not decided
+# the same way.
 ORDRE = {PRIORITAIRE: 0, SECONDAIRE: 1, INCONNU: 2, AILLEURS: 3, INTERNATIONAL: 4}
 
-# Communes d'IDF vues dans la file, ecrites sans leur region.
+# Île-de-France communes seen in the queue, written without their region.
 _IDF_COMMUNES = (
     "courbevoie",
     "puteaux",
@@ -72,7 +71,7 @@ _IDF_COMMUNES = (
     "issy-les-moulineaux",
     "issy les moulineaux",
     "la defense",
-    # « boulogne » seul prenait Boulogne-sur-Mer (Pas-de-Calais) pour l'IDF.
+    # "boulogne" alone took Boulogne-sur-Mer (Pas-de-Calais) for Île-de-France.
     "boulogne-billancourt",
     "boulogne billancourt",
     "saint-denis",
@@ -109,7 +108,7 @@ _IDF_COMMUNES = (
     "gonesse",
     "corbeil-essonnes",
     "corbeil essonnes",
-    # Vues « ailleurs » le 2026-09-23, sans region ni departement.
+    # Seen as "ailleurs" on 2026-09-23, without region or department.
     "maisons-alfort",
     "maisons alfort",
     "saint-ouen",
@@ -157,7 +156,7 @@ _IDF_COMMUNES = (
     "andilly",
 )
 
-# Un lieu qui ne dit que le pays, ou rien : aucune information.
+# A place that only says the country, or nothing: no information.
 _VAGUE = (
     "",
     "france",
@@ -180,15 +179,15 @@ _VAGUE = (
 
 
 def _n(t: object) -> str:
-    """Minuscules, sans accent, blancs ecrases."""
+    """Lower case, without accents, blanks collapsed."""
     return re.sub(r"\s+", " ", sans_accent(str(t or "")).lower()).strip()
 
 
-# Pays etrangers, tels qu'ils apparaissent en FIN de lieu : LinkedIn ecrit
+# Foreign countries, as they appear at the END of a place: LinkedIn writes
 # « Geneva, Geneva, Switzerland », « Rotterdam, South Holland, Netherlands ».
-# _RX_ETRANGER de job_sources ne connait ni ces pays ni ces villes, donc 34
-# offres genevoises et 30 rotterdamoises etaient rangees dans « le reste de la
-# France ». On lit le DERNIER segment, celui qui porte le pays.
+# job_sources' _RX_ETRANGER knows neither these countries nor these cities, so 34
+# Geneva offers and 30 Rotterdam ones were stored in "the rest of
+# France". We read the LAST segment, the one that carries the country.
 _PAYS_ETRANGERS = {
     "switzerland",
     "suisse",
@@ -257,10 +256,10 @@ _PAYS_ETRANGERS = {
     "mexique",
     "south africa",
     "israel",
-    # NOMS FRANCAIS. La liste etait presque entierement anglaise, parce que les
-    # lieux venaient de LinkedIn. Les offres V.I.E de Business France, elles,
-    # sont ecrites en francais : « Copenhague, Danemark » tombait en « reste de
-    # la France ». Un pays doit etre reconnu dans les deux langues.
+    # FRENCH NAMES. The list was almost entirely English, because the
+    # places came from LinkedIn. The Business France V.I.E offers, on the other hand,
+    # are written in French: "Copenhague, Danemark" fell into "the rest of
+    # France". A country must be recognised in both languages.
     "danemark",
     "suede",
     "norvege",
@@ -317,9 +316,9 @@ _PAYS_ETRANGERS = {
     "pays de galles",
     "irlande du nord",
     "taiwan",
-    # Pays ou les V.I.E envoient reellement. « POINTE NOIRE (CONGO) » tombait
-    # en « reste de la France » : Business France ecrit le pays entre
-    # parentheses, et aucun de ces noms n'etait connu.
+    # Countries where V.I.E really send people. "POINTE NOIRE (CONGO)" fell
+    # into "the rest of France": Business France writes the country between
+    # parentheses, and none of these names was known.
     "congo",
     "gabon",
     "angola",
@@ -368,9 +367,9 @@ _PAYS_ETRANGERS = {
     "armenie",
     "belarus",
     "luxembourg ville",
-    # NOMS ANGLAIS, ecrits par LinkedIn en dernier segment. Il manquait tous
-    # ceux-ci : 28 offres a Bogota, 20 a Santiago etaient rangees dans « le
-    # reste de la France » (mesure du 2026-09-23).
+    # ENGLISH NAMES, written by LinkedIn as the last segment. All of these
+    # were missing: 28 offers in Bogota, 20 in Santiago were stored in "the
+    # rest of France" (measured on 2026-09-23).
     "colombia",
     "chile",
     "peru",
@@ -432,7 +431,7 @@ _PAYS_ETRANGERS = {
     "turkiye",
     "suriname",
     "papua new guinea",
-    # macro-regions de recrutement : jamais la France seule
+    # recruiting macro-regions: never France alone
     "namer",
     "latam",
     "apac",
@@ -441,9 +440,9 @@ _PAYS_ETRANGERS = {
     "mena",
 }
 
-# Villes etrangeres ecrites SANS pays : LinkedIn dit « Lisbon Metropolitan
+# Foreign cities written WITHOUT a country: LinkedIn says "Lisbon Metropolitan
 # Area », « Greater Milan Metropolitan Area » ; WTJ colle meme « · France » a
-# « Genève » ou « Zurich ». Aucun pays a lire — la ville est le seul indice.
+# "Genève" or "Zurich". No country to read — the city is the only clue.
 _VILLES_ETRANGERES = {
     "lisbon",
     "lisboa",
@@ -563,10 +562,10 @@ _VILLES_ETRANGERES = {
     "enschede",
 }
 
-# Le FORMAT des metropoles LinkedIn — « Greater X Area », « X Metropolitan
-# Area/Region », « Greater X », « X Metro » — sert surtout hors de France : la
-# liste de villes ne s'arretera jamais (Gothenburg, Cincinnati, Surabaya…).
-# On le lit donc comme un indice etranger, SAUF si une ville francaise est
+# The FORMAT of LinkedIn metropolitan areas — "Greater X Area", "X Metropolitan
+# Area/Region", "Greater X", "X Metro" — is used mostly outside France: the
+# list of cities would never end (Gothenburg, Cincinnati, Surabaya…).
+# So we read it as a foreign clue, UNLESS a French city is
 # reconnue : LinkedIn ecrit aussi « Greater Lille Metropolitan Area ».
 _RX_METRO = re.compile(r"^greater\s|\s(metropolitan\s(area|region)|metro|area|region)$")
 _METROS_FR = (
@@ -603,8 +602,8 @@ _RX_DEP = re.compile(
 # Code de region WTJ : « Saint-Ouen, A8, FR », « Biot, B8, FR », « …, ARA, FR ».
 _RX_REGION_WTJ = re.compile(r",\s*([a-z0-9]{1,3})\s*,\s*([a-z]{2})\b")
 
-# Outre-mer : la France, mais pas une cible. Teste AVANT les communes :
-# « Saint-Denis, Reunion » est le chef-lieu de La Reunion, pas le 93.
+# Overseas: France, but not a target. Tested BEFORE the communes:
+# "Saint-Denis, Reunion" is the capital of La Réunion, not the 93.
 _OUTRE_MER = (
     "reunion",
     "la reunion",
@@ -621,8 +620,8 @@ _OUTRE_MER = (
     "saint-martin",
 )
 
-# Regions francaises HORS cible. Une commune d'IDF homonyme n'y compte pas :
-# « Asnières, Normandy » n'est pas Asnieres-sur-Seine.
+# French regions OUTSIDE the target. A homonymous Île-de-France commune does not count there:
+# "Asnières, Normandy" is not Asnières-sur-Seine.
 _REGIONS_AUTRES = (
     "normandy",
     "normandie",
@@ -643,17 +642,17 @@ _REGIONS_AUTRES = (
 )
 
 # ── SECTEURS GEOGRAPHIQUES ───────────────────────────────────────────────────
-# Le profil (section « zones ») choisit ses secteurs PRIORITAIRES et
-# SECONDAIRES dans ce catalogue, par leur cle. Chaque secteur : un libelle, des
-# noms de lieux (communes, metropole, region), des departements et des codes de
-# region WTJ. Un secteur absent du catalogue se declare dans le profil :
+# The profile ("zones" section) chooses its PRIORITY and
+# SECONDARY sectors in this catalogue, by their key. Each sector: a label,
+# place names (communes, metropolis, region), departments and WTJ region
+# codes. A sector missing from the catalogue is declared in the profile:
 #     "zones": {"prioritaires": ["lyon", {"cle": "chambery", "libelle": "Chambéry",
 #                                         "lieux": ["chambery", "aix-les-bains"],
 #                                         "departements": ["73"]}]}
 #
-# Une METROPOLE n'est pas sa region : « Chasseneuil-du-Poitou, Nouvelle-
-# Aquitaine » n'est pas Bordeaux, la region s'etend a quatre heures de route.
-# Un nom de region n'est pas un lieu.
+# A METROPOLIS is not its region: "Chasseneuil-du-Poitou, Nouvelle-
+# Aquitaine" is not Bordeaux, the region stretches four hours' drive away.
+# A region name is not a place.
 _IDF = (
     "ile-de-france",
     "ile de france",
@@ -832,7 +831,7 @@ CATALOGUE = {
         "departements": {"2a", "2b", "20"},
         "lieux": ("corse", "ajaccio", "bastia"),
     },
-    # Metropoles et regions, pour un profil qui cherche ailleurs.
+    # Metropolises and regions, for a profile that searches elsewhere.
     "lyon": {
         "libelle": "Lyon",
         "departements": {"69"},
@@ -984,7 +983,7 @@ CATALOGUE = {
 
 
 def _secteur(x: object) -> Secteur | None:
-    """Secteur du catalogue (par cle) ou declare dans le profil (dict)."""
+    """Sector of the catalogue (by key) or declared in the profile (dict)."""
     if isinstance(x, dict):
         return {
             "cle": x.get("cle") or _n(x.get("libelle", "")),
@@ -1038,21 +1037,20 @@ def _dans_secteur(t: str, s: Secteur) -> bool:
     return bool(s["communes"]) and _contient(t, s["communes"]) and not _contient(t, _REGIONS_AUTRES)
 
 
-_RX_CACHE: dict[object, re.Pattern[str]] = {}  # cle : le tuple, ou son id()
+_RX_CACHE: dict[object, re.Pattern[str]] = {}  # key: the tuple, or its id()
 
 
 def _contient(t: str, tokens: Iterable[str]) -> bool:
-    """Un des `tokens` apparait-il comme MOT ENTIER dans `t` ?
+    """Does one of the `tokens` appear as a WHOLE WORD in `t`?
 
-    La comparaison en sous-chaine faisait entrer « Singapore » dans le Sud-Est :
-    « sinGAPore » contient « gap ». Meme famille que les faux positifs deja
-    corriges ailleurs (« RSE » dans « diveRSE », « climat » dans
-    « climatisation »). Les bornes de mot suppriment la classe entiere.
+    The substring comparison put "Singapore" in the South-East: "sinGAPore" contains
+    "gap". Same family as the false positives already fixed elsewhere ("RSE" in
+    "diveRSE", "climat" in "climatisation"). Word boundaries remove the whole class.
     """
-    # Cle = le tuple LUI-MEME quand il est hachable. id() ne vaut que pour les
-    # constantes du module : un tuple temporaire libere rend son adresse, le
-    # suivant la reprend et herite du motif de l'autre. `_contient(t, (v,))`
-    # dans une boucle repondait ainsi avec le motif de la ville precedente.
+    # Key = the tuple ITSELF when it is hashable. id() is only valid for the
+    # module constants: a freed temporary tuple gives back its address, the
+    # next one takes it and inherits the other's pattern. `_contient(t, (v,))`
+    # in a loop thus answered with the previous city's pattern.
     cle = tokens if isinstance(tokens, (tuple, frozenset)) else id(tokens)
     rx = _RX_CACHE.get(cle)
     if rx is None:
@@ -1062,16 +1060,16 @@ def _contient(t: str, tokens: Iterable[str]) -> bool:
 
 
 def _departement(t: str) -> str | None:
-    """Numero de departement lu dans le lieu normalise, ou None."""
+    """Department number read in the normalised place, or None."""
     m = _RX_DEP.search(t)
     if not m:
         return None
     d = next(g for g in m.groups() if g)
-    # Un code postal a 5 chiffres ne commence pas par 00 ; « 20xxx » est la Corse.
+    # A 5-digit postcode does not start with 00; "20xxx" is Corsica.
     return None if d == "00" else d
 
 
-# Le lieu ENTIER est « Ville, ST » avec un code d'Etat en majuscules.
+# The WHOLE place is "City, ST" with a state code in capitals.
 _RX_VILLE_ETAT = re.compile(
     r"^[^,]+,\s*(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|MA|MD|ME|MI"
     r"|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA"
@@ -1080,10 +1078,10 @@ _RX_VILLE_ETAT = re.compile(
 
 
 def _code_etranger(job_sources: Any, lieu: str) -> bool:
-    """_RX_ETRANGER, sans prendre une particule pour un code pays : son motif est insensible a la casse, et « Rive-de-Gier » y devenait l'Allemagne (« de »).
+    """_RX_ETRANGER, without taking a particle for a country code: its pattern is case-insensitive, and "Rive-de-Gier" became Germany in it ("de").
 
-    Un code de deux lettres ne compte qu'en MAJUSCULES et hors d'un nom compose («
-    Düsseldorf … DE » oui, « -de- » non).
+    A two-letter code only counts in CAPITALS and outside a compound name
+    ("Düsseldorf … DE" yes, "-de-" no).
     """
     for m in job_sources._RX_ETRANGER.finditer(lieu):
         s = m.group(0)
@@ -1096,23 +1094,23 @@ def _code_etranger(job_sources: Any, lieu: str) -> bool:
 
 
 def zone_lieu(lieu: str | None) -> str:
-    """Zone d'un lieu : prioritaire / sud-est / ailleurs / international / inconnu.
+    """Zone of a place: prioritaire / sud-est / ailleurs / international / inconnu.
 
-    Ordre : noms francais cibles, puis indices etrangers, PUIS departement.
-    Le departement vient apres l'etranger parce qu'un code postal americain
-    (« Houston, TX 77002 ») lu comme departement donnerait « Seine-et-Marne ».
+    Order: target French names, then foreign clues, THEN department. The department
+    comes after abroad because an American postcode ("Houston, TX 77002") read as a
+    department would give "Seine-et-Marne".
     """
     t = _n(lieu)
     if t in _VAGUE or not t:
         return INCONNU
-    # « Ville, ST » americain AVANT les noms francais : « New Orleans, LA »
-    # etait rangee en France a cause d'« Orleans » (2026-10-07).
+    # American "City, ST" BEFORE the French names: "New Orleans, LA"
+    # was stored in France because of "Orleans" (2026-10-07).
     if _RX_VILLE_ETAT.match(lieu or ""):
         return INTERNATIONAL
     wtj = _RX_REGION_WTJ.search(t)
     reg, pays = (wtj.group(1), wtj.group(2)) if wtj else ("", "")
-    # Les secteurs du profil d'abord : ce sont les cibles declarees. L'outre-mer
-    # avant tout : « Saint-Denis, Reunion » n'est pas le 93.
+    # The profile's sectors first: they are the declared targets. Overseas
+    # before everything: "Saint-Denis, Reunion" is not the 93.
     if _contient(t, _OUTRE_MER):
         return AILLEURS
     if any(_dans_secteur(t, s) for s in _ici.SECTEURS_PRIORITAIRES) or (
@@ -1123,20 +1121,20 @@ def zone_lieu(lieu: str | None) -> str:
         pays == "fr" and reg in _ici._WTJ_SUD_EST
     ):
         return SECONDAIRE
-    # Code pays WTJ autre que FR : « Zaventem, VLG, BE · France ». Le « France »
-    # final est celui du site, pas du lieu.
+    # WTJ country code other than FR: "Zaventem, VLG, BE · France". The final
+    # "France" is the site's, not the place's.
     if pays and pays != "fr":
         return INTERNATIONAL
-    # OU QUE LE PAYS SE TROUVE DANS LA CHAINE. LinkedIn le met en dernier
-    # segment (« Geneva, Geneva, Switzerland ») mais Business France le met
-    # entre PARENTHESES (« POINTE NOIRE (CONGO) ») : ne lire que le segment
-    # final rangeait le Congo et le Gabon dans « le reste de la France ».
-    # On cherche donc le pays partout, en mot entier — la borne de mot evite
-    # qu'« Inde » ne matche « Indre » ou « Chine » « Machine ».
+    # WHEREVER THE COUNTRY IS IN THE STRING. LinkedIn puts it as the last
+    # segment ("Geneva, Geneva, Switzerland") but Business France puts it
+    # between PARENTHESES ("POINTE NOIRE (CONGO)"): reading only the final
+    # segment stored Congo and Gabon in "the rest of France".
+    # So we look for the country everywhere, as a whole word — the word boundary prevents
+    # "Inde" from matching "Indre" or "Chine" from matching "Machine".
     if _contient(t, _PAYS_ETRANGERS) or _contient(t, _VILLES_ETRANGERES):
         return INTERNATIONAL
-    # Tout pays du filtre Pays, pas seulement ceux de _PAYS_ETRANGERS : sans
-    # cela « Port Louis, Mauritius » finissait « ailleurs en France ».
+    # Any country of the Country filter, not only those of _PAYS_ETRANGERS: without
+    # that "Port Louis, Mauritius" ended up "elsewhere in France".
     if _contient(t, _PAYS_TOUS) or _contient(t, _VILLES_TOUTES):
         return INTERNATIONAL
     if _RX_METRO.search(t) and not _contient(t, _METROS_FR):
@@ -1147,18 +1145,18 @@ def zone_lieu(lieu: str | None) -> str:
                 return INTERNATIONAL
         except Exception:
             pass
-    # France ou etranger ? On s'appuie sur le detecteur de job_sources, seul
-    # endroit ou vivent les listes de pays et de codes d'Etats americains.
-    # Import tardif : job_sources importe zones pour etiqueter a l'ajout.
+    # France or abroad? We rely on job_sources' detector, the only
+    # place where the lists of countries and American state codes live.
+    # Late import: job_sources imports zones to label on addition.
     try:
         from jobhunter.sources import commun as job_sources
 
-        # LA FRANCE SE TESTE EN PREMIER. _RX_ETRANGER contient le code pays
-        # « de », qui matche le « de » de « Hauts-de-France » : Lille et Nantes
+        # FRANCE IS TESTED FIRST. _RX_ETRANGER contains the country code
+        # "de", which matches the "de" of "Hauts-de-France": Lille and Nantes
         # partaient a l'international.
         francais = bool(job_sources._RX_FR.search(lieu or ""))
-        # en_france() rend True pour TOUT quand la recherche mondiale est
-        # active — on interroge donc les motifs directement.
+        # en_france() returns True for EVERYTHING when the worldwide search is
+        # active — so we ask the patterns directly.
         etranger = not francais and bool(
             job_sources._RX_ETAT_US.search(lieu or "") or _code_etranger(job_sources, lieu or "")
         )
@@ -1166,8 +1164,8 @@ def zone_lieu(lieu: str | None) -> str:
         etranger = False
     if etranger:
         return INTERNATIONAL
-    # Departement : seuls 75 et 92 etaient connus, en jetons. « Bobigny - 93 »,
-    # « Melun - 77 » ou « Bron - 69 » tombaient dans « le reste de la France ».
+    # Department: only 75 and 92 were known, as tokens. "Bobigny - 93",
+    # "Melun - 77" or "Bron - 69" fell into "the rest of France".
     d = _departement(t)
     if d in _ici._DEP_PRIORITAIRE:
         return PRIORITAIRE
@@ -1177,11 +1175,11 @@ def zone_lieu(lieu: str | None) -> str:
 
 
 def sous_zone(lieu: str | None) -> str:
-    """Pour une offre PRIORITAIRE : « bordeaux » ou « idf ». Sinon ''.
+    """For a PRIORITY offer: "bordeaux" or "idf". Otherwise ''.
 
-    Les deux cibles partagent une zone (meme priorite de tri), mais pas une
-    etiquette : l'app affichait « 1 · Bordeaux/IDF » sur 1275 offres dont 56
-    seulement etaient a Bordeaux — l'utilisateur lisait « Bordeaux » sur Paris.
+    The two targets share a zone (same sorting priority), but not a label: the app
+    displayed "1 · Bordeaux/IDF" on 1275 offers of which only 56 were in Bordeaux —
+    the user read "Bordeaux" on Paris.
     """
     if zone_lieu(lieu) != PRIORITAIRE:
         return ""
@@ -1201,10 +1199,10 @@ def libelle_secteur(cle: str) -> str:
     return cle
 
 
-# ── Pays d'un lieu, pour le filtre « Pays » de l'app (2026-10-05) ───────────
-# Un nom canonique par pays, en francais, quelle que soit la langue du lieu :
-# « Switzerland », « Suisse » et « Schweiz » doivent tomber dans la meme case
-# du filtre, sinon il faut cocher trois cases pour un seul pays.
+# ── Country of a place, for the app's "Pays" filter (2026-10-05) ─────────────
+# One canonical name per country, in French, whatever the language of the place:
+# "Switzerland", "Suisse" and "Schweiz" must fall into the same box
+# of the filter, otherwise three boxes have to be ticked for a single country.
 _PAYS_CANON = {
     "Suisse": ("switzerland", "suisse", "schweiz"),
     "Pays-Bas": ("netherlands", "nederland", "pays-bas"),
@@ -1308,7 +1306,7 @@ _PAYS_CANON = {
     "Sri Lanka": ("sri lanka",),
     "Paraguay": ("paraguay",),
     "Uruguay": ("uruguay",),
-    # Ajoutes le 2026-10-07 : rangés « étranger (autre) » faute d'entree.
+    # Added on 2026-10-07: stored as "étranger (autre)" for lack of an entry.
     "Pakistan": ("pakistan",),
     "Équateur": ("ecuador", "equateur"),
     "Costa Rica": ("costa rica",),
@@ -1337,10 +1335,10 @@ _PAYS_CANON = {
     "Djibouti": ("djibouti",),
     "Sierra Leone": ("sierra leone",),
 }
-# Pour zone_lieu. Sans « maurice » : Saint-Maurice est une commune francaise.
+# For zone_lieu. Without "maurice": Saint-Maurice is a French commune.
 _PAYS_TOUS = tuple(a for al in _PAYS_CANON.values() for a in al if a != "maurice")
-# Etats americains en toutes lettres (« Green Bay, Wisconsin Metropolitan Area »).
-# Sans « Georgia » : c'est aussi un pays (« Tbilisi, Georgia »).
+# American states spelled out ("Green Bay, Wisconsin Metropolitan Area").
+# Without "Georgia": it is also a country ("Tbilisi, Georgia").
 _ETATS_US = (
     "alabama",
     "alaska",
@@ -1390,7 +1388,7 @@ _ETATS_US = (
     "wisconsin",
     "wyoming",
 )
-# Villes ecrites sans pays (voir _VILLES_ETRANGERES).
+# Cities written without a country (see _VILLES_ETRANGERES).
 _VILLE_PAYS = {
     "Portugal": ("lisbon", "lisboa", "porto", "guimaraes"),
     "Danemark": ("copenhagen", "aalborg"),
@@ -1544,7 +1542,7 @@ _WTJ_PAYS = {
     "us": "États-Unis",
     "ca": "Canada",
 }
-# Code ISO en fin de lieu, format « Ville Region CC » (Talent, Glassdoor).
+# ISO code at the end of a place, format "City Region CC" (Talent, Glassdoor).
 _ISO_PAYS = {
     **_WTJ_PAYS,
     "fr": "France",
@@ -1571,37 +1569,37 @@ _ISO_PAYS = {
 
 
 def pays_lieu(lieu: str | None) -> str:
-    """Pays d'un lieu, en francais : « France », « Suisse »…, ou « ? ».
+    """Country of a place, in French: "France", "Suisse"…, or "?".
 
-    La France se decide par zone_lieu, qui connait deja departements, communes
-    d'IDF et formats WTJ. A l'etranger, le PAYS ECRIT l'emporte sur la ville
-    (« Paris, Texas » n'existe pas ici, mais « London, Ontario » si).
+    France is decided by zone_lieu, which already knows departments, Île-de-France
+    communes and WTJ formats. Abroad, the WRITTEN COUNTRY wins over the city ("Paris,
+    Texas" does not exist here, but "London, Ontario" does).
     """
     z = zone_lieu(lieu)
     t = _n(lieu)
     if z == INCONNU:
-        # Vague pour la ZONE (quelle region ?), pas pour le PAYS : « France »,
-        # « All France (remote) » et « Remote (FR) » sont en France.
+        # Vague for the ZONE (which region?), not for the COUNTRY: "France",
+        # "All France (remote)" and "Remote (FR)" are in France.
         return "France" if _contient(t, ("france", "fr")) else "?"
     if z != INTERNATIONAL:
         return "France"
     if _RX_VILLE_ETAT.match(lieu or ""):
-        return "États-Unis"  # « Birmingham, AL » n'est pas en Angleterre
+        return "États-Unis"  # "Birmingham, AL" is not in England
     wtj = _RX_REGION_WTJ.search(t)
     if wtj and wtj.group(2) in _WTJ_PAYS:
         return _WTJ_PAYS[wtj.group(2)]
-    # Code ISO en dernier mot : « Delft Zuid-Holland NL », « Arlington VA US ».
+    # ISO code as the last word: "Delft Zuid-Holland NL", "Arlington VA US".
     fin = re.search(r"\s([A-Z]{2})\s*$", lieu or "")
     if fin and fin.group(1).lower() in _ISO_PAYS:
         return _ISO_PAYS[fin.group(1).lower()]
-    # Le DERNIER segment, s'il est un pays, l'emporte : « La Cañada, Querétaro,
-    # Mexico » n'est pas le Canada, « Mexicali, Baja California, Mexico » pas
-    # la Californie.
+    # The LAST segment, if it is a country, wins: "La Cañada, Querétaro,
+    # Mexico" is not Canada, "Mexicali, Baja California, Mexico" is not
+    # California.
     dernier = _n((lieu or "").split(",")[-1])
     for canon, alias in _PAYS_CANON.items():
         if dernier in alias:
             return canon
-    # Avant les pays : « New Mexico » n'est pas le Mexique.
+    # Before the countries: "New Mexico" is not Mexico.
     if _contient(t, _ETATS_US):
         return "États-Unis"
     for canon, alias in _PAYS_CANON.items():
@@ -1620,8 +1618,8 @@ def pays_lieu(lieu: str | None) -> str:
     return "étranger (autre)"
 
 
-# Region du filtre de l'app (l'utilisateur, 2026-10-07) : un clic pour toute
-# l'Europe ou toute l'Asie, au lieu de cocher trente pays.
+# Region of the app's filter (the user, 2026-10-07): one click for all of
+# Europe or all of Asia, instead of ticking thirty countries.
 _REGIONS = {
     "Amérique du Nord": ("États-Unis", "Canada"),
     "Amérique latine": (
@@ -1710,10 +1708,10 @@ _PAYS_REGION = {p: r for r, ps in _REGIONS.items() for p in ps}
 
 
 def region_pays(pays: str | None) -> str:
-    """Region d'un pays rendu par pays_lieu.
+    """Region of a country returned by pays_lieu.
 
-    La France est en Europe, comme tout pays europeen non liste ailleurs ; « ? » et «
-    étranger (autre) » restent « ? ».
+    France is in Europe, like any European country not listed elsewhere; "?" and
+    "étranger (autre)" stay "?".
     """
     if pays in ("?", "étranger (autre)", "", None):
         return "?"
@@ -1721,28 +1719,28 @@ def region_pays(pays: str | None) -> str:
 
 
 def lieu_du_titre(titre: str | None) -> str | None:
-    """Ville etrangere nommee dans l'INTITULE (« … (VIE - New York) »), ou None.
+    """Foreign city named in the TITLE ("… (VIE - New York)"), or None.
 
-    POURQUOI. Talent et Glassdoor donnent parfois le SIEGE comme lieu : Numberly
-    « Forward Deployed Engineer (VIE - New York) » etait rangee « Paris », et
-    l'utilisateur lisait « New York » sous le filtre France (2026-10-07). L'employeur
-    ne se trompe pas sur son propre intitule.
+    WHY. Talent and Glassdoor sometimes give the HEADQUARTERS as the place: Numberly
+    "Forward Deployed Engineer (VIE - New York)" was stored "Paris", and the user read
+    "New York" under the France filter (2026-10-07). The employer is not wrong about
+    their own title.
 
-    Les VILLES seulement, pas les pays : « Analyste ESG — couverture UK » ou
-    « Marches US » decrivent un perimetre, pas un lieu de travail. Une ville
-    nommee dans un intitule, elle, est presque toujours le lieu du poste.
+    CITIES only, not countries: "Analyste ESG — couverture UK" or "Marchés US"
+    describe a scope, not a workplace. A city named in a title, on the other hand, is
+    almost always the place of the job.
     """
     t = _n(titre)
     for pays, villes in _VILLE_PAYS.items():
         for v in villes:
-            # Pas de trait d'union apres : « Porto-Vecchio » est en Corse.
+            # No hyphen after: "Porto-Vecchio" is in Corsica.
             if re.search(r"(?<![a-z0-9-])" + re.escape(v) + r"(?![a-z0-9]|-[a-z])", t):
                 return f"{v.title()}, {pays}"
     return None
 
 
 def lieu_effectif(lieu: str | None, titre: str | None) -> str | None:
-    """Le lieu a retenir : celui de l'annonce, sauf s'il est francais (ou vide) alors que l'intitule nomme une ville etrangere."""
+    """The place to keep: the posting's, unless it is French (or empty) while the title names a foreign city."""
     t = lieu_du_titre(titre)
     if t and zone_lieu(lieu) != INTERNATIONAL:
         return t
@@ -1750,11 +1748,11 @@ def lieu_effectif(lieu: str | None, titre: str | None) -> str | None:
 
 
 def ville_affichee(lieu: str | None) -> str:
-    """Le lieu tel que l'app l'affiche : toute l'Ile-de-France devient « Paris » (l'utilisateur, 2026-10-05).
+    """The place as the app displays it: all of Île-de-France becomes "Paris" (the user, 2026-10-05).
 
-    « La Defense », « Paris - 75 », « Courbevoie, Ile-de- France » et « Greater Paris
-    Metropolitan Region » sont une seule recherche pour lui ; dans la colonne Lieu, ils
-    faisaient cinquante cases a cocher.
+    "La Defense", "Paris - 75", "Courbevoie, Ile-de- France" and "Greater Paris
+    Metropolitan Region" are a single search for them; in the Place column, they made
+    fifty boxes to tick.
     """
     if sous_zone(lieu) == "idf":
         return "Paris"
@@ -1762,7 +1760,7 @@ def ville_affichee(lieu: str | None) -> str:
 
 
 def main() -> int:
-    """Ligne de commande : bilan des zones de la file, ou inscription avec --ecrire."""
+    """Command line: summary of the queue's zones, or writing with --ecrire."""
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "--ecrire", action="store_true", help="inscrit le champ `zone` dans chaque offre de la file"

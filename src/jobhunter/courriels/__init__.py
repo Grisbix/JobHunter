@@ -1,12 +1,12 @@
-"""Statuts de candidature lus dans les courriels (étape G4), en lecture seule.
+"""Application statuses read in emails (step G4), read-only.
 
-- `lecture` : les courriels, depuis un export (.mbox de Google Takeout, dossier de .eml)
-  ou l'API Gmail en lecture seule (client OAuth créé par l'utilisateur, jamais de mot de
-  passe) ;
-- `statuts` : pour chaque courriel, la candidature du suivi qu'il concerne et le statut
-  qu'il suggère (accusé de réception, entretien, refus).
+- `lecture`: the emails, from an export (Google Takeout .mbox, folder of .eml files)
+  or the Gmail API, read-only (OAuth client created by the user, never a
+  password);
+- `statuts`: for each email, the tracked application it concerns and the status it
+  suggests (acknowledgement, interview, rejection).
 
-Rien n'est écrit sans validation, une proposition à la fois (`programmes.statuts_mail`,
-ou la fenêtre de l'application). Un courriel est une entrée non fiable : il n'est que
-lu et classé, jamais suivi (aucun lien ouvert, aucune pièce jointe lue).
+Nothing is written without validation, one suggestion at a time
+(`programmes.statuts_mail`, or the application's window). An email is untrusted input:
+it is only read and classified, never followed (no link opened, no attachment read).
 """

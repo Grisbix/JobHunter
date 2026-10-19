@@ -1,29 +1,27 @@
 #!/usr/bin/env python3
-"""regenere_docs.py — Refait lettres et CV avec le generateur actuel.
+"""regenere_docs.py — Redoes letters and CVs with the current generator.
 
-POURQUOI. Les corrections de redaction ne touchent que les lettres ECRITES
-APRES elles. Celles deja sur disque gardent leur texte d'origine : citations
-brutes de l'annonce, formes inclusives « un(e) », libelles de competence
-recopies avec leurs barres obliques, « forecast » au milieu d'un texte
-francais, jusqu'a quatre « et » dans une phrase. Les CV, eux, portaient
-« valorisation (DCF, multiples) » sur leur ligne de competences.
+WHY. The wording fixes only affect the letters WRITTEN AFTER them. Those already on
+disk keep their original text: raw quotations from the posting, inclusive forms
+"un(e)", skill labels copied with their slashes, "forecast" in the middle of a French
+text, up to four "et" in a sentence. The CVs, for their part, carried "valorisation
+(DCF, multiples)" on their skills line.
 
-CE QUI NE CHANGE PAS. Le NOM du fichier : il est repris tel quel de la file,
-donc les liens de l'app et du suivi restent valides. Rien n'est ecrit dans
-apply_queue.json — ce programme ne prend donc pas le verrou, et l'app peut
-tourner pendant.
+WHAT DOES NOT CHANGE. The file NAME: it is taken as is from the queue, so the links of
+the app and of the tracking stay valid. Nothing is written into apply_queue.json — so
+this program does not take the lock, and the app can run meanwhile.
 
-LA LANGUE EST RECALCULEE a chaque fois, comme le fait le generateur : une
-offre en anglais recoit une lettre en anglais.
+THE LANGUAGE IS RECOMPUTED each time, as the generator does: an offer in English
+receives a letter in English.
 
-Les .docx d'origine sont suivis par git. En cas de doute :
+The original .docx files are tracked by git. When in doubt:
     git checkout -- Lettres/Par_offre
 
-Run :
+Run:
   python JobHunter.pyw regenerer --dry
-  python JobHunter.pyw regenerer                   # lettres
-  python JobHunter.pyw regenerer --cv              # CV
-  python JobHunter.pyw regenerer --cv --sans-pdf   # .docx seuls, PDF plus tard
+  python JobHunter.pyw regenerer                   # letters
+  python JobHunter.pyw regenerer --cv              # CVs
+  python JobHunter.pyw regenerer --cv --sans-pdf   # .docx only, PDFs later
 """
 
 import argparse
@@ -44,19 +42,18 @@ from jobhunter import chemins
 
 SORTIE = {"lettre": chemins.LT_PAR_OFFRE, "cv": chemins.CV_PAR_OFFRE}
 
-# LibreOffice converti en LOT. Une conversion a la fois coute 1,2 s dont
-# l'essentiel est le demarrage du programme : 3336 lettres feraient plus d'une
-# heure. Un seul demarrage pour 150 fichiers ramene ca a quelques minutes.
+# LibreOffice converts in BATCH. One conversion at a time costs 1.2 s, most
+# of which is the program start-up: 3336 letters would take more than an
+# hour. A single start-up for 150 files brings that down to a few minutes.
 LOT_PDF = 150
 
 
 def stem_de(url):
-    """Le nom de fichier (sans extension) stocke dans la file.
+    """The file name (without extension) stored in the queue.
 
-    On le REPREND au lieu de le recalculer : new_name() peut avoir change
-    depuis, et un nom different laisserait l'ancienne lettre sur le disque
-    tandis que la file pointerait vers la nouvelle. Deux fichiers, un lien
-    juste, un orphelin.
+    We TAKE IT BACK instead of recomputing it: new_name() may have changed since, and
+    a different name would leave the old letter on disk while the queue would point
+    to the new one. Two files, one right link, one orphan.
     """
     u = (url or "").strip()
     if not u:
@@ -67,7 +64,7 @@ def stem_de(url):
 
 
 def convertir(fichiers, exe, dossier):
-    """Les .docx -> .pdf, par lots. Rend le nombre de PDF produits."""
+    """The .docx -> .pdf, in batches. Returns the number of PDFs produced."""
     faits = 0
     for i in range(0, len(fichiers), LOT_PDF):
         lot = fichiers[i : i + LOT_PDF]
@@ -120,7 +117,7 @@ def main():
 
     t0 = time.time()
     faits, rates = [], 0
-    offres_de = {}  # stem -> offre, pour reprendre un CV qui deborde
+    offres_de = {}  # stem -> offer, to redo a CV that overflows
     for n, (o, stem) in enumerate(cibles, 1):
         off = dict(
             company=o.get("entreprise") or "",
@@ -134,11 +131,11 @@ def main():
         lg = langue_offre(
             o.get("poste") or "", o.get("description") or "", o.get("localisation") or ""
         )
-        # REPRISES. OneDrive tient les fichiers qu'il vient de synchroniser, et
-        # l'ecriture echoue alors en « OSError: [Errno 22] Invalid argument »
-        # sur un chemin pourtant valide. Une passe juste apres une autre en a
-        # perdu 49 sur 3337 ainsi. Le meme remede que jutil.jwrite : attendre
-        # et recommencer, l'accroche se relache en une seconde ou deux.
+        # RETRIES. OneDrive holds the files it has just synced, and
+        # the write then fails with "OSError: [Errno 22] Invalid argument"
+        # on a path that is nevertheless valid. A pass just after another one
+        # lost 49 out of 3337 that way. The same remedy as jutil.jwrite: wait
+        # and start again, the hold is released in a second or two.
         p = None
         for essai in range(4):
             try:
@@ -176,9 +173,9 @@ def main():
     n = convertir(faits, exe, dossier)
     print(f"{n} PDF ecrits — {time.time() - t1:.0f} s")
     if a.cv:
-        # UNE PAGE, TOUJOURS. Les faits automatiques (cv_auto) ajoutent des
-        # lignes ; la conversion par lots ne regarde pas les pages. On reprend
-        # un par un ceux qui debordent, avec les allegements de CV/Faits.json.
+        # ONE PAGE, ALWAYS. The automatic facts (cv_auto) add
+        # lines; the batch conversion does not look at pages. We redo
+        # one by one those that overflow, with the lightenings of CV/Faits.json.
         from jobhunter.documents import _pages_pdf, cv_une_page
 
         par_stem = offres_de

@@ -1,7 +1,7 @@
-"""web_nav avec reseau et Ollama MOCKES : robust_goto, login_flow, vision_pick,
-llm_agent, choix du moteur, homepage_fallback. Aucun appel reel : goto via
-FakePage, Ollama via urlopen remplace. Un vrai Chromium headless sert de page.
-Converti depuis Scripts/test_web_nav_mock.py.
+"""web_nav with network and Ollama MOCKED: robust_goto, login_flow, vision_pick,
+llm_agent, engine choice, homepage_fallback. No real call: goto through
+FakePage, Ollama through a replaced urlopen. A real headless Chromium serves as the page.
+Converted from Scripts/test_web_nav_mock.py.
 """
 
 import json
@@ -12,14 +12,14 @@ import pytest
 from jobhunter import navigation as w
 
 
-# ── FakePage : simule page.goto sans navigateur ni reseau ──────────────────────
+# ── FakePage: simulates page.goto without browser or network ──────────────────────
 class _FakeResp:
     def __init__(self, status):
         self.status = status
 
 
 class FakePage:
-    """Rejoue un script d'etapes goto : ('ok', status) ou ('raise',)."""
+    """Replays a script of goto steps: ('ok', status) or ('raise',)."""
 
     def __init__(self, script):
         self.script, self.i, self.url = script, 0, "about:blank"
@@ -57,7 +57,7 @@ def test_robust_goto(script, ok):
     assert w.robust_goto(FakePage(script), "http://x", tries=3)["ok"] is ok
 
 
-# ── Ollama mocke : file de reponses pour urlopen ───────────────────────────────
+# ── Mocked Ollama: queue of responses for urlopen ───────────────────────────────
 class _FakeHTTP:
     def __init__(self, payload):
         self._b = json.dumps(payload).encode()
@@ -74,8 +74,8 @@ class _FakeHTTP:
 
 @pytest.fixture
 def ollama(monkeypatch):
-    """ollama(*reponses_generate) : /api/tags liste deux modeles, /api/generate rend
-    les reponses dans l'ordre."""
+    """ollama(*generate_responses): /api/tags lists two models, /api/generate returns
+    the responses in order."""
 
     def faire(*reponses):
         file = list(reponses)
@@ -91,7 +91,7 @@ def ollama(monkeypatch):
     return faire
 
 
-# ── login_flow : jamais de mot de passe tape ───────────────────────────────────
+# ── login_flow: never a password typed ───────────────────────────────────
 @pytest.fixture
 def login_une_etape(page):
     page.set_content(
@@ -120,7 +120,7 @@ def test_login_flow_deux_etapes(page):
     assert s0.get("email") == 1 and "ontinuer" in (s0.get("btn") or "")
 
 
-# ── vision_pick et llm_agent (Ollama mocke) ────────────────────────────────────
+# ── vision_pick and llm_agent (mocked Ollama) ────────────────────────────────────
 def test_vision_pick_clique_le_bouton_nomme(page, ollama):
     ollama({"response": "Postuler"})
     page.set_content('<button onclick="window.__v=1">Postuler</button>')
@@ -152,10 +152,10 @@ def test_llm_agent_degrade_si_ollama_absent(page, monkeypatch):
         raise Exception("connrefused")
 
     monkeypatch.setattr(urllib.request, "urlopen", absent)
-    assert w.llm_agent(page, "x", max_steps=1).get("ok") is False  # detection du modele KO
+    assert w.llm_agent(page, "x", max_steps=1).get("ok") is False  # model detection fails
 
 
-# ── choix du moteur de navigation : Playwright standard, aucun moteur furtif ───
+# ── choice of the navigation engine: standard Playwright, no stealth engine ───
 def test_available_engines():
     engs = w.available_engines()
     assert isinstance(engs, list) and "playwright" in engs

@@ -1,6 +1,6 @@
-"""Reecriture optionnelle par un modele local (Ollama).
+"""Optional rewriting by a local model (Ollama).
 
-Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5).
+Part of jobhunter.documents (formerly Scripts/tailor_application.py, phase 3.5).
 """
 
 import importlib
@@ -22,8 +22,8 @@ _log = _journal.journal(__name__)
 
 
 _ici = sys.modules[__name__]
-# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
-# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+# Values taken from the profile: computed on first read, not at import
+# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -34,7 +34,7 @@ def __getattr__(nom: str) -> Any:
 _PARESSEUX["PROFILE"] = lambda: importlib.import_module("jobhunter.documents.commun").PROFILE
 
 
-# ---- mode LLM : Claude API (si clé) OU Ollama local (gratuit) ----
+# ---- LLM mode: Claude API (if key) OR local Ollama (free) ----
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 
 
@@ -54,7 +54,7 @@ def _llm_prompt(offer: dict[str, Any]) -> str:
 
 
 def _ollama_generate(prompt: str) -> str | None:
-    """Appelle Ollama local (gratuit). Retourne le texte ou None si indispo."""
+    """Calls local Ollama (free). Returns the text or None if unavailable."""
     import json as _json
     import urllib.request
 
@@ -67,7 +67,7 @@ def _ollama_generate(prompt: str) -> str | None:
             data=body,
             headers={"Content-Type": "application/json"},
         )
-        with urllib.request.urlopen(req, timeout=120) as r:  # nosec B310 : schéma vérifié par exiger_http
+        with urllib.request.urlopen(req, timeout=120) as r:  # nosec B310 : scheme checked by exiger_http
             reponse: str = _json.loads(r.read()).get("response", "")
             return reponse.strip()
     except Exception as e:
@@ -78,21 +78,21 @@ def _ollama_generate(prompt: str) -> str | None:
 
 
 def llm_rewrite(offer: dict[str, Any], cv_docx: Any, letter_docx: Any) -> bool:
-    """Réécrit le corps de la lettre par un modèle de langue, s'il y en a un.
+    """Rewrites the letter's body with a language model, if there is one.
 
-    Claude si une clé ANTHROPIC_API_KEY est définie, sinon Ollama en local.
+    Claude if an ANTHROPIC_API_KEY key is set, otherwise Ollama locally.
 
     Args:
-        offer: l'offre (role, company, missions…).
-        cv_docx: le CV généré (non modifié ici).
-        letter_docx: la lettre générée, dont le corps est remplacé.
+        offer: the offer (role, company, missions…).
+        cv_docx: the generated CV (not changed here).
+        letter_docx: the generated letter, whose body is replaced.
 
     Returns:
-        True si la lettre a été réécrite.
+        True if the letter was rewritten.
     """
     prompt = _llm_prompt(offer)
     body = None
-    # 1) Claude API si clé
+    # 1) Claude API if key
     key = os.environ.get("ANTHROPIC_API_KEY")
     if key:
         try:
@@ -114,7 +114,7 @@ def llm_rewrite(offer: dict[str, Any], cv_docx: Any, letter_docx: Any) -> bool:
             _log.info(f"  ✎ Ollama local ({OLLAMA_MODEL})")
     if not body:
         return False
-    # reconstruit la lettre avec le corps LLM
+    # rebuilds the letter with the LLM body
     doc = Document()
     doc.styles["Normal"].font.name = "Calibri"
     doc.styles["Normal"].font.size = Pt(11)
@@ -123,9 +123,9 @@ def llm_rewrite(offer: dict[str, Any], cv_docx: Any, letter_docx: Any) -> bool:
         _ici.PROFILE["email"],
         _ici.PROFILE["tel"],
         "",
-    ]:  # pas d'adresse/ville
+    ]:  # no address/city
         doc.add_paragraph(line)
-    # même nettoyage + élision que tailor_letter : ce chemin LLM écrivait le titre brut
+    # same cleaning + elision as tailor_letter: this LLM path wrote the raw title
     _t = titre_poste(offer.get("role") or "")
     doc.add_paragraph(
         f"Objet : Candidature au poste {_de(_t)}" if _t else "Objet : Candidature spontanée"

@@ -1,6 +1,6 @@
-"""Trouver la page carriere d'une societe, puis l'offre dedans.
+"""Find a company's career page, then the offer in it.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+Part of jobhunter.navigation (formerly Scripts/web_nav.py, phase 3.6).
 """
 
 import importlib
@@ -35,16 +35,16 @@ def smart_step(
     target_kinds: tuple[str, ...] = ("apply_form", "register", "login"),
     max_tries: int = 6,
 ) -> dict[str, Any]:
-    """Fait avancer la page vers l'une des cibles, en essayant des stratégies dans l'ordre.
+    """Moves the page towards one of the targets, trying strategies in order.
 
-    Cookies, clic sur le bon lien, page carrières, menus, portail… Un CAPTCHA ou un
-    blocage arrête et passe la main : rien n'est contourné.
+    Cookies, click on the right link, careers page, menus, portal… A CAPTCHA or a
+    block stops and hands over: nothing is bypassed.
 
     Args:
-        page: la page Playwright.
-        task: l'intention (« apply », « login »…).
-        target_kinds: les types de page qui terminent la recherche.
-        max_tries: nombre maximal d'essais.
+        page: the Playwright page.
+        task: the intent ("apply", "login"…).
+        target_kinds: the page types that end the search.
+        max_tries: maximum number of attempts.
 
     Returns:
         {status: ok | stuck | blocked, kind, note, …}.
@@ -64,10 +64,10 @@ def smart_step(
     for attempt in range(max_tries):
         info = analyze(page)
         kind = info.get("kind", "other")
-        # captcha = humain direct (jamais contourné)
+        # captcha = human straight away (never bypassed)
         if info.get("captcha"):
             return {"status": "blocked", "kind": kind, "note": "captcha — humain requis"}
-        # rate-limit / anti-bot soft = backoff exponentiel + reload AVANT de rendre la main
+        # rate limit / soft anti-bot = exponential backoff + reload BEFORE handing over
         if info.get("blocked"):
             if info.get("rateLimited") and rate_hits < 3:
                 wait = min(2**rate_hits * 4000, 30000)  # 4s,8s,16s
@@ -82,7 +82,7 @@ def smart_step(
             return {"status": "blocked", "kind": kind, "note": "anti-bot — humain requis"}
         if kind in target_kinds:
             return {"status": "ok", "kind": kind, "note": "atteint a l'essai %d" % (attempt + 1)}
-        # apply_cta : bouton Apply/Candidater visible mais pas de form encore → cliquer
+        # apply_cta: Apply/Candidater button visible but no form yet → click
         if kind == "apply_cta":
             lbl = click_for_task(page, task)
             if not lbl:  # fallback: essayer register/login
@@ -93,20 +93,20 @@ def smart_step(
                 except Exception:
                     pass
                 page.wait_for_timeout(1500)
-                continue  # re-analyse après clic
+                continue  # re-analysis after the click
         strat = strategies[attempt % len(strategies)]
         try:
             if strat == "cookies":
                 dismiss_cookies(page)
                 dismiss_overlays(page)
             elif strat == "click":
-                dismiss_overlays(page)  # écarte widgets chat qui interceptent le clic
+                dismiss_overlays(page)  # sets aside chat widgets that intercept the click
                 lbl = click_for_task(page, task)
                 if lbl:
                     page.wait_for_timeout(1200)
             elif strat == "careers":
-                # home corporate -> section Carrières/Nous rejoindre/Careers avant login/offre
-                # v5.1: expand hamburger + hover_menus AVANT le scan carrière
+                # corporate home -> Carrières/Nous rejoindre/Careers section before login/offer
+                # v5.1: expand hamburger + hover_menus BEFORE the career scan
                 expand_hamburger_menu(page)
                 page.wait_for_timeout(500)
                 hover_menus(page)
@@ -115,7 +115,7 @@ def smart_step(
                 if gc.get("clicked"):
                     page.wait_for_timeout(1000)
             elif strat == "hover":
-                if hover_menus(page):  # dérouler sous-menu puis re-cliquer
+                if hover_menus(page):  # unfold the submenu then click again
                     lbl = click_for_task(page, task)
                     if lbl:
                         page.wait_for_timeout(1200)
@@ -123,7 +123,7 @@ def smart_step(
                 # UBS / portails multi-liens : clic lien login → form login
                 if click_portal_login(page):
                     page.wait_for_timeout(2000)
-                    # re-analyse après clic portal
+                    # re-analysis after the portal click
                     info2 = analyze(page)
                     if info2.get("kind") in target_kinds:
                         return {
@@ -153,7 +153,7 @@ def smart_step(
                 page.wait_for_timeout(2000)
         except Exception:
             pass
-    # dernier recours : vision LLM (Ollama llava) — "voit" le bon bouton
+    # last resort: LLM vision (Ollama llava) — "sees" the right button
     v = vision_pick(page, task)
     if v.get("clicked"):
         page.wait_for_timeout(1500)
@@ -171,12 +171,12 @@ def smart_step(
     }
 
 
-# ── #9 DRILL : page carrière (liste d'offres) -> entrer dans la bonne offre ───
+# ── #9 DRILL: career page (list of offers) -> enter the right offer ───────────
 def _drill_js(role_hint: str, job_rx: str = "") -> str:
     import json as _j
 
     hint = _j.dumps((role_hint or "").lower())
-    # pattern liens d'offre : celui de l'ATS détecté, sinon générique
+    # offer link pattern: the detected ATS's, otherwise generic
     jrx = _j.dumps(job_rx or r"/(jobs?|offre|emploi|career|poste|vacan|position|stelle|opening)s?/")
     return r"""
     ((HINT, JRX) => {
@@ -206,7 +206,7 @@ def _drill_js(role_hint: str, job_rx: str = "") -> str:
     """ % (hint, jrx)
 
 
-# Champ recherche d'offres sur page carrière : tape le rôle -> fait surgir l'offre.
+# Offer search field on a career page: types the role -> makes the offer appear.
 _SEARCH_JS = r"""
 () => {
   const _deep=(root,acc)=>{root.querySelectorAll('input,textarea').forEach(e=>acc.push(e));root.querySelectorAll('*').forEach(e=>{if(e.shadowRoot)_deep(e.shadowRoot,acc);});return acc;};
@@ -231,9 +231,9 @@ _SEARCH_JS = r"""
 
 
 def search_careers(page: Any, query: str) -> dict[str, Any]:
-    """Tape le rôle dans le champ recherche d'offres de la page carrière puis soumet (Enter).
+    """Types the role into the offer search field of the career page then submits (Enter).
 
-    Fait surgir l'offre quand la liste ne la montre pas. Retour {searched, ph}.
+    Makes the offer appear when the list does not show it. Returns {searched, ph}.
     """
     if not query:
         return {"searched": False}
@@ -252,7 +252,7 @@ def search_careers(page: Any, query: str) -> dict[str, Any]:
         page.wait_for_timeout(2500)
         return {"searched": True, "ph": r.get("ph", ""), "q": str(query)[:60]}
     except Exception:
-        # fallback : requestSubmit du form contenant le champ
+        # fallback: requestSubmit of the form containing the field
         try:
             react_submit(page)
             page.wait_for_timeout(2000)
@@ -261,13 +261,13 @@ def search_careers(page: Any, query: str) -> dict[str, Any]:
             return {"searched": False, "ph": r.get("ph", "")}
 
 
-# ── DEEP CAREER SCAN : scan complet de la page pour trouver les liens carrière ──
-# Stratégies :
-#  1. Scan ALL <a> hrefs pour patterns career (careers, jobs, recrutement, stellen, etc.)
-#  2. Scan innerText de TOUS les éléments visibles pour mots-clés career, remonte au parent cliquable
+# ── DEEP CAREER SCAN: full scan of the page to find the career links ──────────
+# Strategies:
+#  1. Scan ALL <a> hrefs for career patterns (careers, jobs, recrutement, stellen, etc.)
+#  2. Scan the innerText of ALL visible elements for career keywords, climb up to the clickable parent
 #  3. Scan data-attributes (data-nav, data-track, data-category, data-section, data-href)
 #  4. Scan structures nav/menu/header (<nav>, [class*=nav], [class*=menu], [class*=header])
-#  5. Pour les éléments JS-only (no href, onclick/event): retourne élément pour .click() JS dispatch
+#  5. For JS-only elements (no href, onclick/event): returns the element for a .click() JS dispatch
 #  6. Scoring: href match (+4), text match (+3), header/nav context (+2), short text (+1)
 _DEEP_CAREER_SCAN_JS = r"""
 (() => {
@@ -521,9 +521,9 @@ _DEEP_CAREER_SCAN_JS = r"""
 
 
 def goto_careers(page: Any) -> dict[str, Any]:
-    """Depuis la home corporate, atteint la section Carrières / Nous rejoindre / Careers / Join us (FR/EN/DE/NL, shadow DOM, data-attributes, JS-only links).
+    """From the corporate home, reaches the Carrières / Nous rejoindre / Careers / Join us section (FR/EN/DE/NL, shadow DOM, data-attributes, JS-only links).
 
-    Utilise un scan DOM profond multi-passes. Retour {clicked, label, kind, reason,
+    Uses a deep multi-pass DOM scan. Returns {clicked, label, kind, reason,
     href, top5}.
     """
     # ── Primary: deep career scan (4-pass comprehensive DOM search) ──
@@ -540,7 +540,7 @@ def goto_careers(page: Any) -> dict[str, Any]:
             return {"clicked": False, "reason": "scan_error"}
 
     if not r or not r.get("found"):
-        # v5.1: fallback sitemap.xml si aucun lien carrière trouvé
+        # v5.1: sitemap.xml fallback if no career link found
         sitemap_results = fetch_sitemap_careers(page)
         if sitemap_results:
             best_sm = sitemap_results[0]
@@ -677,9 +677,9 @@ def goto_careers(page: Any) -> dict[str, Any]:
 
 
 # ── CANDIDATE AUTH on careers page ────────────────────────────────────────
-# Scanne TOUS les liens (y compris header/footer, shadow DOM) sur la page
-# carrière pour trouver le vrai login/register CANDIDAT (pas newsletter).
-# Les vrais logins candidats sont souvent dans le header de la page carrière.
+# Scans ALL the links (including header/footer, shadow DOM) on the career
+# page to find the real CANDIDATE login/register (not a newsletter).
+# The real candidate logins are often in the header of the career page.
 _CAREERS_AUTH_JS = r"""
 (() => {
   const _deep=(root,acc)=>{
@@ -761,11 +761,11 @@ _CAREERS_AUTH_JS = r"""
 """
 
 
-# ── FALLBACK SITEMAP.XML : dernier recours quand aucun lien carrière trouvé ──
+# ── SITEMAP.XML FALLBACK: last resort when no career link is found ────────────
 def fetch_sitemap_careers(page: Any, base_url: str = "") -> list[Any]:
-    """Récupère /sitemap.xml et en extrait les URLs contenant des patterns carrière.
+    """Fetches /sitemap.xml and extracts the URLs containing career patterns.
 
-    Retour liste de {url, label, score}. À utiliser quand goto_careers() échoue
+    Returns a list of {url, label, score}. To use when goto_careers() fails
     (no_career_links).
     """
     import re as _re
@@ -799,15 +799,15 @@ def fetch_sitemap_careers(page: Any, base_url: str = "") -> list[Any]:
             req = urllib.request.Request(
                 exiger_http(sitemap_url), headers={"User-Agent": "Mozilla/5.0"}
             )
-            with urllib.request.urlopen(req, timeout=15) as resp:  # nosec B310 : schéma vérifié par exiger_http
+            with urllib.request.urlopen(req, timeout=15) as resp:  # nosec B310 : scheme checked by exiger_http
                 data = resp.read()
             # Try XML parse
             try:
-                # Un plan de site n'a pas de DOCTYPE : en refuser un écarte les bombes
-                # d'entités (« billion laughs ») et les entités externes.
+                # A sitemap has no DOCTYPE: refusing one rules out entity bombs
+                # ("billion laughs") and external entities.
                 if b"<!DOCTYPE" in data[:4096].upper() or b"<!ENTITY" in data.upper():
                     raise ValueError("plan de site avec DOCTYPE ou entité : refusé")
-                root = ET.fromstring(data)  # nosec B314 : DOCTYPE et entités refusés juste avant
+                root = ET.fromstring(data)  # nosec B314 : DOCTYPE and entities refused just before
                 ns = {"ns": "http://www.sitemaps.org/schemas/sitemap/0.9"}
                 urls = root.findall(".//ns:loc", ns) or root.findall(
                     ".//{http://www.sitemaps.org/schemas/sitemap/0.9}loc"
@@ -815,14 +815,14 @@ def fetch_sitemap_careers(page: Any, base_url: str = "") -> list[Any]:
                 for loc in urls:
                     url_text = (loc.text or "").strip()
                     if url_text and CAREER_URL_RX.search(url_text):
-                        # Extraire label du dernier segment
+                        # Extract the label from the last segment
                         path = urlparse(url_text).path.rstrip("/")
                         label = path.rsplit("/", 1)[-1].replace("-", " ").replace("_", " ")
                         results.append(
                             {"url": url_text, "label": label, "score": 2, "source": "sitemap"}
                         )
             except Exception:
-                # Fallback: regex brut sur le XML
+                # Fallback: raw regex on the XML
                 for match in _re.finditer(
                     r"<loc>([^<]+)</loc>", data.decode("utf-8", errors="ignore")
                 ):
@@ -841,10 +841,10 @@ def fetch_sitemap_careers(page: Any, base_url: str = "") -> list[Any]:
 
 
 def drill_to_offer(page: Any, role_hint: str = "", job_rx: str = "") -> dict[str, Any]:
-    """Page carrière = liste d'offres, pas d'offre précise.
+    """Career page = list of offers, not a specific offer.
 
-    Clique le lien d'offre qui matche le mieux le rôle visé (sinon le 1er). `job_rx` =
-    pattern liens spécifique à l'ATS (via detect_ats). Retour {clicked, label, n}.
+    Clicks the offer link that best matches the target role (otherwise the 1st).
+    `job_rx` = link pattern specific to the ATS (via detect_ats). Returns {clicked, label, n}.
     """
     try:
         r = page.evaluate(_drill_js(role_hint, job_rx))
@@ -860,18 +860,18 @@ def drill_to_offer(page: Any, role_hint: str = "", job_rx: str = "") -> dict[str
         return {"clicked": False, "label": r.get("label", "")}
 
 
-# ── RECHERCHE D'OFFRE UNIFIÉE : reconnait l'ATS -> cherche -> entre dans l'offre ─
+# ── UNIFIED OFFER SEARCH: recognises the ATS -> searches -> enters the offer ──
 def find_offer(page: Any, role_hint: str = "", max_tries: int = 3) -> Any:
-    """Point d'entrée UNIQUE pour atteindre une offre sur un site carrière.
+    """SINGLE entry point to reach an offer on a career site.
 
-    1) detect_ats (Workday/iCIMS/TalentSoft/… + pattern liens & champ recherche) 2) si
-    déjà sur form/CTA -> ok 3) search_careers (tape le rôle) -> re-analyse 4)
-    drill_to_offer avec le pattern liens de l'ATS -> re-analyse LOOP : si pas atteint,
-    _unstick (cookies/scroll/wait/hover/reload) + réessaie. Retour {reached, kind, ats,
+    1) detect_ats (Workday/iCIMS/TalentSoft/… + link pattern & search field) 2) if
+    already on form/CTA -> ok 3) search_careers (types the role) -> re-analysis 4)
+    drill_to_offer with the ATS's link pattern -> re-analysis LOOP: if not reached,
+    _unstick (cookies/scroll/wait/hover/reload) + retry. Returns {reached, kind, ats,
     via, tries}.
     """
     TARGET = ("apply_form", "apply_cta", "register", "login")
-    # laisse le JS rendre les offres (cartes React/Vue) avant d'analyser
+    # lets the JS render the offers (React/Vue cards) before analysing
     try:
         page.wait_for_load_state("networkidle", timeout=6000)
     except Exception:
@@ -892,7 +892,7 @@ def find_offer(page: Any, role_hint: str = "", max_tries: int = 3) -> Any:
                 "tries": attempt + 1,
             }
         via = []
-        # 1) recherche par mot-clé (champ recherche d'offres)
+        # 1) keyword search (offer search field)
         sc = search_careers(page, role_hint)
         if sc.get("searched"):
             via.append("search")
@@ -905,15 +905,15 @@ def find_offer(page: Any, role_hint: str = "", max_tries: int = 3) -> Any:
                     "via": "+".join(via),
                     "tries": attempt + 1,
                 }
-        # 2) entrer dans une offre de la liste (pattern ATS si connu, sinon générique)
+        # 2) enter an offer from the list (ATS pattern if known, otherwise generic)
         dr = drill_to_offer(page, role_hint, ats.get("jobLinkRx", ""))
         if not dr.get("clicked") and ats.get("name") != "generic":
-            dr = drill_to_offer(page, role_hint, "")  # fallback pattern générique
+            dr = drill_to_offer(page, role_hint, "")  # generic pattern fallback
         if dr.get("clicked"):
             via.append("drill")
             dismiss_cookies(page)
             info = analyze(page)
-        # 3) perdu (0 offre, rien cliqué) → saute vers la section Carrières puis re-tente
+        # 3) lost (0 offers, nothing clicked) → jumps to the Careers section then retries
         if (
             not via
             and info.get("kind") in ("other", "newsletter_form")
@@ -923,7 +923,7 @@ def find_offer(page: Any, role_hint: str = "", max_tries: int = 3) -> Any:
             if gc.get("clicked"):
                 via.append("careers")
                 dismiss_cookies(page)
-                ats = detect_ats(page)  # l'ATS peut changer après le saut
+                ats = detect_ats(page)  # the ATS may change after the jump
                 info = analyze(page)
                 if info.get("kind") in TARGET:
                     return {
@@ -951,11 +951,11 @@ def find_offer(page: Any, role_hint: str = "", max_tries: int = 3) -> Any:
         }
         if last["reached"]:
             return last
-        _unstick(page, attempt)  # déblocage avant le prochain essai
+        _unstick(page, attempt)  # unblocking before the next attempt
     return last
 
 
-# Annuaires et agregateurs : jamais le site d'une societe.
+# Directories and aggregators: never a company's site.
 _ANNUAIRES = (
     "annuaire-entreprises",
     "societe.com",
@@ -975,9 +975,9 @@ _ANNUAIRES = (
 def homepage_fallback(
     page: Any, entreprise: str, role: str = "", homepage: str | None = None
 ) -> dict[str, Any]:
-    """PIPELINE DE BASE quand l'URL d'offre est morte : nom entreprise → site officiel (cache homepages.json, sinon résolution enrich_homepages : slug+validation+web) → section Carrières → offre.
+    """BASE PIPELINE when the offer URL is dead: company name → official site (homepages.json cache, otherwise enrich_homepages resolution: slug+validation+web) → Careers section → offer.
 
-    Retour {ok, homepage, careers, kind, via, note}.
+    Returns {ok, homepage, careers, kind, via, note}.
     """
     import json as _json
 
@@ -989,28 +989,28 @@ def homepage_fallback(
             ).get(entreprise)
         except Exception:
             hp = None
-    if not hp:  # 2) résolution à la volée (devine domaine + valide HTTP)
+    if not hp:  # 2) on-the-fly resolution (guesses the domain + validates over HTTP)
         try:
             from jobhunter.programmes.enrich_homepages import resolve as _resolve
 
             hp = _resolve(entreprise)
             if isinstance(hp, tuple):  # resolve() retourne (nom, url)
                 hp = hp[1]
-            # Un ANNUAIRE n'est pas le site de la societe. La recherche y
-            # atterrit quand le nom ne resout pas, et le cacher enverrait
-            # ensuite le runner au mauvais endroit — durablement, puisque le
-            # cache fait foi. Mesure : « Entreprise Inconnue XYZ 999 » avait
+            # A DIRECTORY is not the company's site. The search lands there
+            # when the name does not resolve, and caching it would then send
+            # the runner to the wrong place — lastingly, since the
+            # cache is authoritative. Measured: "Entreprise Inconnue XYZ 999" had
             # ainsi ete cachee vers annuaire-entreprises.data.gouv.fr.
             if hp and any(a in hp.lower() for a in _ANNUAIRES):
                 hp = None
-            if hp:  # persiste dans le cache pour la prochaine fois
+            if hp:  # kept in the cache for next time
                 try:
                     _hp_f = _racine.scripts() / "homepages.json"
                     c = _json.loads(_hp_f.read_text(encoding="utf-8"))
                     c[entreprise] = hp
-                    # Atomique : ce cache est relu par d'autres programmes, et
-                    # un write_text interrompu le laissait tronque — donc
-                    # illisible, donc reconstruit de zero au scan suivant.
+                    # Atomic: this cache is re-read by other programs, and
+                    # an interrupted write_text left it truncated — hence
+                    # unreadable, hence rebuilt from scratch at the next scan.
                     importlib.import_module("jobhunter.programmes.jutil").jwrite(_hp_f, c)
                 except Exception:
                     pass

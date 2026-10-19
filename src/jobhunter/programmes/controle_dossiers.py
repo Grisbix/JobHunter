@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""controle_dossiers.py — Les dossiers (CV + lettre) sont-ils prêts à partir ?
+"""controle_dossiers.py — Are the folders (CV + letter) ready to go?
 
-Passe en revue les offres qui ont un dossier et contrôle les FICHIERS FINAUX (voir
-jobhunter.documents.controle) : pièce présente, PDF lisible avec du texte, une page,
-coordonnées du profil présentes, aucun gabarit oublié. Lecture seule : rien n'est
-modifié, ni la file ni les documents.
+Goes through the offers that have a folder and checks the FINAL FILES (see
+jobhunter.documents.controle): document present, readable PDF with text, one page,
+profile contact details present, no forgotten template. Read-only: nothing is
+changed, neither the queue nor the documents.
 
-Les candidatures déjà dans le suivi sont ignorées : leur dossier est parti.
+Applications already in the tracking are ignored: their folder has gone.
 
-Run :
-  python JobHunter.pyw controle              # toutes les offres à dossier
-  python JobHunter.pyw controle --fit 8      # seulement fit >= 8
+Run:
+  python JobHunter.pyw controle              # all the offers with a folder
+  python JobHunter.pyw controle --fit 8      # only fit >= 8
 """
 
 import argparse

@@ -1,19 +1,19 @@
-"""Le classement range-t-il en tête les offres que l'utilisateur juge bonnes ?
+"""Does the ranking put at the top the offers the user judges good?
 
-Partie de jobhunter.scoring. Le jeu de référence existe déjà dans le suivi : une offre à
-laquelle on a postulé (ou qu'on s'apprête à postuler) a été jugée pertinente ; une offre
-marquée « mauvaise » ou « pas intéressé » a été jugée inutile. Le classement est celui du
-moteur : `fit_fin` (le fit décimal), à défaut `fit`.
+Part of jobhunter.scoring. The reference set already exists in the tracking: an offer
+one applied to (or is about to apply to) was judged relevant; an offer marked
+"mauvaise" or "pas intéressé" was judged useless. The ranking is the engine's:
+`fit_fin` (the decimal fit), failing that `fit`.
 
-Mesures :
+Measures:
 
-AUC             probabilité qu'une offre pertinente soit mieux notée qu'une offre
-                inutile (0,5 = au hasard, 1 = parfait), avec un intervalle par
-                rééchantillonnage : avec quelques dizaines de jugements, le chiffre
-                bouge, et il faut le savoir avant de comparer deux versions.
-précision@N     part de pertinentes parmi les N mieux notées, N = nombre de pertinentes.
+AUC             probability that a relevant offer is scored higher than a useless
+                offer (0.5 = random, 1 = perfect), with an interval by resampling:
+                with a few dozen judgements, the figure moves, and that must be known
+                before comparing two versions.
+precision@N     share of relevant ones among the N best scored, N = number of relevant ones.
 
-C'est le chiffre de référence avant toute variante du scoring (feuille de route C1).
+It is the reference figure before any scoring variant (roadmap C1).
 """
 
 import random
@@ -23,22 +23,22 @@ from typing import Any
 
 PERTINENT = ("postulé", "relancé", "entretien", "refus", "à postuler")
 INUTILE = ("mauvaise", "pas intéressé")
-# « mauvaise » a aussi servi pour un FAIT, avant que le statut « expiré » existe : poste
-# pourvu, page sans offre, vu trop tard. Le classement ne peut pas le prévoir : ces
-# offres ne comptent pas comme des erreurs de notation.
+# "mauvaise" was also used for a FACT, before the "expiré" status existed: job
+# filled, page without an offer, seen too late. The ranking cannot foresee it: these
+# offers do not count as scoring errors.
 _RX_FAIT = re.compile(r"pourvu|pas d'offre|trop tard|expir|ferm[ée]|plus en ligne", re.I)
 
 
 def jugements(suivi: Mapping[str, Mapping[str, Any]]) -> dict[str, bool]:
-    """Les offres jugées, d'après leur statut de suivi.
+    """The judged offers, according to their tracking status.
 
     Args:
-        suivi: le suivi, indexé par identité d'offre.
+        suivi: the tracking, indexed by offer identity.
 
     Returns:
-        {identité: True si jugée pertinente, False si inutile} ; les autres statuts
-        (expiré, à vérifier…) ne disent rien de la pertinence et sont ignorés, comme une
-        « mauvaise » dont la note dit un fait (pourvu, page sans offre, trop tard).
+        {identity: True if judged relevant, False if useless}; the other statuses
+        (expiré, à vérifier…) say nothing about relevance and are ignored, like a
+        "mauvaise" whose note states a fact (filled, page without an offer, too late).
     """
     sortie = {}
     for oid, c in suivi.items():
@@ -60,10 +60,10 @@ def note(offre: Mapping[str, Any]) -> float:
 
 
 def auc(positives: list[float], negatives: list[float]) -> float | None:
-    """Probabilité qu'une note positive dépasse une note négative (égalité = 1/2).
+    """Probability that a positive score exceeds a negative score (tie = 1/2).
 
     Returns:
-        L'AUC, ou None s'il manque des positives ou des négatives.
+        The AUC, or None if positives or negatives are missing.
     """
     if not positives or not negatives:
         return None
@@ -101,17 +101,17 @@ def evaluer(
     suivi: Mapping[str, Mapping[str, Any]],
     oid: Any,
 ) -> dict[str, Any]:
-    """Évalue le classement des offres jugées encore présentes dans la file.
+    """Evaluates the ranking of the judged offers still present in the queue.
 
     Args:
-        offres: la file.
-        suivi: le suivi.
-        oid: la fonction d'identité d'une offre (`queue_io.oid`).
+        offres: the queue.
+        suivi: the tracking.
+        oid: the identity function of an offer (`queue_io.oid`).
 
     Returns:
-        {pertinentes, inutiles, auc, intervalle, precision, pires} ; `pires` donne les
-        inutiles les mieux notées et les pertinentes les moins bien notées, là où le
-        classement se trompe le plus.
+        {pertinentes, inutiles, auc, intervalle, precision, pires}; `pires` gives the
+        best-scored useless offers and the worst-scored relevant ones, where the
+        ranking is most wrong.
     """
     juges = jugements(suivi)
     notes: list[tuple[float, bool, Mapping[str, Any]]] = [

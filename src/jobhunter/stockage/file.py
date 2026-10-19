@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
-"""jobhunter.stockage.file — accès unique à apply_queue.json (ancien Scripts/queue_io.py).
+"""jobhunter.stockage.file — single access to apply_queue.json (formerly Scripts/queue_io.py).
 
-POURQUOI CE MODULE. Quatorze programmes écrivent la file, et chacun réimplémentait
-la même séquence : prendre le verrou, relire le disque, modifier, écrire en
-atomique, relâcher. Un seul l'oubliait — l'app — et c'était une perte de données
-en puissance. Une séquence recopiée quatorze fois finit toujours par diverger.
+WHY THIS MODULE. Fourteen programs write the queue, and each reimplemented
+the same sequence: take the lock, reread the disk, modify, write
+atomically, release. Only one forgot it — the app — and it was a potential
+data loss. A sequence copied fourteen times always ends up diverging.
 
     from queue_io import transaction, charger
 
-    offres = charger()                     # lecture seule, pas de verrou
+    offres = charger()                     # read only, no lock
 
-    with transaction() as offres:          # verrou + relecture fraîche
+    with transaction() as offres:          # lock + fresh reread
         for o in offres:
             o["fit"] = 10
-    # sortie du bloc : écriture atomique, puis verrou relâché
+    # leaving the block: atomic write, then lock released
 
-NOM DU FICHIER. Surtout pas `queue.py` : `queue` est un module de la bibliothèque
-standard, `Scripts/` est dans sys.path, et JobHunter.pyw fait `import queue`.
-Le masquer casserait l'application.
+FILE NAME. Above all not `queue.py`: `queue` is a standard library module,
+`Scripts/` is in sys.path, and JobHunter.pyw does `import queue`.
+Shadowing it would break the application.
 
-Decision : docs/adr/0002-trois-fichiers-trois-contrats.md
+Decision: docs/adr/0002-trois-fichiers-trois-contrats.md
 """
 
 import json
@@ -34,29 +34,29 @@ from jobhunter.types import Chemin, Offre
 HERE = racine.scripts()
 CHEMIN = HERE / "apply_queue.json"
 
-# ── Descriptions à part ──────────────────────────────────────────────────────
-# Les descriptions pesaient 8,3 Mo des 11,6 Mo de la file, soit 64 %. Or les 13
-# programmes qui modifient UNE offre réécrivaient le fichier ENTIER : 142 ms par
-# cycle, dont l'essentiel à recopier des textes que personne n'avait touchés.
-# Elles vivent donc dans un fichier annexe, indexé par offre.
+# ── Descriptions kept apart ──────────────────────────────────────────────────────
+# The descriptions weighed 8.3 MB of the queue's 11.6 MB, i.e. 64 %. Yet the 13
+# programs that modify ONE offer rewrote the WHOLE file: 142 ms per
+# cycle, most of it copying texts nobody had touched.
+# So they live in an annex file, indexed by offer.
 #
-# La séparation est INVISIBLE pour les appelants : `charger` réinjecte le champ
-# `description`, l'écriture le ressort. Aucun des 22 usages de `o["description"]`
+# The separation is INVISIBLE to callers: `charger` reinjects the
+# `description` field, writing takes it out. None of the 22 uses of `o["description"]`
 # n'a eu besoin de changer.
 DESCRIPTIONS = HERE / "descriptions.json"
 
 
 def oid(offre: Offre) -> str:
-    """Identifiant stable d'une offre : « entreprise|poste ».
+    """Stable identifier of an offer: "entreprise|poste".
 
-    Unique sur les 2613 offres réelles (vérifié), et déjà la convention de l'app.
-    Surtout PAS l'URL : elle change quand un doublon mieux classé la promeut.
+    Unique over the 2613 real offers (checked), and already the app's convention.
+    Above all NOT the URL: it changes when a better-ranked duplicate promotes it.
 
     Args:
-        offre: une offre de la file.
+        offre: an offer of the queue.
 
     Returns:
-        « entreprise|poste », tels qu'écrits dans l'offre.
+        "entreprise|poste", as written in the offer.
     """
     return f"{(offre.get('entreprise') or '').strip()}|{(offre.get('poste') or '').strip()}"
 
@@ -70,11 +70,11 @@ def _lire_descriptions() -> dict[str, str]:
 
 
 def _est_la_file(p: Chemin) -> bool:
-    """`p` designe-t-il LA file (celle dont les descriptions vivent a part) ?
+    """Does `p` designate THE queue (the one whose descriptions live apart)?
 
-    Compare les chemins RESOLUS : `Path("apply_queue.json")` lance depuis Scripts/
-    n'est pas egal a CHEMIN (absolu). Compare tel quel, il perdait les 11 710
-    descriptions a la lecture, et `sauver` les aurait reecrites dans la file.
+    Compares the RESOLVED paths: `Path("apply_queue.json")` run from Scripts/
+    is not equal to CHEMIN (absolute). Compared as is, it lost the 11,710
+    descriptions on reading, and `sauver` would have rewritten them into the queue.
     """
     try:
         return Path(p).resolve() == Path(CHEMIN).resolve()
@@ -83,21 +83,21 @@ def _est_la_file(p: Chemin) -> bool:
 
 
 def charger(chemin: Chemin | None = None, descriptions: bool = True) -> list[Offre]:
-    """Les offres, en LECTURE SEULE, descriptions réinjectées.
+    """The offers, READ ONLY, descriptions reinjected.
 
-    Pas de verrou : les écritures étant atomiques (tmp + os.replace), une lecture
-    ne voit jamais un fichier à moitié écrit. Ne pas utiliser si l'on compte
-    réécrire — voir `transaction`.
+    No lock: since writes are atomic (tmp + os.replace), a read
+    never sees a half-written file. Do not use if you intend to
+    rewrite — see `transaction`.
 
-    `descriptions=False` évite de lire le fichier annexe quand on n'en a pas
-    besoin : c'est là qu'est le gain de temps.
+    `descriptions=False` avoids reading the annex file when it is not
+    needed: that is where the time saving is.
 
     Args:
-        chemin: la file à lire ; None = `Scripts/apply_queue.json` du dossier des données.
-        descriptions: réinjecter le texte des annonces (fichier annexe).
+        chemin: the queue to read; None = `Scripts/apply_queue.json` of the data folder.
+        descriptions: reinject the postings' text (annex file).
 
     Returns:
-        Les offres ; une liste vide si le fichier manque.
+        The offers; an empty list if the file is missing.
     """
     p = Path(chemin or CHEMIN)
     try:
@@ -118,32 +118,32 @@ def charger(chemin: Chemin | None = None, descriptions: bool = True) -> list[Off
 def sauver(
     offres: list[Offre], chemin: Chemin | None = None, _avant: dict[str, str] | None = None
 ) -> None:
-    """Écriture atomique, SANS verrou.
+    """Atomic write, WITHOUT lock.
 
-    Réservé aux cas où l'appelant tient déjà le verrou. Dans le doute, utiliser
-    `transaction`. Le texte des annonces part dans le fichier annexe, qui n'est
-    réécrit que s'il a changé.
+    Reserved for cases where the caller already holds the lock. When in doubt, use
+    `transaction`. The postings' text goes into the annex file, which is only
+    rewritten if it changed.
 
     Args:
-        offres: toutes les offres ; leur champ `description` est retiré puis remis.
-        chemin: la file à écrire ; None = celle du dossier des données.
-        _avant: les descriptions déjà lues par l'appelant. `transaction` les
-            transmet — sans ça, `sauver` relisait les 8,8 Mo que `charger` venait
-            de lire, 63 ms jetés à chaque écriture.
+        offres: all the offers; their `description` field is removed then put back.
+        chemin: the queue to write; None = the one of the data folder.
+        _avant: the descriptions already read by the caller. `transaction` passes
+            them on — without that, `sauver` reread the 8.8 MB that `charger` had just
+            read, 63 ms thrown away at each write.
     """
     p = Path(chemin or CHEMIN)
-    if not _est_la_file(p):  # fichier de test : pas de separation
+    if not _est_la_file(p):  # test file: no separation
         atomique.ecrire_json(p, offres)
         return
 
-    # TROIS TEMPS, pour qu'aucune panne ne fasse perdre une description encore
-    # utilisée. 1) l'annexe reçoit les textes nouveaux, SANS rien retirer ; 2) la
-    # file est publiée ; 3) seulement alors, les orphelines sont purgées. Une panne
-    # entre deux temps ne laisse que des orphelines, inoffensives. L'ordre d'avant
-    # (purge puis file) perdait la description d'une offre retirée si l'écriture de
-    # la file échouait ensuite : la file gardait l'offre, l'annexe n'avait plus son
-    # texte (audit du 19/10/2026). Deux fichiers atomiques ne font pas une
-    # transaction ; cet ordre en tient lieu.
+    # THREE STEPS, so that no failure loses a description still
+    # in use. 1) the annex receives the new texts, WITHOUT removing anything; 2) the
+    # queue is published; 3) only then are the orphans purged. A failure
+    # between two steps only leaves orphans, harmless. The previous order
+    # (purge then queue) lost the description of a removed offer if writing
+    # the queue then failed: the queue kept the offer, the annex no longer had its
+    # text (audit of 19/10/2026). Two atomic files do not make a
+    # transaction; this order stands in for one.
     avant = _lire_descriptions() if _avant is None else _avant
     textes = dict(avant)
     vivants = set()
@@ -155,24 +155,24 @@ def sauver(
             textes[cle_o] = t
     purgees = textes
     if _avant is None or avant:
-        # purge des orphelines. Sautee quand l'appelant n'a pas lu le fichier
-        # annexe (transaction descriptions=False) : on ne saurait pas distinguer
-        # « orpheline » de « pas chargee », et on effacerait tout.
+        # purge of the orphans. Skipped when the caller did not read the annex
+        # file (transaction descriptions=False): we could not tell
+        # "orphan" from "not loaded", and we would erase everything.
         purgees = {k: v for k, v in textes.items() if k in vivants}
 
-    # N'ECRIRE QUE CE QUI A CHANGE. Reecrire systematiquement les 8,8 Mo de
-    # descriptions coutait 230 ms a chaque transaction — plus cher que l'ancien
-    # fichier unique. Or la quasi-totalite des ecritures ne touche AUCUNE
-    # description : elles changent un fit, un statut, une URL. La purge, elle,
-    # n'arrive que quand des offres quittent la file.
+    # WRITE ONLY WHAT CHANGED. Systematically rewriting the 8.8 MB of
+    # descriptions cost 230 ms per transaction — more expensive than the old
+    # single file. Yet almost all writes touch NO
+    # description: they change a fit, a status, a URL. The purge, for its part,
+    # only happens when offers leave the queue.
     try:
         if textes != avant:
             atomique.ecrire_json(DESCRIPTIONS, textes)  # 1) ajouts seulement
-        atomique.ecrire_json(p, offres)  # 2) la file
+        atomique.ecrire_json(p, offres)  # 2) the queue
         if purgees != textes:
             atomique.ecrire_json(DESCRIPTIONS, purgees)  # 3) purge
     finally:
-        for o in offres:  # l'appelant garde son objet complet, même après une panne
+        for o in offres:  # the caller keeps its complete object, even after a failure
             texte = textes.get(oid(o))
             if texte:
                 o["description"] = texte
@@ -189,48 +189,48 @@ def transaction(
     relire: bool = True,
     descriptions: bool = True,
 ) -> Iterator[list[Offre]]:
-    """Verrou + relecture fraîche + écriture atomique à la sortie du bloc.
+    """Lock + fresh reread + atomic write on leaving the block.
 
-    `relire` : relit le disque À L'INTÉRIEUR du verrou. C'est le point essentiel.
-    Charger la file puis prendre le verrou laisse une fenêtre pendant laquelle un
-    autre programme écrit — on repartirait alors d'un état périmé et on
-    effacerait son travail.
+    `relire`: rereads the disk INSIDE the lock. That is the essential point.
+    Loading the queue then taking the lock leaves a window during which another
+    program writes — we would then start from a stale state and
+    erase its work.
 
-    Une exception dans le bloc ANNULE l'écriture : mieux vaut ne rien écrire
-    qu'écrire un état à moitié transformé.
+    An exception in the block CANCELS the write: better to write nothing
+    than to write a half-transformed state.
 
-    `descriptions=False` : ne lit PAS le fichier annexe (8,8 Mo, 63 ms) et le
-    laisse tel quel. C'est là qu'est le gain de vitesse — pour les programmes qui
-    changent un fit, un statut ou une URL sans toucher au texte des annonces.
-    Les offres n'auront alors pas de champ `description`, et les descriptions
-    orphelines ne sont pas purgées : c'est le travail d'une écriture complète.
+    `descriptions=False`: does NOT read the annex file (8.8 MB, 63 ms) and
+    leaves it as is. That is where the speed gain is — for programs that
+    change a fit, a status or a URL without touching the postings' text.
+    The offers will then have no `description` field, and orphan descriptions
+    are not purged: that is the job of a complete write.
 
     Args:
-        chemin: la file ; None = celle du dossier des données.
-        attente: secondes d'attente du verrou.
-        relire: relire le disque une fois le verrou pris (à garder vrai).
-        descriptions: lire et réécrire aussi le texte des annonces.
+        chemin: the queue; None = the one of the data folder.
+        attente: seconds to wait for the lock.
+        relire: reread the disk once the lock is taken (keep true).
+        descriptions: also read and rewrite the postings' text.
 
     Yields:
-        La liste des offres, à modifier en place.
+        The list of offers, to modify in place.
 
     Raises:
-        VerrouIndisponible: un autre programme garde la file plus de `attente` s.
+        VerrouIndisponible: another program holds the queue for more than `attente` s.
     """
     p = Path(chemin or CHEMIN)
-    # `prendre_verrou` est réentrant, `rendre_verrou` ne l'est PAS : il libère pour de
-    # bon. Une transaction imbriquée rendait le verrou de son appelant, qui continuait
-    # sans lui (audit du 19/10/2026). Comme `suivi.transaction` : on ne rend que le
-    # verrou qu'on a pris.
+    # `prendre_verrou` is reentrant, `rendre_verrou` is NOT: it releases for
+    # good. A nested transaction released its caller's lock, which carried on
+    # without it (audit of 19/10/2026). Like `suivi.transaction`: we only release the
+    # lock we took.
     a_nous = not verrou.tenu(p)
     if a_nous and not verrou.prendre_verrou(p, attente=attente):
         raise VerrouIndisponible(
             f"{p.name} est modifié par un autre programme (attente {attente}s dépassée)"
         )
     try:
-        # Une seule lecture des descriptions pour toute la transaction : elle
-        # sert a les reinjecter en entree, PUIS a savoir en sortie si elles ont
-        # change. Les relire dans sauver coutait 63 ms pour rien.
+        # A single read of the descriptions for the whole transaction: it
+        # serves to reinject them on entry, THEN to know on exit whether they
+        # changed. Rereading them in sauver cost 63 ms for nothing.
         textes = _lire_descriptions() if (relire and descriptions and _est_la_file(p)) else {}
         offres = charger(p, descriptions=False) if relire else []
         if textes:
@@ -240,7 +240,7 @@ def transaction(
                     if t:
                         o["description"] = t
         yield offres
-        sauver(offres, p, _avant=textes)  # atteint seulement si le bloc n'a pas levé
+        sauver(offres, p, _avant=textes)  # reached only if the block did not raise
     finally:
         if a_nous:
             verrou.rendre_verrou(p)
@@ -249,22 +249,22 @@ def transaction(
 def modifier[T](
     fn: Callable[[list[Offre]], T], chemin: Chemin | None = None, attente: float = 180
 ) -> T:
-    """`fn(offres)` sous verrou. Renvoie ce que `fn` renvoie.
+    """`fn(offres)` under lock. Returns what `fn` returns.
 
-    Sucre pour les programmes qui n'ont qu'une transformation à appliquer :
+    Sugar for programs that only have one transformation to apply:
 
         n = modifier(lambda offres: sum(1 for o in offres if o.pop("vieux", None)))
 
     Args:
-        fn: la transformation, appliquée à la liste fraîchement relue.
-        chemin: la file ; None = celle du dossier des données.
-        attente: secondes d'attente du verrou.
+        fn: the transformation, applied to the freshly reread list.
+        chemin: the queue; None = the one of the data folder.
+        attente: seconds to wait for the lock.
 
     Returns:
-        Ce que `fn` renvoie.
+        What `fn` returns.
 
     Raises:
-        VerrouIndisponible: un autre programme garde la file trop longtemps.
+        VerrouIndisponible: another program holds the queue too long.
     """
     with transaction(chemin, attente=attente) as offres:
         return fn(offres)

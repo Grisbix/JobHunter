@@ -19,13 +19,13 @@ SOFFICE = [
 
 
 def to_pdf(docx_path: Path) -> Path | None:
-    """Convertit un .docx en PDF par LibreOffice, à côté du fichier.
+    """Converts a .docx to PDF through LibreOffice, next to the file.
 
     Args:
-        docx_path: le document Word.
+        docx_path: the Word document.
 
     Returns:
-        Le chemin du PDF, ou None si LibreOffice est absent ou a échoué.
+        The path of the PDF, or None if LibreOffice is missing or failed.
     """
     exe = next((s for s in SOFFICE if Path(s).exists()), None)
     if not exe:

@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""top_offres.py — Les N offres a traiter MAINTENANT, pas les N meilleurs scores.
+"""top_offres.py — The N offers to handle NOW, not the N best scores.
 
-Le fit seul ne suffit pas a decider. Une offre a fit 10 est inutile si son lien
-ouvre la page d'accueil de l'entreprise, si elle demande dix ans d'experience,
-si l'utilisateur y a deja postule, ou si elle est a Brest. Ce programme applique les
-filtres d'ACTIONNABILITE avant de trier.
+The fit alone is not enough to decide. A fit-10 offer is useless if its link opens the
+company's home page, if it asks for ten years of experience, if the user already
+applied to it, or if it is in Brest. This program applies the ACTIONABILITY filters
+before sorting.
 
-REJETS, chacun tire d'un cas reel :
-  - lien non direct : « BNP Paribas AM » a fit 10 pointait sur /careers/, et
-    « LinkedIn Jobs FR — Analyste ESG / Finance France » sur une page de
-    resultats. Un lien qui n'ouvre pas l'annonce ne se traite pas ce matin.
-  - doublon : la meme annonce Credit Agricole apparaissait quatre fois, sous
-    « Credit Agricole CIB » et « Credit Agricole S.A. ». On garde la mieux
-    classee par source.
-  - deja postule (suivi.json), deja ecartee (exclusions.json).
-  - experience exigee > 3 ans, contrat alternance/stage, hors zone.
-  - pas de description : le fit est alors calcule sur le seul intitule.
+REJECTIONS, each drawn from a real case:
+  - non-direct link: "BNP Paribas AM" at fit 10 pointed to /careers/, and
+    "LinkedIn Jobs FR — Analyste ESG / Finance France" to a results page. A link that
+    does not open the posting is not handled this morning.
+  - duplicate: the same Credit Agricole posting appeared four times, under
+    "Credit Agricole CIB" and "Credit Agricole S.A.". We keep the one best ranked by
+    source.
+  - already applied (suivi.json), already set aside (exclusions.json).
+  - experience required > 3 years, work-study/internship contract, out of zone.
+  - no description: the fit is then computed on the title alone.
 
-Run :
+Run:
   python JobHunter.pyw top_offres
   python JobHunter.pyw top_offres --n 20 --zone prioritaire
 """
@@ -37,7 +37,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union
 from jobhunter.sources.commun import contrat_du_titre, contrats_exclus
 from jobhunter.sources.fusion import rang_source
 
-# Intitule qui parle vraiment du metier vise, et niveau d'entree.
+# Title that really talks about the target profession, and entry level.
 RX_ESG = re.compile(
     r"\bESG\b|\bISR\b|\bRSE\b|\bSFDR\b|\bCSRD\b|extra.?financi"
     r"|durab|sustainab|climat(?!is)|carbone|taxonomie|impact"
@@ -50,7 +50,7 @@ RX_JUNIOR = re.compile(
     re.I,
 )
 
-# Derniers segments qui designent une rubrique, donc une liste de postes.
+# Last segments that designate a section, hence a list of jobs.
 _RUBRIQUES = {
     "careers",
     "career",
@@ -69,10 +69,10 @@ _RUBRIQUES = {
 }
 _RX_RECHERCHE = re.compile(r"(^|&)(query|q|k|keywords?|search|recherche)=", re.I)
 
-# L'employeur est le SITE lui-meme : la ligne n'est pas une annonce mais une
-# page de listing curee a la main (« LinkedIn Jobs FR — Analyste ESG / Finance
-# France », lien /jobs/analyste-esg-emplois). Le chemin a deux segments la
-# faisait passer pour une annonce.
+# The employer is the SITE itself: the row is not a posting but a
+# listing page curated by hand ("LinkedIn Jobs FR — Analyste ESG / Finance
+# France", link /jobs/analyste-esg-emplois). The two-segment path
+# passed it off as a posting.
 _BOARDS = (
     "linkedin",
     "welcome to the jungle",
@@ -91,7 +91,7 @@ _BOARDS = (
 
 
 def lien_direct(url):
-    """Le lien ouvre-t-il L'ANNONCE, et pas une liste ?"""
+    """Does the link open THE POSTING, and not a list?"""
     u = str(url or "")
     if not u.startswith("http"):
         return False
@@ -99,11 +99,11 @@ def lien_direct(url):
     if _RX_RECHERCHE.search(d.query or ""):
         return False
     seg = [c for c in (d.path or "").split("/") if c]
-    if not seg:  # racine du domaine = page d'accueil
+    if not seg:  # domain root = home page
         return False
     if seg[-1].lower().strip("-_") in _RUBRIQUES:
         return False
-    # Une annonce porte un identifiant : un chemin profond, ou un nombre.
+    # A posting carries an identifier: a deep path, or a number.
     return len(seg) >= 2 or any(c.isdigit() for c in "".join(seg))
 
 
@@ -153,9 +153,9 @@ def main():
             rejets["contrat"] += 1
             continue
         cle = f"{o.get('entreprise', '')}|{o.get('poste', '')}"
-        # Le statut « mauvaise » est le jugement de l'utilisateur sur l'offre. Sans ce
-        # test, une offre qu'il vient d'ecarter dans l'app reviendrait en tete
-        # du classement au prochain appel — et il la recarterait, indefiniment.
+        # The "mauvaise" status is the user's judgement on the offer. Without this
+        # test, an offer they have just set aside in the app would come back at the top
+        # of the ranking at the next call — and they would set it aside again, forever.
         if (suivi.get(cle) or {}).get("s") == "mauvaise":
             rejets["jugee mauvaise"] = rejets.get("jugee mauvaise", 0) + 1
             continue
@@ -179,9 +179,9 @@ def main():
             continue
         gardees.append(o)
 
-    # DEDUPLICATION. La meme annonce revient sous plusieurs raisons sociales
-    # (« Credit Agricole CIB » et « Credit Agricole S.A. »). L'intitule normalise
-    # suffit a les rapprocher ; on garde le lien le mieux classe.
+    # DEDUPLICATION. The same posting comes back under several company names
+    # ("Credit Agricole CIB" and "Credit Agricole S.A."). The normalised title
+    # is enough to bring them together; we keep the best-ranked link.
     par_poste = {}
     for o in gardees:
         k = re.sub(r"[^a-z0-9]+", " ", (o.get("poste") or "").lower()).strip()
@@ -194,13 +194,13 @@ def main():
         t = o.get("poste") or ""
         s = (o.get("fit_fin") or o.get("fit") or 0) * 10  # fit_fin : decimal, departage
         if RX_ESG.search(t):
-            s += 30  # ESG dans l'INTITULE, pas seulement dans le texte
+            s += 30  # ESG in the TITLE, not only in the text
         if RX_JUNIOR.search(t):
             s += 12
         if o.get("zone") == "prioritaire":
             s += 8
         s += rang_source(o.get("url")) * 2  # lien employeur > agregateur
-        # Le PREMIER secteur prioritaire du profil passe devant les autres.
+        # The FIRST priority sector of the profile goes before the others.
         _sz = importlib.import_module("jobhunter.scoring.zones").sous_zone(
             o.get("localisation") or ""
         )

@@ -1,6 +1,6 @@
-"""Mise à jour signée (2.18) : une version que l'auteur n'a pas signée n'est jamais installée.
+"""Signed update (2.18): a version the author did not sign is never installed.
 
-Hors réseau, comme test_mise_a_jour : ZIP, signature et installateur servis en mémoire.
+Offline, like test_mise_a_jour: ZIP, signature and installer served from memory.
 """
 
 import argparse
@@ -34,7 +34,7 @@ def servis(zip_fichiers=V13, signes=V13, version_signee="1.3.0", setup=EXE, avec
 
 
 @pytest.fixture
-def signee(installer, monkeypatch):  # noqa: F811 (fixture importée)
+def signee(installer, monkeypatch):  # noqa: F811 (imported fixture)
     monkeypatch.setattr(sig, "CLE_PUBLIQUE", CLE)
     return installer
 
@@ -92,7 +92,7 @@ def test_sans_cle_publique_comme_avant(installer, capsys):  # noqa: F811
     assert lire(d, "Scripts/a.py") == "A = 2\n"
 
 
-# ── application installée : l'installateur téléchargé, contrôlé, ouvert ───────
+# ── installed application: the installer downloaded, checked, opened ───────
 
 
 @pytest.fixture
@@ -121,7 +121,7 @@ def test_appli_installateur_signe_ouvert(appli, tmp_path, capsys):
 
 
 def test_appli_installateur_altere_jamais_ouvert(appli, capsys):
-    urls = servis(setup=b"autre chose")  # signé pour un autre exécutable
+    urls = servis(setup=b"autre chose")  # signed for another executable
     lances = appli(urls)
     assert maj.maj_application(False) == 1
     assert lances == []
@@ -151,6 +151,6 @@ def test_appli_sans_cle_empreinte_publiee(appli, capsys):
 
 
 def test_appli_hors_ligne_ouvre_la_page(appli):
-    lances = appli({})  # aucun téléchargement possible
+    lances = appli({})  # no download possible
     assert maj.maj_application(False) == 1
     assert lances == [["navigateur", maj.PAGE_VERSIONS]]

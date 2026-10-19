@@ -1,34 +1,31 @@
 #!/usr/bin/env python3
-"""site_final.py — Retrouver une offre LinkedIn sur le site de l'employeur.
+"""site_final.py — Find a LinkedIn offer again on the employer's site.
 
-POURQUOI. 7265 offres de la file sur 8805 n'ont qu'un lien LinkedIn (2026-10-05),
-dont 616 a fit >= 9. LinkedIn ne montre le lien du site de l'employeur qu'a un
-compte CONNECTE : la page publique dit « Inscrivez-vous pour postuler », et son
-HTML ne contient aucune adresse de sortie (verifie sur deux offres Deloitte).
-On ne se connecte pas : un compte pilote par programme se fait restreindre, et
-aucun programme ne manipule de mot de passe ici.
+WHY. 7265 offers of the queue out of 8805 only have a LinkedIn link (2026-10-05), 616
+of them with fit >= 9. LinkedIn only shows the link to the employer's site to a
+LOGGED-IN account: the public page says "Inscrivez-vous pour postuler", and its HTML
+contains no outgoing address (checked on two Deloitte offers). We do not log in: an
+account driven by a program gets restricted, and no program handles a password here.
 
-On prend donc l'autre bout : les API ATS publiques (Greenhouse, Lever, Ashby,
-Recruitee, SmartRecruiters), qui rendent en JSON la liste des offres d'une
-societe avec leur URL directe. Pour chaque entreprise :
-  1. ses flux connus (job_sources.ATS_SLUGS, etat precedent), sinon on sonde
-     des slugs plausibles (probe_ats_queue.variantes x 5 API) ;
-  2. on VERIFIE que le flux est bien celui de cette societe (verify_ats_slugs :
-     « alan » sur Ashby n'est pas forcement l'employeur « Alan ») — seul un
-     verdict CONFIRME compte ;
-  3. on cherche l'intitule dans le flux ; trouve -> l'offre prend l'URL du site
-     final, l'URL LinkedIn est gardee dans `url_linkedin`.
+So we take the other end: the public ATS APIs (Greenhouse, Lever, Ashby, Recruitee,
+SmartRecruiters), which return as JSON the list of a company's offers with their direct
+URL. For each company:
+  1. its known feeds (job_sources.ATS_SLUGS, previous state), otherwise we probe
+     plausible slugs (probe_ats_queue.variantes x 5 APIs);
+  2. we CHECK that the feed is really that company's (verify_ats_slugs: "alan" on
+     Ashby is not necessarily the employer "Alan") — only a CONFIRME verdict counts;
+  3. we look for the title in the feed; found -> the offer takes the final site's
+     URL, the LinkedIn URL is kept in `url_linkedin`.
 
-UNE ABSENCE NE PROUVE PAS UNE FERMETURE. Un flux SmartRecruiters plafonne a
-100 offres par page, une filiale publie ailleurs, un intitule est reformule.
-Une offre absente d'un flux confirme est seulement NOTEE (`site_final` =
-« absente du flux »), jamais retiree.
+AN ABSENCE DOES NOT PROVE A CLOSURE. A SmartRecruiters feed is capped at 100 offers per
+page, a subsidiary publishes elsewhere, a title is reworded. An offer missing from a
+confirmed feed is only NOTED (`site_final` = "absente du flux"), never removed.
 
-Etat : `_site_final.json`, une entree par entreprise (flux trouves, date).
-Une entreprise sans flux n'est resondee qu'apres 30 jours.
+State: `_site_final.json`, one entry per company (feeds found, date). A company without
+a feed is only probed again after 30 days.
 
-Run :
-  python JobHunter.pyw site_final --dry               # mesure, n'ecrit rien dans la file
+Run:
+  python JobHunter.pyw site_final --dry               # measures, writes nothing in the queue
   python JobHunter.pyw site_final                     # fit >= 9
   python JobHunter.pyw site_final --fit 8 --limite 100
 """
@@ -58,7 +55,7 @@ RESONDE_JOURS = 30
 
 UA = probe_ats.UA
 
-# Mentions qui n'appartiennent pas a l'intitule : genre, contrat, lieu.
+# Mentions that do not belong to the title: gender, contract, place.
 _RX_GENRE = re.compile(
     r"[(\[]?\s*\b(?:h\s*/\s*f|f\s*/\s*h|m\s*/\s*f(?:\s*/\s*[dx])?|"
     r"f\s*/\s*m(?:\s*/\s*[dx])?|w\s*/\s*m(?:\s*/\s*[dx])?|"
@@ -106,25 +103,25 @@ def _sans_accent(s):
 
 
 def titre_cle(t):
-    """Intitule reduit a ses mots, pour comparer deux publications de la meme offre."""
+    """Title reduced to its words, to compare two publications of the same offer."""
     t = _RX_GENRE.sub(" ", str(t or ""))
     t = _RX_BRUIT.sub(" ", t)
     return " ".join(re.split(r"[^a-z0-9]+", _sans_accent(t))).strip()
 
 
 def meme_titre(a, b):
-    """Deux intitules designent-ils la meme annonce ? Strict : une fausse
-    correspondance enverrait l'utilisateur postuler a un autre poste."""
-    # MEMES MOTS, pas « assez ressemblants ». Un ratio de similarite rattachait
+    """Do two titles designate the same posting? Strict: a false match would send the
+    user to apply to another job."""
+    # SAME WORDS, not "similar enough". A similarity ratio linked
     # « Junior Energy Consultant » a l'annonce « Energy Consultant » (Baringa,
-    # 2026-10-05) : un seul mot d'ecart, mais deux postes differents. Seuls les
-    # mots vides et l'ordre peuvent varier.
+    # 2026-10-05): a single word of difference, but two different jobs. Only the
+    # stop words and the order may vary.
     ma, mb = set(titre_cle(a).split()) - _VIDES, set(titre_cle(b).split()) - _VIDES
     return bool(ma) and ma == mb
 
 
 def lire_flux(kind, slug, requete=""):
-    """[(titre, url, lieu)] d'un flux, ou None si illisible."""
+    """[(title, url, place)] of a feed, or None if unreadable."""
     import httpx
 
     if kind == "workday":
@@ -183,15 +180,15 @@ def lire_flux(kind, slug, requete=""):
 
 
 # ═══════════════ Workday ═══════════════
-# Les grands groupes publient sur *.myworkdayjobs.com, dont l'API JSON est
-# publique (celle que leur propre page appelle). Mesure le 2026-10-07 :
-#   - POST /wday/cxs/{tenant}/{site}/jobs sur un site inexistant rend 404
-#     « not found: Job_Posting_Site_ID » si le tenant existe sur cet hote,
-#     422 sinon : une requete par (tenant, hote) suffit a trouver le tenant ;
-#   - le nom du site n'a aucune convention (ArdianCareers, erm_Careers,
-#     Eiffage_Careers) mais il ignore la casse : on essaie les formes vues ;
-#   - la fiche d'une offre donne `hiringOrganization.name`, le nom de
-#     l'employeur : c'est la preuve d'identite, en plus du tenant.
+# Large groups publish on *.myworkdayjobs.com, whose JSON API is
+# public (the one their own page calls). Measured on 2026-10-07:
+#   - POST /wday/cxs/{tenant}/{site}/jobs on a non-existent site returns 404
+#     "not found: Job_Posting_Site_ID" if the tenant exists on that host,
+#     422 otherwise: one request per (tenant, host) is enough to find the tenant;
+#   - the site's name has no convention (ArdianCareers, erm_Careers,
+#     Eiffage_Careers) but it ignores case: we try the forms seen;
+#   - an offer's posting gives `hiringOrganization.name`, the employer's
+#     name: it is the proof of identity, in addition to the tenant.
 WD_HOTES = ["wd1", "wd3", "wd5", "wd10", "wd12", "wd103", "wd105", "wd108", "wd501"]
 _WD_SUFFIXES = [
     "Careers",
@@ -224,7 +221,7 @@ _WD_JSON = {**UA, "Accept": "application/json", "Content-Type": "application/jso
 
 
 def _wd_jobs(tenant, hote, site, texte="", limite=20):
-    """Reponse brute de la recherche Workday, ou None si le reseau echoue."""
+    """Raw response of the Workday search, or None if the network fails."""
     import httpx
 
     try:
@@ -251,8 +248,8 @@ def _wd_vitrine(tenant, hote, site):
     base = f"https://{tenant}.{hote}.myworkdayjobs.com/wday/cxs/{tenant}/{site}"
     morceaux = []
     try:
-        # Les TEXTES seuls : les adresses d'image (« /wday/cxs/erm/... »)
-        # contiennent le tenant et confirmeraient n'importe quel site.
+        # The TEXTS only: the image addresses ("/wday/cxs/erm/...")
+        # contain the tenant and would confirm any site.
         for bloc in httpx.get(base + "/sidebar", timeout=15, headers=_WD_JSON).json() or []:
             morceaux += [str(bloc.get(k) or "") for k in ("title", "text", "altText")]
     except Exception:
@@ -291,14 +288,14 @@ def meme_employeur(entreprise, tenant, vitrine):
 
 
 def flux_workday(entreprise):
-    """[["workday", "tenant.hote/site"]] si l'entreprise publie sur Workday."""
+    """[["workday", "tenant.host/site"]] if the company publishes on Workday."""
     compact = re.sub(r"[^a-z0-9]", "", _sans_accent(entreprise))
     tenants = list(dict.fromkeys(([compact] if len(compact) >= 3 else []) + variantes(entreprise)))
     for t in tenants:
         for h in WD_HOTES:
             if not tenant_workday(t, h):
                 continue
-            # « Lombard_Odier_Careers » : les mots du nom, joints par « _ ».
+            # "Lombard_Odier_Careers": the words of the name, joined by "_".
             bases = list(
                 dict.fromkeys([t, "_".join(m.capitalize() for m in mots_du_tenant(entreprise, t))])
             )
@@ -314,12 +311,12 @@ def flux_workday(entreprise):
                     break
                 if meme_employeur(entreprise, t, _wd_vitrine(t, h, site)):
                     return [["workday", f"{t}.{h}/{site}"]]
-                break  # le site existe mais ne nomme pas l'entreprise
+                break  # the site exists but does not name the company
     return []
 
 
 def lire_workday(slug, requete):
-    """[(titre, url, lieu)] des offres du flux qui repondent a la requete."""
+    """[(title, url, place)] of the feed's offers that answer the query."""
     tenant, reste = slug.split(".", 1)
     hote, site = reste.split("/", 1)
     r = _wd_jobs(tenant, hote, site, requete)
@@ -342,11 +339,11 @@ def coquille(postes):
     return any("(sample)" in t.lower() for t, *_ in postes)
 
 
-# Homonymes verifies a la main : le nom concorde, l'employeur non.
-# ashby:hatch est une start-up americaine, pas Hatch l'ingenierie (2026-10-07).
-# Sonde des cabinets du 2026-10-08 : lever:oliverwyman et ashby:andera sont des
+# Namesakes checked by hand: the name matches, the employer does not.
+# ashby:hatch is an American start-up, not Hatch the engineering firm (2026-10-07).
+# Probe of the consulting firms of 2026-10-08: lever:oliverwyman and ashby:andera are
 # start-up de San Francisco ; workday simon = Simon Property Group (centres
-# commerciaux), pas Simon-Kucher — le tenant ne prenait que le premier mot.
+# sales), not Simon-Kucher — the tenant only took the first word.
 FAUX_FLUX = {
     ("ashby", "hatch"),
     ("lever", "oliverwyman"),
@@ -356,9 +353,9 @@ FAUX_FLUX = {
 
 
 def flux_de(entreprise, connus):
-    """Flux ATS CONFIRMES pour cette entreprise : [[kind, slug], ...]."""
+    """CONFIRMED ATS feeds for this company: [[kind, slug], ...]."""
     trouves = []
-    connus = [(k, s) for k, s in connus if k != "workday"]  # traites par sonder()
+    connus = [(k, s) for k, s in connus if k != "workday"]  # handled by sonder()
     candidats = list(connus) or [(k, s) for s in variantes(entreprise) for k in probe_ats.APIS]
     for kind, slug in candidats:
         if (kind, slug) in FAUX_FLUX:
@@ -372,7 +369,7 @@ def flux_de(entreprise, connus):
 
 
 def flux_connus():
-    """Flux deja declares dans job_sources, indexes par nom de societe reduit."""
+    """Feeds already declared in job_sources, indexed by reduced company name."""
     from jobhunter.sources import ATS_SLUGS, WORKDAY_FLUX
 
     idx = {}
@@ -399,13 +396,13 @@ def _age(date, jour):
 
 
 def a_resonder(x, jour):
-    """(ATS publics, Workday) : lesquels sonder pour cette entreprise ?
-    Un flux trouve ne se resonde pas ; une absence, apres 30 jours."""
+    """(public ATS, Workday): which ones to probe for this company?
+    A found feed is not probed again; an absence, after 30 days."""
     if not x:
         return True, True
     fl = x.get("flux") or []
     ats = not any(k != "workday" for k, _ in fl) and _age(x.get("date"), jour) >= RESONDE_JOURS
-    # `wd_date` absente : entree d'avant Workday (2026-10-07), jamais sondee.
+    # `wd_date` missing: entry from before Workday (2026-10-07), never probed.
     wd = not any(k == "workday" for k, _ in fl) and (
         "wd_date" not in x or _age(x["wd_date"], jour) >= RESONDE_JOURS
     )
@@ -413,7 +410,7 @@ def a_resonder(x, jour):
 
 
 def sonder(e, x, connus, jour):
-    """Nouvelle entree d'etat pour l'entreprise `e`."""
+    """New state entry for the company `e`."""
     ats, wd = a_resonder(x, jour)
     x = dict(x or {})
     ancien = x.get("flux") or []
@@ -463,8 +460,8 @@ def main():
     jour = datetime.date.today()
     connus = flux_connus()
 
-    # Un flux Workday ajoute a la main (job_sources.WORKDAY_FLUX) entre aussi
-    # dans une entreprise deja sondee, sans attendre ses 30 jours.
+    # A Workday feed added by hand (job_sources.WORKDAY_FLUX) also gets
+    # into a company already probed, without waiting for its 30 days.
     def _cure_manquant(e):
         fl = (etat.get(e) or {}).get("flux") or []
         return any(k == "workday" and [k, s] not in fl for k, s in connus.get(_cle(e), []))
@@ -485,22 +482,22 @@ def main():
             try:
                 etat[e] = f.result()
             except Exception:
-                pass  # resonde au prochain passage
+                pass  # probed again at the next pass
             if n % 25 == 0:
-                # Ecrit en cours de route : le pipeline peut couper l'etape.
+                # Written along the way: the pipeline may cut the step.
                 ETAT.write_text(json.dumps(etat, ensure_ascii=False, indent=1), encoding="utf-8")
                 print(f"  … {n}/{len(a_sonder)} sondees ({time.time() - t0:.0f} s)")
     ETAT.write_text(json.dumps(etat, ensure_ascii=False, indent=1), encoding="utf-8")
 
-    # Recherche des intitules dans les flux confirmes.
+    # Search for the titles in the confirmed feeds.
     trouvees, absentes = {}, {}
     avec_flux = [e for e in ents if (etat.get(e) or {}).get("flux")]
     for e in avec_flux:
         cache = {}
         for o in par_ent[e]:
             for kind, slug in etat[e]["flux"]:
-                # Ces deux API cherchent cote serveur : la liste complete est
-                # tronquee (SmartRecruiters 100, Workday 20 par page).
+                # These two APIs search server side: the full list is
+                # truncated (SmartRecruiters 100, Workday 20 per page).
                 cherche = kind in ("smartrecruiters", "workday")
                 cle = (kind, slug, o["poste"] if cherche else "")
                 if cle not in cache:

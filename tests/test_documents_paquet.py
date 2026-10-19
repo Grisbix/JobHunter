@@ -1,8 +1,8 @@
-"""Le paquet jobhunter.documents (phase 3.5) : facades et noms conserves.
+"""The jobhunter.documents package (phase 3.5): facades and names kept.
 
-- tailor_application EST jobhunter.documents ; message_offre et cv_auto sont ses modules ;
-- les noms de l'ancien fichier unique restent lisibles (tailor_cv, titre_poste, to_pdf...) ;
-- le message court se charge sans tailor_application.
+- tailor_application IS jobhunter.documents; message_offre and cv_auto are its modules;
+- the names of the old single file remain readable (tailor_cv, titre_poste, to_pdf...);
+- the short message loads without tailor_application.
 """
 
 import json
@@ -50,7 +50,7 @@ def test_les_noms_de_l_ancien_fichier_restent(nom, module):
 def test_une_affectation_va_au_proprietaire(monkeypatch):
     monkeypatch.setattr(tailor_application, "SOFFICE", [])
     assert rendu.SOFFICE == []
-    assert rendu.to_pdf(None) is None  # aucun LibreOffice : pas de PDF, pas d'erreur
+    assert rendu.to_pdf(None) is None  # no LibreOffice: no PDF, no error
 
 
 def test_le_message_se_charge_sans_tailor_application():

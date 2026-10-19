@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""JobHunter — application compacte (1 fenêtre : actions + dashboard riche intégré).
-Tkinter (stdlib, aucune install). Double-clic JobHunter.pyw.
-Onglet Dashboard = table filtrable + fiche détail + ÉDITION statut/note/date
-(écrit direct dans Scripts/suivi.json ; bouton 🔄 Sync Excel pousse vers la feuille SUIVI).
-LE dashboard de l'app = source unique d'infos (plus de HTML séparé).
+"""JobHunter — compact application (one window: actions + rich built-in dashboard).
+Tkinter (stdlib, nothing to install). Double-click JobHunter.pyw.
+Dashboard tab = filterable table + detail card + EDITING of status/note/date
+(written straight into Scripts/suivi.json; the 🔄 Sync Excel button pushes to the SUIVI sheet).
+THE app dashboard = single source of information (no separate HTML any more).
 
-Le code vit dans src/jobhunter ; ce fichier n'est que le lanceur, sans installation :
-  double-clic / `python JobHunter.pyw`        l'application
-  `python JobHunter.pyw <commande> ...`        = `python -m jobhunter <commande> ...`
-Les .bat/.sh et la tache planifiee passent par lui. C'est le seul endroit qui ajoute
-src/ au chemin d'import (installe par pip, le paquet n'en a pas besoin). Pose aussi
-JOBHUNTER_RACINE sur son dossier quand celui-ci tient les donnees (Scripts/, profil/) :
-un paquet installe ailleurs trouve ainsi les bonnes donnees, d'ou qu'on le lance. Decision : docs/adr/0008-programmes-dans-le-paquet.md
+The code lives in src/jobhunter; this file is only the launcher, with no installation:
+  double-click / `python JobHunter.pyw`        the application
+  `python JobHunter.pyw <command> ...`         = `python -m jobhunter <command> ...`
+The .bat/.sh files and the scheduled task go through it. It is the only place that adds
+src/ to the import path (installed by pip, the package does not need it). It also sets
+JOBHUNTER_RACINE to its folder when that folder holds the data (Scripts/, profil/):
+a package installed elsewhere thus finds the right data, wherever it is launched from. Decision: docs/adr/0008-programmes-dans-le-paquet.md
 """
 
 import os

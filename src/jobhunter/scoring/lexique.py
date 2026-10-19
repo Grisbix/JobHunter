@@ -1,8 +1,8 @@
-"""Lexique des competences et domaines du profil : ce que scoring ET documents partagent.
+"""Lexicon of the profile's skills and domains: what scoring AND documents share.
 
-Extrait de Scripts/tailor_application.py (phase 3.3). ats_match l'importait de
-tailor_application, qui importait ats_match en retour : un cycle. Ce module ne depend
-que du profil.
+Extracted from Scripts/tailor_application.py (phase 3.3). ats_match imported it from
+tailor_application, which imported ats_match in return: a cycle. This module only
+depends on the profile.
 """
 
 import re
@@ -13,8 +13,8 @@ from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _P
 
 _ici = sys.modules[__name__]
-# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
-# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+# Values taken from the profile: computed on first read, not at import
+# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -22,18 +22,18 @@ def __getattr__(nom: str) -> Any:
     return _paresseux.lire(_ici, _PARESSEUX, nom)
 
 
-# Un domaine du profil = une variante de CV + un paragraphe de parcours.
-# Le DERNIER domaine est le repli.
+# A profile domain = a CV variant + a background paragraph.
+# The LAST domain is the fallback.
 _PARESSEUX["_DOMAINES"] = lambda: _P.domaines()
 _PARESSEUX["CV_VARIANT"] = lambda: ({d["cle"]: d.get("cv") or "" for d in _ici._DOMAINES})
 _PARESSEUX["CV_VARIANT_EN"] = lambda: ({d["cle"]: d.get("cv_en") or "" for d in _ici._DOMAINES})
 
 
 def cv_variant_key(domaine: str | None) -> str:
-    """Cle de domaine du profil pour un champ `domaine` d'offre.
+    """Profile domain key for an offer's `domaine` field.
 
-    Accepte la cle elle-meme, son libelle (« Finance »), ou un texte libre lu
-    avec les mots d'intitule des domaines ; sinon le domaine de repli.
+    Accepts the key itself, its label ("Finance"), or a free text read with the
+    domains' title words; otherwise the fallback domain.
     """
     d = (domaine or "").strip()
     bas = d.lower()
@@ -46,7 +46,7 @@ def cv_variant_key(domaine: str | None) -> str:
     return str(_ici._DOMAINES[-1]["cle"])
 
 
-# ---- Lexique de competences (libelle -> synonymes a chercher dans l'offre) ----
+# ---- Skills lexicon (label -> synonyms to look for in the offer) ----
 _PARESSEUX["_COMP"] = lambda: _P.get("competences", {}) or {}
 _PARESSEUX["SKILL_LEX"] = lambda: (
     {lab: list(v.get("synonymes") or []) for lab, v in _ici._COMP.items()}
@@ -54,10 +54,10 @@ _PARESSEUX["SKILL_LEX"] = lambda: (
 
 
 # ---- moteur match keyword ----
-# Les sigles COURTS doivent matcher le mot ENTIER. En sous-chaîne ils partaient en
-# vrille : 'ges' (gaz à effet de serre) matchait « GEStion », 'gri' « aGRIcole »,
-# 'pai' « PAIement », 'var' « VARiable ». Ici l'enjeu dépasse le scoring : ces
-# libellés sont IMPRIMÉS sur le CV envoyé au recruteur.
+# SHORT acronyms must match the WHOLE word. As substrings they went
+# haywire: 'ges' (greenhouse gases) matched "GEStion", 'gri' "aGRIcole",
+# 'pai' "PAIement", 'var' "VARiable". Here the stake goes beyond the scoring: these
+# labels are PRINTED on the CV sent to the recruiter.
 _SHORT = 4
 _PARESSEUX["_RX_SKILL"] = lambda: (
     {

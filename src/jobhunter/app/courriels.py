@@ -1,9 +1,9 @@
-"""Fenêtre « Statuts depuis mes courriels » (G4) : lire, proposer, valider une à une.
+"""The "Statuts depuis mes courriels" window (G4): read, suggest, validate one by one.
 
-Partie de jobhunter.app. Les courriels viennent d'un export (.mbox, dossier de .eml) ou
-de l'API Gmail en lecture seule (jobhunter.courriels). La lecture tourne hors du fil de
-la fenêtre ; chaque proposition s'applique d'un clic (« Appliquer ») ou s'écarte
-(« Ignorer »). Rien n'est écrit sans ce clic.
+Part of jobhunter.app. The emails come from an export (.mbox, folder of .eml files) or
+from the Gmail API, read-only (jobhunter.courriels). Reading runs off the window's
+thread; each suggestion is applied with one click ("Appliquer") or set aside
+("Ignorer"). Nothing is written without that click.
 """
 
 import threading
@@ -23,7 +23,7 @@ from jobhunter.stockage import suivi as suivi_io
 
 
 def ouvrir(app: Any) -> None:
-    """Choisir la source des courriels, puis montrer les propositions."""
+    """Choose the email source, then show the suggestions."""
     win = ctk.CTkToplevel(app.root)
     win.title(_t("Statuts depuis mes courriels"))
     win.configure(fg_color=BG)
@@ -88,7 +88,7 @@ def ouvrir(app: Any) -> None:
             except ImportError:
                 msg = _t('Lecture Gmail : installe d\'abord pip install "jobhunter[gmail]".')
                 win.after(0, lambda: info.configure(text=msg))
-            except Exception as e:  # noqa: BLE001 — affiché, jamais avalé
+            except Exception as e:  # noqa: BLE001 — displayed, never swallowed
                 erreur = f"! {type(e).__name__}: {e}"
                 win.after(0, lambda: info.configure(text=erreur))
 

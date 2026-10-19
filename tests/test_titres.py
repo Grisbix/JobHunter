@@ -1,9 +1,9 @@
-"""Nettoyage de l'intitule de poste (tailor_application.titre_poste).
+"""Cleaning of the job title (tailor_application.titre_poste).
 
-Cas tires des VRAIS titres trouves dans la file, pas inventes. Converti depuis
-Scripts/test_titres.py ; les sections H et I y passaient le RESULTAT comme
-condition (`check(nom, valeur, attendu)`) et reussissaient des que le titre
-n'etait pas vide : l'idempotence n'etait pas verifiee. Elle l'est ici.
+Cases taken from REAL titles found in the queue, not invented. Converted from
+Scripts/test_titres.py; sections H and I passed the RESULT as the
+condition there (`check(nom, valeur, attendu)`) and succeeded as soon as the title
+was not empty: idempotence was not checked. It is here.
 """
 
 import pytest
@@ -89,8 +89,8 @@ LONG = (
 
 
 def test_longueur_bornee():
-    # 80 et non 70 : « Consultant, Climate Change and Sustainability Services
-    # Financial Services - Geneva » etait coupe en un nom de departement inverse.
+    # 80 and not 70: "Consultant, Climate Change and Sustainability Services
+    # Financial Services - Geneva" was cut into an inverted department name.
     assert len(T.titre_poste(LONG)) <= 80
 
 
@@ -114,13 +114,13 @@ def test_pas_de_ponctuation_orpheline():
     ],
 )
 def test_idempotence(src):
-    """Re-nettoyer ne doit rien changer : refresh_letters est fait pour etre relance."""
+    """Cleaning again must change nothing: refresh_letters is made to be rerun."""
     une = T.titre_poste(src)
     assert T.titre_poste(une) == une
 
 
 def test_daf_finance_survit():
-    # Piege reel : « F - F » vu comme une mention de genre donnait « DA inance ».
+    # Real trap: "F - F" seen as a gender mention gave "DA inance".
     attendu = "Bras droit DAF - Finance & Processus - GAYA"
     assert T.titre_poste("Bras droit DAF – Finance & Processus F/H - GAYA") == attendu
 

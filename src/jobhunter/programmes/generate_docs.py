@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""generate_docs.py — Génère CV + lettre pour les offres de la QUEUE qui n'en ont pas
-(ou dont les liens sont morts). Remplace l'ancien tailor CLI (qui lisait l'Excel archivé).
+"""generate_docs.py — Generates CV + letter for the QUEUE's offers that have none
+(or whose links are dead). Replaces the old tailor CLI (which read the archived Excel).
 
-Run : python JobHunter.pyw documents --top 30        # top fit sans docs
-      python JobHunter.pyw documents --all           # toutes les offres sans docs
-      python JobHunter.pyw documents --dry"""
+Run: python JobHunter.pyw documents --top 30        # top fit without docs
+     python JobHunter.pyw documents --all           # all the offers without docs
+     python JobHunter.pyw documents --dry"""
 
 import argparse
 import importlib
@@ -23,9 +23,9 @@ from jobhunter.programmes.jutil import url_de as _u
 
 
 def main():
-    # Verrou inter-processus : ce programme reecrit la queue ENTIERE. Si un
-    # autre le fait en meme temps (tache planifiee vs app), le dernier qui
-    # ecrit efface le travail de l'autre.
+    # Inter-process lock: this program rewrites the ENTIRE queue. If
+    # another one does it at the same time (scheduled task vs app), the last one
+    # to write erases the other's work.
     if not importlib.import_module("jobhunter.programmes.jutil").garder(QUEUE):
         return 3
     ap = argparse.ArgumentParser()
@@ -66,26 +66,26 @@ def main():
 
     from jobhunter.stockage import file as queue_io
 
-    # QUEUE explicite : les tests remplacent cette constante par un fichier
-    # jetable. Sans elle, charger() lirait la vraie file.
+    # Explicit QUEUE: the tests replace this constant with a throwaway
+    # file. Without it, charger() would read the real queue.
     q = queue_io.charger(QUEUE)  # descriptions reinjectees depuis descriptions.json
 
     from jobhunter.programmes.rename_docs import new_name
 
     def _noms_uniques(toutes, kind):
-        """stem par offre, sans collision.
+        """stem per offer, without collision.
 
-        new_name() tronque le poste a 48 caracteres et l'entreprise a 2 mots :
-        « Auditeur junior analyste - Nice », « … - Montpellier » et
-        « … - Strasbourg » chez Deloitte donnent le MEME nom. Le dernier ecrit
-        ecrase les autres, et deux offres se retrouvent liees a une lettre qui
-        parle d'une autre ville. On garde le nom nu pour la premiere offre (par
-        URL, donc stable d'une execution a l'autre) et on numerote les suivantes.
+        new_name() truncates the job to 48 characters and the company to 2 words:
+        "Auditeur junior analyste - Nice", "… - Montpellier" and
+        "… - Strasbourg" at Deloitte give the SAME name. The last one written
+        overwrites the others, and two offers end up linked to a letter that talks
+        about another city. We keep the bare name for the first offer (by URL, hence
+        stable from one run to the next) and number the following ones.
         """
-        # Regroupement en MINUSCULES : Windows ne distingue pas la casse, donc
-        # « Auditeur junior analyste » et « Auditeur Junior Analyste » sont deux
-        # cles differentes ici mais UN SEUL fichier sur le disque. Grouper en
-        # respectant la casse laissait ces paires s'ecraser malgre la numerotation.
+        # Grouping in LOWER CASE: Windows does not distinguish case, so
+        # "Auditeur junior analyste" and "Auditeur Junior Analyste" are two
+        # different keys here but ONE SINGLE file on disk. Grouping
+        # case-sensitively let these pairs overwrite each other despite the numbering.
         par_nom = {}
         for x in toutes:
             base = new_name(kind, x.get("poste", ""), x.get("entreprise", ""))
@@ -97,15 +97,15 @@ def main():
                 out[id(y)] = base if rang == 0 else f"{base}_{rang + 1}"
         return out
 
-    # calcule sur la queue ENTIERE : une offre non regeneree occupe deja son nom
+    # computed on the ENTIRE queue: an offer not regenerated already holds its name
     noms_cv = _noms_uniques(q, "CV")
     noms_lt = _noms_uniques(q, "Lettre")
 
     def _collision(x):
-        """Le document lie ne porte pas le nom unique de CETTE offre.
+        """The linked document does not carry THIS offer's unique name.
 
-        Signe qu'une autre offre a ecrase le fichier : le contenu parle d'un
-        autre poste ou d'une autre ville.
+        A sign that another offer overwrote the file: the content talks about another
+        job or another city.
         """
         for cle, noms in (("cv", noms_cv), ("lettre", noms_lt)):
             p = _p(x.get(cle))
@@ -120,14 +120,14 @@ def main():
     )
 
     def _objet_perime(x):
-        """L'objet ECRIT dans la lettre ne correspond pas a l'intitule de l'offre.
+        """The subject WRITTEN in the letter does not match the offer's title.
 
-        Deux causes, que ce test attrape toutes les deux :
-          - la lettre a ete generee avant les regles de nettoyage actuelles et
-            porte un mot tronque (« Bordeau » pour « Bordeaux ») ;
-          - le fichier a ete ecrase par une autre offre et parle d'un autre poste.
-        refresh_letters.py ne sait pas reparer le premier cas : il nettoie le texte
-        existant, il ne peut pas deviner la lettre manquante d'un mot ampute.
+        Two causes, which this test catches both:
+          - the letter was generated before the current cleaning rules and
+            carries a truncated word ("Bordeau" for "Bordeaux");
+          - the file was overwritten by another offer and talks about another job.
+        refresh_letters.py cannot repair the first case: it cleans the existing
+        text, it cannot guess the missing letter of a truncated word.
         """
         import html as _html
         import re as _re
@@ -157,20 +157,20 @@ def main():
         return lu != titre_poste(x.get("poste") or "")
 
     def _cv_generique(x):
-        """CV a refaire : soit un gabarit partage, soit un CV dont le PROFIL porte
-        encore l'intitule BRUT de l'annonce (« un poste d'ACTUAIRE (F/H) »).
+        """CV to redo: either a shared template, or a CV whose PROFILE still carries the
+        RAW title of the posting ("un poste d'ACTUAIRE (F/H)").
 
-        L'app affiche ce lien en bas de la fiche : l'utilisateur y voit un CV generique
-        la ou il attend celui de l'offre.
+        The app displays this link at the bottom of the card: the user sees a generic
+        CV there where they expect the offer's.
         """
         p = _p(x.get("cv"))
         if not (p and p.exists()):
             return False
         if p.parent.name != "Par_offre":
             return True
-        # On lit le CONTENU, pas l'intitule de l'offre : comparer titre_poste(brut)
-        # a brut restait vrai apres regeneration, donc ce selecteur ne convergeait
-        # jamais et reproposait sans fin les memes 1012 offres.
+        # We read the CONTENT, not the offer's title: comparing titre_poste(raw)
+        # with raw stayed true after regeneration, so this selector never
+        # converged and endlessly proposed the same 1012 offers again.
         import html as _html
         import re as _re
         import zipfile
@@ -187,10 +187,10 @@ def main():
                 )
         except Exception:
             return False
-        # Le point de FIN de phrase est suivi d'un blanc. Sans cette condition, la
-        # capture s'arretait au premier point rencontre : « Chargé.e de mission »
-        # devenait « Chargé » et « Studentjob.ch » perdait son extension, ce qui
-        # faisait diverger la comparaison a chaque passe sur des CV pourtant justes.
+        # The END-of-sentence full stop is followed by a blank. Without this condition, the
+        # capture stopped at the first full stop met: "Chargé.e de mission"
+        # became "Chargé" and "Studentjob.ch" lost its extension, which
+        # made the comparison diverge at each pass on CVs that were in fact right.
         m = _re.search(r"recherche d[’']un poste (?:de |d')(.{0,160}?)\.(?=\s|$)", t, _re.S)
         if not m:
             return False
@@ -198,26 +198,26 @@ def main():
 
         lu = _re.sub(r"\s+", " ", m.group(1)).strip()
         att = titre_poste(x.get("poste") or "")
-        # Tolerance au PREFIXE : la capture s'arrete au premier point suivi d'un
-        # blanc, donc un titre qui en contient un (« Dipl. Verwaltungssach… »,
-        # « …, Paris. 6 months ») est lu tronque alors que le CV est juste. Un CV
-        # ecrase par une AUTRE offre ne serait pas un prefixe du titre attendu :
-        # on perd la detection d'une troncature reelle, pas celle d'un melange.
+        # PREFIX tolerance: the capture stops at the first full stop followed by a
+        # blank, so a title that contains one ("Dipl. Verwaltungssach…",
+        # "…, Paris. 6 months") is read truncated while the CV is right. A CV
+        # overwritten by ANOTHER offer would not be a prefix of the expected title:
+        # we lose the detection of a real truncation, not that of a mix-up.
         return not (lu == att or (lu and att.startswith(lu)))
 
     def _sans_source(x):
-        """Lettre en PDF dont le .docx source a disparu : incorrigible sur place.
+        """PDF letter whose source .docx has disappeared: cannot be fixed in place.
 
-        refresh_letters.py part du .docx et reconvertit ; sans source il ne peut
-        rien, et le PDF garde son ancien objet. Seule une regeneration complete
-        depuis la queue le remet d'aplomb.
+        refresh_letters.py starts from the .docx and converts again; without a source
+        it can do nothing, and the PDF keeps its old subject. Only a full regeneration
+        from the queue puts it right.
         """
         p = _p(x.get("lettre"))
         return bool(
             p and p.suffix.lower() == ".pdf" and p.exists() and not p.with_suffix(".docx").exists()
         )
 
-    # cibles : cv OU lettre absent / lien mort
+    # targets: cv OR letter missing / dead link
     def needs(x):
         for k in ("cv", "lettre"):
             p = _p(x.get(k))
@@ -225,8 +225,8 @@ def main():
                 return True
         return False
 
-    # Contrats exclus (alternance, stage) : masques dans l'app, donc jamais
-    # ouverts. Leur fabriquer un CV et une lettre serait du travail perdu.
+    # Excluded contracts (work-study, internship): hidden in the app, hence never
+    # opened. Making them a CV and a letter would be wasted work.
     from jobhunter.sources import contrat_du_titre, contrats_exclus
 
     _EX = contrats_exclus()
@@ -250,7 +250,7 @@ def main():
     else:
         selecteur = needs
     todo = [x for x in q if _visible(x) and selecteur(x)]
-    # fit_fin (2026-10-09) departage les ex aequo d'un meme fit entier.
+    # fit_fin (2026-10-09) breaks ties between offers with the same integer fit.
     todo.sort(key=lambda x: (-(int(x.get("fit") or 0)), -(x.get("fit_fin") or 0)))
     if not a.all:
         todo = todo[: a.top]
@@ -266,20 +266,20 @@ def main():
     done = 0
     n_en = 0
     for i, x in enumerate(todo):
-        # La langue se lit sur l'ANNONCE, pas sur le pays : une offre parisienne
-        # d'un gerant international est souvent redigee en anglais, et une offre
-        # luxembourgeoise peut etre en francais. 1525 offres de la file sont en
-        # anglais, dont 388 en Ile-de-France.
+        # The language is read on the POSTING, not on the country: a Paris offer
+        # from an international asset manager is often written in English, and a
+        # Luxembourg offer may be in French. 1525 offers of the queue are in
+        # English, 388 of them in Île-de-France.
         lg = langue_offre(x.get("poste"), x.get("description"), x.get("localisation"))
         n_en += lg == "en"
-        # MISSIONS : le champ dédié SEULEMENT, jamais la description brute.
-        # La lettre cite ce texte entre parenthèses — « Les missions que vous
-        # décrivez (…) font écho à ces expériences ». Or les 400 premiers
-        # caractères d'une annonce sont presque toujours la présentation de
-        # l'entreprise : la lettre pour EY Genève citait « At EY, we're all in
-        # to shape your future with confidence… », c'est-à-dire le slogan
-        # d'EY renvoyé à EY, et coupé en plein mot (« a better wor »).
-        # Sans vraies missions, la phrase est simplement omise.
+        # MISSIONS: the dedicated field ONLY, never the raw description.
+        # The letter quotes this text between parentheses — "Les missions que vous
+        # décrivez (…) font écho à ces expériences". But the first 400
+        # characters of a posting are almost always the presentation of
+        # the company: the letter for EY Geneva quoted "At EY, we're all in
+        # to shape your future with confidence…", i.e. EY's slogan
+        # sent back to EY, and cut in the middle of a word ("a better wor").
+        # Without real missions, the sentence is simply left out.
         offer = dict(
             company=x["entreprise"],
             role=x["poste"],
@@ -287,12 +287,12 @@ def main():
             missions=(x.get("missions") or "")[:400],
             profil=(x.get("profil") or "")[:300],
             domaine=x.get("domaine", ""),
-            # Le destinataire, quand l'annonce le nomme. tailor_letter
-            # ouvre alors sur « Monsieur X, » au lieu de la generique.
+            # The recipient, when the posting names them. tailor_letter
+            # then opens with "Monsieur X," instead of the generic one.
             rh=x.get("rh"),
         )
         try:
-            # en mode --cv-generique le CV existe mais c'est un gabarit : on le REMPLACE
+            # in --cv-generique mode the CV exists but it is a template: we REPLACE it
             if (
                 a.url
                 or a.cv_generique
@@ -303,7 +303,7 @@ def main():
                 cv, pdf = cv_une_page(offer, nom=noms_cv.get(id(x)), langue=lg)
                 if cv:
                     x["cv"] = _u(pdf or cv)
-            # en mode --sans-source le PDF existe : on le REMPLACE (objet perime)
+            # in --sans-source mode the PDF exists: we REPLACE it (stale subject)
             if (
                 a.url
                 or a.sans_source

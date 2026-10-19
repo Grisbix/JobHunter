@@ -1,4 +1,4 @@
-"""Les panneaux bureau chargent les sources sans sortie console (pythonw)."""
+"""The desktop panels load the sources without console output (pythonw)."""
 
 import os
 import subprocess

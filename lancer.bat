@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
-rem L'environnement de installer.bat s'il existe, sinon le Python de l'ordinateur.
+rem installer.bat's environment if it exists, otherwise the computer's Python.
 set "PY=python"
 set "PYW=pythonw"
 if exist ".venv\Scripts\python.exe" (

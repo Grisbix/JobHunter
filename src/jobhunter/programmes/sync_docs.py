@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-"""sync_docs.py — GENDARME de cohérence CV/lettres. Le .docx est la SOURCE,
-le .pdf est DÉRIVÉ. Quand un docx change quelque part, son pdf (et les liens
-de l'app) suivent.
+"""sync_docs.py — CONSISTENCY KEEPER for CVs/letters. The .docx is the SOURCE, the .pdf is
+DERIVED. When a docx changes somewhere, its pdf (and the app's links) follow.
 
-Passes (défaut = toutes sauf --format) :
-  1. PAIRES    : docx sans pdf → pdf généré ; pdf orphelin (sans docx) → signalé
-  2. FRAÎCHEUR : pdf plus vieux que son docx → régénéré (LibreOffice)
-  3. LIENS     : cv/lettre de apply_queue.json cassés → re-matchés par nom de fichier
-  4. --format  : homogénéise les lettres (justifié+césure, date du jour,
-                 Objet avant salutation, destinataire retiré, tirets IA)
+Passes (default = all except --format):
+  1. PAIRS     : docx without pdf → pdf generated; orphan pdf (without docx) → reported
+  2. FRESHNESS : pdf older than its docx → regenerated (LibreOffice)
+  3. LINKS     : broken cv/lettre of apply_queue.json → re-matched by file name
+  4. --format  : homogenises the letters (justified+hyphenation, today's date,
+                 Objet before the salutation, recipient removed, AI dashes)
 
-Run : python JobHunter.pyw sync_docs            # 1+2+3
-      python JobHunter.pyw sync_docs --format   # 1+2+3+4
-      python JobHunter.pyw sync_docs --dry      # montre sans toucher"""
+Run: python JobHunter.pyw sync_docs            # 1+2+3
+     python JobHunter.pyw sync_docs --format   # 1+2+3+4
+     python JobHunter.pyw sync_docs --dry      # shows without touching"""
 
 import argparse
 import importlib
@@ -97,7 +96,7 @@ def pass_links(dry=False):
             p = importlib.import_module("jobhunter.programmes.jutil").chemin_de(u)
             if p.exists():
                 continue
-            # re-match : même stem, autre extension ou dossier attendu
+            # re-match: same stem, other extension or expected folder
             cand = None
             for ext in (p.suffix, ".pdf", ".docx"):
                 c = d / (p.stem + ext)
@@ -116,11 +115,11 @@ def pass_links(dry=False):
 
 
 def pass_format(dry=False):
-    """Format homogène des lettres : justifié+césure+formules (fix_letters),
-    tirets (fix_dashes), date/ordre/destinataire (refresh_letters)."""
+    """Homogeneous format of the letters: justified+hyphenation+formulas (fix_letters),
+    dashes (fix_dashes), date/order/recipient (refresh_letters)."""
     from jobhunter.programmes import fix_letters, refresh_letters
 
-    try:  # script personnel, absent de la version partagee
+    try:  # personal script, missing from the shared version
         import fix_dashes
     except ImportError:
         fix_dashes = None
@@ -143,9 +142,9 @@ def pass_format(dry=False):
 
 
 def main():
-    # Verrou inter-processus : ce programme reecrit la queue ENTIERE. Si un
-    # autre le fait en meme temps (tache planifiee vs app), le dernier qui
-    # ecrit efface le travail de l'autre.
+    # Inter-process lock: this program rewrites the ENTIRE queue. If
+    # another one does it at the same time (scheduled task vs app), the last one
+    # to write erases the other's work.
     if not importlib.import_module("jobhunter.programmes.jutil").garder(QUEUE):
         return 3
     ap = argparse.ArgumentParser()

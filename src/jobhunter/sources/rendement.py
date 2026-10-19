@@ -1,20 +1,20 @@
-"""Rendement de chaque source de collecte : ce qu'elle rapporte, et pourquoi pas plus.
+"""Yield of each collection source: what it brings, and why not more.
 
-Partie de jobhunter.sources. Une collecte vide a des causes opposées : rien de neuf à
-prendre, ou un refus d'entrée. Ce module mesure chaque appel de source pendant la
-collecte (durée, offres ramenées, incidents survenus pendant CET appel) ; la fusion y
-ajoute les offres nouvelles et pertinentes. Chaque source reçoit un verdict :
+Part of jobhunter.sources. An empty collection has opposite causes: nothing new to
+take, or a refusal of entry. This module measures each source call during the
+collection (duration, offers brought back, incidents that occurred during THAT call); the merge
+adds the new and relevant offers. Each source gets a verdict:
 
-refusé          refus d'entrée (401, 403, 999, CAPTCHA, défi anti-bot) et rien ramené
-limité          limite de débit (429) rencontrée : la source a bridé, la passe est partielle
-partiel         des erreurs (délai, réseau), mais des offres quand même
-rien à prendre  aucune offre et aucun incident : une journée calme
-ok              des offres, sans incident
+refusé          refusal of entry (401, 403, 999, CAPTCHA, anti-bot challenge) and nothing brought back
+limité          rate limit (429) met: the source throttled, the pass is partial
+partiel         errors (timeout, network), but offers all the same
+rien à prendre  no offer and no incident: a calm day
+ok              offers, without incident
 
-Une ligne par collecte va dans `Scripts/_rendement.jsonl` ; `python JobHunter.pyw
-rendement` en fait le bilan sur les derniers jours.
+One line per collection goes into `Scripts/_rendement.jsonl`; `python JobHunter.pyw
+rendement` sums it up over the last days.
 
-Decision : docs/adr/0004-429-attendre-403-arreter.md
+Decision: docs/adr/0004-429-attendre-403-arreter.md
 """
 
 import collections
@@ -32,7 +32,7 @@ REFUSE, LIMITE, PARTIEL, VIDE, OK = "refusé", "limité", "partiel", "rien à pr
 _RX_REFUS = re.compile(r"\b(?:401|403|999)\b|captcha|challenge|anti-?bot|bloqu", re.I)
 _RX_LIMITE = re.compile(r"\b429\b")
 
-# Mesures de la collecte en cours : {source: {"ramenees", "duree", "incidents"}}.
+# Measurements of the current collection: {source: {"ramenees", "duree", "incidents"}}.
 MESURES: dict[str, dict[str, Any]] = {}
 
 
@@ -53,14 +53,14 @@ def ecart(avant: dict[str, dict[str, int]]) -> dict[str, int]:
 
 
 def verdict(ramenees: int, incidents: dict[str, int]) -> str:
-    """Le verdict d'une source pour une collecte (voir l'en-tête du module).
+    """The verdict of a source for one collection (see the module header).
 
     Args:
-        ramenees: offres rendues par la source.
-        incidents: {« source cause »: nombre} survenus pendant son appel.
+        ramenees: offers returned by the source.
+        incidents: {"source cause": count} that occurred during its call.
 
     Returns:
-        REFUSE, LIMITE, PARTIEL, VIDE ou OK.
+        REFUSE, LIMITE, PARTIEL, VIDE or OK.
     """
     causes = " ".join(incidents)
     if _RX_REFUS.search(causes) and not ramenees:
@@ -75,12 +75,12 @@ def verdict(ramenees: int, incidents: dict[str, int]) -> str:
 def mesurer(
     nom: str, fn: Callable[..., list[dict[str, Any]]], *args: Any, **kw: Any
 ) -> list[dict[str, Any]]:
-    """Appelle une source et note son rendement.
+    """Calls a source and records its yield.
 
-    Les offres rendues sont étiquetées `_passe` = `nom` pour que la fusion compte les
-    nouvelles par source.
+    The returned offers are labelled `_passe` = `nom` so that the merge counts the
+    new ones per source.
 
-    Une exception de la source remonte comme avant ; la mesure est notée quand même.
+    An exception from the source propagates as before; the measurement is recorded anyway.
     """
     avant = instantane()
     debut = time.monotonic()
@@ -109,7 +109,7 @@ def completer(uniques: Iterable[dict[str, Any]], par_source: dict[str, dict[str,
 
 
 def enregistrer(chemin: Path, quand: datetime.datetime | None = None) -> None:
-    """Ajoute la collecte au journal de rendement (une ligne JSON)."""
+    """Appends the collection to the yield log (one JSON line)."""
     if not MESURES:
         return
     ligne = {
@@ -133,7 +133,7 @@ def resume() -> list[str]:
 
 
 def bilan(lignes: Iterable[dict[str, Any]], depuis: str = "") -> dict[str, dict[str, Any]]:
-    """Cumule le journal par source depuis la date `depuis` (ISO ; "" = tout).
+    """Sums the log per source since the date `depuis` (ISO; "" = everything).
 
     Returns:
         {source: {collectes, ramenees, nouvelles, pertinentes, duree, verdicts: Counter}}

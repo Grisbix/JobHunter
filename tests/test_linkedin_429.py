@@ -1,8 +1,8 @@
-"""LinkedIn (job_sources.scan_linkedin) : un 429 s'attend et reprend la MEME page ;
-403/999 arretent tout ; la passe s'arrete proprement a sa duree maximale.
+"""LinkedIn (job_sources.scan_linkedin): a 429 is waited for and resumes the SAME page;
+403/999 stop everything; the pass stops cleanly at its maximum duration.
 
-Mesure du 2026-10-17 : a 1,2 s entre pages, l'API invite repondait 429 des les
-premieres requetes et le code jetait chaque page limitee. Converti depuis la fin de
+Measurement of 2026-10-17: at 1.2 s between pages, the guest API answered 429 from the
+first requests and the code threw away each limited page. Converted from the end of
 Scripts/test_lecteurs_ats.py.
 """
 
@@ -29,7 +29,7 @@ def limite(retry_after=None):
 
 @pytest.fixture
 def li(faux_reseau, horloge, monkeypatch):
-    """li(*reponses, mots, lieux) -> (offres, urls, pauses de limite)."""
+    """li(*responses, words, places) -> (offers, urls, limit pauses)."""
     monkeypatch.setattr(J, "LI_PAUSE", 0)
 
     def faire(*reponses, mots=("esg",), lieux=None):
@@ -107,7 +107,7 @@ def test_sans_incident_aucune_pause(li):
 
 
 def test_duree_max_depassee_sans_429(faux_reseau, horloge, monkeypatch):
-    """La premiere page a pris toute la duree : les mots-cles suivants sont sautes."""
+    """The first page took the whole duration: the following keywords are skipped."""
     monkeypatch.setattr(J, "LI_PAUSE", 0)
     monkeypatch.setattr(J, "KEYWORDS", ["esg", "csrd", "isr"])
 

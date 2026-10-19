@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""test_live_nav.py — Test RÉEL (read-only) : navigue de vrais sites carrière,
-lance la reconnaissance (detect_ats, segment_page, cookies, goto_careers, find_offer)
-et rapporte si le programme s'adapte. AUCUN login, AUCUN submit. Headless.
+"""test_live_nav.py — REAL test (read-only): navigates real career sites, runs the
+recognition (detect_ats, segment_page, cookies, goto_careers, find_offer) and reports
+whether the program adapts. NO login, NO submit. Headless.
 Run: python JobHunter.pyw test_live_nav
 """
 
@@ -9,7 +9,7 @@ import sys
 import time
 
 from jobhunter import racine as _racine
-from jobhunter.programmes import _profil_exemple  # noqa: F401  — en tete : profil d'exemple
+from jobhunter.programmes import _profil_exemple  # noqa: F401  — at the top: example profile
 
 sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console : TextIOWrapper
 from playwright.sync_api import sync_playwright
@@ -63,7 +63,7 @@ def _all_sites():
 
 if "--all" in sys.argv:
     _A = _all_sites()
-    # --all [chunk] [nchunks] : découpe pour rester sous le timeout
+    # --all [chunk] [nchunks]: split to stay under the timeout
     _args = [a for a in sys.argv[1:] if a.isdigit()]
     if len(_args) >= 2:
         ck, nck = int(_args[0]), int(_args[1])
@@ -74,7 +74,7 @@ elif len(sys.argv) > 1 and sys.argv[1].isdigit():
     SITES = _sample_sites(per_cat=int(sys.argv[1]))
 else:
     SITES = _sample_sites(per_cat=6)
-EXTERNES = [  # sites hors queue → prouve la généralisation
+EXTERNES = [  # sites outside the queue → proves the generalisation
     ("EXT·Decathlon", "https://joinus.decathlon.fr/fr/annonces"),
     ("EXT·Veolia", "https://jobs.veolia.com/fr"),
     ("EXT·Ubisoft", "https://www.ubisoft.com/en-us/company/careers"),
@@ -108,7 +108,7 @@ def test_site(page, name, url, role="analyste esg"):
         page.wait_for_load_state("networkidle", timeout=6000)
     except Exception:
         pass
-    time.sleep(1.5)  # laisse le JS rendre (cartes offres React/Vue)
+    time.sleep(1.5)  # lets the JS render (React/Vue offer cards)
     try:
         ck = w.dismiss_cookies(page)
         r["cookies"] = ck.get("done", "?")
@@ -128,7 +128,7 @@ def test_site(page, name, url, role="analyste esg"):
     if r["captcha"]:
         r["reached"] = "CAPTCHA"
         return r
-    # recherche d'offre (read-only : detect→search→drill, sans soumettre)
+    # offer search (read-only: detect→search→drill, without submitting)
     try:
         info = w.analyze(page)
         if info.get("kind") in ("apply_form", "apply_cta", "register", "login"):

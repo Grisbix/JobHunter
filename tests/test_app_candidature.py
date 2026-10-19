@@ -1,7 +1,7 @@
-"""Panneau « Candidatures » de l'application (app/candidature.py), sans fenêtre.
+"""The "Candidatures" panel of the application (app/candidature.py), without a window.
 
-Lecture des événements du programme, textes affichés, commandes transmises seulement
-quand le programme attend, et déclaration manuelle « déclaré » (ADR 0009).
+Reading the program's events, displayed texts, commands passed on only
+when the program is waiting, and manual "déclaré" declaration (ADR 0009).
 """
 
 import io
@@ -19,7 +19,7 @@ class Etiquette:
         self.vu = {}
 
     def configure(self, **k):
-        # comme un CTkLabel : la couleur du texte est text_color, `fg` leve ValueError
+        # like a CTkLabel: the text colour is text_color, `fg` raises ValueError
         assert "fg" not in k, "CTkLabel.configure ne connait pas fg"
         self.vu.update(k)
 
@@ -50,12 +50,12 @@ def app():
     return a
 
 
-# ── événements ───────────────────────────────────────────────────────────────
+# ── events ───────────────────────────────────────────────────────────────
 @pytest.mark.parametrize(
     ("ligne", "attendu"),
     [
         ('@JH {"type": "offre", "i": 1}', {"type": "offre", "i": 1}),
-        ("  📝 couverture 80 %", None),  # ligne de journal
+        ("  📝 couverture 80 %", None),  # log line
         ("@JH {pas du json", None),
         ('@JH {"sans": "type"}', None),
     ],
@@ -89,7 +89,7 @@ def test_evenement_inconnu_n_affiche_rien():
     assert cand.texte_evenement({"type": "attente"}) is None
 
 
-# ── le panneau ───────────────────────────────────────────────────────────────
+# ── the panel ───────────────────────────────────────────────────────────────
 def test_boutons_actifs_seulement_quand_le_programme_attend(app):
     app._cand_evenement({"type": "offre", "i": 1, "total": 1, "entreprise": "A", "poste": "P"})
     assert app._cand_boutons[0].vu["state"] == "disabled"
@@ -106,7 +106,7 @@ def test_commande_transmise_puis_boutons_coupes(app):
     app._cand_evenement({"type": "attente"})
     app._cand_commande("envoye")
     assert app._cand_proc.stdin.getvalue() == "envoye\n"
-    assert app._cand_boutons[0].vu["state"] == "disabled"  # pas de double déclaration
+    assert app._cand_boutons[0].vu["state"] == "disabled"  # no double declaration
 
 
 def test_resultat_recharge_le_suivi(app):
@@ -120,7 +120,7 @@ def test_resultat_recharge_le_suivi(app):
     assert app.suivi == {"x": 1}
 
 
-# ── déclaration manuelle et fiche ─────────────────────────────────────────────
+# ── manual declaration and posting card ─────────────────────────────────────────────
 def test_confirmation_manuelle_ecrit_declare():
     a = object.__new__(ui.App)
     a.root, a._annuler = None, []
@@ -154,7 +154,7 @@ def test_fiche_dit_l_etat_de_la_preuve():
     assert "p.png" in lignes[2]
 
 
-# ── contrôle du dossier (documents.controle) ──────────────────────────────────
+# ── check of the file (documents.controle) ──────────────────────────────────
 def test_texte_dossier_pret():
     zone, texte, _ = cand.texte_evenement({"type": "dossier", "problemes": []})
     assert zone == "dossier" and texte.startswith("Dossier vérifié")

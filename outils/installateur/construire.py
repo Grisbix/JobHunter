@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""Construit l'application autonome, puis l'installateur Windows JobHunterSetup.exe.
+"""Builds the standalone application, then the Windows installer JobHunterSetup.exe.
 
-    python outils/installateur/construire.py            # dossier dist/JobHunter + installateur
-    python outils/installateur/construire.py --sans-iss  # le dossier seul (pas d'Inno Setup)
+    python outils/installateur/construire.py            # dist/JobHunter folder + installer
+    python outils/installateur/construire.py --sans-iss  # the folder only (no Inno Setup)
 
-Étapes :
-  1. le squelette des données (profils d'exemple, réglages des sources, dossier du CV),
-     copié au premier lancement dans Documents/JobHunter (jobhunter.gele) ;
-  2. PyInstaller : JobHunter.exe et jobhunter-cli.exe dans dist/JobHunter/ ;
-  3. contrôle : jobhunter-cli.exe charge chaque programme sans erreur ;
-  4. Inno Setup (ISCC) : dist/JobHunterSetup.exe, installation sans droits
-     d'administrateur dans %LOCALAPPDATA%/Programs/JobHunter.
+Steps:
+  1. the data skeleton (example profiles, source settings, CV folder), copied at
+     first launch into Documents/JobHunter (jobhunter.gele);
+  2. PyInstaller: JobHunter.exe and jobhunter-cli.exe in dist/JobHunter/;
+  3. check: jobhunter-cli.exe loads each program without error;
+  4. Inno Setup (ISCC): dist/JobHunterSetup.exe, installed without administrator
+     rights in %LOCALAPPDATA%/Programs/JobHunter.
 
-La CI (.github/workflows/installateur.yml) le lance à chaque release et attache
-l'installateur à la release. Décision : docs/adr/0011-application-autonome.md
+The CI (.github/workflows/installateur.yml) runs it at each release and attaches
+the installer to the release. Decision: docs/adr/0011-application-autonome.md
 """
 
 import argparse
@@ -59,9 +59,9 @@ def pyinstaller() -> Path:
             str(ICI / "JobHunter.spec"),
         ],
         check=True,
-        # collect_submodules("jobhunter") importe le paquet : celui de src/, jamais une
-        # version installée ailleurs (le runner de la CI n'en a pas, un poste de dev en
-        # a souvent une plus ancienne).
+        # collect_submodules("jobhunter") imports the package: the one in src/, never a
+        # version installed elsewhere (the CI runner has none, a dev machine often
+        # has an older one).
         env=dict(os.environ, PYTHONPATH=str(RACINE / "src")),
     )
     return DIST / "JobHunter"

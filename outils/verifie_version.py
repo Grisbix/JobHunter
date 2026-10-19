@@ -1,7 +1,7 @@
-"""VERSION (lu par la mise a jour) et pyproject.toml doivent porter la meme version.
+"""VERSION (read by the updater) and pyproject.toml must carry the same version.
 
-Deux sources de version, c'est une de trop : la phase 6 du plan n'en gardera
-qu'une. D'ici la, ce controle tourne en CI et avant chaque commit.
+Two version sources is one too many: phase 6 of the plan will keep only one.
+Until then, this check runs in CI and before each commit.
 """
 
 import sys

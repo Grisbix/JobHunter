@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
-"""banc.py — Banc de non-regression : prouve qu'une refonte ne change rien.
+"""banc.py — Non-regression bench: proves that a rewrite changes nothing.
 
-Pour chaque offre d'un jeu, il enregistre ce que le moteur DECIDE : filtre
-d'intitule, fit, fit_fin, experience exigee, domaine, motif du tri, zone, pays,
-contrat, langue, plafond de langue, et le texte du message. Pour un echantillon,
-il enregistre aussi le texte complet de la lettre et du CV (date neutralisee).
-Rien n'est ecrit sur le disque hors du fichier de sortie : l'enregistrement des
-.docx est intercepte.
+For each offer of a set, it records what the engine DECIDES: title filter, fit,
+fit_fin, required experience, domain, sorting reason, zone, country, contract,
+language, language cap, and the text of the message. For a sample, it also records
+the full text of the letter and of the CV (date neutralised).
+Nothing is written to disk outside the output file: saving the .docx files is
+intercepted.
 
     python outils/banc.py enregistrer outils/banc_reference.json
     python outils/banc.py comparer   outils/banc_reference.json
 
-Jeux :
-  - par defaut, les offres FICTIVES de outils/banc_offres.py sur le profil
-    d'exemple — c'est le jeu de la CI, versionne avec sa reference ;
-  - --file <apply_queue.json> --profil <profil.json> : une vraie file (dans
-    Recherche_emploi), reference gardee hors git.
+Sets:
+  - by default, the FICTITIOUS offers of outils/banc_offres.py on the example
+    profile — the CI set, versioned with its reference;
+  - --file <apply_queue.json> --profil <profil.json>: a real queue (in
+    Recherche_emploi), reference kept out of git.
 
-Un ecart n'est pas forcement un bug : si le changement est voulu, on
-regenere la reference dans le MEME commit, et le message dit pourquoi.
+A difference is not necessarily a bug: if the change is intended, the reference
+is regenerated in the SAME commit, and the message says why.
 
-Decision : docs/adr/0006-banc-de-non-regression.md
+Decision: docs/adr/0006-banc-de-non-regression.md
 """
 
 import argparse
@@ -50,7 +50,7 @@ _RX_DATE = re.compile(
 
 
 def _neutre(texte):
-    """La date du jour change chaque jour : elle n'est pas une decision du moteur."""
+    """Today's date changes every day: it is not a decision of the engine."""
     return _RX_DATE.sub("<DATE>", texte)
 
 
@@ -63,7 +63,7 @@ def _texte_docx(doc):
 
 
 class Capture:
-    """Remplace Document.save : garde le texte, n'ecrit rien."""
+    """Replaces Document.save: keeps the text, writes nothing."""
 
     def __init__(self):
         self.textes = []
@@ -86,16 +86,16 @@ class Capture:
 
 
 def _sur(f, *a, **k):
-    """Une exception est un resultat comme un autre : elle doit rester la meme."""
+    """An exception is a result like any other: it must stay the same."""
     try:
         return f(*a, **k)
-    except Exception as e:  # noqa: BLE001 — on enregistre le type, c'est voulu
+    except Exception as e:  # noqa: BLE001 — we record the type, on purpose
         return f"ERREUR {type(e).__name__}"
 
 
 def mesurer(offres, cle, n_docs):
-    """{cle: decisions} pour chaque offre."""
-    sys.path[:0] = [str(SCRIPTS.parent / "src"), str(SCRIPTS)]  # le moteur mesure
+    """{key: decisions} for each offer."""
+    sys.path[:0] = [str(SCRIPTS.parent / "src"), str(SCRIPTS)]  # the engine measures
     from jobhunter import documents as tailor_application
     from jobhunter import sources as job_sources
     from jobhunter.documents import message as message_offre
@@ -202,7 +202,7 @@ def main():
     if a.moteur:
         global SCRIPTS
         SCRIPTS = Path(a.moteur).resolve()
-    # AVANT tout import du moteur : il lit le profil au chargement.
+    # BEFORE any engine import: it reads the profile when loaded.
     os.environ["PROFIL_JOBHUNTER"] = str(Path(a.profil).resolve() if a.profil else EXEMPLE)
     offres, cle = charger_jeu(a)
     mesure = mesurer(offres, cle, a.docs)

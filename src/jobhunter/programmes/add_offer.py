@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""add_offer.py — COLLE UN LIEN d'offre → analyse la page (titre, entreprise,
-description), score (fit/ATS), ajoute à apply_queue.json, puis génère CV + lettre.
+"""add_offer.py — PASTE AN offer LINK → analyses the page (title, company,
+description), scores (fit/ATS), adds to apply_queue.json, then generates CV + letter.
 
-Run : python JobHunter.pyw ajouter --url "https://…"           # analyse + queue + docs
-      python JobHunter.pyw ajouter --url "https://…" --no-docs # sans CV/lettre
+Run: python JobHunter.pyw ajouter --url "https://…"           # analysis + queue + docs
+     python JobHunter.pyw ajouter --url "https://…" --no-docs # without CV/letter
 """
 
 import argparse
@@ -21,7 +21,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union
 HERE = _racine.scripts()
 QUEUE = HERE / "apply_queue.json"
 
-# titre + entreprise depuis la page (og: meta > h1 > <title>)
+# title + company from the page (og: meta > h1 > <title>)
 _META_JS = r"""
 () => {
   const q=s=>document.querySelector(s);
@@ -76,15 +76,15 @@ def analyze_url(url):
         b.close()
     import html as _html
 
-    # titre : og:title > h1 > <title> — nettoie entités + « | Site »
+    # title: og:title > h1 > <title> — cleans entities + "| Site"
     t = _html.unescape((m.get("ogTitle") or m.get("h1") or m.get("title") or "").strip())
     t = re.split(r"\s*[|•]\s*", t)[0].strip()
     ent = _html.unescape((m.get("ogSite") or "").strip())
-    # LinkedIn : « ENTREPRISE hiring POSTE in VILLE » → sépare
+    # LinkedIn: "COMPANY hiring JOB in CITY" → split
     mm = re.match(r"^(.{2,50}?)\s+hiring\s+(.+?)(?:\s+in\s+.{2,60})?$", t, re.I)
     if mm:
         ent, t = mm.group(1).strip(), mm.group(2).strip()
-    # boards : og:site_name = nom du site, pas l'employeur
+    # boards: og:site_name = name of the site, not the employer
     if not ent or ent.lower() in (
         "linkedin",
         "indeed",
@@ -126,8 +126,8 @@ def make_docs(url):
     """Génère CV + lettre pour la ligne queue de cette URL, met à jour les liens."""
     from jobhunter.stockage import file as queue_io
 
-    # QUEUE explicite : les tests remplacent cette constante par un fichier
-    # jetable. Sans elle, charger() lirait la vraie file.
+    # Explicit QUEUE: the tests replace this constant with a throwaway
+    # file. Without it, charger() would read the real queue.
     q = queue_io.charger(QUEUE)  # descriptions reinjectees depuis descriptions.json
     x = next((v for v in q if v.get("url") == url), None)
     if not x:
@@ -167,9 +167,9 @@ def make_docs(url):
 
 
 def main():
-    # Verrou inter-processus : ce programme reecrit la queue ENTIERE. Si un
-    # autre le fait en meme temps (tache planifiee vs app), le dernier qui
-    # ecrit efface le travail de l'autre.
+    # Inter-process lock: this program rewrites the ENTIRE queue. If
+    # another one does it at the same time (scheduled task vs app), the last one
+    # to write erases the other's work.
     if not importlib.import_module("jobhunter.programmes.jutil").garder(QUEUE):
         return 3
     ap = argparse.ArgumentParser()

@@ -1,4 +1,4 @@
-"""Journaux du moteur (jobhunter.journal)."""
+"""Engine logs (jobhunter.journal)."""
 
 import logging
 
@@ -20,7 +20,7 @@ def test_configurer_ajoute_un_fichier_horodate(tmp_path, capsys):
     avant = list(racine.handlers)
     try:
         journal.configurer(fichier=fichier)
-        journal.configurer(fichier=fichier)  # une seule fois
+        journal.configurer(fichier=fichier)  # only once
         assert len(racine.handlers) == len(avant) + 1
         journal.journal("jobhunter.essai").warning("refus 403")
         for h in racine.handlers:

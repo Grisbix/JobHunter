@@ -1,9 +1,9 @@
-"""Scoring : ce qui decide quelles offres meritent un dossier.
+"""Scoring: what decides which offers deserve a folder.
 
-fit       note de 1 a 10 et fit_fin (ancien Scripts/ats_match.py)
-langue    langue de redaction d'une annonce
-zones     zone, pays, region d'un lieu
-tri       retrait de ce qui ne colle pas au profil (ancien Scripts/tri_file.py)
-lexique   competences et domaines du profil, partages avec les documents
-domaines  domaine d'une offre d'apres son intitule (ancien scrape_jobs.classify_domaine)
+fit       score from 1 to 10 and fit_fin (formerly Scripts/ats_match.py)
+langue    writing language of a posting
+zones     zone, country, region of a place
+tri       removal of what does not match the profile (formerly Scripts/tri_file.py)
+lexique   skills and domains of the profile, shared with the documents
+domaines  domain of an offer from its title (formerly scrape_jobs.classify_domaine)
 """

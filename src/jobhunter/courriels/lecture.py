@@ -1,15 +1,15 @@
-"""Lire des courriels : export local (.mbox, .eml) ou API Gmail en lecture seule.
+"""Read emails: local export (.mbox, .eml) or the Gmail API, read-only.
 
-Partie de jobhunter.courriels. Chaque source rend des `Courriel` : expéditeur, sujet,
-date et texte brut du corps (HTML réduit au texte). Les pièces jointes sont ignorées.
+Part of jobhunter.courriels. Each source returns `Courriel` objects: sender, subject,
+date and raw text of the body (HTML reduced to text). Attachments are ignored.
 
-**L'API Gmail** demande un client OAuth « application de bureau » que l'utilisateur crée
-lui-même dans sa console Google Cloud, et dont il dépose le fichier dans
-`Scripts/gmail_client.json`. Au premier usage, son navigateur s'ouvre sur la page de
-consentement de Google, où il accepte la portée **gmail.readonly** ; le jeton obtenu va
-dans `Scripts/gmail_token.json`. Le programme ne voit jamais de mot de passe et ne peut
-ni envoyer, ni modifier, ni supprimer un courriel. Bibliothèque requise :
-`google-auth-oauthlib` (`pip install "jobhunter[gmail]"`).
+**The Gmail API** requires a "desktop application" OAuth client that the user creates
+themselves in their Google Cloud console, and whose file they drop into
+`Scripts/gmail_client.json`. On first use, their browser opens on Google's consent page,
+where they accept the **gmail.readonly** scope; the token obtained goes into
+`Scripts/gmail_token.json`. The program never sees a password and can neither send,
+nor modify, nor delete an email. Required library: `google-auth-oauthlib`
+(`pip install "jobhunter[gmail]"`).
 """
 
 import base64
@@ -36,7 +36,7 @@ class Courriel:
 
     de: str  # « Nom <adresse> » tel quel
     sujet: str
-    le: str  # AAAA-MM-JJ ; "" si la date est illisible
+    le: str  # YYYY-MM-DD; "" if the date is unreadable
     corps: str  # texte brut
 
 
@@ -61,7 +61,7 @@ def _corps(m: Message) -> str:
             continue
         try:
             texte = octets.decode(partie.get_content_charset() or "utf-8", "replace")
-        except LookupError:  # jeu de caractères inconnu
+        except LookupError:  # unknown character set
             texte = octets.decode("utf-8", "replace")
         (simple if type_ == "text/plain" else riche).append(texte)
     texte = "\n".join(simple) if simple else _texte_html("\n".join(riche))
@@ -108,16 +108,16 @@ def depuis_eml(dossier: Path) -> Iterator[Courriel]:
 
 
 def depuis_gmail(scripts: Path, jours: int = 60, maximum: int = 500) -> Iterator[Courriel]:
-    """Les courriels reçus ces `jours` derniers, par l'API Gmail en lecture seule.
+    """The emails received over the last `jours` days, through the Gmail API, read-only.
 
     Args:
-        scripts: le dossier `Scripts/` (client OAuth et jeton).
-        jours: ancienneté maximale.
-        maximum: nombre maximal de courriels lus.
+        scripts: the `Scripts/` folder (OAuth client and token).
+        jours: maximum age.
+        maximum: maximum number of emails read.
 
     Raises:
-        FileNotFoundError: pas de `gmail_client.json` (voir l'en-tête du module).
-        ImportError: `google-auth-oauthlib` absent.
+        FileNotFoundError: no `gmail_client.json` (see the module header).
+        ImportError: `google-auth-oauthlib` missing.
     """
     client = scripts / CLIENT
     if not client.exists():
@@ -134,8 +134,8 @@ def depuis_gmail(scripts: Path, jours: int = 60, maximum: int = 500) -> Iterator
     if cred and cred.expired and cred.refresh_token:
         cred.refresh(Request())
     if not cred or not cred.valid:
-        # Le navigateur de l'utilisateur s'ouvre sur la page de Google : c'est lui qui
-        # consent, à la seule lecture.
+        # The user's browser opens on Google's page: it is the user who
+        # consents, to reading only.
         cred = InstalledAppFlow.from_client_secrets_file(str(client), [PORTEE]).run_local_server(
             port=0
         )

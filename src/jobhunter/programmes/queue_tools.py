@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""queue_tools.py — Maintenance de apply_queue.json.
-  mark_dead()  : vérifie toutes les URLs (link_check.batch_check) → tag `link_status`
-                 sur chaque offre (OK / EXPIREE / ANTI-BOT / MORT) + sidecar link_status.json.
-  writeback()  : réécrit l'URL d'une offre (ex: URL morte → homepage résolue), garde `url_orig`.
-Appelé par apply_runner (write-back après homepage_fallback) et le bouton JobHunter (marquage).
-CLI : python JobHunter.pyw queue_tools mark        # marque les URLs mortes
-      python JobHunter.pyw queue_tools test        # auto-test (fichier temporaire)
+"""queue_tools.py — Maintenance of apply_queue.json.
+  mark_dead()  : checks all the URLs (link_check.batch_check) → `link_status` tag
+                 on each offer (OK / EXPIREE / ANTI-BOT / MORT) + link_status.json sidecar.
+  writeback()  : rewrites an offer's URL (e.g. dead URL → resolved homepage), keeps `url_orig`.
+Called by apply_runner (write-back after homepage_fallback) and the JobHunter button (marking).
+CLI: python JobHunter.pyw queue_tools mark        # marks the dead URLs
+     python JobHunter.pyw queue_tools test        # self-test (temporary file)
 """
 
 import sys
@@ -23,15 +23,15 @@ SIDECAR = SCRIPTS / "link_status.json"
 sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console : TextIOWrapper
 
 
-# TOUTE ECRITURE PASSE PAR queue_io.transaction : verrou, relecture fraiche, ecriture
-# atomique. `mark_dead` lisait la file, controlait les liens (des minutes de reseau),
-# puis reecrivait son instantane avec write_text, sans verrou : une collecte fusionnee
-# pendant ce temps etait perdue (audit du 19/10/2026). Le reseau se fait maintenant hors
-# verrou, et seuls ses RESULTATS sont appliques a la file relue.
+# EVERY WRITE GOES THROUGH queue_io.transaction: lock, fresh re-read, atomic
+# write. `mark_dead` read the queue, checked the links (minutes of network),
+# then rewrote its snapshot with write_text, without a lock: a collection merged
+# in the meantime was lost (audit of 19/10/2026). The network now happens outside
+# the lock, and only its RESULTS are applied to the re-read queue.
 
 
 def load(path=QUEUE):
-    """La file en lecture (sans les descriptions)."""
+    """The queue, read-only (without the descriptions)."""
     return queue_io.charger(path, descriptions=False)
 
 
@@ -46,14 +46,14 @@ def _tag(res):
     return "MORT"
 
 
-_HARD_HOSTS = ("linkedin.", "indeed.", "glassdoor.")  # anti-bot systématique : inutile de scanner
+_HARD_HOSTS = ("linkedin.", "indeed.", "glassdoor.")  # systematic anti-bot: no point scanning
 
 
 def mark_dead(path=QUEUE, verbose=True, _checker=None, skip_hard=True):
-    """Vérifie chaque URL http unique de la queue, écrit `link_status` sur chaque offre.
-    skip_hard=True : LinkedIn/Indeed/Glassdoor tagués ANTI-BOT sans HTTP (scan inutile, ban).
-    _checker : fn(list[url])->{url:res} injectable (tests). Défaut = link_check.batch_check.
-    Retour {total, checked, skipped_hard, counts:{tag:n}}."""
+    """Checks each unique http URL of the queue, writes `link_status` on each offer.
+    skip_hard=True: LinkedIn/Indeed/Glassdoor tagged ANTI-BOT without HTTP (useless scan, ban).
+    _checker: fn(list[url])->{url:res} injectable (tests). Default = link_check.batch_check.
+    Returns {total, checked, skipped_hard, counts:{tag:n}}."""
     all_urls = {r["url"] for r in load(path) if str(r.get("url") or "").startswith("http")}
 
     def _hard(u):
@@ -79,7 +79,7 @@ def mark_dead(path=QUEUE, verbose=True, _checker=None, skip_hard=True):
                 r["link_status"] = tags[u]
                 counts[tags[u]] = counts.get(tags[u], 0) + 1
         total = len(rows)
-    # sidecar (survit à un rebuild : référence/inspection)
+    # sidecar (survives a rebuild: reference/inspection)
     try:
         atomique.ecrire_json(
             SIDECAR if path == QUEUE else Path(path).with_name("link_status.json"), tags
@@ -97,8 +97,8 @@ def prune(path=QUEUE, drop=("MORT",), verbose=True):
     """Supprime de la queue les offres dont link_status ∈ drop (défaut: MORT seul).
     N'enlève PAS EXPIREE/ANTI-BOT par défaut (récupérables / vivants). Retour nb supprimé.
     Lancer mark_dead AVANT. Réversible : queue régénérable via build_queue + backup git."""
-    # Les offres du suivi ne partent JAMAIS : une annonce ferme apres qu'on y a postule,
-    # et c'est justement celle-la qu'on veut garder (invariant d'AGENTS.md).
+    # Tracked offers NEVER leave: a posting closes after one applied,
+    # and that is precisely the one we want to keep (invariant of AGENTS.md).
     suivies = set(suivi_io.charger())
     with queue_io.transaction(path, descriptions=False) as rows:
         before = len(rows)
@@ -175,7 +175,7 @@ if __name__ == "__main__":
         sys.exit(0 if _selftest() else 1)
     elif cmd == "mark":
         mark_dead()
-    elif cmd == "prune":  # mark_dead puis supprime les MORT
+    elif cmd == "prune":  # mark_dead then deletes the MORT ones
         mark_dead()
         prune()
     else:

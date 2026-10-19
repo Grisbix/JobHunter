@@ -1,8 +1,8 @@
-; Installateur Windows de JobHunter (Inno Setup 6). Construit par construire.py :
+; JobHunter's Windows installer (Inno Setup 6). Built by construire.py:
 ;   ISCC /DVersion=2.9.0 /DSource=dist\JobHunter /Odist JobHunter.iss
-; Installation pour l'utilisateur seul, sans droits d'administrateur. Les données
-; (profil, CV, offres, suivi) vivent dans Documents\JobHunter : ni l'installation, ni
-; la mise à jour, ni la désinstallation n'y touchent.
+; Per-user installation, without administrator rights. The data
+; (profile, CVs, offers, tracker) live in Documents\JobHunter: neither installing,
+; updating nor uninstalling touches them.
 
 #ifndef Version
   #define Version "0.0.0"
@@ -41,8 +41,8 @@ Name: "en"; MessagesFile: "compiler:Default.isl"
 Name: "bureau"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
-; Le dossier du programme est remplacé en entier : une version plus ancienne ne laisse
-; aucun module périmé derrière elle.
+; The program folder is replaced entirely: an older version leaves
+; no stale module behind.
 Source: "{#Source}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [InstallDelete]

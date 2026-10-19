@@ -1,6 +1,6 @@
-"""EURES : le portail d'emploi officiel de l'Union europeenne.
+"""EURES: the official job portal of the European Union.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+Part of jobhunter.sources (formerly Scripts/job_sources.py, phase 3.4).
 """
 
 import re
@@ -15,26 +15,26 @@ from jobhunter.sources.efc import _RX_EFC_ESG, _RX_EFC_SENIOR, _est_graduate
 _log = _journal.journal(__name__)
 
 
-# ═══════════════ 9. EURES — le portail d'emploi OFFICIEL de l'Union europeenne ═══
-# POURQUOI. 96 % des offres etrangeres de la file venaient de la seule recherche
-# LinkedIn « Worldwide », plafonnee a 12 pages par mot-cle et noyee sous le
-# volume indien et americain. EURES agrege les services publics de l'emploi des
-# 30 pays de l'EEE, description comprise, en JSON.
+# ═══════════════ 9. EURES — the OFFICIAL job portal of the European Union ═══
+# WHY. 96 % of the foreign offers in the queue came from the LinkedIn
+# "Worldwide" search alone, capped at 12 pages per keyword and drowned under the
+# Indian and American volume. EURES aggregates the public employment services of the
+# 30 EEA countries, description included, in JSON.
 #
-# CE QUI EST AUTORISE (verifie le 2026-09-24). robots.txt de europa.eu ne ferme
-# ni /eures/api/ ni /eures/portal/, et declare `crawl-delay: 10`, respecte ici.
-# L'API est celle que le portail public appelle lui-meme, sans authentification.
+# WHAT IS ALLOWED (checked on 2026-09-24). europa.eu's robots.txt closes
+# neither /eures/api/ nor /eures/portal/, and declares `crawl-delay: 10`, respected here.
+# The API is the one the public portal calls itself, without authentication.
 #
-# PIEGE : la recherche est LARGE. « ESG analyst » rend 255 000 resultats sur une
-# semaine : le mot-cle est cherche dans la description, et les « ESG » des
-# achats industriels allemands remontent. Le classement BEST_MATCH met les bons
-# en tete ; on ne lit donc qu'une page par mot-cle, et l'intitule doit passer
-# le filtre metier d'eFC (analyste, risque, ESG… et pas senior).
+# TRAP: the search is BROAD. "ESG analyst" returns 255,000 results over one
+# week: the keyword is searched in the description, and the "ESG" of
+# German industrial purchasing come up. The BEST_MATCH ranking puts the good ones
+# first; so we only read one page per keyword, and the title must pass
+# eFC's profession filter (analyst, risk, ESG… and not senior).
 EURES_URL = "https://europa.eu/eures/api/jv-searchengine/public/jv-search/search"
 
 EURES_FICHE = "https://europa.eu/eures/portal/jv-se/jv-details/{}?lang=en"
 
-EURES_DELAI = 10  # crawl-delay de europa.eu — ne pas baisser
+EURES_DELAI = 10  # europa.eu crawl-delay — do not lower
 
 EURES_MOTS = [
     "ESG analyst",
@@ -47,7 +47,7 @@ EURES_MOTS = [
     "graduate programme sustainability",
 ]
 
-# Codes pays EURES -> nom anglais, que zones.py reconnait.
+# EURES country codes -> English name, which zones.py recognises.
 _EURES_PAYS = {
     "AT": "Austria",
     "BE": "Belgium",
@@ -83,14 +83,14 @@ _EURES_PAYS = {
     "CH": "Switzerland",
 }
 
-# En allemand, « ESG » est aussi le verre de securite (Einscheiben-
+# In German, "ESG" is also safety glass (Einscheiben-
 # Sicherheitsglas) : « Produktionsmitarbeiter ESG-Herstellung » remontait.
 _RX_EURES_VERRE = re.compile(r"\bESG-?(?:fertigung|herstellung|glas)|einscheiben", re.I)
 
-# Metiers hors cible que « sustainability » fait remonter chez EURES — achats,
-# ingenierie, commerce, HSE, direction — mesures le 2026-09-24. fit_score les
-# note 9 ou 10 (le mot suffit a lever le plafond ESG) : il faut donc les
-# ecarter ICI, un filtre sur le fit ne les retiendrait pas.
+# Off-target professions that "sustainability" brings up at EURES — purchasing,
+# engineering, sales, HSE, management — measured on 2026-09-24. fit_score rates them
+# 9 or 10 (the word is enough to lift the ESG cap): so they must be
+# set aside HERE, a filter on the fit would not catch them.
 _RX_EURES_HORS = re.compile(
     r"procurement|einkauf|beschaffung|engineer|ingenieur|vertrieb|\bsales\b"
     r"|leiter|leitung|\blead\b|\bhse\b|\bqhse\b|athlete|bioeng|produktion"
@@ -98,7 +98,7 @@ _RX_EURES_HORS = re.compile(
     re.I,
 )
 
-# Employeur masque par l'annonceur : on ne l'invente pas.
+# Employer hidden by the advertiser: we do not invent it.
 _RX_EURES_ANONYME = re.compile(
     r"siehe beschreibung|confidential|non renseign|not specified|anonym|see description"
     r"|voir (?:la )?description|^\W*$",
@@ -130,13 +130,13 @@ def _eures_corps(mot: str, page: int, par_page: int) -> dict[str, Any]:
 
 
 def _eures_offre(j: Any, _EX: Any) -> dict[str, Any] | None:
-    """Une annonce EURES -> offre, ou None si l'intitule ne convient pas."""
+    """One EURES posting -> offer, or None if the title does not fit."""
     titre = __import__("html").unescape(str(j.get("title") or "")).strip()
-    # FILTRE STRICT, mesure le 2026-09-24. Avec le seul filtre metier d'eFC,
-    # 55 des 61 offres retenues etaient des « Data Analyst » ou « Business
-    # Analyst » allemands generiques, notees 1 ou 2 : le mot-cle est cherche
-    # dans la DESCRIPTION. On exige donc que l'INTITULE parle d'ESG ou de
-    # durabilite, ou qu'il s'agisse d'un programme jeunes diplomes.
+    # STRICT FILTER, measured on 2026-09-24. With eFC's profession filter alone,
+    # 55 of the 61 offers kept were generic German "Data Analyst" or "Business
+    # Analyst" jobs, rated 1 or 2: the keyword is searched
+    # in the DESCRIPTION. So we require the TITLE to talk about ESG or
+    # sustainability, or to be a graduate programme.
     if not titre or not title_ok(titre) or _RX_EFC_SENIOR.search(titre):
         return None
     if not (_RX_EFC_ESG.search(titre) or _est_graduate(titre)) or _RX_EURES_VERRE.search(titre):
@@ -170,7 +170,7 @@ def _eures_offre(j: Any, _EX: Any) -> dict[str, Any] | None:
 def scan_eures(
     pages: int = 1, par_page: int = 50, mots: list[str] | None = None
 ) -> list[dict[str, Any]]:
-    """Offres EURES de la derniere semaine, une page par mot-cle par defaut."""
+    """EURES offers of the last week, one page per keyword by default."""
     import httpx
 
     _EX = _commun.contrats_exclus()

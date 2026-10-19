@@ -1,6 +1,6 @@
-"""Constantes de l'application : chemins, statuts, colonnes du tableau, etapes et maintenance.
+"""Application constants: paths, statuses, table columns, steps and maintenance.
 
-Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
+Part of jobhunter.app (former JobHunter.pyw, phase 3.7)."""
 
 import functools as _ft
 import os
@@ -20,10 +20,10 @@ from jobhunter.app import theme as _theme
 
 
 def ouvrir(chemin: object) -> bool:
-    """Ouvre un fichier ou un dossier avec l'application du systeme.
+    """Opens a file or a folder with the system's application.
 
-    `os.startfile` n'existe que sous Windows : ailleurs, l'appeler levait
-    AttributeError. Rend True, pour s'enchainer dans une lambda Tk
+    `os.startfile` only exists on Windows: elsewhere, calling it raised
+    AttributeError. Returns True, to chain in a Tk lambda
     (`lambda: p and ouvrir(p)`).
     """
     if sys.platform == "win32":
@@ -54,8 +54,8 @@ from jobhunter.app.theme import (
 from jobhunter.scoring import zones as _zones
 
 _ici = sys.modules[__name__]
-# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
-# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+# Values taken from the profile: computed on first read, not at import
+# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -63,14 +63,14 @@ def __getattr__(nom: str) -> Any:
     return _paresseux.lire(_ici, _PARESSEUX, nom)
 
 
-ROOT = _racine.racine()  # marqueur ou JOBHUNTER_RACINE (jobhunter.racine)
+ROOT = _racine.racine()  # marker or JOBHUNTER_RACINE (jobhunter.racine)
 
 
 SCRIPTS = ROOT / "Scripts"
 
 
-# Lance les programmes en sous-processus : python.exe sous Python, jobhunter-cli.exe
-# dans l'application installée (jobhunter.gele).
+# Runs the programs as subprocesses: python.exe under Python, jobhunter-cli.exe
+# in the installed application (jobhunter.gele).
 PY = _gele.interpreteur()
 
 
@@ -86,10 +86,10 @@ COMPTES = SCRIPTS / "comptes_sites.json"
 PROFILE = SCRIPTS / "apply_profile.json"
 
 
-CV_ATS_DIR = chemins.CV_MODELES  # 5 CV variants (source, dans le depot)
+CV_ATS_DIR = chemins.CV_MODELES  # 5 CV variants (source, in the repository)
 
 
-_PARESSEUX["CV_OFFRE_DIR"] = lambda: chemins.CV_PAR_OFFRE  # CV cibles par offre
+_PARESSEUX["CV_OFFRE_DIR"] = lambda: chemins.CV_PAR_OFFRE  # CVs tailored per offer
 
 
 _PARESSEUX["LETTRES_DIR"] = lambda: chemins.LT_PAR_OFFRE  # lettres de motivation (docx+pdf)
@@ -98,8 +98,8 @@ _PARESSEUX["LETTRES_DIR"] = lambda: chemins.LT_PAR_OFFRE  # lettres de motivatio
 _PARESSEUX["_PREFIXE"] = lambda: _profil.prefixe_fichier()
 
 
-# Pays et lieu affiches, memorises par chaine de lieu : le tableau les recalcule
-# a chaque rafraichissement, sur 7000 lignes et quelques centaines de lieux.
+# Displayed country and place, memoised per location string: the table recomputes
+# them at each refresh, over 7000 rows and a few hundred places.
 _pays_lieu = _ft.lru_cache(maxsize=None)(_zones.pays_lieu)
 
 
@@ -109,25 +109,25 @@ _ville_affichee = _ft.lru_cache(maxsize=None)(_zones.ville_affichee)
 _region_lieu = _ft.lru_cache(maxsize=None)(lambda l: _zones.region_pays(_pays_lieu(l)))
 
 
-# statuts de suivi (libellés lisibles stockés dans suivi.json + feuille Excel SUIVI)
-# « mauvaise » = l'offre ne vaut rien POUR MOI (mal notee, hors sujet, senior
-# deguise). A distinguer de « refus », qui est la reponse de l'EMPLOYEUR apres
-# candidature : confondre les deux fausserait le taux de reponse du panneau
-# Stats, ou « refus » compte les portes fermees, pas les offres ecartees.
+# tracking statuses (readable labels stored in suivi.json + SUIVI Excel sheet)
+# "mauvaise" = the offer is worth nothing FOR ME (badly scored, off topic, disguised
+# senior). To be told apart from "refus", which is the EMPLOYER's answer after
+# applying: mixing the two would distort the response rate of the Stats
+# panel, where "refus" counts closed doors, not offers set aside.
 #
-# « pas intéressé » = ni un verdict sur la qualite de l'offre ni une reponse :
-# l'utilisateur n'en veut pas, point. L'offre reste dans la file (le scan qui la
-# retrouve demain retombe sur la meme cle de suivi, donc elle reste cachee)
-# mais disparait du tableau. Reversible en un clic, contrairement a
-# « Écarter » qui la retire de la file et exige un motif.
+# "pas intéressé" = neither a verdict on the offer's quality nor an answer:
+# the user does not want it, full stop. The offer stays in the queue (the scan that
+# finds it again tomorrow lands on the same tracking key, so it stays hidden)
+# but disappears from the table. Reversible in one click, unlike
+# "Écarter", which removes it from the queue and requires a reason.
 PAS_INTERESSE = "pas intéressé"
 
 
-# « expiré » = l'annonce est fermee (vue trop tard, ou retiree par l'employeur).
-# Ni un jugement sur l'offre (« mauvaise ») ni une reponse (« refus ») : un fait.
-# Masque comme « pas intéressé » — rien a faire sur une offre fermee — et garde
-# dans le suivi pour que le scan qui la retrouverait ne la refasse pas surgir.
-# Ajoute le 2026-10-04 : l'utilisateur notait « mauvaise » + « trop tard » faute de mieux.
+# "expiré" = the posting is closed (seen too late, or withdrawn by the employer).
+# Neither a judgement on the offer ("mauvaise") nor an answer ("refus"): a fact.
+# Hidden like "pas intéressé" — nothing to do on a closed offer — and kept
+# in the tracking so that the scan that would find it again does not bring it back.
+# Added on 2026-10-04: the user wrote "mauvaise" + "trop tard" for lack of anything better.
 EXPIRE = "expiré"
 
 
@@ -148,13 +148,13 @@ STATUTS = [
 ]
 
 
-# Marqueurs MONOCHROMES : ils heritent de la couleur de la ligne, la
-# ou un emoji couleur imposait la sienne et cassait la lecture du tableau.
-ST_EMOJI = {statut: "" for statut in STATUTS}  # libellés seuls, sans pictogrammes décoratifs
+# MONOCHROME markers: they inherit the row's colour, where
+# a colour emoji imposed its own and broke the reading of the table.
+ST_EMOJI = {statut: "" for statut in STATUTS}  # labels only, no decorative pictograms
 
 
-# Couleur de la ligne selon le statut : l'oeil trouve les candidatures en
-# cours sans lire la colonne. Posee APRES l'etat du lien (le dernier tag gagne).
+# Row colour by status: the eye finds the applications in
+# progress without reading the column. Set AFTER the link state (the last tag wins).
 ST_COULEUR = {
     "à postuler": ACC,
     "à vérifier": AMBRE,
@@ -168,9 +168,9 @@ ST_COULEUR = {
 }
 
 
-# Libelles colores DANS le tableau : versions texte, sinon illisibles.
-# Seuls les liens A PROBLEME sont colores. « OK » l'etait aussi, en vert : 98 %
-# des lignes, tout le tableau vire au vert et plus rien ne se distingue.
+# Coloured labels IN the table: text versions, otherwise unreadable.
+# Only PROBLEM links are coloured. "OK" was too, in green: 98%
+# of the rows, the whole table turns green and nothing stands out any more.
 LS_COLOR = {
     "MORT": TX_BAD,
     "EXPIREE": TX_AMBRE,
@@ -180,7 +180,7 @@ LS_COLOR = {
 }
 
 
-# ESSENTIELS : visibles direct. Le reste (maintenance) sous « 🔧 Maintenance ▾ ».
+# ESSENTIALS: visible straight away. The rest (maintenance) under "🔧 Maintenance ▾".
 STEPS = [
     (
         "Scan offres",
@@ -211,17 +211,17 @@ STEPS = [
 ]
 
 
-# 19 items empiles a plat ne se lisent pas. Regroupes par INTENTION : on
-# cherche « ou vont mes offres », pas un nom de script.
+# 19 items stacked flat cannot be read. Grouped by INTENT: one
+# looks for "where are my offers going", not a script name.
 MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
     (
         "Sources & offres",
         [
             ("Scrape les sites", [PY, "-m", "jobhunter.programmes.scrape_jobs", "--headless"]),
             ("Homepages", [PY, "-m", "jobhunter.programmes.enrich_homepages"]),
-            # Le scan quotidien ne voit que 7 jours (filtre f_TPR LinkedIn). Une
-            # offre publiee en debut de mois et ratee sur le moment reste
-            # invisible sans cette passe elargie.
+            # The daily scan only sees 7 days (LinkedIn f_TPR filter). An
+            # offer published at the start of the month and missed at the time stays
+            # invisible without this wider pass.
             ("Rattrapage 31 j", [PY, "-m", "jobhunter.sources", "--all", "--days", "31"]),
             ("Sonder flux ATS", [PY, "-m", "jobhunter.programmes.probe_ats"]),
             ("Sonder flux Workday", [PY, "-m", "jobhunter.programmes.probe_workday"]),
@@ -234,7 +234,7 @@ MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
     (
         "Documents",
         [
-            ("CV/lettres…", None),  # None = commande construite a la volee
+            ("CV/lettres…", None),  # None = command built on the fly
             ("Sync docs+format", [PY, "-m", "jobhunter.programmes.sync_docs", "--format"]),
             ("Export CSV", [PY, "-m", "jobhunter.programmes.export_queue_csv", "--keep", "8"]),
             ("Relire les lettres", [PY, "-m", "jobhunter.programmes.relecture"]),
@@ -262,7 +262,7 @@ MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
     (
         "Accès & diagnostic",
         [
-            # Saisie masquee du secret API : il ne transite ni par le chat ni par
+            # Masked entry of the API secret: it goes neither through the chat nor through
             # l'historique shell. Console reelle obligatoire (getpass lit stdin).
             ("Clés France Travail", [PY, "-m", "jobhunter.programmes.setup_francetravail"]),
             ("Fermer Chrome", [PY, "-m", "jobhunter.programmes.acces", "--close"]),
@@ -275,15 +275,15 @@ MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
                 [PY, "-m", "jobhunter.programmes.test_live_nav"],
             ),
             ("Mettre à jour JobHunter", "maj"),  # "maj" = mise a jour + relance (App.mettre_a_jour)
-            ("Collecte chaque matin…", "planifier"),  # tâche Windows (App._planifier)
-            ("Statuts depuis mes courriels…", "courriels"),  # lecture seule (app.courriels)
-            ("Langue : English", "langue"),  # bascule l'interface FR <-> EN (app.langue)
+            ("Collecte chaque matin…", "planifier"),  # Windows task (App._planifier)
+            ("Statuts depuis mes courriels…", "courriels"),  # read-only (app.courriels)
+            ("Langue : English", "langue"),  # switches the interface FR <-> EN (app.langue)
         ],
     ),
 ]
 
 
-# scripts interactifs (input()) -> lancés dans une VRAIE console, pas en subprocess piped
+# interactive scripts (input()) -> run in a REAL console, not a piped subprocess
 INTERACTIVE = (
     "jobhunter.programmes.apply_runner",
     "jobhunter.programmes.setup_francetravail",
@@ -291,14 +291,14 @@ INTERACTIVE = (
 )
 
 
-SCRAPE_TAG = "\U0001f50e"  # loupe, prefixe des logs du scan automatique
+SCRAPE_TAG = "\U0001f50e"  # magnifier, prefix of the automatic scan's logs
 
 
 LF = "\n"
 
 
-# (clé offre, entête, largeur). Colonne numérique (tri num) : fit.
-# largeurs élargies pour la police agrandie (sinon texte tronqué / statut « 🆕 nouveau » clippé)
+# (offer key, header, width). Numeric column (numeric sort): fit.
+# widths enlarged for the bigger font (otherwise text truncated / "🆕 nouveau" status clipped)
 COLS = [
     ("_chk", "☐", 40),
     ("_st", "Statut", 140),
@@ -317,10 +317,10 @@ COLS = [
 ]
 
 
-# Zones : le tri alphabetique de la colonne doit suivre la PREFERENCE, pas
-# l'alphabet. Le chiffre en tete y suffit, et se lit aussi bien a l'oeil.
-# « prioritaire » regroupe les secteurs prioritaires du profil : l'etiquette
-# nomme le secteur de l'offre (sous_zone), sinon toutes portaient le premier.
+# Zones: the alphabetical sort of the column must follow the PREFERENCE, not
+# the alphabet. The leading digit is enough, and reads just as well by eye.
+# "prioritaire" groups the profile's priority sectors: the label
+# names the offer's sector (sous_zone), otherwise they all carried the first one.
 ZONE_ETIQ = {
     "prioritaire": "1 · prioritaire",
     "secondaire": "2 · secondaire",
@@ -330,10 +330,10 @@ ZONE_ETIQ = {
 }
 
 
-# Dernier segment d'URL qui designe une RUBRIQUE, donc une liste de postes,
-# et jamais un poste precis.
-# Memes motifs que job_sources : les offres DEJA en file portent souvent
-# « CDI » alors que leur intitule dit « Alternance » — LinkedIn se trompe.
+# Last URL segment that designates a SECTION, hence a list of jobs,
+# and never a specific job.
+# Same patterns as job_sources: offers ALREADY in the queue often carry
+# "CDI" when their title says "Alternance" — LinkedIn gets it wrong.
 _RX_ALT = re.compile(r"\b(alternan[ct]|apprenti|apprentissage|contrat\s+pro)", re.I)
 
 
@@ -359,17 +359,17 @@ _RUBRIQUES = {
 }
 
 
-# Paramètres qui désignent une RECHERCHE, pas une offre : ?query=…, ?q=…,
-# ?keywords=…. Un lien d'offre porte un identifiant, pas des mots-clés.
+# Parameters that designate a SEARCH, not an offer: ?query=…, ?q=…,
+# ?keywords=…. An offer link carries an identifier, not keywords.
 _RX_RECHERCHE_Q = re.compile(r"(^|&)(query|q|k|keywords?|search|recherche)=", re.I)
 
 
-DEFAULT_ST = ""  # rien affiché tant qu'aucun statut manuel (pas de « 🆕 nouveau »)
+DEFAULT_ST = ""  # nothing displayed as long as there is no manual status (no "🆕 nouveau")
 
 
-# Invite du champ de recherche. Constante et non litteral repete : le texte
-# sert AUSSI de sentinelle (« le champ est-il vide ? »), et deux copies qui
-# divergent d'un espace feraient chercher l'invite elle-meme.
+# Placeholder of the search field. A constant, not a repeated literal: the text
+# ALSO serves as a sentinel ("is the field empty?"), and two copies that
+# differ by one space would search for the placeholder itself.
 SEARCH_HINT = "rechercher…"
 
 
@@ -379,8 +379,8 @@ DOM_SHORT = {
     "Finance / Investissement": "Finance",
     "Conseil / Strategy": "Conseil",
     "Risk / Quant / Assurance": "Risk",
-    # libelles actuels de classify_domaine ; les precedents restent pour
-    # les offres anciennes. Sans eux la colonne affichait « ESG_Finan ».
+    # current labels of classify_domaine; the previous ones stay for
+    # older offers. Without them the column displayed "ESG_Finan".
     "ESG_Finance_Durable": "ESG",
     "Data_IA": "Data/IA",
     "Risk_Quant": "Risk",
@@ -391,11 +391,11 @@ CONTRAT_COURT = {"non precise": "—", "non précisé": "—", "Non précisé": 
 
 
 class _ChoixStatut(ctk.CTkOptionMenu):
-    """Menu de statut au theme sombre, qui parle la langue de l'ancien Combobox.
+    """Dark-themed status menu that speaks the old Combobox's language.
 
-    Le Combobox ttk restait blanc sur fond de nuit : clam ne colore pas l'etat
-    « readonly ». Ce menu garde get()/set() avec "" pour « aucun statut », que
-    save_edit et _load_edit utilisent tels quels.
+    The ttk Combobox stayed white on a night background: clam does not colour the
+    "readonly" state. This menu keeps get()/set() with "" for "no status", which
+    save_edit and _load_edit use as is.
     """
 
     VIDE = "—"

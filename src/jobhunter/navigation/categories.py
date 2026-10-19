@@ -1,6 +1,6 @@
-"""Strategies par categorie de site (tableaux de navigation/strategies.py).
+"""Strategies per site category (tables in navigation/strategies.py).
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+Part of jobhunter.navigation (formerly Scripts/web_nav.py, phase 3.6).
 """
 
 from typing import Any
@@ -16,9 +16,9 @@ from jobhunter.navigation.strategies import (
 
 
 def click_first_job_offer(page: Any) -> Any:
-    """Cat2/3 : trouve et clique la premiere offre d'emploi sur la page.
+    """Cat2/3: finds and clicks the first job offer on the page.
 
-    Retour {found, href, label, total_offers}.
+    Returns {found, href, label, total_offers}.
     """
     try:
         r = page.evaluate(FIRST_JOB_OFFER_JS)
@@ -40,9 +40,9 @@ def click_first_job_offer(page: Any) -> Any:
 
 
 def check_apply_for_register(page: Any) -> Any:
-    """Cat2/3 : apres avoir clique une offre, verifie si le flux apply inclut une creation de compte (email + password demandes).
+    """Cat2/3: after clicking an offer, checks whether the apply flow includes an account creation (email + password asked).
 
-    Retour {kind, hasEmail, hasNewPwd, ...}.
+    Returns {kind, hasEmail, hasNewPwd, ...}.
     """
     try:
         return page.evaluate(ATS_APPLY_REGISTER_DETECT_JS)
@@ -51,9 +51,9 @@ def check_apply_for_register(page: Any) -> Any:
 
 
 def probe_auth_endpoints(page: Any) -> Any:
-    """Cat3 : scanne les liens /login, /register, /signin dans la page.
+    """Cat3: scans the /login, /register, /signin links in the page.
 
-    Retour {found, authLinks, footerAuthLinks}.
+    Returns {found, authLinks, footerAuthLinks}.
     """
     try:
         return page.evaluate(SITEMAP_PROBE_JS)
@@ -62,9 +62,9 @@ def probe_auth_endpoints(page: Any) -> Any:
 
 
 def check_root_domain(page: Any) -> Any:
-    """Cat4 : verifie si le domaine racine est accessible et a des liens carriere.
+    """Cat4: checks whether the root domain is reachable and has career links.
 
-    Retour {title, bodyPreview, hasCareerLinks, careerLinks, url, status}.
+    Returns {title, bodyPreview, hasCareerLinks, careerLinks, url, status}.
     """
     try:
         return page.evaluate(ROOT_DOMAIN_CHECK_JS)
@@ -79,9 +79,9 @@ def check_root_domain(page: Any) -> Any:
 
 
 def didomi_reject_and_wait(page: Any, wait_ms: int = 12000) -> Any:
-    """Ferme la banniere Didomi (Bpifrance) et attend le chargement React.
+    """Closes the Didomi banner (Bpifrance) and waits for React to load.
 
-    Retour {done, ...}.
+    Returns {done, ...}.
     """
     try:
         r = page.evaluate(BPIFRANCE_DIDOMI_JS)
@@ -92,9 +92,9 @@ def didomi_reject_and_wait(page: Any, wait_ms: int = 12000) -> Any:
 
 
 def scan_nonstandard_inputs(page: Any) -> Any:
-    """Scan les inputs non-standards (BPCE, Engagement Jeunes) pour diagnostic.
+    """Scans the non-standard inputs (BPCE, Engagement Jeunes) for diagnostics.
 
-    Retour {found, inputs}.
+    Returns {found, inputs}.
     """
     try:
         return page.evaluate(BPCE_INPUT_JS)

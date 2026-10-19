@@ -1,19 +1,19 @@
-"""Après « j'ai envoyé » : la page dit-elle que la candidature est arrivée ?
+"""After "j'ai envoyé": does the page say the application arrived?
 
-Partie de jobhunter.navigation. Le programme ne clique JAMAIS le bouton d'envoi : c'est
-l'utilisateur qui le fait, puis qui le déclare. Ce module regarde seulement ce que la page
-affiche ensuite, et rend l'un des deux états de la preuve :
+Part of jobhunter.navigation. The program NEVER clicks the send button: it is the user
+who does it, then declares it. This module only looks at what the page displays next,
+and returns one of the two states of the proof:
 
-confirmé    la page montre un message de confirmation (« Merci pour votre candidature »,
-            « Application submitted », « Vielen Dank für Ihre Bewerbung »…) ou une adresse
-            de confirmation (/thank-you, /confirmation), ET le formulaire n'est plus là ;
-incertain   tout le reste : formulaire toujours affiché, message d'erreur, page muette.
+confirmé    the page shows a confirmation message ("Merci pour votre candidature",
+            "Application submitted", "Vielen Dank für Ihre Bewerbung"…) or a
+            confirmation address (/thank-you, /confirmation), AND the form is gone;
+incertain   everything else: form still displayed, error message, silent page.
 
-Une déclaration seule — un clic, une touche — ne vaut jamais « confirmé » : il faut un
-signal observé. Et « incertain » ne relance jamais rien ; c'est à l'utilisateur de
-vérifier (voir sa boîte mail, le site).
+A declaration alone — a click, a key — is never worth "confirmé": an observed signal is
+required. And "incertain" never retries anything; it is up to the user to check (their
+mailbox, the site).
 
-Decision : docs/adr/0009-preuve-distincte-de-la-declaration.md
+Decision: docs/adr/0009-preuve-distincte-de-la-declaration.md
 """
 
 import re
@@ -25,8 +25,8 @@ from urllib.parse import urlsplit
 CONFIRME = "confirmé"
 INCERTAIN = "incertain"
 
-# Messages de confirmation. Volontairement des PHRASES, pas des mots seuls : « merci »
-# ou « candidature » figurent sur presque tous les formulaires avant l'envoi.
+# Confirmation messages. Deliberately SENTENCES, not single words: "merci"
+# or "candidature" appear on almost every form before the send.
 _RX_MERCI = re.compile(
     r"merci (?:beaucoup )?(?:pour|de) (?:votre|ta) candidature"
     r"|(?:votre|ta) candidature (?:a (?:bien )?été|est) (?:bien )?"
@@ -41,13 +41,13 @@ _RX_MERCI = re.compile(
     r"|ihre bewerbung (?:wurde|ist) (?:erfolgreich )?(?:eingegangen|versendet|übermittelt|abgeschickt)",
     re.I,
 )
-# Une adresse de confirmation (le chemin, pas le domaine ni la requête).
+# A confirmation address (the path, not the domain nor the query).
 _RX_URL = re.compile(
     r"/(?:[^/?#]*[-_/])?(?:confirmation|confirmed|thank[-_]?you|thanks|merci|success|submitted|"
     r"application[-_]?sent|bestaetigung|danke)(?:[-_/.]|$)",
     re.I,
 )
-# Un message d'erreur de formulaire : l'envoi n'est pas passé.
+# A form error message: the send did not go through.
 _RX_ERREUR = re.compile(
     r"champ (?:est )?obligatoire|ce champ est requis|this field is required|required field"
     r"|veuillez (?:corriger|renseigner|remplir|compléter)|please (?:correct|fill|complete|enter)"
@@ -56,8 +56,8 @@ _RX_ERREUR = re.compile(
     re.I,
 )
 
-# Le formulaire est-il encore là ? Un bouton d'envoi final VISIBLE, ou des champs à
-# remplir visibles en nombre, disent que l'utilisateur est toujours devant le formulaire.
+# Is the form still there? A VISIBLE final send button, or fields to
+# fill visible in numbers, say the user is still in front of the form.
 _FORMULAIRE_JS = r"""
 () => {
   const vis = el => { const r = el.getBoundingClientRect();
@@ -79,16 +79,16 @@ def _extrait(texte: str, debut: int, fin: int, marge: int = 60) -> str:
 def analyser_confirmation(
     texte: str | None, url: str | None, formulaire_visible: bool
 ) -> tuple[str, str]:
-    """Décide l'état de la preuve à partir de ce que la page montre.
+    """Decides the state of the proof from what the page shows.
 
     Args:
-        texte: le texte visible de la page (et de ses cadres).
-        url: l'adresse de la page.
-        formulaire_visible: un bouton d'envoi final ou des champs à remplir sont encore là.
+        texte: the visible text of the page (and of its frames).
+        url: the address of the page.
+        formulaire_visible: a final send button or fields to fill are still there.
 
     Returns:
-        (état, extrait) : l'état (`CONFIRME` ou `INCERTAIN`) et le passage qui le justifie,
-        ou la raison de l'incertitude.
+        (state, extract): the state (`CONFIRME` or `INCERTAIN`) and the passage that
+        justifies it, or the reason for the uncertainty.
     """
     t = " ".join((texte or "").split())
     if formulaire_visible:
@@ -99,7 +99,7 @@ def analyser_confirmation(
     merci = _RX_MERCI.search(t)
     if merci:
         return CONFIRME, _extrait(t, merci.start(), merci.end())
-    chemin = urlsplit(url or "").path  # ni le domaine, ni la requete
+    chemin = urlsplit(url or "").path  # neither the domain nor the query
     if _RX_URL.search(chemin):
         return CONFIRME, "adresse de confirmation : " + (url or "")
     return INCERTAIN, "aucun message de confirmation sur la page"
@@ -123,18 +123,18 @@ def _lire(page: Any) -> tuple[str, str, bool]:
 
 
 def observer_confirmation(page: Any, attente: float = 8.0, pas: float = 0.5) -> dict[str, Any]:
-    """Regarde la page après la déclaration d'envoi, jusqu'à `attente` secondes.
+    """Watches the page after the send declaration, for up to `attente` seconds.
 
-    Une page de confirmation met souvent une ou deux secondes à venir : on relit tant que
-    l'état est incertain. Rien n'est cliqué, rien n'est saisi.
+    A confirmation page often takes one or two seconds to come: we re-read as long as
+    the state is uncertain. Nothing is clicked, nothing is typed.
 
     Args:
-        page: la page Playwright où l'utilisateur vient d'envoyer.
-        attente: durée maximale d'observation, en secondes.
-        pas: intervalle entre deux lectures.
+        page: the Playwright page where the user has just sent.
+        attente: maximum observation time, in seconds.
+        pas: interval between two reads.
 
     Returns:
-        {"etat", "texte", "url"} : l'état de la preuve, l'extrait qui la justifie, l'adresse.
+        {"etat", "texte", "url"}: the state of the proof, the extract that justifies it, the address.
     """
     fin = time.monotonic() + attente
     while True:

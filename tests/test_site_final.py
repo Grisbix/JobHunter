@@ -1,8 +1,8 @@
-"""Retrouver une offre LinkedIn sur le site de l'employeur (site_final), sans reseau.
+"""Find a LinkedIn offer on the employer's site (site_final), without network.
 
-Intitule strict, identite de l'employeur en mots entiers, quand resonder un flux,
-lecture Workday, comptes ATS de demonstration (« coquilles »).
-Converti depuis Scripts/test_site_final.py.
+Strict title, employer identity in whole words, when to probe a feed again,
+Workday reading, demo ATS accounts ("shells").
+Converted from Scripts/test_site_final.py.
 """
 
 import datetime
@@ -14,7 +14,7 @@ from jobhunter.programmes import site_final as S
 J = datetime.date(2026, 10, 7)
 
 
-# ── intitules : memes mots, l'ordre et le genre/contrat varient ────────────────
+# ── titles: same words, order and gender/contract vary ────────────────
 @pytest.mark.parametrize(
     ("a", "b", "attendu"),
     [
@@ -43,12 +43,12 @@ def test_mots_du_tenant(nom, tenant, attendu):
     assert S.mots_du_tenant(nom, tenant) == attendu
 
 
-# ── identite : la vitrine doit nommer l'entreprise en mots entiers ─────────────
+# ── identity: the shop window must name the company in whole words ─────────────
 @pytest.mark.parametrize(
     ("nom", "tenant", "texte", "attendu"),
     [
         ("ERM", "erm", "at erm, sustainability is", True),
-        ("ERM", "erm", "long term growth", False),  # « erm » dans « term »
+        ("ERM", "erm", "long term growth", False),  # "erm" in "term"
         ("Lombard Odier", "lombardodier", "about lombard odier", True),
         ("Lombard Odier", "lombardodier", "lombardodier group", False),
         ("Accenture", "accenture", "8140 asol - gurugram non stpi company", False),
@@ -59,7 +59,7 @@ def test_meme_employeur(nom, tenant, texte, attendu):
     assert S.meme_employeur(nom, tenant, texte) is attendu
 
 
-# ── quand resonder : un flux trouve ne se resonde pas, une absence apres 30 j ──
+# ── when to probe again: a found feed is not probed again, an absence after 30 d ──
 @pytest.mark.parametrize(
     ("etat", "attendu"),
     [
@@ -86,7 +86,7 @@ def test_a_resonder(etat, attendu):
     assert S.a_resonder(etat, J) == attendu
 
 
-# ── sonder : garde ce qui est trouve, ne resonde que ce qui est du ─────────────
+# ── probe: keeps what is found, only probes again what is due ─────────────
 @pytest.fixture
 def appels(monkeypatch):
     vus = []

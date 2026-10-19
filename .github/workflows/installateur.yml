@@ -1,12 +1,12 @@
 name: installateur
 
-# Construit JobHunterSetup.exe (application autonome, sans Python sur la machine) et
-# l'attache à la release. Lancé à chaque release publiée, ou à la main (Actions →
-# installateur → Run workflow) ou par une PR qui touche l'empaquetage : l'installateur
-# est alors un artefact du run.
-# Deux jobs : la construction ne fait que lire le dépôt ; seule la publication, et
-# seulement pour une release, reçoit le droit d'écrire.
-# Décision : docs/adr/0011-application-autonome.md
+# Builds JobHunterSetup.exe (standalone application, no Python on the machine) and
+# attaches it to the release. Runs on each published release, or by hand (Actions →
+# installateur → Run workflow) or on a PR that touches the packaging: the installer
+# is then an artifact of the run.
+# Two jobs: the build only reads the repository; only the publication, and
+# only for a release, gets write permission.
+# Decision: docs/adr/0011-application-autonome.md
 
 on:
   release:
@@ -55,14 +55,14 @@ jobs:
           & "$dest\jobhunter-cli.exe" --help
           if ($LASTEXITCODE -ne 0) { exit 1 }
           if (-not (Test-Path "$env:JOBHUNTER_RACINE\profil\exemple_finance_esg.json")) { exit 1 }
-      # Critère de fin de F4 : sur un Windows sans Python, l'application s'ouvre, collecte
-      # (navigateur du système, fusion d'un scan fictif), écrit un dossier et se met à
-      # jour. Python est retiré du PATH : seul le Python embarqué peut répondre.
+      # F4 completion criterion: on a Windows without Python, the application opens, collects
+      # (system browser, merge of a fictitious scan), writes an application file and updates
+      # itself. Python is removed from PATH: only the embedded Python can answer.
       - name: Sans Python - navigateur, collecte, dossier, mise à jour
         shell: pwsh
         run: |
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notmatch '(?i)python' }) -join ';'
-          # (l'alias du Microsoft Store, dans WindowsApps, n'est pas un Python)
+          # (the Microsoft Store alias, in WindowsApps, is not a Python)
           $reste = Get-Command python -All -ErrorAction SilentlyContinue | Where-Object { $_.Source -notmatch 'WindowsApps' }
           if ($reste) { Write-Error "python encore sur le PATH : $($reste.Source)"; exit 1 }
           $dest = "$env:RUNNER_TEMP\JobHunterInstall"
@@ -77,7 +77,7 @@ jobs:
         run: |
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notmatch '(?i)python' }) -join ';'
           $env:JOBHUNTER_RACINE = "$env:RUNNER_TEMP\JobHunterEssai"
-          $env:JOBHUNTER_SANS_FOND = "1"   # aucun travail de fond : rien ne sort sur le web
+          $env:JOBHUNTER_SANS_FOND = "1"   # no background work: nothing goes out on the web
           $p = Start-Process "$env:RUNNER_TEMP\JobHunterInstall\JobHunter.exe" -PassThru
           $titre = ""
           for ($i = 0; $i -lt 60 -and -not $titre; $i++) {
@@ -110,20 +110,20 @@ jobs:
           if-no-files-found: error
 
   publier:
-    # Seul job qui écrit : il attache l'installateur déjà construit et contrôlé.
+    # The only job that writes: it attaches the installer already built and checked.
     if: github.event_name == 'release'
     needs: windows
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: write
-      id-token: write      # attestation de provenance (Sigstore)
+      id-token: write      # provenance attestation (Sigstore)
       attestations: write
     steps:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
           name: JobHunterSetup
-      # Preuve vérifiable que l'exécutable sort de CE dépôt et de CE workflow :
+      # Verifiable proof that the executable comes from THIS repository and THIS workflow:
       #   gh attestation verify JobHunterSetup.exe --repo Grisbix/JobHunter
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
         with:
@@ -133,7 +133,7 @@ jobs:
       - name: Attacher a la release
         env:
           GH_TOKEN: ${{ github.token }}
-          # Jamais d'expression ${{ }} dans le script : le nom vient de l'environnement.
+          # Never a ${{ }} expression in the script: the name comes from the environment.
           TAG: ${{ github.event.release.tag_name }}
         run: >-
           gh release upload "$TAG" JobHunterSetup.exe JobHunterSetup.exe.sha256

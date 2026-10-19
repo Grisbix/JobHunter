@@ -1,35 +1,34 @@
 #!/usr/bin/env python3
-"""probe_carrieres.py — Trouve la VRAIE page carrière de chaque site, et son ATS.
+"""probe_carrieres.py — Finds the REAL career page of each site, and its ATS.
 
-POURQUOI. `scrape_jobs.py` devine 14 chemins par domaine (`/careers`, `/jobs`,
-`/recrutement`…) et s'arrête au premier qui répond. Mesuré sur les 11 premiers
-sites : 0 offre. La Banque Postale renvoie 404 sur les 7 chemins essayés, BPCE
-répond 200 sur les 4 siens et n'affiche rien — sa page est une SPA Workday.
-Deviner une URL ne dit ni où sont les offres, ni comment les lire.
+WHY. `scrape_jobs.py` guesses 14 paths per domain (`/careers`, `/jobs`,
+`/recrutement`…) and stops at the first that answers. Measured on the first 11 sites:
+0 offers. La Banque Postale returns 404 on the 7 paths tried, BPCE answers 200 on its 4
+and displays nothing — its page is a Workday SPA. Guessing a URL says neither where the
+offers are nor how to read them.
 
-CE PROGRAMME NE DEVINE PAS D'ABORD, IL LIT. Trois passes, de la moins chère à
-la plus chère :
+THIS PROGRAM DOES NOT GUESS FIRST, IT READS. Three passes, from the cheapest to the
+most expensive:
 
-  1. LA PAGE D'ACCUEIL. Un site corporate porte son lien « Carrières » dans sa
-     navigation. Une requête, et on suit le lien qu'il donne lui-même — c'est
-     l'inverse de deviner.
-  2. LE SITEMAP. `robots.txt` déclare souvent un sitemap ; les URL carrière y
-     figurent. Utile quand la navigation est rendue en JavaScript.
-  3. LES CHEMINS DEVINÉS, en dernier recours et sur une liste large.
+  1. THE HOME PAGE. A corporate site carries its "Careers" link in its navigation. One
+     request, and we follow the link it gives itself — the opposite of guessing.
+  2. THE SITEMAP. `robots.txt` often declares a sitemap; the career URLs are in it.
+     Useful when the navigation is rendered in JavaScript.
+  3. THE GUESSED PATHS, as a last resort and on a wide list.
 
-CE QUI COMPTE VRAIMENT : L'ATS DERRIÈRE. Trouver `careers.axa.com` ne sert à
-rien, c'est une vitrine anti-bot. Trouver que ses offres viennent de
-`axa.wd3.myworkdayjobs.com`, si : Workday, Greenhouse, Lever, SmartRecruiters,
-Ashby et Recruitee exposent tous une API JSON publique. C'est ce qui fait que
-`job_sources.py` ramène 324 offres là où le scraper DOM en ramène 0.
+WHAT REALLY MATTERS: THE ATS BEHIND. Finding `careers.axa.com` is useless, it is an
+anti-bot shop window. Finding that its offers come from `axa.wd3.myworkdayjobs.com`
+is not: Workday, Greenhouse, Lever, SmartRecruiters, Ashby and Recruitee all expose a
+public JSON API. That is what makes `job_sources.py` bring back 324 offers where the
+DOM scraper brings back 0.
 
-Ne modifie RIEN. Affiche, et écrit un JSON si on le demande.
+Changes NOTHING. Displays, and writes a JSON if asked.
 
-Run :
+Run:
   python JobHunter.pyw probe_carrieres
   python JobHunter.pyw probe_carrieres --json carrieres.json
-  python JobHunter.pyw probe_carrieres --domaines axa,bpce      # filtre
-  python JobHunter.pyw probe_carrieres --sans-sitemap           # passes 1 et 3 seulement
+  python JobHunter.pyw probe_carrieres --domaines axa,bpce      # filter
+  python JobHunter.pyw probe_carrieres --sans-sitemap           # passes 1 and 3 only
 """
 
 import argparse
@@ -53,10 +52,10 @@ UA = {
     "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
 }
 
-# ── Les mots qui désignent une section carrière ──────────────────────────────
-# Servent DEUX fois : sur le texte visible d'un lien, et sur son href. Un site
-# dit « Nous rejoindre » et pointe `/recrutement` ; un autre dit « Careers » et
-# pointe `/en/about-us/join`. Il faut les deux angles pour ne pas rater.
+# ── The words that designate a career section ────────────────────────────────
+# Used TWICE: on a link's visible text, and on its href. One site
+# says "Nous rejoindre" and points to `/recrutement`; another says "Careers" and
+# points to `/en/about-us/join`. Both angles are needed not to miss.
 MOTS_TEXTE = [
     "recrutement",
     "recrute",
@@ -100,8 +99,8 @@ MOTS_TEXTE = [
     "nos métiers",
     "espace candidat",
 ]
-# Sur le href, on ne veut QUE des segments de chemin : « career » comme
-# sous-chaîne libre matcherait « /careful-investing ». On borne par / - _ . ou fin.
+# On the href, we ONLY want path segments: "career" as a free
+# substring would match "/careful-investing". We bound with / - _ . or end.
 MOTS_HREF = [
     "recrutement",
     "recrute",
@@ -136,10 +135,10 @@ MOTS_HREF = [
     "espace-candidat",
     "nos-metiers",
 ]
-# SUR DES MOTS ENTIERS. En sous-chaîne libre, « job » matche « Jobijoba » et
-# « Jobijoba au service des entreprises » désignait magnet.work comme le
-# portail de recrutement. `\b` suffit : dans « Jobijoba », il y a bien une
-# frontière avant le J mais pas après le b de « Job ».
+# ON WHOLE WORDS. As a free substring, "job" matches "Jobijoba" and
+# "Jobijoba au service des entreprises" designated magnet.work as the
+# recruiting portal. `\b` is enough: in "Jobijoba", there is indeed a
+# boundary before the J but not after the b of "Job".
 RX_TEXTE = re.compile(r"\b(?:" + "|".join(re.escape(m) for m in MOTS_TEXTE) + r")\b", re.I)
 
 _SEP = r"[/\-_.?=&]"
@@ -148,9 +147,9 @@ RX_HREF = re.compile(
     re.I,
 )
 
-# ── Les chemins devinés, PASSE 3 ─────────────────────────────────────────────
-# Beaucoup plus large que les 14 de scrape_jobs, et avec les préfixes de langue
-# qui manquaient (`/fr/`, `/fr-fr/`, `/en/`).
+# ── The guessed paths, PASS 3 ────────────────────────────────────────────────
+# Much wider than scrape_jobs' 14, and with the language prefixes
+# that were missing (`/fr/`, `/fr-fr/`, `/en/`).
 CHEMINS = [
     "/recrutement",
     "/recrutements",
@@ -200,9 +199,9 @@ CHEMINS = [
     "/job-search",
 ]
 
-# ── Les ATS, et pourquoi on les cherche ──────────────────────────────────────
-# Chacun expose une API JSON publique. Trouver l'ATS d'une société, c'est
-# pouvoir lire ses offres proprement au lieu de gratter une page rendue.
+# ── The ATS, and why we look for them ────────────────────────────────────────
+# Each exposes a public JSON API. Finding a company's ATS means
+# being able to read its offers cleanly instead of scraping a rendered page.
 ATS = {
     "myworkdayjobs.com": "Workday",
     "workday.com": "Workday",
@@ -242,9 +241,9 @@ ATS = {
 RX_LIEN = re.compile(r"<a\b[^>]*?href\s*=\s*[\"']([^\"'>]+)[\"'][^>]*>(.*?)</a>", re.I | re.S)
 RX_BALISE = re.compile(r"<[^>]+>")
 
-# Réseaux sociaux et agrégateurs : « eFinancialCareers sur Twitter » porte
-# « career » dans son libellé et menait tout droit à twitter.com. Ce ne sont
-# jamais les offres de la société, c'est sa communication.
+# Social networks and aggregators: "eFinancialCareers sur Twitter" carries
+# "career" in its label and led straight to twitter.com. They are
+# never the company's offers, it is its communication.
 HOTES_IGNORES = (
     "twitter.com",
     "x.com",
@@ -260,10 +259,10 @@ HOTES_IGNORES = (
     "whatsapp.",
 )
 
-# Un libellé de navigation est COURT : « Carrières », « Nous rejoindre ».
-# Au-delà, on lit du corps de page — « Diversité, équité et inclusion La
-# diversité des talents, des… » a fait passer une page RSE pour un portail
-# d'emploi. Un texte long n'est retenu que si le href confirme.
+# A navigation label is SHORT: "Carrières", "Nous rejoindre".
+# Beyond that, we are reading page body — "Diversité, équité et inclusion La
+# diversité des talents, des…" passed a CSR page off as a job
+# portal. A long text is only kept if the href confirms.
 LIBELLE_MAX = 40
 
 
@@ -272,7 +271,7 @@ def _texte(html_fragment):
 
 
 def ats_de(url):
-    """Quel ATS sert cette URL ? '' si aucun reconnu."""
+    """Which ATS serves this URL? '' if none is recognised."""
     u = (url or "").lower()
     for cle, nom in ATS.items():
         if cle in u:
@@ -289,14 +288,14 @@ def _get(client, url, timeout=15):
 
 
 def liens_ats(html, base):
-    """TOUS les liens de la page qui pointent vers un ATS connu.
+    """ALL the links of the page that point to a known ATS.
 
-    Passe à part, et pas un filtre sur `liens_carriere` : un lien d'ATS ne
-    porte pas forcément de mot carrière. « Voir nos offres » →
-    `axa.wd3.myworkdayjobs.com/AXA` n'a ni « career » ni « recrutement », ni
-    dans son texte ni dans son href (`myworkdayjobs` ne contient pas « jobs »
-    sur une frontière). En cherchant l'ATS dans les seuls liens déjà retenus,
-    on jetait la trouvaille avant de la regarder.
+    A separate pass, and not a filter on `liens_carriere`: an ATS link does not
+    necessarily carry a career word. "Voir nos offres" →
+    `axa.wd3.myworkdayjobs.com/AXA` has neither "career" nor "recrutement", neither
+    in its text nor in its href (`myworkdayjobs` does not contain "jobs" on a
+    boundary). By looking for the ATS only in the links already kept, we threw the
+    find away before looking at it.
     """
     vus, sortie = set(), []
     for href, dedans in RX_LIEN.findall(html or ""):
@@ -312,11 +311,11 @@ def liens_ats(html, base):
 
 
 def liens_carriere(html, base):
-    """Les liens de la page qui mènent vers une section carrière.
+    """The links of the page that lead to a career section.
 
-    Rend une liste [(url, texte, pourquoi)] triée : un lien reconnu par SON
-    TEXTE vaut mieux qu'un lien reconnu par son href — le texte est ce que le
-    site affiche à un humain, le href peut être un mot de passage.
+    Returns a list [(url, text, why)] sorted: a link recognised by ITS TEXT is better
+    than a link recognised by its href — the text is what the site displays to a
+    human, the href may be a passing word.
     """
     vus, sortie = set(), []
     for href, dedans in RX_LIEN.findall(html or ""):
@@ -325,7 +324,7 @@ def liens_carriere(html, base):
             continue
         txt = _texte(dedans)[:80]
         par_href = bool(RX_HREF.search(href))
-        # Le texte ne compte que s'il ressemble a un libelle de navigation.
+        # The text only counts if it looks like a navigation label.
         par_texte = bool(RX_TEXTE.search(txt)) and len(txt) <= LIBELLE_MAX
         if not (par_texte or par_href):
             continue
@@ -364,7 +363,7 @@ def urls_carriere_sitemap(client, sitemaps):
         trouve += [u for u in urls if RX_HREF.search(u)]
         if trouve:
             break
-    # les plus courtes d'abord : « /carrieres » avant « /carrieres/offre/1234 »
+    # the shortest first: "/carrieres" before "/carrieres/offre/1234"
     return sorted(set(trouve), key=len)[:15]
 
 
@@ -389,7 +388,7 @@ def sonde_site(entree, faire_sitemap=True):
         "note": "",
     }
     with httpx.Client(headers=UA, follow_redirects=True) as client:
-        # ── passe 1 : la page d'accueil dit où elle recrute ──
+        # ── pass 1: the home page says where it recruits ──
         r = _get(client, racine, timeout=20)
         if r is None:
             res["note"] = "injoignable"
@@ -403,8 +402,8 @@ def sonde_site(entree, faire_sitemap=True):
             res["note"] = (res["note"] + " ; " if res["note"] else "") + f"redirige → {arrivee}"
 
         html = r.text or "" if r.status_code < 400 else ""
-        # Un lien qui pointe DIRECTEMENT sur un ATS est le jackpot : c'est la
-        # source, pas la vitrine. On le cherche parmi TOUS les liens.
+        # A link that points DIRECTLY to an ATS is the jackpot: it is the
+        # source, not the shop window. We look for it among ALL the links.
         direct = liens_ats(html, arrivee)
         if direct:
             url, txt, nom = direct[0]
@@ -416,12 +415,12 @@ def sonde_site(entree, faire_sitemap=True):
             url, txt, pourquoi = liens[0]
             res.update(carriere=url, via=f"accueil ({pourquoi})", libelle=txt)
             res["candidats"] = [u for u, _, _ in liens[:8]]
-            # la page carrière elle-même pointe-t-elle vers un ATS ?
+            # does the career page itself point to an ATS?
             rc = _get(client, url, timeout=20)
             if rc is not None and rc.status_code < 400:
                 dedans = liens_ats(rc.text or "", str(rc.url))
-                # l'URL finale elle-meme peut etre l'ATS (la page carriere
-                # redirige souvent droit sur le portail)
+                # the final URL itself may be the ATS (the career page
+                # often redirects straight to the portal)
                 if ats_de(str(rc.url)):
                     dedans.insert(0, (str(rc.url), "", ats_de(str(rc.url))))
                 if dedans:
@@ -430,21 +429,21 @@ def sonde_site(entree, faire_sitemap=True):
                     res["via"] += "→ATS"
             return res
 
-        # ── passe 2 : le sitemap déclaré ──
+        # ── pass 2: the declared sitemap ──
         if faire_sitemap:
             sm = urls_carriere_sitemap(client, sitemaps_de(client, racine))
             if sm:
                 res.update(carriere=sm[0], via="sitemap")
                 res["candidats"] = sm[:8]
-                # ats ET ats_urls ensemble : les renseigner separement laissait
-                # un ATS annonce sans une seule URL pour le joindre.
+                # ats AND ats_urls together: filling them separately left
+                # an announced ATS without a single URL to reach it.
                 urls_ats = [u for u in sm if ats_de(u)]
                 if urls_ats:
                     res["ats"] = ats_de(urls_ats[0])
                     res["ats_urls"] = urls_ats[:5]
                 return res
 
-        # ── passe 3 : les chemins devinés, en dernier ──
+        # ── pass 3: the guessed paths, last ──
         for chemin in CHEMINS:
             u = racine.rstrip("/") + chemin
             if not robots_autorise(u):
@@ -452,11 +451,11 @@ def sonde_site(entree, faire_sitemap=True):
             rr = _get(client, u, timeout=10)
             if rr is None or rr.status_code != 200 or len(rr.text or "") <= 800:
                 continue
-            # SOFT-404. Beaucoup de sites rendent 200 sur n'importe quoi et
-            # servent leur accueil. `ubs.com/global/en/careers.html/recrutement`
-            # repondait 200 — une URL qui ne peut pas exister. Si le chemin
-            # demande n'est plus dans l'URL finale, on n'a pas trouve la page,
-            # on s'est fait rediriger.
+            # SOFT-404. Many sites return 200 on anything and
+            # serve their home page. `ubs.com/global/en/careers.html/recrutement`
+            # answered 200 — a URL that cannot exist. If the requested path
+            # is no longer in the final URL, we did not find the page,
+            # we got redirected.
             final = str(rr.url).lower().rstrip("/")
             dernier = chemin.strip("/").split("/")[-1].lower()
             if dernier not in final:
@@ -491,9 +490,9 @@ def main():
         res = list(ex.map(lambda e: sonde_site(e, not a.sans_sitemap), entrees))
     res.sort(key=lambda r: r["num"])
 
-    # ON ECRIT AVANT D'AFFICHER. Une IndexError dans une f-string de mise en
-    # page a deja jete une collecte de cinq minutes sur 65 sites : le travail
-    # etait fait, il n'en restait rien. Le fichier d'abord, la forme ensuite.
+    # WE WRITE BEFORE DISPLAYING. An IndexError in a formatting f-string
+    # already threw away a five-minute collection over 65 sites: the work
+    # was done, nothing was left of it. The file first, the form afterwards.
     if a.json:
         Path(a.json).write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
 

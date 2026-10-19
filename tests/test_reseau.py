@@ -1,9 +1,9 @@
-"""jobhunter.reseau : requetes bornees en duree TOTALE et en taille (phase 3.2).
+"""jobhunter.reseau: requests bounded in TOTAL duration and in size (phase 3.2).
 
-Jusqu'ici ces fonctions n'avaient aucun test direct : les suites les remplacaient
-toujours par des doublures. On verifie leurs garanties avec un faux flux httpx, sans
-reseau : un serveur qui distille ses octets est coupe a la duree totale, un corps
-trop gros est refuse, la reponse rendue est complete et sans double decompression.
+Until now these functions had no direct test: the suites always replaced them
+with doubles. We check their guarantees with a fake httpx stream, without
+network: a server that trickles its bytes is cut at the total duration, a body
+too big is refused, the returned response is complete and without double decompression.
 """
 
 import io
@@ -17,7 +17,7 @@ from jobhunter import sources as job_sources
 
 
 class FluxLent:
-    """Faux `envoi` : .stream() rend des blocs, en avancant une horloge simulee."""
+    """Fake `envoi`: .stream() returns blocks, advancing a simulated clock."""
 
     def __init__(self, blocs, horloge, par_bloc=0.0, statut=200, entetes=None):
         self.blocs, self.horloge, self.par_bloc = blocs, horloge, par_bloc
@@ -60,7 +60,7 @@ def test_reponse_complete(horloge):
 
 
 def test_coupe_a_la_duree_totale(horloge):
-    """Un octet toutes les 19 s : chaque paquet respecte le delai, pas l'ensemble."""
+    """One byte every 19 s: each packet respects the timeout, not the whole."""
     lent = FluxLent([b"x"] * 100, horloge, par_bloc=19)
     with pytest.raises(httpx.TimeoutException, match="plus de 60 s"):
         reseau.get_borne(lent, "https://lent", timeout=20)
@@ -80,7 +80,7 @@ def test_corps_trop_gros_refuse(horloge):
 
 
 def test_pas_de_double_decompression(horloge):
-    """iter_bytes a deja decompresse : la reponse ne doit plus annoncer gzip."""
+    """iter_bytes has already decompressed: the response must no longer announce gzip."""
     r = reseau.get_borne(
         FluxLent(
             [b"ok"],
@@ -137,7 +137,7 @@ def test_lire_borne_coupe_a_la_duree(horloge):
         reseau.lire_borne(LecteurLent(horloge), total=3)
 
 
-# ── job_sources garde ses anciens noms ─────────────────────────────────────────
+# ── job_sources keeps its old names ─────────────────────────────────────────
 def test_job_sources_reexporte_le_reseau():
     assert (
         job_sources._get_borne,
@@ -147,7 +147,7 @@ def test_job_sources_reexporte_le_reseau():
     ) == (reseau.get_borne, reseau.post_borne, reseau.lire_borne, reseau.client_partage)
 
 
-# ── profil : la facade est le module du paquet ─────────────────────────────────
+# ── profile: the facade is the package's module ─────────────────────────────────
 def test_profil_est_le_module_du_paquet():
     assert profil is profil_paquet
 

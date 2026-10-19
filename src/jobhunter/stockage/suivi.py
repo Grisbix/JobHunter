@@ -1,40 +1,40 @@
 #!/usr/bin/env python3
-"""jobhunter.stockage.suivi — Le seul chemin d'accès à `suivi.json` (ancien Scripts/suivi_io.py).
+"""jobhunter.stockage.suivi — The only access path to `suivi.json` (formerly Scripts/suivi_io.py).
 
-POURQUOI CE FICHIER EXISTE. `suivi.json` garde les CANDIDATURES : ce à quoi
-l'utilisateur a postulé, quand, et où ça en est. C'est la donnée la moins
-reconstituable du projet — une offre perdue, le scan la retrouve demain ;
-une candidature perdue ne revient jamais.
+WHY THIS FILE EXISTS. `suivi.json` keeps the APPLICATIONS: what
+the user applied to, when, and where it stands. It is the least
+reconstructible data of the project — a lost offer, the scan finds it again tomorrow;
+a lost application never comes back.
 
-Elle était pourtant le seul fichier important écrit SANS verrou, par deux
-programmes à la fois : l'app (`_jwrite(SUIVI, self.suivi)`) et `relances.py`.
-Et l'app n'écrivait pas une modification — elle réécrivait tout son dictionnaire
-en mémoire, chargé au dernier rafraîchissement. D'où cette perte, reproduite :
+Yet it was the only important file written WITHOUT a lock, by two
+programs at once: the app (`_jwrite(SUIVI, self.suivi)`) and `relances.py`.
+And the app did not write a change — it rewrote its whole in-memory dictionary,
+loaded at the last refresh. Hence this loss, reproduced:
 
-    disque au depart : 3 candidatures
-    app en memoire   : 3 candidatures
-    relances.py ecrit: 2 relances notees
-    l'app ecrit      : 1 nouvelle candidature
-    → relances perdues : 2
+    disk at start    : 3 applications
+    app in memory    : 3 applications
+    relances.py wrote: 2 follow-ups recorded
+    the app writes   : 1 new application
+    → follow-ups lost: 2
 
-Un clic « postulé » sur une offre effaçait deux relances sur d'autres, sans un
-mot. `apply_queue.json` avait `queue_io` pour exactement ça depuis longtemps ;
-`suivi.json`, rien.
+One "postulé" click on an offer erased two follow-ups on others, without a
+word. `apply_queue.json` had had `queue_io` for exactly that for a long time;
+`suivi.json`, nothing.
 
-MODE D'EMPLOI. Ne jamais écrire le fichier en direct. Passer par `modifier` :
+HOW TO USE. Never write the file directly. Go through `modifier`:
 
     import suivi_io
     def poser(s):
         s["Amundi|Analyste ESG"] = {"s": "postulé", "d": "2026-09-17"}
     suivi_io.modifier(poser)
 
-`modifier` prend le verrou, RELIT le disque à l'intérieur, applique la fonction
-sur cet état frais, puis écrit. Ce qu'un autre programme a écrit entre-temps est
-donc conservé. Une exception dans la fonction annule l'écriture.
+`modifier` takes the lock, REREADS the disk inside, applies the function
+on this fresh state, then writes. What another program wrote in the meantime is
+therefore kept. An exception in the function cancels the write.
 
-`charger()` pour la lecture seule.
+`charger()` for read-only access.
 
-Decision : docs/adr/0002-trois-fichiers-trois-contrats.md
+Decision: docs/adr/0002-trois-fichiers-trois-contrats.md
 """
 
 import datetime
@@ -55,14 +55,14 @@ class VerrouIndisponible(RuntimeError):
 
 
 def charger(chemin: Chemin | None = None) -> Suivi:
-    """Le suivi, en lecture.
+    """The tracker, read only.
 
     Args:
-        chemin: le fichier ; None = `Scripts/suivi.json` du dossier des données.
+        chemin: the file; None = `Scripts/suivi.json` of the data folder.
 
     Returns:
-        Les candidatures par identité d'offre ; dict vide si le fichier manque
-        ou est illisible.
+        The applications by offer identity; empty dict if the file is missing
+        or unreadable.
     """
     try:
         return _lire(Path(chemin or CHEMIN))
@@ -75,12 +75,12 @@ class SuiviIllisible(RuntimeError):
 
 
 def _lire(p: Path) -> Suivi:
-    """Le suivi ; {} si le fichier n'existe pas ; SuiviIllisible s'il existe sans se lire.
+    """The tracker; {} if the file does not exist; SuiviIllisible if it exists but cannot be read.
 
-    Une écriture ne part JAMAIS d'une lecture ratée. `charger` rendait {} pour un
-    fichier absent comme pour un JSON tronqué ; la transaction écrivait ensuite ce {}
-    plus la nouvelle candidature, et toutes les autres disparaissaient (audit du
-    19/10/2026). Le suivi est la donnée la moins reconstituable du projet.
+    A write NEVER starts from a failed read. `charger` returned {} for a
+    missing file as for a truncated JSON; the transaction then wrote that {}
+    plus the new application, and all the others disappeared (audit of
+    19/10/2026). The tracker is the least reconstructible data of the project.
     """
     try:
         brut = p.read_text(encoding="utf-8")
@@ -104,52 +104,52 @@ def _lire(p: Path) -> Suivi:
 
 @contextmanager
 def transaction(chemin: Chemin | None = None, attente: float = 30) -> Iterator[Suivi]:
-    """Verrou + relecture fraîche + écriture atomique à la sortie du bloc.
+    """Lock + fresh reread + atomic write on leaving the block.
 
-    `attente` courte : les appelants sont interactifs (un clic dans l'app) ou
-    brefs (`relances.py`). Mieux vaut dire « réessaie » que figer la fenêtre.
+    Short `attente`: the callers are interactive (a click in the app) or
+    brief (`relances.py`). Better to say "try again" than to freeze the window.
 
     Args:
-        chemin: le fichier ; None = celui du dossier des données.
-        attente: secondes d'attente du verrou.
+        chemin: the file; None = the one of the data folder.
+        attente: seconds to wait for the lock.
 
     Yields:
-        Le suivi fraîchement relu, à modifier en place.
+        The freshly reread tracker, to modify in place.
 
     Raises:
-        VerrouIndisponible: un autre programme garde le suivi plus de `attente` s.
-        SuiviIllisible: le fichier existe mais ne se lit pas ; il est laissé tel quel.
+        VerrouIndisponible: another program holds the tracker for more than `attente` s.
+        SuiviIllisible: the file exists but cannot be read; it is left as is.
     """
     p = Path(chemin or CHEMIN)
-    # `prendre_verrou` est reentrant, `rendre_verrou` ne l'est PAS : il libere
-    # pour de bon. Si l'appelant tenait deja le verrou, on ne le lui retire pas.
+    # `prendre_verrou` is reentrant, `rendre_verrou` is NOT: it releases
+    # for good. If the caller already held the lock, we do not take it away from it.
     a_nous = not verrou.tenu(p)
     if a_nous and not verrou.prendre_verrou(p, attente=attente):
         raise VerrouIndisponible(
             f"{p.name} est modifié par un autre programme (attente {attente}s dépassée)"
         )
     try:
-        suivi = _lire(p)  # lève SuiviIllisible plutôt que de repartir de {}
+        suivi = _lire(p)  # raises SuiviIllisible rather than starting from {}
         yield suivi
-        atomique.ecrire_json(p, suivi)  # atteint seulement si le bloc n'a pas levé
+        atomique.ecrire_json(p, suivi)  # reached only if the block did not raise
     finally:
         if a_nous:
             verrou.rendre_verrou(p)
 
 
 def modifier[T](fn: Callable[[Suivi], T], chemin: Chemin | None = None, attente: float = 30) -> T:
-    """`fn(suivi)` sous verrou, sur l'état FRAÎCHEMENT relu.
+    """`fn(suivi)` under lock, on the FRESHLY reread state.
 
     Args:
-        fn: la transformation.
-        chemin: le fichier ; None = celui du dossier des données.
-        attente: secondes d'attente du verrou.
+        fn: the transformation.
+        chemin: the file; None = the one of the data folder.
+        attente: seconds to wait for the lock.
 
     Returns:
-        Ce que `fn` renvoie.
+        What `fn` returns.
 
     Raises:
-        VerrouIndisponible: un autre programme garde le suivi trop longtemps.
+        VerrouIndisponible: another program holds the tracker too long.
     """
     with transaction(chemin, attente=attente) as suivi:
         return fn(suivi)
@@ -158,21 +158,21 @@ def modifier[T](fn: Callable[[Suivi], T], chemin: Chemin | None = None, attente:
 def poser(
     oid: str, rec: Candidature | None, chemin: Chemin | None = None, attente: float = 30
 ) -> None:
-    """Écrit (ou efface, si `rec` est vide) l'entrée d'une candidature.
+    """Writes (or erases, if `rec` is empty) the entry of an application.
 
-    `attente` : à raccourcir quand l'appelant est une interface. Tkinter est
-    mono-fil — attendre 30 s dans un gestionnaire de clic fige la fenêtre
-    entière, et l'utilisateur croit l'app plantée. Mieux vaut rendre la main
-    vite et afficher « réessaie ».
+    `attente`: to shorten when the caller is an interface. Tkinter is
+    single-threaded — waiting 30 s in a click handler freezes the whole
+    window, and the user thinks the app has crashed. Better to hand back
+    quickly and display "try again".
 
     Args:
-        oid: l'identité de l'offre (`queue_io.oid`).
-        rec: la candidature ; vide ou None efface l'entrée.
-        chemin: le fichier ; None = celui du dossier des données.
-        attente: secondes d'attente du verrou.
+        oid: the offer's identity (`queue_io.oid`).
+        rec: the application; empty or None erases the entry.
+        chemin: the file; None = the one of the data folder.
+        attente: seconds to wait for the lock.
 
     Raises:
-        VerrouIndisponible: un autre programme garde le suivi trop longtemps.
+        VerrouIndisponible: another program holds the tracker too long.
     """
 
     def _f(s: Suivi) -> None:
@@ -194,7 +194,7 @@ if __name__ == "__main__":
         print(f"  {k[:52]:52s} {v}")
 
 
-# Statuts qui viennent APRES l'envoi : declarer l'envoi ne les fait pas reculer.
+# Statuses that come AFTER sending: declaring the sending does not move them back.
 _APRES_ENVOI = ("relancé", "entretien", "refus")
 
 
@@ -205,31 +205,31 @@ def declarer_envoi(
     chemin: Chemin | None = None,
     attente: float = 30,
 ) -> Candidature:
-    """Enregistre une candidature envoyée par l'utilisateur, avec l'état de sa preuve.
+    """Records an application sent by the user, with the state of its proof.
 
-    Une seule écriture : statut « postulé » (sauf s'il est déjà plus loin : relancé,
-    entretien, refus), date du jour si le statut change, `envoi` et `preuve`. La note
-    et les autres champs de l'entrée relue sont gardés ; une déclaration sans preuve ne
-    remplace jamais une preuve déjà observée.
+    A single write: status "postulé" (unless it is already further along: followed up,
+    interview, refusal), today's date if the status changes, `envoi` and `preuve`. The note
+    and the other fields of the reread entry are kept; a declaration without proof never
+    replaces a proof already observed.
 
     Args:
-        oid: l'identité de l'offre (`queue_io.oid`).
-        envoi: « confirmé », « incertain » ou « déclaré » (ADR 0009).
-        preuve: ce que la page affichait ; None pour une simple déclaration.
-        chemin: le fichier ; None = celui du dossier des données.
-        attente: secondes d'attente du verrou.
+        oid: the offer's identity (`queue_io.oid`).
+        envoi: "confirmé", "incertain" or "déclaré" (ADR 0009).
+        preuve: what the page displayed; None for a mere declaration.
+        chemin: the file; None = the one of the data folder.
+        attente: seconds to wait for the lock.
 
     Returns:
-        L'entrée telle qu'écrite.
+        The entry as written.
 
     Raises:
-        VerrouIndisponible: un autre programme garde le suivi trop longtemps.
+        VerrouIndisponible: another program holds the tracker too long.
 
-    Decision : docs/adr/0009-preuve-distincte-de-la-declaration.md
+    Decision: docs/adr/0009-preuve-distincte-de-la-declaration.md
     """
 
     def _f(s: Suivi) -> Candidature:
-        rec: Candidature = dict(s.get(oid) or {})  # type: ignore[assignment]  # copie d'une Candidature
+        rec: Candidature = dict(s.get(oid) or {})  # type: ignore[assignment]  # copy of a Candidature
         if rec.get("s") not in ("postulé", *_APRES_ENVOI):
             rec["s"] = "postulé"
             rec["d"] = datetime.date.today().isoformat()
@@ -237,7 +237,7 @@ def declarer_envoi(
         if preuve:
             rec["envoi"] = envoi
             rec["preuve"] = preuve
-        else:  # simple declaration : n'efface jamais une preuve deja observee
+        else:  # mere declaration: never erases a proof already observed
             rec.setdefault("envoi", envoi)
         s[oid] = rec
         return rec

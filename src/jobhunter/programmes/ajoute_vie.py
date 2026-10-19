@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""ajoute_vie.py — Ajoute une offre V.I.E a la file, avec CV et lettre.
+"""ajoute_vie.py — Adds a V.I.E offer to the queue, with CV and letter.
 
-POURQUOI. mon-vie-via est une application monopage : le HTML brut est une
-coquille vide, et le scan quotidien (job_sources --vie) ne lit que la LISTE.
-Les fiches arrivaient donc recopiees a la main depuis le navigateur, champ par
-champ — trois offres traitees ainsi avant qu'on ne trouve mieux.
+WHY. mon-vie-via is a single-page application: the raw HTML is an empty shell, and
+the daily scan (job_sources --vie) only reads the LIST. The postings were therefore
+copied by hand from the browser, field by field — three offers handled that way
+before something better was found.
 
-L'API porte en fait une route DETAIL :
+The API actually carries a DETAIL route:
 
     civiweb-api-prd.azurewebsites.net/api/Offers/details/{id}
 
-Elle rend la fiche entiere — missions, profil, indemnite, dates, contact —
-avec la meme cle publique que la liste, celle que le site expedie a tout
-visiteur. Pas de compte, pas de donnees personnelles.
+It returns the whole posting — missions, profile, allowance, dates, contact — with
+the same public key as the list, the one the site sends to every visitor. No account,
+no personal data.
 
-LA LANGUE N'EST PAS FORCEE : langue_offre() lit l'annonce. Une V.I.E redigee
-en anglais recoit un dossier en anglais.
+THE LANGUAGE IS NOT FORCED: langue_offre() reads the posting. A V.I.E written in
+English receives a folder in English.
 
-Run :
+Run:
   python JobHunter.pyw ajoute_vie 245612
   python JobHunter.pyw ajoute_vie https://mon-vie-via.businessfrance.fr/offres/245612
   python JobHunter.pyw ajoute_vie 245612 --dry
@@ -49,13 +49,13 @@ def fiche(id_):
         exiger_http(API.format(id_)),
         headers={"x-api-key": J._vie_key(), "Accept": "application/json"},
     )
-    with urllib.request.urlopen(r, timeout=25) as f:  # nosec B310 : schéma vérifié par exiger_http
+    with urllib.request.urlopen(r, timeout=25) as f:  # nosec B310 : scheme checked by exiger_http
         return json.loads(f.read().decode("utf-8", "replace"))
 
 
 def construire(d, id_):
-    """La fiche de l'API -> une ligne de file. Rend aussi missions et profil,
-    que tailor_* consomme separement du corps de l'annonce."""
+    """The API posting -> a queue row. Also returns missions and profile,
+    which tailor_* uses separately from the posting's body."""
     poste = (d.get("missionTitle") or "").strip()
     societe = (d.get("organizationName") or "").strip()
     lieu = f"{(d.get('cityName') or '').title()} ({(d.get('countryName') or '').title()})"
@@ -74,7 +74,7 @@ def construire(d, id_):
 
 
 def expire_le(d):
-    """La date de fin de diffusion : publication + duree, en jours."""
+    """The end date of publication: publication + duration, in days."""
     import datetime
 
     try:
@@ -84,22 +84,22 @@ def expire_le(d):
         return ""
 
 
-# ── Rattrapage en lot ───────────────────────────────────────────────────────
-# Ce que le scan quotidien laisse derriere lui. Mesure du 21/09/2026 sur les
-# 274 V.I.E de la file :
+# ── Batch catch-up ──────────────────────────────────────────────────────────
+# What the daily scan leaves behind. Measured on 21/09/2026 on the
+# 274 V.I.E of the queue:
 #
-#     268  sans salaire
-#     271  sans contact recruteur
-#      49  sans CV ni lettre
-#       3  sans description
+#     268  without salary
+#     271  without recruiter contact
+#      49  without CV or letter
+#       3  without description
 #
-# `job_sources --vie` lit la LISTE de l'API, qui ne porte ni l'indemnite ni le
-# contact. La route DETAIL les porte. Personne n'allait les chercher.
+# `job_sources --vie` reads the API's LIST, which carries neither the allowance nor the
+# contact. The DETAIL route carries them. Nobody went to get them.
 _RX_ID_VIE = re.compile(r"/offres/(\d{4,})")
 
 
 def _incompletes(q):
-    """Les V.I.E dont l'API detail a quelque chose a apprendre, avec leur id."""
+    """The V.I.E about which the detail API has something to teach, with their id."""
     out = []
     for o in q:
         if o.get("contrat") != "V.I.E" and "mon-vie-via" not in (o.get("url") or ""):
@@ -118,11 +118,11 @@ def _incompletes(q):
 
 
 def completer(a):
-    """Complete toutes les V.I.E incompletes depuis l'API detail.
+    """Completes all the incomplete V.I.E from the detail API.
 
-    LE VERROU N'EST PRIS QU'A L'ECRITURE. 258 appels reseau espaces d'une
-    pause, c'est plusieurs minutes ; les passer sous verrou bloquerait l'app
-    pendant tout ce temps pour rien. On collecte d'abord, on ecrit ensuite.
+    THE LOCK IS ONLY TAKEN FOR WRITING. 258 network calls spaced by a pause is
+    several minutes; doing them under lock would block the app all that time for
+    nothing. We collect first, we write afterwards.
     """
     import time
 
@@ -141,14 +141,14 @@ def completer(a):
         try:
             d = fiche(id_)
         except urllib.error.HTTPError as e:
-            # 404 ET 500 veulent dire « cette annonce n'existe plus ».
-            # Verifie le 21/09/2026 : l'id 246087 (offre vivante) repond a
-            # chaque appel, les ids 244993 et 244988 rendent toujours
+            # 404 AND 500 mean "this posting no longer exists".
+            # Checked on 21/09/2026: the id 246087 (live offer) answers
+            # every call, the ids 244993 and 244988 always return
             #     {"message":"Une erreur est survenue lors du traitement..."}
-            # Ce n'est donc pas un throttle — l'API sert son erreur generique
-            # a la place d'un 404 propre. Une V.I.E expire au bout d'un mois :
-            # sur une file de plusieurs semaines, c'est le cas MAJORITAIRE,
-            # pas une panne.
+            # So it is not a throttle — the API serves its generic error
+            # instead of a clean 404. A V.I.E expires after a month:
+            # on a queue several weeks old, it is the MAJORITY case,
+            # not a failure.
             if e.code in (404, 500):
                 morts.append(id_)
             else:
@@ -166,10 +166,10 @@ def completer(a):
 
     print(f"\n{len(recolte)} fiches recuperees, {len(morts)} annonces retirees, {erreurs} erreurs")
 
-    # UN ECHEC TOTAL N'EST PAS « tout a expire ». Si pas une seule fiche ne
-    # revient, la cause probable est la cle, le reseau ou l'API — pas une file
-    # entierement perimee. On le dit, et on n'ecrit RIEN : marquer 258 offres
-    # « expirees » sur une panne d'API serait une perte seche.
+    # A TOTAL FAILURE IS NOT "everything expired". If not a single posting
+    # comes back, the likely cause is the key, the network or the API — not an entirely
+    # stale queue. We say so, and write NOTHING: marking 258 offers
+    # "expirées" on an API failure would be a dead loss.
     if not recolte and (morts or erreurs):
         print("! AUCUNE fiche recuperee sur l'ensemble du lot.")
         print("  Cle d'API, reseau ou service indisponible — rien n'est ecrit.")
@@ -197,9 +197,9 @@ def completer(a):
             neuf = {
                 "salaire": f"{d.get('indemnite', 0):.2f} EUR / mois",
                 "rh": d.get("contactName") or "",
-                # Le mail du recruteur, que rien ne stockait. Sur une V.I.E
-                # c'est l'interlocuteur direct : une relance y arrive, la ou
-                # un formulaire n'accuse jamais reception.
+                # The recruiter's email, which nothing stored. On a V.I.E
+                # it is the direct contact: a follow-up reaches them, where
+                # a form never acknowledges receipt.
                 "rh_email": d.get("contactEmail") or "",
                 "missions": missions,
                 "profil": profil,
@@ -218,9 +218,9 @@ def completer(a):
                 chg = True
             touchees += chg
 
-        # Les retirees prennent le statut que `tri_file` sait lire. On ne les
-        # SUPPRIME pas : une annonce fermee apres candidature doit garder sa
-        # ligne, sinon la trace de l'envoi devient orpheline.
+        # The withdrawn ones take the status that `tri_file` can read. We do not
+        # DELETE them: a posting closed after an application must keep its
+        # row, otherwise the trace of the send becomes orphaned.
         expirees = 0
         for id_ in morts:
             o = index.get(id_)
@@ -304,18 +304,18 @@ def main():
             cle = f"{societe}|{poste}"
             deja = next((o for o in q if f"{o.get('entreprise')}|{o.get('poste')}" == cle), None)
             if deja is not None:
-                # DEJA EN FILE NE VEUT PAS DIRE DEJA COMPLETE. Le scan quotidien
-                # (job_sources --vie) ne lit que la LISTE : il rend l'intitule,
-                # l'entreprise et le lieu, sans salaire, sans description, sans
-                # missions. L'API DETAIL, elle, porte tout. Abandonner ici
-                # laissait l'offre a moitie vide et sans dossier — ce qui est
-                # exactement le cas qu'on vient de rencontrer sur la 246087 :
-                # en file depuis trois jours, salaire vide, aucun document.
+                # ALREADY IN THE QUEUE DOES NOT MEAN ALREADY COMPLETE. The daily scan
+                # (job_sources --vie) only reads the LIST: it returns the title,
+                # the company and the place, without salary, without description, without
+                # missions. The DETAIL API carries everything. Giving up here
+                # left the offer half empty and without a folder — which is
+                # exactly the case we just met on 246087:
+                # in the queue for three days, empty salary, no document.
                 #
-                # On ne REMPLACE rien : on ne remplit que ce qui manque. Seule
-                # la description fait exception, et seulement si celle qu'on
-                # tient est plus longue — c'est la regle deja posee dans
-                # merge_into_queue, ou un extrait ne doit jamais ecraser un
+                # We REPLACE nothing: we only fill what is missing. Only
+                # the description is an exception, and only if the one we
+                # hold is longer — it is the rule already set in
+                # merge_into_queue, where an excerpt must never overwrite a
                 # texte entier.
                 neuf = {
                     "salaire": f"{d.get('indemnite', 0):.2f} EUR / mois",
@@ -389,11 +389,11 @@ def main():
                 }
                 q.append(o)
 
-            # LE DOSSIER NE SE REFAIT PAS S'IL EXISTE. Sur une offre deja en
-            # file, `o` est la ligne existante : regenerer ecraserait un
-            # document peut-etre deja relu, voire deja envoye. On ne produit
-            # que ce qui manque, ou ce dont le fichier a disparu.
-            from jobhunter.programmes.jutil import chemin_de  # noqa: E402  (apres le verrou)
+            # THE FOLDER IS NOT REDONE IF IT EXISTS. On an offer already in
+            # the queue, `o` is the existing row: regenerating would overwrite a
+            # document perhaps already reviewed, or even already sent. We only produce
+            # what is missing, or what whose file has disappeared.
+            from jobhunter.programmes.jutil import chemin_de  # noqa: E402  (after the lock)
 
             off = dict(
                 company=societe,

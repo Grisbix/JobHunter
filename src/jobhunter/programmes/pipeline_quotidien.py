@@ -1,58 +1,57 @@
 #!/usr/bin/env python3
-"""pipeline_quotidien.py — Le scan du matin, en un seul point d'entree.
+"""pipeline_quotidien.py — The morning scan, in a single entry point.
 
-CE QU'IL REMPLACE, et pourquoi. Trois mecanismes etaient censes alimenter la
-file. Mesure du 21/09/2026 : aucun des trois n'apportait une offre.
+WHAT IT REPLACES, and why. Three mechanisms were supposed to feed the queue. Measured
+on 21/09/2026: none of the three brought a single offer.
 
-  Tache Windows `JobSearch_Daily_Scrape`
+  Windows task `JobSearch_Daily_Scrape`
       -File ...\\Recherche_emploi_ESG_Finance_ORGANISE\\Scripts\\run_pipeline.ps1
-      Ce fichier n'existe plus. Resultat 0xFFFD0000 chaque matin a 8h00.
+      That file no longer exists. Result 0xFFFD0000 every morning at 8:00.
 
   hermes/scripts/run_full_job_pipeline.sh
-      Scrape Indeed via curl_cffi impersonate='chrome124'. La requete PASSE
-      (HTTP 200, 794 Ko) mais la page ne contient plus une seule carte :
-      `td.resultContent` = 0, `data-jk=` = 0, ni captcha ni blocage. Le
-      parseur vise un balisage qu'Indeed n'utilise plus. Le script affiche
-      « Scraped 0 jobs », fusionne zero offre, et se termine sur
-      « ✅ Pipeline termine ». Un echec qui se declare reussi.
+      Scraped Indeed through curl_cffi impersonate='chrome124'. The request GOES
+      THROUGH (HTTP 200, 794 KB) but the page no longer contains a single card:
+      `td.resultContent` = 0, `data-jk=` = 0, neither captcha nor block. The parser
+      targets a markup Indeed no longer uses. The script prints "Scraped 0 jobs",
+      merges zero offers, and ends on "✅ Pipeline termine". A failure that declares
+      itself successful.
 
   hermes/scripts/run_job_search_pipeline.sh
-      Orchestre trois wrappers tiers. Dernier run : trois `returncode=0`,
-      trois « wrapper executed », dont un « placeholder summary ». Rien
-      n'entre dans apply_queue.json.
+      Orchestrated three third-party wrappers. Last run: three `returncode=0`, three
+      "wrapper executed", one of them a "placeholder summary". Nothing enters
+      apply_queue.json.
 
-AUCUN DES TROIS NE TOUCHAIT LES V.I.E. Les 274 de la file venaient de
-lancements manuels.
+NONE OF THE THREE TOUCHED THE V.I.E. The 274 in the queue came from manual runs.
 
-CE PIPELINE-CI appelle le code du projet, celui qui est teste :
+THIS PIPELINE calls the project's code, the tested one:
 
-    1. job_sources.py, en trois     a) ATS, Workday, LinkedIn, V.I.E, FIR
-       passes fusionnees chacune    b) eFC x9 sites, EURES
-                                    c) Talent, Indeed, Glassdoor, APEC, WTJ, FT
-    2. ajoute_vie.py --completer   la route DETAIL des V.I.E : indemnite,
-                                   contact, description — que la LISTE n'a pas
-    3. linkedin_desc.py            le texte des offres LinkedIn du jour, qui
-                                   arrivent avec leur seul intitule
-       scrape_desc.py (3b, 3c)     idem pour Workday (API) et les sites carriere
-                                   lus sans description (pages publiques)
-    4. tri_file.py --supprime      seniorite, experience exigee, metier — les
-                                   candidatures de suivi.json sont epargnees
-    5. generate_docs.py --top N    CV et lettre pour le haut de la file
+    1. job_sources.py, in five      a) ATS, Workday, V.I.E, FIR    b) LinkedIn
+       passes, each merged          c) eFC x9 sites, EURES
+                                    d) APEC, France Travail, Adzuna, Jooble
+                                    e) Glassdoor, WTJ (last: they refuse often)
+    2. ajoute_vie.py --completer   the V.I.E DETAIL route: allowance, contact,
+                                   description — which the LIST does not have
+    3. linkedin_desc.py            the text of today's LinkedIn offers, which arrive
+                                   with their title only
+       scrape_desc.py (3b, 3c)     same for Workday (API) and the career sites read
+                                   without a description (public pages)
+    4. tri_file.py --supprime      seniority, required experience, profession — the
+                                   applications of suivi.json are spared
+    5. generate_docs.py --top N    CV and letter for the top of the queue
 
-Chaque lancement ecrit son journal dans _logs/pipeline_<date>_<heure>.log.
-Les modules du moteur y ajoutent pipeline_<date>_<heure>_moteur.log (horodate).
+Each run writes its log into _logs/pipeline_<date>_<time>.log. The engine's modules
+add pipeline_<date>_<time>_moteur.log to it (timestamped).
 
-LES ETAPES SONT SEQUENTIELLES, et ce n'est pas un choix de style :
-`job_sources.main()` prend le verrou de la file a son demarrage et le garde
-pour tout le scan. Deux etapes en parallele, et la seconde sort en code 3.
+THE STEPS ARE SEQUENTIAL, and it is not a matter of style: `job_sources.main()` takes
+the queue lock when it starts and keeps it for the whole scan. Two steps in parallel,
+and the second exits with code 3.
 
-UN ZERO N'EST PAS UNE BONNE NOUVELLE. « Rien a prendre » et « refus d'entree »
-rendent le meme chiffre, et c'est ainsi qu'un scan entierement bride passe
-pour une journee calme — apres quoi on le relance, ce qu'il ne faut surtout
-pas faire face a un quota. Ce programme releve donc les compteurs de chaque
-etape et le dit quand une etape n'a rien rendu.
+A ZERO IS NOT GOOD NEWS. "Nothing to take" and "refused entry" give the same figure,
+and that is how an entirely throttled scan passes for a quiet day — after which it is
+run again, which is exactly what must not be done against a quota. This program
+therefore reads each step's counters and says so when a step returned nothing.
 
-Run :
+Run:
   python JobHunter.pyw pipeline
   python JobHunter.pyw pipeline --docs 50
   python JobHunter.pyw pipeline --sans-docs
@@ -69,23 +68,23 @@ import time
 from jobhunter import gele as _gele
 from jobhunter import racine as _racine
 
-# La racine par MARQUEUR (jobhunter.racine), jamais un chemin en dur : les dossiers
-# ont bouge quatre fois les 20-21/09/2026 et tout ce qui codait une racine est mort en
+# The root by MARKER (jobhunter.racine), never a hard-coded path: the folders
+# moved four times on 20-21/09/2026 and everything that hard-coded a root died
 # silence. JOBHUNTER_RACINE surcharge.
 ROOT = _racine.racine()
 SCRIPTS = ROOT / "Scripts"
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
-# Lecteurs de sites carriere qui ne rapportent que le titre : leur page d'offre
-# est publique, scrape_desc la lit. Liste fermee — une source anti-bot n'y entre pas.
+# Career site readers that only bring back the title: their offer page
+# is public, scrape_desc reads it. Closed list — an anti-bot source does not get in.
 DESC_SOURCES_PUBLIQUES = (
     "sitemap,talentbrew,avature,oracle,adb,icims,peoplesoft,"
     "service_public,eightfold,workable,gogenerali,sfrss,phenom,csod"
 )
 
-# Ce qu'on releve dans la sortie de chaque etape pour savoir si elle a produit
-# quelque chose. Un motif qui ne matche pas n'est pas une erreur : il rend None,
-# et l'etape est signalee « sans compteur » plutot que « zero ».
+# What we read in each step's output to know whether it produced
+# something. A pattern that does not match is not an error: it returns None,
+# and the step is reported "sans compteur" rather than "zéro".
 _COMPTEURS = {
     "scan": re.compile(r"\+(\d+)\s+nouvelles"),
     "vie": re.compile(r"(\d+)\s+offres\s+enrichies"),
@@ -100,13 +99,13 @@ _COMPTEURS = {
 
 
 class _Journal:
-    """Ecrit a la fois sur la console et dans le journal du jour.
+    """Writes both to the console and to today's log.
 
-    POURQUOI. Lance par la tache planifiee, le pipeline n'a pas de console
-    visible : le 2026-09-22, un scan a tourne une heure sans que personne
-    puisse dire s'il avancait, s'il etait bride ou s'il etait bloque. Le dernier
-    journal datait du 08/09. Le journal est ecrit PAR le pipeline, pas par une
-    redirection du lanceur : il existe donc aussi pour un lancement a la main."""
+    WHY. Run by the scheduled task, the pipeline has no visible console: on
+    2026-09-22, a scan ran for an hour without anyone being able to say whether it
+    was progressing, throttled or stuck. The last log dated from 08/09. The log is
+    written BY the pipeline, not by a redirection of the launcher: so it also exists
+    for a manual run."""
 
     def __init__(self, console, chemin):
         self.console = console
@@ -126,22 +125,22 @@ _A_SAUVER = ("apply_queue.json", "descriptions.json", "suivi.json")
 
 
 def sauvegarder(garder=7):
-    """Copie datee des donnees, AVANT que la moindre etape y touche.
+    """Dated copy of the data, BEFORE any step touches it.
 
-    POURQUOI ICI. Jusqu'au 2026-09-23, git versionnait la file : c'etait la
-    sauvegarde de fait. Les donnees generees sont sorties de git ce jour-la
-    (elles se melaient aux commits de code), et cet instantane prend le relais.
-    Il est pris avant la collecte : si une etape abime la file, l'etat d'avant
-    existe. Sept jours glissants, ~35 Mo chacun. Rend le dossier, ou None."""
+    WHY HERE. Until 2026-09-23, git versioned the queue: it was the de facto backup.
+    The generated data left git that day (it mixed with the code commits), and this
+    snapshot takes over. It is taken before the collection: if a step damages the
+    queue, the state from before exists. Seven rolling days, ~35 MB each. Returns the
+    folder, or None."""
     import shutil
 
     base = SCRIPTS / "_sauvegardes"
     cible = base / time.strftime("%Y-%m-%d")
     try:
-        # LA PREMIERE DU JOUR GAGNE. Un second lancement le meme jour (essai
-        # --rapide, relance a la main) recopiait la file deja modifiee par-dessus
-        # celle du matin : le 2026-10-02, l'essai de 18h55 a remplace l'etat
-        # d'avant l'audit qui venait de retirer 1486 offres.
+        # THE FIRST OF THE DAY WINS. A second run the same day (a --rapide
+        # trial, a manual rerun) copied the queue already modified over
+        # the morning's: on 2026-10-02, the 18:55 trial replaced the state
+        # from before the audit that had just removed 1486 offers.
         if (cible / "apply_queue.json").exists():
             return cible
         cible.mkdir(parents=True, exist_ok=True)
@@ -149,7 +148,7 @@ def sauvegarder(garder=7):
             src = SCRIPTS / nom
             if src.exists():
                 shutil.copy2(src, cible / nom)
-        # Le nom est une date ISO : l'ordre alphabetique est chronologique.
+        # The name is an ISO date: alphabetical order is chronological.
         for vieux in sorted(p for p in base.iterdir() if p.is_dir())[:-garder]:
             shutil.rmtree(vieux, ignore_errors=True)
         return cible
@@ -159,17 +158,17 @@ def sauvegarder(garder=7):
 
 
 def etape(nom, args, cle, timeout=5400):
-    """Lance une etape. Rend (code, compteur ou None, sortie complete).
+    """Runs a step. Returns (code, counter or None, full output).
 
-    LA SORTIE PASSE EN DIRECT. L'ancienne version capturait tout et n'affichait
-    que les douze dernieres lignes A LA FIN de l'etape : pendant une collecte
-    d'une heure, rien. Maintenant chaque ligne est recopiee au moment ou
-    l'etape l'ecrit, donc le journal dit ou l'on en est.
+    THE OUTPUT GOES THROUGH LIVE. The old version captured everything and only
+    displayed the last twelve lines AT THE END of the step: during a one-hour
+    collection, nothing. Now each line is copied as the step writes it, so the log
+    says where we are.
 
-    LE DEPASSEMENT DE DUREE TUE L'ETAPE, PAS LE PIPELINE. `subprocess.run(
-    timeout=...)` levait TimeoutExpired, que rien n'attrapait : le pipeline
-    mourait sans bilan. Ici une minuterie tue l'etape, qui rend un code non nul,
-    et les etapes suivantes decident d'elles-memes."""
+    EXCEEDING THE DURATION KILLS THE STEP, NOT THE PIPELINE. `subprocess.run(
+    timeout=...)` raised TimeoutExpired, which nothing caught: the pipeline died
+    without a summary. Here a timer kills the step, which returns a non-zero code,
+    and the following steps decide for themselves."""
     debut = time.time()
     print(f"\n{'─' * 62}\n▶ {nom}\n  {' '.join(args)}")
     env = dict(os.environ, PYTHONUNBUFFERED="1", PYTHONIOENCODING="utf-8")
@@ -182,18 +181,18 @@ def etape(nom, args, cle, timeout=5400):
         encoding="utf-8",
         errors="replace",
         env=env,
-        # Un run planifie n'a pas de console : sans ceci, Popen
-        # meurt sur « [WinError 6] Descripteur non valide ».
+        # A scheduled run has no console: without this, Popen
+        # dies on "[WinError 6] Descripteur non valide".
         stdin=subprocess.DEVNULL,
     )
     tue = threading.Event()
 
     def _stop():
         tue.set()
-        # L'ARBRE, PAS SEULEMENT LE PROCESSUS. Le 2026-09-28, l'etape « arretee
-        # apres 90 min » en a dure 136 : p.kill() tuait Python, mais ses enfants
-        # (navigateur) gardaient la sortie ouverte et la lecture ci-dessous
-        # attendait leur fin. taskkill /T emporte les descendants.
+        # THE TREE, NOT ONLY THE PROCESS. On 2026-09-28, the step "stopped
+        # after 90 min" lasted 136: p.kill() killed Python, but its children
+        # (browser) kept the output open and the read below
+        # waited for their end. taskkill /T takes the descendants with it.
         if os.name == "nt":
             subprocess.run(
                 ["taskkill", "/PID", str(p.pid), "/T", "/F"],
@@ -209,8 +208,8 @@ def etape(nom, args, cle, timeout=5400):
         for ligne in p.stdout:
             ligne = ligne.rstrip("\n")
             lignes.append(ligne)
-            # Minutes ecoulees en tete de ligne : sans elles, un journal de 78 min
-            # ne disait pas QUELLE source prenait le temps.
+            # Minutes elapsed at the start of the line: without them, a 78-min log
+            # did not say WHICH source was taking the time.
             print(f"  {(time.time() - debut) / 60:5.1f}' {ligne}")
         p.wait()
     finally:
@@ -229,14 +228,14 @@ def etape(nom, args, cle, timeout=5400):
 
 
 def dispo_aujourd_hui(a, jour):
-    """Le controle de disponibilite tourne-t-il aujourd'hui (jour : 0 = lundi) ?"""
+    """Does the availability check run today (day: 0 = Monday)?"""
     if a.sans_dispo:
         return False
     return a.dispo or a.rapide or jour == a.dispo_jour
 
 
 def main():
-    _racine.exporter_paquet()  # les etapes lancent `python -m jobhunter...`
+    _racine.exporter_paquet()  # the steps run `python -m jobhunter...`
     ap = argparse.ArgumentParser()
     ap.add_argument("--docs", type=int, default=30, help="nombre de dossiers a generer (0 = aucun)")
     ap.add_argument("--sans-docs", action="store_true")
@@ -252,11 +251,11 @@ def main():
     )
     ap.add_argument("--dispo", action="store_true", help="controle de disponibilite aujourd'hui")
     ap.add_argument("--sans-site", action="store_true")
-    # UN PIPELINE QU'ON NE PEUT PAS ESSAYER N'EST PAS VERIFIABLE. `--all` prend
-    # plus d'une heure : impossible de repondre « est-ce que ca marche ? » sans
-    # bloquer une machine pour l'apres-midi. Ce mode traverse les TROIS etapes
-    # sur un echantillon — une seule source, dix V.I.E, trois dossiers — et
-    # rend le meme rapport. Il sert a valider le cablage, pas a remplir la file.
+    # A PIPELINE THAT CANNOT BE TRIED IS NOT VERIFIABLE. `--all` takes
+    # more than an hour: impossible to answer "does it work?" without
+    # blocking a machine for the afternoon. This mode goes through the THREE steps
+    # on a sample — a single source, ten V.I.E, three folders — and
+    # gives the same report. It serves to validate the wiring, not to fill the queue.
     ap.add_argument(
         "--rapide", action="store_true", help="essai de bout en bout sur un echantillon (~5 min)"
     )
@@ -266,8 +265,8 @@ def main():
     journaux.mkdir(exist_ok=True)
     journal = journaux / f"pipeline_{time.strftime('%Y-%m-%d_%H%M')}.log"
     sys.stdout = _Journal(sys.stdout, journal)
-    # Le journal horodate du moteur (jobhunter.journal : heure, niveau, module), un
-    # par execution, a cote du journal de la console ; les etapes en heritent.
+    # The engine's timestamped log (jobhunter.journal: time, level, module), one
+    # per run, next to the console log; the steps inherit it.
     os.environ["JOBHUNTER_JOURNAL"] = str(journal.with_name(journal.stem + "_moteur.log"))
 
     titre = f"Pipeline quotidien — {time.strftime('%Y-%m-%d %H:%M')}"
@@ -285,29 +284,29 @@ def main():
 
     bilan, alertes = [], list(alertes_depart)
 
-    # L'APEC en mode rapide : API publique, robots.txt sans un seul Disallow,
-    # et elle rend quelques centaines d'offres en trois minutes. C'est la
-    # source qui remplace Indeed depuis qu'il est ferme.
-    # LA COLLECTE EN TROIS ETAPES, chacune avec sa duree maximale et SA fusion.
-    # En une seule, `--all` ne fusionnait qu'a la toute fin : du 24 au 28/09,
-    # quatre matins sur cinq, la collecte a depasse 90 min et tout ce qu'elle
-    # avait ramasse — dont ~3300 offres LinkedIn — a ete perdu avec elle. La
-    # reussie du 27 avait pris 78 min. Aucune source ne bloquait : c'etait la
-    # SOMME (LinkedIn long, pauses de 45 s sur les 403 d'Indeed et de
-    # Glassdoor, 200 s sur le 202 de WTJ, eFC a 10 s la fiche). Decoupee, une
-    # etape trop lente ne perd plus que ses propres offres.
-    #   a) gros volume, APIs rapides ; b) sources bornees par leur crawl-delay ;
-    #   c) sites lents, qui refusent souvent — en dernier, pour que leurs pauses
-    #   ne retardent rien d'autre.
+    # APEC in quick mode: public API, robots.txt without a single Disallow,
+    # and it returns a few hundred offers in three minutes. It is the
+    # source that replaces Indeed since it closed.
+    # THE COLLECTION IN SEVERAL STEPS, each with its maximum duration and ITS merge.
+    # In a single one, `--all` only merged at the very end: from 24 to 28/09,
+    # four mornings out of five, the collection exceeded 90 min and everything it
+    # had gathered — including ~3300 LinkedIn offers — was lost with it. The
+    # successful one of the 27th had taken 78 min. No source was blocking: it was the
+    # SUM (long LinkedIn, 45 s pauses on the 403s of Indeed and
+    # Glassdoor, 200 s on WTJ's 202, eFC at 10 s per posting). Split, a
+    # step that is too slow only loses its own offers.
+    #   a) large volume, fast APIs; b) sources bounded by their crawl-delay;
+    #   c) slow sites, which often refuse — last, so that their pauses
+    #   delay nothing else.
     if a.rapide:
         collectes = [("1/5  Collecte — APEC seule (essai)", ["--apec"], 5400)]
     else:
-        # CINQ PASSES depuis le 2026-10-02. En trois, la passe a (ATS + Workday
-        # + LinkedIn) et la passe c (Talent + Indeed + Glassdoor + APEC + WTJ)
-        # ont toutes deux depasse 60 min le 30/09 : ATS 13 min et Workday 19
-        # n'atteignaient LinkedIn qu'a 33 min ; Talent prenait 30 min a lui seul.
-        # LinkedIn a desormais sa passe ; les sources sures (APEC, France
-        # Travail) passent avant celles qui refusent (Indeed, Glassdoor, WTJ).
+        # FIVE PASSES since 2026-10-02. With three, pass a (ATS + Workday
+        # + LinkedIn) and pass c (Talent + Indeed + Glassdoor + APEC + WTJ)
+        # both exceeded 60 min on 30/09: ATS 13 min and Workday 19
+        # only reached LinkedIn at 33 min; Talent alone took 30 min.
+        # LinkedIn now has its own pass; the safe sources (APEC, France
+        # Travail) go before those that refuse (Indeed, Glassdoor, WTJ).
         collectes = [
             (
                 "1a/5 Collecte — ATS, Workday, V.I.E, FIR",
@@ -320,8 +319,8 @@ def main():
                 ["--efc", "--efc-sites", "monde", "--efc-limite", "30", "--eures"],
                 1800,
             ),
-            # Talent et Indeed retires le 2026-10-03 (0 offre, 403 depuis le
-            # 24/09) ; Adzuna et Jooble, API officielles, couvrent leur vivier.
+            # Talent and Indeed removed on 2026-10-03 (0 offers, 403 since
+            # 24/09); Adzuna and Jooble, official APIs, cover their pool.
             (
                 "1d/5 Collecte — APEC, France Travail, Adzuna, Jooble",
                 ["--apec", "--ft", "--adzuna", "--jooble"],
@@ -334,7 +333,7 @@ def main():
         code, n, _ = etape(nom, ["-m", "jobhunter.sources", *drapeaux], "scan", timeout=duree)
         bilan.append(("collecte " + nom[1] if not a.rapide else "collecte", code, n))
         if code == 3:
-            # Verrou pris ailleurs : les etapes suivantes echoueraient pareil.
+            # Lock taken elsewhere: the following steps would fail the same way.
             print("\n! La file est occupee par un autre programme. Arret propre.")
             return 3
         ajoutees += n or 0
@@ -350,21 +349,21 @@ def main():
         if code == 4:
             alertes.append("l'API V.I.E n'a rendu aucune fiche — cle ou reseau")
 
-    # 3 ET 4 AVANT 5, ET CE N'EST PAS UN DETAIL. Les dossiers se generent pour le
-    # haut de la file. Sans description, une offre LinkedIn est notee sur huit
-    # mots de titre, et `tri_file` ne voit pas les annees d'experience exigees —
-    # le 2026-09-22, ce seul critere a ecarte 1540 offres, invisibles sans texte.
-    # L'ancien ordre produisait donc des CV pour des postes Senior que le tri
-    # aurait supprimes le lendemain.
+    # 3 AND 4 BEFORE 5, AND IT IS NOT A DETAIL. The folders are generated for the
+    # top of the queue. Without a description, a LinkedIn offer is scored on eight
+    # title words, and `tri_file` does not see the years of experience required —
+    # on 2026-09-22, this criterion alone set aside 1540 offers, invisible without text.
+    # The old order therefore produced CVs for Senior jobs that the sorting
+    # would have deleted the next day.
     if not a.sans_desc:
         desc = ["-m", "jobhunter.programmes.linkedin_desc"] + (
             ["--limit", "20"] if a.rapide else []
         )
         code, n, _ = etape("3/5  Descriptions LinkedIn", desc, "desc")
         bilan.append(("descriptions", code, n))
-        # 3b. Les sites carriere (2026-10-08) : Workday par son API, puis les
-        # lecteurs qui ne rapportent que le titre, par leur page publique. Liste
-        # FERMEE de sources : jamais Glassdoor ni Indeed, qui refusent les robots.
+        # 3b. The career sites (2026-10-08): Workday through its API, then the
+        # readers that only bring back the title, through their public page. CLOSED
+        # list of sources: never Glassdoor nor Indeed, which refuse robots.
         lim = ["--limit", "10"] if a.rapide else []
         code, n, _ = etape(
             "3b/5 Descriptions Workday (API)",
@@ -384,24 +383,24 @@ def main():
         bilan.append(("desc. sites carriere", code, n))
 
     if not a.sans_tri:
-        # En essai, le tri INSPECTE sans ecrire : --rapide valide le cablage,
-        # il ne doit pas purger la vraie file.
+        # In a trial, the sorting INSPECTS without writing: --rapide validates the wiring,
+        # it must not purge the real queue.
         tri = ["-m", "jobhunter.scoring.tri"] + ([] if a.rapide else ["--supprime"])
         code, n, _ = etape("4/5  Tri — seniorite, experience, metier", tri, "tri")
         bilan.append(("tri", code, n))
 
-    # 4b, AVANT LES DOSSIERS : on ne genere pas un CV pour une offre fermee.
-    # Le 2026-10-02, un audit complet a trouve une offre verifiee sur trois
-    # deja fermee. Chaque jour ne recontrole que ce qui n'a pas ete vu depuis
-    # sept jours. Sur une limite de debit (429), audit_dispo attend et reprend
-    # — une seule pause ici, pour ne pas retarder les dossiers ; il rend alors
-    # le code 4 (« incomplet »), et la relance du lendemain reprend la ou il
-    # s'est arrete. Ce n'est pas une panne.
-    # UNE FOIS PAR SEMAINE (le dimanche, --dispo-jour). Chaque jour, l'etape
-    # coutait 45 min pour rien : coupee par la minuterie avant de retirer quoi
-    # que ce soit (08-18/10/2026). Elle s'arrete maintenant d'elle-meme
-    # (--duree, 100 min, les meilleures offres d'abord) puis retire les fermees ;
-    # la minuterie ne sert plus que de filet.
+    # 4b, BEFORE THE FOLDERS: we do not generate a CV for a closed offer.
+    # On 2026-10-02, a full audit found one verified offer out of three
+    # already closed. Each day only rechecks what has not been seen for
+    # seven days. On a rate limit (429), audit_dispo waits and resumes
+    # — a single pause here, so as not to delay the folders; it then returns
+    # code 4 ("incomplet"), and the next day's run resumes where it
+    # stopped. It is not a failure.
+    # ONCE A WEEK (on Sunday, --dispo-jour). Every day, the step
+    # cost 45 min for nothing: cut by the timer before removing anything
+    # at all (08-18/10/2026). It now stops by itself
+    # (--duree, 100 min, the best offers first) then removes the closed ones;
+    # the timer is now only a safety net.
     if dispo_aujourd_hui(a, time.localtime().tm_wday):
         dispo = ["-m", "jobhunter.programmes.audit_dispo", "--pauses", "1"]
         dispo += (
@@ -413,12 +412,12 @@ def main():
             code = 0
         bilan.append(("disponibilite", code, n))
 
-    # 4c, AVANT LES DOSSIERS : une offre LinkedIn retrouvee sur le site de
-    # l'employeur (ATS publics, Workday) y prend son lien direct, pour postuler
-    # sans passer par LinkedIn. L'etat `_site_final.json` evite de resonder :
-    # un flux trouve est garde, une absence n'est resondee qu'apres 30 jours.
-    # Le premier passage apres l'ajout de Workday (2026-10-07) sonde tout ;
-    # coupe par la minuterie, il reprend le lendemain ou il en etait.
+    # 4c, BEFORE THE FOLDERS: a LinkedIn offer found again on the
+    # employer's site (public ATS, Workday) takes its direct link there, to apply
+    # without going through LinkedIn. The `_site_final.json` state avoids probing again:
+    # a found feed is kept, an absence is only probed again after 30 days.
+    # The first pass after Workday was added (2026-10-07) probes everything;
+    # cut by the timer, it resumes the next day where it was.
     if not a.sans_site:
         site = ["-m", "jobhunter.programmes.site_final", "--fit", "8"] + (
             ["--limite", "10", "--dry"] if a.rapide else []
@@ -436,8 +435,8 @@ def main():
             "docs",
         )
         bilan.append(("dossiers", code, n))
-        # 5b : ce qui partira vraiment (PDF lisible, une page, coordonnees, gabarit
-        # rempli). Lecture seule ; un dossier a revoir ne doit pas partir tel quel.
+        # 5b: what will really be sent (readable PDF, one page, contact details, filled
+        # template). Read-only; a folder to review must not be sent as is.
         code, n, _ = etape(
             "5b/5 Controle des dossiers",
             ["-m", "jobhunter.programmes.controle_dossiers", "--fit", "8"],

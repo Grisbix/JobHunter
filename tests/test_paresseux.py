@@ -1,5 +1,5 @@
-"""Valeurs tirees du profil : calculees a la premiere lecture, et un profil injecte
-vaut partout (phase 4 du plan)."""
+"""Values taken from the profile: computed on first read, and an injected profile
+applies everywhere (phase 4 of the plan)."""
 
 import copy
 import os
@@ -16,14 +16,14 @@ from jobhunter.sources import commun
 
 @pytest.fixture
 def profil_injecte():
-    """Le profil d'exemple, copie et modifiable ; le fichier revient a la fin."""
+    """The example profile, copied and modifiable; the file comes back at the end."""
     donnees = copy.deepcopy(profil.charger())
     yield donnees
     profil.recharger()
 
 
 def test_valeur_calculee_puis_gardee_dans_le_module():
-    profil.recharger()  # un test precedent a pu remplacer KEYWORDS (sources_config)
+    profil.recharger()  # a previous test may have replaced KEYWORDS (sources_config)
     mots = commun.KEYWORDS
     assert mots == list(profil.get("collecte.mots_cles", []))
     assert vars(commun)["KEYWORDS"] is mots
@@ -63,8 +63,8 @@ def test_oublier_refait_la_valeur():
 
 
 def test_un_module_lance_comme_programme_lit_ses_valeurs_paresseuses():
-    # Lance en `__main__`, le module doit trouver ses valeurs par `_ici` (avant la 2.0,
-    # une facade lancee par runpy sans alter_sys le faisait echouer).
+    # Run as `__main__`, the module must find its values through `_ici` (before 2.0,
+    # a facade run by runpy without alter_sys made it fail).
     env = {**os.environ, "PROFIL_JOBHUNTER": str(EXEMPLE), "PYTHONPATH": str(SRC)}
     r = subprocess.run(
         [sys.executable, "-m", "jobhunter.chemins"],

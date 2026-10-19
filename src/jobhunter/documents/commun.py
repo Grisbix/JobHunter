@@ -1,9 +1,9 @@
-"""Ce que partagent CV, lettre et message : intitule nettoye, competences, valeurs d'entreprise.
+"""What CV, letter and message share: cleaned title, skills, company values.
 
-Partie de jobhunter.documents (ancien Scripts/tailor_application.py, phase 3.5).
+Part of jobhunter.documents (formerly Scripts/tailor_application.py, phase 3.5).
 """
 
-# Noms du lexique, re-exportes : `tailor_application.cv_variant_key` reste valable.
+# Names from the lexicon, re-exported: `tailor_application.cv_variant_key` stays valid.
 import importlib
 import re
 import sys
@@ -15,8 +15,8 @@ from jobhunter import profil as _P
 from jobhunter.scoring.lexique import cv_variant_key, has_skill  # noqa: F401
 
 _ici = sys.modules[__name__]
-# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
-# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+# Values taken from the profile: computed on first read, not at import
+# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -44,7 +44,7 @@ _PARESSEUX["SKILL_LEX"] = lambda: importlib.import_module("jobhunter.scoring.lex
 CV_ATS = chemins.CV_MODELES
 
 
-# Dossiers de sortie : crees au moment d'ecrire (chemins.preparer), pas a l'import.
+# Output folders: created when writing (chemins.preparer), not at import.
 _PARESSEUX["CV_OUT"] = lambda: chemins.CV_PAR_OFFRE
 _PARESSEUX["LT_OUT"] = lambda: chemins.LT_PAR_OFFRE
 
@@ -57,14 +57,14 @@ _PARESSEUX["PROFILE"] = lambda: dict(
 )
 
 
-# accroche valeur par entreprise : profil, lettre.valeurs_entreprises_fr/en
+# value hook per company: profile, lettre.valeurs_entreprises_fr/en
 _PARESSEUX["COMPANY_VALUE"] = lambda: dict(_P.get("lettre.valeurs_entreprises_fr", {}) or {})
 
 
-# Mots qui gardent leur majuscule dans un intitule de poste : noms propres
-# residuels. La regle generale est qu'un intitule francais est un NOM COMMUN
-# (« contrôleur de gestion », pas « Contrôleur de Gestion »), mais les annonces
-# capitalisent chaque mot a l'anglaise et on recopiait tel quel.
+# Words that keep their capital in a job title: residual proper
+# nouns. The general rule is that a French job title is a COMMON NOUN
+# ("contrôleur de gestion", not "Contrôleur de Gestion"), but postings
+# capitalise every word the English way and we copied it as is.
 _PROPRES = {
     "france",
     "paris",
@@ -85,8 +85,8 @@ _PROPRES = {
 }
 
 
-# Les sigles qui gardent leurs capitales meme dans un intitule hurle. Liste
-# EXPLICITE : aucune regle de longueur ne separe « ESG » de « DES ».
+# Acronyms that keep their capitals even in a shouted title. EXPLICIT
+# list: no length rule tells "ESG" from "DES".
 _SIGLES = {
     "ESG",
     "RSE",
@@ -139,20 +139,20 @@ _SIGLES = {
 
 
 def minuscule_titre(t: str) -> str:
-    """« Contrôleur de Gestion Financier » -> « contrôleur de gestion financier ».
+    """“Contrôleur de Gestion Financier” -> "contrôleur de gestion financier".
 
-    Un sigle reste intact (« Analyste RSE-ESG » garde RSE-ESG), un nom propre
-    connu aussi. Tout le reste passe en bas de casse : en francais un intitule
-    de poste est un nom commun.
+    An acronym stays intact ("Analyste RSE-ESG" keeps RSE-ESG), and so does a known
+    proper noun. Everything else goes lower case: in French a job title is a common
+    noun.
 
-    MAIS une annonce peut etre ecrite ENTIEREMENT en capitales — « CORPORATE
-    FINANCE », « GESTIONNAIRE DES RISQUES ». Prendre chaque mot pour un sigle
-    laissait alors l'objet de la lettre hurler. Quand la majorite des mots
-    longs sont en capitales, c'est une annonce qui crie, pas une suite de
-    sigles : on abaisse TOUT, et on ne releve que les sigles reconnus.
+    BUT a posting may be written ENTIRELY in capitals — "CORPORATE FINANCE",
+    "GESTIONNAIRE DES RISQUES". Taking every word for an acronym then left the
+    letter's subject shouting. When most long words are in capitals, it is a
+    shouting posting, not a series of acronyms: we lower EVERYTHING, and only raise
+    back the recognised acronyms.
 
-    La longueur ne suffit pas a distinguer un sigle : « DES » fait trois
-    lettres et reste un article, d'ou « gestionnaire DES risques ».
+    Length is not enough to tell an acronym: "DES" has three letters and stays an
+    article, hence "gestionnaire DES risques".
     """
     mots = (t or "").split(" ")
     longs = [m.strip(",.;:()[]") for m in mots if len(m.strip(",.;:()[]")) > 4]
@@ -164,7 +164,7 @@ def minuscule_titre(t: str) -> str:
         if not nu:
             sortie.append(m)
         elif nu.lower() in _PROPRES:
-            # Un nom propre garde sa majuscule, mais pas TOUTES ses capitales :
+            # A proper noun keeps its capital, but not ALL its capitals:
             # « CHARGE DE MISSION RSE FRANCE » donnait « … RSE FRANCE ».
             sortie.append(m.capitalize() if crie else m)
         elif crie:
@@ -177,14 +177,14 @@ def minuscule_titre(t: str) -> str:
 
 
 def _de(mot: str, apostrophe: str = "'") -> str:
-    r"""Élision : 'de Amundi' -> "d'Amundi".
+    r"""Elision: 'de Amundi' -> "d'Amundi".
 
-    'h' et 'y' EXCLUS : « de Hollande » et « de Yann » sont corrects, pas « d'Hollande ».
+    'h' and 'y' EXCLUDED: "de Hollande" and "de Yann" are correct, not "d'Hollande".
 
-    `apostrophe` : le gabarit de CV est écrit avec l'apostrophe TYPOGRAPHIQUE
-    (« d’une expertise », « d’un mémoire »). Y injecter une apostrophe droite
-    donnait, dans la même phrase : « d’un poste d'Analyste RSE-ESG ». Deux
-    apostrophes différentes à six mots d'intervalle, sur un CV.
+    `apostrophe`: the CV template is written with the TYPOGRAPHIC apostrophe
+    ("d’une expertise", "d’un mémoire"). Injecting a straight apostrophe into it
+    gave, in the same sentence: "d’un poste d'Analyste RSE-ESG". Two different
+    apostrophes six words apart, on a CV.
     """
     mot = (mot or "").strip()
     if mot[:1].lower() in "aàâäeéèêëiîïoôöuùûü":
@@ -192,19 +192,19 @@ def _de(mot: str, apostrophe: str = "'") -> str:
     return "de " + mot
 
 
-# ── Nettoyage de l'intitulé de poste ────────────────────────────────────────
-# Le titre brut d'une annonce n'est PAS un intitulé de poste : il porte la mention
-# de genre, le type de contrat, la ville, la référence interne… Écrit tel quel dans
-# « Objet : Candidature au poste de … », il donne des lettres illisibles.
-# Les \b sont INDISPENSABLES : sans eux, « DAF - Finance » matche « F - F »
-# (le F final de DAF, le tiret, le F initial de Finance) et le nettoyage produit
-# « DA inance ». Le motif ne doit accepter que des lettres ISOLEES.
+# ── Cleaning the job title ───────────────────────────────────────────────────
+# The raw title of a posting is NOT a job title: it carries the gender
+# mention, the contract type, the city, the internal reference… Written as is in
+# "Objet : Candidature au poste de …", it gives unreadable letters.
+# The \b are ESSENTIAL: without them, "DAF - Finance" matches "F - F"
+# (the final F of DAF, the dash, the initial F of Finance) and the cleaning produces
+# "DA inance". The pattern must only accept ISOLATED letters.
 RX_GENRE = re.compile(r"[(\[]?\s*\b[HFMWX]\b(?:\s*[/|.-]\s*\b[HFMWXD]\b){1,2}\s*[)\]]?", re.I)
 
 
-# Le marqueur de genre COLLE, sans separateur : « CORPORATE FINANCE HF ».
-# RX_GENRE exige un separateur (H/F, H-F, H.F) et laissait donc passer celui-ci,
-# si bien que l'objet annoncait un poste de « corporate finance hf ». Ancre en
+# The GLUED gender marker, without a separator: "CORPORATE FINANCE HF".
+# RX_GENRE requires a separator (H/F, H-F, H.F) and therefore let this one through,
+# so that the subject announced a "corporate finance hf" job. Anchored at
 # FIN de chaine seulement : ailleurs, « HF » peut vouloir dire haute frequence.
 RX_GENRE_COLLE = re.compile(r"\s*[(\[]?\s*\b(?:HF|FH|MW|FM|MF)\b\s*[)\]]?\s*$", re.I)
 
@@ -224,7 +224,7 @@ RX_BRUIT = re.compile(
 )
 
 
-# « #00137324 » : aucun caractère de mot devant le #, donc un \b devant ne matcherait JAMAIS
+# "#00137324": no word character before the #, so a \b before it would NEVER match
 RX_REF = re.compile(r"#\s*\d+")
 
 
@@ -239,18 +239,18 @@ RX_ADRESSE = re.compile(
 
 
 for _n, _rx in list(globals().items()):
-    # Un « \b » mangé par un heredoc devient \x08 : le motif ne matche plus jamais,
-    # sans erreur. On refuse de démarrer plutôt que de générer des lettres fausses.
+    # A "\b" eaten by a heredoc becomes \x08: the pattern never matches any more,
+    # without an error. We refuse to start rather than generate wrong letters.
     if _n.startswith("RX_") and hasattr(_rx, "pattern"):
         assert "\x08" not in _rx.pattern, "motif corrompu (backspace littéral) : " + _n
 
 
 def titre_poste(t: str | None, maxlen: int = 80) -> str:
-    """Intitulé lisible à partir du titre brut d'une annonce.
+    """Readable job title from the raw title of a posting.
 
-    Coupe au dernier séparateur AVANT maxlen, jamais au milieu d'un mot.
-    Renvoie "" si ce n'est pas un intitulé de poste (adresse postale, vide) :
-    l'appelant écrit alors une formule neutre plutôt qu'une phrase absurde.
+    Cuts at the last separator BEFORE maxlen, never in the middle of a word.
+    Returns "" if it is not a job title (postal address, empty): the caller then
+    writes a neutral phrase rather than an absurd sentence.
     """
     t = re.sub(r"\s+", " ", (t or "").strip())
     if RX_ADRESSE.search(t):
@@ -260,14 +260,14 @@ def titre_poste(t: str | None, maxlen: int = 80) -> str:
     t = RX_CONTRAT.sub(" ", t)
     t = RX_BRUIT.sub(" ", t)
     t = RX_REF.sub(" ", t)
-    # Parentheses vides ou reduites a des chiffres/ponctuation par les coupes
-    # precedentes : « CDD (2.5 mois) » laissait « - (2. ) » une fois le contrat
-    # et la duree retires.
+    # Parentheses empty or reduced to digits/punctuation by the previous
+    # cuts: "CDD (2.5 mois)" left "- (2. )" once the contract
+    # and the duration were removed.
     t = re.sub(r"[(\[]\s*[\d.,;:\s-]*\s*[)\]]", " ", t)
     t = re.sub(r"\s*,(\s*,)+", ",", t)
     t = RX_LIEU_FIN.sub("", t)
-    # séparateurs : uniquement ceux ENTOURÉS d'espaces — « LCB-FT » et « H2-Power »
-    # sont des mots, pas des séparateurs
+    # separators: only those SURROUNDED by spaces — "LCB-FT" and "H2-Power"
+    # are words, not separators
     t = re.sub(r"\s+[-–—:|]\s+", " - ", t)
     t = re.sub(r"\s*[–—:|]\s*", " - ", t)
     t = re.sub(r"(\s*-\s*){2,}", " - ", t)
@@ -284,10 +284,10 @@ def titre_poste(t: str | None, maxlen: int = 80) -> str:
 
 
 def _coupe_mot(t: str | None, n: int) -> str:
-    """Tronque a n caracteres SANS couper un mot, et sans laisser de ponctuation pendante.
+    """Truncates to n characters WITHOUT cutting a word, and without leaving dangling punctuation.
 
-    « …help to build a better wor » est parti dans une vraie lettre : une citation
-    coupee en plein mot est plus visible qu'une citation absente.
+    "…help to build a better wor" went out in a real letter: a quotation cut in
+    the middle of a word is more visible than a missing quotation.
     """
     t = " ".join((t or "").split())
     if len(t) <= n:
@@ -300,7 +300,7 @@ def _coupe_mot(t: str | None, n: int) -> str:
 
 
 def company_value(company: str | None) -> str:
-    """Accroche connue pour cette entreprise, ou "" : quand l'entreprise est inconnue, la lettre ne lui prete AUCUN engagement, elle parle du poste."""
+    """Known hook for this company, or "": when the company is unknown, the letter lends it NO commitment, it talks about the job."""
     c = (company or "").lower()
     for k, v in _ici.COMPANY_VALUE.items():
         if k in c:
@@ -308,20 +308,20 @@ def company_value(company: str | None) -> str:
     return ""
 
 
-# ── LE CORPS ECRIT A LA MAIN ─────────────────────────────────────────────────
-# Le gabarit sert 5374 annonces. Il ne peut donc rien dire de precis sur
-# aucune : il nomme des competences, jamais un fonds, jamais une mission de
-# l'annonce. C'est le bon compromis pour une candidature de masse et le
-# mauvais pour les cinq offres de l'annee qui meritent une heure de travail.
+# ── THE HAND-WRITTEN BODY ────────────────────────────────────────────────────
+# The template serves 5374 postings. So it cannot say anything specific about
+# any of them: it names skills, never a fund, never a mission from
+# the posting. That is the right trade-off for mass applying and the
+# wrong one for the five offers of the year that deserve an hour of work.
 #
-# Quand `Lettres/Sur_mesure/<entreprise>__<poste>.txt` existe, ses paragraphes
-# remplacent le CORPS. Tout le reste continue d'etre genere : l'en-tete, la
-# date, l'objet, la formule d'appel — qui sait nommer deux destinataires — et
-# la reprise de cloture accordee. On ne reecrit pas a la main ce que le code
-# fait mieux.
+# When `Lettres/Sur_mesure/<entreprise>__<poste>.txt` exists, its paragraphs
+# replace the BODY. Everything else is still generated: the header, the
+# date, the subject, the salutation — which knows how to name two recipients — and
+# the agreed closing. We do not rewrite by hand what the code
+# does better.
 #
-# C'est une ENTREE, au meme titre que CV/Modeles : `regenere_docs.py` ne la
-# touche pas, et regenerer la lettre la reprend telle quelle.
+# It is an INPUT, just like CV/Modeles: `regenere_docs.py` does not
+# touch it, and regenerating the letter takes it back as is.
 _RX_SLUG = re.compile(r"[^a-z0-9]+")
 
 
@@ -329,10 +329,10 @@ def _slug(s: str | None) -> str:
     return _RX_SLUG.sub("_", (s or "").lower()).strip("_")
 
 
-# Libelles de competences en ANGLAIS. La lettre anglaise les cite en toutes
-# lettres ; les laisser en francais trahit la generation automatique plus
-# surement qu'une faute de style. Les sigles reglementaires (SFDR, CSRD, GRI,
-# TCFD, PAI) ne se traduisent PAS : ce sont les memes textes europeens.
+# Skill labels in ENGLISH. The English letter quotes them in full;
+# leaving them in French betrays automatic generation more
+# surely than a style mistake. The regulatory acronyms (SFDR, CSRD, GRI,
+# TCFD, PAI) are NOT translated: they are the same European texts.
 _PARESSEUX["SKILL_EN"] = lambda: ({lab: v.get("en") or lab for lab, v in _ici._COMP.items()})
 
 
@@ -340,15 +340,15 @@ _SKILL_EN_NORM = None
 
 
 def skills_en(labels: list[str]) -> list[str]:
-    """Libelles traduits.
+    """Translated labels.
 
-    La recherche ignore les ACCENTS : les cles de SKILL_EN sont ecrites sans eux, les
-    libelles reels en portent (« Analyse financiere » contre « Analyse financiere »).
-    Comparer tels quels ne trouvait rien et la lettre anglaise restait farcie de
-    francais.
+    The search ignores ACCENTS: the keys of SKILL_EN are written without them, the
+    real labels carry them ("Analyse financière" versus "Analyse financiere").
+    Comparing them as they are found nothing and the English letter stayed stuffed
+    with French.
 
-    Un libelle inconnu est RENDU TEL QUEL plutot que supprime : mieux vaut un
-    mot francais visible qu'une competence disparue.
+    An unknown label is RETURNED AS IS rather than removed: better a visible French
+    word than a skill that disappeared.
     """
     global _SKILL_EN_NORM
     if _SKILL_EN_NORM is None:
@@ -360,23 +360,23 @@ def skills_en(labels: list[str]) -> list[str]:
     return [_SKILL_EN_NORM.get(sans_accent(x).lower(), x) for x in labels]
 
 
-# Libelles qui servent au SCORING mais ne s'ecrivent pas dans une lettre : ce
-# sont des noms de categorie internes, pas des competences. « Durabilité / ESG
-# (généraliste) » s'est retrouve tel quel, parentheses comprises, dans une
-# lettre anglaise envoyee a EY Geneve — au milieu de SFDR et GRI/TCFD, il
-# signalait le systeme qui l'avait ecrite.
+# Labels used for SCORING but not written in a letter: they
+# are internal category names, not skills. "Durabilité / ESG
+# (généraliste)" ended up as is, parentheses included, in an
+# English letter sent to EY Geneva — between SFDR and GRI/TCFD, it
+# gave away the system that had written it.
 _PARESSEUX["SKILL_INTERNES"] = lambda: ({lab for lab, v in _ici._COMP.items() if v.get("interne")})
 
 
 def match_skills(offer_text: str | None, max_n: int = 8) -> list[str]:
-    """Les compétences du lexique présentes dans une annonce, hors compétences internes.
+    """The lexicon's skills present in a posting, excluding internal skills.
 
     Args:
-        offer_text: le texte de l'annonce.
-        max_n: nombre maximal de compétences rendues.
+        offer_text: the posting's text.
+        max_n: maximum number of skills returned.
 
     Returns:
-        Les libellés trouvés, dans l'ordre du lexique.
+        The labels found, in lexicon order.
     """
     t = (offer_text or "").lower()
     hits = []
@@ -385,7 +385,7 @@ def match_skills(offer_text: str | None, max_n: int = 8) -> list[str]:
             continue
         if has_skill(label, t):
             hits.append(label)
-    # socle neutre (pas de biais ESG) si offre pauvre en texte
+    # neutral base (no ESG bias) if the offer is poor in text
     if len(hits) < 3:
         for base in _P.get("competences_de_base", []) or []:
             if base not in hits:

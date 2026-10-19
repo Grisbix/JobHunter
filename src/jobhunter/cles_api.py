@@ -1,13 +1,13 @@
-"""Les clés des API officielles de collecte : où chaque source les lit, et leur saisie.
+"""The keys of the official collection APIs: where each source reads them, and their entry.
 
-Chaque source lit SON fichier dans `Scripts/` (ignoré par git) : France Travail
-`francetravail.json`, Adzuna `adzuna.json`, Jooble `jooble.json`. Avant la 2.12, la
-saisie de l'application écrivait France Travail dans `api_keys.json`, qu'aucune source
-ne lit : la clé était perdue sans un mot. La saisie passe désormais par ce module, qui
-écrit le fichier que la source lit vraiment.
+Each source reads ITS file in `Scripts/` (ignored by git): France Travail
+`francetravail.json`, Adzuna `adzuna.json`, Jooble `jooble.json`. Before 2.12, the
+application's entry wrote France Travail into `api_keys.json`, which no source reads:
+the key was lost without a word. The entry now goes through this module, which writes
+the file the source really reads.
 
-Aucune valeur n'est affichée ni journalisée. `presente()` ne dit que si les champs
-existent, sans les rendre.
+No value is displayed or logged. `presente()` only says whether the fields exist,
+without returning them.
 """
 
 import json
@@ -17,7 +17,7 @@ from pathlib import Path
 from jobhunter.stockage import verrou as _verrou
 from jobhunter.stockage.atomique import ecrire_json
 
-ATTENTE = 10  # secondes d'attente du verrou d'un fichier de cle
+ATTENTE = 10  # seconds of waiting for the lock of a key file
 
 
 @dataclass(frozen=True)
@@ -28,8 +28,8 @@ class Cle:
     libelle: str
     fichier: str
     champs: tuple[str, ...]
-    secrets: tuple[str, ...]  # champs masqués à la saisie
-    obtenir: str  # page officielle où créer la clé
+    secrets: tuple[str, ...]  # fields masked during entry
+    obtenir: str  # official page where the key is created
 
 
 CLES = {
@@ -66,7 +66,7 @@ def _lire(chemin: Path) -> dict[str, object]:
 
 
 def presente(dossier: Path, nom: str) -> bool:
-    """Vrai si le fichier de la source contient tous ses champs, non vides."""
+    """True if the source's file contains all its fields, not empty."""
     cle = CLES[nom]
     try:
         c = _lire(dossier / cle.fichier)
@@ -76,29 +76,29 @@ def presente(dossier: Path, nom: str) -> bool:
 
 
 def enregistrer(dossier: Path, nom: str, valeurs: dict[str, str]) -> Path:
-    """Écrit la clé d'une source dans le fichier qu'elle lit.
+    """Writes a source's key into the file it reads.
 
-    Un champ laissé vide garde la valeur déjà enregistrée : on peut changer le seul
-    secret sans retaper l'identifiant. Les autres options du fichier sont gardées.
+    A field left empty keeps the value already stored: one can change the secret
+    alone without retyping the identifier. The file's other options are kept.
 
     Args:
-        dossier: le dossier `Scripts/`.
-        nom: `francetravail`, `adzuna` ou `jooble`.
-        valeurs: champ → valeur saisie.
+        dossier: the `Scripts/` folder.
+        nom: `francetravail`, `adzuna` or `jooble`.
+        valeurs: field → value entered.
 
     Returns:
-        Le fichier écrit.
+        The file written.
 
     Raises:
-        KeyError: source inconnue.
-        ValueError: un champ manque (ni saisi ni déjà présent), ou le fichier existant
-            est illisible — il est alors laissé tel quel.
+        KeyError: unknown source.
+        ValueError: a field is missing (neither entered nor already present), or the
+            existing file is unreadable — it is then left as is.
     """
     cle = CLES[nom]
     chemin = dossier / cle.fichier
-    # Lire, compléter, écrire sous verrou : deux saisies simultanées (l'app et
-    # `jobhunter acces --set-key`) gardaient sinon chacune l'ancien fichier, et la
-    # seconde effaçait le champ changé par la première (audit Codex du 19/10).
+    # Read, complete, write under lock: two simultaneous entries (the app and
+    # `jobhunter acces --set-key`) otherwise each kept the old file, and the
+    # second erased the field changed by the first (Codex audit of 19/10).
     a_nous = not _verrou.tenu(chemin)
     if not _verrou.prendre_verrou(chemin, attente=ATTENTE, bavard=False):
         raise ValueError(f"{chemin.name} est en cours d'écriture ; réessaie dans un instant.")

@@ -1,8 +1,8 @@
-"""Saisie d'une clé d'API de collecte, dans une petite fenêtre de l'application.
+"""Entry of a collection API key, in a small window of the application.
 
-Partie de jobhunter.app. La clé part dans le fichier que la source lit vraiment
-(jobhunter.cles_api). Les champs secrets sont masqués ; aucune valeur déjà
-enregistrée n'est relue ni réaffichée : un champ laissé vide la garde.
+Part of jobhunter.app. The key goes into the file the source really reads
+(jobhunter.cles_api). Secret fields are masked; no value already stored is read back
+or displayed again: a field left empty keeps it.
 """
 
 import webbrowser
@@ -19,12 +19,12 @@ from jobhunter.app.theme import ACC, ACC_H, ACC_TX, BG, BTN, BTN_H, CB, CE, CF, 
 
 
 def saisir_cle(app: Any, nom: str, apres: Callable[[], None]) -> None:
-    """Ouvre la fenêtre de saisie de la clé `nom` (francetravail, adzuna, jooble).
+    """Opens the entry window for the `nom` key (francetravail, adzuna, jooble).
 
     Args:
-        app: l'application (pour la fenêtre parente et le journal).
-        nom: la source.
-        apres: rappelé après un enregistrement réussi (rafraîchit le panneau).
+        app: the application (for the parent window and the log).
+        nom: the source.
+        apres: called back after a successful save (refreshes the panel).
     """
     cle = cles_api.CLES[nom]
     deja = cles_api.presente(SCRIPTS, nom)

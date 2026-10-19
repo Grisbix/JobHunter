@@ -1,35 +1,33 @@
 #!/usr/bin/env python3
-"""linkedin_closed.py — Retire de la queue les offres LinkedIn qui n'acceptent plus de candidature.
+"""linkedin_closed.py — Removes from the queue the LinkedIn offers that no longer accept applications.
 
-LinkedIn renvoie HTTP 200 meme pour une annonce fermee : le code de statut ne dit
-RIEN. Seule l'API invite (jobs-guest, sans authentification) porte le marqueur
-« No longer accepting applications ». C'est ce marqueur, et lui seul, qui autorise
-la suppression.
+LinkedIn returns HTTP 200 even for a closed posting: the status code says NOTHING.
+Only the guest API (jobs-guest, without authentication) carries the marker "No longer
+accepting applications". It is this marker, and it alone, that allows the deletion.
 
-Regle de prudence : on ne supprime que sur un signal POSITIF de fermeture.
-Un timeout, une erreur reseau, un 429 ou une page inattendue laissent l'offre en
-place — mieux vaut garder une offre morte qu'effacer une offre vivante.
+Caution rule: we only delete on a POSITIVE closing signal. A timeout, a network error,
+a 429 or an unexpected page leave the offer in place — better keep a dead offer than
+erase a live one.
 
-Les offres retirees sont sauvegardees dans _supprimees_linkedin_<date>.json
-(non versionne) : la suppression reste annulable.
+The removed offers are saved in _supprimees_linkedin_<date>.json (not versioned): the
+deletion stays reversible.
 
-PIEGE DE LOCALISATION. LinkedIn sert la page dans la langue du visiteur, et la
-tournure francaise est PASSIVE : « Les candidatures ne sont plus acceptées ».
-Un motif qui n'attend que la forme active (« n'accepte plus de candidature ») ou
-que l'anglais rate TOUTES les annonces servies en francais — l'essentiel d'entre
-elles depuis la France — et les declare ouvertes. Verifie sur 6 annonces
-(3 fermees, 3 ouvertes) : 6/6 correctes, y compris a travers la variante
-« mur de connexion » que LinkedIn sert apres quelques dizaines de requetes.
-Cette variante porte bien le marqueur : elle n'est PAS aveugle.
+LOCALISATION TRAP. LinkedIn serves the page in the visitor's language, and the French
+phrasing is PASSIVE: "Les candidatures ne sont plus acceptées". A pattern that only
+expects the active form ("n'accepte plus de candidature") or only the English misses
+ALL the postings served in French — most of them from France — and declares them open.
+Checked on 6 postings (3 closed, 3 open): 6/6 right, including through the "login
+wall" variant that LinkedIn serves after a few dozen requests. That variant does carry
+the marker: it is NOT blind.
 
-La memoire persistante (_linkedin_etat.json) evite de reinterroger ce qui est
-deja tranche. Si le detecteur change, PURGER ce fichier : ses verdicts ont ete
-rendus par l'ancienne version.
+The persistent memory (_linkedin_etat.json) avoids asking again about what is already
+decided. If the detector changes, PURGE this file: its verdicts were given by the old
+version.
 
-Run :
-  python JobHunter.pyw linkedin_closed --dry                      # compte seulement
-  python JobHunter.pyw linkedin_closed --workers 1 --pause 20     # passe lente
-  python JobHunter.pyw linkedin_closed                            # supprime pour de bon
+Run:
+  python JobHunter.pyw linkedin_closed --dry                      # counts only
+  python JobHunter.pyw linkedin_closed --workers 1 --pause 20     # slow pass
+  python JobHunter.pyw linkedin_closed                            # deletes for good
 """
 
 import argparse
@@ -54,13 +52,13 @@ UA = {
     "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
 }
 
-# L'identifiant est le dernier nombre long de /jobs/view/<slug>-<id>
+# The identifier is the last long number of /jobs/view/<slug>-<id>
 RX_ID = re.compile(r"/jobs/view/(?:[^/?#]*?-)?(\d{6,})")
-# Marqueur de fermeture, FR et EN. LinkedIn sert l'une ou l'autre selon la locale.
-# La tournure FRANCAISE est PASSIVE — « Les candidatures ne sont plus acceptées » —
-# et non « n'accepte plus de candidature ». Attendre la forme active revenait a
-# rater toutes les annonces servies en francais, c'est-a-dire l'essentiel d'entre
-# elles depuis la France.
+# Closing marker, FR and EN. LinkedIn serves one or the other depending on the locale.
+# The FRENCH phrasing is PASSIVE — "Les candidatures ne sont plus acceptées" —
+# and not "n'accepte plus de candidature". Expecting the active form meant
+# missing all the postings served in French, that is most of
+# them from France.
 RX_FERME = re.compile(
     r"no longer accepting applications"
     r"|candidatures? ne sont plus accept"
@@ -71,10 +69,10 @@ RX_FERME = re.compile(
     re.I,
 )
 
-# Variante « mur de connexion » servie apres quelques dizaines de requetes invite.
-# Elle est identique pour une offre ouverte et une offre fermee : illisible.
+# "Login wall" variant served after a few dozen guest requests.
+# It is identical for an open offer and a closed offer: unreadable.
 RX_MUR = re.compile(r"sign-in-modal|authwall|guest-homepage", re.I)
-# Presence d'un vrai bouton de candidature = page reellement lisible
+# Presence of a real apply button = page really readable
 RX_POSTULER = re.compile(r"apply-button|jobs-apply-button|sign-up-modal__apply", re.I)
 
 OUVERT, FERME, INCONNU = "ouvert", "ferme", "inconnu"
@@ -86,39 +84,39 @@ def job_id(url):
 
 
 def etat(jid, client, essais=2):
-    """OUVERT / FERME / INCONNU. INCONNU protege : il n'entraine aucune suppression."""
+    """OUVERT / FERME / INCONNU. INCONNU protects: it leads to no deletion."""
     for n in range(essais):
         try:
             r = client.get(API.format(jid), headers=UA, timeout=15)
         except Exception:
             time.sleep(1.5 * (n + 1))
             continue
-        if r.status_code == 429:  # LinkedIn nous freine : on ralentit
+        if r.status_code == 429:  # LinkedIn slows us down: we slow down
             time.sleep(5 * (n + 1))
             continue
         if r.status_code == 404:
-            # l'annonce n'existe plus du tout — mais LinkedIn sert aussi des 404
-            # transitoires ; on ne supprime pas la-dessus, on le signale
+            # the posting no longer exists at all — but LinkedIn also serves transient
+            # 404s; we do not delete on that, we report it
             return INCONNU
         if r.status_code != 200:
             time.sleep(1.0)
             continue
         h = r.text
-        if len(h) < 200:  # reponse tronquee : on ne conclut pas
+        if len(h) < 200:  # truncated response: we do not conclude
             return INCONNU
         if RX_FERME.search(h):
             return FERME
-        # PIEGE : passe un certain volume, LinkedIn sert une variante « mur de
-        # connexion » IDENTIQUE pour une offre ouverte et une offre fermee — le
-        # marqueur de fermeture en est absent. Conclure « ouvert » sur cette
-        # page reviendrait a certifier une offre qu'on n'a pas pu lire.
+        # TRAP: past a certain volume, LinkedIn serves a "login wall"
+        # variant IDENTICAL for an open offer and a closed offer — the
+        # closing marker is missing from it. Concluding "open" on this
+        # page would amount to certifying an offer that could not be read.
         if RX_MUR.search(h) and not RX_POSTULER.search(h):
             return INCONNU
         return OUVERT
     return INCONNU
 
 
-ETAT = HERE / "_linkedin_etat.json"  # memoire des verifications (non versionne)
+ETAT = HERE / "_linkedin_etat.json"  # memory of the checks (not versioned)
 SUIVI = HERE / "suivi.json"  # candidatures : statut, note, date
 
 
@@ -128,7 +126,7 @@ def _oid_offre(offre):
 
 
 def _oids_suivis():
-    """Offres portant une trace de candidature. Intouchables."""
+    """Offers carrying a trace of application. Untouchable."""
     try:
         return set(importlib.import_module("jobhunter.stockage.suivi").charger(SUIVI))
     except (FileNotFoundError, ValueError):
@@ -143,7 +141,7 @@ def _memoire():
 
 
 def _frais(entree, jours):
-    """Une verification concluante de moins de `jours` jours est reutilisable."""
+    """A conclusive check less than `jours` days old can be reused."""
     if not entree or entree.get("etat") == INCONNU:
         return False
     try:
@@ -180,9 +178,9 @@ def main():
 
     import httpx
 
-    # En --dry on n'ecrit pas la queue : prendre le verrou d'ecriture ferait
-    # attendre 3 min derriere une generation de documents, pour rien. Les
-    # ecritures etant atomiques (tmp + replace), la lecture reste coherente.
+    # With --dry we do not write the queue: taking the write lock would make
+    # us wait 3 min behind a document generation, for nothing. The
+    # writes being atomic (tmp + replace), the read stays consistent.
     if not a.dry and not importlib.import_module("jobhunter.programmes.jutil").garder(QUEUE):
         return 3
 
@@ -194,8 +192,8 @@ def main():
         jid = job_id(o.get("url"))
         if jid:
             cibles.append((i, jid, o))
-    # Reutilise les verifications concluantes recentes : LinkedIn bride l'acces
-    # invite, donc chaque requete compte. On ne rejoue que l'indetermine.
+    # Reuses the recent conclusive checks: LinkedIn throttles guest
+    # access, so every request counts. We only replay the undetermined.
     memo = _memoire()
     res, a_faire = {}, []
     for i, jid, _ in cibles:
@@ -214,7 +212,7 @@ def main():
     coupe = 0
     with httpx.Client(follow_redirects=True) as client:
         if a.workers <= 1 or a.pause:
-            # marche lente : une requete a la fois, pause entre chaque
+            # slow walk: one request at a time, pause between each
             for n, (i, jid) in enumerate(a_faire, 1):
                 v = etat(jid, client)
                 res[i] = v
@@ -241,11 +239,11 @@ def main():
                         print(f"  … {n}/{len(a_faire)}")
     ETAT.write_text(json.dumps(memo, ensure_ascii=False, indent=1), encoding="utf-8")
 
-    # NE JAMAIS supprimer une offre a laquelle l'utilisateur a candidate. Une annonce
-    # ferme APRES qu'on y a postule : c'est meme le cas le plus frequent. Sans ce
-    # garde-fou, l'outil effacait en priorite les offres du suivi — la trace de la
-    # candidature devenait orpheline et disparaissait de l'app. C'est arrive pour
-    # de vrai (Volkswagen Financial Services, candidature du 11/07).
+    # NEVER delete an offer the user applied to. A posting
+    # closes AFTER one applied: it is even the most frequent case. Without this
+    # safeguard, the tool erased the tracked offers first — the trace of the
+    # application became orphaned and disappeared from the app. It happened
+    # for real (Volkswagen Financial Services, application of 11/07).
     fermes, proteges = [], 0
     suivis = _oids_suivis()
     for i, v in res.items():

@@ -28,7 +28,7 @@ def main():
         _travail(queue_io.charger(), a)
         return 0
     try:
-        # verrou + relecture FRAICHE dedans + ecriture atomique a la sortie
+        # lock + FRESH re-read inside it + atomic write on exit
         with queue_io.transaction() as q:
             _travail(q, a)
     except queue_io.VerrouIndisponible as e:
@@ -48,7 +48,7 @@ def _travail(q, a):
     changed = fit_changed = senior = 0
     dist = {}
     for x in q:
-        # exigences = poste + missions + profil + description (si dispo)
+        # requirements = job + missions + profile + description (if available)
         full = " ".join(str(x.get(k) or "") for k in ("poste", "missions", "profil", "description"))
         miss = " ".join(str(x.get(k) or "") for k in ("missions", "description"))
         prof = str(x.get("profil") or "")
@@ -61,7 +61,7 @@ def _travail(q, a):
             changed += 1
             if not a.dry:
                 x["ats_pct"] = new
-        # FIT recalculé avec critère EXPÉRIENCE (l'utilisateur junior : malus si N ans exigés)
+        # FIT recomputed with the EXPERIENCE criterion (junior user: penalty if N years are required)
         newfit, yrs, fin = fit_detail(full, x.get("poste", ""))
         oldfit = str(x.get("fit") or "")
         if str(newfit) != oldfit:
@@ -71,7 +71,7 @@ def _travail(q, a):
         if not a.dry:
             x["fit"] = newfit
             x["fit_fin"] = fin
-            x["exp_requise"] = yrs  # années d'expérience exigées (0 = non précisé)
+            x["exp_requise"] = yrs  # years of experience required (0 = not specified)
         if match_skills and not a.dry:
             try:
                 x["skills_match"] = len(

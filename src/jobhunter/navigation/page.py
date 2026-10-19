@@ -1,6 +1,6 @@
-"""Lecture d'une page : bandeau cookies (REFUS d'abord), analyse, attente du formulaire.
+"""Reading a page: cookie banner (REFUSE first), analysis, waiting for the form.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+Part of jobhunter.navigation (formerly Scripts/web_nav.py, phase 3.6).
 """
 
 from typing import Any
@@ -122,9 +122,9 @@ ANALYZE_JS = r"""
 """
 
 
-# Section "carrières / nous rejoindre" à atteindre depuis la home avant login/offre (FR/EN/DE/NL/IT/ES).
-# v5.1 : mots-clés étendus — graduate, apprenticeship, RH, our people, culture, etc.
-# v5.1 : negative lookahead global SUPPRIMÉ (faux négatifs). Exclusions faites dans _DEEP_CAREER_SCAN_JS.
+# "Careers / join us" section to reach from the home before login/offer (FR/EN/DE/NL/IT/ES).
+# v5.1: extended keywords — graduate, apprenticeship, HR, our people, culture, etc.
+# v5.1: global negative lookahead REMOVED (false negatives). Exclusions done in _DEEP_CAREER_SCAN_JS.
 CAREERS_RX = (
     r"(carri[eè]res?|nous rejoindre|rejoign(ez|dre)( ?-? ?nous| l'?[eé]quipe)?"
     r"|recrutement|recrute(ons?|ments?)?|recruiting|nos offres|offres? d'?emploi"
@@ -151,7 +151,7 @@ CAREERS_RX = (
 )
 
 
-# JS partagé : collecte tous les cliquables EN PERÇANT le shadow DOM (web components).
+# Shared JS: collects all the clickables, PIERCING the shadow DOM (web components).
 _DEEP_CLICKABLE = r"""
   const _deep=(root,acc)=>{
     root.querySelectorAll('a,button,[role=button],input[type=button],input[type=submit],[onclick],summary,div[class*="apply" i],div[class*="cta" i]').forEach(e=>acc.push(e));
@@ -163,13 +163,13 @@ _DEEP_CLICKABLE = r"""
 
 
 def pick_js(task: str) -> str:
-    """Le script qui repère, sur la page, le lien ou bouton correspondant à une tâche.
+    """The script that spots, on the page, the link or button matching a task.
 
     Args:
-        task: « register », « login », « apply » ou « careers ».
+        task: "register", "login", "apply" or "careers".
 
     Returns:
-        Le code JavaScript à évaluer dans la page.
+        The JavaScript code to evaluate in the page.
     """
     RX = {
         "register": r"(cr[eé][eé]?z? (un |mon |votre )?compte|nouveau compte|ouvrir un compte|s'?inscri(re|vez)|inscri(ption|vez)|s'?enregistr(er|ez)|enregistr(er|ez)|register|registrieren|konto erstellen|sign ?up|signup|create (an |your )?account|(cr[eé]e\w*|ouvrir) (un |mon |votre )?espace( candidat)?|cr[eé][eé]?z? mon profil|je m'?inscris|rejoign(ez|dre)|join us|devenir membre|pas (encore )?de compte|no account|don'?t have an account|nouvel utilisateur|new user)",
@@ -179,8 +179,8 @@ def pick_js(task: str) -> str:
     }
     NEVER = r"(envoyer ma candidature|soumettre ma candidature|submit application|confirmer et envoyer|valider (et )?envoyer|envoyer definitivement)"
     want = RX.get(task, RX["apply"])
-    # CAREERS_RX chevauche register (join us/rejoindre) ET apply (postuler/candidater/apply).
-    # Pas de pénalité croisée avec careers : sinon boutons Postuler/Inscription pénalisés.
+    # CAREERS_RX overlaps register (join us/rejoindre) AND apply (postuler/candidater/apply).
+    # No cross penalty with careers: otherwise Postuler/Inscription buttons get penalised.
     skip = {task}
     if task == "careers":
         skip.update(("register", "apply", "login"))
@@ -223,13 +223,13 @@ def pick_js(task: str) -> str:
 
 
 def dismiss_cookies(page: Any) -> Any:
-    """Ferme le bandeau de cookies en REFUSANT d'abord ce qui n'est pas nécessaire.
+    """Closes the cookie banner, REFUSING first what is not necessary.
 
     Args:
-        page: la page Playwright.
+        page: the Playwright page.
 
     Returns:
-        {done: ce qui a été fait} ; {done: "err"} si le script a échoué.
+        {done: what was done}; {done: "err"} if the script failed.
     """
     try:
         return page.evaluate(COOKIE_JS)
@@ -269,9 +269,9 @@ _OVERLAY_JS = r"""
 
 
 def dismiss_overlays(page: Any) -> Any:
-    """Ferme les widgets chat (Intercom/Drift/Zendesk/Crisp…) et modales non-essentielles qui interceptent les clics.
+    """Closes the chat widgets (Intercom/Drift/Zendesk/Crisp…) and non-essential modals that intercept clicks.
 
-    NE touche PAS aux bannières cookies/formulaires d'offre/auth.
+    Does NOT touch cookie banners/offer forms/auth.
     """
     try:
         return page.evaluate(_OVERLAY_JS)
@@ -280,13 +280,13 @@ def dismiss_overlays(page: Any) -> Any:
 
 
 def analyze(page: Any) -> Any:
-    """Analyse la page : type (formulaire, connexion, offre…), CAPTCHA, blocage.
+    """Analyses the page: type (form, login, offer…), CAPTCHA, block.
 
     Args:
-        page: la page Playwright.
+        page: the Playwright page.
 
     Returns:
-        Le diagnostic ; « other » sans CAPTCHA si l'analyse a échoué.
+        The diagnosis; "other" without CAPTCHA if the analysis failed.
     """
     try:
         return page.evaluate(ANALYZE_JS)
@@ -294,7 +294,7 @@ def analyze(page: Any) -> Any:
         return {"kind": "other", "captcha": False, "blocked": False}
 
 
-# #6 Wizbii/Meeschaert : form register détecté mais inputs rendus tard (React/Vue).
+# #6 Wizbii/Meeschaert: register form detected but inputs rendered late (React/Vue).
 _COUNT_VISIBLE_INPUTS_JS = r"""
 () => {
   const _deep=(root,acc)=>{root.querySelectorAll('input,textarea').forEach(e=>acc.push(e));root.querySelectorAll('*').forEach(e=>{if(e.shadowRoot)_deep(e.shadowRoot,acc);});return acc;};
@@ -310,9 +310,9 @@ _COUNT_VISIBLE_INPUTS_JS = r"""
 def wait_for_form(
     page: Any, min_inputs: int = 1, timeout_ms: int = 7000, timeout: int | None = None
 ) -> Any:
-    """Attend que les champs de saisie apparaissent (formulaire chargé dynamiquement).
+    """Waits for the input fields to appear (dynamically loaded form).
 
-    Retour nb d'inputs visibles (0 = jamais rendu).
+    Returns the number of visible inputs (0 = never rendered).
     """
     if timeout is not None:
         timeout_ms = timeout
@@ -335,14 +335,14 @@ def wait_for_form(
 
 
 def click_for_task(page: Any, task: str) -> Any:
-    """Clique le lien ou bouton qui mène à la tâche (jamais un bouton d'envoi).
+    """Clicks the link or button that leads to the task (never a send button).
 
     Args:
-        page: la page Playwright.
-        task: « register », « login », « apply » ou « careers ».
+        page: the Playwright page.
+        task: "register", "login", "apply" or "careers".
 
     Returns:
-        Le libellé cliqué, ou None si rien ne correspond.
+        The clicked label, or None if nothing matches.
     """
     try:
         r = page.evaluate(pick_js(task))

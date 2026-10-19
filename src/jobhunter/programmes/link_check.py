@@ -9,7 +9,7 @@ import requests
 
 sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console : TextIOWrapper
 
-# Phrases "offre morte" malgré HTTP 200 (FR/EN/DE) — soft 404 / expirée / pourvue
+# "dead offer" phrases despite HTTP 200 (FR/EN/DE) — soft 404 / expired / filled
 SOFT_DEAD_RX = re.compile(
     r"(page (introuvable|non trouv[eé]e|indisponible|n'existe (plus|pas))"
     r"|erreur 404|404 (not found|error|page)|not found"
@@ -43,7 +43,7 @@ def check(u):
         soft = None
         if r.status_code < 400:
             body = (r.text or "")[:60000]
-            # titre <title> + début du body (là où vivent les messages 404/expiré)
+            # <title> + start of the body (where the 404/expired messages live)
             m = re.search(r"<title[^>]*>(.*?)</title>", body, re.I | re.S)
             title = m.group(1) if m else ""
             scan = (title + " " + re.sub(r"<[^>]+>", " ", body))[:20000]
@@ -55,8 +55,8 @@ def check(u):
         return u, type(e).__name__, None
 
 
-# ── Intégration pipeline : check rapide d'une URL (HTTP HEAD) ──────────
-# Appelable depuis batch_comptes.py / run_pipeline.py avant goto.
+# ── Pipeline integration: quick check of a URL (HTTP HEAD) ──────────
+# Callable from batch_comptes.py / run_pipeline.py before goto.
 
 
 def quick_check(url: str, timeout: float = 8.0) -> dict:
@@ -64,10 +64,10 @@ def quick_check(url: str, timeout: float = 8.0) -> dict:
     Retour {live: bool, status, soft_dead: str|None, note: str}.
     Ne bloque pas le pipeline si réseau lent (timeout court)."""
     try:
-        # HEAD d'abord (léger)
+        # HEAD first (light)
         r = requests.head(url, headers=UA, timeout=timeout, allow_redirects=True)
         if r.status_code >= 500:
-            # HEAD peut être refusé — tenter GET
+            # HEAD may be refused — try GET
             r = requests.get(url, headers=UA, timeout=timeout, allow_redirects=True)
         status = r.status_code
     except requests.exceptions.Timeout:
@@ -89,7 +89,7 @@ def quick_check(url: str, timeout: float = 8.0) -> dict:
             "note": "anti-bot (probablement vivant)",
         }
 
-    # Soft-404 check sur le body (seulement si 200-299)
+    # Soft-404 check on the body (only if 200-299)
     soft = None
     if 200 <= status < 300:
         try:

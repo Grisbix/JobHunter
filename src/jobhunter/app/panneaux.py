@@ -1,6 +1,6 @@
-"""Panneaux : statistiques, acces aux sites, societes, sources, ajout d'offre par URL.
+"""Panels: statistics, site access, companies, sources, adding an offer by URL.
 
-Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
+Part of jobhunter.app (former JobHunter.pyw, phase 3.7)."""
 
 import importlib
 import json
@@ -47,10 +47,10 @@ from jobhunter.stockage import file as queue_io
 
 
 def _t_etat(etat: str) -> str:
-    """Un état de source (« ok — 3 offres », « refusé — pas avant le 14/11 ») traduit.
+    """A source state ("ok — 3 offres", "refusé — pas avant le 14/11"), translated.
 
-    Le verdict vient du catalogue ; la suite, faite de nombres et de dates, se traduit
-    mot à mot.
+    The verdict comes from the catalogue; the rest, made of numbers and dates, is
+    translated word for word.
     """
     tete, sep, reste = etat.partition(" — ")
     for mot in ("pas avant le", "offres", "offre", "vérifie-la"):
@@ -78,7 +78,7 @@ class PanneauxMixin:
     def _show_dash(self: "AppTypee") -> None:
         self._hide_all()
         if getattr(self, "_viewer_close", None):
-            self._viewer_close()  # déverrouille le pdf affiché
+            self._viewer_close()  # unlocks the displayed pdf
         self.dash.pack(fill="both", expand=True)
         self._nav_actif("offres")
 
@@ -119,8 +119,8 @@ class PanneauxMixin:
             cursor="hand2",
         ).pack(side="right", padx=24)
 
-        # Grille a colonnes egales : dix cartes cote a cote en pack() sortaient
-        # de la fenetre, et les trois dernieres (Entretien, Refus…) etaient coupees.
+        # Equal-column grid: ten cards side by side with pack() went
+        # out of the window, and the last three (Entretien, Refus…) were cut off.
         cards = CF(w, bg=WORK, plat=True)
         cards.pack(fill="x", padx=28, pady=(12, 4))
         w._cards = {}
@@ -156,13 +156,13 @@ class PanneauxMixin:
             ("bar", "Répartition", 520, "w"),
         ):
             tv.heading(k, text=_t(lbl))
-            tv.column(k, width=wd, anchor=anc, stretch=(k == "bar"))  # type: ignore[call-overload]  # typeshed veut un Literal pour anchor
+            tv.column(k, width=wd, anchor=anc, stretch=(k == "bar"))  # type: ignore[call-overload]  # typeshed wants a Literal for anchor
         tv.pack(fill="both", expand=True)
         tv.tag_configure("h", foreground=ACC, font=(_theme.FONT_UI, 13, "bold"))
         w._tv = tv
 
         def reload_() -> None:
-            # relit le DISQUE : le pipeline tourne en fond, self.offers peut être périmé
+            # re-reads the DISK: the pipeline runs in the background, self.offers may be stale
             try:
                 q = queue_io.charger(QUEUE)
             except Exception:
@@ -175,18 +175,18 @@ class PanneauxMixin:
                 )
             except Exception:
                 sv = {}
-            # Cle « s », pas « statut » : c'est ce qu'ecrivent _set_statut et
-            # suivi_io. Avec « statut », les cartes Postulé/Relancé/Entretien/
-            # Refus affichaient 0 alors que dix candidatures etaient suivies.
+            # Key "s", not "statut": it is what _set_statut and
+            # suivi_io write. With "statut", the Postulé/Relancé/Entretien/
+            # Refus cards showed 0 while ten applications were tracked.
             st = [str((v or {}).get("s") or "").lower() for v in sv.values()]
             ok = [
                 o for o in q if str(o.get("link_status") or "").upper() not in ("MORT", "EXPIREE")
             ]
 
-            # PRETES A ENVOYER = le seul chiffre qui decide d'une soiree.
-            # « fit >= 8 » seul est trompeur : une offre dont le CV ou la lettre
-            # n'existe plus SUR LE DISQUE ne peut pas etre envoyee, et la queue
-            # peut tres bien garder la reference d'un fichier efface.
+            # READY TO SEND = the only figure that decides an evening.
+            # "fit >= 8" alone is misleading: an offer whose CV or letter
+            # no longer exists ON DISK cannot be sent, and the queue
+            # may well keep the reference of a deleted file.
             def _fichier(u: Any) -> Any:
                 if not u:
                     return False
@@ -242,8 +242,8 @@ class PanneauxMixin:
                     d[v] = d.get(v, 0) + 1
                 return sorted(d.items(), key=lambda x: -x[1])
 
-            # Ce qui separe une offre bien notee d'une offre envoyable. Sans ce
-            # detail, « 487 a fit >= 8 » laisse croire que tout est pret.
+            # What separates a well-scored offer from a sendable one. Without this
+            # detail, "487 a fit >= 8" suggests that everything is ready.
             section(
                 "▶ Sur les offres a fit ≥ 8",
                 [
@@ -293,14 +293,14 @@ class PanneauxMixin:
         w.pack(fill="both", expand=True)
 
     def _acces_panel(self: "AppTypee") -> None:
-        """ACCÈS : ce dont chaque source de la collecte a besoin, et son dernier état mesuré.
+        """ACCESS: what each source of the collection needs, and its last measured state.
 
-        Deux onglets. « Collecte des offres » : accès libre ou clé d'API, et le verdict
-        de la dernière collecte de chaque source (`_rendement.jsonl`) — refus, limite,
-        rien à prendre ; on y saisit les clés et on y collecte une source seule.
-        « Connexions pour candidater » : les sites où l'on se connecte soi-même.
-        Aucune clé n'est relue ici : seule sa présence compte (jobhunter.cles_api), et
-        les mots de passe restent dans le gestionnaire de Chrome."""
+        Two tabs. "Collecte des offres": free access or API key, and the verdict of
+        each source's last collection (`_rendement.jsonl`) — refusal, limit, nothing
+        to take; keys are entered there and a single source can be collected there.
+        "Connexions pour candidater": the sites where one logs in oneself.
+        No key is read back here: only its presence counts (jobhunter.cles_api), and
+        passwords stay in Chrome's manager."""
         self._hide_all()
         if "acces" in self._panels:
             w = self._panels["acces"]
@@ -360,7 +360,7 @@ class PanneauxMixin:
         )
         choix.pack(anchor="w", padx=28, pady=(10, 4))
 
-        # ── Onglet 1 : la collecte ────────────────────────────────────────────
+        # ── Tab 1: the collection ─────────────────────────────────────────────
         col = CF(w, bg=WORK)
         pages[onglets[0]] = col
         CL(
@@ -420,7 +420,7 @@ class PanneauxMixin:
                 return
             e = etats[nom]
             if e.bloque:
-                # Un refus d'entrée s'arrête : pas de nouvel essai avant 30 jours (ADR 0004).
+                # A refused entry stops: no new attempt before 30 days (ADR 0004).
                 self._log(f"⛔ {_t(e.libelle)} : {_t_etat(e.etat)}\n")
                 return
             if nom in cles_api.CLES and not cles_api.presente(SCRIPTS, nom):
@@ -467,7 +467,7 @@ class PanneauxMixin:
             cursor="hand2",
         ).pack(side="left")
 
-        # ── Onglet 2 : les connexions pour candidater ─────────────────────────
+        # ── Tab 2: the logins for applying ────────────────────────────────────
         cnx = CF(w, bg=WORK)
         pages[onglets[1]] = cnx
         CL(
@@ -586,7 +586,7 @@ class PanneauxMixin:
         host = w._tv.item(sel[0], "values")[0]
         self.run_step([PY, "-m", "jobhunter.programmes.acces", "--open", host], f"Connexion {host}")
 
-    # sites d'OFFRES généraux (boards) — PAS des entreprises
+    # general JOB sites (boards) — NOT companies
     BOARD_HOSTS = (
         "linkedin",
         "indeed",
@@ -619,13 +619,13 @@ class PanneauxMixin:
             return F, []
 
     def _companies_panel(self: "AppTypee") -> None:
-        """ENTREPRISES : les flux réellement collectés et les offres de la file qui en viennent.
+        """COMPANIES: the feeds really collected and the queue's offers that come from them.
 
-        Une ligne par entreprise suivie, lue par son outil de recrutement (API publique :
-        `sources_config.json`) ou, à défaut, par son site carrière dans le navigateur
-        (`unique_domains.txt`). Les comptes viennent de jobhunter.app.inventaire : exacts,
-        par marqueur de source. Une URL collée est reconnue : un ATS lisible par API devient
-        un flux, un autre site va dans la liste lue par le navigateur."""
+        One row per followed company, read through its recruiting tool (public API:
+        `sources_config.json`) or, failing that, through its career site in the
+        browser (`unique_domains.txt`). The counts come from jobhunter.app.inventaire:
+        exact, by source marker. A pasted URL is recognised: an ATS readable through
+        an API becomes a feed, another site goes into the list read by the browser."""
         self._hide_all()
         if "companies" in self._panels:
             w = self._panels["companies"]
@@ -680,7 +680,7 @@ class PanneauxMixin:
             ("url", "Page", 340, "w"),
         ):
             tv.heading(k, text=_t(lbl))
-            tv.column(k, width=wd, anchor=anc, stretch=(k == "url"))  # type: ignore[call-overload]  # typeshed veut un Literal pour anchor
+            tv.column(k, width=wd, anchor=anc, stretch=(k == "url"))  # type: ignore[call-overload]  # typeshed wants a Literal for anchor
         tv.pack(fill="both", expand=True, padx=28, pady=18)
         tv.tag_configure("odd", background=ROW1)
         tv.tag_configure("even", background=ROW0)
@@ -787,7 +787,7 @@ class PanneauxMixin:
         def add() -> None:
             v = ent.get().strip()
             if not v.startswith("http"):
-                # Un nom : on le cherche dans les annuaires Lever, Ashby, Greenhouse.
+                # A name: it is searched in the Lever, Ashby, Greenhouse directories.
                 annuaire(v)
                 ent.delete(0, "end")
                 return
@@ -883,11 +883,11 @@ class PanneauxMixin:
             try:
                 return json.loads(CFG.read_text(encoding="utf-8"))
             except Exception:
-                # seed depuis les défauts du module
+                # seed from the module defaults
                 try:
                     from jobhunter import sources as js
 
-                    return {"keywords": list(js.KEYWORDS), "ats_slugs": dict(js.ATS_SLUGS)}  # type: ignore[attr-defined]  # KEYWORDS et ATS_SLUGS sont des valeurs paresseuses
+                    return {"keywords": list(js.KEYWORDS), "ats_slugs": dict(js.ATS_SLUGS)}  # type: ignore[attr-defined]  # KEYWORDS and ATS_SLUGS are lazy values
                 except Exception:
                     return {"keywords": [], "ats_slugs": {}}
 
@@ -938,7 +938,7 @@ class PanneauxMixin:
                 c["ats_slugs"][kind].remove(val)
             _save(c)
 
-        # ── tableau à colonnes : Type | Source | Offres trouvées | 🔗 Lien ──
+        # ── column table: Type | Source | Offers found | 🔗 Link ──
         self._hide_all()
         if "sources" in self._panels:
             w = self._panels["sources"]
@@ -985,7 +985,7 @@ class PanneauxMixin:
             ("url", "Lien", 420, "w"),
         ):
             tv.heading(k, text=_t(lbl))
-            tv.column(k, width=wd, anchor=anc, stretch=(k == "url"))  # type: ignore[call-overload]  # typeshed veut un Literal pour anchor
+            tv.column(k, width=wd, anchor=anc, stretch=(k == "url"))  # type: ignore[call-overload]  # typeshed wants a Literal for anchor
         tv.pack(fill="both", expand=True, padx=28, pady=18)
         tv.tag_configure("odd", background=ROW1)
         tv.tag_configure("even", background=ROW0)
@@ -1062,7 +1062,7 @@ class PanneauxMixin:
             it = tv.focus()
             if not it:
                 return
-            t, s, _n, u = tv.item(it)["values"]  # type: ignore[str-unpack]  # typeshed : values peut etre str ; ici toujours un tuple
+            t, s, _n, u = tv.item(it)["values"]  # type: ignore[str-unpack]  # typeshed: values may be str; here always a tuple
             dele(f"{t}: {u if t == 'board' else s}")
             self._log(f"－ retiré : {t}: {s}\n")
             reload()

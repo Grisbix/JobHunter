@@ -1,8 +1,8 @@
-"""La formule d'appel nominative du message (message_offre.appel), sans reseau.
+"""The message's named greeting (message_offre.appel), without network.
 
-Le champ `rh` porte une URL dans 413 offres sur 416 : un code qui le prendrait
-pour un nom ecrirait « Bonjour https://www.linkedin.com/search... ».
-Converti depuis Scripts/test_appel.py.
+The `rh` field carries a URL in 413 offers out of 416: code that took it
+for a name would write "Bonjour https://www.linkedin.com/search...".
+Converted from Scripts/test_appel.py.
 """
 
 import pytest
@@ -17,20 +17,20 @@ def a(rh, langue="fr", ton="sobre"):
 GENERIQUE_FR, GENERIQUE_EN = "Madame, Monsieur,", "Dear Sir or Madam,"
 
 APPELS = [
-    # les trois noms reels de la file
+    # the three real names of the queue
     ("Monsieur KEVIN SILVA PEREIRA", "fr", "sobre", "Monsieur Silva Pereira,"),
     ("Monsieur KEVIN SILVA PEREIRA", "en", "sobre", "Dear Mr Silva Pereira,"),
-    ("Madame Awa MOUSSA", "fr", "sobre", "Madame Moussa,"),  # les capitales = le patronyme
+    ("Madame Awa MOUSSA", "fr", "sobre", "Madame Moussa,"),  # capitals = the surname
     ("Madame Mélanie GIRARD", "fr", "sobre", "Madame Girard,"),
-    # particules : nobiliaires en bas, articles en haut (« De Gaulle » est une faute,
-    # « Le Pen » non)
+    # particles: nobiliary ones lowercase, articles capitalised ("De Gaulle" is a mistake,
+    # "Le Pen" is not)
     ("Monsieur JEAN-PIERRE DE LA TOUR", "fr", "sobre", "Monsieur de La Tour,"),
     ("Monsieur CHARLES DE GAULLE", "fr", "sobre", "Monsieur de Gaulle,"),
     ("Madame Marine LE PEN", "fr", "sobre", "Madame Le Pen,"),
     ("Mrs Sarah VAN DEN BERG", "fr", "sobre", "Madame van den Berg,"),
     ("M. Joao DOS SANTOS", "fr", "sobre", "Monsieur dos Santos,"),
     ("Mr PATRICK O'BRIEN", "en", "sobre", "Dear Mr O'Brien,"),
-    # ce qui N'EST PAS une personne (le cas le plus frequent)
+    # what is NOT a person (the most frequent case)
     ("https://www.linkedin.com/search/results/people/?keywords=RH", "fr", "sobre", GENERIQUE_FR),
     ("https://www.linkedin.com/search/results/people/?keywords=RH", "en", "sobre", GENERIQUE_EN),
     ("", "fr", "sobre", GENERIQUE_FR),
@@ -38,14 +38,14 @@ APPELS = [
     ("Talent Acquisition Team", "en", "sobre", GENERIQUE_EN),
     ("Direction des Ressources Humaines", "en", "sobre", GENERIQUE_EN),
     ("recrutement@societe.fr", "en", "sobre", GENERIQUE_EN),
-    # le genre ne se devine pas d'un prenom ; l'anglais s'adresse au nom complet
+    # gender cannot be guessed from a first name; English addresses the full name
     ("Kevin Silva Pereira", "fr", "sobre", GENERIQUE_FR),
     ("Kevin Silva Pereira", "en", "sobre", "Dear Kevin Silva Pereira,"),
-    # le ton detendu garde sa forme
+    # the relaxed tone keeps its form
     ("", "fr", "detente", "Bonjour,"),
     ("Monsieur KEVIN SILVA PEREIRA", "fr", "detente", "Monsieur Silva Pereira,"),
-    # plusieurs destinataires dans le meme champ (Mirova : « a Louis Mac Arthur et
-    # Clement Lebrun » etait pris pour UN patronyme)
+    # several recipients in the same field (Mirova: "a Louis Mac Arthur et
+    # Clement Lebrun" was taken for ONE surname)
     (
         "Monsieur Louis Mac Arthur et Monsieur Clément Lebrun",
         "fr",
@@ -71,11 +71,11 @@ APPELS = [
         "sobre",
         "Monsieur de Gaulle, Madame Le Pen,",
     ),
-    # un morceau muet est ECARTE, pas propage (« Monsieur Et Marie Dupont »)
+    # a silent chunk is DROPPED, not propagated ("Monsieur Et Marie Dupont")
     ("Monsieur Jean et Marie Dupont", "fr", "sobre", "Monsieur Jean,"),
     ("Monsieur Louis Mac Arthur / Service Recrutement", "fr", "sobre", "Monsieur Mac Arthur,"),
     ("Service Recrutement et Direction RH", "fr", "sobre", GENERIQUE_FR),
-    # l'URL se teste AVANT la decoupe : ses barres obliques sont un separateur
+    # the URL is tested BEFORE splitting: its slashes are a separator
     ("https://www.linkedin.com/search/results/people/?keywords=RH", "fr", "sobre", GENERIQUE_FR),
 ]
 
@@ -103,7 +103,7 @@ def test_patronyme(brut, attendu):
     assert _patronyme(brut) == attendu
 
 
-# ── nom absent de l'annonce : pas nomme (2026-10-07) ───────────────────────────
+# ── name absent from the posting: not named (2026-10-07) ───────────────────────────
 @pytest.mark.parametrize(
     ("rh", "texte", "attendu"),
     [
@@ -114,7 +114,7 @@ def test_patronyme(brut, attendu):
             "Madame Audrey Durand",
         ),
         ("Monsieur Hélène Dupré", "écrire à M. Dupre", "Monsieur Hélène Dupré"),  # accents
-        ("Madame X", "Madame, Monsieur", ""),  # la civilite seule ne compte pas
+        ("Madame X", "Madame, Monsieur", ""),  # the title of address alone does not count
     ],
 )
 def test_nom_dans_offre(rh, texte, attendu):

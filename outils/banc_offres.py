@@ -1,10 +1,10 @@
-"""Offres FICTIVES et deterministes pour le banc de non-regression.
+"""FICTITIOUS, deterministic offers for the non-regression bench.
 
-Chaque offre combine un intitule, une description et un lieu, choisis pour
-traverser les decisions du moteur : plafond ESG, finance classique, vetos de
-metier, seniorite, etudiant, outils techniques, langue de redaction et langue
-exigee, zones et pays, contrats. Aucune donnee reelle : les societes sont
-inventees et les textes ecrits pour l'occasion.
+Each offer combines a title, a description and a location, chosen to go through
+the engine's decisions: ESG cap, classic finance, job vetoes, seniority, student,
+technical tools, writing language and required language, zones and countries,
+contracts. No real data: the companies are made up and the texts written for the
+occasion.
 """
 
 import itertools
@@ -60,7 +60,7 @@ DESCRIPTIONS = [
     "Fictive Bank is looking for an analyst to join its corporate finance team: financial "
     "modelling, valuation (DCF, multiples), credit analysis, budgeting and reporting to "
     "management. Excel and PowerPoint required, VBA a plus. 0-2 years of experience.",
-    # redigee en neerlandais
+    # written in Dutch
     "Wij zoeken een analist voor ons team duurzaam beleggen. Je analyseert de ESG-prestaties "
     "van bedrijven en ondersteunt de rapportage. Je hebt een masterdiploma en je spreekt "
     "vloeiend Nederlands en Engels. Wij bieden een uitdagende baan in een groeiend team.",
@@ -83,7 +83,7 @@ DESCRIPTIONS = [
     "You will build data pipelines with Python, Spark, Airflow, Kubernetes, Terraform and "
     "dbt, deploy services on AWS with Docker, and maintain CI/CD with GitLab for our ESG "
     "data platform.",
-    # presentation d'entreprise seule
+    # company presentation only
     "Fictive Group is a global leader in its field, present in 40 countries with 20,000 "
     "employees. We believe in diversity and inclusion. Join us and shape the future.",
     # allemand
@@ -125,7 +125,7 @@ SOCIETES = [
 
 
 def offres():
-    """Liste deterministe d'offres au format de la file (apply_queue.json)."""
+    """Deterministic list of offers in the queue format (apply_queue.json)."""
     out = []
     for i, (titre, desc) in enumerate(itertools.product(INTITULES, DESCRIPTIONS)):
         out.append(

@@ -1,6 +1,6 @@
-"""Actions sur les offres : statut, ecarter, supprimer (avec corbeille), postuler (clic humain).
+"""Actions on offers: status, set aside, delete (with recycle bin), apply (human click).
 
-Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
+Part of jobhunter.app (former JobHunter.pyw, phase 3.7)."""
 
 import datetime
 import json
@@ -29,8 +29,8 @@ class ActionsMixin:
         if not o:
             return
         oid = self._oid(o)
-        # On repart de l'entree TELLE QU'ELLE EST SUR LE DISQUE, pas de la copie
-        # memoire : une note ou une relance ajoutee entre-temps doit survivre.
+        # We start again from the entry AS IT IS ON DISK, not from the in-memory
+        # copy: a note or a follow-up added in the meantime must survive.
         avant = dict(suivi_io.charger(_commun.SUIVI).get(oid, {}))
         rec = dict(avant)
         if statut:
@@ -45,10 +45,10 @@ class ActionsMixin:
         self.refresh_table()
 
     def _pas_interesse(self: "AppTypee", o: Any) -> None:
-        """Suppr / bouton / clic droit : l'offre sort du tableau, reste en file.
+        """Del / button / right click: the offer leaves the table, stays in the queue.
 
-        Le curseur passe a la ligne suivante AVANT le rafraichissement : sinon
-        il retombe en tete de tableau et chaque offre triee coute un defilement.
+        The cursor moves to the next row BEFORE the refresh: otherwise it falls back
+        to the top of the table and each sorted offer costs a scroll.
         """
         if not o:
             self._log("Sélectionne d'abord une offre.\n")
@@ -75,7 +75,7 @@ class ActionsMixin:
                 return
 
     def _pas_interesse_checked(self: "AppTypee") -> None:
-        """Toutes les offres cochees d'un coup. Un seul Ctrl+Z les rend toutes."""
+        """All the ticked offers at once. A single Ctrl+Z restores them all."""
         oids = [k for k in self.checked if self._find_by_oid(k)]
         if not oids:
             self._log("Coche d'abord des offres (colonne ☐).\n")
@@ -83,7 +83,7 @@ class ActionsMixin:
         geste: list[Any] = []
         jour = datetime.date.today().isoformat()
 
-        def _f(s: Any) -> None:  # UNE transaction : verrou, relecture, ecriture
+        def _f(s: Any) -> None:  # ONE transaction: lock, re-read, write
             geste.clear()
             for oid in oids:
                 avant = dict(s.get(oid, {}))
@@ -108,7 +108,7 @@ class ActionsMixin:
         self._log(f"⊖ {len(geste)} offre(s) « pas intéressé » — masquées, Ctrl+Z pour annuler.\n")
 
     def _annuler_dernier(self: "AppTypee") -> None:
-        """Ctrl+Z : remet le suivi du dernier geste tel qu'il etait avant."""
+        """Ctrl+Z: puts the tracking of the last action back as it was before."""
         if not self._annuler:
             self._log("Rien à annuler.\n")
             return
@@ -170,8 +170,8 @@ class ActionsMixin:
         except Exception as ex:
             self._log(f"! écriture sélection KO: {ex}\n")
             return
-        # Panneau Candidatures : le programme remplit et s'arrete sur Envoyer, l'utilisateur
-        # clique dans Chrome puis « J'ai envoyé » ; plus de console (2.2.0).
+        # Applications panel: the program fills in and stops on Send, the user
+        # clicks in Chrome then "J'ai envoyé"; no console any more (2.2.0).
         self._candidater(SEL, len(sel))
 
     def _find_by_oid(self: "AppTypee", oid: Any) -> Any:
@@ -223,10 +223,10 @@ class ActionsMixin:
         for s in ("à postuler", "à vérifier", "postulé", "relancé", "entretien", "refus"):
             m.add_command(
                 label=f"{ST_EMOJI.get(s, '')} {s}",
-                command=lambda s=s: self._set_statut(o, s),  # type: ignore[misc]  # lambda a parametre par defaut (capture de boucle)
+                command=lambda s=s: self._set_statut(o, s),  # type: ignore[misc]  # lambda with a default parameter (loop capture)
             )
-        # « mauvaise » a part, apres un separateur : ce n'est pas une etape du
-        # parcours de candidature mais un jugement sur l'offre elle-meme.
+        # "mauvaise" apart, after a separator: it is not a step of the
+        # application journey but a judgement on the offer itself.
         m.add_separator()
         m.add_command(
             label=f"{ST_EMOJI['mauvaise']} mauvaise (offre sans intérêt)",
@@ -244,7 +244,7 @@ class ActionsMixin:
             m.grab_release()
 
     def _open_offer(self: "AppTypee", o: Any) -> None:
-        """Ouvre l'URL de l'offre ; sinon recherche web (entreprise + poste)."""
+        """Opens the offer's URL; otherwise a web search (company + job)."""
         if not o:
             return
         u = o.get("url") or ""
@@ -256,8 +256,8 @@ class ActionsMixin:
         if not marque:
             self._log(f"→ {u[:78]}" + chr(10))
             return
-        # Sans ce message on croit l'app cassee : elle ouvre une page
-        # d'accueil alors qu'on attendait une offre.
+        # Without this message one thinks the app is broken: it opens a home
+        # page when an offer was expected.
         quoi = "page de resultats" if marque == "≡" else "page carrieres / accueil"
         mort = " — le lien direct etait mort" if o.get("url_orig") else ""
         self._log(
@@ -327,15 +327,15 @@ class ActionsMixin:
             pass
 
     def _ecarter_checked(self: "AppTypee") -> None:
-        """Écarte les offres cochées AVEC un motif, et retient le refus.
+        """Sets the ticked offers aside WITH a reason, and remembers the refusal.
 
-        Supprimer ne suffit pas : le scan retrouve l'offre à la source et la
-        réajoute le lendemain. Ici le refus est mémorisé dans exclusions.json,
-        que merge_into_queue consulte avant d'ajouter quoi que ce soit.
+        Deleting is not enough: the scan finds the offer at the source again and
+        re-adds it the next day. Here the refusal is stored in exclusions.json,
+        which merge_into_queue checks before adding anything.
 
-        Le motif n'est pas un ornement. Un refus sur une offre à fit élevé est
-        un désaccord entre le score et le jugement de l'utilisateur — c'est ce que lit
-        `python JobHunter.pyw exclusions` pour montrer ce que la notation rate.
+        The reason is not decoration. A refusal on a high-fit offer is a
+        disagreement between the score and the user's judgement — that is what
+        `python JobHunter.pyw exclusions` reads to show what the scoring misses.
         """
         oids = set(self.checked)
         if not oids:
@@ -358,8 +358,8 @@ class ActionsMixin:
             except Exception:
                 fresh = list(self.offers)
             vises = [o for o in fresh if self._oid(o) in oids]
-            # On enregistre AVANT de retirer : si l'écriture de la file échoue,
-            # mieux vaut une exclusion en trop qu'une offre écartée sans motif.
+            # We record BEFORE removing: if writing the queue fails,
+            # better one exclusion too many than an offer set aside without a reason.
             n_exc = exclusions.ajouter(vises, motif)
             restant = [o for o in fresh if self._oid(o) not in oids]
             retirees = len(fresh) - len(restant)
@@ -379,13 +379,13 @@ class ActionsMixin:
         )
 
     def _demander_motif(self: "AppTypee", n: Any) -> Any:
-        """Petite boîte : motifs fréquents en boutons, plus un champ libre.
+        """Small dialog: frequent reasons as buttons, plus a free field.
 
-        Rend le motif choisi, ou None si l'utilisateur annule.
+        Returns the chosen reason, or None if the user cancels.
 
-        Parente = self.root. Elle etait `self`, l'objet App, qui n'est pas un
-        widget : Toplevel(self) levait a chaque clic et « Écarter » ne
-        s'ouvrait jamais — l'exception partait dans le journal de panne.
+        Parent = self.root. It used to be `self`, the App object, which is not a
+        widget: Toplevel(self) raised on every click and "Écarter" never
+        opened — the exception went to the crash log.
         """
         try:
             from jobhunter.programmes import exclusions
@@ -458,7 +458,7 @@ class ActionsMixin:
         CB(barre, text="Écarter", command=lambda: prendre(e.get().strip() or None), bg=DEL).pack(
             side="right", padx=8
         )
-        # grab APRES l'affichage : sur Windows, un grab_set sur une fenetre pas
+        # grab AFTER display: on Windows, a grab_set on a window not
         # encore visible echoue (« grab failed: window not viewable »).
         dlg.after(80, lambda: (dlg.grab_set(), e.focus_set()))
         self.root.wait_window(dlg)
@@ -467,14 +467,14 @@ class ActionsMixin:
     CORBEILLE = SCRIPTS / "_corbeille"
 
     def _delete_checked(self: "AppTypee") -> None:
-        """Supprime les offres cochées de apply_queue.json, après copie en corbeille.
+        """Deletes the ticked offers from apply_queue.json, after a copy to the recycle bin.
 
-        La boîte promettait « récupérable via git ». C'était faux le jour où je
-        l'ai vérifié : le dernier commit de la file datait de la veille et
-        424 offres du disque n'existaient dans aucun commit — dont les 428
-        arrivées ce jour-là. Supprimer l'une d'elles la perdait pour de bon.
-        On écrit donc une copie horodatée avant de retirer quoi que ce soit ;
-        la promesse porte maintenant sur un fichier qui existe vraiment.
+        The dialog promised "recoverable via git". That was false the day I checked
+        it: the last commit of the queue was from the day before and 424 offers on
+        disk existed in no commit — including the 428 that arrived that day.
+        Deleting one of them lost it for good. So a timestamped copy is written
+        before removing anything; the promise now rests on a file that really
+        exists.
         """
         oids = set(self.checked)
         if not oids:
@@ -490,16 +490,16 @@ class ActionsMixin:
             ).format(n=len(oids)),
         ):
             return
-        # VERROU. Relire le disque juste avant d'ecrire REDUIT la fenetre de course
-        # mais ne la ferme pas : un job de fond qui ecrit entre cette relecture et
-        # notre ecriture voit son travail efface. L'app etait le SEUL des 14
-        # ecrivains de la queue a ne pas prendre le verrou.
+        # LOCK. Re-reading the disk just before writing NARROWS the race window
+        # but does not close it: a background job that writes between this re-read and
+        # our write sees its work erased. The app was the ONLY one of the 14
+        # writers of the queue not to take the lock.
         if not self._verrou_queue(True):
             self._log("✗ un autre programme modifie la file — réessaie dans un instant.\n")
             return
         try:
-            # état frais : les jobs de fond ont pu enrichir la queue depuis le
-            # dernier chargement — sinon on écraserait leurs modifs
+            # fresh state: the background jobs may have enriched the queue since the
+            # last load — otherwise we would overwrite their changes
             try:
                 fresh = queue_io.charger(QUEUE)
             except Exception:
@@ -508,10 +508,10 @@ class ActionsMixin:
             partantes = [o for o in fresh if self._oid(o) in oids]
             fresh = [o for o in fresh if self._oid(o) not in oids]
             removed = before - len(fresh)
-            # LA COPIE D'ABORD. Si l'écriture de la file échoue ensuite, on a une
-            # corbeille en trop ; dans l'autre ordre, on aurait des offres
-            # supprimées sans copie. `charger()` a réinjecté les descriptions,
-            # elles partent donc avec.
+            # THE COPY FIRST. If writing the queue then fails, we have one recycle bin
+            # too many; in the other order, we would have offers
+            # deleted without a copy. `charger()` re-injected the descriptions,
+            # so they go with them.
             sauvegarde = ""
             try:
                 self.CORBEILLE.mkdir(parents=True, exist_ok=True)
@@ -522,8 +522,8 @@ class ActionsMixin:
                 self._log(f"! copie de sauvegarde KO ({ex}) — suppression ANNULÉE.\n")
                 return
             try:
-                # sauver() ressort les descriptions vers descriptions.json ;
-                # _jwrite les réécrirait dans la file et annulerait la séparation.
+                # sauver() moves the descriptions out to descriptions.json;
+                # _jwrite would write them back into the queue and undo the separation.
                 queue_io.sauver(fresh, QUEUE)
             except Exception as ex:
                 self._log(f"! écriture queue KO: {ex}\n")
@@ -531,37 +531,37 @@ class ActionsMixin:
         finally:
             self._verrou_queue(False)
         self.checked.clear()
-        self.load_offers()  # recharge l'état frais
+        self.load_offers()  # reloads the fresh state
         self._log(
             f"🗑 {removed} offre(s) supprimée(s) — copie dans Scripts/_corbeille/{sauvegarde}\n"
         )
 
-    # ── visionneuse CV & LETTRES : panneau INTÉGRÉ (remplace le dashboard, Retour) ──
-    # PDF → PyMuPDF (toutes les pages EMPILÉES, molette = dérouler en entier)
-    # DOCX/TXT → texte extrait (python-docx) dans un panneau scrollable
+    # ── CV & LETTERS viewer: BUILT-IN panel (replaces the dashboard, Back) ──
+    # PDF → PyMuPDF (all the pages STACKED, mouse wheel = scroll all the way)
+    # DOCX/TXT → extracted text (python-docx) in a scrollable panel
     @staticmethod
     def _verrou_queue(prendre: Any, _attente: Any = 20) -> Any:
-        """Prend / rend le verrou inter-processus de la queue. True si obtenu.
+        """Takes / releases the inter-process lock of the queue. True if obtained.
 
-        Attente courte (20 s) : c'est une action interactive, mieux vaut dire
-        « reessaie » que figer la fenetre 3 minutes.
+        Short wait (20 s): this is an interactive action, better to say
+        "try again" than to freeze the window for 3 minutes.
         """
         try:
             from jobhunter.programmes import jutil
         except Exception:
-            return True  # jutil introuvable : on n'empeche pas d'agir
+            return True  # jutil not found: we do not prevent acting
         try:
             if prendre:
                 return jutil.prendre_verrou(QUEUE, attente=_attente)
             jutil.rendre_verrou(QUEUE)
             return True
         except Exception:
-            # UNE PANNE DU VERROU N'EST PAS UN FEU VERT. Ce cas rendait True et
-            # l'action destructive continuait sans protection — l'inverse de ce
-            # que le verrou existe pour empecher. Rendre la main est sans
-            # risque : l'appelant affiche « reessaie ». Le cas « jutil
-            # introuvable » ci-dessus reste permissif, lui : sans Scripts/
-            # l'app n'a de toute facon pas de file a proteger.
+            # A LOCK FAILURE IS NOT A GREEN LIGHT. This case returned True and
+            # the destructive action went on without protection — the opposite of what
+            # the lock exists to prevent. Giving control back carries no
+            # risk: the caller displays "try again". The "jutil
+            # not found" case above stays permissive: without Scripts/
+            # the app has no queue to protect anyway.
             return not prendre
 
     @staticmethod

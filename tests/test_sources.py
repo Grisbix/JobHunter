@@ -1,8 +1,8 @@
-"""Arbitrage des doublons entre sources, lexiques et filtre d'entree (job_sources, scrape_jobs).
+"""Arbitration of duplicates between sources, lexicons and entrance filter (job_sources, scrape_jobs).
 
-Une meme annonce parait souvent sur LinkedIn ET sur un vrai site d'emploi ;
-LinkedIn est le pire des deux, et la premiere source vue gagnait au hasard de
-l'ordre des scans. Converti depuis Scripts/test_sources.py.
+The same posting often appears on LinkedIn AND on a real job site;
+LinkedIn is the worse of the two, and the first source seen won at the whim of
+the scan order. Converted from Scripts/test_sources.py.
 """
 
 import json
@@ -20,7 +20,7 @@ IND = "https://fr.indeed.com/viewjob?jk=x"
 ATS = "https://boards.greenhouse.io/o/jobs/1"
 
 
-# ── classement des sources ─────────────────────────────────────────────────────
+# ── ranking of sources ─────────────────────────────────────────────────────
 @pytest.mark.parametrize(
     ("url", "attendu"),
     [
@@ -65,10 +65,10 @@ def test_ordre_des_sources(meilleure, pire):
     assert rang_source(meilleure) > rang_source(pire)
 
 
-# ── promotion reelle dans merge_into_queue ─────────────────────────────────────
+# ── real promotion in merge_into_queue ─────────────────────────────────────
 @pytest.fixture
 def file_vide(tmp_path, monkeypatch):
-    """File jetable ; les fusions ne lisent pas les rejets reels du tri."""
+    """Throwaway queue; the merges do not read the sort's real rejections."""
     q = tmp_path / "q.json"
     q.write_text("[]", encoding="utf-8")
     monkeypatch.setattr(J, "QUEUE", q)
@@ -131,7 +131,7 @@ def test_canal_manuel_pour_un_board(promue_par_wtj):
 
 @pytest.fixture
 def linkedin_ensuite(promue_par_wtj):
-    """LinkedIn ne doit JAMAIS ecraser une meilleure source."""
+    """LinkedIn must NEVER overwrite a better source."""
     r = fusion([oderis(LI)])
     return r, lire(promue_par_wtj[0])
 
@@ -158,9 +158,9 @@ def test_canal_auto_pour_une_entreprise(ats_ensuite):
     assert ats_ensuite[0]["canal"] == "auto"
 
 
-# ── enrichissement DANS LE MEME lot ────────────────────────────────────────────
-# `--all` enchaine les sources : la meme annonce arrive plusieurs fois dans UN
-# appel. La promotion et la description s'ecrivaient sur un dict orphelin.
+# ── enrichment IN THE SAME batch ────────────────────────────────────────────
+# `--all` chains the sources: the same posting arrives several times in ONE
+# call. The promotion and the description were written on an orphan dict.
 LOT = [
     J._mk("Analyste ESG", LI, "Amundi", "Paris, France", source="linkedin-search"),
     J._mk(
@@ -210,9 +210,9 @@ def test_ordre_inverse_aucune_retrogradation(ordre_inverse):
     assert ordre_inverse[0]["promus"] == 0
 
 
-# ── les deux listes de mots-cles ne divergent pas ──────────────────────────────
-# title_ok = lexique LARGE et mot METIER : un mot present dans l'un et absent de
-# l'autre fait jeter l'offre en silence (« CSRD » etait demande a LinkedIn puis jete).
+# ── the two keyword lists do not diverge ──────────────────────────────
+# title_ok = BROAD lexicon and PROFESSION word: a word present in one and absent from
+# the other silently throws the offer away ("CSRD" was asked of LinkedIn then thrown away).
 @pytest.mark.parametrize(
     "mot",
     [
@@ -261,8 +261,8 @@ def test_mot_passe_le_lexique_large(mot):
     assert matches_esg_finance(mot)
 
 
-# ── le filtre d'entree de scrape_jobs ──────────────────────────────────────────
-# « h/f » est dans le lexique large : seul, il acceptait boucher, plombier, serveur.
+# ── scrape_jobs' entrance filter ──────────────────────────────────────────
+# "h/f" is in the broad lexicon: alone, it accepted butcher, plumber, waiter.
 @pytest.mark.parametrize(
     ("titre", "attendu"),
     [
@@ -288,9 +288,9 @@ def test_offre_retenue(titre, attendu):
     assert offre_retenue(titre) is attendu
 
 
-# ── le garde-fou \b couvre TOUS les motifs ─────────────────────────────────────
+# ── the \b safeguard covers ALL patterns ─────────────────────────────────────
 def test_au_moins_25_motifs_compiles():
-    # les motifs vivent dans les sous-modules de jobhunter.sources (phase 3.4)
+    # the patterns live in the submodules of jobhunter.sources (phase 3.4)
     assert len(J._motifs()) >= 25
 
 
@@ -308,7 +308,7 @@ def test_motif_corrompu_detecte(monkeypatch, nom, corrompu):
         J._verifier_motifs()
 
 
-# ── par defaut, le monde entier entre ──────────────────────────────────────────
+# ── by default, the whole world gets in ──────────────────────────────────────────
 def test_monde_actif_par_defaut():
     assert J.MONDE is True
 
@@ -328,8 +328,8 @@ def test_le_monde_entre(lieu):
     assert en_france(lieu)
 
 
-# ── avec --france, le filtre trie toujours juste ───────────────────────────────
-# Un flux ATS porte le nom de la societe, pas son pays : seul le LIEU tranche.
+# ── with --france, the filter still sorts right ───────────────────────────────
+# An ATS feed carries the company's name, not its country: only the PLACE decides.
 @pytest.mark.parametrize(
     ("lieu", "attendu"),
     [
@@ -351,7 +351,7 @@ def test_le_monde_entre(lieu):
         ("Frankfurt am Main, Hessen, Deutschland", False),
         ("de", False),
         ("Casablanca", False),
-        # passaient a tort : aucun code d'Etat americain, et l'inconnu etait accepte
+        # wrongly passed: no American state code, and the unknown was accepted
         ("Reston, VA", False),
         ("Aurora, CO", False),
         ("Crane, IN", False),

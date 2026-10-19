@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""fix_letters.py — Réhabilite les lettres existantes (Lettres/Par_offre) :
-  1. JUSTIFIE le corps + active la CÉSURE auto (texte justifié sans trous/rivières)
-  2. adoucit les formules trop agressives de l'ancien générateur
-  3. régénère les PDF jumeaux (LibreOffice)
+"""fix_letters.py — Restores the existing letters (Lettres/Par_offre):
+  1. JUSTIFIES the body + turns on automatic HYPHENATION (justified text without gaps/rivers)
+  2. softens the overly aggressive formulas of the old generator
+  3. regenerates the twin PDFs (LibreOffice)
 
-Idempotent. Run : python JobHunter.pyw fix_letters [--dry] [--no-pdf]"""
+Idempotent. Run: python JobHunter.pyw fix_letters [--dry] [--no-pdf]"""
 
 import argparse
 import subprocess
@@ -29,7 +29,7 @@ SOFFICE = [
     r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
 ]
 
-# formules agressives → version posée (préserve la suite de la phrase)
+# aggressive formulas → calm version (keeps the rest of the sentence)
 SOFTEN = [
     (
         "Concrètement, je peux mobiliser sans délai : ",
@@ -39,7 +39,7 @@ SOFTEN = [
     ("recoupent directement ce que j'ai pratiqué", "font écho à ces expériences"),
     ("Vivement intéressé par le poste", "Très intéressé par le poste"),
 ]
-# lignes à ne PAS justifier (en-têtes, signature, objet…)
+# lines NOT to justify (headers, signature, subject…)
 from jobhunter import profil as _P
 
 _ID = _P.identite()
@@ -66,7 +66,7 @@ def fix_doc(path, dry=False):
     except Exception:
         return False
     changed = False
-    # 1) césure auto
+    # 1) automatic hyphenation
     try:
         s = doc.settings.element
         if s.find(qn("w:autoHyphenation")) is None:
@@ -86,7 +86,7 @@ def fix_doc(path, dry=False):
                     if old in r.text:
                         r.text = r.text.replace(old, new)
                         changed = True
-        # 1b) justification du corps (pas les en-têtes/signature courts)
+        # 1b) justification of the body (not the short headers/signature)
         if (
             len(t) > 90
             and not any(k in low for k in NO_JUST)

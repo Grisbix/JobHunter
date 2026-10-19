@@ -1,13 +1,13 @@
-"""L'application bureau (ancien JobHunter.pyw, phase 3.7 du plan).
+"""The desktop application (former JobHunter.pyw, phase 3.7 of the plan).
 
-commun     chemins, statuts, colonnes du tableau, etapes et maintenance
-theme      couleurs, polices, widgets de base
-fenetre    App, assemblage des mixins ; main()
-tableau, donnees, fiche, actions, panneaux, detail, execution : un mixin par domaine
+commun     paths, statuses, table columns, steps and maintenance
+theme      colours, fonts, basic widgets
+fenetre    App, assembly of the mixins; main()
+tableau, donnees, fiche, actions, panneaux, detail, execution: one mixin per domain
 
-FACADE (jobhunter._facade) : le paquet voit les noms de ses sous-modules (`app.App`,
-`app.COLS`) ; remplacer `app.SUIVI` atteint le module qui le definit. Charger le paquet
-lit le profil : le lanceur appelle `jobhunter.accueil.assurer_profil()` d'abord.
+FACADE (jobhunter._facade): the package sees the names of its submodules (`app.App`,
+`app.COLS`); replacing `app.SUIVI` reaches the module that defines it. Loading the
+package reads the profile: the launcher calls `jobhunter.accueil.assurer_profil()` first.
 """
 
 from jobhunter import _facade

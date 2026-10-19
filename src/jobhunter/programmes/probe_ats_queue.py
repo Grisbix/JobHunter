@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
-"""probe_ats_queue.py — Quelles entreprises de la file exposent un flux ATS lisible ?
+"""probe_ats_queue.py — Which companies of the queue expose a readable ATS feed?
 
-POURQUOI. Remonter au site de l'employeur par navigation ne marche pas : mesure
-0 sur 27 (mesure de l'ancien offres_depuis_site, retire en 2.7). Les API ATS, elles, rendent du JSON avec
-l'URL directe de l'annonce ET sa description, sans navigateur ni anti-bot.
+WHY. Going up to the employer's site through navigation does not work: measured 0 out
+of 27 (measurement of the old offres_depuis_site, removed in 2.7). The ATS APIs, on
+the other hand, return JSON with the posting's direct URL AND its description, without
+a browser or anti-bot.
 
-Ce programme part des entreprises DEJA dans la queue — pas d'une liste devinee
-comme probe_ats.py — et compte les offres qui passent le filtre de pertinence
-(`job_sources.title_ok`). Un flux de 1120 offres dont aucune ne correspond au
-profil ne vaut rien : c'est le nombre APRES filtre qui decide.
+This program starts from the companies ALREADY in the queue — not from a guessed list
+like probe_ats.py — and counts the offers that pass the relevance filter
+(`job_sources.title_ok`). A feed of 1120 offers none of which matches the profile is
+worth nothing: it is the number AFTER the filter that decides.
 
-Ne modifie RIEN. Ecrit un rapport JSON ; l'ajout dans sources_config.json reste
-une decision explicite.
+Changes NOTHING. Writes a JSON report; adding to sources_config.json stays an
+explicit decision.
 
-Run :
-  python JobHunter.pyw probe_ats_queue --fit 8          # entreprises des offres fit >= 8
-  python JobHunter.pyw probe_ats_queue --fit 0          # toutes
+Run:
+  python JobHunter.pyw probe_ats_queue --fit 8          # companies of the offers with fit >= 8
+  python JobHunter.pyw probe_ats_queue --fit 0          # all of them
   python JobHunter.pyw probe_ats_queue --json out.json
 """
 
@@ -39,7 +40,7 @@ from jobhunter.sources.commun import title_ok
 from jobhunter.sources.fusion import rang_source
 from jobhunter.stockage import file as queue_io
 
-# Mots qui ne font pas partie du slug d'un ATS.
+# Words that are not part of an ATS slug.
 BRUIT = {
     "group",
     "groupe",
@@ -69,7 +70,7 @@ def variantes(nom):
         return []
     out = ["".join(utiles), "-".join(utiles)]
     if len(utiles) > 1:
-        out.append(utiles[0])  # « alten » pour « Alten Group »
+        out.append(utiles[0])  # "alten" for "Alten Group"
         out.append("".join(utiles[:2]))
     return [s for s in dict.fromkeys(out) if len(s) >= 3]
 
@@ -98,7 +99,7 @@ def main():
         }
     )
 
-    essais = {}  # slug -> nom de societe (le 1er qui le propose)
+    essais = {}  # slug -> company name (the 1st that proposes it)
     for e in ents:
         for s in variantes(e):
             essais.setdefault(s, e)
@@ -117,7 +118,7 @@ def main():
             if n % 400 == 0:
                 print(f"  … {n}/{len(jobs)}  ({len(trouves)} flux)")
 
-    # Combien d'offres passent VRAIMENT le filtre metier ?
+    # How many offers REALLY pass the profession filter?
     print(f"\n{len(trouves)} flux actif(s) — comptage des offres pertinentes…")
     for r in trouves:
         titres = _tous_les_titres(r["ats"], r["slug"])
@@ -163,7 +164,7 @@ def main():
 
 
 def _tous_les_titres(kind, slug):
-    """Tous les intitules du flux (probe_ats.titles n'en rend que 3)."""
+    """All the titles of the feed (probe_ats.titles only returns 3)."""
     import httpx
 
     try:

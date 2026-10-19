@@ -1,8 +1,8 @@
-"""Sources Adzuna et Jooble (API officielles), sans reseau.
+"""Adzuna and Jooble sources (official APIs), without network.
 
-Sans cle la source se tait et le dit ; un refus d'entree arrete au 3e ; un 429 fait
-une pause puis reprend ; la cle ne fuit JAMAIS dans la sortie, meme dans une
-exception. Converti depuis Scripts/test_agregateurs.py.
+Without a key the source stays silent and says so; a refusal of entry stops at the 3rd; a 429 pauses
+then resumes; the key NEVER leaks into the output, even in an
+exception. Converted from Scripts/test_agregateurs.py.
 """
 
 import json
@@ -24,8 +24,8 @@ class R:
 
 @pytest.fixture
 def agreg(monkeypatch, tmp_path, capsys):
-    """Rend scan(fonction, reponses) -> (offres, sortie, appels, pauses).
-    Les cles sont dans des fichiers jetables ; sans `cles`, ils n'existent pas."""
+    """Returns scan(function, responses) -> (offers, output, calls, pauses).
+    The keys are in throwaway files; without `cles`, they do not exist."""
     pauses = []
     monkeypatch.setattr(js.time, "sleep", pauses.append)
     monkeypatch.setattr(js, "ADZUNA_CFG", tmp_path / "adzuna.json")
@@ -56,7 +56,7 @@ def agreg(monkeypatch, tmp_path, capsys):
     js.INCIDENTS.clear()
 
 
-# ── sans cle : la source se tait et le dit ─────────────────────────────────────
+# ── without a key: the source stays silent and says so ─────────────────────────────────────
 def test_adzuna_sans_cle_aucune_offre(agreg):
     assert agreg(js.scan_adzuna, cles=False)[0] == []
 
@@ -70,7 +70,7 @@ def test_jooble_sans_cle(agreg):
     assert res == [] and "jooble.json absent" in sortie
 
 
-# ── Adzuna : lecture et filtres ────────────────────────────────────────────────
+# ── Adzuna: reading and filters ────────────────────────────────────────────────
 PAGE = {
     "results": [
         {
@@ -133,7 +133,7 @@ def test_adzuna_cle_absente_de_la_sortie(adzuna):
     assert CLE not in adzuna[1]
 
 
-# ── refus d'entree : arret au 3e ───────────────────────────────────────────────
+# ── refusal of entry: stop at the 3rd ───────────────────────────────────────────────
 @pytest.fixture
 def refus(agreg):
     return agreg(js.scan_adzuna, [R(403)] * 20)
@@ -165,7 +165,7 @@ def test_adzuna_429_persistant_arret(limite):
     assert "limite de debit persistante" in limite[1]
 
 
-# ── la cle ne fuit jamais, meme dans une exception ─────────────────────────────
+# ── the key never leaks, even in an exception ─────────────────────────────
 @pytest.fixture
 def exception(agreg):
     erreur = RuntimeError(f"echec sur https://api.adzuna.com/?app_key={CLE}")

@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""evaluation_classement.py — Le classement range-t-il en tête les offres que je juge bonnes ?
+"""evaluation_classement.py — Does the ranking put at the top the offers I judge good?
 
-Compare la note du moteur (fit décimal) aux jugements du suivi : postulé, relancé,
-entretien, refus, à postuler = pertinente ; mauvaise, pas intéressé = inutile (voir
-jobhunter.scoring.evaluation). Affiche l'AUC avec son intervalle, la précision des
-premières, et les offres où le classement se trompe le plus. Lecture seule.
+Compares the engine's score (decimal fit) with the tracking's judgements: postulé,
+relancé, entretien, refus, à postuler = relevant; mauvaise, pas intéressé = useless
+(see jobhunter.scoring.evaluation). Displays the AUC with its interval, the precision
+of the top ones, and the offers where the ranking is most wrong. Read-only.
 
-`--enregistrer` garde le résultat comme RÉFÉRENCE (Scripts/_evaluation.json) : une
-variante du scoring se juge ensuite contre elle, en plus du banc.
+`--enregistrer` keeps the result as a REFERENCE (Scripts/_evaluation.json): a scoring
+variant is then judged against it, in addition to the bench.
 
-Plus il y a de jugements, plus le chiffre est sûr : marquer « mauvaise » ou « pas
-intéressé » dans l'application, en passant, enrichit la référence.
+The more judgements there are, the surer the figure: marking "mauvaise" or "pas
+intéressé" in the application, in passing, enriches the reference.
 
-Run :
+Run:
   python JobHunter.pyw evaluation
   python JobHunter.pyw evaluation --enregistrer
 """

@@ -1,20 +1,20 @@
-"""Valeurs de module calculees a la premiere lecture, pas a l'import (phase 4 du plan).
+"""Module values computed on first read, not at import (phase 4 of the plan).
 
-Les constantes tirees du profil (motifs du filtre, axes du scoring, textes de lettre)
-et de `Scripts/chemins.json` etaient calculees au chargement : importer
-`jobhunter.sources.linkedin` lisait le profil. Elles sont maintenant declarees comme
-fabriques dans le dictionnaire `_PARESSEUX` de leur module, et le `__getattr__` de
-module (PEP 562) les calcule a la premiere lecture de `module.NOM`, puis les range dans
-le module : les lectures suivantes, un `monkeypatch.setattr` ou une facade les voient
-comme avant.
+The constants taken from the profile (filter patterns, scoring axes, letter texts) and
+from `Scripts/chemins.json` were computed at load time: importing
+`jobhunter.sources.linkedin` read the profile. They are now declared as factories in
+the `_PARESSEUX` dictionary of their module, and the module's `__getattr__` (PEP 562)
+computes them on the first read of `module.NAME`, then stores them in the module: the
+following reads, a `monkeypatch.setattr` or a facade see them as before.
 
-Dans le module lui-meme, le code lit ces noms par `_ici.NOM` (`_ici` = le module) : un
-nom global nu ne passe pas par `__getattr__` et leverait `NameError`.
+In the module itself, the code reads these names through `_ici.NAME` (`_ici` = the
+module): a bare global name does not go through `__getattr__` and would raise
+`NameError`.
 
-`oublier()` efface les valeurs deja calculees ; `profil.utiliser()` s'en sert pour
-qu'un profil injecte vaille partout.
+`oublier()` erases the values already computed; `profil.utiliser()` uses it so that an
+injected profile applies everywhere.
 
-Decision : docs/adr/0007-valeurs-du-profil-paresseuses.md
+Decision: docs/adr/0007-valeurs-du-profil-paresseuses.md
 """
 
 import types
@@ -23,12 +23,12 @@ from typing import Any
 
 Fabriques = dict[str, Callable[[], Any]]
 
-# Modules dont au moins une valeur a ete calculee : ce que `oublier` doit vider.
+# Modules of which at least one value was computed: what `oublier` must empty.
 _CALCULES: dict[str, tuple[types.ModuleType, Fabriques]] = {}
 
 
 def lire(module: types.ModuleType, fabriques: Fabriques, nom: str) -> Any:
-    """Corps du `__getattr__` d'un module : calcule `nom`, le garde, le rend."""
+    """Body of a module's `__getattr__`: computes `nom`, keeps it, returns it."""
     fabrique = fabriques.get(nom)
     if fabrique is None:
         raise AttributeError(f"module {module.__name__!r} has no attribute {nom!r}")
@@ -39,7 +39,7 @@ def lire(module: types.ModuleType, fabriques: Fabriques, nom: str) -> Any:
 
 
 def oublier() -> None:
-    """Efface les valeurs calculees : la prochaine lecture les refait."""
+    """Erases the computed values: the next read recomputes them."""
     for module, fabriques in _CALCULES.values():
         for nom in fabriques:
             vars(module).pop(nom, None)

@@ -1,27 +1,27 @@
-"""La collecte chaque matin : la tâche planifiée Windows, créée depuis l'application.
+"""The collection every morning: the Windows scheduled task, created from the application.
 
-`planifier.bat` ne sert qu'à l'installation depuis le code source. L'application
-installée (sans Python) n'avait rien : il fallait cliquer « Actualiser les offres »
-chaque jour. Ce module crée la MÊME tâche (même nom, donc l'une remplace l'autre), avec
-la bonne commande dans les deux cas :
+`planifier.bat` only serves the installation from source code. The installed
+application (without Python) had nothing: one had to click "Actualiser les offres"
+every day. This module creates the SAME task (same name, so one replaces the other),
+with the right command in both cases:
 
-- application installée : `jobhunter-cli.exe pipeline` (les données sont dans
-  `Documents/JobHunter`, que l'exécutable retrouve seul) ;
-- code source : `python.exe JobHunter.pyw pipeline`, comme `planifier.bat`.
+- installed application: `jobhunter-cli.exe pipeline` (the data is in
+  `Documents/JobHunter`, which the executable finds on its own);
+- source code: `python.exe JobHunter.pyw pipeline`, like `planifier.bat`.
 
-Rien n'est créé sans un clic de l'utilisateur ; `schtasks` agit pour son compte seul,
-sans droits d'administrateur. Hors Windows : `planifier.sh` (cron).
+Nothing is created without a click from the user; `schtasks` acts for their account
+only, without administrator rights. Outside Windows: `planifier.sh` (cron).
 """
 
 import re
-import subprocess  # nosec B404 : schtasks, arguments construits ici
+import subprocess  # nosec B404 : schtasks, arguments built here
 import sys
 from pathlib import Path
 
 from jobhunter import gele as _gele
 from jobhunter import racine as _racine
 
-TACHE = "JobHunter - collecte quotidienne"  # le nom de planifier.bat
+TACHE = "JobHunter - collecte quotidienne"  # the name in planifier.bat
 _RX_HEURE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
@@ -31,10 +31,10 @@ def disponible() -> bool:
 
 
 def commande() -> str:
-    """La ligne que la tâche exécute (`/TR` de schtasks).
+    """The line that the task runs (schtasks' `/TR`).
 
     Raises:
-        FileNotFoundError: code source sans `JobHunter.pyw` à la racine des données.
+        FileNotFoundError: source code without `JobHunter.pyw` at the data root.
     """
     if _gele.est_gele():
         return f'"{_gele.interpreteur()}" pipeline'
@@ -45,7 +45,7 @@ def commande() -> str:
 
 
 def _schtasks(*args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(  # nosec B603 B607 : schtasks, arguments fixes ou validés
+    return subprocess.run(  # nosec B603 B607 : schtasks, fixed or validated arguments
         ["schtasks", *args], capture_output=True, text=True, timeout=30
     )
 

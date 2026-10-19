@@ -1,9 +1,9 @@
-"""Lecteurs de pages carriere et d'ATS publics (job_sources.fetch_ats / fetch_autre).
+"""Readers of career pages and public ATS (job_sources.fetch_ats / fetch_autre).
 
-Sans reseau : les reponses sont figees, copiees de la structure reelle des sites au
-2026-10-08. Converti depuis Scripts/test_lecteurs_ats.py, qui remplacait
-_get_borne, _post_borne, WORKDAY_MOTS et WORKDAY_PAUSE pour tout le processus.
-La partie LinkedIn est dans test_linkedin_429.py.
+Without network: the responses are frozen, copied from the real structure of the sites on
+2026-10-08. Converted from Scripts/test_lecteurs_ats.py, which replaced
+_get_borne, _post_borne, WORKDAY_MOTS and WORKDAY_PAUSE for the whole process.
+The LinkedIn part is in test_linkedin_429.py.
 """
 
 import datetime
@@ -21,9 +21,9 @@ class JS(dict):
 
 @pytest.fixture
 def lire(monkeypatch):
-    """lire(kind, cle, pages, statut=200, ats=False) -> (offres, urls demandees, incidents).
-    `pages` : un corps seul (toute URL), ou {motif d'URL: corps} (premier motif contenu)."""
-    monkeypatch.setattr(J, "WORKDAY_MOTS", ["esg"])  # une requete par lecteur a mot-cle
+    """lire(kind, cle, pages, statut=200, ats=False) -> (offers, URLs requested, incidents).
+    `pages`: a single body (any URL), or {URL pattern: body} (first pattern contained)."""
+    monkeypatch.setattr(J, "WORKDAY_MOTS", ["esg"])  # one request per keyword reader
     monkeypatch.setattr(J, "WORKDAY_PAUSE", 0)
 
     def faire(kind, cle, pages, statut=200, ats=False, appel=None):
@@ -55,7 +55,7 @@ def titres(r):
     return [o["titre"] for o in r]
 
 
-# Garde-fou : les intitules de test passent bien le filtre metier.
+# Safeguard: the test titles do pass the profession filter.
 def test_title_ok_accepte_l_intitule_de_test():
     assert J.title_ok("Sustainable Finance Analyst") is True
 
@@ -64,7 +64,7 @@ def test_title_ok_refuse_l_intitule_hors_metier():
     assert J.title_ok("Software Engineer") is False
 
 
-# ── Avature : deux gabarits, avec et sans class="link" ─────────────────────────
+# ── Avature: two templates, with and without class="link" ─────────────────────────
 AVATURE = """
 <article class="article article--result"><div class="article__header"><div class="article__header__text">
  <h3 class="article__header__text__title article__header__text__title--7">
@@ -188,7 +188,7 @@ def test_adb_lieu(adb):
     assert adb[0][0]["location"] == "Asian Development Bank Headquarters"
 
 
-# ── PeopleSoft Fluid (BEI) : champs indexes par ligne ──────────────────────────
+# ── PeopleSoft Fluid (BEI): fields indexed by row ──────────────────────────
 def ligne(i, titre, ident, date, lieu):
     return (
         f"<span class='ps_box-value' id='SCH_JOB_TITLE${i}' >{titre}</span>"
@@ -278,7 +278,7 @@ def test_gogenerali_perimetre_direzionale(generali):
     assert "onlyDirectionalPerimeter=true" in generali[1][0]
 
 
-# ── Sitemap : index, limite d'age, identifiant en tete, mode h1 ────────────────
+# ── Sitemap: index, age limit, leading identifier, h1 mode ────────────────
 AUJ = datetime.date.today().isoformat()
 VIEUX = (datetime.date.today() - datetime.timedelta(days=J.SITEMAP_JOURS + 5)).isoformat()
 SM = {
@@ -444,7 +444,7 @@ def test_eightfold_offre(eightfold):
     )
 
 
-# ── RSS SuccessFactors et TalentSoft ───────────────────────────────────────────
+# ── SuccessFactors and TalentSoft RSS ───────────────────────────────────────────
 SF = """<rss><item><title><![CDATA[ESG Analyst - Paris (Paris, FR)]]></title>
 <link><![CDATA[https://careers.ey.com/job/1]]></link><description><![CDATA[<p>CSRD</p>]]></description></item>
 <item><title>Job | Sustainable Finance Analyst</title><link>https://jobs.belfius.be/job/2</link></item></rss>"""
@@ -520,7 +520,7 @@ def test_phenom_offre(phenom):
 
 
 def test_phenom_une_seule_page(phenom):
-    assert len(phenom[1]) == 1  # moins de 10 offres
+    assert len(phenom[1]) == 1  # fewer than 10 offers
 
 
 def test_jibe_lien_construit_sans_slug_ignore(lire):
@@ -586,7 +586,7 @@ def test_oracle_liste_vide_sans_erreur(lire):
     assert (r, incidents) == ([], {})
 
 
-# ── Cornerstone : jeton anonyme de la page, puis API ───────────────────────────
+# ── Cornerstone: the page's anonymous token, then API ───────────────────────────
 CSOD = {
     "/ux/ats/careersite/": 'csod.context = {"token": "abc", "endpoints": {"cloud": "https://eu.api.csod.com/"}};',
     "rec-job-search": JS(
@@ -629,7 +629,7 @@ def test_csod_sans_jeton_pas_d_appel_api(lire):
     assert (r, len(appels)) == ([], 1)
 
 
-# ── iCIMS : pagination jusqu'a une page sans nouveaute ─────────────────────────
+# ── iCIMS: pagination up to a page with nothing new ─────────────────────────
 CARTE = (
     '<li class="iCIMS_JobCardItem"><a href="https://careers-msci.icims.com/jobs/{n}/x/job?in_iframe=1" '
     'title="{n} - {t}">x</a><span>Job Locations</span> </dt> <dd class="x"><span > Paris </span></li>'
@@ -656,7 +656,7 @@ def test_icims_lieu(icims):
     assert icims[0][0]["location"] == "Paris"
 
 
-# ── Choisir le service public : employeur financier OU intitule ESG ────────────
+# ── Choisir le service public: financial employer OR ESG title ────────────
 def carte_csp(href, titre, employeur):
     return (
         f'<li class="fr-col-12 item"><h3 class="fr-card__title"><a\n href="{href}">{titre}</a></h3>'
@@ -684,7 +684,7 @@ def test_service_public_employeur_et_lieu(service_public):
     assert (o["entreprise"], o["location"]) == ("Caisse des Dépôts", "Paris")
 
 
-# ── refus : 403 compte un incident, 404 se tait ────────────────────────────────
+# ── refusals: 403 counts an incident, 404 stays silent ────────────────────────────────
 @pytest.fixture
 def refus_403(lire):
     return lire("talentbrew", "careers.moodys.com/en|49841", "", 403)

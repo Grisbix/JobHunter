@@ -1,26 +1,26 @@
-"""jobhunter.documents.cv_auto — Retouches de CV automatiques, sans LLM, a partir d'une banque de faits.
+"""jobhunter.documents.cv_auto — Automatic CV touch-ups, without an LLM, from a fact bank.
 
-Ancien Scripts/cv_auto.py.
+Formerly Scripts/cv_auto.py.
 
-POURQUOI. Le CV d'une offre sortait du modele tel quel, a l'intitule pres. Une
-annonce Helexia (solaire, Espagne) recevait « Espagnol (débutant) » et aucune
-mention des investissements dans les renouvelables — alors que l'utilisateur en a fait.
-Le sur-mesure ecrit a la main (CV/Sur_mesure) regle le cas, mais coute une
-heure et des tokens par offre ; le pipeline en prepare trente par jour.
+WHY. An offer's CV came out of the template as is, apart from the title. A Helexia
+posting (solar, Spain) received "Espagnol (débutant)" and no mention of investments
+in renewables — although the user has done some. The tailor-made version written by
+hand (CV/Sur_mesure) solves the case, but costs an hour and tokens per offer; the
+pipeline prepares thirty a day.
 
-LE PRINCIPE. `CV/Faits.json` liste des faits VALIDES par l'utilisateur, chacun avec
-ses declencheurs (motifs cherches dans l'annonce) et ses retouches (memes
-operations que CV/Sur_mesure). Ce module choisit les faits que l'annonce
-appelle et rend les retouches. Il n'ecrit RIEN qui ne soit dans la banque :
-pas d'invention possible, et le meme CV d'un jour a l'autre.
+THE PRINCIPLE. `CV/Faits.json` lists facts VALIDATED by the user, each with its
+triggers (patterns searched in the posting) and its touch-ups (same operations as
+CV/Sur_mesure). This module picks the facts the posting calls for and returns the
+touch-ups. It writes NOTHING that is not in the bank: no invention possible, and the
+same CV from one day to the next.
 
-LA PAGE. Ajouter une ligne fait souvent deborder. `allegements` liste les
-lignes du modele qu'on peut retirer, dans l'ordre ; tailor_application les
-retire une par une tant que le PDF fait plus d'une page.
+THE PAGE. Adding a line often overflows. `allegements` lists the template's lines
+that can be removed, in order; tailor_application removes them one by one as long as
+the PDF is longer than one page.
 
-Run :
-  python JobHunter.pyw cv-auto --essai "texte d'annonce"     # faits retenus pour ce texte
-  python JobHunter.pyw cv-auto --liste                       # la banque et son etat
+Run:
+  python JobHunter.pyw cv-auto --essai "posting text"     # facts kept for this text
+  python JobHunter.pyw cv-auto --liste                    # the bank and its state
 """
 
 import json
@@ -43,10 +43,10 @@ def _chemin() -> Path:
 
 @lru_cache(maxsize=1)
 def banque() -> dict[str, Any]:
-    """La banque lue une fois par processus.
+    """The bank, read once per process.
 
-    {} si absente ou illisible : sans banque, le CV sort du modele comme avant — jamais
-    d'erreur bloquante.
+    {} if missing or unreadable: without a bank, the CV comes out of the template as
+    before — never a blocking error.
     """
     try:
         b: dict[str, Any] = json.loads(_chemin().read_text(encoding="utf-8"))
@@ -57,7 +57,7 @@ def banque() -> dict[str, Any]:
 
 
 def faits_retenus(texte: str | None, b: dict[str, Any] | None = None) -> list[dict[str, Any]]:
-    """Les faits valides dont un declencheur apparait dans `texte`, par priorite."""
+    """The valid facts one of whose triggers appears in `texte`, by priority."""
     b = banque() if b is None else b
     t = texte or ""
     out = []
@@ -73,9 +73,9 @@ def faits_retenus(texte: str | None, b: dict[str, Any] | None = None) -> list[di
 def retouches(
     texte: str | None, langue: str = "fr", allege: int = 0, b: dict[str, Any] | None = None
 ) -> dict[str, Any]:
-    """Retouches au format de CV/Sur_mesure pour une annonce.
+    """Touch-ups in the CV/Sur_mesure format for a posting.
 
-    `allege` : nombre de lignes d'`allegements` a retirer (0 = aucune).
+    `allege`: number of `allegements` lines to remove (0 = none).
     """
     b = banque() if b is None else b
     r: dict[str, list[Any]] = {"remplace": [], "ajoute_apres": [], "supprime": [], "faits": []}
@@ -93,21 +93,21 @@ def retouches(
 
 
 def nb_allegements(langue: str = "fr", b: dict[str, Any] | None = None) -> int:
-    """Nombre de lignes que `cv_une_page` peut retirer pour tenir sur une page.
+    """Number of lines that `cv_une_page` can remove to fit on one page.
 
     Args:
-        langue: « fr » ou « en ».
-        b: la banque de faits ; None = celle de CV/Faits.json.
+        langue: "fr" or "en".
+        b: the fact bank; None = the one in CV/Faits.json.
 
     Returns:
-        Le nombre d'allègements disponibles.
+        The number of available lightenings.
     """
     b = banque() if b is None else b
     return len((b.get("allegements") or {}).get(langue, []))
 
 
 def main() -> int:
-    """Ligne de commande : liste la banque de faits ou essaie une annonce."""
+    """Command line: lists the fact bank or tries a posting."""
     import argparse
 
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper

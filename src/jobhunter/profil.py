@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
-r"""Tout ce qui est PROPRE A LA PERSONNE, lu dans profil/profil.json.
+r"""Everything SPECIFIC TO THE PERSON, read from profil/profil.json.
 
-Ancien Scripts/profil.py.
+Formerly Scripts/profil.py.
 
-Le moteur (collecte, tri, scoring, CV, lettres) ne connait aucun metier, aucune
-ville, aucun nom : il lit ce module. Pour changer de cible, on change le profil,
-jamais le code.
+The engine (collection, sorting, scoring, CV, letters) knows no profession, no city,
+no name: it reads this module. To change target, one changes the profile, never the
+code.
 
-Le fichier se cree avec `python JobHunter.pyw profil <ton_cv.pdf>`, puis
-se retouche a la main. Un exemple complet (finance durable) est dans
-profil/exemple_finance_esg.json.
+The file is created with `python JobHunter.pyw profil <your_cv.pdf>`, then edited by
+hand. A complete example (sustainable finance) is in profil/exemple_finance_esg.json.
 
-Les listes de MOTS acceptent deux formes :
-  "analyste financier"     un mot ou une expression, cherche en debut de mot
-                           (« analyste » trouve aussi « analystes »)
-  "re:taxonomi\\w*"        une expression reguliere, pour les cas fins
+WORD lists accept two forms:
+  "analyste financier"     a word or a phrase, searched at the start of a word
+                           ("analyste" also finds "analystes")
+  "re:taxonomi\\w*"        a regular expression, for the fine cases
 """
 
 import json
@@ -30,27 +29,27 @@ from jobhunter import paresseux as _paresseux
 from jobhunter import racine as _racine
 
 RACINE = _racine.racine()
-# PROFIL_JOBHUNTER permet d'essayer un autre profil sans toucher au fichier.
+# PROFIL_JOBHUNTER allows trying another profile without touching the file.
 FICHIER = Path(os.environ.get("PROFIL_JOBHUNTER") or RACINE / "profil" / "profil.json")
 
 
 class ProfilAbsent(RuntimeError):
-    """Aucun profil : ni fichier `profil/profil.json`, ni profil injecte."""
+    """No profile: neither a `profil/profil.json` file nor an injected profile."""
 
 
-# Profil fourni en memoire par `utiliser` (tests, essais) ; None = le fichier.
+# Profile provided in memory by `utiliser` (tests, trials); None = the file.
 _INJECTE: dict[str, Any] | None = None
 
 
 @lru_cache(maxsize=1)
 def charger() -> dict[str, Any]:
-    """Le profil entier, lu une fois puis garde en memoire.
+    """The whole profile, read once then kept in memory.
 
     Returns:
-        Le profil injecte par `utiliser`, sinon le contenu de `FICHIER`.
+        The profile injected by `utiliser`, otherwise the content of `FICHIER`.
 
     Raises:
-        ProfilAbsent: aucun profil injecte et le fichier n'existe pas.
+        ProfilAbsent: no injected profile and the file does not exist.
     """
     if _INJECTE is not None:
         return _INJECTE
@@ -65,13 +64,13 @@ def charger() -> dict[str, Any]:
 
 
 def utiliser(donnees: dict[str, Any]) -> None:
-    """Remplace le profil par `donnees`, sans fichier.
+    """Replaces the profile with `donnees`, without a file.
 
-    Un test construit ainsi le profil dont il a besoin. Tout ce que le moteur en
-    avait tire est recalcule a la lecture suivante ; `recharger()` revient au fichier.
+    A test thus builds the profile it needs. Everything the engine had derived from it
+    is recomputed at the next read; `recharger()` goes back to the file.
 
     Args:
-        donnees: le profil complet, au format de profil.json.
+        donnees: the complete profile, in the profil.json format.
     """
     global _INJECTE
     _INJECTE = donnees
@@ -80,10 +79,10 @@ def utiliser(donnees: dict[str, Any]) -> None:
 
 
 def recharger(fichier: Path | None = None) -> None:
-    """Revient au fichier et oublie les valeurs tirees de l'ancien profil.
+    """Goes back to the file and forgets the values derived from the old profile.
 
     Args:
-        fichier: un autre fichier de profil a lire desormais ; None garde `FICHIER`.
+        fichier: another profile file to read from now on; None keeps `FICHIER`.
     """
     global _INJECTE, FICHIER
     _INJECTE = None
@@ -94,14 +93,14 @@ def recharger(fichier: Path | None = None) -> None:
 
 
 def get(chemin: str, defaut: Any = None) -> Any:
-    """Une valeur du profil par son chemin pointe.
+    """A profile value by its dotted path.
 
     Args:
-        chemin: cles separees par des points, par exemple « scoring.axes ».
-        defaut: ce qui est rendu si une etape du chemin manque.
+        chemin: keys separated by dots, for example "scoring.axes".
+        defaut: what is returned if a step of the path is missing.
 
     Returns:
-        La valeur trouvee, ou `defaut`.
+        The value found, or `defaut`.
     """
     v: Any = charger()
     for k in chemin.split("."):
@@ -113,10 +112,10 @@ def get(chemin: str, defaut: Any = None) -> Any:
 
 # ── Identite ────────────────────────────────────────────────────────────────
 def identite() -> dict[str, str]:
-    """Coordonnees du candidat, sans champ manquant.
+    """The candidate's contact details, without a missing field.
 
     Returns:
-        nom, email, tel, linkedin, ville, et genre (« m » ou « f », pour les accords).
+        nom, email, tel, linkedin, ville, and genre ("m" or "f", for agreements).
     """
     i = get("identite", {}) or {}
     nom = (i.get("nom_complet") or f"{i.get('prenom', '')} {i.get('nom', '')}").strip()
@@ -126,7 +125,7 @@ def identite() -> dict[str, str]:
         "tel": i.get("telephone", ""),
         "linkedin": i.get("linkedin", ""),
         "ville": i.get("ville", ""),
-        "genre": (i.get("genre") or "m").lower()[:1],  # accords de la lettre
+        "genre": (i.get("genre") or "m").lower()[:1],  # the letter's agreements
     }
 
 
@@ -149,22 +148,22 @@ def _fragment(mot: object, entier: bool) -> str:
     mot = str(mot)
     if mot.startswith("re:"):
         return "(?:" + mot[3:] + ")"  # regex : prise TELLE QUELLE
-    # Mot : borne GAUCHE (« rse » ne doit pas trouver « diveRSE »), pas de borne
+    # Word: LEFT boundary ("rse" must not find "diveRSE"), no boundary
     # droite sauf `entier` — « analyste » doit trouver « analystes ».
     corps = re.escape(mot.strip()).replace(r"\ ", r"\s+")
     return r"\b" + corps + (r"\b" if entier else "")
 
 
 def motif(mots: Iterable[object] | None, entier: bool = False) -> re.Pattern[str] | None:
-    """Une regex compilee qui trouve l'un des `mots`.
+    """A compiled regex that finds one of the `mots`.
 
     Args:
-        mots: mots, expressions ou regex prefixees par « re: » (prises telles quelles).
-        entier: borne aussi a droite les mots — sigles courts : « rse » ne doit pas
-            trouver « RSEau ».
+        mots: words, phrases or regexes prefixed with "re:" (taken as they are).
+        entier: also bounds the words on the right — short acronyms: "rse" must not
+            find "RSEau".
 
     Returns:
-        La regex, insensible a la casse, ou None si la liste est vide.
+        The regex, case-insensitive, or None if the list is empty.
     """
     mots = [m for m in (mots or []) if str(m).strip()]
     if not mots:
@@ -173,18 +172,19 @@ def motif(mots: Iterable[object] | None, entier: bool = False) -> re.Pattern[str
 
 
 def cherche(rx: re.Pattern[str] | None, texte: str | None) -> bool:
-    """Vrai si `rx` existe et trouve quelque chose dans `texte` (None = texte vide)."""
+    """True if `rx` exists and finds something in `texte` (None = empty text)."""
     return bool(rx and rx.search(texte or ""))
 
 
-# ── Domaines : variantes de CV et paragraphes de parcours ──────────────────
+# ── Domains: CV variants and background paragraphs ──────────────────────────
 def domaines() -> list[dict[str, Any]]:
-    """Les domaines du profil, dans l'ordre.
+    """The profile's domains, in order.
 
-    Le premier dont un mot apparait dans l'intitule gagne ; le DERNIER sert de repli.
+    The first one with a word appearing in the title wins; the LAST one serves as
+    the fallback.
 
     Returns:
-        Les domaines, ou un domaine « General » unique si le profil n'en a pas.
+        The domains, or a single "General" domain if the profile has none.
     """
     d: list[dict[str, Any]] = get("domaines", []) or []
     if not d:
@@ -193,15 +193,15 @@ def domaines() -> list[dict[str, Any]]:
 
 
 def domaine_par_cle(cle: str) -> dict[str, Any]:
-    """Le domaine de cle `cle`, ou le domaine de repli (le dernier)."""
+    """The domain with key `cle`, or the fallback domain (the last one)."""
     for d in domaines():
         if d.get("cle") == cle:
             return d
     return domaines()[-1]
 
 
-# ── Formulaires de candidature (apply_runner, web_nav) ──────────────────────
-# Noms de champs rencontres sur les sites carriere, par cle du profil. Generiques.
+# ── Application forms (apply_runner, web_nav) ────────────────────────────────
+# Field names met on career sites, per profile key. Generic.
 ALIAS_CHAMPS = {
     "prenom": [
         "prenom",
@@ -314,10 +314,10 @@ _CHAMPS_FORMULAIRE = (
 
 
 def formulaire() -> dict[str, Any]:
-    """Le profil de remplissage des formulaires : identite + section « formulaire ».
+    """The form-filling profile: identity + "formulaire" section.
 
-    JAMAIS de mot de passe : regle du projet, aucun programme n'en manipule — les
-    champs mot de passe restent a l'utilisateur.
+    NEVER a password: project rule, no program handles one — the password fields
+    stay the user's.
     """
     i = get("identite", {}) or {}
     f = get("formulaire", {}) or {}

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installation de JobHunter (macOS, Linux). Equivalent de installer.bat.
+# JobHunter installation (macOS, Linux). Equivalent of installer.bat.
 set -e
 cd "$(dirname "$0")"
 echo "=== Installation de JobHunter ==="
@@ -14,8 +14,8 @@ if ! "$PY" -c "import sys; sys.exit(0 if sys.version_info >= (3, 12) else 1)"; t
   echo "Python 3.12 ou plus recent est necessaire. Version actuelle : $("$PY" --version)"
   exit 1
 fi
-# Un environnement Python propre a JobHunter, dans .venv : les paquets installes ne
-# touchent pas au Python de l'ordinateur. Les autres scripts l'utilisent s'il existe.
+# A Python environment of JobHunter's own, in .venv: the installed packages do not
+# touch the computer's Python. The other scripts use it if it exists.
 if [ ! -x .venv/bin/python ]; then
   echo "Creation de l'environnement Python de JobHunter dans .venv ..."
   "$PY" -m venv .venv || {
@@ -26,7 +26,7 @@ fi
 PY=.venv/bin/python
 "$PY" -m pip install -r requirements.txt
 "$PY" -m playwright install chromium
-# Empreinte des fichiers tels qu'installes : la mise a jour reconnaitra tes modifications.
+# Fingerprint of the files as installed: the update will recognise your changes.
 "$PY" JobHunter.pyw maj --initialiser
 echo
 echo "Installation terminee. Depose ton CV dans Mon_CV puis lance ./lancer.sh"

@@ -1,8 +1,8 @@
-"""Normalisation de texte et garde-fou des motifs (ex-helpers de Scripts/jutil.py).
+"""Text normalisation and pattern safeguard (former helpers of Scripts/jutil.py).
 
-Les copies de ces fonctions DIVERGEAIENT d'un programme a l'autre : une comparaison
-sensible a la casse ici, insensible la, une table d'accents qui oubliait la moitie
-des lettres. Une seule version, partout.
+The copies of these functions DIVERGED from one program to another: a case-sensitive
+comparison here, insensitive there, an accent table that forgot half
+the letters. A single version, everywhere.
 """
 
 import re
@@ -12,47 +12,47 @@ from collections.abc import Mapping
 
 # ── Normalisation de texte ───────────────────────────────────────────────────
 def sans_accent(s: object) -> str:
-    """Minuscules sans accents, via NFD.
+    """Lowercase without accents, through NFD.
 
-    Remplace des tables manuelles qui oubliaient la moitie des lettres
-    (« ë », « ï », « ù », « ü » n'y figuraient pas).
+    Replaces manual tables that forgot half the letters
+    ("ë", "ï", "ù", "ü" were not in them).
     """
     s = unicodedata.normalize("NFD", str(s or "").lower())
     return "".join(c for c in s if not unicodedata.combining(c))
 
 
 def cle(s: str | None) -> str:
-    """Clé de comparaison : minuscules, blancs normalises. GARDE les accents.
+    """Comparison key: lowercase, blanks normalised. KEEPS the accents.
 
-    Volontairement distincte de `sans_accent` : cette fonction sert de cle de
-    DEDUPLICATION de la queue. Lui faire ignorer les accents fusionnerait des
-    offres aujourd'hui distinctes — un changement de comportement, pas un
-    nettoyage. Utiliser `sans_accent(cle(s))` quand on veut les deux.
+    Deliberately distinct from `sans_accent`: this function serves as the
+    DEDUP key of the queue. Making it ignore accents would merge
+    offers that are distinct today — a change of behaviour, not a
+    clean-up. Use `sans_accent(cle(s))` when you want both.
     """
     return re.sub(r"\s+", " ", (s or "").strip().lower())
 
 
 def verifier_motifs(espace: Mapping[str, object], minimum: int = 1) -> int:
-    r"""Refuse de demarrer si une regex du module porte un `\b` corrompu.
+    r"""Refuses to start if a regex of the module carries a corrupted `\b`.
 
-    Une frontiere de mot se corrompt de deux facons, toutes deux SILENCIEUSES —
-    le motif compile, ne leve rien, et ne matche plus jamais :
-      \\x08          un \\b passe dans un heredoc shell devient un backspace
-      \\\\b (litteral) une « correction » du cas precedent qui echappe l'antislash
+    A word boundary gets corrupted in two ways, both SILENT —
+    the pattern compiles, raises nothing, and never matches again:
+      \\x08          a \\b passed through a shell heredoc becomes a backspace
+      \\\\b (literal) a "fix" of the previous case that escapes the backslash
 
-    `job_sources` avait ce controle, pas `ats_match` — et c'est `ats_match` qui
-    l'avait attrape : son `_ESG_TITLE_RX` commencait par un backspace, donc le
-    plafond de fit ne se levait JAMAIS pour un intitule ESG. Le scoring tournait
-    depuis on ne sait quand avec sa regle principale morte. D'ou cette version
-    partagee : un garde-fou recopie a la main dans chaque module finit par
-    manquer la ou il sert.
+    `job_sources` had this check, not `ats_match` — and it is `ats_match` that
+    had caught it: its `_ESG_TITLE_RX` started with a backspace, so the
+    fit cap NEVER lifted for an ESG title. The scoring had been running
+    since who knows when with its main rule dead. Hence this shared
+    version: a safeguard copied by hand into each module ends up
+    missing where it matters.
 
-    Appel type, en FIN de module (globals() doit etre complet) :
+    Typical call, at the END of the module (globals() must be complete):
 
         jutil.verifier_motifs(globals(), minimum=6)
 
-    `minimum` : nombre de motifs attendus. Si la selection cesse de rien trouver,
-    le controle rassurerait sans rien verifier — on prefere qu'il crie.
+    `minimum`: number of patterns expected. If the selection stops finding anything,
+    the check would reassure without checking anything — we prefer it to shout.
     """
     import re as _re
 

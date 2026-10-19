@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
-"""wtj_desc.py — Recupere la DESCRIPTION des offres Welcome to the Jungle.
+"""wtj_desc.py — Fetches the DESCRIPTION of Welcome to the Jungle offers.
 
-POURQUOI. J'avais annonce que WTJ etait « illisible, protection anti-bot ».
-C'est plus nuance que ca : une fiche WTJ rend 200 sur une requete HTTP nue et
-porte un bloc `<script type="application/ld+json">` de type JobPosting avec la
-description complete — le balisage que WTJ publie pour Google. Pas besoin de
-navigateur.
+WHY. I had announced that WTJ was "unreadable, anti-bot protection". It is more
+nuanced than that: a WTJ posting returns 200 on a bare HTTP request and carries a
+`<script type="application/ld+json">` block of type JobPosting with the full
+description — the markup WTJ publishes for Google. No need for a browser.
 
-MAIS le debit est bride. Apres quelques fiches, CloudFront bascule l'IP sur un
-challenge et repond 202 avec un corps vide, et il y reste : ralentir a 8 s entre
-requetes n'a rien change (mesure faite). On ne contourne pas ce challenge. Le
-script lit ce qu'il peut, s'arrete net des le premier 202, garde ce qui est lu.
-En pratique : quelques fiches par passe, plusieurs passes espacees.
+BUT the rate is throttled. After a few postings, CloudFront switches the IP to a
+challenge and answers 202 with an empty body, and it stays there: slowing down to 8 s
+between requests changed nothing (measured). We do not bypass this challenge. The
+script reads what it can, stops dead at the first 202, keeps what was read. In
+practice: a few postings per pass, several spaced passes.
 
-Re-score le fit ET exp_requise dans la foulee : une description ajoutee sans
-re-scoring laisse l'offre a son ancien fit, calcule sur le seul titre.
+Re-scores the fit AND exp_requise at the same time: a description added without
+re-scoring leaves the offer at its old fit, computed on the title alone.
 
-Run :
+Run:
   python JobHunter.pyw wtj_desc --dry
   python JobHunter.pyw wtj_desc --limit 20
   python JobHunter.pyw wtj_desc
@@ -47,7 +46,7 @@ UA = {
 
 
 class Bloque(Exception):
-    """WTJ a bascule l'IP en challenge anti-bot. On s'arrete, on ne contourne pas."""
+    """WTJ switched the IP to an anti-bot challenge. We stop, we do not bypass it."""
 
     def __init__(self, code):
         super().__init__(f"WTJ repond {code} (challenge anti-bot)")
@@ -58,7 +57,7 @@ RX_BALISE = re.compile(r"<[^>]+>")
 
 
 def _texte(brut):
-    """HTML de la description -> texte lisible, sauts de ligne preserves."""
+    """Description HTML -> readable text, line breaks preserved."""
     t = re.sub(r"<\s*(br|/p|/li|/div)\s*/?>", "\n", brut, flags=re.I)
     t = html.unescape(RX_BALISE.sub(" ", t))
     t = re.sub(r"[ \t\xa0]+", " ", t)
@@ -66,18 +65,18 @@ def _texte(brut):
 
 
 def description(url, client, essais=2):
-    """Texte de l'annonce, ou "" si illisible. Ne leve jamais."""
+    """Text of the posting, or "" if unreadable. Never raises."""
     for n in range(essais):
         try:
             r = client.get(url, headers=UA, timeout=25)
         except Exception:
             time.sleep(1.5 * (n + 1))
             continue
-        # 202 avec corps vide = challenge anti-bot CloudFront. Il n'arrive pas a
-        # la premiere requete : WTJ sert quelques fiches, puis bascule l'IP en
-        # challenge et l'y laisse (ralentir a 8 s entre requetes n'y change rien,
-        # mesure faite). Ce n'est pas un code de succes, il ne faut surtout pas
-        # le traiter comme tel : la description serait ecrasee par du vide.
+        # 202 with an empty body = CloudFront anti-bot challenge. It does not come at
+        # the first request: WTJ serves a few postings, then switches the IP to a
+        # challenge and leaves it there (slowing down to 8 s between requests changes nothing,
+        # measured). It is not a success code, it must absolutely not
+        # be treated as such: the description would be overwritten with emptiness.
         if r.status_code == 202 or r.status_code == 429:
             raise Bloque(r.status_code)
         if r.status_code != 200:
@@ -87,21 +86,21 @@ def description(url, client, essais=2):
                 o = json.loads(bloc)
             except Exception:
                 continue
-            # Un seul bloc porte @type JobPosting ; l'autre est une FAQPage
-            # sans description utile.
+            # Only one block carries @type JobPosting; the other is a FAQPage
+            # without a useful description.
             if isinstance(o, dict) and o.get("@type") == "JobPosting":
                 t = _texte(str(o.get("description") or ""))
-                # Sous 200 caracteres c'est un resume d'interface, pas l'annonce
+                # Below 200 characters it is an interface summary, not the posting
                 return t if len(t) >= 200 else ""
         return ""
     return ""
 
 
 def _cible(u):
-    """Fiche d'offre WTJ, pas une recherche ni une page societe.
+    """WTJ offer posting, not a search nor a company page.
 
-    Les URL /fr/jobs?query=… de la queue viennent du scan : elles n'ont aucune
-    description a lire, les compter comme des echecs fausserait le bilan.
+    The /fr/jobs?query=… URLs of the queue come from the scan: they have no
+    description to read, counting them as failures would skew the summary.
     """
     return "welcometothejungle.com" in u and "/jobs/" in u and "?query=" not in u
 
@@ -152,8 +151,8 @@ def _travail(q, a, ecrire):
                 try:
                     textes[futs[f]] = f.result()
                 except Bloque as e:
-                    # Inutile de continuer : le challenge vaut pour l'IP entiere.
-                    # Les descriptions deja lues sont conservees et ecrites.
+                    # No point going on: the challenge applies to the whole IP.
+                    # The descriptions already read are kept and written.
                     print(
                         f"  ~ {e} — arret. Les {len(textes)} fiches deja lues "
                         f"sont conservees ; reessaie plus tard."

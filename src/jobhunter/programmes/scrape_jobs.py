@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-scrape_jobs.py — Scrape les offres FRAÎCHES des 65 sites carrière d'entreprises ESG/Finance.
+scrape_jobs.py — Scrapes the FRESH offers of the 65 career sites of ESG/Finance companies.
 
-Utilise Playwright pour naviguer sur chaque site carrière,
-détecter les listes d'offres et filtrer par mots-clés ESG/Finance.
+Uses Playwright to navigate each career site, detect the lists of offers and filter by
+ESG/Finance keywords.
 
 Usage:
-    python JobHunter.pyw scrape_jobs                         # Scrape tous les sites
-    python JobHunter.pyw scrape_jobs --sites 1-10            # Sites 1 à 10 seulement
-    python JobHunter.pyw scrape_jobs --domains wtj,smart     # Par nom de domaine partiel
+    python JobHunter.pyw scrape_jobs                         # scrape all the sites
+    python JobHunter.pyw scrape_jobs --sites 1-10            # sites 1 to 10 only
+    python JobHunter.pyw scrape_jobs --domains wtj,smart     # by partial domain name
     python JobHunter.pyw scrape_jobs --output offres_fraiches.json
-    python JobHunter.pyw scrape_jobs --headless              # Mode headless (pas de fenêtre)
-    python JobHunter.pyw scrape_jobs --skip 10               # Sites déjà scrapés, reprendre au 11e
+    python JobHunter.pyw scrape_jobs --headless              # headless mode (no window)
+    python JobHunter.pyw scrape_jobs --skip 10               # sites already scraped, resume at the 11th
 """
 
 import argparse
@@ -25,18 +25,18 @@ from typing import Any
 
 from jobhunter import racine as _racine
 
-# Sortie UTF-8 OBLIGATOIRE : ce programme affiche des emojis. Dans un terminal
-# Windows la console les tolere, mais des que la sortie est redirigee (tuyau,
-# fichier de log, tache planifiee) Python retombe sur cp1252 et leve
-# UnicodeEncodeError des la premiere ligne — le scraping mourait avant d'ouvrir
-# le moindre site, sans qu'aucune offre ne soit collectee.
+# UTF-8 output MANDATORY: this program displays emojis. In a Windows
+# terminal the console tolerates them, but as soon as the output is redirected (pipe,
+# log file, scheduled task) Python falls back on cp1252 and raises
+# UnicodeEncodeError from the first line — the scraping died before opening
+# a single site, without any offer being collected.
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 except Exception:
     pass
 
-# Domaine d'une offre et lexique large : jobhunter.scoring.domaines (phase 3.4).
+# An offer's domain and wide lexicon: jobhunter.scoring.domaines (phase 3.4).
 from jobhunter.navigation.navigateur import lancer as _lancer  # noqa: E402
 from jobhunter.scoring.domaines import (  # noqa: E402, F401
     DOMAINE_MAP,
@@ -45,7 +45,7 @@ from jobhunter.scoring.domaines import (  # noqa: E402, F401
     matches_esg_finance,
 )
 
-# ── JS : Extraction universelle d'offres d'emploi ──
+# ── JS: universal extraction of job offers ──
 EXTRACT_OFFERS_JS = r"""
 () => {
   const jobs = [];
@@ -149,7 +149,7 @@ EXTRACT_OFFERS_JS = r"""
 }
 """
 
-# ── JS : Détecter le type de page + compter offres ──
+# ── JS: detect the page type + count offers ──
 PAGE_ANALYZE_OFFERS_JS = r"""
 () => {
   const txt = (document.body ? document.body.innerText : '').slice(0, 30000).toLowerCase();
@@ -182,25 +182,25 @@ PAGE_ANALYZE_OFFERS_JS = r"""
 
 
 # ── robots.txt ───────────────────────────────────────────────────────────────
-# Ce programme DEVINE des chemins : 14 candidats (/careers, /jobs, /recrutement…)
-# sur 65 domaines. C'est exactement le comportement qu'un robots.txt sert a
-# cadrer, et c'etait le seul collecteur a ne pas le lire — job_sources documente
-# le sien site par site, avec la date de verification. Ici les domaines sont trop
-# nombreux pour etre commentes a la main : on demande au serveur.
+# This program GUESSES paths: 14 candidates (/careers, /jobs, /recrutement…)
+# on 65 domains. It is exactly the behaviour a robots.txt serves to
+# frame, and it was the only collector not to read it — job_sources documents
+# its own site by site, with the date of verification. Here the domains are too
+# many to be commented by hand: we ask the server.
 #
-# Un robots.txt absent, illisible ou injoignable vaut AUTORISATION : c'est la
-# regle usuelle, et l'inverse ferait disparaitre des sites en silence au premier
+# A missing, unreadable or unreachable robots.txt counts as PERMISSION: it is the
+# usual rule, and the opposite would make sites disappear silently at the first
 # incident reseau.
 _ROBOTS_CACHE: dict[str, Any] = {}
-# On se nomme. Aucun site ne porte de regle « JobHunter » aujourd'hui, et
-# robotparser retombe alors sur le bloc « User-agent: * » — celui qui nous
-# gouverne. Mais si un site en ajoute une un jour, elle sera respectee, ce que
-# demander « * » en dur n'aurait pas permis.
+# We name ourselves. No site carries a "JobHunter" rule today, and
+# robotparser then falls back on the "User-agent: *" block — the one that
+# governs us. But if a site adds one some day, it will be respected, which
+# asking for a hard-coded "*" would not have allowed.
 ROBOTS_UA = "JobHunter"
 
 
 def robots_autorise(url: str) -> bool:
-    """Le robots.txt de ce domaine autorise-t-il `url` ? Un cache par hote."""
+    """Does this domain's robots.txt allow `url`? One cache per host."""
     from urllib import robotparser
     from urllib.parse import urlsplit
 
@@ -216,7 +216,7 @@ def robots_autorise(url: str) -> bool:
         try:
             rp.read()
         except Exception:
-            rp = False  # injoignable : on n'y revient pas, et on passe
+            rp = False  # unreachable: we do not come back to it, and we move on
         _ROBOTS_CACHE[hote] = rp
     if rp is False:
         return True
@@ -237,11 +237,11 @@ def load_domains(domains_path: str) -> list[dict]:
         num = i + 1
         if "|" in line:
             tete, url = line.split("|", 1)
-            # HONORER LE NUMERO. Il etait lu puis jete, et chaque entree
-            # renumerotee par sa position. `--domains wtj` ecrit un fichier
-            # temporaire « N|url » avec les numeros d'origine : en le relisant,
-            # le site 57 redevenait le site 1, et `--sites` combine a `--domains`
-            # ne designait plus rien de ce que l'affichage annoncait.
+            # HONOUR THE NUMBER. It was read then thrown away, and each entry
+            # renumbered by its position. `--domains wtj` writes a temporary
+            # "N|url" file with the original numbers: when reading it back,
+            # site 57 became site 1 again, and `--sites` combined with `--domains`
+            # no longer designated anything of what the display announced.
             if tete.strip().isdigit():
                 num = int(tete.strip())
         else:
@@ -300,7 +300,7 @@ def build_job_urls(entry: dict) -> list[str]:
         urls.append(base + "/offre-de-emploi")
         return urls
 
-    # Générer des chemins carrière courants pour sites corporate
+    # Generate common career paths for corporate sites
     careers_paths = [
         "/careers",
         "/careers/jobs",
@@ -318,14 +318,14 @@ def build_job_urls(entry: dict) -> list[str]:
         "/search/jobs",
     ]
 
-    # URLs existantes déjà carrière
+    # Existing URLs already career ones
     career_domains = {"jobs.", "careers.", "recrutement.", "talents.", "career."}
     if any(domain.startswith(p) for p in career_domains):
         urls.append(base + "/jobs")
         urls.append(base + "/search")
         urls.append(base + "/search/jobs")
     else:
-        # Site corporate — ajouter les chemins carrière
+        # Corporate site — add the career paths
         for p in careers_paths:
             urls.append(base + p)
 
@@ -333,7 +333,7 @@ def build_job_urls(entry: dict) -> list[str]:
 
 
 def extract_company_name(entry: dict) -> str:
-    """Extrait un nom lisible d'entreprise depuis le domaine."""
+    """Extracts a readable company name from the domain."""
     domain = entry["domain"]
     known = {
         "axa-im.com": "AXA IM",
@@ -348,8 +348,8 @@ def extract_company_name(entry: dict) -> str:
         "careers.bpce.fr": "BPCE",
         "banquepopulaire.fr": "Banque Populaire",
         "credit-agricole.fr": "Crédit Agricole",
-        # Ces deux-la ont change d'hote ; sans entree, le repli decoupait le
-        # domaine et produisait « Rejoindre » et « Caissedesdepots-recrute ».
+        # These two changed host; without an entry, the fallback cut up the
+        # domain and produced "Rejoindre" and "Caissedesdepots-recrute".
         "rejoindre.credit-agricole.com": "Crédit Agricole",
         "caissedesdepots-recrute.fr": "Caisse des Dépôts",
         "tikehaucapital.com": "Tikehau Capital",
@@ -409,21 +409,21 @@ def extract_company_name(entry: dict) -> str:
         "linkfinance.fr": "Link Finance",
         "apec.fr": "APEC",
     }
-    # SUR UNE FRONTIERE DE LABEL, pas n'importe ou dans la chaine. `k in domain`
-    # traitait le domaine comme du texte : « ey.com » est une sous-chaine de
-    # « mckins-ey.com » et de « kearn-ey.com », et les offres de McKinsey comme
-    # celles de Kearney entraient dans la file au nom d'EY — mauvaise societe sur
-    # le CV, la lettre et le suivi. Un nom de domaine se lit par labels separes
-    # par des points : on exige donc que la cle soit le domaine, ou qu'elle le
-    # termine apres un point.
+    # ON A LABEL BOUNDARY, not anywhere in the string. `k in domain`
+    # treated the domain as text: "ey.com" is a substring of
+    # "mckins-ey.com" and of "kearn-ey.com", and the offers of McKinsey like
+    # those of Kearney entered the queue under EY's name — wrong company on
+    # the CV, the letter and the tracking. A domain name is read as labels separated
+    # by dots: we therefore require the key to be the domain, or to
+    # end it after a dot.
     d = domain.lower()
-    # les cles les plus longues d'abord : « careers.bpce.fr » doit gagner sur
-    # « bpce.fr », sinon l'ordre du dictionnaire decide au hasard.
+    # the longest keys first: "careers.bpce.fr" must win over
+    # "bpce.fr", otherwise the dictionary order decides at random.
     for k, v in sorted(known.items(), key=lambda kv: -len(kv[0])):
         kl = k.lower()
         if d == kl or d.endswith("." + kl):
             return v
-    # Fallback: extraire du domaine
+    # Fallback: extract from the domain
     parts = domain.replace("www.", "").split(".")
     if parts[0] in ("jobs", "careers", "recrutement", "talents", "career"):
         return parts[1].capitalize() if len(parts) > 2 else parts[0].capitalize()
@@ -431,17 +431,17 @@ def extract_company_name(entry: dict) -> str:
 
 
 def offre_retenue(titre: str) -> bool:
-    """LE filtre d'entrée : lexique large + mot métier + pas de rôle hors-cible.
+    """THE entry filter: wide lexicon + profession word + no off-target role.
 
-    `matches_esg_finance` etait le seul filtre de ce programme. Comme « h/f »
-    est dans son lexique et que presque toute annonce francaise le porte, il
-    laissait passer boucher, plombier et serveur. `title_ok` corrige ca depuis
-    juillet dans job_sources, mais n'avait jamais ete branche ici.
+    `matches_esg_finance` was the only filter of this program. As "h/f" is in its
+    lexicon and almost every French posting carries it, it let through butcher,
+    plumber and waiter. `title_ok` fixes that since July in job_sources, but had
+    never been wired here.
 
-    Import TARDIF : la collecte est lourde a charger, et inutile a qui
-    n'appelle pas ce filtre.
-    Repli sur le tamis large si job_sources est indisponible — mieux vaut trop
-    d'offres que pas de scan du tout.
+    LATE import: the collection is heavy to load, and useless to anyone who does not
+    call this filter.
+    Falls back on the wide sieve if job_sources is unavailable — better too many
+    offers than no scan at all.
     """
     if not titre:
         return False
@@ -453,7 +453,7 @@ def offre_retenue(titre: str) -> bool:
 
 
 def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
-    """Scrape un site pour en extraire les offres d'emploi."""
+    """Scrapes a site to extract its job offers."""
     import httpx
 
     site_name = extract_company_name(entry)
@@ -693,9 +693,9 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
         if url in visited:
             continue
         visited.add(url)
-        # Chemin DEVINE : c'est ici que robots.txt compte le plus. Un site peut
-        # ouvrir sa racine et fermer /search ou /job-search — on ne l'apprend
-        # qu'en le lisant. Le cache rend ce test gratuit apres le 1er appel.
+        # GUESSED path: this is where robots.txt matters most. A site may
+        # open its root and close /search or /job-search — we only learn it
+        # by reading it. The cache makes this test free after the 1st call.
         if not robots_autorise(url):
             continue
         try:
@@ -703,7 +703,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
             page.goto(url, timeout=timeout_ms, wait_until="domcontentloaded")
             time.sleep(random.uniform(1.0, 2.5))
 
-            # Cookie dismiss (via web_nav.COOKIE_JS si dispo)
+            # Cookie dismiss (through web_nav.COOKIE_JS if available)
             try:
                 from jobhunter.navigation.page import COOKIE_JS
 
@@ -712,7 +712,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
             except Exception:
                 pass
 
-            # Analyser la page
+            # Analyse the page
             info = page.evaluate(PAGE_ANALYZE_OFFERS_JS)
             if info.get("isJobPage") or info.get("jobLinks", 0) >= 2 or info.get("cards", 0) >= 2:
                 # Try standard extraction
@@ -823,8 +823,8 @@ def scrape_all_sites(
         except Exception:
             pass
 
-    # Choisir le moteur
-    # Playwright standard, navigateur annonce comme automatise : aucun
+    # Choose the engine
+    # Standard Playwright, browser announced as automated: no
     # deguisement (moteur furtif, faux user-agent, navigator.webdriver masque).
     from playwright.sync_api import sync_playwright
 
@@ -838,7 +838,7 @@ def scrape_all_sites(
         browser = _lancer(browser_type, headless=headless)
         context = browser.new_context(viewport={"width": 1280, "height": 800})
         page = context.new_page()
-        # TURBO : bloque images/polices/pubs → scan 2-5× plus rapide (texte suffit)
+        # TURBO: blocks images/fonts/ads → scan 2-5× faster (text is enough)
         try:
             from jobhunter.navigation.navigateur import block_resources
 
@@ -860,9 +860,9 @@ def scrape_all_sites(
                         total_offers += len(offers)
                         all_offers.extend(offers)
                         # Sauvegarde progressive. jwrite ecrit a cote puis
-                        # bascule : un write_text direct laissait un fichier
-                        # tronque si le scan mourait pendant l'ecriture, et
-                        # c'est le fichier de REPRISE (--skip) qu'on perdait.
+                        # switch: a direct write_text left a file
+                        # truncated if the scan died during the write, and
+                        # it is the RESUME file (--skip) that was lost.
                         importlib.import_module("jobhunter.programmes.jutil").jwrite(
                             output_path, all_offers
                         )
@@ -871,18 +871,18 @@ def scrape_all_sites(
                         print("  ⚠️ Aucune offre ESG/Finance trouvée")
                 except Exception as e:
                     print(f"  ❌ Erreur site: {type(e).__name__}: {str(e)[:100]}")
-                # Pause entre les sites
+                # Pause between the sites
                 time.sleep(random.uniform(1.0, 3.0))
         finally:
-            # Ctrl-C ou plantage : sans ce finally, le Chromium restait en vie
-            # et un scan relance en empilait un de plus a chaque fois.
+            # Ctrl-C or crash: without this finally, the Chromium stayed alive
+            # and a rerun scan stacked one more each time.
             try:
                 browser.close()
             except Exception:
                 pass
 
     # Sauvegarde finale
-    # Déduplication
+    # Deduplication
     seen_urls = set()
     unique_offers = []
     for o in all_offers:
@@ -914,18 +914,18 @@ def scrape_all_sites(
 
 
 def merger(offres, dry=False):
-    """Fait entrer la récolte dans apply_queue.json.
+    """Brings the harvest into apply_queue.json.
 
-    SANS CECI, LE PROGRAMME NE SERT A RIEN. Il ecrivait `offres_fraiches.json`,
-    qu'AUCUN autre programme ne lisait : les sites carriere etaient scrapes
-    depuis des mois et leurs offres n'atteignaient jamais la file. Le probleme
-    avait ete repere (00_MASTER, 12/07) et regle une fois A LA MAIN — jamais en
-    code. Le bouton « Scrape les sites » de l'app tournait donc dans le vide.
+    WITHOUT THIS, THE PROGRAM IS USELESS. It wrote `offres_fraiches.json`, which NO
+    other program read: the career sites had been scraped for months and their
+    offers never reached the queue. The problem had been spotted (00_MASTER, 12/07)
+    and solved once BY HAND — never in code. The app's "Scrape les sites" button
+    therefore spun in the void.
 
-    On passe par `job_sources.merge_into_queue` plutot que d'ecrire la file
-    ici : c'est lui qui tient la deduplication, l'arbitrage de source, le filtre
-    geographique, les exclusions et le scoring. Le format produit par
-    `scrape_site` est deja le sien (titre/url/entreprise/domaine/location/date).
+    We go through `job_sources.merge_into_queue` rather than writing the queue here:
+    it is the one that holds the deduplication, the source arbitration, the
+    geographic filter, the exclusions and the scoring. The format produced by
+    `scrape_site` is already its own (titre/url/entreprise/domaine/location/date).
     """
     if not offres:
         print("→ rien à fusionner.")
@@ -968,7 +968,7 @@ def main():
         dest="headless",
         help="Afficher la fenêtre du navigateur",
     )
-    # Le mode furtif est retire ; les deux options restent acceptees, sans effet.
+    # The stealth mode is removed; both options stay accepted, without effect.
     parser.add_argument("--stealth", action="store_true", help="sans effet (retire)")
     parser.add_argument("--no-stealth", action="store_false", dest="stealth", help="sans effet")
     parser.add_argument("--skip", type=int, default=0, help="Nombre de sites à sauter (reprise)")
@@ -987,12 +987,12 @@ def main():
     )
     args = parser.parse_args()
 
-    # Déterminer le chemin du fichier domaines
+    # Determine the path of the domains file
     scripts_dir = _racine.scripts()
     if args.domains_file:
         domains_file = Path(args.domains_file)
     else:
-        # Chercher dans Scripts/ ou parent
+        # Look in Scripts/ or parent
         candidates = [
             scripts_dir / "unique_domains.txt",
             scripts_dir.parent / "Scripts" / "unique_domains.txt",
@@ -1029,7 +1029,7 @@ def main():
         if not entries:
             print("❌ Aucun site trouvé")
             sys.exit(1)
-        # Sauvegarde temporaire pour le scraper
+        # Temporary save for the scraper
         temp_domains = scripts_dir / "_temp_filtered_domains.txt"
         temp_domains.write_text(
             "\n".join(f"{e['num']}|{e['url']}" for e in entries), encoding="utf-8"
@@ -1052,7 +1052,7 @@ def main():
         max_sites=max_sites,
     )
 
-    # Nettoyer fichier temporaire
+    # Clean the temporary file
     temp_file = scripts_dir / "_temp_filtered_domains.txt"
     if temp_file.exists():
         temp_file.unlink()

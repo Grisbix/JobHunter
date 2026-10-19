@@ -1,6 +1,6 @@
-"""Donnees de l'app : chargement de la file, enrichissement et synchro en arriere-plan, relances.
+"""App data: loading the queue, background enrichment and sync, follow-ups.
 
-Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
+Part of jobhunter.app (former JobHunter.pyw, phase 3.7)."""
 
 import datetime
 import importlib
@@ -17,7 +17,7 @@ from jobhunter.stockage import file as queue_io
 
 
 class DonneesMixin:
-    # ── données ──
+    # ── data ──
     def _oid(self: "AppTypee", o: Any) -> Any:
         return f"{(o.get('entreprise') or '').strip()}|{(o.get('poste') or '').strip()}"
 
@@ -26,7 +26,7 @@ class DonneesMixin:
         return urlparse(u).netloc.replace("www.", "").lower() if u.startswith("http") else ""
 
     def _acct_of(self: "AppTypee", o: Any) -> Any:
-        """Compte connu pour ce site ? Match host (exact ou sous-domaine). Retour info|None."""
+        """Known account for this site? Host match (exact or subdomain). Returns info|None."""
         host = self._host(o)
         if not host:
             return None
@@ -43,8 +43,8 @@ class DonneesMixin:
         return None
 
     def load_offers(self: "AppTypee") -> None:
-        # la queue change (scan, suppressions) : le texte cherchable mis en cache
-        # decrirait sinon des offres qui n'existent plus
+        # the queue changes (scan, deletions): the cached searchable text
+        # would otherwise describe offers that no longer exist
         self._search_cache.clear()
         try:
             self.offers = queue_io.charger(QUEUE)
@@ -75,7 +75,7 @@ class DonneesMixin:
         VERROU _bg_busy partagé avec _auto_sync : jamais 2 jobs qui écrivent la queue en même temps."""
         if getattr(self, "_desc_busy", False) or getattr(self, "_bg_busy", False):
             return
-        # cap par session : évite de scraper 1300 offres d'un coup (rate-limit/ban)
+        # cap per session: avoids scraping 1300 offers at once (rate limit/ban)
         if getattr(self, "_desc_batches", 0) >= 8:
             return
         todo = self._missing_desc()
@@ -113,13 +113,13 @@ class DonneesMixin:
         def done() -> None:
             self._desc_busy = False
             self._bg_busy = False
-            self.load_offers()  # recharge (descriptions + ATS mis à jour) → table rafraîchie
+            self.load_offers()  # reload (descriptions + ATS updated) → table refreshed
             rest = len(self._missing_desc())
             got = n - rest
             self._log(
                 f"✅ descriptions: +{got} récupérées ({rest} restantes, dont Indeed/anti-bot).\n"
             )
-            if rest and got:  # il en reste ET on progresse → lot suivant
+            if rest and got:  # some remain AND we are making progress → next batch
                 self.root.after(1500, self._auto_enrich)
 
         threading.Thread(target=work, daemon=True).start()
@@ -129,7 +129,7 @@ class DonneesMixin:
         Relancé toutes les 10 min tant que l'app tourne."""
         if getattr(self, "_sync_busy", False) or getattr(self, "_bg_busy", False):
             self.root.after(120000, self._auto_sync)
-            return  # occupé → réessaie dans 2 min
+            return  # busy → try again in 2 min
         self._sync_busy = True
         self._bg_busy = True
 
@@ -155,13 +155,13 @@ class DonneesMixin:
                 self._bg_busy = False
                 if msg and not msg.startswith("pdf créés: 0 · pdf resynchronisés: 0"):
                     self._log(f"🔁 sync docs : {msg}\n")
-                self.root.after(600000, self._auto_sync)  # re-check dans 10 min
+                self.root.after(600000, self._auto_sync)  # re-check in 10 min
 
             self.root.after(0, done)
 
         threading.Thread(target=work, daemon=True).start()
 
-    _SCRAPE_COOLDOWN_S = 1800  # 30 min minimum entre deux scans declenches
+    _SCRAPE_COOLDOWN_S = 1800  # 30 min minimum between two triggered scans
 
     def _scrape_cooldown_ok(self: "AppTypee") -> Any:
         last = getattr(self, "_scrape_last", None)
@@ -170,11 +170,11 @@ class DonneesMixin:
         return (datetime.datetime.now() - last).total_seconds() >= self._SCRAPE_COOLDOWN_S
 
     def _on_focus_scrape(self: "AppTypee", e: Any = None) -> None:
-        """La fenetre reprend le focus : on revient dans l'app, on rafraichit.
+        """The window gets the focus back: we are back in the app, we refresh.
 
-        Declenchement par evenement plutot que minuterie : pas de scan pendant
-        que l'app est en arriere-plan, et les offres sont fraiches au moment ou
-        tu les regardes. Le cooldown evite qu'un alt-tab repete relance un scan.
+        Triggered by an event rather than a timer: no scan while the app is in the
+        background, and the offers are fresh at the moment you look at them. The
+        cooldown prevents a repeated alt-tab from starting a scan again.
         """
         if e is not None and getattr(e, "widget", None) is not self.root:
             return
@@ -182,20 +182,20 @@ class DonneesMixin:
             self._auto_scrape()
 
     def _auto_scrape(self: "AppTypee") -> None:
-        """AUTO : scrape_jobs.py en fond — nouvelles offres des sites entreprises.
+        """AUTO: scrape_jobs.py in the background — new offers from company sites.
 
-        Meme motif que _auto_sync, mais espace de 3 h : un scan trop frequent se
-        fait rate-limiter ou bannir. Cap par session comme _auto_enrich.
-        VERROU _bg_busy partage : jamais 2 jobs qui ecrivent la file en meme temps.
+        Same pattern as _auto_sync, but 3 h apart: a scan that is too frequent gets
+        rate-limited or banned. Cap per session like _auto_enrich.
+        Shared _bg_busy LOCK: never 2 jobs writing the queue at the same time.
         """
         if getattr(self, "_scrape_busy", False) or getattr(self, "_bg_busy", False):
             self.root.after(300000, self._auto_scrape)
-            return  # occupe -> reessaie dans 5 min
+            return  # busy -> try again in 5 min
         if self.proc and self.proc.poll() is None:
             self.root.after(300000, self._auto_scrape)
-            return  # un bouton tourne -> 5 min
+            return  # a button is running -> 5 min
         if getattr(self, "_scrape_runs", 0) >= 4:
-            return  # cap : 4 scans par session
+            return  # cap: 4 scans per session
         self._scrape_busy = True
         self._bg_busy = True
         self._scrape_last = datetime.datetime.now()
@@ -235,9 +235,9 @@ class DonneesMixin:
                     self._log(SCRAPE_TAG + " scan auto : +%d offre(s). %s%s" % (neuf, msg, LF))
                 elif msg.startswith("!"):
                     self._log(SCRAPE_TAG + " scan auto : %s%s" % (msg, LF))
-                # plus de minuterie : le prochain scan viendra du focus fenetre
+                # no more timer: the next scan will come from the window focus
                 if neuf > 0:
-                    self.root.after(1500, self._auto_enrich)  # descriptions des nouvelles
+                    self.root.after(1500, self._auto_enrich)  # descriptions of the new ones
 
             self.root.after(0, done)
 

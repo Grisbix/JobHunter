@@ -15,22 +15,22 @@ from jobhunter.sources.commun import UA, _mk, title_ok
 _log = _journal.journal(__name__)
 
 
-# ═══════════════ 6. Talent.com — agregateur (remplace la couverture Indeed) ══════
-# Indeed est INACCESSIBLE : Cloudflare bloque au niveau IP/empreinte TLS, y compris
-# en fenetre reelle avec patchright+stealth (teste). Contourner une protection
-# anti-bot est hors de question ; Talent.com agrege un vivier comparable et expose
-# du JSON-LD schema.org propre, avec la DESCRIPTION incluse (elle manque a 755
-# offres de la queue, dont la quasi-totalite vient d'Indeed).
+# ═══════════════ 6. Talent.com — aggregator (replaces the Indeed coverage) ══════
+# Indeed is INACCESSIBLE: Cloudflare blocks at the IP/TLS fingerprint level, including
+# in a real window with patchright+stealth (tested). Bypassing an anti-bot
+# protection is out of the question; Talent.com aggregates a comparable pool and exposes
+# clean schema.org JSON-LD, with the DESCRIPTION included (it is missing for 755
+# offers in the queue, almost all of which come from Indeed).
 #
-# Cout : 1 requete de recherche + 1 par offre retenue. Le filtre title_ok est
-# applique AVANT d'aller chercher le detail, pour ne pas payer les hors-sujet.
+# Cost: 1 search request + 1 per offer kept. The title_ok filter is
+# applied BEFORE fetching the detail, so as not to pay for the off-topic ones.
 TALENT_SEARCH = "https://fr.talent.com/jobs?k={kw}&l=France"
 
 _TALENT_LINK_RX = re.compile(r'href="(/view\?id=\d+)"')
 
 
 def _talent_detail(httpx: Any, url: str) -> Any:
-    """(titre, entreprise, lieu, date, description) depuis le JSON-LD JobPosting."""
+    """(title, company, place, date, description) from the JobPosting JSON-LD."""
     import html as _html
     import json as _json
 
@@ -66,9 +66,9 @@ def _talent_detail(httpx: Any, url: str) -> Any:
 
 
 def fetch_talent(max_days: int = 60, per_kw: int = 20) -> list[dict[str, Any]]:
-    """Offres Talent.com pour chaque mot-cle.
+    """Talent.com offers for each keyword.
 
-    max_days ecarte les annonces anciennes : le site sert des offres de plus d'un an (vu
+    max_days sets aside old postings: the site serves offers more than a year old (seen
     : datePosted 2025-06).
     """
     from urllib.parse import quote as _q
@@ -77,10 +77,10 @@ def fetch_talent(max_days: int = 60, per_kw: int = 20) -> list[dict[str, Any]]:
 
     today = datetime.date.today()
     out, seen = [], set()
-    # LES OFFRES DEJA DANS LA FILE NE SONT PAS RECHARGEES. Chaque fiche coute une
-    # requete, et la collecte rechargeait tous les jours les memes : 30 min pour
-    # Talent seul le 30/09, dans une passe bornee a 60. Leur description est
-    # deja la ; seule une offre nouvelle merite sa fiche.
+    # OFFERS ALREADY IN THE QUEUE ARE NOT RELOADED. Each posting costs a
+    # request, and the collection reloaded the same ones every day: 30 min for
+    # Talent alone on 30/09, in a pass capped at 60. Their description is
+    # already there; only a new offer deserves its posting.
     try:
         from jobhunter.stockage import file as queue_io
 
@@ -130,10 +130,10 @@ def fetch_talent(max_days: int = 60, per_kw: int = 20) -> list[dict[str, Any]]:
 
 
 def scan_talent() -> list[dict[str, Any]]:
-    """Collecte Talent.com (hors --all depuis le 2026-10-03) et l'annonce dans le journal.
+    """Talent.com collection (outside --all since 2026-10-03), announced in the log.
 
     Returns:
-        Les offres, avec description.
+        The offers, with description.
     """
     o = fetch_talent()
     _log.info(f"  ✓ Talent.com → {len(o)} offres (avec description)")

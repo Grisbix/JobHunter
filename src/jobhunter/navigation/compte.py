@@ -1,15 +1,15 @@
-"""Connexion par etapes (le mot de passe n'est JAMAIS tape) et bascule vers l'inscription.
+"""Step-by-step login (the password is NEVER typed) and switch to sign-up.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+Part of jobhunter.navigation (formerly Scripts/web_nav.py, phase 3.6).
 
-Decision : docs/adr/0005-aucune-soumission-automatique.md
+Decision: docs/adr/0005-aucune-soumission-automatique.md
 """
 
 from typing import Any
 
 from jobhunter.navigation.page import analyze
 
-# ── LOGIN multi-étapes (SmartRecruiters email→continue→password + génériques) ──
+# ── Multi-step LOGIN (SmartRecruiters email→continue→password + generic ones) ──
 _LOGIN_JS = r"""
 (P) => {
   const norm=s=>(s||'').toLowerCase();
@@ -61,8 +61,8 @@ _LOGIN_JS = r"""
 """
 
 
-# #7 React : fill() ne déclenche pas toujours l'état -> requestSubmit() natif.
-# Cible le form contenant un input email/password rempli. Retour bool.
+# #7 React: fill() does not always trigger the state -> native requestSubmit().
+# Targets the form containing a filled email/password input. Returns bool.
 _REQSUBMIT_JS = r"""
 () => {
   const inp=[...document.querySelectorAll('input[type=email],input[type=password],input[name*=email i]')].find(e=>e.value&&e.value.trim());
@@ -75,9 +75,9 @@ _REQSUBMIT_JS = r"""
 
 
 def react_submit(page: Any) -> bool:
-    """Soumission native HTML (form.requestSubmit) quand le clic bouton est avalé par React/SPA.
+    """Native HTML submission (form.requestSubmit) when the button click is swallowed by React/SPA.
 
-    Retour True si un form a été soumis.
+    Returns True if a form was submitted.
     """
     try:
         return bool(page.evaluate(_REQSUBMIT_JS))
@@ -86,11 +86,11 @@ def react_submit(page: Any) -> bool:
 
 
 def login_flow(page: Any, email: str, pwd: str, max_steps: int = 3) -> dict[str, Any]:
-    """Login multi-étapes (SmartRecruiters : email→continue→password→login).
+    """Multi-step login (SmartRecruiters: email→continue→password→login).
 
-    Remplit les champs vides + clique continue/login à chaque étape. Fallback
-    requestSubmit() si le clic ne fait pas avancer (React). Le mot de passe n'est JAMAIS
-    tape : regle du projet, quel que soit pwd.
+    Fills the empty fields + clicks continue/login at each step. requestSubmit()
+    fallback if the click does not move forward (React). The password is NEVER typed:
+    project rule, whatever pwd is.
     """
     pwd = ""
     import json as _json
@@ -114,7 +114,7 @@ def login_flow(page: Any, email: str, pwd: str, max_steps: int = 3) -> dict[str,
                 page.wait_for_timeout(2000)
             except Exception:
                 break
-            # clic avalé (URL + DOM inchangés) -> requestSubmit natif
+            # click swallowed (URL + DOM unchanged) -> native requestSubmit
             try:
                 still = page.locator('[data-wn-next="1"]').count() > 0
                 if still and page.url == url_before:
@@ -123,16 +123,16 @@ def login_flow(page: Any, email: str, pwd: str, max_steps: int = 3) -> dict[str,
                         page.wait_for_timeout(2000)
             except Exception:
                 pass
-        if submitted_pwd:  # password soumis -> login envoyé, stop
+        if submitted_pwd:  # password submitted -> login sent, stop
             break
         if not r.get("email") and not r.get("btn"):
             break
     return {"steps": steps}
 
 
-# ── BASCULE vers CRÉATION DE COMPTE (sign in -> sign up) ──────────────────────
-# Sur portail carrière : la page montre souvent LOGIN par défaut. Si pas de compte,
-# faut cliquer le toggle/onglet "Créer un compte / Pas de compte ? Inscrivez-vous".
+# ── SWITCH to ACCOUNT CREATION (sign in -> sign up) ───────────────────────────
+# On a career portal: the page often shows LOGIN by default. If there is no account,
+# one must click the "Créer un compte / Pas de compte ? Inscrivez-vous" toggle/tab.
 _SWITCH_REG_JS = r"""
 () => {
   const _deep=(root,acc)=>{root.querySelectorAll('a,button,[role=button],[role=tab],input[type=button]').forEach(e=>acc.push(e));root.querySelectorAll('*').forEach(e=>{if(e.shadowRoot)_deep(e.shadowRoot,acc);});return acc;};
@@ -159,9 +159,9 @@ _SWITCH_REG_JS = r"""
 
 
 def switch_to_register(page: Any) -> dict[str, Any]:
-    """Bascule d'un écran login vers l'écran création de compte (toggle/onglet).
+    """Switches from a login screen to the account creation screen (toggle/tab).
 
-    Retour {switched, label, kind}. kind = analyze après clic.
+    Returns {switched, label, kind}. kind = analyze after the click.
     """
     try:
         r = page.evaluate(_SWITCH_REG_JS)

@@ -1,19 +1,19 @@
-"""Proposer un statut de candidature à partir d'un courriel. Fonctions pures, sans réseau.
+"""Suggest an application status from an email. Pure functions, no network.
 
-Partie de jobhunter.courriels. Deux questions par courriel :
+Part of jobhunter.courriels. Two questions per email:
 
-1. **Quelle candidature ?** Celle du suivi dont l'entreprise apparaît dans l'expéditeur
-   (nom affiché ou domaine) ou dans le sujet. Une entreprise nommée seulement dans le
-   corps ne suffit que si l'intitulé du poste y est aussi : les lettres d'information
-   citent beaucoup d'entreprises. Deux candidatures dans la même entreprise : celle dont
-   l'intitulé apparaît, sinon aucune (on ne devine pas).
-2. **Quel statut ?** Refus, entretien ou accusé de réception, d'après des formules en
-   français, anglais et allemand. Le refus passe en premier : une lettre de refus
-   remercie souvent pour la candidature.
+1. **Which application?** The tracked one whose company appears in the sender
+   (display name or domain) or in the subject. A company named only in the body
+   is enough only if the job title is there too: newsletters mention many
+   companies. Two applications at the same company: the one whose title appears,
+   otherwise none (we do not guess).
+2. **Which status?** Rejection, interview or acknowledgement, from phrases in
+   French, English and German. Rejection comes first: a rejection letter often
+   thanks you for applying.
 
-Un statut n'avance que vers l'aval : un accusé de réception ne fait passer « à postuler »
-qu'à « postulé » ; un entretien ne revient jamais à « postulé » ; rien ne remplace un
-refus. Le résultat est une liste de `Proposition`, que l'utilisateur valide une à une.
+A status only moves forward: an acknowledgement only takes "à postuler" to
+"postulé"; an interview never goes back to "postulé"; nothing replaces a
+rejection. The result is a list of `Proposition`, which the user validates one by one.
 """
 
 import re
@@ -26,7 +26,7 @@ from jobhunter.courriels.lecture import Courriel
 
 REFUS, ENTRETIEN, POSTULE = "refus", "entretien", "postulé"
 
-# Rang de chaque statut dans la vie d'une candidature : on ne propose que d'avancer.
+# Rank of each status in the life of an application: we only suggest moving forward.
 _RANG = {
     "": 0,
     "à postuler": 0,
@@ -67,7 +67,7 @@ _MOTIFS = (
 )
 _RX = tuple((statut, re.compile(m, re.I)) for statut, m in _MOTIFS)
 
-# Mots qui ne désignent pas une entreprise : formes juridiques, « groupe », pays…
+# Words that do not designate a company: legal forms, "groupe", countries…
 _VIDES = {
     "sa", "sas", "sasu", "sarl", "se", "ag", "gmbh", "kg", "ltd", "llc", "inc", "plc", "bv",
     "nv", "spa", "group", "groupe", "france", "paris", "europe", "international", "the",
@@ -82,7 +82,7 @@ class Proposition:
     oid: str  # « entreprise|poste »
     actuel: str
     propose: str
-    raison: str  # la formule trouvée
+    raison: str  # the phrase found
     de: str
     sujet: str
     le: str
@@ -99,7 +99,7 @@ def mots_entreprise(entreprise: str) -> list[str]:
 
 
 def _nomme(mots: list[str], texte_plat: str, colle: str = "") -> bool:
-    """Tous les mots de l'entreprise dans le texte (ou colles dans un domaine)."""
+    """All the company's words in the text (or glued together in a domain)."""
     if not mots:
         return False
     tokens = f" {texte_plat} "
@@ -132,7 +132,7 @@ def candidature(c: Courriel, suivi: Mapping[str, Mapping[str, Any]]) -> str | No
         if en_tete or (_nomme(mots, corps_plat) and poste_cite):
             par_entreprise.setdefault(" ".join(mots), []).append(oid)
     if len(par_entreprise) != 1:
-        return None  # aucune, ou plusieurs entreprises : on ne devine pas
+        return None  # none, or several companies: we do not guess
     oids = next(iter(par_entreprise.values()))
     if len(oids) == 1:
         return oids[0]
@@ -156,7 +156,7 @@ def propositions(
         actuel = str(suivi[oid].get("s") or "")
         statut, raison = trouve
         if actuel not in _RANG or _RANG[statut] <= _RANG[actuel]:
-            continue  # statut inconnu (« mauvaise »…) ou pas d'avancée
+            continue  # unknown status ("mauvaise"…) or no progress
         p = Proposition(oid, actuel, statut, raison, c.de, c.sujet, c.le)
         deja = meilleures.get(oid)
         if not deja or (_RANG[statut], c.le) > (_RANG[deja.propose], deja.le):

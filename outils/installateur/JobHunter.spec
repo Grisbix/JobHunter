@@ -1,8 +1,8 @@
 # -*- mode: python ; coding: utf-8 -*-
-# Application autonome : deux exécutables dans un même dossier, sans Python sur la machine.
-#   JobHunter.exe      l'application, sans console
-#   jobhunter-cli.exe  les programmes lancés par l'application (console)
-# Construction : python outils/installateur/construire.py   (docs : ADR 0011)
+# Standalone application: two executables in the same folder, no Python on the machine.
+#   JobHunter.exe      the application, without a console
+#   jobhunter-cli.exe  the programs launched by the application (console)
+# Build: python outils/installateur/construire.py   (docs : ADR 0011)
 import os
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
@@ -11,7 +11,7 @@ ICI = SPECPATH
 RACINE = os.path.dirname(os.path.dirname(ICI))
 SQUELETTE = os.path.join(ICI, "build", "squelette")
 
-cachees = collect_submodules("jobhunter")  # aiguillés par nom (-m module, jobhunter <commande>)
+cachees = collect_submodules("jobhunter")  # dispatched by name (-m module, jobhunter <command>)
 donnees = (
     collect_data_files("customtkinter")
     + collect_data_files("docx")

@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""premier_lancement.py — cree TON profil a partir de ton CV.
+"""premier_lancement.py — creates YOUR profile from your CV.
 
-    python JobHunter.pyw profil chemin/vers/mon_cv.pdf      (ou .docx)
-    python JobHunter.pyw profil mon_cv.docx --auto           (aucune question)
+    python JobHunter.pyw profil path/to/my_cv.pdf      (or .docx)
+    python JobHunter.pyw profil my_cv.docx --auto      (no questions)
 
-Ce que fait le programme :
-  1. lit le CV (PDF ou Word) : nom, email, telephone, LinkedIn, ville, langues,
-     competences reconnues (catalogue_competences.py) ;
-  2. te pose cinq questions : metiers vises, annees d'experience, villes,
-     accords (il/elle), listes d'entreprises ;
-  3. ecrit profil/profil.json — tout ce que le moteur sait de toi —, copie le CV
-     dans CV/Modeles/, prepare sources_config.json (mots-cles de recherche).
+What the program does:
+  1. reads the CV (PDF or Word): name, email, phone, LinkedIn, city, languages,
+     recognised skills (catalogue_competences.py);
+  2. asks you five questions: target jobs, years of experience, cities,
+     agreements (il/elle), company lists;
+  3. writes profil/profil.json — everything the engine knows about you —, copies the
+     CV into CV/Modeles/, prepares sources_config.json (search keywords).
 
-Un CV .docx est PREFERABLE : les CV generes par offre partent de ce modele et
-peuvent y inserer l'intitule du poste (ecris « [nom du poste] » dans ton
-accroche). Un CV .pdf est envoye tel quel.
+A .docx CV is PREFERABLE: the CVs generated per offer start from this template and
+can insert the job title into it (write "[nom du poste]" in your headline). A .pdf CV
+is sent as is.
 
-Rien n'est envoye nulle part : tout reste dans ce dossier.
-Ensuite : relis profil/profil.json (les champs « A COMPLETER » surtout).
+Nothing is sent anywhere: everything stays in this folder.
+Then: review profil/profil.json (the "A COMPLETER" fields above all).
 """
 
 import argparse
@@ -39,7 +39,7 @@ from jobhunter.programmes.catalogue_competences import FAMILLES, catalogue  # no
 
 A_COMPLETER = "A COMPLETER"
 
-# ── 1. Lecture du CV ─────────────────────────────────────────────────────────
+# ── 1. Reading the CV ────────────────────────────────────────────────────────
 
 
 def lire_cv(chemin):
@@ -86,7 +86,7 @@ def identite_du_cv(texte):
     tel = (_RX_TEL.search(texte) or [""])[0]
     lk = (_RX_LINKEDIN.search(texte) or [""])[0]
     prenom = nom = ""
-    # Le nom : une des premieres lignes, 2 a 4 mots alphabetiques, sans chiffre.
+    # The name: one of the first lines, 2 to 4 alphabetic words, without a digit.
     for l in lignes[:8]:
         mots = l.replace("-", " - ").split()
         if (
@@ -95,7 +95,7 @@ def identite_du_cv(texte):
             and all(re.fullmatch(r"[A-Za-zÀ-ÿ'’-]+", m) for m in mots)
         ):
             vrais = [m for m in l.split() if m]
-            # Le mot en MAJUSCULES est le nom de famille, s'il y en a un.
+            # The word in CAPITALS is the surname, if there is one.
             maj = [m for m in vrais if m.isupper() and len(m) > 1]
             if maj and len(maj) < len(vrais):
                 nom = " ".join(m.capitalize() for m in maj)
@@ -103,7 +103,7 @@ def identite_du_cv(texte):
             else:
                 prenom, nom = vrais[0], " ".join(vrais[1:])
             break
-    # La ville : un secteur du catalogue des zones nomme dans l'en-tete.
+    # The city: a sector of the zone catalogue named in the header.
     ville = ""
     entete = _sans_accent(" ".join(lignes[:12])).lower()
     from jobhunter.scoring import zones
@@ -137,7 +137,7 @@ def resume_du_cv(texte):
                     if bloc:
                         break
                     continue
-                if x.isupper() and len(x) < 40:  # titre de la section suivante
+                if x.isupper() and len(x) < 40:  # title of the next section
                     break
                 bloc.append(x)
             txt = re.sub(r"\s+", " ", " ".join(bloc)).strip()
@@ -174,18 +174,18 @@ def langue_du_cv(texte):
 
 
 def demander(question, defaut, auto, impose=None):
-    # Une reponse donnee en option (--metiers...) passe avant la question : un agent
-    # comme Claude Code renseigne tout sans clavier.
+    # An answer given as an option (--metiers...) comes before the question: an agent
+    # like Claude Code fills in everything without a keyboard.
     if impose is not None:
         print(f"  {question} -> {impose}")
         return impose
-    # Sans clavier (agent, tuyau), input() leverait EOFError : on prend la valeur proposee.
+    # Without a keyboard (agent, pipe), input() would raise EOFError: we take the proposed value.
     if auto or not sys.stdin.isatty():
         print(f"  {question} -> {defaut}")
         return defaut
     try:
         r = input(f"  {question} [{defaut}] : ").strip()
-    except EOFError:  # console sans clavier : la valeur proposee
+    except EOFError:  # console without a keyboard: the proposed value
         r = ""
     return r or defaut
 
@@ -240,10 +240,10 @@ def slug(s):
     return re.sub(r"[^A-Za-z0-9]+", "_", s).strip("_") or "Domaine"
 
 
-# ── 3. Construction du profil ────────────────────────────────────────────────
+# ── 3. Building the profile ──────────────────────────────────────────────────
 
-# Roles ecartes par defaut (rarement voulus par erreur), avec leur famille :
-# une famille VISEE n'est jamais ecartee.
+# Roles set aside by default (rarely wanted by mistake), with their family:
+# a TARGETED family is never set aside.
 _EXCLUS_DEFAUT = [
     ("brand", "marketing"),
     ("re:design(er)?\\b", "design"),
@@ -279,7 +279,7 @@ _EXCLUS_DEFAUT = [
 
 
 def familles_visees(metiers, comps):
-    """Score par famille : intitules vises (fort) + competences du CV."""
+    """Score per family: targeted titles (strong) + CV skills."""
     score = {f: 0 for f in FAMILLES}
     txt = " " + " ".join(metiers).lower() + " "
     for f, (_lib, mots) in FAMILLES.items():
@@ -360,8 +360,8 @@ def construire(cv_txt, cv_nom, rep):
     coeur = ordre[0] if ordre else ""
     mots_cibles = sorted({m for t in metiers for m in mots_significatifs(t)})
 
-    # Competences du profil = celles du CV. La lettre cite des competences
-    # que l'annonce demande ET que le CV porte : jamais une qu'il n'a pas.
+    # Profile skills = the CV's. The letter quotes skills
+    # that the posting asks for AND that the CV carries: never one it does not have.
     competences = {}
     for lab, v in comps.items():
         e = {k: v[k] for k in ("synonymes", "en", "prose_fr", "prose_en") if k in v}
@@ -424,7 +424,7 @@ def construire(cv_txt, cv_nom, rep):
         }
     )
 
-    # Forme masculine aussi : les annonces ecrivent « Chargé(e) », « Chargé H/F ».
+    # Masculine form too: postings write "Chargé(e)", "Chargé H/F".
     formes = []
     for t in metiers:
         formes.append(t.lower())
@@ -487,8 +487,8 @@ def construire(cv_txt, cv_nom, rep):
             "sauvetage": mots_cibles,
             "outils_max": 0 if coeur in ("dev", "data") else 4,
         },
-        # Langues parlees : le francais (outil en francais), plus celles du CV.
-        # Une annonce redigee ou exigee dans une autre langue est plafonnee.
+        # Languages spoken: French (tool in French), plus those of the CV.
+        # A posting written or required in another language is capped.
         "langues_parlees": ["fr"]
         + [
             c
@@ -532,8 +532,8 @@ def construire(cv_txt, cv_nom, rep):
 
 
 def familles_tri_a_exclure(metiers):
-    """Familles du tri (tri_file._METIERS) qui ne visent AUCUN des metiers
-    choisis : elles sont retirees de la file. Une famille visee reste."""
+    """Families of the sorting (tri_file._METIERS) that target NONE of the chosen
+    jobs: they are removed from the queue. A targeted family stays."""
     from jobhunter.scoring import tri as tri_file
 
     exclure = []
@@ -596,7 +596,7 @@ def main():
     ident["email"] = demander("Email", ident["email"] or A_COMPLETER, a.auto)
     ident["telephone"] = demander("Téléphone", ident["telephone"], a.auto)
     ident["ville"] = demander("Ville", ident["ville"], a.auto)
-    # Metier : la ligne sous le nom est souvent le titre du CV.
+    # Job: the line under the name is often the CV's title.
     lignes = [l.strip() for l in txt.splitlines() if l.strip()]
     propose = next((l for l in lignes[1:8] if 4 < len(l) < 60 and not re.search(r"[@\d]", l)), "")
     metiers = [
@@ -615,7 +615,7 @@ def main():
         )
     except ValueError:
         annees = 0
-    # Un intitule au feminin (« Chargée », « Directrice ») propose « f ».
+    # A title in the feminine ("Chargée", "Directrice") suggests "f".
     fem = bool(re.search(r"\b\w+(?:ée|trice|euse)\b", " ".join(metiers), re.I))
     genre = demander(
         "Accords dans les lettres : « diplômé » (m) ou « diplômée » (f) ?",
@@ -625,7 +625,7 @@ def main():
     )
     from jobhunter.scoring import zones
 
-    # Le secteur le plus PRECIS qui nomme la ville : la metropole avant la region.
+    # The most PRECISE sector that names the city: the metropolis before the region.
     v = _sans_accent(ident["ville"] or "").lower()
     candidats = [
         (len(s.get("departements", ())), cle)
@@ -695,7 +695,7 @@ def main():
     if sortie.exists():
         shutil.copyfile(sortie, sortie.with_suffix(".json.bak"))
     sortie.write_text(json.dumps(profil, ensure_ascii=False, indent=1), encoding="utf-8")
-    # Les familles du tri se calculent avec le profil en place (tri_file le lit).
+    # The sorting families are computed with the profile in place (tri_file reads it).
     import os
 
     from jobhunter import profil as _profil
@@ -706,8 +706,8 @@ def main():
     sortie.write_text(json.dumps(profil, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"  profil        : {sortie.relative_to(RACINE)}")
 
-    # Fichiers de donnees vides : la file d'offres et le suivi des candidatures.
-    # L'app repere sa racine a Scripts/apply_queue.json.
+    # Empty data files: the queue of offers and the application tracking.
+    # The app finds its root through Scripts/apply_queue.json.
     for nom, vide in (("apply_queue.json", "[]"), ("suivi.json", "{}")):
         if not (HERE / nom).exists():
             (HERE / nom).write_text(vide, encoding="utf-8")

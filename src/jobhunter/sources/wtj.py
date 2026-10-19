@@ -1,6 +1,6 @@
-"""Welcome to the Jungle : le sitemap public.
+"""Welcome to the Jungle: the public sitemap.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+Part of jobhunter.sources (formerly Scripts/job_sources.py, phase 3.4).
 """
 
 import json
@@ -49,27 +49,27 @@ def _wtj_429(pg: Any) -> bool:
 
 WTJ_SITEMAP = "https://www.welcometothejungle.com/sitemaps/index.xml.gz"
 
-# Mesure : le challenge CloudFront de WTJ tombe apres ~3 minutes (202, 202, 200
-# a 60 s d'intervalle). Attendre rapporte donc quelques fiches de plus par
-# passe ; s'arreter au premier 202 en rendait zero.
-WTJ_REPOS = 200  # secondes d'attente quand le mur tombe
+# Measured: WTJ's CloudFront challenge drops after ~3 minutes (202, 202, 200
+# at 60 s intervals). Waiting therefore brings a few more postings per
+# pass; stopping at the first 202 brought zero.
+WTJ_REPOS = 200  # seconds of waiting when the wall goes up
 
-WTJ_PATIENCE = 2  # nombre maximum d'attentes par passe
+WTJ_PATIENCE = 2  # maximum number of waits per pass
 
-# 2 et non plus 6 (2026-10-02) : six attentes de 200 s faisaient 20 min d'immobilite
-# dans une passe bornee a 60, pour un mur qui retombait aussitot la plupart du temps.
+# 2 and no longer 6 (2026-10-02): six waits of 200 s made 20 min of idleness
+# in a pass capped at 60, for a wall that most of the time came straight back down.
 
 
 def _wtj_fiche(url: str, client: Any) -> dict[str, Any] | None:
-    """JobPosting d'une fiche WTJ, ou None.
+    """JobPosting of a WTJ posting, or None.
 
-    Meme balisage que eFinancialCareers : un <script type="application/ld+json"> destine
-    a Google.
+    Same markup as eFinancialCareers: a <script type="application/ld+json"> meant
+    for Google.
 
-    Leve `Bloque` sur 202/429 : c'est le challenge anti-bot de CloudFront, il
-    vaut pour l'IP entiere et insister ne sert a rien. Surtout, 202 est un code
-    de SUCCES — le confondre avec une page vide ferait passer le mur pour une
-    fiche sans description.
+    Raises `Bloque` on 202/429: it is CloudFront's anti-bot challenge, it
+    applies to the whole IP and insisting is useless. Above all, 202 is a SUCCESS
+    code — mistaking it for an empty page would pass the wall off as a
+    posting without description.
     """
     from jobhunter.programmes.wtj_desc import UA as _WUA
     from jobhunter.programmes.wtj_desc import Bloque
@@ -95,32 +95,32 @@ def _wtj_fiche(url: str, client: Any) -> dict[str, Any] | None:
 
 
 def scan_wtj(pages: int = 2) -> list[dict[str, Any]]:
-    """Offres Welcome to the Jungle, via le SITEMAP declare dans robots.txt.
+    """Welcome to the Jungle offers, through the SITEMAP declared in robots.txt.
 
-    L'ANCIENNE VERSION VISAIT UNE ROUTE INTERDITE, ET MORTE. Elle construisait
-    des URL `/fr/jobs?query=<mots>`. Or le robots.txt de WTJ porte, noir sur
-    blanc :
+    THE OLD VERSION TARGETED A FORBIDDEN, AND DEAD, ROUTE. It built
+    `/fr/jobs?query=<words>` URLs. Yet WTJ's robots.txt says, in black and
+    white:
 
         disallow: */jobs?query=*
         Disallow: /*?
 
-    C'est exactement ce qu'on demandait. Et depuis, WTJ a retire la recherche
-    libre : `/fr/jobs?query=…` ignore le parametre et sert une page de
-    presentation de leur produit « matching », la vraie recherche etant passee
-    derriere une authentification (`/fr/authenticate/signin?redirect=/fr/jobs`).
-    Le scan ne pouvait donc plus rien rendre — d'ou les 429 a repetition et les
-    « 0 offre » silencieux.
+    That is exactly what we were asking for. And since then, WTJ has removed free
+    search: `/fr/jobs?query=…` ignores the parameter and serves a page
+    presenting their "matching" product, the real search having moved
+    behind an authentication (`/fr/authenticate/signin?redirect=/fr/jobs`).
+    The scan could therefore no longer return anything — hence the repeated 429s and the
+    silent "0 offre".
 
-    LA VOIE OUVERTE. Le meme robots.txt declare un sitemap :
+    THE OPEN PATH. The same robots.txt declares a sitemap:
         Sitemap: https://www.welcometothejungle.com/sitemaps/index.xml.gz
-    Neuf fichiers `job-listings.N.xml.gz`, 88 000 annonces, 60 000 en francais.
-    Les pages `/fr/companies/<slug>/jobs/<slug>` ne sont interdites nulle part.
+    Nine `job-listings.N.xml.gz` files, 88,000 postings, 60,000 in French.
+    The `/fr/companies/<slug>/jobs/<slug>` pages are forbidden nowhere.
 
-    LE DEBIT RESTE BRIDE. Apres quelques fiches, CloudFront bascule l'IP sur un
-    challenge et repond 202 avec un corps vide (voir wtj_desc.py, meme mur). On
-    lit donc peu de fiches par passe, on s'arrete des le premier 202, et on
-    garde ce qui est lu. `pages` est conserve pour la compatibilite des
-    appelants et sert de plafond : pages * 5 fiches.
+    THE RATE STAYS THROTTLED. After a few postings, CloudFront switches the IP to a
+    challenge and answers 202 with an empty body (see wtj_desc.py, same wall). So we
+    read few postings per pass, stop at the first 202, and
+    keep what was read. `pages` is kept for the callers' compatibility
+    and serves as a cap: pages * 5 postings.
     """
     import gzip
 
@@ -161,16 +161,16 @@ def scan_wtj(pages: int = 2) -> list[dict[str, Any]]:
             for l in re.findall(r"<loc>([^<]+)</loc>", t):
                 if "/fr/companies/" not in l or "/jobs/" not in l:
                     continue
-                # Le slug porte l'intitule, en minuscules et sans accents : il
-                # sert au PRE-FILTRE. Le vrai titre vient du ld+json de la fiche.
+                # The slug carries the title, lowercase and without accents: it
+                # serves the PRE-FILTER. The real title comes from the posting's ld+json.
                 approx = l.split("/jobs/")[-1].replace("-", " ")
                 if contrat_du_titre(approx) in _EX:
                     continue
                 if _RX_EFC_ESG.search(approx):
                     cibles.append(l)
 
-        # On ne relit pas ce qui est deja en file : chaque fiche coute une
-        # requete sur un debit tres limite.
+        # We do not read again what is already in the queue: each posting costs a
+        # request on a very limited rate.
         from jobhunter.stockage import file as queue_io
 
         connues = {
@@ -185,18 +185,18 @@ def scan_wtj(pages: int = 2) -> list[dict[str, Any]]:
             f"— {min(len(neuves), plafond)} lue(s) cette passe (le reste au prochain scan)"
         )
 
-        # PATIENCE. Le mur de WTJ n'est pas definitif : mesure a la seconde, il
-        # tombe apres ~3 minutes. S'arreter au premier 202 rendait 0 offre a
-        # chaque passe alors qu'attendre en donne quelques-unes de plus. On
-        # attend donc, un nombre limite de fois, et on rend la main ensuite.
-        # Ce n'est pas un contournement : on ralentit, on ne force rien.
+        # PATIENCE. WTJ's wall is not final: measured to the second, it
+        # drops after ~3 minutes. Stopping at the first 202 returned 0 offers on
+        # each pass whereas waiting gives a few more. So we
+        # wait, a limited number of times, and hand back afterwards.
+        # It is not a workaround: we slow down, we force nothing.
         etat = {"attentes": 0}
 
         def _fiche_patiente(url: str) -> Any:
-            """JobPosting, ou None si WTJ nous ferme la porte pour de bon.
+            """JobPosting, or None if WTJ shuts the door on us for good.
 
-            Rend None UNIQUEMENT quand la patience est epuisee : l'appelant sait
-            alors qu'il doit arreter la source, pas seulement sauter une fiche.
+            Returns None ONLY when patience is exhausted: the caller then knows
+            it must stop the source, not just skip a posting.
             """
             while True:
                 try:
@@ -211,14 +211,14 @@ def scan_wtj(pages: int = 2) -> list[dict[str, Any]]:
 
         for u in neuves[:plafond]:
             jp = _fiche_patiente(u)
-            if jp is None:  # mur durable : on rend la main
+            if jp is None:  # lasting wall: we hand back
                 break
-            if not jp:  # fiche illisible : on passe a la suivante
+            if not jp:  # unreadable posting: move on to the next one
                 continue
-            # UNE SEULE REQUETE PAR OFFRE. La description et l'intitule vivent
-            # dans le MEME bloc ld+json : les chercher par deux appels separes
-            # doublait la consommation d'un quota deja minuscule — le mur
-            # tombait deux fois plus vite, pour rien.
+            # ONE SINGLE REQUEST PER OFFER. The description and the title live
+            # in the SAME ld+json block: fetching them with two separate calls
+            # doubled the consumption of an already tiny quota — the wall
+            # went up twice as fast, for nothing.
             d = _strip_html(str(jp.get("description") or ""))
             if len(d) < 200:
                 continue

@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
-"""rejets_tri.py — Les offres que tri_file a retirees, pour que la collecte ne
-les reprenne pas.
+"""rejets_tri.py — The offers that tri_file removed, so that the collection does not take
+them back.
 
-POURQUOI. Le tri juge sur la DESCRIPTION (experience exigee, seniorite), que la
-collecte LinkedIn n'a pas encore au moment de fusionner. Une offre retiree a
-midi revenait donc le soir meme comme « nouvelle », on refaisait sa description,
-et le tri la retirait encore. Mesure du 2026-10-05 : sur 1469 offres retirees par
-le tri du soir, 1157 l'avaient deja ete a midi — environ 900 requetes LinkedIn
-par passe pour rien, et autant de risques de limite de debit (899 bridages 429
-ce soir-la).
+WHY. The sorting judges on the DESCRIPTION (required experience, seniority), which the
+LinkedIn collection does not have yet at merge time. An offer removed at noon thus came
+back the same evening as "new", its description was fetched again, and the sorting
+removed it again. Measured on 2026-10-05: of 1469 offers removed by the evening
+sorting, 1157 had already been removed at noon — about 900 LinkedIn requests per pass
+for nothing, and as many risks of a rate limit (899 throttlings with 429 that evening).
 
-C'est le pendant automatique de `exclusions.py`, qui memorise les refus faits a
-la main. La cle est la meme : l'oid « entreprise|poste », jamais l'URL.
+It is the automatic counterpart of `exclusions.py`, which remembers the refusals made
+by hand. The key is the same: the oid "entreprise|poste", never the URL.
 
-LE REJET EXPIRE APRES 30 JOURS. Les regles du tri changent ; une offre mal jugee
-ne doit pas rester invisible indefiniment. Une offre encore en ligne un mois plus
-tard repassera le tri avec les regles du jour.
+THE REJECTION EXPIRES AFTER 30 DAYS. The sorting rules change; a badly judged offer
+must not stay invisible forever. An offer still online a month later will go through
+the sorting again with the rules of the day.
 """
 
 import datetime
@@ -46,16 +45,16 @@ def _vivant(rec, jour):
 
 
 def charger(chemin=None, jour=None):
-    """{oid: {"m": motif, "d": date}} des rejets encore valables."""
+    """{oid: {"m": reason, "d": date}} of the rejections still valid."""
     jour = jour or datetime.date.today()
     return {k: v for k, v in _lire(chemin or FICHIER).items() if _vivant(v, jour)}
 
 
 def ajouter(rejets, chemin=None, jour=None):
-    """Memorise {oid: motif}. Purge les rejets expires. Ecriture atomique.
+    """Remembers {oid: reason}. Purges the expired rejections. Atomic write.
 
-    Un rejet deja connu garde sa date d'origine : sinon une offre retiree chaque
-    jour ne verrait jamais expirer son rejet."""
+    A rejection already known keeps its original date: otherwise an offer removed
+    every day would never see its rejection expire."""
     chemin = Path(chemin or FICHIER)
     jour = jour or datetime.date.today()
     d = charger(chemin, jour)

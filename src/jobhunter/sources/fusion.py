@@ -1,6 +1,6 @@
-"""Fusion de la collecte dans apply_queue.json : dedoublonnage, promotion d'URL, scoring.
+"""Merge of the collection into apply_queue.json: dedup, URL promotion, scoring.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+Part of jobhunter.sources (formerly Scripts/job_sources.py, phase 3.4).
 """
 
 import importlib
@@ -20,14 +20,14 @@ from jobhunter.sources.commun import (
 )
 from jobhunter.texte import cle as _norm
 
-# accents CONSERVES (cle de deduplication de la queue)
+# accents KEPT (dedup key of the queue)
 
-# ── Qualite de la source d'une URL ──────────────────────────────────────────
-# Une meme annonce paraît souvent sur LinkedIn ET sur un vrai site d'emploi
+# ── Quality of a URL's source ──────────────────────────────────────────
+# The same posting often appears on LinkedIn AND on a real job site
 # (« Consultant(e) Junior ESG » chez Oderis : LinkedIn + Welcome to the Jungle).
-# LinkedIn est le PIRE des deux : la page est derriere un mur de connexion, la
-# description est illisible sans compte, et postuler renvoie de toute facon vers
-# le site d'origine. On garde donc l'URL la mieux classee.
+# LinkedIn is the WORSE of the two: the page is behind a login wall, the
+# description is unreadable without an account, and applying sends you anyway to
+# the original site. So we keep the best-ranked URL.
 _AGREGATEURS = (
     "indeed.",
     "talent.com",
@@ -74,12 +74,12 @@ _ATS = (
 
 
 def rang_source(url: str | None) -> int:
-    """Qualite de la source, du pire au meilleur. Sert a arbitrer les doublons.
+    """Quality of the source, from worst to best. Used to arbitrate duplicates.
 
-    0 LinkedIn      mur de connexion, description illisible, redirige ailleurs
-    1 agregateur    Indeed, Talent, Jobijoba : copie d'une annonce d'ailleurs
-    2 site d'emploi WTJ, APEC, France Travail : annonce de premiere main
-    3 ATS / site entreprise : la source, celle ou la candidature arrive
+    0 LinkedIn      login wall, unreadable description, redirects elsewhere
+    1 aggregator    Indeed, Talent, Jobijoba: copy of a posting from elsewhere
+    2 job site      WTJ, APEC, France Travail: first-hand posting
+    3 ATS / company site: the source, where the application arrives
     """
     u = (url or "").lower()
     if not u:
@@ -92,18 +92,18 @@ def rang_source(url: str | None) -> int:
         return 3
     if any(k in u for k in _SITES_EMPLOI):
         return 2
-    return 3  # domaine d'entreprise : c'est la source
+    return 3  # company domain: it is the source
 
 
 def merge_into_queue(fresh: list[dict[str, Any]], dry: bool = False, attente: float = 180) -> Any:
-    """Fusionne `fresh` dans la file. Lecture-modification-ECRITURE : sous verrou.
+    """Merges `fresh` into the queue. Read-modify-WRITE: under lock.
 
-    `main()` prend deja le verrou pour tout le processus (`verrou.garder`), et
-    c'est le chemin normal. Mais cette fonction s'appelle aussi seule — depuis
-    les tests, depuis l'app, depuis un autre programme — et elle s'executait
-    alors a decouvert : relire la file, la transformer, puis la reecrire en
-    entier sans verrou efface ce qu'un autre programme a ecrit entre-temps.
-    On le prend si personne ne le tient, et on ne rend QUE ce qu'on a pris.
+    `main()` already takes the lock for the whole process (`verrou.garder`), and
+    that is the normal path. But this function is also called alone — from
+    the tests, from the app, from another program — and it then ran
+    unprotected: reading the queue, transforming it, then rewriting it in
+    full without a lock erases what another program wrote in the meantime.
+    We take it if nobody holds it, and we only release what we took.
     """
     from jobhunter.scoring.fit import fit_detail, score_offer
     from jobhunter.stockage import file as queue_io
@@ -124,13 +124,13 @@ def merge_into_queue(fresh: list[dict[str, Any]], dry: bool = False, attente: fl
 def _merge_into_queue(
     fresh: list[dict[str, Any]], dry: bool, fit_detail: Any, score_offer: Any, queue_io: Any
 ) -> dict[str, Any]:
-    # QUEUE explicite : les tests remplacent cette constante par un fichier
-    # jetable. Sans elle, charger() lirait la vraie file.
+    # Explicit QUEUE: the tests replace this constant with a throwaway
+    # file. Without it, charger() would read the real queue.
     q = queue_io.charger(_commun.QUEUE)  # descriptions reinjectees depuis descriptions.json
-    # PURGE bruit : rows 'Scan' déjà mergées dont le titre échoue le nouveau filtre anti-bruit.
-    # JAMAIS une offre du suivi : un filtre ou un profil modifié ne doit pas priver une
-    # candidature de sa fiche (invariant d'AGENTS.md ; audit du 19/10/2026, « Brand
-    # Design Intern » postulée puis purgée par une fusion vide).
+    # Noise PURGE: 'Scan' rows already merged whose title fails the new anti-noise filter.
+    # NEVER an offer of the tracker: a changed filter or profile must not deprive an
+    # application of its posting (AGENTS.md invariant; audit of 19/10/2026, "Brand
+    # Design Intern" applied to then purged by an empty merge).
     from jobhunter.stockage import suivi as suivi_io
 
     suivies = set(suivi_io.charger())
@@ -147,42 +147,42 @@ def _merge_into_queue(
     par_url = {_norm_url(x.get("url")): x for x in q if x.get("url")}
     today = time.strftime("%Y-%m-%d")
     added = updated = promus = hors_zone = pays_ecartes = 0
-    # par source de la collecte (etiquette _passe, posee par rendement.mesurer)
+    # per source of the collection (_passe label, set by rendement.mesurer)
     par_source: dict[str, dict[str, int]] = {}
     _EXCLUS = _commun.contrats_exclus()
     _RX_PAYS = _rx_pays_exclus()
-    # Offres ECARTEES a la main. Supprimer une offre ne la tue pas : le scan la
-    # retrouve a la source et la reajoute le lendemain. Le refus doit tenir.
+    # Offers SET ASIDE by hand. Deleting an offer does not kill it: the scan
+    # finds it again at the source and re-adds it the next day. The refusal must hold.
     from jobhunter.programmes import exclusions as _exc
 
     _REFUSEES = _exc.charger()
-    # Offres RETIREES PAR LE TRI. Le tri juge sur la description, que la collecte
-    # n'a pas encore : sans cette memoire, 1157 offres retirees a midi revenaient
-    # le soir comme nouvelles (2026-10-05). Voir rejets_tri.py.
+    # Offers REMOVED BY THE SORT. The sort judges on the description, which the collection
+    # does not have yet: without this memory, 1157 offers removed at noon came back
+    # in the evening as new (2026-10-05). See rejets_tri.py.
     from jobhunter.programmes import rejets_tri as _rej
 
     _REJ_TRI = _rej.charger(_commun.REJETS_TRI)
     ecartees = rejetees_tri = 0
     for o in fresh:
-        # Hors de France : on n'ajoute pas. Voir en_france() — un flux ATS porte
-        # le nom de la societe, pas son pays.
+        # Outside France: we do not add. See en_france() — an ATS feed carries
+        # the company's name, not its country.
         if not en_france(o.get("location")):
             hors_zone += 1
             continue
-        # PAYS ECARTES. Voir pays_exclus() : une purge de la file ne tient pas,
-        # le scan reajoute le lendemain ce qu'on a supprime la veille.
+        # EXCLUDED COUNTRIES. See pays_exclus(): a purge of the queue does not hold,
+        # the scan re-adds the next day what was deleted the day before.
         #
-        # LES V.I.E EN SONT EXEMPTS. Le refus du Royaume-Uni et de la Belgique
-        # vise les employeurs LOCAUX ; un V.I.E reste un contrat francais, paye
-        # en euros, encadre par Business France, dans une filiale d'un groupe
-        # francais. Mesure du 2026-09-22 : le filtre ecartait 35 V.I.E, dont
-        # ArcelorMittal Bruxelles « Environment & CO2 data » et Bostik Stafford
-        # « Sustainability data », toutes deux a fit 10. La Belgique est meme le
-        # premier pays V.I.E, avec 32 offres sur 143.
+        # V.I.E ARE EXEMPT. The refusal of the United Kingdom and Belgium
+        # targets LOCAL employers; a V.I.E remains a French contract, paid
+        # in euros, supervised by Business France, in a subsidiary of a French
+        # group. Measurement of 2026-09-22: the filter set aside 35 V.I.E, including
+        # ArcelorMittal Brussels "Environment & CO2 data" and Bostik Stafford
+        # "Sustainability data", both at fit 10. Belgium is even the
+        # first V.I.E country, with 32 offers out of 143.
         if _RX_PAYS and not _est_vie(o) and _RX_PAYS.search(str(o.get("location") or "")):
             pays_ecartes += 1
             continue
-        # Meme cle que queue_io.oid : « entreprise|poste », non normalisee.
+        # Same key as queue_io.oid: "entreprise|poste", not normalised.
         if f"{o['entreprise'].strip()}|{o['titre'].strip()}" in _REFUSEES:
             ecartees += 1
             continue
@@ -192,17 +192,17 @@ def _merge_into_queue(
             continue
         desc = (o.get("description") or "").strip()
         if key in idx or _norm_url(o["url"]) in have_url:
-            # déjà en queue : si on a maintenant une description et pas elle → enrichit + re-score
-            # La ligne se retrouve par identité OU par URL, AVANT tout enrichissement : la
-            # même annonce dont la source a corrigé l'intitulé n'avait sinon jamais sa
-            # description (audit du 19/10/2026).
+            # already in the queue: if we now have a description and it does not → enrich + re-score
+            # The row is found by identity OR by URL, BEFORE any enrichment: the
+            # same posting whose source corrected the title otherwise never got its
+            # description (audit of 19/10/2026).
             x = idx.get(key)
             if x is None:
                 x = par_url.get(_norm_url(o["url"]))
-            # PROMOTION D'URL. La meme annonce arrive de plusieurs sources ; la
-            # premiere vue gagnait, au hasard de l'ordre des scans. Si celle-ci
-            # vient d'une meilleure source, elle remplace l'ancienne : on garde
-            # le lien ou l'utilisateur peut lire l'offre ET postuler.
+            # URL PROMOTION. The same posting arrives from several sources; the
+            # first one seen won, at the whim of the scan order. If this one
+            # comes from a better source, it replaces the old one: we keep
+            # the link where the user can read the offer AND apply.
             if x is not None and rang_source(o.get("url")) > rang_source(x.get("url")):
                 x["url"] = o["url"]
                 x["source"] = o.get("source", x.get("source", ""))
@@ -216,23 +216,23 @@ def _merge_into_queue(
                 x["link_status"] = "OK"
                 have_url.add(_norm_url(o["url"]))
                 promus += 1
-                # La description SUIT le lien. Deux sources publient la meme
-                # annonce mais pas le meme texte : LinkedIn sert la prose, le
-                # site d'origine y ajoute le cadre (contrat, diplome, niveau
-                # d'experience). CNP « EXPERT INVESTISSEMENT RESPONSABLE » en
-                # est l'exemple : la version LinkedIn ne dit rien du niveau,
-                # celle d'eFinancialCareers exige « Plus de 10 ans ». L'offre
-                # est restee a fit 10 avec exp_requise = 0 — le detecteur
-                # d'experience marche, il n'avait simplement jamais lu la
-                # phrase. Sans ce remplacement, promouvoir le lien laissait le
-                # texte de la source la moins informative.
+                # The description FOLLOWS the link. Two sources publish the same
+                # posting but not the same text: LinkedIn serves the prose, the
+                # original site adds the frame (contract, degree, level
+                # of experience). CNP "EXPERT INVESTISSEMENT RESPONSABLE" is
+                # the example: the LinkedIn version says nothing about the level,
+                # the eFinancialCareers one requires "Plus de 10 ans". The offer
+                # stayed at fit 10 with exp_requise = 0 — the experience
+                # detector works, it had simply never read the
+                # sentence. Without this replacement, promoting the link left the
+                # text of the least informative source.
                 #
-                # MAIS une source peut etre meilleure pour le LIEN et moins
-                # bonne pour le TEXTE. Indeed en est le cas : son lien vaut
-                # mieux que celui de LinkedIn, alors qu'elle ne livre qu'un
-                # resume de 160 caracteres. Sans cette garde, promouvoir le
-                # lien detruisait une annonce complete pour la remplacer par
-                # trois lignes, et fit_score rescorait sur ce qui restait.
+                # BUT a source can be better for the LINK and worse
+                # for the TEXT. Indeed is the case: its link is worth
+                # more than LinkedIn's, while it only delivers a
+                # 160-character summary. Without this guard, promoting the
+                # link destroyed a full posting to replace it with
+                # three lines, and fit_score re-scored on what was left.
                 if desc and o.get("desc_partielle") and (x.get("description") or "").strip():
                     desc = ""
                 if desc:
@@ -257,20 +257,20 @@ def _merge_into_queue(
                 except Exception:
                     pass
                 updated += 1
-            # LE CADRE — contrat, teletravail, salaire, date de parution. Une
-            # source peut etre mediocre pour le texte et excellente pour ces
-            # champs-la : Indeed les sert structures (15/15 des cartes portent
-            # un type de contrat) quand nos autres sources obligent a les
-            # deviner dans la prose. On ne REMPLACE jamais une valeur posee, on
-            # ne comble que les trous — et « non precise » est un trou, c'est
-            # ce que le detecteur ecrit quand il n'a rien trouve.
-            # VU_LE : la derniere fois qu'une source a de nouveau servi l'offre.
-            # Pour APEC, Glassdoor, Indeed, la page de l'offre refuse les robots
-            # et ne peut pas dire si l'offre vit encore ; le canal qui l'a
-            # trouvee, lui, la ressert tant qu'elle est en ligne. audit_dispo
-            # s'en sert pour retirer ce que sa source a cesse de publier.
-            # Rattachement par URL aussi : un doublon reconnu au lien seul
-            # (meme annonce, intitule retouche) doit compter comme revu.
+            # THE FRAME — contract, remote work, salary, publication date. A
+            # source can be poor for the text and excellent for these
+            # fields: Indeed serves them structured (15/15 cards carry
+            # a contract type) where our other sources force us to
+            # guess them in the prose. We NEVER replace a set value, we
+            # only fill the gaps — and "non precise" is a gap, it is
+            # what the detector writes when it found nothing.
+            # VU_LE: the last time a source served the offer again.
+            # For APEC, Glassdoor, Indeed, the offer page refuses robots
+            # and cannot say whether the offer is still alive; the channel that
+            # found it, on the other hand, serves it again as long as it is online. audit_dispo
+            # uses it to remove what its source stopped publishing.
+            # Matching by URL too: a duplicate recognised by its link alone
+            # (same posting, retouched title) must count as seen again.
             if x is not None:
                 x["vu_le"] = today
             if x is not None:
@@ -288,23 +288,23 @@ def _merge_into_queue(
             if ("linkedin.com" in u or "indeed." in u or "welcometothejungle" in u)
             else "auto"
         )
-        # Contrat exclu : on n'ajoute meme pas. l'utilisateur n'est pas etudiant ;
-        # inutile de faire entrer des alternances et des stages pour les
+        # Excluded contract: we do not even add. The user is not a student;
+        # no point letting in work-study and internship offers for
         # masquer ensuite a l'affichage.
-        # Un contrat ANNONCE par la source passe avant tout ce qu'on pourrait
-        # lire dans le titre ou la prose : Indeed publie `jobTypes` en clair,
-        # la deduction n'a plus lieu d'etre.
+        # A contract ANNOUNCED by the source comes before anything we could
+        # read in the title or the prose: Indeed publishes `jobTypes` in clear,
+        # deduction is no longer needed.
         _ctr = o.get("contrat") or contrat_du_titre(o["titre"], o.get("source", ""))
-        # Le titre ne dit rien dans 45 % des cas : la description, si. On ne
-        # DEDUIT jamais un contrat absent — « non precise » est une reponse.
-        # Un resume de 160 caracteres ne suffit pas a trancher : on ne l'y
-        # cherche pas.
+        # The title says nothing in 45 % of cases: the description does. We never
+        # DEDUCE a missing contract — "non precise" is an answer.
+        # A 160-character summary is not enough to decide: we do not
+        # search it there.
         if not _ctr and not o.get("desc_partielle"):
             _ctr = contrat_de_la_description(desc, "non precise")
         _ctr = _ctr or "non precise"
         if _ctr in _EXCLUS:
             continue
-        # scoring sur titre + DESCRIPTION (les APIs ATS la fournissent au scan)
+        # scoring on title + DESCRIPTION (the ATS APIs provide it at scan time)
         fit, yrs, fin = fit_detail(f"{o['titre']} {desc}", o["titre"])
         try:
             ats = score_offer(
@@ -329,12 +329,12 @@ def _merge_into_queue(
             "exp_requise": yrs,
             "action": "",
             "contrat": _ctr,
-            # Lieu de l'INTITULE s'il nomme une ville etrangere (zones.lieu_effectif) :
-            # Talent et Glassdoor donnent parfois le siege, « Paris », a un V.I.E New York.
+            # Place of the TITLE if it names a foreign city (zones.lieu_effectif):
+            # Talent and Glassdoor sometimes give the head office, "Paris", to a New York V.I.E.
             "localisation": _zones.lieu_effectif(o.get("location", ""), o.get("titre", "")),
-            # Zone geographique, calculee a l'ajout : sans ca, chaque nouvelle
-            # offre arriverait sans zone et la colonne de l'app se remplirait de
-            # trous jusqu'au prochain passage de zones.py.
+            # Geographic zone, computed on adding: without it, each new
+            # offer would arrive without a zone and the app's column would fill with
+            # gaps until the next run of zones.py.
             "zone": _zones.zone_lieu(
                 _zones.lieu_effectif(o.get("location", ""), o.get("titre", ""))
             ),
@@ -343,11 +343,11 @@ def _merge_into_queue(
             "profil": "",
             "pourquoi": "",
             "process": o.get("date") or today,
-            # `process` melange depuis toujours la date de parution et celle du
-            # scan : sur 5911 offres, 2634 portent le meme jour, celui ou on les
-            # a vues. Impossible d'y distinguer l'une de l'autre apres coup, on
-            # ne va donc pas l'ecraser. La date CERTAINE va dans son propre
-            # champ, vide quand la source ne la donne pas.
+            # `process` has always mixed the publication date and the scan
+            # date: out of 5911 offers, 2634 carry the same day, the one on which we
+            # saw them. Impossible to tell one from the other afterwards, so we
+            # will not overwrite it. The CERTAIN date goes in its own
+            # field, empty when the source does not give it.
             "date_publication": o.get("date") or "",
             "source": o.get("source", ""),
             "missions": "",
@@ -360,15 +360,15 @@ def _merge_into_queue(
             "description": desc,
             "vu_le": today,
         }
-        if o.get("autres_lieux"):  # meme poste publie dans d'autres villes (scan)
+        if o.get("autres_lieux"):  # same job published in other cities (scan)
             ligne["autres_lieux"] = list(o["autres_lieux"])
         q.append(ligne)
-        # INDEXER LA LIGNE, PAS L'OFFRE BRUTE. `idx[key] = o` rangeait le dict
-        # du scan, alors que la file recoit un dict DIFFERENT : toute promotion
-        # d'URL ou description arrivant plus tard dans le MEME lot s'ecrivait
-        # sur l'orphelin. Le compteur annoncait « promus: 1 » et la file gardait
-        # le lien LinkedIn et sa description vide. C'est le cas NORMAL — un
-        # `--all` enchaine ATS, LinkedIn, WTJ, eFC et Indeed sur la meme annonce.
+        # INDEX THE ROW, NOT THE RAW OFFER. `idx[key] = o` stored the dict
+        # of the scan, while the queue receives a DIFFERENT dict: any promotion
+        # of URL or description arriving later in the SAME batch was written
+        # on the orphan. The counter announced "promus: 1" and the queue kept
+        # the LinkedIn link and its empty description. It is the NORMAL case — an
+        # `--all` chains ATS, LinkedIn, WTJ, eFC and Indeed on the same posting.
         idx[key] = ligne
         par_url[_norm_url(o["url"])] = ligne
         added += 1

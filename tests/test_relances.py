@@ -1,8 +1,8 @@
-"""Les brouillons de relance de la semaine sont prets, rien n'est envoye (relances).
+"""The week's follow-up drafts are ready, nothing is sent (relances).
 
-Un brouillon par relance due, le bon modele (J+7 la premiere fois, J+10 apres une
-relance), aucun brouillon retouche a la main n'est ecrase, et le bilan dit
-clairement que rien n'est envoye. Converti depuis Scripts/test_relances.py.
+One draft per follow-up due, the right template (D+7 the first time, D+10 after a
+follow-up), no draft retouched by hand is overwritten, and the report says
+clearly that nothing is sent. Converted from Scripts/test_relances.py.
 """
 
 import pytest

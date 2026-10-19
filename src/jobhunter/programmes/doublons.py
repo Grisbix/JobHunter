@@ -1,39 +1,39 @@
 #!/usr/bin/env python3
-"""doublons.py — La meme annonce publiee deux fois sous deux intitules.
+"""doublons.py — The same posting published twice under two titles.
 
-POURQUOI. La fusion de job_sources deduplique sur « entreprise|poste » normalise
-et sur l'URL. Les doublons d'avant cette regle (meme URL sous deux cles) sont
-reunis ici aussi. Et deux cas lui echappent, releves par l'utilisateur le 2026-10-05 :
+WHY. job_sources' merge deduplicates on normalised "entreprise|poste" and on the URL.
+The duplicates from before that rule (same URL under two keys) are also reunited here.
+And two cases escape it, spotted by the user on 2026-10-05:
 
-  1. LA MEME LANGUE, UN INTITULE A PEINE DIFFERENT : « Consultant en
-     Transformation Finance - F/H » et « Consultant Transformation Finance F/H »,
-     au meme endroit. Mesure : 65 groupes dans la file.
-  2. LA MEME OFFRE TRADUITE : ABB a Eggelsberg publie « Product Sustainability
-     & EU Taxonomy Specialist » et « Spezialist:in Produktnachhaltigkeit &
-     EU-Taxonomie ». Aucun mot de titre en commun.
+  1. THE SAME LANGUAGE, A BARELY DIFFERENT TITLE: "Consultant en Transformation
+     Finance - F/H" and "Consultant Transformation Finance F/H", at the same place.
+     Measured: 65 groups in the queue.
+  2. THE SAME OFFER TRANSLATED: ABB in Eggelsberg publishes "Product Sustainability
+     & EU Taxonomy Specialist" and "Spezialist:in Produktnachhaltigkeit &
+     EU-Taxonomie". No title word in common.
 
-Pour le cas 2, le titre ne sert a rien et le texte non plus — il est traduit.
-Ce qui ne se traduit pas, ce sont les SIGLES et les NOMBRES (EU, CSRD, LCA,
-2026, 40 %…). Mesure sur les 104 paires « meme entreprise, meme lieu, langues
-differentes » de la file : les vraies traductions sont a 0,60-1,00 de Jaccard
-(ABB 0,85, Dollarama 0,91, Bombardier 1,00), les fausses paires a 0,55 au plus
-(Indosuez 0,50 sur deux postes distincts). Seuil 0,6, et au moins 5 jetons de
-chaque cote : en dessous, deux descriptions courtes se ressemblent par hasard.
+For case 2, the title is useless and so is the text — it is translated. What is not
+translated are the ACRONYMS and the NUMBERS (EU, CSRD, LCA, 2026, 40%…). Measured on
+the 104 "same company, same place, different languages" pairs of the queue: the real
+translations are at 0.60-1.00 Jaccard (ABB 0.85, Dollarama 0.91, Bombardier 1.00),
+the false pairs at 0.55 at most (Indosuez 0.50 on two distinct jobs). Threshold 0.6,
+and at least 5 tokens on each side: below that, two short descriptions look alike by
+chance.
 
-On garde UNE offre par groupe : celle du suivi d'abord (jamais retiree), puis
-la meilleure source (site employeur > LinkedIn), puis le francais ou l'anglais
-(langues de l'utilisateur), puis la plus recemment resservie par sa source (l'intitule
-actuel), puis le meilleur fit, puis la description la plus longue.
+We keep ONE offer per group: the tracked one first (never removed), then the best
+source (employer site > LinkedIn), then French or English (the user's languages), then
+the one most recently served again by its source (the current title), then the best
+fit, then the longest description.
 
-Decision : docs/adr/0010-identite-entreprise-poste.md
+Decision: docs/adr/0010-identite-entreprise-poste.md
 """
 
 import re
 import unicodedata
 
 JACCARD_MIN = 0.6
-# Une URL qui designe UNE annonce : identifiant numerique ou UUID, ou chemin d'offre.
-# Une page carriere generique (meme lien pour dix postes) ne doit jamais unir deux offres.
+# A URL that designates ONE posting: numeric identifier or UUID, or offer path.
+# A generic career page (same link for ten jobs) must never join two offers.
 _RX_URL_ANNONCE = re.compile(r"\d{5,}|[0-9a-f]{8}-[0-9a-f]{4}-|/jobs?/[^/?#]{6,}", re.I)
 JETONS_MIN = 5
 
@@ -91,13 +91,12 @@ _RX_NON_LATIN = re.compile(r"[^\x00-ɏ\s\W]")
 
 
 def mots_titre(t):
-    """Mots de l'intitule, AVEC leurs repetitions, dans l'ordre alphabetique.
+    """Words of the title, WITH their repetitions, in alphabetical order.
 
-    Pas un ensemble : « Finance and Accounting Leadership Program: Accounting »
-    et « …: Finance » ont le meme ENSEMBLE de mots et sont deux filieres
-    (Fifth Third). Un titre non latin (chinois, japonais) rend None : une fois
-    les ideogrammes retires, il ne reste que « ESG », et six postes EY de Taipei
-    se confondaient."""
+    Not a set: "Finance and Accounting Leadership Program: Accounting" and
+    "…: Finance" have the same SET of words and are two tracks (Fifth Third). A
+    non-Latin title (Chinese, Japanese) returns None: once the ideograms are removed,
+    only "ESG" is left, and six EY jobs in Taipei were mixed up."""
     t = str(t or "")
     if _RX_NON_LATIN.search(t):
         return None
@@ -132,7 +131,7 @@ def _rang(o, proteges, rang_source):
         (o.get("_oid") in proteges),
         rang_source(o.get("url")),
         langue(o) in ("fr", "en"),
-        # la version que la source sert ENCORE (intitule actuel), pas l'ancienne
+        # the version the source STILL serves (current title), not the old one
         str(o.get("vu_le") or ""),
         o.get("fit") or 0,
         len(o.get("description") or ""),
@@ -140,10 +139,10 @@ def _rang(o, proteges, rang_source):
 
 
 def doublons(file, proteges=frozenset(), rang_source=None, oid=None):
-    """{oid retire: motif} pour la file donnee. Ne modifie rien.
+    """{removed oid: reason} for the given queue. Changes nothing.
 
-    `oid` et `rang_source` sont injectes pour que ce module reste sans
-    dependance (les tests passent des fonctions simples)."""
+    `oid` and `rang_source` are injected so that this module stays without
+    dependencies (the tests pass simple functions)."""
     if rang_source is None:
         from jobhunter.sources import rang_source
     if oid is None:
@@ -151,7 +150,7 @@ def doublons(file, proteges=frozenset(), rang_source=None, oid=None):
     for o in file:
         o["_oid"] = oid(o)
     try:
-        # Union-find sur les paires reconnues.
+        # Union-find on the recognised pairs.
         parent = {id(o): id(o) for o in file}
 
         def racine(x):
@@ -163,10 +162,10 @@ def doublons(file, proteges=frozenset(), rang_source=None, oid=None):
         def unir(a, b):
             parent[racine(id(a))] = racine(id(b))
 
-        # 0. LA MEME URL D'ANNONCE : la meme offre, quels que soient l'intitule ou le nom
-        #    d'entreprise. Mesure du 2026-10-19 : 9 groupes dans la file, nes avant que la
-        #    fusion ne rattache par URL — un employeur qui retouche son intitule (Qonto :
-        #    trois titres pour la meme annonce Lever), un flux renomme (« PwC France »
+        # 0. THE SAME POSTING URL: the same offer, whatever the title or the company
+        #    name. Measured on 2026-10-19: 9 groups in the queue, born before the
+        #    merge linked by URL — an employer who edits their title (Qonto:
+        #    three titles for the same Lever posting), a renamed feed ("PwC France"
         #    puis « PwC », meme lien Workday).
         from jobhunter.sources.commun import _norm_url
 
@@ -198,11 +197,11 @@ def doublons(file, proteges=frozenset(), rang_source=None, oid=None):
                     vb = ville(b)
                     if not va or va != vb:
                         continue
-                    # 1. meme intitule aux mots vides, au genre et a l'ordre pres
+                    # 1. same title apart from stop words, gender and order
                     if ta and ta == mots_titre(b.get("poste")):
                         unir(a, b)
                         continue
-                    # 2. traduction : langues differentes, sigles et nombres communs
+                    # 2. translation: different languages, common acronyms and numbers
                     la, lb = langue(a), langue(b)
                     if la and lb and la != lb:
                         ja, jb = jetons(a), jetons(b)

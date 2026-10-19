@@ -1,23 +1,23 @@
-"""jobhunter.navigation.strategies — Stratégies spécifiques par site pour les 62 sites sans compte.
+"""jobhunter.navigation.strategies — Site-specific strategies for the 62 sites without an account.
 
-Ancien Scripts/site_strategies.py.
+Formerly Scripts/site_strategies.py.
 
-4 catégories :
-  CAT1 — ESPACE CANDIDAT BLOQUÉ (11 sites) : solutions de contournement
-  CAT2 — ATS EXTERNE (5 sites) : création via offre d'emploi
-  CAT3 — SANS ESPACE CANDIDAT (37 sites) : scan offres → apply → register implicite
-  CAT4 — INACCESSIBLE (9 sites) : fallback domaines racine
+4 categories:
+  CAT1 — CANDIDATE AREA BLOCKED (11 sites): workarounds
+  CAT2 — EXTERNAL ATS (5 sites): creation through a job offer
+  CAT3 — NO CANDIDATE AREA (37 sites): scan offers → apply → implicit register
+  CAT4 — UNREACHABLE (9 sites): root domain fallback
 
-Chaque entrée = {domain: {category, strategy, url_override, js_fix, wait_ms, note}}
+Each entry = {domain: {category, strategy, url_override, js_fix, wait_ms, note}}
 """
 
 from typing import Any
 
 # ──────────────────────────────────────────────────────────────────────────────
-# CATÉGORIE 1 — ESPACE CANDIDAT EXISTANT MAIS BLOQUÉ (11 sites)
+# CATEGORY 1 — CANDIDATE AREA EXISTS BUT BLOCKED (11 sites)
 # ──────────────────────────────────────────────────────────────────────────────
 CAT1_BLOCKED: dict[str, dict[str, Any]] = {
-    # ── PROBLÈME : formulaire alerte email (pas un vrai register) ──
+    # ── PROBLEM: email alert form (not a real register) ──
     "jobs.amundi.com": {
         "category": "blocked",
         "subtype": "newsletter_masquerade",
@@ -27,7 +27,7 @@ CAT1_BLOCKED: dict[str, dict[str, Any]] = {
         "wait_ms": 0,
         "note": "Create candidate area = email alert form. ANALYZE must detect single email+no password = newsletter, not register.",
     },
-    # ── PROBLÈME : Cloudflare + CAPTCHA login ──
+    # ── PROBLEM: Cloudflare + login CAPTCHA ──
     "group.pictet": {
         "category": "blocked",
         "subtype": "cloudflare_captcha",
@@ -37,22 +37,22 @@ CAT1_BLOCKED: dict[str, dict[str, Any]] = {
         "wait_ms": 0,
         "note": "Cloudflare anti-bot + CAPTCHA. Impossible en automatique. Requiert intervention humaine.",
     },
-    # ── PROBLÈME : formulaire React ne charge pas (cookies Didomi bloquent JS) ──
+    # ── PROBLEM: React form does not load (Didomi cookies block JS) ──
     "talents.bpifrance.fr": {
         "category": "blocked",
         "subtype": "didomi_react_block",
         "strategy": "didomi_reject_then_wait",
         "url_override": "https://talents.bpifrance.fr/connexion-compte-candidatures/",
-        "js_fix": "BPIFRANCE_DIDOMI_JS",  # Fermer Didomi + attendre 10s pour React
+        "js_fix": "BPIFRANCE_DIDOMI_JS",  # Close Didomi + wait 10 s for React
         "wait_ms": 12000,  # React hydration peut prendre 8-12s
         "note": "Didomi bloque le chargement React. Fermer Didomi + wait long (>10s) pour hydratation.",
     },
-    # ── PROBLÈME : inputs non-standards (noms différents de email/password) ──
+    # ── PROBLEM: non-standard inputs (names other than email/password) ──
     "labanquepostale.fr": {
         "category": "blocked",
         "subtype": "nonstandard_inputs",
         "strategy": "extended_input_detect",
-        "js_fix": "BPCE_INPUT_JS",  # Scanner les vrais noms d'inputs
+        "js_fix": "BPCE_INPUT_JS",  # Scan the real input names
         "wait_ms": 3000,
         "note": "Page 'Accès à vos comptes'. Inputs nommés différemment. Scanner les names réels.",
     },
@@ -64,7 +64,7 @@ CAT1_BLOCKED: dict[str, dict[str, Any]] = {
         "wait_ms": 3000,
         "note": "Même problème que BanquePostale — groupe BPCE.",
     },
-    # ── PROBLÈME : anti-bot extrême (patchright timeout) ──
+    # ── PROBLEM: extreme anti-bot (patchright timeout) ──
     "recrutement.bpce.fr": {
         "category": "blocked",
         "subtype": "extreme_antibot",
@@ -74,7 +74,7 @@ CAT1_BLOCKED: dict[str, dict[str, Any]] = {
         "wait_ms": 0,
         "note": "Anti-bot extrême — même patchright timeout. Requiert intervention humaine.",
     },
-    # ── PROBLÈME : CAPTCHA login ──
+    # ── PROBLEM: login CAPTCHA ──
     "recrutement.natixis.com": {
         "category": "blocked",
         "subtype": "captcha_login",
@@ -84,7 +84,7 @@ CAT1_BLOCKED: dict[str, dict[str, Any]] = {
         "wait_ms": 0,
         "note": "Login CAPTCHA. Requiert intervention humaine.",
     },
-    # ── PROBLÈME : inputs nommés différemment ──
+    # ── PROBLEM: inputs named differently ──
     "engagement-jeunes.com": {
         "category": "blocked",
         "subtype": "nonstandard_inputs",
@@ -93,17 +93,17 @@ CAT1_BLOCKED: dict[str, dict[str, Any]] = {
         "wait_ms": 3000,
         "note": "Register email=False car inputs nommés différemment. Scanner les noms réels.",
     },
-    # ── PROBLÈME : login employés uniquement (popin fonctionne mais pas de register) ──
+    # ── PROBLEM: employee login only (popin works but no register) ──
     "meeschaert.com": {
         "category": "blocked",
         "subtype": "employee_login_only",
         "strategy": "login_only_no_register",
         "url_override": "https://www.meeschaert.com/carrieres/recrutement",
-        "js_fix": "MEESCHAERT_REGISTER_FALLBACK_JS",  # Tenter register via API cachée
+        "js_fix": "MEESCHAERT_REGISTER_FALLBACK_JS",  # Try register through a hidden API
         "wait_ms": 3000,
         "note": "Login employés via popin OK. Pas de register visible. Chercher endpoint register caché ou candidature spontanée.",
     },
-    # ── PROBLÈME : login investisseurs uniquement ──
+    # ── PROBLEM: investor login only ──
     "kkr.com": {
         "category": "blocked",
         "subtype": "investor_login_only",
@@ -113,7 +113,7 @@ CAT1_BLOCKED: dict[str, dict[str, Any]] = {
         "wait_ms": 0,
         "note": "Login investisseurs uniquement. Pas d'espace candidat. Postuler directement sur les offres.",
     },
-    # ── PROBLÈME : login clients (MyLO, LO Gate) ──
+    # ── PROBLEM: client login (MyLO, LO Gate) ──
     "lombardodier.com": {
         "category": "blocked",
         "subtype": "client_login_only",
@@ -127,14 +127,14 @@ CAT1_BLOCKED: dict[str, dict[str, Any]] = {
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# CATÉGORIE 2 — ATS EXTERNE (5 sites)
+# CATEGORY 2 — EXTERNAL ATS (5 sites)
 # ──────────────────────────────────────────────────────────────────────────────
 CAT2_ATS: dict[str, dict[str, Any]] = {
     "jobs.smartrecruiters.com": {
         "category": "ats_external",
         "subtype": "smartrecruiters",
         "strategy": "apply_creates_account",
-        "url_override": None,  # URL spécifique à l'offre, pas le domaine générique
+        "url_override": None,  # URL specific to the offer, not the generic domain
         "js_fix": None,
         "wait_ms": 0,
         "note": "Pas de login direct. Passer par une offre spécifique → postuler = créer compte.",
@@ -164,7 +164,7 @@ CAT2_ATS: dict[str, dict[str, Any]] = {
         "category": "ats_external",
         "subtype": "teamtailor",
         "strategy": "apply_creates_account",
-        "url_override": "https://sweep.net/jobs",  # ou /careers
+        "url_override": "https://sweep.net/jobs",  # or /careers
         "js_fix": None,
         "wait_ms": 0,
         "note": "Teamtailor — login hasEmail=False. Postuler via offre = créer compte.",
@@ -184,7 +184,7 @@ CAT2_ATS: dict[str, dict[str, Any]] = {
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# CATÉGORIE 3 — SANS ESPACE CANDIDAT (37 sites)
+# CATEGORY 3 — NO CANDIDATE AREA (37 sites)
 # ──────────────────────────────────────────────────────────────────────────────
 CAT3_NO_SPACE: dict[str, dict[str, Any]] = {
     "careers.societegenerale.com": {
@@ -413,7 +413,7 @@ CAT3_NO_SPACE: dict[str, dict[str, Any]] = {
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# CATÉGORIE 4 — INACCESSIBLE (9 sites)
+# CATEGORY 4 — UNREACHABLE (9 sites)
 # ──────────────────────────────────────────────────────────────────────────────
 CAT4_DEAD: dict[str, dict[str, Any]] = {
     "rafp.fr": {
@@ -483,7 +483,7 @@ CAT4_DEAD: dict[str, dict[str, Any]] = {
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# MAPPING COMPLET : toutes les 62 entrées
+# FULL MAPPING: all 62 entries
 # ──────────────────────────────────────────────────────────────────────────────
 ALL_SITE_STRATEGIES: dict[str, dict[str, Any]] = {}
 ALL_SITE_STRATEGIES.update(CAT1_BLOCKED)
@@ -494,7 +494,7 @@ ALL_SITE_STRATEGIES.update(CAT4_DEAD)
 
 def get_strategy(domain: str) -> dict[str, Any] | None:
     """Retourne la stratégie pour un domaine donné. None si pas trouvé."""
-    # Nettoyer le domaine
+    # Clean the domain
     clean = domain.lower().strip().replace("https://", "").replace("http://", "").rstrip("/")
     # Chercher correspondance exacte
     if clean in ALL_SITE_STRATEGIES:
@@ -520,12 +520,12 @@ def get_sites_by_category(category: str) -> dict[str, dict[str, Any]]:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# JOB OFFER URLS pour les ATS externes (offres spécifiques à utiliser)
+# JOB OFFER URLS for the external ATS (specific offers to use)
 # ──────────────────────────────────────────────────────────────────────────────
 ATS_JOB_URLS: dict[str, str] = {
-    # SmartRecruiters: chercher sur Google "site:jobs.smartrecruiters.com ESG/Finance"
+    # SmartRecruiters: search Google for "site:jobs.smartrecruiters.com ESG/Finance"
     "smartrecruiters_search": "https://jobs.smartrecruiters.com/",
-    # BreezyHR: les pages carrières pointent vers des offres spécifiques
+    # BreezyHR: the career pages point to specific offers
     "carbon4finance_breezy": "https://carbon4finance.breezy.hr/",
     "karmen_breezy": "https://karmen.breezy.hr/",
     # Teamtailor (sweep)
@@ -536,7 +536,7 @@ ATS_JOB_URLS: dict[str, str] = {
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# JS FIXES pour les problèmes spécifiques
+# JS FIXES for the specific problems
 # ──────────────────────────────────────────────────────────────────────────────
 
 # Bpifrance : fermer Didomi + attendre React
@@ -561,7 +561,7 @@ BPIFRANCE_DIDOMI_JS = r"""
 })()
 """
 
-# BPCE (BanquePostale, BanquePopulaire) : scanner les vrais noms d'inputs
+# BPCE (BanquePostale, BanquePopulaire): scan the real input names
 BPCE_INPUT_JS = r"""
 (() => {
   // Scanner TOUS les inputs visibles et retourner leurs attributs pour diagnostic
@@ -602,7 +602,7 @@ BPCE_INPUT_JS = r"""
 })()
 """
 
-# Engagement Jeunes : scanner les inputs spécifiques
+# Engagement Jeunes: scan the specific inputs
 ENGAGEMENT_JEUNES_JS = r"""
 (() => {
   // Ce site utilise probablement des noms comme 'identifiant', 'motdepasse', etc.
@@ -620,7 +620,7 @@ ENGAGEMENT_JEUNES_JS = r"""
 })()
 """
 
-# Meeschaert : chercher un endpoint register alternatif (candidature spontanée)
+# Meeschaert: look for an alternative register endpoint (spontaneous application)
 MEESCHAERT_REGISTER_FALLBACK_JS = r"""
 (() => {
   // Stratégie : cliquer "Candidature spontanée" → ça ouvre un formulaire
@@ -649,7 +649,7 @@ MEESCHAERT_REGISTER_FALLBACK_JS = r"""
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# JS pour CAT 2 (ATS externes) : trouver la première offre d'emploi
+# JS for CAT 2 (external ATS): find the first job offer
 # ──────────────────────────────────────────────────────────────────────────────
 FIRST_JOB_OFFER_JS = r"""
 (() => {
@@ -684,7 +684,7 @@ FIRST_JOB_OFFER_JS = r"""
 """
 
 
-# ── JS pour Cat 3 : après avoir cliqué une offre, détecter si apply = register ──
+# ── JS for Cat 3: after clicking an offer, detect whether apply = register ──
 ATS_APPLY_REGISTER_DETECT_JS = r"""
 (() => {
   const txt = (document.body ? document.body.innerText : '').slice(0, 15000).toLowerCase();
@@ -738,7 +738,7 @@ ATS_APPLY_REGISTER_DETECT_JS = r"""
 """
 
 
-# ── JS pour Cat 4 : vérifier si le domaine racine est accessible ──
+# ── JS for Cat 4: check whether the root domain is reachable ──
 ROOT_DOMAIN_CHECK_JS = r"""
 (() => {
   // Retourne les infos de la page courante pour diagnostic
@@ -764,7 +764,7 @@ ROOT_DOMAIN_CHECK_JS = r"""
 """
 
 
-# ── JS pour scanner les endpoints /login, /register, /signin dans la page ──
+# ── JS to scan the /login, /register, /signin endpoints in the page ──
 SITEMAP_PROBE_JS = r"""
 (() => {
   const AUTH_PATTERNS = /\/(login|signin|signup|register|account|my-account|mon-compte|connexion|inscription|espace-candidat|espace-recrutement|candidate|applicant|auth)/i;
@@ -787,7 +787,7 @@ SITEMAP_PROBE_JS = r"""
 """
 
 
-# Exports pour import
+# Exports for import
 __all__ = [
     "ALL_SITE_STRATEGIES",
     "get_strategy",

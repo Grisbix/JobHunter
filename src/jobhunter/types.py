@@ -1,14 +1,14 @@
-"""Types partages du moteur (phase 5 du plan).
+"""Shared types of the engine (phase 5 of the plan).
 
-Les offres et les candidatures restent des dict JSON : leur format sur disque ne change
-pas. `Offre` et `Candidature` sont des `TypedDict` **non totaux** : toutes les cles sont
-facultatives, parce qu'une offre se construit par etapes (la collecte pose entreprise,
-poste et url ; le scoring, fit et zone ; la generation, cv et lettre) et que de vieilles
-offres n'ont jamais recu les champs ajoutes depuis. Le typage nomme et type les champs ;
-il ne rend rien obligatoire.
+Offers and applications remain JSON dicts: their on-disk format does not change.
+`Offre` and `Candidature` are **non-total** `TypedDict`s: all keys are
+optional, because an offer is built in stages (the collection sets company,
+job and url; the scoring, fit and zone; the generation, cv and letter) and old
+offers never received the fields added since. The typing names and types the fields;
+it makes nothing mandatory.
 
-Inventaire du 2026-10-19 sur une vraie file (12 137 offres, 48 candidatures) et sur les
-cles que le code lit ou ecrit. Une cle nouvelle s'ajoute ici avant d'etre ecrite.
+Inventory of 2026-10-19 on a real queue (12,137 offers, 48 applications) and on the
+keys the code reads or writes. A new key is added here before being written.
 """
 
 from os import PathLike
@@ -16,16 +16,16 @@ from typing import TypedDict
 
 
 class Offre(TypedDict, total=False):
-    """Une offre de la file (apply_queue.json)."""
+    """An offer of the queue (apply_queue.json)."""
 
-    # identite et lien
+    # identity and link
     n: int
     entreprise: str
     poste: str
     url: str
     url_type: str  # "OFFRE", "RECHERCHE"…
     site_kind: str
-    site_final: str  # lien du site employeur trouve par site_final
+    site_final: str  # link of the employer's site found by site_final
     url_linkedin: str
     url_home: str
     url_orig: str
@@ -33,21 +33,21 @@ class Offre(TypedDict, total=False):
     source: str
     # contenu de l'annonce
     description: str
-    desc_partielle: bool  # extrait d'agregateur : une meilleure source le remplace
+    desc_partielle: bool  # aggregator excerpt: a better source replaces it
     missions: str
     profil: str
     process: str
     contrat: str
     localisation: str
     localisation_orig: str
-    autres_lieux: list[str]  # meme poste publie ailleurs (dedoublonnage du scan)
+    autres_lieux: list[str]  # same job published elsewhere (scan dedup)
     teletravail: str
     salaire: str
     date_publication: str
     peu_de_candidats: bool
     exp_requise: int
     is_stage: bool
-    # decisions du moteur
+    # engine decisions
     domaine: str
     fit: int
     fit_fin: float
@@ -61,9 +61,9 @@ class Offre(TypedDict, total=False):
     etat: str
     # disponibilite
     link_status: str
-    ls_check: str  # date du dernier controle
-    vu_le: str  # derniere fois qu'une source l'a resservie
-    # documents et contact
+    ls_check: str  # date of the last check
+    vu_le: str  # last time a source served it again
+    # documents and contact
     cv: str | None
     lettre: str | None
     cv_variant: str | None
@@ -73,32 +73,32 @@ class Offre(TypedDict, total=False):
 
 
 class Preuve(TypedDict, total=False):
-    """Ce que la page affichait apres la declaration d'envoi (ADR 0009)."""
+    """What the page displayed after the sending declaration (ADR 0009)."""
 
-    texte: str  # l'extrait qui justifie l'etat, ou la raison de l'incertitude
+    texte: str  # the excerpt that justifies the state, or the reason for the uncertainty
     url: str
-    capture: str  # chemin de la capture de la page, "" si impossible
-    le: str  # date et heure de l'observation, ISO
+    capture: str  # path of the page screenshot, "" if impossible
+    le: str  # date and time of the observation, ISO
 
 
 class Candidature(TypedDict, total=False):
-    """Une entree de suivi.json."""
+    """An entry of suivi.json."""
 
-    s: str  # statut : « postulé », « entretien », « refus »…
+    s: str  # status: "postulé", "entretien", "refus"…
     d: str  # date, AAAA-MM-JJ
     n: str  # note libre
-    retiree: str  # date a laquelle l'offre a quitte la file
-    envoi: str  # « confirmé », « incertain » ou « déclaré » (ADR 0009)
+    retiree: str  # date on which the offer left the queue
+    envoi: str  # "confirmé", "incertain" or "déclaré" (ADR 0009)
     preuve: Preuve
-    courriel: "CourrielStatut"  # le courriel qui a justifié le dernier statut (2.20)
+    courriel: "CourrielStatut"  # the email that justified the last status (2.20)
 
 
 class CourrielStatut(TypedDict, total=False):
     """Le courriel qu'un statut proposé, puis accepté, cite (jobhunter.courriels)."""
 
-    de: str  # expéditeur
+    de: str  # sender
     sujet: str
-    le: str  # date du courriel, AAAA-MM-JJ
+    le: str  # date of the email, YYYY-MM-DD
 
 
 Suivi = dict[str, Candidature]

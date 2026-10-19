@@ -1,11 +1,11 @@
-"""Audit de disponibilite (audit_dispo), sans reseau.
+"""Availability audit (audit_dispo), without network.
 
-Une limite de debit s'attend et reprend, un refus d'entree s'arrete ; APEC et WTJ
-retrouvent l'offre par leur propre source ; une offre suivie n'est jamais retiree ;
-choix et ordre des cibles ; arret de soi-meme a la duree ;
-controle hebdomadaire dans le pipeline ; la sauvegarde du jour n'est jamais ecrasee.
-Converti depuis Scripts/test_audit_dispo.py, qui remplacait httpx.Client et
-time.sleep pour tout le processus.
+A rate limit is waited for and resumed, a refusal of entry stops; APEC and WTJ
+find the offer again through their own source; a tracked offer is never removed;
+choice and order of the targets; self-stop on duration;
+weekly check in the pipeline; the day's backup is never overwritten.
+Converted from Scripts/test_audit_dispo.py, which replaced httpx.Client and
+time.sleep for the whole process.
 """
 
 import datetime
@@ -23,8 +23,8 @@ JOUR = "2026-10-02"
 
 @pytest.fixture(autouse=True)
 def etat_isole(tmp_path, monkeypatch):
-    """L'etat sur disque va dans tmp_path : lances dans un vrai dossier de donnees,
-    les tests de par_la_source ecrasaient son _audit_dispo.json (2026-10-18)."""
+    """The state on disk goes to tmp_path: run in a real data folder,
+    the par_la_source tests overwrote its _audit_dispo.json (2026-10-18)."""
     monkeypatch.setattr(a, "ETAT", tmp_path / "_audit_dispo.json")
 
 
@@ -57,7 +57,7 @@ def pauses(monkeypatch):
 
 @pytest.fixture
 def scenario(monkeypatch):
-    """Le client httpx d'audit_dispo rend les reponses donnees, dans l'ordre."""
+    """audit_dispo's httpx client returns the given responses, in order."""
 
     def jouer(reponses):
         it = iter(reponses)
@@ -123,7 +123,7 @@ def test_403_aucune_pause(refus):
     assert not [s for s in refus[1] if s > 1]
 
 
-# ── APEC : retrouver l'offre par la recherche qui l'a trouvee ──────────────────
+# ── APEC: find the offer again through the search that found it ──────────────────
 def apec(num, poste="Analyste ESG"):
     url = f"https://www.apec.fr/candidat/recherche-emploi.html/emploi/detail-offre/{num}"
     return offre(num, url=url, poste=poste)
@@ -184,7 +184,7 @@ def test_apec_403_rien_tranche(apec_refus):
     assert all(v[0] is None for v in apec_refus[1].values())
 
 
-# ── WTJ : le sitemap liste ce qui est en ligne ─────────────────────────────────
+# ── WTJ: the sitemap lists what is online ─────────────────────────────────
 U = "https://www.welcometothejungle.com/fr/companies/x/jobs/"
 
 
@@ -212,7 +212,7 @@ def test_wtj_sitemap_illisible_rien_tranche(monkeypatch):
     assert etat[a.queue_io.oid(q[0])][0] is None
 
 
-# ── plus servie par sa source (Glassdoor, Indeed) ──────────────────────────────
+# ── no longer served by its source (Glassdoor, Indeed) ──────────────────────────────
 GD = "https://www.glassdoor.fr/job-listing/x"
 VIEILLE = offre(1, url=GD, vu_le="2026-08-20", source="glassdoor 2026-08-20")
 REVUE = offre(2, url=GD + "2", vu_le="2026-10-01", source="glassdoor 2026-08-20")
@@ -248,7 +248,7 @@ def test_fermee_source_motif_dedie(etat_source):
     assert a.motif(VIEILLE, etat_source, {}, "", None).startswith("retiree par sa source")
 
 
-# ── choix des cibles : revue = ouverte, rythme selon l'age, ordre ──────────────
+# ── choice of targets: reviewed = open, pace by age, order ──────────────
 L = "https://www.linkedin.com/jobs/view/"
 
 
@@ -261,7 +261,7 @@ def cibles():
     basse = offre(4, url=L + "1000004", source="linkedin 2026-08-01", fit=3)
     haute = offre(5, url=L + "1000005", source="linkedin 2026-09-30", fit=10)
     q = [revue, jeune, vieille, basse, haute]
-    etat = {  # vues il y a 6 jours
+    etat = {  # seen 6 days ago
         a.queue_io.oid(jeune): ["OK", "ouverte", jeune["url"], "2026-09-26"],
         a.queue_io.oid(vieille): ["OK", "ouverte", vieille["url"], "2026-09-26"],
     }
@@ -279,11 +279,11 @@ def test_revue_par_la_collecte_marquee_ok(cibles):
 
 
 def test_offre_jeune_pas_encore(cibles):
-    assert "E2" not in cibles[0]  # vue il y a 6 j, rythme 10 j
+    assert "E2" not in cibles[0]  # seen 6 d ago, pace 10 d
 
 
 def test_offre_vieille_a_refaire(cibles):
-    assert "E3" in cibles[0]  # vue il y a 6 j, rythme 5 j
+    assert "E3" in cibles[0]  # seen 6 d ago, pace 5 d
 
 
 def test_meilleur_fit_d_abord(cibles):
@@ -298,7 +298,7 @@ def test_frais_fixe_l_emporte_sur_l_age(cibles):
     assert "E2" in cibles[3]
 
 
-# ── linkedin_desc signale une fiche fermee au passage ──────────────────────────
+# ── linkedin_desc reports a closed posting in passing ──────────────────────────
 @pytest.fixture
 def fiche_fermee():
     class Rep:
@@ -321,7 +321,7 @@ def test_fiche_fermee_reperee(fiche_fermee):
     assert "42" in ld.FERMEES
 
 
-# ── la sauvegarde du jour n'est jamais ecrasee ─────────────────────────────────
+# ── the day's backup is never overwritten ─────────────────────────────────
 def test_premiere_sauvegarde_du_jour_gagne(tmp_path, monkeypatch):
     monkeypatch.setattr(pq, "SCRIPTS", tmp_path)
     (tmp_path / "apply_queue.json").write_text("matin", encoding="utf-8")
@@ -331,7 +331,7 @@ def test_premiere_sauvegarde_du_jour_gagne(tmp_path, monkeypatch):
     assert (copie / "apply_queue.json").read_text(encoding="utf-8") == "matin"
 
 
-# ── la duree : s'arreter de soi-meme, pour arriver a la suppression ────────────
+# ── duration: stop by itself, to get to the deletion ────────────
 def test_duree_ecoulee_arret_avant_tout_controle(pauses, scenario):
     scenario([OUVERTE] * 3)
     etat = {}
@@ -341,7 +341,7 @@ def test_duree_ecoulee_arret_avant_tout_controle(pauses, scenario):
 
 def test_duree_pas_de_pause_qui_la_depasserait(pauses, scenario):
     scenario([OUVERTE] + [R(429)] * 5)
-    fin = a.time.monotonic() + 600  # 10 min restantes, la pause en ferait 15
+    fin = a.time.monotonic() + 600  # 10 min left, the pause would take 15
     assert not a.verifier([offre(i) for i in range(3)], {}, 4, JOUR, fin=fin)
     assert not [s for s in pauses if s > 30]
 

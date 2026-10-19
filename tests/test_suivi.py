@@ -1,8 +1,8 @@
-"""Une candidature enregistree ne disparait jamais (queue_io, suivi_io, linkedin_closed).
+"""A recorded application never disappears (queue_io, suivi_io, linkedin_closed).
 
-Origine : linkedin_closed a retire une offre a laquelle l'utilisateur avait postule,
-parce que LinkedIn n'acceptait plus de candidature. Or une annonce ferme presque
-toujours APRES qu'on y a postule. Converti depuis Scripts/test_suivi.py.
+Origin: linkedin_closed removed an offer the user had applied to,
+because LinkedIn no longer accepted applications. Yet a posting closes almost
+always AFTER one has applied to it. Converted from Scripts/test_suivi.py.
 """
 
 import pytest
@@ -12,7 +12,7 @@ from jobhunter.programmes import linkedin_closed as L
 from jobhunter.stockage import file as queue_io
 from jobhunter.stockage import suivi as suivi_io
 
-# ── A. la cle du suivi est la meme partout ─────────────────────────────────────
+# ── A. the tracker's key is the same everywhere ─────────────────────────────────────
 OFFRE = {"entreprise": " Amundi ", "poste": " Analyste ESG "}
 
 
@@ -24,7 +24,7 @@ def test_cle_sans_espaces():
     assert queue_io.oid(OFFRE) == "Amundi|Analyste ESG"
 
 
-# ── B. le suivi survit a une reecriture de la file ─────────────────────────────
+# ── B. the tracker survives a rewrite of the queue ─────────────────────────────
 @pytest.fixture
 def file_reecrite(file_temporaire):
     with queue_io.transaction() as q:
@@ -52,10 +52,10 @@ def test_description_survit(file_reecrite):
     assert len(file_reecrite[0]["description"]) == 500
 
 
-# ── C. suppression automatique : une offre suivie est EPARGNEE ─────────────────
+# ── C. automatic deletion: a tracked offer is SPARED ─────────────────
 @pytest.fixture
 def fermes():
-    """Le tri de linkedin_closed : parmi les offres fermees, les suivies ne partent pas."""
+    """linkedin_closed's sort: among the closed offers, the tracked ones do not go."""
     q = [
         {"entreprise": "Volkswagen", "poste": "Analyste Data"},  # suivie
         {"entreprise": "Zzz", "poste": "Analyste Quelconque"},
@@ -77,9 +77,9 @@ def test_une_seule_suppression(fermes):
     assert len(fermes) == 1
 
 
-# ── C bis. deux ecrivains, aucune perte (suivi_io) ─────────────────────────────
-# L'app ecrivait son instantane memoire : un clic « postule » reecrivait TOUT le
-# fichier et effacait ce que relances.py venait d'y mettre (deux relances perdues).
+# ── C bis. two writers, no loss (suivi_io) ─────────────────────────────
+# The app wrote its memory snapshot: one "postulé" click rewrote the WHOLE
+# file and erased what relances.py had just put there (two follow-ups lost).
 @pytest.fixture
 def deux_ecrivains(tmp_path):
     f = tmp_path / "suivi.json"
@@ -90,14 +90,14 @@ def deux_ecrivains(tmp_path):
             "BNP Paribas|Analyste": {"s": "postulé", "d": "2026-09-06"},
         },
     )
-    instantane = suivi_io.charger(f)  # ce que l'app tient en memoire
-    suivi_io.modifier(  # relances.py note deux relances
+    instantane = suivi_io.charger(f)  # what the app holds in memory
+    suivi_io.modifier(  # relances.py records two follow-ups
         lambda s: [
             s.__setitem__(k, dict(s[k], s="relancé", relance="2026-09-17")) for k in list(s)
         ],
         f,
     )
-    # puis l'app pose une NOUVELLE candidature depuis son instantane perime
+    # then the app sets a NEW application from its stale snapshot
     suivi_io.poser("Sweep|ESG Analyst", {"s": "postulé", "d": "2026-09-17"}, f)
     return f, instantane, suivi_io.charger(f)
 
@@ -128,11 +128,11 @@ def test_exception_au_milieu_n_ecrit_rien(deux_ecrivains):
     assert f.read_text(encoding="utf-8") == avant
 
 
-# ── D. sur les donnees REELLES : seulement a la demande, dans le depot d'un utilisateur ──
+# ── D. on REAL data: only on demand, in a user's repo ──
 @pytest.mark.donnees_reelles
 def test_aucune_candidature_orpheline():
-    """Chaque candidature du suivi pointe vers une offre de la file, ou est marquee
-    `retiree` (ligne retiree expres de la file).  pytest -m donnees_reelles"""
-    reel = suivi_io.charger()  # jamais json.load direct (AGENTS.md)
+    """Each application of the tracker points to an offer of the queue, or is marked
+    `retiree` (row removed from the queue on purpose).  pytest -m donnees_reelles"""
+    reel = suivi_io.charger()  # never a direct json.load (AGENTS.md)
     ids = {queue_io.oid(o) for o in queue_io.charger(descriptions=False)}
     assert [k for k in reel if k not in ids and not reel[k].get("retiree")] == []

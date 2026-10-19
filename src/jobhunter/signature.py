@@ -1,34 +1,33 @@
-"""Signature des versions publiées : Ed25519, en Python pur.
+"""Signature of the published versions: Ed25519, in pure Python.
 
-Pourquoi. La mise à jour télécharge du code depuis GitHub. HTTPS garantit qu'il vient de
-GitHub, pas qu'il vient de l'auteur : un compte ou un workflow compromis publierait une
-version piégée que toutes les installations prendraient. La signature est faite **hors
-de GitHub**, avec une clé privée qui ne quitte pas l'ordinateur de l'auteur
-(`outils/signature.py`) ; l'application ne connaît que la clé publique, écrite ici.
+Why. The update downloads code from GitHub. HTTPS guarantees that it comes from
+GitHub, not that it comes from the author: a compromised account or workflow would
+publish a booby-trapped version that every installation would take. The signature is
+made **outside GitHub**, with a private key that never leaves the author's computer
+(`outils/signature.py`); the application only knows the public key, written here.
 
-Ce qui est signé : le **manifeste** d'une version — son numéro, l'empreinte SHA-256 de
-chaque fichier du programme (le ZIP de l'étiquette `v<version>`) et celle de
-`JobHunterSetup.exe`. Il est publié avec la release, dans `signature.json`.
+What is signed: the **manifest** of a version — its number, the SHA-256 fingerprint of
+each file of the program (the ZIP of the `v<version>` tag) and that of
+`JobHunterSetup.exe`. It is published with the release, in `signature.json`.
 
-Tant que `CLE_PUBLIQUE` est vide, aucune version n'est signée : la mise à jour se fait
-comme avant et le dit. Dès qu'elle est posée, une version sans signature valide est
-refusée.
+As long as `CLE_PUBLIQUE` is empty, no version is signed: the update happens as before
+and says so. As soon as it is set, a version without a valid signature is refused.
 
-L'algorithme est celui de la RFC 8032 (section 6), sans dépendance : la vérification
-d'une signature prend quelques millisecondes.
+The algorithm is that of RFC 8032 (section 6), without a dependency: checking a
+signature takes a few milliseconds.
 
-Décision : docs/adr/0012-mises-a-jour-signees.md
+Decision: docs/adr/0012-mises-a-jour-signees.md
 """
 
 import hashlib
 import json
 from typing import Any
 
-# Clé publique de l'auteur (64 caractères hexadécimaux), posée par
-# `python outils/signature.py cle`. Vide = versions non signées.
+# The author's public key (64 hexadecimal characters), set by
+# `python outils/signature.py cle`. Empty = unsigned versions.
 CLE_PUBLIQUE = ""
 
-FICHIER = "signature.json"  # nom de l'asset de la release
+FICHIER = "signature.json"  # name of the release asset
 
 
 class SignatureInvalide(Exception):
@@ -150,7 +149,7 @@ def verifier(cle: bytes, message: bytes, signature: bytes) -> bool:
     return _egaux(_multiplier(s, _G), _ajouter(r, _multiplier(h, a)))
 
 
-# ── Manifeste d'une version ─────────────────────────────────────────────────
+# ── Manifest of a version ────────────────────────────────────────────────────
 
 
 def octets(manifeste: dict[str, Any]) -> bytes:
@@ -159,7 +158,7 @@ def octets(manifeste: dict[str, Any]) -> bytes:
 
 
 def manifeste(version: str, fichiers: dict[str, bytes], setup: bytes | None) -> dict[str, Any]:
-    """Ce qu'on signe pour une version : ses fichiers et son installateur, par empreinte."""
+    """What is signed for a version: its files and its installer, by fingerprint."""
     return {
         "version": version,
         "fichiers": {rel: hashlib.sha256(b).hexdigest() for rel, b in sorted(fichiers.items())},
@@ -168,17 +167,17 @@ def manifeste(version: str, fichiers: dict[str, bytes], setup: bytes | None) -> 
 
 
 def emballer(secret: bytes, m: dict[str, Any]) -> bytes:
-    """Le contenu de `signature.json` : le manifeste et sa signature."""
+    """The content of `signature.json`: the manifest and its signature."""
     sig = signer(secret, octets(m)).hex()
     return json.dumps({"manifeste": m, "signature": sig}, indent=1, sort_keys=True).encode()
 
 
 def ouvrir(contenu: bytes, version: str, cle_hex: str | None = None) -> dict[str, Any]:
-    """Le manifeste de `signature.json`, si sa signature est valide pour cette version.
+    """The manifest of `signature.json`, if its signature is valid for this version.
 
     Raises:
-        SignatureInvalide: fichier illisible, signature fausse, ou manifeste d'une autre
-            version (une vieille signature rejouée pour faire revenir en arrière).
+        SignatureInvalide: unreadable file, wrong signature, or manifest of another
+            version (an old signature replayed to roll back).
     """
     cle_hex = CLE_PUBLIQUE if cle_hex is None else cle_hex
     try:
@@ -195,10 +194,10 @@ def ouvrir(contenu: bytes, version: str, cle_hex: str | None = None) -> dict[str
 
 
 def controler_fichiers(m: dict[str, Any], fichiers: dict[str, bytes]) -> None:
-    """Chaque fichier téléchargé est dans le manifeste, à la même empreinte, et rien ne manque.
+    """Each downloaded file is in the manifest, with the same fingerprint, and nothing is missing.
 
     Raises:
-        SignatureInvalide: le premier écart trouvé.
+        SignatureInvalide: the first discrepancy found.
     """
     attendus = m.get("fichiers") or {}
     for rel, b in fichiers.items():
@@ -210,10 +209,10 @@ def controler_fichiers(m: dict[str, Any], fichiers: dict[str, bytes]) -> None:
 
 
 def controler_setup(m: dict[str, Any], setup: bytes) -> None:
-    """L'installateur téléchargé est celui que l'auteur a signé.
+    """The downloaded installer is the one the author signed.
 
     Raises:
-        SignatureInvalide: empreinte absente ou différente.
+        SignatureInvalide: fingerprint missing or different.
     """
     if not m.get("setup") or m["setup"] != hashlib.sha256(setup).hexdigest():
         raise SignatureInvalide("JobHunterSetup.exe diffère de la version signée")

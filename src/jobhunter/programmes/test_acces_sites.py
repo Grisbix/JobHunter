@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
-"""test_acces_sites.py — Mesure QUELS sites de la queue sont ouvrables.
+"""test_acces_sites.py — Measures WHICH sites of the queue can be opened.
 
-Repond a « lesquels arrives-tu a ouvrir ». Pour chaque domaine distinct, ouvre
-une URL representative, ecarte le bandeau cookies (refus prioritaire), et
-classe le resultat :
-  OK        page lisible
-  MUR LOGIN formulaire de connexion (se regle en se connectant une fois)
-  BLOQUE    anti-bot / captcha — NON contournable, et on ne cherche pas a l'etre
+Answers "which ones can you open". For each distinct domain, opens a representative
+URL, sets aside the cookie banner (refusal first), and classifies the result:
+  OK        readable page
+  MUR LOGIN login form (solved by logging in once)
+  BLOQUE    anti-bot / captcha — NOT bypassable, and we do not try to bypass it
   ERREUR    navigation impossible
 
-Le detail cookies dit si le refus a fonctionne (cmp-reject / reject) ou si le
-code a du ACCEPTER faute de bouton de refus (accept-fallback) : ces cas-la sont
-les seuls ou un consentement est donne, autant les connaitre.
+The cookie detail says whether the refusal worked (cmp-reject / reject) or whether the
+code had to ACCEPT for lack of a refusal button (accept-fallback): those cases are the
+only ones where consent is given, so it is best to know them.
 
-Run :
-  python JobHunter.pyw test_acces_sites                 # sites CARRIERE (hors job boards)
-  python JobHunter.pyw test_acces_sites --boards        # job boards uniquement
-  python JobHunter.pyw test_acces_sites --all --limit 0 # tout, sans plafond
+Run:
+  python JobHunter.pyw test_acces_sites                 # CAREER sites (excluding job boards)
+  python JobHunter.pyw test_acces_sites --boards        # job boards only
+  python JobHunter.pyw test_acces_sites --all --limit 0 # everything, no cap
   python JobHunter.pyw test_acces_sites --json out.json
 """
 
@@ -30,7 +29,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from jobhunter import racine as _racine
-from jobhunter.programmes import _profil_exemple  # noqa: F401  — en tete : profil d'exemple
+from jobhunter.programmes import _profil_exemple  # noqa: F401  — at the top: example profile
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -59,7 +58,7 @@ BOARDS = (
     "efinancialcareers",
     "meteojob",
 )
-# URL d'OFFRE : on veut la page d'accueil/carriere du domaine, pas une annonce
+# OFFER URL: we want the domain's home/career page, not a posting
 _OFFRE_RX = re.compile(r"/jobs?/view|[?&]jk=|/o/|/job-offers?/|/offres/\d+", re.I)
 
 
@@ -134,9 +133,9 @@ def main():
                 )
             except Exception as e:
                 etat, kind = "ERREUR", type(e).__name__
-                # Navigateur mort : sans relance, TOUT le reste du lot defile en
-                # erreur (28 sites sur 106 lors du premier passage, dont des sites
-                # dont on savait qu'ils repondaient).
+                # Dead browser: without a restart, ALL the rest of the batch scrolls by in
+                # error (28 sites out of 106 during the first pass, including sites
+                # we knew were answering).
                 if "Closed" in kind or "Closed" in str(e) or "crash" in str(e).lower():
                     try:
                         ctx.close()
@@ -148,7 +147,7 @@ def main():
                     except Exception:
                         print("  ✖ relance impossible — arret")
                         break
-            # Onglet recycle : evite la derive memoire sur les longs lots.
+            # Recycled tab: avoids memory drift on long batches.
             if (i + 1) % 30 == 0:
                 try:
                     vieux = page

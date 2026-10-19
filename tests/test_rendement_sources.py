@@ -1,6 +1,6 @@
-"""Rendement des sources (sources.rendement) : mesure, verdicts, journal et bilan.
+"""Source yield (sources.rendement): measurement, verdicts, log and report.
 
-Une collecte vide a des causes opposées ; le verdict les distingue (ADR 0004).
+An empty collection has opposite causes; the verdict tells them apart (ADR 0004).
 """
 
 import collections
@@ -34,7 +34,7 @@ def propre():
         (0, {"linkedin HTTP 429": 2}, R.LIMITE),
         (5, {"ats:lever ReadTimeout": 1}, R.PARTIEL),
         (0, {"ats:lever ReadTimeout": 1}, R.PARTIEL),
-        (7, {"glassdoor HTTP 403": 1}, R.PARTIEL),  # refusé en partie, mais des offres
+        (7, {"glassdoor HTTP 403": 1}, R.PARTIEL),  # partly refused, but some offers
     ],
 )
 def test_verdict(ramenees, incidents, attendu):
@@ -42,7 +42,7 @@ def test_verdict(ramenees, incidents, attendu):
 
 
 def test_mesurer_etiquette_et_compte_les_incidents_de_l_appel():
-    INCIDENTS["linkedin"]["HTTP 429"] += 1  # avant l'appel : ne compte pas
+    INCIDENTS["linkedin"]["HTTP 429"] += 1  # before the call: does not count
 
     def source():
         INCIDENTS["linkedin"]["HTTP 429"] += 2
@@ -119,7 +119,7 @@ def test_bilan_signale_une_source_toujours_refusee(tmp_path, monkeypatch, capsys
     assert prog.main([]) == 0
     sortie = capsys.readouterr().out
     assert "Refusées à CHAQUE collecte : apec" in sortie
-    assert sortie.index("ats") < sortie.index("apec")  # les plus rentables d'abord
+    assert sortie.index("ats") < sortie.index("apec")  # the most profitable first
 
 
 def test_bilan_cumule():
@@ -155,7 +155,7 @@ def test_fusion_compte_les_nouvelles_par_source(tmp_path, monkeypatch):
     entrant[0]["_passe"], entrant[1]["_passe"] = "ats", "linkedin"
     bilan = J.merge_into_queue(entrant, dry=False)
     file = json.loads(q.read_text(encoding="utf-8"))
-    assert all("_passe" not in o for o in file)  # l'etiquette ne part pas dans la file
+    assert all("_passe" not in o for o in file)  # the label does not go into the queue
     par = bilan["par_source"]
     assert bilan["added"] >= 1 and set(par) <= {"ats", "linkedin"}
     assert sum(c["nouvelles"] for c in par.values()) == bilan["added"] == len(file)

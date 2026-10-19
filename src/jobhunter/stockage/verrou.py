@@ -1,22 +1,22 @@
-"""Verrou INTER-PROCESSUS par fichier .lock (ancienne section de Scripts/jutil.py).
+"""INTER-PROCESS lock through a .lock file (former section of Scripts/jutil.py).
 
-Un programme qui trouve le fichier occupe sort en code 3 sans rien modifier ; un
-verrou vivant ne se casse jamais (detail : .claude/rules/verrous.md).
+A program that finds the file busy exits with code 3 without modifying anything; a
+live lock is never broken (detail: .claude/rules/verrous.md).
 
-Decision : docs/adr/0003-verrou-fichier-code-3.md
+Decision: docs/adr/0003-verrou-fichier-code-3.md
 """
 
 # ── Verrou INTER-PROCESSUS ────────────────────────────────────────────────────
-# jwrite garantit qu'une ecriture n'est jamais coupee en deux. Ca ne suffit pas :
-# le schema dangereux est lire-tout / modifier / reecrire-tout. Deux processus
-# qui font ca en meme temps produisent deux ecritures valides, et la seconde
-# EFFACE le travail de la premiere. C'est ainsi que 4 offres FIR ont disparu :
-# un scan tournait pendant que scrape_desc reecrivait la queue.
+# jwrite guarantees that a write is never cut in two. That is not enough:
+# the dangerous pattern is read-all / modify / rewrite-all. Two processes
+# doing that at the same time produce two valid writes, and the second
+# ERASES the work of the first. That is how 4 FIR offers disappeared:
+# a scan was running while scrape_desc rewrote the queue.
 #
-# L'app a bien un verrou (_bg_busy), mais il ne vaut que DANS son processus. Or
-# la tache planifiee JobSearch_Daily_Scrape lance le meme pipeline a cote.
+# The app does have a lock (_bg_busy), but it only holds WITHIN its process. Yet
+# the scheduled task JobSearch_Daily_Scrape launches the same pipeline alongside.
 #
-# D'ou un verrou porte par un fichier, visible de tous les processus.
+# Hence a lock carried by a file, visible to all processes.
 import atexit as _atexit
 import os
 import sys
@@ -38,18 +38,18 @@ def _fverrou(path: Chemin) -> Path:
 
 
 def _pid_vivant(pid: int | str | None, depuis: float | str | None = None) -> bool:
-    """True si le processus tourne encore. En cas de doute : True (on ne casse pas).
+    """True if the process is still running. When in doubt: True (we do not break).
 
-    Un programme tue de force (Stop-Process, taskkill /F, crash) ne passe pas par
-    atexit et laisse son verrou derriere lui. Sans ce test, il faut attendre
-    l'expiration (30 min) alors que plus rien ne tient le fichier.
+    A program killed by force (Stop-Process, taskkill /F, crash) does not go through
+    atexit and leaves its lock behind. Without this test, one must wait for
+    expiry (30 min) even though nothing holds the file any more.
 
-    `depuis` : instant (epoch) ou le verrou a ete pose. WINDOWS RECYCLE LES PID.
-    Le 2026-10-02, la collecte tuee a 13h13 (console fermee) a laisse son verrou ;
-    a 14h49 son PID 12720 a ete reattribue a un processus de l'extension Chrome,
-    et le verrou passait pour tenu « par un PID vivant » — toute collecte
-    suivante sortait en code 3. Un processus ne avant le verrou peut en etre le
-    proprietaire ; un processus ne APRES ne peut pas l'etre.
+    `depuis`: instant (epoch) at which the lock was set. WINDOWS RECYCLES PIDs.
+    On 2026-10-02, the collection killed at 13:13 (console closed) left its lock;
+    at 14:49 its PID 12720 was reassigned to a process of the Chrome extension,
+    and the lock passed for held "by a live PID" — every following
+    collection exited with code 3. A process born before the lock can be its
+    owner; a process born AFTER cannot be.
     """
     try:
         pid = int(pid)  # type: ignore[arg-type]  # None (verrou illisible) leve TypeError, attrape
@@ -57,15 +57,15 @@ def _pid_vivant(pid: int | str | None, depuis: float | str | None = None) -> boo
         return True
     if pid <= 0:
         return True
-    if sys.platform == "win32":  # (et non os.name : mypy le comprend sous Linux)
+    if sys.platform == "win32":  # (and not os.name: mypy understands it under Linux)
         import ctypes
 
         k = ctypes.windll.kernel32
         PROCESS_QUERY_LIMITED_INFORMATION, STILL_ACTIVE = 0x1000, 259
         h = k.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
         if not h:
-            # 87 = ERREUR_PARAMETRE_INVALIDE -> le PID n'existe pas.
-            # Tout autre code (acces refuse…) : on suppose vivant.
+            # 87 = ERROR_INVALID_PARAMETER -> the PID does not exist.
+            # Any other code (access denied…): we assume alive.
             return bool(k.GetLastError() != 87)
         try:
             code = ctypes.c_ulong()
@@ -88,12 +88,12 @@ def _pid_vivant(pid: int | str | None, depuis: float | str | None = None) -> boo
         finally:
             k.CloseHandle(h)
     try:
-        os.kill(pid, 0)  # signal 0 : ne tue pas, teste l'existence
+        os.kill(pid, 0)  # signal 0: does not kill, tests existence
         return True
     except ProcessLookupError:
         return False
     except PermissionError:
-        return True  # existe mais pas a nous
+        return True  # exists but not ours
     except OSError:
         return True
 
@@ -101,21 +101,21 @@ def _pid_vivant(pid: int | str | None, depuis: float | str | None = None) -> boo
 def prendre_verrou(
     path: Chemin, attente: float = 180, perime: float = 1800, bavard: bool = True
 ) -> bool:
-    """Prend le verrou de `path` ; reentrant pour le processus qui le tient deja.
+    """Takes the lock of `path`; reentrant for the process that already holds it.
 
     Args:
-        path: le fichier a proteger (le verrou est un fichier voisin).
-        attente: secondes d'attente avant d'abandonner.
-        perime: un verrou plus vieux que ca est considere abandonne (processus
-            tue sans passer par atexit) et casse — jamais un verrou vivant.
-        bavard: annoncer l'attente sur la sortie.
+        path: the file to protect (the lock is a neighbouring file).
+        attente: seconds to wait before giving up.
+        perime: a lock older than this is considered abandoned (process
+            killed without going through atexit) and broken — never a live lock.
+        bavard: announce the wait on the output.
 
     Returns:
-        True si le verrou est obtenu, False sinon.
+        True if the lock is obtained, False otherwise.
     """
     v = _fverrou(path)
-    # Reentrance : un programme qui tient deja le verrou ne doit pas se bloquer
-    # lui-meme si une fonction appelee le redemande.
+    # Reentrance: a program that already holds the lock must not block
+    # itself if a called function asks for it again.
     if _TENUS.get(str(v)):
         return True
     fin = _time.time() + attente
@@ -132,7 +132,7 @@ def prendre_verrou(
         try:
             age = _time.time() - v.stat().st_mtime
         except FileNotFoundError:
-            continue  # libere entre-temps : on retente
+            continue  # released in the meantime: we retry
         try:
             champs = v.read_text(encoding="utf-8").split()
             tenu_par = champs[0]
@@ -142,8 +142,8 @@ def prendre_verrou(
             pose = float(champs[1])
         except (IndexError, ValueError):
             pose = None
-        # Verrou orphelin : le processus qui le tenait est mort sans le rendre.
-        # Inutile d'attendre l'expiration, personne ne touche plus au fichier.
+        # Orphan lock: the process that held it died without releasing it.
+        # No point waiting for expiry, nobody touches the file any more.
         if tenu_par and not _pid_vivant(tenu_par, pose):
             if bavard:
                 _log.info(f"! verrou {v.name} laisse par le PID {tenu_par}, mort — je le casse")
@@ -152,17 +152,17 @@ def prendre_verrou(
             except FileNotFoundError:
                 pass
             continue
-        # L'EXPIRATION NE S'APPLIQUE QU'A UN VERROU SANS PROPRIETAIRE VIVANT.
-        # Le 2026-09-22, `linkedin_desc` lisait 6438 descriptions en trois heures
-        # sous un seul `transaction()`. A 17h34 il prenait le verrou, a 18h04
-        # l'auto-scrape de l'app le cassait sur l'age — alors que le PID 19940
-        # tournait toujours et ecrirait la file entiere a sa sortie. Tout ce qui
-        # aurait ete ecrit dans l'intervalle aurait ete efface sans bruit.
+        # EXPIRY ONLY APPLIES TO A LOCK WITHOUT A LIVE OWNER.
+        # On 2026-09-22, `linkedin_desc` read 6438 descriptions in three hours
+        # under a single `transaction()`. At 17:34 it took the lock, at 18:04
+        # the app's auto-scrape broke it on age — while PID 19940
+        # was still running and would write the whole queue on exit. Everything
+        # written in the meantime would have been erased silently.
         #
-        # Un travail long n'est pas un travail abandonne. Quand le PID est
-        # lisible ET vivant, on attend (et l'appelant sort en code 3 au bout de
-        # `attente`) ; `perime` ne tranche plus que le cas ou l'on ne sait pas
-        # qui tient le verrou.
+        # A long job is not an abandoned job. When the PID is
+        # readable AND alive, we wait (and the caller exits with code 3 after
+        # `attente`); `perime` now only decides the case where we do not know
+        # who holds the lock.
         if age > perime and not tenu_par:
             if bavard:
                 _log.warning(
@@ -191,28 +191,28 @@ def prendre_verrou(
 
 
 def tenu(path: Chemin) -> bool:
-    """CE processus tient-il deja le verrou de `path` ?
+    """Does THIS process already hold the lock of `path`?
 
-    `prendre_verrou` est reentrant, mais `rendre_verrou` ne l'est PAS : il
-    libere pour de bon. Une fonction qui prend le verrou puis le rend, alors
-    que son appelant le gardait pour toute la duree du programme (`garder`),
-    le lui retire au passage — et la suite du travail se fait a decouvert.
-    D'ou ce test : ne rendre que ce qu'on a soi-meme pris.
+    `prendre_verrou` is reentrant, but `rendre_verrou` is NOT: it
+    releases for good. A function that takes the lock then releases it, while
+    its caller kept it for the whole duration of the program (`garder`),
+    takes it away from the caller in passing — and the rest of the work runs unprotected.
+    Hence this test: only release what you took yourself.
 
     Args:
-        path: le fichier protege.
+        path: the protected file.
 
     Returns:
-        True si ce processus tient le verrou.
+        True if this process holds the lock.
     """
     return bool(_TENUS.get(str(_fverrou(path))))
 
 
 def rendre_verrou(path: Chemin) -> None:
-    """Libere le verrou de `path` s'il est tenu par ce processus (pour de bon).
+    """Releases the lock of `path` if it is held by this process (for good).
 
     Args:
-        path: le fichier protege.
+        path: the protected file.
     """
     v = _fverrou(path)
     if _TENUS.pop(str(v), None):
@@ -223,18 +223,18 @@ def rendre_verrou(path: Chemin) -> None:
 
 
 def garder(path: Chemin, attente: float = 180) -> bool:
-    """A appeler au debut d'un programme qui reecrit `path` en entier.
+    """To be called at the start of a program that rewrites `path` entirely.
 
-    Prend le verrou pour toute la duree du processus et le rend automatiquement
-    a la sortie, meme sur exception. Rend False si un autre programme travaille
-    deja sur le fichier : l'appelant doit alors s'arreter, pas ecraser.
+    Takes the lock for the whole duration of the process and releases it automatically
+    on exit, even on exception. Returns False if another program is already working
+    on the file: the caller must then stop, not overwrite.
 
     Args:
-        path: le fichier que le programme va reecrire.
-        attente: secondes d'attente du verrou.
+        path: the file the program is going to rewrite.
+        attente: seconds to wait for the lock.
 
     Returns:
-        True si le verrou est pris pour le reste du processus.
+        True if the lock is taken for the rest of the process.
     """
     if not prendre_verrou(path, attente=attente):
         _log.info(

@@ -1,6 +1,6 @@
-"""Repli par modele local (Ollama) : vision et agent pas a pas.
+"""Fallback through a local model (Ollama): vision and step-by-step agent.
 
-Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
+Part of jobhunter.navigation (formerly Scripts/web_nav.py, phase 3.6).
 """
 
 import random as _rnd
@@ -45,17 +45,17 @@ def _click_by_text_js(label: str) -> str:
 def vision_pick(
     page: Any, task: str, model: str | None = None, host: str = "http://localhost:11434"
 ) -> dict[str, Any]:
-    """Fallback vision : screenshot -> Ollama lit le bon bouton -> clic DOM.
+    """Vision fallback: screenshot -> Ollama reads the right button -> DOM click.
 
-    Auto-détecte le modèle vision disponible (qwen2.5vl, llava, etc.). Silencieux si
-    Ollama absent/modèle absent. Retour {clicked, label, note}.
+    Auto-detects the available vision model (qwen2.5vl, llava, etc.). Silent if
+    Ollama/the model is missing. Returns {clicked, label, note}.
     """
     import base64
     import json
     import urllib.error
     import urllib.request
 
-    # Auto-détection du modèle vision disponible
+    # Auto-detection of the available vision model
     if model is None:
         model = _detect_vision_model(host)
         if model is None:
@@ -87,7 +87,7 @@ def vision_pick(
             data=body,
             headers={"Content-Type": "application/json"},
         )
-        with urllib.request.urlopen(req, timeout=120) as resp:  # nosec B310 : schéma vérifié par exiger_http
+        with urllib.request.urlopen(req, timeout=120) as resp:  # nosec B310 : scheme checked by exiger_http
             out = json.loads(resp.read().decode())
         label = (out.get("response") or "").strip().strip('"').splitlines()[0][:60]
     except Exception as e:
@@ -105,9 +105,9 @@ def vision_pick(
 
 
 def _detect_vision_model(host: str = "http://localhost:11434") -> str | None:
-    """Détecte le premier modèle vision disponible via l'API Ollama.
+    """Detects the first vision model available through the Ollama API.
 
-    Ordre de préférence : qwen2.5vl → llava → minicpm-v → bakllava.
+    Order of preference: qwen2.5vl → llava → minicpm-v → bakllava.
     """
     import json
     import urllib.error
@@ -125,21 +125,21 @@ def _detect_vision_model(host: str = "http://localhost:11434") -> str | None:
     ]
     try:
         req = urllib.request.Request(exiger_http(host + "/api/tags"))
-        with urllib.request.urlopen(req, timeout=5) as resp:  # nosec B310 : schéma vérifié par exiger_http
+        with urllib.request.urlopen(req, timeout=5) as resp:  # nosec B310 : scheme checked by exiger_http
             data = json.loads(resp.read().decode())
         models: list[str] = [m.get("name", "") for m in data.get("models", [])]
         for kw in VISION_KEYWORDS:
             for m in models:
                 if kw in m.lower():
                     return m.split(":")[0] if ":" in m else m
-        # Fallback: tout modèle avec "vl" ou "vision" dans le nom
+        # Fallback: any model with "vl" or "vision" in its name
         for m in models:
             ml = m.lower()
             if "vl" in ml or "vision" in ml:
                 return m.split(":")[0] if ":" in m else m
     except Exception:
         pass
-    return None  # rien trouvé → fallback manuel
+    return None  # nothing found → manual fallback
 
 
 def _detect_text_model(host: str = "http://localhost:11434") -> str | None:
@@ -150,7 +150,7 @@ def _detect_text_model(host: str = "http://localhost:11434") -> str | None:
     PREF = ["qwen2.5", "llama3", "llama-3", "mistral", "mixtral", "phi", "gemma", "qwen"]
     try:
         req = urllib.request.Request(exiger_http(host + "/api/tags"))
-        with urllib.request.urlopen(req, timeout=5) as resp:  # nosec B310 : schéma vérifié par exiger_http
+        with urllib.request.urlopen(req, timeout=5) as resp:  # nosec B310 : scheme checked by exiger_http
             models: list[str] = [
                 m.get("name", "") for m in json.loads(resp.read().decode()).get("models", [])
             ]
@@ -163,9 +163,9 @@ def _detect_text_model(host: str = "http://localhost:11434") -> str | None:
         return None
 
 
-# ── #1 AGENT LLM (plan-act) : lit la page, décide l'action, exécute, recommence ─
-# Raisonnement humain-équiv sur DOM (+ vision optionnelle). Ollama local, gratuit.
-# GARDE-FOUS : ne clique jamais le submit final, ne résout jamais de captcha.
+# ── #1 LLM AGENT (plan-act): reads the page, decides the action, runs it, starts again ─
+# Human-equivalent reasoning on the DOM (+ optional vision). Local Ollama, free.
+# SAFEGUARDS: never clicks the final submit, never solves a captcha.
 _AGENT_DOM_JS = r"""
 () => {
   const _deep=(root,acc,sel)=>{root.querySelectorAll(sel).forEach(e=>acc.push(e));root.querySelectorAll('*').forEach(e=>{if(e.shadowRoot)_deep(e.shadowRoot,acc,sel);});return acc;};
@@ -193,11 +193,11 @@ def llm_agent(
     host: str = "http://localhost:11434",
     profile: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """#1 Agent plan-act : à chaque étape lit le DOM (digest), demande au LLM local (Ollama) l'action à faire pour atteindre `goal`, l'exécute, recommence.
+    """#1 Plan-act agent: at each step reads the DOM (digest), asks the local LLM (Ollama) for the action to take to reach `goal`, runs it, starts again.
 
-    Actions : click / fill / scroll / done / stop. GARDE-FOUS : refuse submit final &
-    captcha (renvoie stop). Dégrade proprement si Ollama absent. Retour {ok, steps, log,
-    note}.
+    Actions: click / fill / scroll / done / stop. SAFEGUARDS: refuses the final submit
+    & captcha (returns stop). Degrades cleanly if Ollama is missing. Returns {ok, steps,
+    log, note}.
     """
     import json
     import re as _re
@@ -262,7 +262,7 @@ def llm_agent(
                 data=body,
                 headers={"Content-Type": "application/json"},
             )
-            with urllib.request.urlopen(req, timeout=90) as resp:  # nosec B310 : schéma vérifié par exiger_http
+            with urllib.request.urlopen(req, timeout=90) as resp:  # nosec B310 : scheme checked by exiger_http
                 out = json.loads(resp.read().decode())
             act = json.loads(out.get("response") or "{}")
         except Exception as e:
@@ -288,7 +288,7 @@ def llm_agent(
             continue
         sel = '[data-wn-ag="%s"]' % idx
         if a == "click":
-            # garde-fou submit final
+            # final submit safeguard
             try:
                 txt = page.locator(sel).first.inner_text(timeout=1500)
             except Exception:

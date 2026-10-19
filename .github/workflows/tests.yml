@@ -1,13 +1,13 @@
 name: tests
 
-# A chaque push : qualite du code (ruff, version), banc de non-regression, et les
-# 27 suites sans reseau via pytest. Tout tourne sur le profil d'exemple
-# (_profil_test.py, offres fictives du banc) : aucune donnee personnelle n'est necessaire.
+# On each push: code quality (ruff, version), non-regression bench, and the
+# network-free test suites through pytest. Everything runs on the example profile
+# (_profil_test.py, the bench's fictitious offers): no personal data is needed.
 on:
   push:
   pull_request:
 
-# Le jeton du workflow ne fait que lire le dépôt : aucune étape n'écrit.
+# The workflow token only reads the repository: no step writes.
 permissions:
   contents: read
 
@@ -62,7 +62,7 @@ jobs:
         run: python -m pytest -q --cov --cov-report=term
 
   unix:
-    # Les scripts macOS/Linux et la logique pure, hors Windows.
+    # The macOS/Linux scripts and the pure logic, outside Windows.
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -73,8 +73,8 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      # shell: bash = « bash -eo pipefail » : sans pipefail, `| tail -1` rendait le
-      # code de tail et une suite en echec passait au vert.
+      # shell: bash = "bash -eo pipefail": without pipefail, `| tail -1` returned
+      # tail's exit code and a failing suite went green.
       - name: Syntaxe des scripts .sh
         shell: bash
         run: for f in *.sh; do bash -n "$f"; echo "$f ok"; done

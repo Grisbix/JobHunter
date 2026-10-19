@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
-"""probe_keywords.py — Mesure le RENDEMENT réel de mots-clés de recherche.
+"""probe_keywords.py — Measures the real YIELD of search keywords.
 
-Inventer une liste de mots-clés ne dit rien : seul compte ce qu'ils rapportent.
-Ce script interroge la recherche publique LinkedIn pour chaque candidat et
-distingue :
-  - trouvées : offres passant le filtre anti-bruit (title_ok)
-  - NOUVELLES : absentes de apply_queue.json (dédup par URL normalisée)
+Inventing a list of keywords says nothing: only what they bring back counts. This
+script queries LinkedIn's public search for each candidate and distinguishes:
+  - found: offers passing the anti-noise filter (title_ok)
+  - NEW: missing from apply_queue.json (dedup by normalised URL)
 
-Un mot-clé qui ne ramène que du déjà-vu ne sert à rien ; c'est « nouvelles »
-qui décide s'il vaut la peine d'être ajouté au scan.
+A keyword that only brings back the already-seen is useless; it is "new" that decides
+whether it is worth adding to the scan.
 
-Ne modifie RIEN. Ajout au scan = via sources_config.json (voir --config).
+Changes NOTHING. Adding to the scan = through sources_config.json (see --config).
 
-Run :
-  python JobHunter.pyw probe_keywords                       # liste candidate intégrée
+Run:
+  python JobHunter.pyw probe_keywords                       # built-in candidate list
   python JobHunter.pyw probe_keywords --kw "analyste climat,finance verte"
-  python JobHunter.pyw probe_keywords --min-new 3 --config  # ajoute les rentables à la config
+  python JobHunter.pyw probe_keywords --min-new 3 --config  # adds the profitable ones to the config
 """
 
 import argparse
@@ -32,8 +31,8 @@ HERE = _racine.scripts()
 QUEUE = HERE / "apply_queue.json"
 CFG = HERE / "sources_config.json"
 
-# Vocabulaire réel des offres ESG/finance FR+EN pour un profil junior.
-# Regroupé par thème pour que la sortie soit lisible.
+# Real vocabulary of ESG/finance FR+EN offers for a junior profile.
+# Grouped by theme so that the output is readable.
 CANDIDATS = {
     "ESG / réglementaire": [
         "notation esg",
@@ -90,8 +89,8 @@ CANDIDATS = {
     ],
 }
 
-# Profil « construit son propre outillage avec Claude Code » : dev assisté par IA,
-# agents, LLM. Testé séparément (--set ia) car c'est un autre marché que l'ESG.
+# Profile "builds their own tooling with Claude Code": AI-assisted dev,
+# agents, LLM. Tested separately (--set ia) because it is another market than ESG.
 CANDIDATS_IA = {
     "Vibe coding / dev assisté IA": [
         "vibe coding",
@@ -153,9 +152,9 @@ def main():
         default=3,
         help="seuil de nouvelles offres pour juger un mot-clé rentable",
     )
-    # LEÇON du 29/07 : juger sur la NOUVEAUTÉ seule a fait entrer 169 offres
-    # hors sujet sur 201 (15 % de pertinence). Un mot-clé n'est bon que s'il
-    # ramène du nouveau ET du pertinent → on exige les deux.
+    # LESSON of 29/07: judging on NOVELTY alone let in 169 off-topic offers
+    # out of 201 (15% relevance). A keyword is only good if it
+    # brings back new AND relevant → we require both.
     ap.add_argument(
         "--relevant-rx",
         default="",

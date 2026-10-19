@@ -1,6 +1,6 @@
-"""Lecteurs des API publiques d'ATS (Greenhouse, Lever, Ashby...) et des autres API de recrutement.
+"""Readers of the public ATS APIs (Greenhouse, Lever, Ashby...) and of the other recruiting APIs.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+Part of jobhunter.sources (formerly Scripts/job_sources.py, phase 3.4).
 """
 
 import datetime
@@ -19,15 +19,15 @@ from jobhunter.sources.commun import INCIDENTS, UA, _mk, _strip_html, title_ok
 _log = _journal.journal(__name__)
 
 
-# ═══════════════ 1. ATS APIs (httpx pur, pas de navigateur) — AVEC descriptions ═══════════════
+# ═══════════════ 1. ATS APIs (pure httpx, no browser) — WITH descriptions ═══════════════
 def _ats_ko(kind: str, slug: str, r: Any) -> bool:
-    """Réponse inutilisable ? Et si oui, faut-il s'en inquiéter ?
+    """Unusable response? And if so, should it be a concern?
 
-    404 : le slug n'existe pas chez cet ATS. C'est le cas NORMAL — la liste est
-    volontairement large, on sonde des sociétés qui n'y sont pas. Silence.
-    Tout le reste (429 quota, 5xx panne) est un refus : la société a peut-être
-    des offres, on ne les a pas vues. Ça se compte, sinon un scan entièrement
-    bridé ressemble à un scan sans nouveauté.
+    404: the slug does not exist at this ATS. It is the NORMAL case — the list is
+    deliberately wide, we probe companies that are not there. Silence.
+    Everything else (429 quota, 5xx failure) is a refusal: the company may have
+    offers, we did not see them. It is counted, otherwise an entirely throttled scan
+    looks like a scan with nothing new.
     """
     if r.status_code == 200:
         return False
@@ -36,11 +36,11 @@ def _ats_ko(kind: str, slug: str, r: Any) -> bool:
     return True
 
 
-# Le nom d'un compte ATS n'est pas celui de l'entreprise : `slug.title()` donnait
-# « Grantthornton », « Societegenerale », « Vestiairecollective ». Une entreprise
-# mal nommee echappe au tri par entreprise, au doublon avec LinkedIn et a toute
-# recherche (2026-10-08 : Roland Berger « absent », 34 offres sous
-# « rolandberger »). Les slugs absents d'ici gardent `slug.title()`.
+# The name of an ATS account is not the company's: `slug.title()` gave
+# "Grantthornton", "Societegenerale", "Vestiairecollective". A badly named
+# company escapes the sorting by company, the duplicate check with LinkedIn and any
+# search (2026-10-08: Roland Berger "absent", 34 offers under
+# "rolandberger"). The slugs missing from here keep `slug.title()`.
 ATS_NOMS = {
     "backmarket": "Back Market",
     "clarityai": "Clarity AI",
@@ -82,20 +82,20 @@ ATS_NOMS = {
 
 
 def nom_ats(slug: str) -> str:
-    """Le nom d'entreprise lisible d'un identifiant d'ATS (« rolandberger » → Roland Berger).
+    """The readable company name of an ATS identifier ("rolandberger" → Roland Berger).
 
     Args:
-        slug: l'identifiant du compte sur l'ATS.
+        slug: the identifier of the account on the ATS.
 
     Returns:
-        Le nom connu, sinon l'identifiant en capitales initiales.
+        The known name, otherwise the identifier with initial capitals.
     """
     return ATS_NOMS.get(slug.lower()) or slug.title()
 
 
-# Teamtailor : flux RSS public par societe, lieu en <tt:city>/<tt:country>.
-# Ajoute le 2026-10-08 pour South Pole, Indefi, Datamaran, Position Green — le
-# conseil ESG europeen y est, et sur aucun des cinq ATS lus jusque-la.
+# Teamtailor: public RSS feed per company, place in <tt:city>/<tt:country>.
+# Added on 2026-10-08 for South Pole, Indefi, Datamaran, Position Green — the
+# European ESG consulting is there, and on none of the five ATS read until then.
 _RX_TT_ITEM = re.compile(r"<item>(.*?)</item>", re.S)
 
 
@@ -105,22 +105,22 @@ def _tt(champ: str, item: Any) -> str:
 
 
 def fetch_ats(kind: str, slug: str) -> list[dict[str, Any]]:
-    """Les offres d'un compte sur un ATS public (Greenhouse, Lever, Ashby, Recruitee…).
+    """The offers of an account on a public ATS (Greenhouse, Lever, Ashby, Recruitee…).
 
     Args:
-        kind: le type d'ATS.
-        slug: l'identifiant du compte.
+        kind: the type of ATS.
+        slug: the identifier of the account.
 
     Returns:
-        Les offres au titre et à l'URL renseignés ; [] sur refus ou panne (comptés
-        dans INCIDENTS).
+        The offers with title and URL filled in; [] on refusal or failure (counted
+        in INCIDENTS).
     """
     import httpx
 
     out = []
     try:
         if kind == "greenhouse":
-            # ?content=true → description HTML incluse dans la liste
+            # ?content=true → HTML description included in the list
             r = _commun._get_borne(
                 httpx,
                 f"https://boards-api.greenhouse.io/v1/boards/{slug}/jobs?content=true",
@@ -142,8 +142,8 @@ def fetch_ats(kind: str, slug: str) -> list[dict[str, Any]]:
                     )
                 )
         elif kind == "lever":
-            # Lever héberge certaines entreprises dans sa région européenne : leur flux
-            # rend 404 sur api.lever.co et répond sur api.eu.lever.co.
+            # Lever hosts some companies in its European region: their feed
+            # returns 404 on api.lever.co and answers on api.eu.lever.co.
             r = _commun._get_borne(
                 httpx, f"https://api.lever.co/v0/postings/{slug}?mode=json", timeout=15, headers=UA
             )
@@ -208,7 +208,7 @@ def fetch_ats(kind: str, slug: str) -> list[dict[str, Any]]:
                     )
                 )
         elif kind == "teamtailor":
-            # Un domaine propre (jobs.tennaxia.com) sert le meme flux.
+            # A domain of its own (jobs.tennaxia.com) serves the same feed.
             hote = slug if "." in slug else f"{slug}.teamtailor.com"
             r = _commun._get_borne(httpx, f"https://{hote}/jobs.rss", timeout=15, headers=UA)
             if _ats_ko(kind, slug, r):
@@ -245,7 +245,7 @@ def fetch_ats(kind: str, slug: str) -> list[dict[str, Any]]:
                     f"smartrecruiters:{slug}",
                 )
                 out.append(o)
-        # SmartRecruiters : description via appel détail — seulement pour les titres retenus (peu)
+        # SmartRecruiters: description through a detail call — only for the titles kept (few)
         if kind == "smartrecruiters":
             kept = [o for o in out if title_ok(o["titre"])]
             for o in kept:
@@ -266,9 +266,9 @@ def fetch_ats(kind: str, slug: str) -> list[dict[str, Any]]:
                         )[:30000]
                 except Exception:
                     pass
-                time.sleep(0.4)  # appel détail par offre : on ne mitraille pas
-            # Meme garde que la sortie normale : une offre sans URL n'est pas
-            # exploitable, elle ne doit pas entrer par cette branche non plus.
+                time.sleep(0.4)  # detail call per offer: we do not machine-gun
+            # Same guard as the normal output: an offer without a URL is not
+            # usable, it must not get in through this branch either.
             return [o for o in kept if o["titre"] and o["url"]]
     except Exception as e:
         INCIDENTS[f"ats:{kind}"][type(e).__name__] += 1
@@ -276,14 +276,14 @@ def fetch_ats(kind: str, slug: str) -> list[dict[str, Any]]:
     return [o for o in out if o["titre"] and o["url"] and title_ok(o["titre"])]
 
 
-ATS_PAUSE = 0.5  # entre deux slugs : 40 appels d'affilee, autant les espacer
+ATS_PAUSE = 0.5  # between two slugs: 40 calls in a row, better space them out
 
 
 def scan_ats() -> list[dict[str, Any]]:
-    """Collecte tous les comptes ATS de la configuration.
+    """Collects all the ATS accounts of the configuration.
 
     Returns:
-        Les offres de tous les comptes.
+        The offers of all the accounts.
     """
     offers = []
     for kind, slugs in _commun.ATS_SLUGS.items():
@@ -313,7 +313,7 @@ _RX_AV_PAYS = re.compile(r'list-item-jobCountry">([^<]+)<')
 
 _RX_AV_DATE = re.compile(r'list-item-jobCreationDate">(\d{2})-(\d{2})-(\d{4})<')
 
-# Deux themes TalentBrew : titre dans le <a> (Moody's) ou dans un <h2> a l'interieur (ING).
+# Two TalentBrew themes: title in the <a> (Moody's) or in an <h2> inside it (ING).
 _RX_TB_LIEN = re.compile(
     r'href="(/[a-z-]+/job/[^"]+)"[^>]*data-job-id="\d+"[^>]*>\s*(?:<h2[^>]*>)?\s*([^<]+?)\s*<'
 )
@@ -363,15 +363,15 @@ def _sans_cdata(s: str) -> str:
 
 
 def fetch_autre(kind: str, cle: str, nom: str) -> list[dict[str, Any]]:
-    """Les offres d'un autre flux public (Workable, Pinpoint, Eightfold, Teamtailor…).
+    """The offers of another public feed (Workable, Pinpoint, Eightfold, Teamtailor…).
 
     Args:
-        kind: le type de flux.
-        cle: l'identifiant du compte (et ses paramètres).
-        nom: le nom d'entreprise à afficher.
+        kind: the type of feed.
+        cle: the identifier of the account (and its parameters).
+        nom: the company name to display.
 
     Returns:
-        Les offres au titre et à l'URL renseignés.
+        The offers with title and URL filled in.
     """
     import httpx
 
@@ -422,11 +422,11 @@ def fetch_autre(kind: str, cle: str, nom: str) -> list[dict[str, Any]]:
                     )
                 )
         elif kind == "sitemap":
-            # Sites maison sans API, mais dont le sitemap liste chaque offre avec
-            # sa date (Sia Partners, Carbone 4). Titre tire de l'adresse : leur
-            # page d'offre affiche « Offres d'emploi » en <h1>, pas l'intitule.
-            # « racine|chemin|h1 » : l'adresse ne porte qu'un identifiant (KBC),
-            # le titre se lit alors dans le <h1> de chaque page.
+            # In-house sites without an API, but whose sitemap lists each offer with
+            # its date (Sia Partners, Carbone 4). Title drawn from the address: their
+            # offer page displays "Offres d'emploi" in <h1>, not the title.
+            # "root|path|h1": the address only carries an identifier (KBC),
+            # the title is then read in the <h1> of each page.
             racine, chemin, *mode = cle.split("|")
             limite = (datetime.date.today() - datetime.timedelta(days=SITEMAP_JOURS)).isoformat()
             r = _commun._get_borne(httpx, racine, timeout=20, headers=UA, follow_redirects=True)
@@ -447,11 +447,11 @@ def fetch_autre(kind: str, cle: str, nom: str) -> list[dict[str, Any]]:
                     if chemin not in loc or loc in vus or (date and date < limite):
                         continue
                     vus.add(loc)
-                    # Tout ce qui suit le chemin : « internship-consultant-m/f-january-2027 »
-                    # contient un « / ». Le « -0 », « -1 » final est un doublon de slug.
+                    # Everything that follows the path: "internship-consultant-m/f-january-2027"
+                    # contains a "/". The final "-0", "-1" is a slug duplicate.
                     slug = loc.split(chemin, 1)[1].strip("/")
                     titre = re.sub(r"[-_]+", " ", unquote(slug)).strip()
-                    # « 7827/senior-esg-risk-analyst » (ABN AMRO) : l'identifiant en tete tombe.
+                    # "7827/senior-esg-risk-analyst" (ABN AMRO): the leading identifier drops.
                     titre = _RX_SM_ID.sub("", _RX_SM_NUM.sub("", titre)).capitalize()
                     if mode == ["h1"]:
                         p = _commun._get_borne(
@@ -464,9 +464,9 @@ def fetch_autre(kind: str, cle: str, nom: str) -> list[dict[str, Any]]:
                         time.sleep(_workday.WORKDAY_PAUSE)
                     out.append(_mk(titre, loc, nom, "", date, f"sitemap:{urlparse(racine).netloc}"))
         elif kind == "peoplesoft":
-            # PeopleSoft Fluid (BEI) : la page de recherche rendue cote serveur
-            # liste toutes les offres ouvertes, champs indexes par ligne ($0, $1...).
-            # Le lien de detail exige la session : il ouvre la liste, puis l'offre.
+            # PeopleSoft Fluid (EIB): the server-rendered search page
+            # lists all the open offers, fields indexed by row ($0, $1...).
+            # The detail link requires the session: it opens the list, then the offer.
             base = f"https://{cle}/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL"
             r = _commun._get_borne(
                 httpx,
@@ -498,9 +498,9 @@ def fetch_autre(kind: str, cle: str, nom: str) -> list[dict[str, Any]]:
                     )
                 )
         elif kind == "gogenerali":
-            # Generali (portail italien, sieges et filiales) : l'API de la page
-            # repond sans jeton. Les agences (hors perimetre « direzionale ») sont
-            # des postes commerciaux, exclus. Fiche : /home/job/{id}/{titre}.
+            # Generali (Italian portal, headquarters and subsidiaries): the page's API
+            # answers without a token. The agencies (outside the "direzionale" scope) are
+            # sales jobs, excluded. Posting: /home/job/{id}/{title}.
             r = _commun._get_borne(
                 httpx,
                 f"https://{cle}/rest-api/talent-farm-mediator/get-available-jobs-from-ats"
@@ -531,8 +531,8 @@ def fetch_autre(kind: str, cle: str, nom: str) -> list[dict[str, Any]]:
                     )
                 )
         elif kind == "adb":
-            # Banque asiatique de developpement : tableau HTML de toutes les
-            # offres ouvertes, « Intitule / reference » dans le lien.
+            # Asian Development Bank: HTML table of all the
+            # open offers, "Title / reference" in the link.
             r = _commun._get_borne(
                 httpx, f"https://{cle}", timeout=30, headers=UA, follow_redirects=True
             )
@@ -551,8 +551,8 @@ def fetch_autre(kind: str, cle: str, nom: str) -> list[dict[str, Any]]:
                     )
                 )
         elif kind == "icims":
-            # Liste HTML paginee (pr=0, 1, ...), filtree ensuite par title_ok :
-            # la recherche par mot-cle de l'iframe ne rend rien sans session.
+            # Paginated HTML list (pr=0, 1, ...), then filtered by title_ok:
+            # the iframe's keyword search returns nothing without a session.
             vus = set()
             for page in range(ICIMS_PAGES):
                 r = _commun._get_borne(
@@ -602,7 +602,7 @@ def fetch_autre(kind: str, cle: str, nom: str) -> list[dict[str, Any]]:
 
 
 def _cherche_autre(httpx: Any, kind: str, cle: str, mot: str) -> list[Any]:
-    """[(titre, url, lieu, date, description)] pour un mot-cle, cote serveur."""
+    """[(title, url, place, date, description)] for a keyword, server side."""
     if kind == "eightfold":
         hote, domaine = cle.split("|")
         r = _commun._get_borne(
@@ -650,7 +650,7 @@ def _cherche_autre(httpx: Any, kind: str, cle: str, mot: str) -> list[Any]:
             )
         return res
     if kind == "talentsoft":
-        # Sans Rss_Keywords le flux rend les 20 dernieres offres, tous metiers.
+        # Without Rss_Keywords the feed returns the last 20 offers, all professions.
         r = _commun._get_borne(
             httpx,
             f"https://{cle}/handlers/offerRss.ashx?LCID=1036&Rss_Keywords={quote(mot)}",
@@ -674,8 +674,8 @@ def _cherche_autre(httpx: Any, kind: str, cle: str, mot: str) -> list[Any]:
             )
         return res
     if kind == "phenom":
-        # La page de resultats embarque ses offres en JSON (phApp.ddo), 10 par
-        # page. C'est le rendu serveur que tout visiteur recoit.
+        # The results page embeds its offers as JSON (phApp.ddo), 10 per
+        # page. It is the server render that every visitor receives.
         res = []
         for depart in (0, 10):
             r = _commun._get_borne(
@@ -709,7 +709,7 @@ def _cherche_autre(httpx: Any, kind: str, cle: str, mot: str) -> list[Any]:
                 break
         return res
     if kind == "jibe":
-        # Jibe (Google Cloud Talent) : la page carriere appelle /api/jobs, JSON
+        # Jibe (Google Cloud Talent): the career page calls /api/jobs, JSON
         # public, description comprise. Schneider Electric (2026-10-08).
         r = _commun._get_borne(
             httpx,
@@ -736,7 +736,7 @@ def _cherche_autre(httpx: Any, kind: str, cle: str, mot: str) -> list[Any]:
             )
         return res
     if kind == "talentbrew":
-        # Radancy TalentBrew : la page de recherche (mot dans le chemin) est
+        # Radancy TalentBrew: the search page (word in the path) is
         # rendue cote serveur. Moody's, ING (2026-10-08). cle = « hote/langue|org ».
         base, org = cle.split("|")
         r = _commun._get_borne(
@@ -766,7 +766,7 @@ def _cherche_autre(httpx: Any, kind: str, cle: str, mot: str) -> list[Any]:
             )
         return res
     if kind == "avature":
-        # Page de recherche rendue cote serveur, 50 cartes par page.
+        # Server-rendered search page, 50 cards per page.
         r = _commun._get_borne(
             httpx,
             f"https://{cle}/SearchJobs/?listFilterMode=1&jobRecordsPerPage=50&search={quote(mot)}",
@@ -794,8 +794,8 @@ def _cherche_autre(httpx: Any, kind: str, cle: str, mot: str) -> list[Any]:
             )
         return res
     if kind == "csod":
-        # Cornerstone : la page publique delivre a tout visiteur un jeton
-        # anonyme, que son propre script envoie a l'API de recherche.
+        # Cornerstone: the public page delivers to every visitor an anonymous
+        # token, which its own script sends to the search API.
         hote, site = cle.split("|")
         tenant = hote.split(".")[0]
         page = _commun._get_borne(
@@ -883,11 +883,11 @@ def _cherche_autre(httpx: Any, kind: str, cle: str, mot: str) -> list[Any]:
     return []
 
 
-# Choisir le service public : le portail des trois fonctions publiques (CDC,
-# Banque de France, AMF, ACPR, ministeres...). Trouve le 2026-10-08 en cherchant
-# « Caisse des Depots recrutement » : la CDC n'a pas de flux propre, ses offres
-# sont la. Recherche plein texte large (22 409 resultats pour « esg »), triee
-# par pertinence : deux pages par mot suffisent, title_ok fait le reste.
+# Choisir le service public: the portal of the three French civil services (CDC,
+# Banque de France, AMF, ACPR, ministries...). Found on 2026-10-08 while searching
+# "Caisse des Depots recrutement": the CDC has no feed of its own, its offers
+# are there. Wide full-text search (22,409 results for "esg"), sorted
+# by relevance: two pages per word are enough, title_ok does the rest.
 CSP = "https://choisirleservicepublic.gouv.fr"
 
 CSP_MOTS = [
@@ -901,9 +901,9 @@ CSP_MOTS = [
     "extra-financier",
 ]
 
-# Mesure du 2026-10-08 : 178 offres passent title_ok, dont 36 communes et 31
-# intercommunalites. On ne garde que les employeurs financiers publics, ou un
-# intitule franchement ESG / finance durable quel que soit l'employeur.
+# Measured on 2026-10-08: 178 offers pass title_ok, including 36 municipalities and 31
+# inter-municipal bodies. We only keep public financial employers, or a
+# frankly ESG / sustainable finance title whatever the employer.
 _RX_CSP_EMPLOYEUR = re.compile(
     r"caisse des d[ée]p[ôo]ts|\bCDC\b|banque de france|\bAMF\b|autorit[ée] des march[ée]s|"
     r"\bACPR\b|contr[ôo]le prudentiel|\bAFD\b|agence fran[cç]aise de d[ée]veloppement|"
@@ -915,7 +915,7 @@ _RX_CSP_EMPLOYEUR = re.compile(
 )
 
 _RX_CSP_INTITULE = re.compile(
-    # Pas « climat » seul : plans climat territoriaux, et meme « climat scolaire ».
+    # Not "climat" alone: territorial climate plans, and even "climat scolaire".
     r"\bESG\b|\bRSE\b|finance durable|extra-?financ|taxonomie|\bISR\b|"
     r"analyste financ|analyste investissement|risques? financ|finance climat",
     re.I,
@@ -929,10 +929,10 @@ _RX_CSP_CHAMP = re.compile(r'<span class="sr-only">([^<]+?) : </span>\s*(.*?)\s*
 
 
 def fetch_service_public() -> list[dict[str, Any]]:
-    """Collecte Choisir le service public, par mots-clés.
+    """Choisir le service public collection, by keywords.
 
     Returns:
-        Les offres, sans doublon.
+        The offers, without duplicates.
     """
     import httpx
 
@@ -946,8 +946,8 @@ def fetch_service_public() -> list[dict[str, Any]]:
                 r = _commun._get_borne(httpx, url, timeout=20, headers=UA, follow_redirects=True)
                 if _ats_ko("service_public", mot, r):
                     break
-                # Une carte contient ses propres <li> : on decoupe sur son
-                # ouverture plutot que de chercher sa fermeture.
+                # A card contains its own <li>: we cut on its
+                # opening rather than looking for its closing.
                 for carte in r.text.split('<li class="fr-col-12 item">')[1:]:
                     m = _RX_CSP_TITRE.search(carte)
                     if not m or m.group(1) in vus:
@@ -977,17 +977,17 @@ def fetch_service_public() -> list[dict[str, Any]]:
     ]
 
 
-# Impactpool : agregateur des organisations internationales (ONU, OCDE, BEI,
-# banques de developpement). robots.txt n'interdit rien. Trouve le 2026-10-08
-# en cherchant ou publient les organisations dont la vitrine repond 403 :
-# leur vitrine refuse, leurs offres sont ici.
+# Impactpool: aggregator of international organisations (UN, OECD, EIB,
+# development banks). robots.txt forbids nothing. Found on 2026-10-08
+# while looking where the organisations whose shop window answers 403 publish:
+# their shop window refuses, their offers are here.
 IMPACTPOOL = "https://www.impactpool.org"
 
-# Mesure du 2026-10-08 : 7 recherches a 0,6 s d'intervalle -> la 1re rend 200,
-# les 6 suivantes 403. Un refus s'arrete (regle du projet) : peu de mots, une
-# longue pause, et arret au premier refus — pas de nouvelle tentative.
-# NON BRANCHE dans scan_autres : relance 1 min plus tard, la 1re requete rend
-# deja 403 (adresse marquee). A reessayer au plus tot le 2026-11-08, a la main.
+# Measured on 2026-10-08: 7 searches 0.6 s apart -> the 1st returns 200,
+# the next 6 403. A refusal stops (project rule): few words, a
+# long pause, and stop at the first refusal — no new attempt.
+# NOT WIRED into scan_autres: run again 1 min later, the 1st request already
+# returns 403 (address flagged). To try again on 2026-11-08 at the earliest, by hand.
 IMPACTPOOL_MOTS = ["sustainable finance", "ESG", "climate finance"]
 
 IMPACTPOOL_PAUSE = 15
@@ -1000,10 +1000,10 @@ _RX_IP_CARTE = re.compile(
 
 
 def fetch_impactpool() -> list[dict[str, Any]]:
-    """Collecte Impactpool (organisations internationales), par mots-clés.
+    """Impactpool collection (international organisations), by keywords.
 
     Returns:
-        Les offres, sans doublon.
+        The offers, without duplicates.
     """
     import httpx
 
@@ -1018,7 +1018,7 @@ def fetch_impactpool() -> list[dict[str, Any]]:
                 follow_redirects=True,
             )
             if _ats_ko("impactpool", mot, r):
-                break  # refus : on s'arrete
+                break  # refusal: we stop
             for chemin, titre, org, lieu in _RX_IP_CARTE.findall(r.text):
                 if chemin in vus:
                     continue
@@ -1044,10 +1044,10 @@ def _texte_brut(fragment: str) -> str:
 
 
 def scan_autres() -> list[dict[str, Any]]:
-    """Collecte tous les « autres flux » de la configuration.
+    """Collects all the "other feeds" of the configuration.
 
     Returns:
-        Les offres de tous les flux.
+        The offers of all the feeds.
     """
     offres = []
     for kind, cle, nom in _commun.AUTRES_FLUX:

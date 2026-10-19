@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""relecture.py — Relit les lettres générées et signale ce qui cloche, sans rien modifier.
+"""relecture.py — Re-reads the generated letters and reports what is wrong, without changing anything.
 
-Une seconde passe, sans le contexte de la rédaction (jobhunter.documents.relecture) :
-dévalorisation, superlatif, « excellent » pour une langue, ponctuation, redites, autre
-entreprise nommée, destinataire absent de l'annonce, texte venu d'une annonce piégée.
-On corrige à la main, dans `Lettres/Sur_mesure/<entreprise>__<poste>.txt`.
+A second pass, without the context of the writing (jobhunter.documents.relecture):
+underselling, superlative, "excellent" for a language, punctuation, repetitions, other
+company named, recipient missing from the posting, text coming from a booby-trapped
+posting. Corrections are made by hand, in `Lettres/Sur_mesure/<entreprise>__<poste>.txt`.
 
-Les candidatures déjà dans le suivi sont ignorées : leur lettre est partie.
+Applications already in the tracking are ignored: their letter has gone.
 
-Run :
-  python JobHunter.pyw relecture                 # les lettres des offres de fit >= 8
-  python JobHunter.pyw relecture --fit 0         # toutes
-  python JobHunter.pyw relecture --url acme      # les offres dont l'URL ou le nom contient « acme »
+Run:
+  python JobHunter.pyw relecture                 # the letters of the offers with fit >= 8
+  python JobHunter.pyw relecture --fit 0         # all of them
+  python JobHunter.pyw relecture --url acme      # the offers whose URL or name contains "acme"
 """
 
 import argparse
@@ -60,7 +60,7 @@ def main(argv: list[str] | None = None) -> int:
     compte: collections.Counter[str] = collections.Counter()
     a_revoir = lues = 0
     for o in sorted(cibles, key=lambda x: -int(x.get("fit") or 0)):
-        # Le .docx est la source de la lettre ; à défaut, le texte du PDF final.
+        # The .docx is the letter's source; failing that, the text of the final PDF.
         chemin = chemin_de(o.get("lettre"))
         if chemin is None:
             continue

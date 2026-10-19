@@ -11,15 +11,15 @@ import pytest
 
 os.environ["JOBHUNTER_SANS_FOND"] = "1"
 os.environ.pop("JOBHUNTER_ACTION", None)
-# L'app vit dans jobhunter.app depuis la phase 3.7 ; JobHunter.pyw n'est que le lanceur.
-import jobhunter.app as ui  # noqa: E402  (apres les variables d'environnement)
+# The app lives in jobhunter.app since phase 3.7; JobHunter.pyw is only the launcher.
+import jobhunter.app as ui  # noqa: E402  (after the environment variables)
 
 
 class DesignTests(unittest.TestCase):
     @pytest.fixture(autouse=True)
     def _racine(self, racine_tk):
-        # La racine Tk de la session (conftest) : une seconde racine dans le même
-        # processus fait échouer l'initialisation de Tcl par intermittence.
+        # The session's Tk root (conftest): a second root in the same
+        # process makes Tcl initialisation fail intermittently.
         self.racine = racine_tk
 
     def test_sessions(self):
@@ -76,7 +76,7 @@ class DesignTests(unittest.TestCase):
                     app = ui.App(root)
                     self.assertEqual(
                         len(app.tree.cget("displaycolumns")), 9
-                    )  # Pays puis Région ajoutés depuis la refonte
+                    )  # Country then Region added since the redesign
                     self.assertTrue(app._sidebar_on)
                     self.assertEqual(len(app._nav), 6)
                     self.assertEqual(set(app._offer_kpis), {"total", "fit", "post"})
@@ -85,9 +85,9 @@ class DesignTests(unittest.TestCase):
                     self.assertEqual(app._offer_kpis["post"].cget("text"), "0")
                     root.geometry("1080x680")
                     root.deiconify()
-                    # update() et non update_idletasks() : l'affichage d'une fenetre
-                    # (evenement Map) n'est pas une tache « idle ». En local la fenetre
-                    # etait souvent deja affichee ; sur la machine de CI, jamais.
+                    # update() and not update_idletasks(): displaying a window
+                    # (Map event) is not an "idle" task. Locally the window
+                    # was often already displayed; on the CI machine, never.
                     root.update()
                     self.assertTrue(app._offer_split.winfo_ismapped())
                     self.assertTrue(app.sidebar.winfo_ismapped())

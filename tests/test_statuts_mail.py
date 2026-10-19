@@ -1,4 +1,4 @@
-"""Statuts depuis les courriels (G4) : la bonne candidature, le bon statut, rien sans accord."""
+"""Statuses from emails (G4): the right application, the right status, nothing without consent."""
 
 import json
 import mailbox
@@ -56,7 +56,7 @@ def test_accuse_de_reception_seulement_avant_l_envoi():
     accuse = "Nous avons bien reçu votre candidature."
     p = statuts.propositions([c("Mirova <rh@mirova.com>", "Candidature", accuse)], SUIVI)
     assert [(x.oid, x.propose) for x in p] == [("Mirova|Stage ISR", "postulé")]
-    # déjà « postulé » : un accusé n'apporte rien
+    # already "postulé": an acknowledgement brings nothing
     assert statuts.propositions([c("Amundi <rh@amundi.com>", "Candidature", accuse)], SUIVI) == []
 
 
@@ -93,7 +93,7 @@ def test_le_plus_avance_garde():
     assert [p.propose for p in statuts.propositions([b, a], SUIVI)] == ["refus"]
 
 
-# ── lecture des exports ──────────────────────────────────────────────────────
+# ── reading the exports ──────────────────────────────────────────────────────
 
 
 def message(de, sujet, corps, html=False):
@@ -212,7 +212,7 @@ def test_gmail_jeton_trop_large_refuse(tmp_path, faux_google):
     faux_google["portees"] = [lecture.PORTEE, "https://www.googleapis.com/auth/gmail.send"]
     with pytest.raises(PermissionError):
         list(lecture.depuis_gmail(tmp_path))
-    assert not (tmp_path / lecture.JETON).exists()  # jamais gardé
+    assert not (tmp_path / lecture.JETON).exists()  # never kept
 
 
 def test_fenetre_de_l_app_s_ouvre(racine_tk):
@@ -228,7 +228,7 @@ def test_fenetre_de_l_app_s_ouvre(racine_tk):
     assert "Statuts depuis mes courriels" in titres
 
 
-# ── écriture : seulement ce qui est validé ──────────────────────────────────
+# ── writing: only what is validated ──────────────────────────────────
 
 
 @pytest.fixture
@@ -247,9 +247,9 @@ def test_valider_ecrit_seulement_oui(suivi_jetable):
     s = json.loads(suivi_jetable.read_text(encoding="utf-8"))
     assert s["Amundi|Analyste ESG"]["s"] == "refus"
     assert s["Amundi|Analyste ESG"]["d"] == "2026-10-15"
-    assert s["Amundi|Analyste ESG"]["n"] == "relancer lundi"  # la note reste
+    assert s["Amundi|Analyste ESG"]["n"] == "relancer lundi"  # the note stays
     assert s["Amundi|Analyste ESG"]["courriel"]["sujet"] == "Candidature"
-    assert s["Mirova|Stage ISR"] == {"s": "à postuler"}  # refusée : intacte
+    assert s["Mirova|Stage ISR"] == {"s": "à postuler"}  # refused: untouched
 
 
 def test_quitter_arrete_tout(suivi_jetable):
@@ -261,7 +261,7 @@ def test_quitter_arrete_tout(suivi_jetable):
 def test_suivi_change_entre_temps_rien_ecrit(suivi_jetable):
     props = statuts.propositions([c("Amundi <rh@amundi.com>", "x", "Interview invite you")], SUIVI)
     s = json.loads(suivi_jetable.read_text(encoding="utf-8"))
-    s["Amundi|Analyste ESG"]["s"] = "refus"  # l'utilisateur l'a changé dans l'app
+    s["Amundi|Analyste ESG"]["s"] = "refus"  # the user changed it in the app
     suivi_jetable.write_text(json.dumps(s, ensure_ascii=False), encoding="utf-8")
     assert statuts_mail.valider(props, lambda q: "o", suivi_jetable) == 0
     assert (

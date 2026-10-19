@@ -9,7 +9,7 @@ where winget >nul 2>nul
 if errorlevel 1 goto python_manuel
 choice /c ON /m "L'installer maintenant (Python 3.12, pour ton compte, via winget)"
 if errorlevel 2 goto python_manuel
-rem winget affiche lui-meme ses conditions : c'est toi qui les acceptes.
+rem winget displays its own terms: you are the one who accepts them.
 winget install -e --id Python.Python.3.12 --scope user
 if errorlevel 1 goto python_manuel
 echo.
@@ -31,8 +31,8 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-rem Un environnement Python propre a JobHunter, dans .venv : les paquets installes
-rem ne touchent pas au Python de l'ordinateur. Les autres .bat l'utilisent s'il existe.
+rem A Python environment of JobHunter's own, in .venv: the installed packages
+rem do not touch the computer's Python. The other .bat files use it if it exists.
 if not exist ".venv\Scripts\python.exe" (
   echo Creation de l'environnement Python de JobHunter dans .venv ...
   python -m venv .venv || goto erreur
@@ -40,7 +40,7 @@ if not exist ".venv\Scripts\python.exe" (
 set "PY=.venv\Scripts\python.exe"
 "%PY%" -m pip install -r requirements.txt || goto erreur
 "%PY%" -m playwright install chromium || goto erreur
-rem Empreinte des fichiers tels qu'installes : la mise a jour reconnaitra tes modifications.
+rem Fingerprint of the files as installed: the update will recognise your changes.
 "%PY%" JobHunter.pyw maj --initialiser
 echo.
 echo Installation terminee. Depose ton CV dans Mon_CV puis lance lancer.bat.

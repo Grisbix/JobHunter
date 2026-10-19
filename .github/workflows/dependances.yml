@@ -1,7 +1,7 @@
 name: dependances
 
-# Une PR qui ajoute ou monte une dépendance avec une vulnérabilité connue (gravité
-# modérée ou plus) ou une licence incompatible est bloquée avant la fusion.
+# A PR that adds or bumps a dependency with a known vulnerability (moderate
+# severity or higher) or an incompatible licence is blocked before merging.
 on:
   pull_request:
 

@@ -1,12 +1,12 @@
-"""Ce que les mixins de l'application voient de `self` (phase 5 du plan).
+"""What the application's mixins see of `self` (phase 5 of the plan).
 
-`App` assemble un mixin par domaine ; chacun lit des attributs et appelle des
-methodes definis dans les autres. Ce Protocol les declare tous : un nom lu sur
-`self` et defini nulle part est une erreur de mypy. Les types restent Any — le
-gain est l'existence du nom, pas encore sa forme.
+`App` assembles one mixin per domain; each reads attributes and calls methods
+defined in the others. This Protocol declares them all: a name read on `self` and
+defined nowhere is a mypy error. The types stay Any — the gain is the existence of
+the name, not yet its shape.
 
-GENERE depuis le code de app/ ; a regenerer quand un mixin pose un nouvel
-attribut (mypy le signale : « AppTypee has no attribute »).
+GENERATED from the code of app/; to regenerate when a mixin sets a new attribute
+(mypy reports it: "AppTypee has no attribute").
 """
 
 from typing import Any, Protocol

@@ -1,16 +1,16 @@
-"""Règles d'architecture du paquet, vérifiées sur le code (phase 3 du plan).
+"""Architecture rules of the package, checked on the code (phase 3 of the plan).
 
-1. Le MOTEUR n'importe pas l'interface : ni tkinter, ni customtkinter, ni
-   jobhunter.app. Seuls `jobhunter.app` et `jobhunter.accueil` (le premier lancement,
-   qui ouvre une fenêtre de choix de fichier) y ont droit. Un moteur qui tire Tkinter ne
-   tourne plus dans une tâche planifiée sans écran, ni en CI.
-2. Aucun module du paquet ne touche à sys.path : le paquet s'importe parce qu'il est
-   installé (ou parce que `JobHunter.pyw` ajoute src/, seul endroit autorisé). Huit
-   insertions de Scripts/ — le dossier des DONNÉES — ont survécu à la 2.0 jusqu'au
-   2026-10-19 : un .py déposé là passait avant les modules du même nom.
+1. The ENGINE does not import the interface: neither tkinter, nor customtkinter, nor
+   jobhunter.app. Only `jobhunter.app` and `jobhunter.accueil` (the first launch,
+   which opens a file-choice window) are allowed to. An engine that pulls in Tkinter no longer
+   runs in a scheduled task without a screen, nor in CI.
+2. No module of the package touches sys.path: the package is imported because it is
+   installed (or because `JobHunter.pyw` adds src/, the only allowed place). Eight
+   insertions of Scripts/ — the DATA folder — survived 2.0 until
+   2026-10-19: a .py dropped there came before the modules of the same name.
 
-Le plan disait ces règles « vérifiées en CI par import-linter », qui n'a jamais été
-branché ; ce test en tient lieu, sans dépendance.
+The plan said these rules were "checked in CI by import-linter", which was never
+wired up; this test stands in for it, without a dependency.
 """
 
 import ast

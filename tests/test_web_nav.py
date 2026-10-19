@@ -1,9 +1,9 @@
-"""web_nav sur pages HTML synthetiques (sans reseau), dans un vrai Chromium headless.
+"""web_nav on synthetic HTML pages (without network), in a real headless Chromium.
 
-Cookies, typologie des pages, choix des boutons, detection d'ATS, segmentation,
-plan d'action, assistant multi-ecrans (arret sur l'envoi final), remplissage et
-televersement. Converti depuis Scripts/test_web_nav.py, qui ajoutait une fonction
-`pg_pick` au module web_nav et laissait ses fichiers dans le dossier temporaire.
+Cookies, page typology, choice of buttons, ATS detection, segmentation,
+action plan, multi-screen wizard (stop at the final send), filling and
+upload. Converted from Scripts/test_web_nav.py, which added a function
+`pg_pick` to the web_nav module and left its files in the temporary folder.
 """
 
 import pytest
@@ -28,7 +28,7 @@ def test_cookies_cmp_onetrust(page):
     assert w.dismiss_cookies(page).get("done") == "cmp-reject"
 
 
-# ── analyze : nature de la page ────────────────────────────────────────────────
+# ── analyze: nature of the page ────────────────────────────────────────────────
 @pytest.mark.parametrize(
     ("html", "kind"),
     [
@@ -148,7 +148,7 @@ def test_segment_deux_offres(segments):
             "drill",
         ),
         ("<form><input type=email><input type=file></form>", "ready"),
-        ('<iframe src="https://hcaptcha.com/x"></iframe>', "stop"),  # captcha : on s'arrete
+        ('<iframe src="https://hcaptcha.com/x"></iframe>', "stop"),  # captcha: we stop
     ],
     ids=["cookies d'abord", "carrieres", "offres", "formulaire pret", "captcha"],
 )
@@ -274,7 +274,7 @@ def test_fill_application_pays(rempli):
     assert rempli[0].eval_on_selector("select[name=pays]", "e=>e.value") == "France"
 
 
-# ── dismiss_overlays : ferme widget de chat et modale, garde cookies ───────────
+# ── dismiss_overlays: closes chat widget and modal, keeps cookies ───────────
 @pytest.fixture
 def overlays(page):
     page.set_content(
@@ -297,7 +297,7 @@ def test_overlay_garde_la_banniere_cookie(overlays):
 
 
 def test_overlay_modale_fermee_sans_erreur(page):
-    # l'ancienne suite verifiait `True` ; on verifie au moins que l'appel aboutit
+    # the old suite checked `True`; we at least check that the call completes
     page.set_content(
         '<div role=dialog style="width:300px;height:200px"><p>Abonne-toi</p>'
         "<button>Non merci</button></div>"
@@ -305,7 +305,7 @@ def test_overlay_modale_fermee_sans_erreur(page):
     w.dismiss_overlays(page)
 
 
-# ── _pick_option et smart_upload ───────────────────────────────────────────────
+# ── _pick_option and smart_upload ───────────────────────────────────────────────
 def _options(pg):
     return pg.eval_on_selector("select", "s=>[...s.options].map(o=>({t:o.text,v:o.value}))")
 

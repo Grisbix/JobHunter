@@ -1,14 +1,14 @@
-"""Statuts de candidature depuis les courriels : propositions validées une à une (G4).
+"""Application statuses from the emails: suggestions validated one by one (G4).
 
     jobhunter statuts-mail --mbox Takeout/Mail/Tous.mbox
-    jobhunter statuts-mail --eml chemin/vers/dossier
-    jobhunter statuts-mail --gmail [--jours 60]     # API Gmail, lecture seule
-    jobhunter statuts-mail ... --liste               # montre, n'écrit rien
+    jobhunter statuts-mail --eml path/to/folder
+    jobhunter statuts-mail --gmail [--jours 60]     # Gmail API, read-only
+    jobhunter statuts-mail ... --liste               # shows, writes nothing
 
-Pour chaque proposition : o = appliquer, n = ignorer, q = arrêter. Une proposition
-acceptée écrit le statut, la date du courriel et le courriel cité (`courriel` : de,
-sujet, date) dans le suivi, sous verrou et sur l'état relu ; la note et le reste de
-l'entrée sont gardés. Voir jobhunter.courriels pour la lecture et ses garanties.
+For each suggestion: o = apply, n = ignore, q = stop. An accepted suggestion writes the
+status, the email's date and the cited email (`courriel`: from, subject, date) into the
+tracking, under lock and on the re-read state; the note and the rest of the entry are
+kept. See jobhunter.courriels for the reading and its guarantees.
 """
 
 import argparse
@@ -30,7 +30,7 @@ def appliquer(p: statuts.Proposition, chemin: Path | None = None, attente: float
         rec: Candidature = dict(s.get(p.oid) or {})  # type: ignore[assignment]  # copie
         actuel = str(rec.get("s") or "")
         if actuel not in statuts._RANG or statuts._RANG[p.propose] <= statuts._RANG[actuel]:
-            return False  # le suivi a bougé depuis la proposition
+            return False  # the tracking moved since the suggestion
         rec["s"] = p.propose
         rec["d"] = p.le or datetime.date.today().isoformat()
         rec["courriel"] = CourrielStatut(de=p.de, sujet=p.sujet, le=p.le)

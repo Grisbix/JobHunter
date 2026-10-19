@@ -1,7 +1,7 @@
-"""Acces concurrent a la file (queue_io).
+"""Concurrent access to the queue (queue_io).
 
-Le module existe pour rendre impossible l'oubli du verrou : on verifie surtout
-ce qui doit ARRIVER quand deux programmes se marchent dessus. Converti depuis
+The module exists to make forgetting the lock impossible: we mainly check
+what must HAPPEN when two programs step on each other. Converted from
 Scripts/test_queue_io.py.
 """
 
@@ -32,11 +32,11 @@ def autre_processus(chemin):
     r = subprocess.run([sys.executable, "-c", sonde], capture_output=True, text=True)
     jutil_rendu = r.stdout.strip()
     if jutil_rendu == "True":
-        jutil.rendre_verrou(chemin)  # la sonde laisse le verrou derriere elle
+        jutil.rendre_verrou(chemin)  # the probe leaves the lock behind it
     return jutil_rendu
 
 
-# ── A. lecture et ecriture ─────────────────────────────────────────────────────
+# ── A. reading and writing ─────────────────────────────────────────────────────
 def test_charger(q):
     assert queue_io.charger(q) == [{"entreprise": "A", "fit": 1}]
 
@@ -51,7 +51,7 @@ def test_transaction_ecrit(q):
     assert queue_io.charger(q)[0]["fit"] == 9
 
 
-# ── B. le verrou est pris pendant le bloc ──────────────────────────────────────
+# ── B. the lock is taken during the block ──────────────────────────────────────
 def test_autre_processus_bloque_pendant(q):
     with queue_io.transaction(q):
         assert autre_processus(q) == "False"
@@ -63,7 +63,7 @@ def test_autre_processus_passe_apres(q):
     assert autre_processus(q) == "True"
 
 
-# ── C. une exception n'ecrit rien ──────────────────────────────────────────────
+# ── C. an exception writes nothing ──────────────────────────────────────────────
 def _transaction_qui_casse(q):
     with pytest.raises(ValueError), queue_io.transaction(q) as offres:
         offres.append({"entreprise": "NE DOIT PAS ETRE ECRIT"})
@@ -81,11 +81,11 @@ def test_verrou_relache_malgre_exception(q):
     assert autre_processus(q) == "True"
 
 
-# ── D. relecture fraiche DANS le verrou ────────────────────────────────────────
+# ── D. fresh reread INSIDE the lock ────────────────────────────────────────
 @pytest.fixture
 def ecrit_par_un_autre(q):
-    """Un autre programme ecrit pendant qu'on ne tient pas encore le verrou."""
-    queue_io.charger(q)  # copie perimee, qui ne doit pas servir
+    """Another program writes while we do not hold the lock yet."""
+    queue_io.charger(q)  # stale copy, which must not be used
     q.write_text(json.dumps([{"entreprise": "ECRIT_PAR_UN_AUTRE", "fit": 5}]), encoding="utf-8")
     vu = {}
     with queue_io.transaction(q) as offres:
@@ -117,7 +117,7 @@ def test_le_nom_du_module_ne_masque_pas_la_stdlib():
     assert hasattr(stdlib_queue, "Queue")
 
 
-# ── G. descriptions dans un fichier annexe (vrais chemins du module, rediriges) ─
+# ── G. descriptions in an annex file (the module's real paths, redirected) ─
 @pytest.fixture
 def deux_offres(file_temporaire):
     with queue_io.transaction() as offres:
@@ -157,8 +157,8 @@ def test_charger_reinjecte(deux_offres):
 
 
 def test_chemin_relatif_vers_la_file_reinjecte(deux_offres, monkeypatch):
-    # Path("apply_queue.json") lance depuis le dossier de la file : meme fichier que
-    # CHEMIN, ecrit autrement. Compare tel quel, les descriptions disparaissaient.
+    # Path("apply_queue.json") run from the queue's folder: same file as
+    # CHEMIN, written differently. Compared as is, the descriptions disappeared.
     monkeypatch.chdir(deux_offres.parent)
     assert len(queue_io.charger(queue_io.Path("apply_queue.json"))[0]["description"]) == 4000
 
@@ -206,16 +206,16 @@ def test_descriptions_false_n_injecte_rien(amundi_supprimee):
 
 @pytest.fixture
 def ecriture_sans_descriptions(amundi_supprimee):
-    """LE CHEMIN DANGEREUX : ecrire sans avoir lu l'annexe. Si la purge des
-    orphelines s'appliquait la, elle ne verrait aucune description vivante et
-    effacerait tout. BNP (sans description) puis Mirova (avec) pour le prouver."""
+    """THE DANGEROUS PATH: writing without having read the annex. If the purge of
+    orphans applied there, it would see no live description and
+    would erase everything. BNP (without description) then Mirova (with) to prove it."""
     with queue_io.transaction() as offres:
         offres.append(
             {"entreprise": "Mirova", "poste": "Analyste", "fit": 8, "description": "y" * 3000}
         )
     avant = _annexe()
     with queue_io.transaction(descriptions=False) as offres:
-        offres[0]["fit"] = 3  # on ne touche a aucune description
+        offres[0]["fit"] = 3  # we touch no description
     return avant
 
 

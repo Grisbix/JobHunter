@@ -1,10 +1,10 @@
-"""Charger le moteur n'ecrit rien, ne sort pas sur le reseau, et ne lit aucun fichier.
+"""Loading the engine writes nothing, does not go out on the network, and reads no file.
 
-Phase 4 du plan. Mesure faite par un crochet d'audit (`sys.addaudithook`) dans un
-processus neuf qui importe TOUS les modules de `jobhunter`. Avant : trois dossiers de
-sortie crees a l'import (CV/Par_offre, Lettres/Par_offre, Lettres/Messages) ; ils le
-sont maintenant au moment d'ecrire. Le profil et `Scripts/chemins.json` etaient lus
-au chargement ; ce qui en est tire se calcule a la premiere lecture
+Phase 4 of the plan. Measured by an audit hook (`sys.addaudithook`) in a
+fresh process that imports ALL the modules of `jobhunter`. Before: three output
+folders created at import (CV/Par_offre, Lettres/Par_offre, Lettres/Messages); they
+now are at write time. The profile and `Scripts/chemins.json` were read
+at load time; what is drawn from them is computed on first read
 (`jobhunter.paresseux`).
 """
 
@@ -48,9 +48,9 @@ SONDE = textwrap.dedent(
 
 
 def _mesure():
-    # Sans la couverture de pytest-cov : elle ecrirait ses .coverage.* dans ce processus.
+    # Without pytest-cov coverage: it would write its .coverage.* in this process.
     env = {k: v for k, v in os.environ.items() if not k.startswith(("COV_", "COVERAGE"))}
-    # Le bytecode (__pycache__) est l'affaire de Python, pas du moteur.
+    # The bytecode (__pycache__) is Python's business, not the engine's.
     env.update(PYTHONPATH=str(SRC), PROFIL_JOBHUNTER=str(EXEMPLE), PYTHONDONTWRITEBYTECODE="1")
     env.pop("JOBHUNTER_RACINE", None)
     r = subprocess.run(

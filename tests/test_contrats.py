@@ -1,7 +1,7 @@
-"""Deduction du type de contrat (job_sources), et ses faux positifs.
+"""Deduction of the contract type (job_sources), and its false positives.
 
-Converti depuis Scripts/test_contrats.py. Les phrases « etudiant » sont des
-phrases reelles de la file (2026-10-04).
+Converted from Scripts/test_contrats.py. The "etudiant" sentences are real
+sentences from the queue (2026-10-04).
 """
 
 import pytest
@@ -20,20 +20,20 @@ PAR_TITRE = [
     # libelles anglais
     ("Sustainability Manager - Permanent", "CDI"),
     ("Analyste Fixed Term - 6 mois", "CDD"),
-    ("Analyste Fixed Income", ""),  # Fixed Income n'est PAS un contrat
-    ("Analyst - Full-time", ""),  # un rythme, pas un contrat
-    # l'etudiant passe avant tout le reste
+    ("Analyste Fixed Income", ""),  # Fixed Income is NOT a contract
+    ("Analyst - Full-time", ""),  # a pattern, not a contract
+    # the student comes before everything else
     ("Stage Analyste M&A (puis VIE/CDI)", "Stage"),
     ("Alternance Analyste ESG - CDI à la clé", "Alternance"),
     ("V.I.E - Analyste Finance", "V.I.E"),
-    # faux positifs : aucun contrat ne doit sortir
+    # false positives: no contract must come out
     ("Analyste ESG H/F", ""),
     ("Chargé de mission développement durable", ""),
     ("Chargé de vie associative", ""),
     ("Assurance vie - Gestionnaire", ""),
     ("ANALYSTE CYCLE DE VIE HABILLEMENT", ""),
     ("Analyste Fixed Income", ""),
-    # un poste etudiant est un stage
+    # a student job is an internship
     ("Working Student - Supplier Sustainability (f/m/div)", "Stage"),
     ("Werkstudent:in AXA Asset Management", "Stage"),
 ]
@@ -50,11 +50,11 @@ PAR_DESCRIPTION = [
     # libelle structure
     ("Type de contrat : CDI. Poste base a Paris.", "CDI"),
     ("Contrat : Alternance de 24 mois.", "Alternance"),
-    # pieges deja rencontres
-    ("Vous avez une experience en alternance ou en poste.", ""),  # experience, pas contrat
+    # traps already met
+    ("Vous avez une experience en alternance ou en poste.", ""),  # experience, not contract
     ("Nous investissons dans des startups early stage.", ""),  # phase d'entreprise
-    ("Vous gerez les contrats prestataires et commandes.", ""),  # les clients
-    # un poste qui demande un etudiant est un stage
+    ("Vous gerez les contrats prestataires et commandes.", ""),  # the clients
+    # a job that asks for a student is an internship
     ("Et si c'était vous ? Vous êtes étudiant en Bac +4/5, avec une spécialisation ESG.", "Stage"),
     ("Qui êtes vous ? Étudiant(e) en dernière année d'école d'ingénieur ou Master 2.", "Stage"),
     ("Étudiant en fin d’études ou en année de césure au sein d’une école de commerce.", "Stage"),
@@ -71,7 +71,7 @@ PAR_DESCRIPTION = [
     ("Candidates must be enrolled at one of the following universities to be considered.", "Stage"),
     ("Vous êtes étudiant en master, en vue de l'obtention du diplôme d'ingénieur.", "Stage"),
     ("Contrat : CDD. Vous êtes étudiant en master.", "Stage"),  # l'etudiant l'emporte
-    # le diplome est accepte : ce n'est pas un stage
+    # the degree is accepted: it is not an internship
     (
         "We're looking for individuals currently pursuing (or already holding) a relevant "
         "master's degree.",
@@ -82,11 +82,11 @@ PAR_DESCRIPTION = [
     ("Bachelor's degree (or currently pursuing a degree) in Political Science.", ""),
     ("Higher education or currently studying in finance or economics.", ""),
     ("Étudiant en dernière année ou jeune diplômé d'une école de commerce.", ""),
-    # un passe demande, pas un statut
+    # a past asked for, not a status
     ("Erste Erfahrungen durch Praktika oder Werkstudententätigkeiten im Finanzbereich.", ""),
     ("Relevant experience through internships, working student roles, or research projects.", ""),
-    # sans libelle « Contrat : » : la mention seule, et l'enumeration qui ne declare rien
-    # (le 2026-10-19, un renommage cassait ce chemin sans qu'aucun test ne le voie)
+    # without a "Contrat :" label: the mention alone, and the enumeration that declares nothing
+    # (on 2026-10-19, a rename broke this path without any test seeing it)
     ("Nous proposons un poste en CDI, basé à Paris.", "CDI"),
     ("Mission de V.I.E de 12 mois à Singapour.", "V.I.E"),
     ("Il ouvre la voie à des opportunités en alternance, VIE, CDD et CDI.", ""),

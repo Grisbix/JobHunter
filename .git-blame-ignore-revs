@@ -1,4 +1,4 @@
-# Commits purement mecaniques, ignores par `git blame` (GitHub le lit tout seul ;
-# en local : git config blame.ignoreRevsFile .git-blame-ignore-revs).
+# Purely mechanical commits, ignored by `git blame` (GitHub reads this file by itself;
+# locally: git config blame.ignoreRevsFile .git-blame-ignore-revs).
 # style: format the whole codebase with ruff format
 6b624717be9f4aea381ae1251272212a165aa6ba

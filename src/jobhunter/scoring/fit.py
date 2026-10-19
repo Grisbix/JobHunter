@@ -1,16 +1,16 @@
-"""jobhunter.scoring.fit (ancien Scripts/ats_match.py).
+"""jobhunter.scoring.fit (formerly Scripts/ats_match.py).
 
-ats_match.py — Scoring ATS façon Resume-Matcher (léger, offline).
+ats_match.py — ATS scoring in the style of Resume-Matcher (light, offline).
 
-Pour chaque offre : extrait les compétences REQUISES (dans Missions + Profil requis),
-regarde lesquelles sont COUVERTES par le CV variant choisi, calcule un match %
-et liste les compétences MANQUANTES (gaps à ajouter au CV/lettre).
+For each offer: extracts the REQUIRED skills (in Missions + Required profile), looks at
+which ones are COVERED by the chosen CV variant, computes a match % and lists the
+MISSING skills (gaps to add to the CV/letter).
 
-Réutilise le lexique multi-profil de tailor_application (SKILL_LEX).
+Reuses tailor_application's multi-profile lexicon (SKILL_LEX).
 
 Run:
     python -m jobhunter.scoring.fit --company Amundi
-    python -m jobhunter.scoring.fit --all --min 0          # rapport complet -> ats_report.csv
+    python -m jobhunter.scoring.fit --all --min 0          # full report -> ats_report.csv
     python -m jobhunter.scoring.fit --n 12
 """
 
@@ -34,8 +34,8 @@ from jobhunter.chemins import CV_MODELES as CV_ATS
 from jobhunter.scoring.lexique import cv_variant_key, has_skill
 
 _ici = sys.modules[__name__]
-# Valeurs tirees du profil : calculees a la premiere lecture, pas a l'import
-# (jobhunter.paresseux). Dans ce module, on les lit par `_ici.NOM`.
+# Values taken from the profile: computed on first read, not at import
+# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -69,13 +69,13 @@ _cv_cache: dict[str, str] = {}
 
 
 def cv_text_cached(k: str) -> str:
-    """Le texte du CV d'une variante, lu une fois par processus.
+    """The text of a variant's CV, read once per process.
 
     Args:
-        k: la clé de variante de CV (domaine).
+        k: the CV variant key (domain).
 
     Returns:
-        Le texte du CV.
+        The text of the CV.
     """
     if k not in _cv_cache:
         _cv_cache[k] = cv_text(k)
@@ -83,22 +83,22 @@ def cv_text_cached(k: str) -> str:
 
 
 def skills_in(text: str | None) -> set[str]:
-    """Set des libellés SKILL_LEX présents dans le texte.
+    """Set of the SKILL_LEX labels present in the text.
 
-    Matcher partagé avec tailor_application (has_skill) : sigles courts = mot ENTIER,
-    expressions longues = sous-chaîne. Évite les faux positifs 'ges' dans « GEStion »,
-    'gri' dans « aGRIcole », 'pai' dans « PAIement ».
+    Matcher shared with tailor_application (has_skill): short acronyms = WHOLE word,
+    long phrases = substring. Avoids the false positives 'ges' in "GEStion", 'gri' in
+    "aGRIcole", 'pai' in "PAIement".
     """
     t = (text or "").lower()
     return {label for label in _ici.SKILL_LEX if has_skill(label, t)}
 
 
-# ── Détecteur d'expérience requise ──
+# ── Required experience detector ──
 _EXP_NUM = re.compile(r"(\d{1,2})\s*(?:\+|ans?|an\b|années?|years?|yrs?)\+?", re.I)
 _EXP_CTX = re.compile(r"(exp[ée]rien|experien|ann[ée]es?\s+d|years?\s+of|d['e]\s*exp)", re.I)
-# Niveau vise : profil.json, section « niveau ». Cherches dans l'INTITULE seul
-# (voir fit_detail) ; « lead » n'y est pas en sous-chaine — il attrape « Lead
-# Generation » — c'est `senior_en_fin` qui s'en charge, avec la negation qu'il faut.
+# Target level: profil.json, "niveau" section. Searched in the TITLE alone
+# (see fit_detail); "lead" is not there as a substring — it catches "Lead
+# Generation" — it is `senior_en_fin` that handles it, with the right negation.
 _PARESSEUX["JUNIOR"] = lambda: tuple(_P.get("niveau.mots_junior", []) or [])
 _PARESSEUX["SENIOR"] = lambda: tuple(_P.get("niveau.mots_senior", []) or [])
 _PARESSEUX["_RX_SENIOR_FIN"] = lambda: _P.motif(_P.get("niveau.senior_en_fin", []))
@@ -106,21 +106,21 @@ _PARESSEUX["NEG"] = lambda: tuple(_P.get("niveau.mots_negatifs", []) or [])
 
 
 def experience_years(text: str | None) -> int:
-    r"""Années d'expérience EXIGÉES détectées (0 si aucune).
+    r"""Years of experience REQUIRED detected (0 if none).
 
-    Prend le max des nombres apparaissant près d'un mot 'expérience'. Ex '10 ans
-    d'expérience' → 10. Plafond 15 (>15 = bruit : âge, ancienneté société…). Ignore si
-    poste junior/alternance.
+    Takes the max of the numbers appearing near an 'expérience' word. E.g. '10 ans
+    d'expérience' → 10. Cap 15 (>15 = noise: age, company seniority…). Ignored if the
+    job is junior/work-study.
 
-    Les blancs sont ÉCRASÉS avant la recherche. La fenêtre de contexte ne fait que
-    28 caractères de part et d'autre du nombre, et les fiches structurées séparent
-    l'étiquette de sa valeur par des rafales de retours chariot :
+    Blanks are COLLAPSED before the search. The context window is only 28 characters
+    on either side of the number, and structured postings separate the label from its
+    value with bursts of carriage returns:
 
         Niveau d'expérience \r\n \r\n \r\n \r\n Plus de 10 ans
 
-    Le mot « expérience » tombait alors hors fenêtre et l'exigence passait
-    inaperçue. CNP « EXPERT INVESTISSEMENT RESPONSABLE » sortait ainsi à fit 10
-    avec exp_requise = 0 alors que l'annonce demande plus de dix ans.
+    The word "expérience" then fell outside the window and the requirement went
+    unnoticed. CNP "EXPERT INVESTISSEMENT RESPONSABLE" thus came out at fit 10 with
+    exp_requise = 0 while the posting asks for more than ten years.
     """
     t = re.sub(r"\s+", " ", (text or "")).lower()
     if any(
@@ -141,37 +141,37 @@ def experience_years(text: str | None) -> int:
             "graduate program",
         )
     ):
-        return 0  # offre junior : un '10 ans' isolé = bruit
+        return 0  # junior offer: an isolated '10 ans' = noise
     yrs = 0
     for m in _EXP_NUM.finditer(t):
         a, b = m.start(), m.end()
-        # FENÊTRE À GAUCHE PLUS LARGE QU'À DROITE. L'exigence s'écrit presque
-        # toujours « expérience … de N ans » : le mot déclencheur précède le
-        # nombre, souvent de loin. « expérience professionnelle antérieure de
-        # 3 à 5 ans » place « expérience » à 44 caractères de « 5 ans » — hors
-        # d'une fenêtre de 28, et l'offre Crédit Mutuel AM (3 à 5 ans exigés)
-        # ressortait à exp_requise = 0. À DROITE on reste serré : « 5 ans »
-        # suivi trente caractères plus loin d'un « expérience » appartenant à
-        # la phrase suivante ne dit rien de ce nombre-là.
+        # WINDOW WIDER ON THE LEFT THAN ON THE RIGHT. The requirement is almost
+        # always written "expérience … de N ans": the trigger word precedes the
+        # number, often by far. "expérience professionnelle antérieure de
+        # 3 à 5 ans" puts "expérience" 44 characters away from "5 ans" — outside
+        # a window of 28, and the Crédit Mutuel AM offer (3 to 5 years required)
+        # came out at exp_requise = 0. On the RIGHT we stay tight: "5 ans"
+        # followed thirty characters further by an "expérience" belonging to
+        # the next sentence says nothing about that number.
         ctx = t[max(0, a - 70) : min(len(t), b + 28)]
         if _EXP_CTX.search(ctx):
             n = int(m.group(1))
-            if 1 <= n <= 15:  # exp réaliste ; >15 = âge/ancienneté → ignoré
+            if 1 <= n <= 15:  # realistic exp; >15 = age/seniority → ignored
                 yrs = max(yrs, n)
     return yrs
 
 
-# ── Scoring VECTORIEL : axes ponderes, au lieu de « +1 par competence » ──
+# ── VECTOR scoring: weighted axes, instead of "+1 per skill" ──
 # L'ancien fit = 2 + len(skills_in) saturait : « Assistant administratif » matchait
-# Excel + Anglais + Communication et sortait 10/10. Les competences GENERIQUES
-# (bureautique, langues) ne sont dans AUCUN axe : elles ne font pas monter le score.
+# Excel + English + Communication and came out 10/10. The GENERIC skills
+# (office tools, languages) are in NO axis: they do not raise the score.
 #
-# Tout vient du profil (section « scoring ») :
-#   axes            {nom: {poids, competences}} — l'axe COEUR est la cible
-#                   premiere, l'axe COMPLEMENT une cible secondaire
-#   cible_score     somme ponderee qui vaut fit = 10
-#   saturation_axe  un axe sature a N libelles distincts (on ne divise pas par la
-#                   taille de l'axe : un axe large serait mecaniquement desavantage)
+# Everything comes from the profile ("scoring" section):
+#   axes            {name: {poids, competences}} — the CORE axis is the first
+#                   target, the COMPLEMENT axis a secondary target
+#   cible_score     weighted sum that is worth fit = 10
+#   saturation_axe  an axis saturates at N distinct labels (we do not divide by the
+#                   size of the axis: a wide axis would be mechanically disadvantaged)
 _PARESSEUX["_SC"] = lambda: _P.get("scoring", {}) or {}
 _PARESSEUX["AXES"] = lambda: (
     {a: list(v.get("competences") or []) for a, v in (_ici._SC.get("axes") or {}).items()}
@@ -190,15 +190,15 @@ _PARESSEUX["_PLAFOND_COMPLEMENT"] = lambda: float(_ici._SC.get("plafond_compleme
 _PARESSEUX["_PLAFOND_SECOND"] = lambda: float(_ici._SC.get("plafond_second", 8.0))
 _PARESSEUX["_PLAFOND_VETO"] = lambda: float(_ici._SC.get("plafond_veto", 6.0))
 
-# INTITULES. Le titre dit ce QU'EST le poste, la description ne fait que
-# mentionner des sujets : c'est lui qui leve ou abaisse le plafond.
-#   intitules_coeur        leve le plafond a 10, sauf metier hors cible
-#   intitules_coeur_forts  leve le plafond a 10 dans tous les cas
-#   intitules_second       metier vise en second : plafond 8 (+2 x axe coeur)
+# TITLES. The title says what the job IS, the description only
+# mentions subjects: it is the one that raises or lowers the cap.
+#   intitules_coeur        raises the cap to 10, except off-target profession
+#   intitules_coeur_forts  raises the cap to 10 in all cases
+#   intitules_second       profession targeted second: cap 8 (+2 x core axis)
 #   veto_sigles / veto_si + veto_et : metier voisin a ecarter (plafond 6)
-#   intitules_techniques (sauf ..._sauf) et intitules_hors_metier : le
-#     vocabulaire de la cible ne rapproche pas ces metiers du profil
-# Les noms historiques (_ESG_TITLE_RX…) restent : les tests et la densite les lisent.
+#   intitules_techniques (except ..._sauf) and intitules_hors_metier: the
+#     target's vocabulary does not bring these professions closer to the profile
+# The historical names (_ESG_TITLE_RX…) stay: the tests and the density read them.
 _PARESSEUX["_ESG_TITLE_RX"] = lambda: _P.motif(_ici._SC.get("intitules_coeur"))
 _PARESSEUX["_ESG_TITRE_FORT"] = lambda: _P.motif(_ici._SC.get("intitules_coeur_forts"))
 _PARESSEUX["_TITRE_FINANCE"] = lambda: _P.motif(_ici._SC.get("intitules_second"))
@@ -212,7 +212,7 @@ _c = _P.cherche
 
 
 def _titre_hse(role: str) -> bool:
-    """Intitule d'un metier voisin a ecarter (exemple finance durable : HSE)."""
+    """Title of a neighbouring profession to set aside (sustainable finance example: HSE)."""
     return bool(
         _c(_ici._RX_HSE_SIGLE, role)
         or (_c(_ici._RX_SECURITE, role) and _c(_ici._RX_SANTE_ENV, role))
@@ -220,22 +220,22 @@ def _titre_hse(role: str) -> bool:
 
 
 def _titre_hors_cible(role: str) -> bool:
-    """Metier technique ou hors metier : le vocabulaire de la cible ne le rapproche pas du profil."""
+    """Technical or off-profession job: the target's vocabulary does not bring it closer to the profile."""
     tech = _c(_ici._RX_TECHNIQUE_TITRE, role) and not _c(_ici._RX_TITRE_FINANCE, role)
     return bool(tech or _c(_ici._RX_HORS_METIER, role))
 
 
 # ── Anti-boilerplate ─────────────────────────────────────────────────────────
-# Une description d'entreprise de 8000 caracteres qui dit UNE fois chacun de
-# trois mots de la cible sature l'axe : c'est du discours d'employeur, pas le
-# poste. La DENSITE (marqueurs de l'intitule coeur pour 1000 caracteres) separe
-# les deux ; en dessous du seuil, l'axe coeur est attenue au prorata.
+# A company description of 8000 characters that says ONCE each of
+# three words of the target saturates the axis: it is employer talk, not the
+# job. The DENSITY (core title markers per 1000 characters) separates
+# the two; below the threshold, the core axis is reduced pro rata.
 _PARESSEUX["_ESG_DENSITE_MIN"] = lambda: float(
     _ici._SC.get("densite_coeur_min", 1.0)
-)  # marqueurs pour 1000 caracteres
+)  # markers per 1000 characters
 _PARESSEUX["_ESG_DENSITE_LONG"] = lambda: int(
     _ici._SC.get("densite_coeur_longueur", 800)
-)  # en deca, le texte est trop court pour qu'une densite veuille dire quelque chose
+)  # below that, the text is too short for a density to mean anything
 
 
 def densite_esg(text: str | None) -> float:
@@ -253,10 +253,10 @@ def axis_scores(text: str | None) -> dict[str, float]:
     for axe, labels in _ici.AXES.items():
         cap = min(_ici._CAP, len(labels)) or 1
         out[axe] = min(sum(1 for l in labels if l in got), cap) / cap
-    # L'axe ESG, et lui seul, est attenue quand ses marqueurs sont noyes : c'est
-    # le seul qui leve le plafond de fit, donc le seul ou une mention de passage
-    # coute cher. Un texte court echappe au controle — « Analyste ESG » seul
-    # fait 12 caracteres pour un marqueur, sa densite n'a pas de sens.
+    # The ESG axis, and it alone, is reduced when its markers are drowned: it is
+    # the only one that raises the fit cap, hence the only one where a passing mention
+    # costs a lot. A short text escapes the check — "Analyste ESG" alone
+    # is 12 characters for one marker, its density makes no sense.
     if (
         out.get(_ici.COEUR, 0) > 0
         and _ici._ESG_TITLE_RX is not None
@@ -277,7 +277,7 @@ _PARESSEUX["_MALUS_EXP"] = lambda: sorted(
 
 
 def _malus_experience(yrs: int) -> float:
-    """Malus pour `yrs` annees exigees : le palier le plus haut atteint."""
+    """Penalty for `yrs` years required: the highest step reached."""
     return next((m for seuil, m in _ici._MALUS_EXP if yrs >= seuil), 0.0)
 
 
@@ -287,19 +287,19 @@ def fit_score(text: str | None, title: str | None = "") -> tuple[int, int]:
     return fit, yrs
 
 
-# ── LANGUE : une offre dans une langue que l'utilisateur ne parle pas ───────
-# Le vocabulaire metier (ESG, reporting, analyst) est le meme dans toutes les
-# langues : sans cette regle, une annonce en neerlandais sortait a 10 pour qui
-# ne lit pas le neerlandais. Deux cas, deux plafonds :
-#   - annonce REDIGEE dans une langue non parlee -> 2 (illisible)
-#   - annonce qui EXIGE une langue non parlee (« fluent Dutch », « Nederlands
-#     vereist ») -> 4. « Dutch is a plus » n'exige rien : ignore.
-# Langues parlees : profil « langues_parlees » (codes fr, en, de, es, it, nl, pt...).
+# ── LANGUAGE: an offer in a language the user does not speak ────────────────
+# The professional vocabulary (ESG, reporting, analyst) is the same in all
+# languages: without this rule, a posting in Dutch came out at 10 for someone who
+# does not read Dutch. Two cases, two caps:
+#   - posting WRITTEN in a language not spoken -> 2 (unreadable)
+#   - posting that REQUIRES a language not spoken ("fluent Dutch", "Nederlands
+#     vereist") -> 4. "Dutch is a plus" requires nothing: ignored.
+# Languages spoken: profile "langues_parlees" (codes fr, en, de, es, it, nl, pt...).
 _PARESSEUX["LANGUES_PARLEES"] = lambda: set(_P.get("langues_parlees", ["fr", "en"]) or ["fr", "en"])
 
-# Mots-outils propres a chaque langue (articles, pronoms, prepositions) et
-# quelques mots d'annonce sans equivalent ailleurs. Les mots communs a deux
-# langues (« de », « en », « die ») sont evites.
+# Function words specific to each language (articles, pronouns, prepositions) and
+# a few posting words without an equivalent elsewhere. Words common to two
+# languages ("de", "en", "die") are avoided.
 _MOTS_OUTILS = {
     "fr": {
         "le",
@@ -352,9 +352,9 @@ _MOTS_OUTILS = {
 }
 _RX_MOT = re.compile(r"[a-zà-ÿąćęłńóśźżåæø]+")
 
-# Noms de chaque langue, tels qu'une annonce les ecrit (anglais, francais,
-# langue elle-meme, neerlandais). Les langues parlees sortent de la liste des
-# langues « etrangeres » et servent a reconnaitre une alternative.
+# Names of each language, as a posting writes them (English, French,
+# the language itself, Dutch). The spoken languages leave the list of
+# "foreign" languages and serve to recognise an alternative.
 _NOMS_LANGUES = {
     "fr": r"french|fran[cç]ais|frans",
     "en": r"english|anglais|engels",
@@ -386,12 +386,11 @@ def _compte_langues(mots: list[str]) -> dict[str, int]:
 
 
 def langue_redaction(t: str | None) -> str:
-    """Code de la langue dominante du texte ('' si texte trop court ou indecis).
+    """Code of the dominant language of the text ('' if the text is too short or undecided).
 
-    L'EN-TETE compte a part : EURES traduit automatiquement en anglais des
-    annonces neerlandaises ; le corps anglais l'emportait (26 mots-outils contre
-    4). Les premieres lignes sont celles de l'employeur : si elles sont
-    nettement dans une langue non parlee, l'annonce l'est.
+    The HEADER counts separately: EURES automatically translates Dutch postings into
+    English; the English body won (26 function words against 4). The first lines are
+    the employer's: if they are clearly in a language not spoken, the posting is.
     """
     tete = _compte_langues(_RX_MOT.findall((t or "")[:600].lower()))
     lg = max(tete, key=tete.__getitem__)
@@ -415,16 +414,16 @@ _PARESSEUX["_LANGUES_ETRANGERES"] = lambda: (
 _PARESSEUX["_PARLEES"] = lambda: (
     "(?:" + "|".join(v for k, v in _NOMS_LANGUES.items() if k in _ici.LANGUES_PARLEES) + ")"
 )
-# Le nom de langue designe un marche ou une entite, pas une competence :
+# The language name designates a market or an entity, not a skill:
 # « strong presence in Chinese markets », « Dutch GAAP », « Italian clients ».
 _PAS_UNE_LANGUE = (
     r"(?![\s-]+(?:markets?|clients?|customers?|compan\w*|business\w*|teams?"
     r"|entit\w*|subsidiar\w*|operations?|government|law|gaap|regulat\w*"
     r"|portfolio|assets?|real\s+estate|banks?|offices?|sites?)\b)"
 )
-# « Fluent in English and Dutch », « maitrise du neerlandais ». Seuls des mots
-# qui parlent de LANGUE introduisent : « strong », « excellent » precedaient
-# aussi bien un marche.
+# "Fluent in English and Dutch", "maitrise du neerlandais". Only words
+# that talk about LANGUAGE introduce it: "strong", "excellent" preceded
+# a market just as well.
 _PARESSEUX["_RX_LANGUE_AVANT"] = lambda: re.compile(
     r"\b(?:fluen(?:t|cy)|native|mother\s+tongue|proficien\w*|business[- ]level"
     r"|courant|ma[iî]trise|bilingue?|bilingual|vloeiend)\W+(?:\w+\W+){0,4}?"
@@ -443,20 +442,20 @@ _PARESSEUX["_RX_LANGUE_APRES"] = lambda: re.compile(
     r"|exig[ée]e?|obligatoire|indispensable|requis[e]?|courant)\b",
     re.I,
 )
-# Une annonce « neerlandophone » exige le neerlandais.
+# A "neerlandophone" posting requires Dutch.
 _RX_NEERLANDOPHONE = re.compile(r"\bnederlandstalig\w*|\bnederlandse\s+taal\b", re.I)
-# Ce qui suit la langue et la rend facultative.
+# What follows the language and makes it optional.
 _RX_FACULTATIF = re.compile(
     r"^\W*(?:\w+\W+){0,4}?(?:a\s+|an\s+)?(?:plus|asset|advantage|bonus|nice[- ]to[- ]have"
     r"|prefer\w*|desirable|beneficial|atout|souhait\w*|appr[ée]ci\w*|pluspunt|voordeel)\b",
     re.I,
 )
-# Ce qui PRECEDE la langue et la rend facultative : « preferable in Dutch too ».
+# What PRECEDES the language and makes it optional: "preferable in Dutch too".
 _RX_FACULTATIF_AVANT = re.compile(
     r"\b(?:prefer\w*|ideally|id[ée]alement|optional\w*|souhait\w*|bonus|plus)\W+(?:\w+\W+){0,2}$",
     re.I,
 )
-# Une alternative avec une langue parlee n'exige rien : « Dutch and/or French ».
+# An alternative with a spoken language requires nothing: "Dutch and/or French".
 _PARESSEUX["_RX_ALTERNATIVE"] = lambda: re.compile(
     r"(?:"
     + _ici._PARLEES
@@ -473,7 +472,7 @@ _PARESSEUX["_RX_NOM_LANGUE"] = lambda: re.compile(r"\b" + _ici._LANGUES_ETRANGER
 
 
 def langue_exigee(t: str | None) -> str:
-    """Nom d'une langue non parlee que l'annonce EXIGE, sinon ''."""
+    """Name of a language not spoken that the posting REQUIRES, otherwise ''."""
     t = t or ""
     if "nl" not in _ici.LANGUES_PARLEES and _RX_NEERLANDOPHONE.search(t):
         return "nederlands"
@@ -493,7 +492,7 @@ def langue_exigee(t: str | None) -> str:
 
 
 def plafond_langue(t: str | None) -> tuple[float, str]:
-    """(plafond, motif) : 2 si redigee dans une langue non parlee, 4 si elle en exige une, (10, '') sinon."""
+    """(cap, reason): 2 if written in a language not spoken, 4 if it requires one, (10, '') otherwise."""
     lg = langue_redaction(t)
     if lg and lg not in _ici.LANGUES_PARLEES:
         return 2.0, f"redigee en {lg}"
@@ -506,31 +505,31 @@ def plafond_langue(t: str | None) -> tuple[float, str]:
 def fit_detail(
     text: str | None, title: str | None = "", raisons: list[str] | None = None
 ) -> tuple[int, int, float]:
-    """(fit, yrs, fit_fin). `fit_fin` departage les ex aequo d'un meme fit.
+    """(fit, yrs, fit_fin). `fit_fin` breaks ties between offers with the same fit.
 
-    `raisons`, si on la passe, recoit en clair chaque etape du calcul (voir
-    `expliquer`) ; le calcul est le meme avec ou sans.
+    `raisons`, if passed, receives each step of the computation in plain words (see
+    `expliquer`); the computation is the same with or without it.
 
-    l'utilisateur, 2026-10-09 : 546 offres a 10, 1203 a 8, 3321 a 6 — dans un niveau,
-    l'ordre ne voulait rien dire. fit_fin = fit +/- 0,45 : son arrondi rend
-    TOUJOURS `fit`, aucun seuil (>= 8...) ne bouge. Dans le niveau, il suit
-    _departage : intitule ESG, densite ESG, competences citees, experience.
+    The user, 2026-10-09: 546 offers at 10, 1203 at 8, 3321 at 6 — within a level, the
+    order meant nothing. fit_fin = fit +/- 0.45: its rounding ALWAYS returns `fit`, no
+    threshold (>= 8...) moves. Within the level, it follows _departage: ESG title, ESG
+    density, skills cited, experience.
 
-    Fit 1-10 vectoriel : 6 axes pondérés (ESG ×3, finance ×2, IA ×1.5, reste ×1),
-    puis malus junior/senior/sales et MALUS EXPÉRIENCE (l'utilisateur est junior).
+    Vector fit 1-10: 6 weighted axes (ESG ×3, finance ×2, AI ×1.5, rest ×1), then
+    junior/senior/sales penalties and the EXPERIENCE PENALTY (the user is junior).
 
-    `title` : les malus séniorité/rôle s'appliquent au SEUL intitulé quand il est
-    fourni. Cherchés dans la description entière, ils produisent des faux positifs
-    — « Lead Generation » déclenchait le malus SENIOR et « présence commerciale »
-    le malus NEG, soit −4 sur une offre qui n'est ni senior ni commerciale.
-    Le niveau et le type de poste se lisent dans l'intitulé, pas dans la
-    présentation de l'entreprise.
+    `title`: the seniority/role penalties apply to the title ALONE when it is
+    provided. Searched in the whole description, they produce false positives —
+    "Lead Generation" triggered the SENIOR penalty and "présence commerciale" the NEG
+    penalty, i.e. −4 on an offer that is neither senior nor sales.
+    The level and the type of job are read in the title, not in the company's
+    presentation.
     """
     t = (text or "").lower()
     role = (title or text or "").lower()
     sc = axis_scores(t)
     raw = sum(sc[a] * _ici.POIDS[a] for a in _ici.AXES)
-    fit = 1 + 9 * min(1.0, raw / _ici._TARGET)  # 1..10, pas de magic number empilé
+    fit = 1 + 9 * min(1.0, raw / _ici._TARGET)  # 1..10, no stacked magic number
     if raisons is not None:
         got = skills_in(t)
         for axe, labels in _ici.AXES.items():
@@ -540,18 +539,18 @@ def fit_detail(
                     f"{axe} {sc[axe]:.0%} (x{_ici.POIDS[axe]:g}) : " + ", ".join(trouves[:6])
                 )
         raisons.append(f"vocabulaire : {fit:.1f}/10")
-    # PLAFOND PAR PRIORITE DE PROFIL. Sans lui, finance + risk + conseil suffisent
-    # a atteindre _TARGET sans le moindre signal ESG : 251 offres sortaient a
-    # fit >= 8 avec l'axe ESG a ZERO, et le TOP 25 ne contenait plus que 3
-    # intitules ESG. Le score mesurait la richesse du vocabulaire, pas l'adequation.
+    # CAP BY PROFILE PRIORITY. Without it, finance + risk + consulting are enough
+    # to reach _TARGET without the slightest ESG signal: 251 offers came out at
+    # fit >= 8 with the ESG axis at ZERO, and the TOP 25 only contained 3
+    # ESG titles. The score measured the richness of the vocabulary, not the fit.
     #   ESG present            -> jusqu'a 10 (coeur de cible)
-    #   pas d'ESG mais IA      -> 8 max (marche vise en complement)
-    #   ni ESG ni IA           -> 6 max (repli finance, jamais devant une offre ESG)
-    # Le plafond suit la DENSITE ESG, pas sa simple presence : un seul libelle
-    # capte au detour d'une longue description (esg=0.33) suffisait a contourner
-    # un plafond binaire, et « ANALYSTE M&A » restait a 10.
+    #   no ESG but AI          -> 8 max (market targeted as a complement)
+    #   neither ESG nor AI     -> 6 max (finance fallback, never ahead of an ESG offer)
+    # The cap follows the ESG DENSITY, not its mere presence: a single label
+    # caught in passing in a long description (esg=0.33) was enough to get round
+    # a binary cap, and "ANALYSTE M&A" stayed at 10.
     #   esg 0.00 -> 6   esg 0.33 -> 7.3   esg 0.67 -> 8.7   esg 1.00 -> 10
-    coeur = sc.get(_ici.COEUR, 0.0) if _ici.COEUR else 1.0  # sans axe coeur : pas de plafond
+    coeur = sc.get(_ici.COEUR, 0.0) if _ici.COEUR else 1.0  # without a core axis: no cap
     compl = sc.get(_ici.COMPLEMENT, 0.0) if _ici.COMPLEMENT else 0.0
     cap = _ici._PLAFOND_SANS_COEUR + (10.0 - _ici._PLAFOND_SANS_COEUR) * coeur
     if coeur == 0 and compl >= 0.5:
@@ -559,11 +558,11 @@ def fit_detail(
     if _c(_ici._TITRE_FINANCE, role):
         cap = max(
             cap, _ici._PLAFOND_SECOND + (10.0 - _ici._PLAFOND_SECOND) * coeur
-        )  # metier vise en second
+        )  # profession targeted second
         if raisons is not None:
             raisons.append("intitulé du métier visé en second (finance)")
-    # Un intitule explicitement ESG leve le plafond : le titre dit ce QU'EST le
-    # poste, la description ne fait que mentionner des sujets.
+    # An explicitly ESG title raises the cap: the title says what the
+    # job IS, the description only mentions subjects.
     fort = _c(_ici._ESG_TITRE_FORT, role)
     hors = _titre_hors_cible(role)
     if fort or (_c(_ici._ESG_TITLE_RX, role) and not hors):
@@ -572,14 +571,14 @@ def fit_detail(
             raisons.append("intitulé du cœur de cible : plafond 10")
     elif raisons is not None:
         raisons.append(f"plafond {cap:.1f} (cœur {coeur:.0%}, complément {compl:.0%})")
-    # Vetos en dernier : HSE, metier technique ou hors finance l'emportent sur
-    # le vocabulaire environnemental de l'intitule ET de la description, jamais
-    # sur un marqueur ESG-finance. Le metier technique ne faisait que perdre la
-    # levee par l'intitule : une description dense en carbone rendait quand
+    # Vetoes last: HSE, technical or non-finance profession win over
+    # the environmental vocabulary of the title AND of the description, never
+    # over an ESG-finance marker. The technical profession only lost the
+    # raise given by the title: a description dense in carbon still returned
     # meme 10 a « Engineer Sustainability & Product Compliance ».
-    # Le plafond du veto metier suit la regle generale : 8 si le poste parle
-    # d'IA (cible secondaire), 6 sinon. Un plafond fixe a 6 faisait perdre deux
-    # points a 137 postes « AI Engineer » que personne ne jugeait trop hauts.
+    # The profession veto's cap follows the general rule: 8 if the job talks
+    # about AI (secondary target), 6 otherwise. A cap fixed at 6 cost two
+    # points to 137 "AI Engineer" jobs that nobody judged too high.
     if not fort and _titre_hse(role):
         cap = min(cap, _ici._PLAFOND_VETO)
         if raisons is not None:
@@ -588,15 +587,15 @@ def fit_detail(
         cap = min(cap, _ici._PLAFOND_COMPLEMENT if compl >= 0.5 else _ici._PLAFOND_VETO)
         if raisons is not None:
             raisons.append(f"métier hors cible dans l'intitulé : plafond {cap:g}")
-    # LES BONUS D'ABORD, LE PLAFOND ENSUITE. Le plafond etait applique avant, et
-    # le bonus junior le franchissait : « Auditeur junior analyste » sortait a
-    # 10 avec un plafond calcule a 8.7. Un plafond qu'un bonus peut depasser ne
-    # plafonne rien — et la regle « ni ESG ni IA -> 6 max » ne tenait plus.
+    # THE BONUSES FIRST, THE CAP AFTERWARDS. The cap was applied before, and
+    # the junior bonus went over it: "Auditeur junior analyste" came out at
+    # 10 with a cap computed at 8.7. A cap that a bonus can exceed
+    # caps nothing — and the rule "neither ESG nor AI -> 6 max" no longer held.
     #
-    # JUNIOR SUR L'INTITULE SEUL, comme SENIOR et NEG. Il etait aussi cherche
-    # dans toute la description : un « ... ouvert aux alternants » en pied
-    # d'annonce donnait +1 a un poste qui n'a rien de junior. C'est exactement
-    # le faux positif deja corrige pour les deux autres listes, laisse ici.
+    # JUNIOR ON THE TITLE ALONE, like SENIOR and NEG. It was also searched
+    # in the whole description: an "... ouvert aux alternants" at the bottom
+    # of a posting gave +1 to a job that has nothing junior about it. It is exactly
+    # the false positive already fixed for the two other lists, left here.
     if any(k in role for k in _ici.JUNIOR):
         fit += _ici._BONUS_JUNIOR
         if raisons is not None:
@@ -611,8 +610,8 @@ def fit_detail(
         if raisons is not None:
             mot = next(k for k in _ici.NEG if k in role)
             raisons.append(f"intitulé écarté « {mot.strip()} » : -2")
-    # La langue en dernier : aucun intitule ni bonus ne rend lisible une
-    # annonce dans une langue que l'utilisateur ne parle pas.
+    # The language last: no title or bonus makes readable a
+    # posting in a language the user does not speak.
     plafond_lg, motif_lg = plafond_langue(text or "")
     cap = min(cap, plafond_lg)
     if raisons is not None and motif_lg:
@@ -627,18 +626,18 @@ def fit_detail(
 
 
 def _departage(t: str, role: str, fit: float, entier: int, yrs: int) -> float:
-    """0..1 : rang d'une offre parmi celles de meme fit entier.
+    """0..1: rank of an offer among those with the same integer fit.
 
-    Les axes du fit plafonnent a 1 : au sommet, toutes les offres riches
-    sortaient egales. On prend donc des signaux qui ne saturent pas (ou
-    doucement) : ce que dit l'INTITULE, la densite ESG du texte, le nombre de
-    competences ESG/finance citees, la place du score brut dans le niveau, et
-    l'experience exigee (moins vaut mieux : l'utilisateur est junior).
+    The fit's axes cap at 1: at the top, all the rich offers came out equal. So we
+    take signals that do not saturate (or only gently): what the TITLE says, the ESG
+    density of the text, the number of ESG/finance skills cited, the position of the
+    raw score within the level, and the required experience (less is better: the user
+    is junior).
     """
     titre = 1.0 if _c(_ici._ESG_TITRE_FORT, role) else 0.6 if _c(_ici._ESG_TITLE_RX, role) else 0.0
     d = densite_esg(t)
     got = skills_in(t)
-    # Les deux axes les plus lourds : la cible et le metier de base.
+    # The two heaviest axes: the target and the base profession.
     lourds = sorted(_ici.AXES, key=lambda a: -_ici.POIDS.get(a, 0))[:2]
     n = sum(1 for axe in lourds for l in _ici.AXES[axe] if l in got)
     pos = max(0.0, min(1.0, fit - (entier - 0.5)))
@@ -652,31 +651,31 @@ def _departage(t: str, role: str, fit: float, entier: int, yrs: int) -> float:
 
 
 def score_offer(offer: dict[str, Any]) -> dict[str, Any]:
-    """Couverture des compétences demandées par l'annonce par le CV de son domaine.
+    """Coverage of the skills the posting asks for by the CV of its domain.
 
     Args:
-        offer: l'offre (role, missions, profil, domaine).
+        offer: the offer (role, missions, profil, domaine).
 
     Returns:
-        {required, covered, missing, pct} ; pct = None si l'annonce ne demande
-        aucune compétence connue.
+        {required, covered, missing, pct}; pct = None if the posting asks for no
+        known skill.
     """
     required = skills_in(f"{offer['role']} {offer['missions']} {offer['profil']}")
     if not required:
-        # rien de détecté -> neutre
+        # nothing detected -> neutral
         return dict(required=set(), covered=set(), missing=set(), pct=None)
     cv = cv_text_cached(cv_variant_key(offer["domaine"]))
-    covered = {s for s in required if has_skill(s, cv)}  # même matcher (mot entier)
+    covered = {s for s in required if has_skill(s, cv)}  # same matcher (whole word)
     missing = required - covered
     pct = round(100 * len(covered) / len(required))
     return dict(required=required, covered=covered, missing=missing, pct=pct)
 
 
-# Garde-fou, en FIN de module : globals() doit etre complet pour tout voir.
-# Il manquait ici, et c'est precisement ici qu'un motif etait corrompu —
-# `_ESG_TITLE_RX` commencait par un backspace, donc « un intitule explicitement
-# ESG leve le plafond a 10 » ne s'appliquait JAMAIS. Le coeur du scoring
-# tournait avec sa regle principale morte, sans que rien ne le signale.
+# Safeguard, at the END of the module: globals() must be complete to see everything.
+# It was missing here, and it is precisely here that a pattern was corrupted —
+# `_ESG_TITLE_RX` started with a backspace, so "an explicitly ESG title
+# raises the cap to 10" NEVER applied. The core of the scoring
+# ran with its main rule dead, without anything reporting it.
 __import__("jobhunter.texte", fromlist=["x"]).verifier_motifs(globals(), minimum=4)
 
 if __name__ == "__main__":
@@ -684,10 +683,10 @@ if __name__ == "__main__":
 
 
 def expliquer(text: str | None, title: str | None = "") -> list[str]:
-    """Pourquoi l'offre a ce fit, étape par étape, en clair.
+    """Why the offer has this fit, step by step, in plain words.
 
-    Les compétences trouvées par axe, la note de vocabulaire, le plafond et sa raison,
-    les bonus et malus de l'intitulé, la langue, l'expérience demandée, puis le fit.
+    The skills found per axis, the vocabulary score, the cap and its reason, the
+    title's bonuses and penalties, the language, the experience asked for, then the fit.
     """
     raisons: list[str] = []
     fit, _yrs, _fin = fit_detail(text, title, raisons)

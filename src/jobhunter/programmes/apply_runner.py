@@ -10,17 +10,17 @@ NO form is ever auto-submitted. Submit = you.
 
 Usage (run in a real terminal, NOT inside an IDE output pane):
     cd Scripts
-    py apply_runner.py --canal auto           # offres directes (defaut)
-    py apply_runner.py --canal linkedin       # Easy Apply semi-auto
-    py apply_runner.py --selection sel.json   # offres cochees dans l'app
-    py apply_runner.py --canal auto --start 5 # reprendre a la 5e
+    py apply_runner.py --canal auto           # direct offers (default)
+    py apply_runner.py --canal linkedin       # semi-automatic Easy Apply
+    py apply_runner.py --selection sel.json   # offers ticked in the app
+    py apply_runner.py --canal auto --start 5 # resume at the 5th
 
 First run: a fresh Chrome window opens. Log into LinkedIn / WTJ / the ATS once;
 the profile dir remembers you for next runs.
 
 Per offer, console asks:
-    [s] = marqué ENVOYÉ   [k] = SAUTÉ   [r] = re-remplir (après navigation manuelle)
-    [o] = ré-ouvrir l'URL  [enter] = re-remplir   [q] = quitter (sauvegarde)
+    [s] = marked SENT   [k] = SKIPPED   [r] = refill (after manual navigation)
+    [o] = reopen the URL  [enter] = refill   [q] = quit (saved)
 
 `--pilote` : the same loop driven by the desktop app instead of the keyboard. Events go
 to stdout as `@JH {json}` lines (offre, pret, bloque, attente, resultat, fin); commands
@@ -31,7 +31,7 @@ After "envoyé" (both modes) the page is OBSERVED, never clicked: suivi.json get
 "postulé" with `envoi` = confirmé | incertain and a `preuve` (excerpt, address,
 screenshot in Scripts/_preuves/). See docs/adr/0009-preuve-distincte-de-la-declaration.md
 
-Decision : docs/adr/0005-aucune-soumission-automatique.md
+Decision: docs/adr/0005-aucune-soumission-automatique.md
 """
 
 import argparse
@@ -43,8 +43,8 @@ from pathlib import Path
 
 from jobhunter import racine as _racine
 
-# Console Windows = cp1252 → les print d'emoji/accents (describe_page, fill…) levaient
-# UnicodeEncodeError et cassaient le remplissage. Force UTF-8 (remplace si impossible).
+# Windows console = cp1252 → the emoji/accent prints (describe_page, fill…) raised
+# UnicodeEncodeError and broke the filling. Forces UTF-8 (replaces if impossible).
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
@@ -62,7 +62,7 @@ def _unquote_path(u):
 
 ROOT = _racine.racine()
 # Profil de formulaire : profil/profil.json (identite + section « formulaire »),
-# sans aucun mot de passe. Voir profil.formulaire().
+# without any password. See profil.formulaire().
 PROFILE = importlib.import_module("jobhunter.profil").formulaire()
 # persistent login store — MUST be off OneDrive (sync breaks Chrome's profile lock -> exit 21)
 PW_USER_DIR = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "apply_runner_chrome"
@@ -70,11 +70,11 @@ PW_USER_DIR = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "apply_ru
 # ---- field heuristics: regex (on name+id+placeholder+aria-label+label text) -> profile key ----
 import re
 
-# _norm() vivait ici : table d'accents manuelle et incomplete (ni ë, ni ï, ni ù,
-# ni ü), et surtout appelee NULLE PART. Supprimee. Si un besoin revient :
-# jutil.sans_accent(), qui passe par NFD et n'oublie aucune lettre.
+# _norm() lived here: a manual and incomplete accent table (no ë, no ï, no ù,
+# no ü), and above all called NOWHERE. Removed. If the need comes back:
+# jutil.sans_accent(), which goes through NFD and forgets no letter.
 
-# ordre = priorité (spécifique avant générique). Chaque clé existe dans apply_profile.json.
+# order = priority (specific before generic). Each key exists in apply_profile.json.
 FIELD_MAP = [
     (
         r"(e-?mail|courriel|identifiant|username|login)",
@@ -112,7 +112,7 @@ FIELD_MAP = [
     (
         r"(full.?name|nom complet|votre nom|\bname\b|vollst[aä]ndiger name)",
         "full",
-    ),  # générique en dernier
+    ),  # generic last
 ]
 COVER_RE = r"(message|motivation|lettre|cover|pourquoi|presentation|about you|commentaire|tell us|parlez|why|motiv)"
 
@@ -144,7 +144,7 @@ AUTOFILL_JS = r"""
 
 
 def _piece(u):
-    """Chemin de la piece a joindre : le PDF a jour plutot que son .docx source."""
+    """Path of the document to attach: the up-to-date PDF rather than its source .docx."""
     from jobhunter.documents.controle import piece_finale
 
     brut = _unquote_path(u)
@@ -172,7 +172,7 @@ def autofill(page):
         try:
             loc = page.locator(f'[data-pw-idx="{m["idx"]}"]')
             if m["tag"] == "SELECT":
-                # dropdown : choisit l'option dont le libellé/valeur contient la valeur profil
+                # dropdown: picks the option whose label/value contains the profile value
                 if not _select_match(loc, str(val)):
                     continue
             else:
@@ -180,8 +180,8 @@ def autofill(page):
             filled += 1
         except Exception:
             pass
-    filled += fill_selects_radios(page)  # civilité, pays, niveau via <select>/radio
-    # Aucun champ mot de passe n'est rempli : regle du projet (ADR 0005).
+    filled += fill_selects_radios(page)  # title, country, level through <select>/radio
+    # No password field is filled: project rule (ADR 0005).
     return filled
 
 
@@ -207,7 +207,7 @@ def fill_selects_radios(page):
     """Remplit civilité (M./Monsieur) via <select> ou radio, et pays=France si <select> vide.
     Léger, best-effort. Retour nb rempli."""
     n = 0
-    # civilité : radio ou select contenant "monsieur/m." (profil = homme)
+    # title: radio or select containing "monsieur/m." (profile = man)
     js = r"""
     () => {
       const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
@@ -351,9 +351,9 @@ def highlight_submit(page):
 
 
 def accept_consent(page):
-    """Coche les cases de consentement OBLIGATOIRES (CGU, conditions, politique de confidentialité,
-    traitement des données) nécessaires pour créer un compte / postuler. Ne coche PAS les opt-ins
-    marketing (newsletter, offres commerciales)."""
+    """Ticks the MANDATORY consent boxes (T&Cs, terms, privacy policy,
+    data processing) needed to create an account / apply. Does NOT tick marketing
+    opt-ins (newsletter, commercial offers)."""
     js = r"""
     () => {
       const REQ = /(accepte|conditions|cgu|c\.g\.u|politique|traitement.*donn|j'?ai lu|termes|terms|privacy|consent|rgpd|mentions l)/i;
@@ -380,14 +380,14 @@ def accept_consent(page):
         return 0
 
 
-# ── Qui repond a « envoye ? » : le clavier (terminal) ou l'application (pilote) ──
+# ── Who answers "envoyé ?": the keyboard (terminal) or the application (pilote) ──
 class _Terminal:
-    """Comportement historique : invites et touches dans une console."""
+    """Historic behaviour: prompts and keys in a console."""
 
     pilote = False
 
     def evenement(self, type_, **champs):
-        pass  # les print du programme suffisent en console
+        pass  # the program's prints are enough in a console
 
     def commande(self, invite):
         return input(invite).strip().lower()
@@ -399,15 +399,15 @@ class _Terminal:
                 "   Quand tu as fini → [Entrée] pour fermer Chrome > "
             )
         except Exception:
-            time.sleep(120)  # pas de clavier (stdin fermé) → garde ouvert 2 min
+            time.sleep(120)  # no keyboard (stdin closed) → keep open for 2 min
 
 
-# Commandes de l'application → touches historiques de la boucle.
+# Application commands → historic keys of the loop.
 _COMMANDES = {"envoye": "s", "saute": "k", "reremplir": "r", "rouvrir": "o", "quitter": "q"}
 
 
 class _Pilote:
-    """L'application pilote : evenements `@JH {json}` sur stdout, commandes sur stdin."""
+    """The application pilots: `@JH {json}` events on stdout, commands on stdin."""
 
     pilote = True
 
@@ -419,13 +419,13 @@ class _Pilote:
     def commande(self, invite):
         self.evenement("attente")
         ligne = sys.stdin.readline()
-        if not ligne:  # l'application a ferme le tuyau : on s'arrete proprement
+        if not ligne:  # the application closed the pipe: we stop cleanly
             return "q"
         return _COMMANDES.get(ligne.strip().lower(), "")
 
     def fin(self):
         self.evenement("fin")
-        sys.stdin.readline()  # Chrome reste ouvert jusqu'a « quitter » (ou fermeture)
+        sys.stdin.readline()  # Chrome stays open until "quitter" (or closing)
 
 
 def _chemin_preuve(d):
@@ -436,10 +436,10 @@ def _chemin_preuve(d):
 
 
 def declarer_envoi(page, d):
-    """L'utilisateur dit avoir clique Envoyer : la page est OBSERVEE (rien n'est clique),
-    la preuve gardee, le suivi ecrit en une fois. Rend l'etat et la preuve.
+    """The user says they clicked Send: the page is OBSERVED (nothing is clicked),
+    the proof kept, the tracking written in one go. Returns the state and the proof.
 
-    Decision : docs/adr/0009-preuve-distincte-de-la-declaration.md"""
+    Decision: docs/adr/0009-preuve-distincte-de-la-declaration.md"""
     import datetime as _dt
 
     from jobhunter.navigation.confirmation import capturer_preuve, observer_confirmation
@@ -458,8 +458,8 @@ def declarer_envoi(page, d):
 
 
 def _decision_pilote(ui, page, d, marquer):
-    """Attend la decision de l'application pour une offre deja prete (LinkedIn Easy
-    Apply). Rend la touche finale : s (envoye), k (saute) ou q (quitter)."""
+    """Waits for the application's decision for an offer already ready (LinkedIn Easy
+    Apply). Returns the final key: s (sent), k (skipped) or q (quit)."""
     while True:
         cmd = ui.commande("")
         if cmd == "s":
@@ -550,27 +550,27 @@ def main():
     if args.pilote:
         args.auto = True  # surligne Envoyer ; « envoye » vient de l'application
 
-    # L'application passe --chrome après une connexion via acces.py. Ce profil
-    # existe déjà : le cloner à nouveau effacerait les sessions enregistrées.
+    # The application passes --chrome after a login through acces.py. That profile
+    # already exists: cloning it again would erase the stored sessions.
     if args.chrome:
         print("--chrome : réutilisation du profil dédié partagé avec acces.py")
 
-    # --- source : apply_queue.json UNIQUEMENT (Excel supprimé du pipeline) ---
+    # --- source: apply_queue.json ONLY (Excel removed from the pipeline) ---
     if not (args.selection or args.canal):
-        args.canal = "auto"  # défaut : offres directes (l'Excel n'existe plus)
+        args.canal = "auto"  # default: direct offers (the Excel no longer exists)
         print("(pas de --canal/--selection → défaut : --canal auto)")
     queues = []
     QUEUE_DONE = _racine.scripts() / "apply_runner_done.json"
     queue_done = {}
     import json as _json
 
-    # La file passe par son contrat d'acces (ADR 0002), jamais par json.load direct.
+    # The queue goes through its access contract (ADR 0002), never through a direct json.load.
     from jobhunter.stockage import file as queue_io
 
     q = queue_io.charger(descriptions=False)
     if QUEUE_DONE.exists():
         queue_done = _json.load(open(QUEUE_DONE, encoding="utf-8"))
-    # --selection : liste explicite d'offres cochées (prioritaire, ignore canal/prio)
+    # --selection: explicit list of ticked offers (takes precedence, ignores canal/prio)
     sel_keys = None
     if args.selection:
         try:
@@ -591,7 +591,7 @@ def main():
             if not li_mode and x.get("priorite") != "prio":
                 continue
             if li_mode:
-                # canal linkedin : sélection par HOST (le champ canal reste "manuel")
+                # linkedin canal: selection by HOST (the canal field stays "manuel")
                 if "linkedin.com" not in (x.get("url") or ""):
                     continue
             elif args.canal != "all" and x.get("canal") != args.canal:
@@ -622,14 +622,13 @@ def main():
     queues.append((f"queue:{args.selection and 'selection' or args.canal}", None, rows, None))
 
     def mark(ws, d, ix, val):
-        """Écrit le statut dans apply_runner_done.json (ws/ix conservés pour compat).
+        """Writes the status into apply_runner_done.json (ws/ix kept for compatibility).
 
-        ÉCRITURE ATOMIQUE. `open(..., "w")` tronque le fichier AVANT d'écrire :
-        une coupure au milieu — et ce programme tourne dans une console ouverte
-        pendant des heures, à côté d'un Chrome qu'on ferme parfois d'un coup —
-        laissait un fichier vide ou à moitié écrit. Ce fichier dit à quoi
-        l'utilisateur a déjà postulé ; le perdre fait repostuler. jutil écrit à côté
-        puis bascule d'un seul coup.
+        ATOMIC WRITE. `open(..., "w")` truncates the file BEFORE writing: a cut in
+        the middle — and this program runs in a console open for hours, next to a
+        Chrome that is sometimes closed abruptly — left an empty or half-written
+        file. This file says what the user has already applied to; losing it makes
+        them apply again. jutil writes next to it then switches in one go.
         """
         queue_done[f"{d['comp']}|{d['role']}"] = val
         importlib.import_module("jobhunter.programmes.jutil").jwrite(QUEUE_DONE, queue_done)
@@ -639,8 +638,8 @@ def main():
     print("Profil:", PROFILE["full"], "|", PROFILE["email"])
     print("AUCUN envoi auto. Tu vérifies + cliques Envoyer toi-même.\n")
 
-    # Profil Chrome DEDIE a JobHunter, jamais le profil Chrome personnel : celui-ci
-    # porte les sessions et mots de passe enregistres de l'utilisateur.
+    # Chrome profile DEDICATED to JobHunter, never the personal Chrome profile: that one
+    # carries the user's stored sessions and passwords.
     launch_args = ["--start-maximized"]
     udir = str(PW_USER_DIR)
     print(f"Profil persistant dédié: {udir} (connecte-toi 1 fois, à la main, ça reste)")
@@ -655,8 +654,8 @@ def main():
                 args=launch_args,
                 no_viewport=True,
             )
-            # TURBO (défaut) : bloque images/polices/media/pubs → pages 2-5× plus vite.
-            # --images pour tout recharger si un site casse. --no-turbo pour désactiver.
+            # TURBO (default): blocks images/fonts/media/ads → pages 2-5× faster.
+            # --images to reload everything if a site breaks. --no-turbo to disable.
             if not getattr(args, "no_turbo", False):
                 try:
                     from jobhunter.navigation import block_resources
@@ -676,7 +675,7 @@ def main():
             for d in rows:
                 if str(d["status"]).strip().upper() in ("ENVOYÉ", "ENVOYE", "SAUTÉ", "SAUTE"):
                     continue
-                # garde : pas d'URL http -> rien à ouvrir, on saute (recherche manuelle requise)
+                # guard: no http URL -> nothing to open, we skip (manual search required)
                 if not str(d.get("url") or "").startswith("http"):
                     continue
                 seen += 1
@@ -685,7 +684,7 @@ def main():
                 try:
                     print("=" * 70)
                     print(f"[{seen}/{total}] {d['comp']} — {d['role']}")
-                    fa = {}  # remplissage de CETTE offre (vide si echec)
+                    fa = {}  # filling of THIS offer (empty on failure)
                     ui.evenement(
                         "offre",
                         i=seen,
@@ -719,7 +718,7 @@ def main():
                         g = robust_goto(page, d["url"], tries=3)
                         if not g["ok"]:
                             print("  ! navigation:", g["note"])
-                            # PIPELINE DE BASE : URL morte → site officiel → carrières → offre
+                            # BASE PIPELINE: dead URL → official site → careers → offer
                             hf = homepage_fallback(page, d["comp"], d.get("role", ""))
                             try:
                                 from jobhunter.programmes.queue_tools import writeback
@@ -743,7 +742,7 @@ def main():
                             print("  ! navigation:", type(e).__name__)
                     _fast = getattr(args, "fast", False)
                     time.sleep(0.5 if _fast else 1.5)
-                    # ── LinkedIn Easy Apply SEMI-AUTO : session réutilisée, remplit, STOP avant Envoyer ──
+                    # ── LinkedIn Easy Apply SEMI-AUTOMATIC: session reused, fills in, STOP before Send ──
                     if "linkedin.com" in (d.get("url") or ""):
                         try:
                             from jobhunter.navigation import dismiss_cookies, linkedin_easy_apply
@@ -769,7 +768,7 @@ def main():
                                 )
                                 mark(ws, d, ix, "À VÉRIFIER LinkedIn")
                                 if ui.pilote:
-                                    # l'application attend la decision de l'utilisateur
+                                    # the application waits for the user's decision
                                     ui.evenement(
                                         "pret",
                                         couverture=None,
@@ -786,14 +785,14 @@ def main():
                                 time.sleep(0.5 if _fast else 3)
                                 continue
                             if la.get("kind") == "external":
-                                # candidature externe : laisse le pipeline générique gérer (ATS derrière)
+                                # external application: lets the generic pipeline handle it (ATS behind)
                                 pass
                             else:
                                 mark(ws, d, ix, "LinkedIn " + str(la.get("kind")))
                                 continue
                         except Exception as e:
                             print("  ! linkedin:", type(e).__name__)
-                    # navigation intelligente + LOOP auto-résolution (self-healing)
+                    # smart navigation + self-resolution LOOP (self-healing)
                     try:
                         from jobhunter.navigation import (
                             describe_page,
@@ -810,15 +809,15 @@ def main():
                         time.sleep(0.3 if _fast else 1)
                         if ck.get("done") not in ("none", "err"):
                             print(f"  🍪 cookies: {ck.get('done')}")
-                        # reconnaissance COMPLÈTE de la page (sautée en --fast pour la vitesse)
+                        # FULL recognition of the page (skipped with --fast for speed)
                         if not _fast:
                             try:
                                 print("  🗺️ " + describe_page(page).replace("\n", "\n  "))
                             except Exception:
                                 pass
-                        # tâche visée selon l'intention : postuler (ouvre form), gère register si détecté
+                        # task targeted by intent: apply (opens the form), handles register if detected
                         r = smart_step(page, task="apply", max_tries=5)
-                        # page morte (404 ATS / offre pourvue) → PIPELINE DE BASE homepage→carrières
+                        # dead page (ATS 404 / offer filled) → BASE PIPELINE homepage→careers
                         if r["status"] == "stuck" and r.get("kind") == "dead":
                             from jobhunter.navigation import homepage_fallback
 
@@ -834,7 +833,7 @@ def main():
                                 except Exception:
                                     pass
                                 r = smart_step(page, task="apply", max_tries=4)
-                        # homepage corporate -> section Carrières/Nous rejoindre avant offre/login
+                        # corporate homepage -> Carrières/Nous rejoindre section before offer/login
                         if r["status"] == "stuck" and r["kind"] in ("other", "offer_list"):
                             gc = retry(
                                 page, lambda: goto_careers(page), lambda x: x.get("clicked"), 3
@@ -845,7 +844,7 @@ def main():
                                 )
                                 dismiss_cookies(page)
                                 r = smart_step(page, task="apply", max_tries=4)
-                        # recherche d'offre UNIFIÉE : ATS + recherche mot-clé + drill (pattern ATS)
+                        # UNIFIED offer search: ATS + keyword search + drill (ATS pattern)
                         if r["status"] == "stuck" and r["kind"] in (
                             "offer_list",
                             "apply_cta",
@@ -857,7 +856,7 @@ def main():
                             )
                             if fo.get("reached"):
                                 r = smart_step(page, task="apply", max_tries=3)
-                        # dernier recours : agent LLM (lit la page, décide) — si --agent + Ollama
+                        # last resort: LLM agent (reads the page, decides) — if --agent + Ollama
                         if getattr(args, "agent", False) and r["status"] == "stuck":
                             from jobhunter.navigation import llm_agent
 
@@ -880,12 +879,10 @@ def main():
                         elif r["status"] == "ok":
                             print(f"  ✅ nav: {r['kind']} ({r['note']})")
                             if r["kind"] == "login":
-                                # #auth : postuler = souvent PAS de compte -> tente bascule création
+                                # #auth: applying = often NO account -> tries switching to creation
                                 auth = getattr(args, "auth", "auto")
                                 switched = False
-                                if (
-                                    False
-                                ):  # creation de compte : jamais automatique (regle du projet)
+                                if False:  # account creation: never automatic (project rule)
                                     sw = retry(
                                         page,
                                         lambda: switch_to_register(page),
@@ -898,7 +895,7 @@ def main():
                                         )
                                         switched = True
                                 if not switched and auth != "register":
-                                    # Connexion : l'email seulement, le mot de passe reste a l'utilisateur.
+                                    # Login: the email only, the password stays the user's.
                                     lg = login_flow(page, PROFILE.get("email", ""), "")
                                     print(f"     🔑 login 2-étapes : {len(lg['steps'])} étape(s)")
                                 elif not switched:
@@ -909,7 +906,7 @@ def main():
                             print(f"  🔁 nav: {r['note']} (kind={r['kind']})")
                     except Exception as e:
                         print("  ! web_nav:", type(e).__name__)
-                    # #6 attendre les inputs rendus tard (React/Vue : Wizbii, Meeschaert)
+                    # #6 wait for inputs rendered late (React/Vue: Wizbii, Meeschaert)
                     try:
                         from jobhunter.navigation import wait_for_form
 
@@ -920,7 +917,7 @@ def main():
                             )
                     except Exception:
                         pass
-                    # REMPLISSAGE UNIVERSEL : tous les champs + selects + radios + CGU + tous les docs
+                    # UNIVERSAL FILLING: all the fields + selects + radios + T&Cs + all the docs
                     try:
                         from jobhunter.navigation import fill_application
 
@@ -941,7 +938,7 @@ def main():
                             print(f"  ! autofill: {type(e2).__name__} — skip offre")
                             mark(ws, d, ix, "SKIP AUTOFILL")
                             continue
-                    # --wizard : formulaire multi-écrans (Workday/iCIMS) -> remplit+Suivant en boucle
+                    # --wizard: multi-screen form (Workday/iCIMS) -> fill+Next in a loop
                     if getattr(args, "wizard", False):
                         try:
                             from jobhunter.navigation import fill_application as _fa
@@ -976,8 +973,8 @@ def main():
                         time.sleep(30)
                         mark(ws, d, ix, "À VÉRIFIER")
                         continue
-                    # Page de code recu par mail (OTP) : c'est a l'utilisateur de le lire et de le
-                    # saisir. Aucun programme ne lit sa boite mail (regle du projet).
+                    # Page asking for a code received by email (OTP): it is up to the user to read it and
+                    # type it. No program reads their mailbox (project rule).
                     try:
                         from jobhunter.navigation import otp_present as _otp_present
 
@@ -1040,7 +1037,7 @@ def main():
                         pass
                     continue
         print("\nFini. Toutes les offres parcourues.")
-        # NE PAS fermer Chrome tant que tu n'as pas validé/cliqué Envoyer.
+        # Do NOT close Chrome until you have validated/clicked Send.
         ui.fin()
         ctx.close()
 

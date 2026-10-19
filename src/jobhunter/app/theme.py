@@ -1,6 +1,6 @@
-"""Theme : couleurs, polices, espacements et widgets de base (CF, CB, CL, CE, make_btn).
+"""Theme: colours, fonts, spacing and basic widgets (CF, CB, CL, CE, make_btn).
 
-Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
+Part of jobhunter.app (former JobHunter.pyw, phase 3.7)."""
 
 import datetime
 import tkinter as tk
@@ -13,8 +13,8 @@ from jobhunter.app.langue import t as _t
 ctk.set_appearance_mode("light")
 
 
-# Recruitment CRM (Outcrowd) adapté : navigation marine, plan de travail bleu pâle,
-# données sur blanc. Couleurs séparées pour les contrôles sur sidebar sombre.
+# Recruitment CRM (Outcrowd), adapted: navy navigation, pale blue workspace,
+# data on white. Separate colours for the controls on the dark sidebar.
 BG = "#E9EFF7"
 
 
@@ -26,7 +26,7 @@ CARD = "#FFFFFF"
 
 LINE = "#D8E2EF"
 
-# Contour d'un champ de saisie : 3:1 au moins sur CARD, BG et WORK (WCAG 1.4.11, E3).
+# Outline of an input field: at least 3:1 on CARD, BG and WORK (WCAG 1.4.11, E3).
 LINE_SAISIE = "#74869F"
 
 
@@ -44,7 +44,7 @@ ROW1 = "#F5F8FC"
 
 ACC = "#325EDF"
 
-# Anneau de focus clavier (E3) : l'accent, 5,5:1 sur CARD, 4,8:1 sur BG.
+# Keyboard focus ring (E3): the accent, 5.5:1 on CARD, 4.8:1 on BG.
 FOCUS = ACC
 
 
@@ -126,18 +126,18 @@ RAD_BTN = 6
 RAD_CARD = 10
 
 
-# Nommer une famille de police ABSENTE fait basculer Tk sur un repli arbitraire,
-# souvent pire que le point de depart. On resout donc a l'execution, quand une
-# fenetre existe, en prenant la premiere famille reellement installee.
+# Naming a MISSING font family makes Tk fall back to an arbitrary font,
+# often worse than the starting point. So we resolve at run time, when a
+# window exists, taking the first family really installed.
 FONT_UI = "Segoe UI Variable Display"
 
 
 FONT_MONO = "Consolas"
 
 
-# Espacements. Tk n'a ni clamp() ni vw : on evalue une fois au demarrage, a
-# partir de la largeur d'ecran reelle. Pas de recalcul au redimensionnement —
-# ce serait un comportement nouveau, et le plancher couvre les petites fenetres.
+# Spacing. Tk has neither clamp() nor vw: we evaluate once at start-up,
+# from the real screen width. No recomputation on resize —
+# that would be new behaviour, and the floor covers small windows.
 PAD_PAGE = 24  # marge exterieure    clamp(24px, 3vw,   56px)
 
 
@@ -172,7 +172,7 @@ def _resoudre_polices() -> None:
             break
 
 
-_TRANSPARENT = (BG,)  # seul le fond principal est "conteneur"
+_TRANSPARENT = (BG,)  # only the main background is a "container"
 
 
 def _fgcol(bg: Any) -> Any:
@@ -215,8 +215,8 @@ def CF(
     plat: Any = False,
     **_: Any,
 ) -> Any:
-    """plat=True : simple conteneur de mise en page, sans liser ni coins —
-    une rangee de boutons posee DANS une carte n'est pas une carte de plus."""
+    """plat=True: simple layout container, without border or corners —
+    a row of buttons placed INSIDE a card is not one more card."""
     kw = {}
     if bg is not None:
         kw["fg_color"] = _fgcol(bg)
@@ -232,7 +232,7 @@ def CF(
         kw["border_width"] = 1
         kw["border_color"] = highlightbackground
     elif surface:
-        # Un seul liser par surface ; aucun cadre ajouté aux sous-conteneurs.
+        # A single border per surface; no frame added to sub-containers.
         try:
             fond_parent = parent.cget("fg_color")
         except (ValueError, tk.TclError):
@@ -265,16 +265,16 @@ def CB(
     }
     if bg is not None:
         kw["fg_color"] = bg
-    # Le survol « gagne legerement en luminosite » : une teinte par role, pas
-    # un eclat generique. Sans cela CustomTkinter applique son propre bleu.
+    # Hover "gets slightly brighter": one tint per role, not
+    # a generic glow. Without it CustomTkinter applies its own blue.
     _SURVOL = {ACC: ACC_H, BTN: BTN_H, DEL: DEL_H, CARD: BTN_H, SIDE_CARD: BTN_H}
     if activebackground:
         kw["hover_color"] = activebackground
     elif bg in _SURVOL:
         kw["hover_color"] = _SURVOL[bg]
-    # Couleur de texte DEDUITE du role quand elle n'est pas imposee : du texte
-    # clair sur le bleu clair ACC serait illisible, et un appelant qui oublie
-    # fg ne doit pas produire un bouton qu'on ne peut pas lire.
+    # Text colour DERIVED from the role when it is not imposed: light
+    # text on the light blue ACC would be unreadable, and a caller who forgets
+    # fg must not produce a button that cannot be read.
     _TEXTE = {
         ACC: ACC_TX,
         ACC_H: ACC_TX,
@@ -325,8 +325,8 @@ def CL(
 def CE(
     parent: Any, bg: Any = None, fg: Any = None, width: Any = None, font: Any = None, **_: Any
 ) -> Any:
-    # Bordure d'un champ : 3:1 au moins sur tous les fonds (WCAG 1.4.11, E3) ; LINE, à
-    # 1,3:1, laissait le champ invisible. Focus : la bordure passe en FOCUS, 2 px.
+    # Outline of a field: at least 3:1 on all backgrounds (WCAG 1.4.11, E3); LINE, at
+    # 1.3:1, left the field invisible. Focus: the outline switches to FOCUS, 2 px.
     kw = {"corner_radius": RAD_BTN, "border_width": 1, "border_color": LINE_SAISIE}
     if bg is not None:
         kw["fg_color"] = bg
@@ -351,10 +351,10 @@ def CE(
 
 
 def anneau_focus(fond: Any) -> str:
-    """La couleur de l'anneau de focus selon le fond du bouton : visible sur chacun.
+    """The colour of the focus ring depending on the button's background: visible on each.
 
-    Bleu nuit de la barre latérale → texte clair ; bouton d'accent (bleu) → texte foncé ;
-    ailleurs, FOCUS.
+    Night blue of the sidebar → light text; accent button (blue) → dark text;
+    elsewhere, FOCUS.
     """
     if fond in (SIDE, SIDE_CARD, SIDE_H):
         return SIDE_TX
@@ -364,12 +364,12 @@ def anneau_focus(fond: Any) -> str:
 
 
 def clavier(bouton: Any) -> Any:
-    """Rend un CTkButton utilisable au clavier (E3) ; le rend.
+    """Makes a CTkButton usable from the keyboard (E3); returns it.
 
-    CustomTkinter dessine ses boutons sur un canevas que la tabulation saute : sans
-    souris, aucun bouton de l'application n'était atteignable. Le canevas prend le focus
-    dans l'ordre de création (l'ordre visuel, les widgets étant posés de haut en bas),
-    montre un anneau FOCUS de 2 px, et Entrée ou Espace déclenchent le bouton.
+    CustomTkinter draws its buttons on a canvas that Tab skips: without a mouse, no
+    button of the application could be reached. The canvas takes the focus in
+    creation order (the visual order, widgets being laid out top to bottom), shows
+    a 2 px FOCUS ring, and Enter or Space trigger the button.
     """
     canevas = getattr(bouton, "_canvas", None)
     if canevas is None:

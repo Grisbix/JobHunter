@@ -1,8 +1,8 @@
-"""LinkedIn : la recherche PUBLIQUE (API invite), avec attente sur 429.
+"""LinkedIn: the PUBLIC search (guest API), with waiting on 429.
 
-Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
+Part of jobhunter.sources (formerly Scripts/job_sources.py, phase 3.4).
 
-Decision : docs/adr/0004-429-attendre-403-arreter.md
+Decision: docs/adr/0004-429-attendre-403-arreter.md
 """
 
 import re
@@ -17,7 +17,7 @@ from jobhunter.sources.commun import INCIDENTS, UA, _mk, title_ok
 _log = _journal.journal(__name__)
 
 
-# ═══════════════ 2. LinkedIn recherche PUBLIQUE (guest, httpx, paginé) ═══════════════
+# ═══════════════ 2. LinkedIn PUBLIC search (guest, httpx, paginated) ═══════════════
 _LI_CARD = re.compile(
     r'<a[^>]+class="[^"]*base-card__full-link[^"]*"[^>]+href="([^"]+)"[^>]*>.*?'
     r'<span class="sr-only">\s*(.*?)\s*</span>',
@@ -32,14 +32,14 @@ _LI_LOC = re.compile(r"job-search-card__location[^>]*>([^<]+)<", re.S)
 def linkedin_guest_search(
     keyword: str, pages: int = 2, days: int = 7, lieu: str = "France"
 ) -> list[dict[str, Any]]:
-    """API guest LinkedIn (HTML fragments, AUCUN login, lecture publique).
+    """LinkedIn guest API (HTML fragments, NO login, public reading).
 
-    Pagination par start=0,25,50… f_TPR filtre fraîcheur (604800s=7j).
+    Pagination by start=0,25,50… f_TPR filters freshness (604800s=7d).
 
-    `lieu` etait code en dur sur « France ». Desactiver le filtre geographique
-    a l'entree de la file ne servait donc a rien pour cette source : elle ne
-    DEMANDAIT que des offres francaises. Un filtre en aval ne peut pas rattraper
-    ce qu'une requete en amont n'a jamais demande.
+    `lieu` was hard-coded to "France". Disabling the geographic filter
+    at the queue's entrance was therefore useless for this source: it only
+    ASKED for French offers. A downstream filter cannot catch up on
+    what an upstream request never asked for.
     """
     import html as _html
 
@@ -56,7 +56,7 @@ def linkedin_guest_search(
         )
         try:
             r = _commun._get_borne(httpx, url, timeout=15, headers=UA)
-            # Une limite de debit s'ATTEND : meme page, apres la pause.
+            # A rate limit is WAITED for: same page, after the pause.
             while r.status_code == 429:
                 INCIDENTS["linkedin_http"][429] += 1
                 if not _li_pause_429(r):
@@ -65,19 +65,19 @@ def linkedin_guest_search(
                 r = _commun._get_borne(httpx, url, timeout=15, headers=UA)
             _LI["suite_429"] = 0
             if r.status_code in (403, 999):
-                # Un REFUS s'arrete : plus aucune requete LinkedIn de la collecte.
+                # A REFUSAL stops: no more LinkedIn requests in the collection.
                 INCIDENTS["linkedin_http"][r.status_code] += 1
                 _LI["stop"] = str(r.status_code)
                 return out
             if r.status_code != 200:
-                # UN REFUS N'EST PAS UNE ABSENCE D'OFFRES. `break` muet rendait
-                # une liste vide indistinguable de « rien de neuf cette
-                # semaine » — sur la source qui fournit les deux tiers de la
-                # file. Un scan entierement bride affichait « 0 offres » et
-                # passait pour une journee calme. On compte, et main() le dit.
+                # A REFUSAL IS NOT AN ABSENCE OF OFFERS. A silent `break` returned
+                # an empty list indistinguishable from "nothing new this
+                # week" — on the source that provides two thirds of the
+                # queue. A fully throttled scan displayed "0 offres" and
+                # passed for a calm day. We count, and main() says so.
                 INCIDENTS["linkedin_http"][r.status_code] += 1
                 break
-            blocks = r.text.split("base-card")  # 1 carte par bloc
+            blocks = r.text.split("base-card")  # 1 card per block
             for b in blocks:
                 mu = re.search(r'href="(https://[a-z]+\.linkedin\.com/jobs/view/[^"?]+)', b)
                 mt = re.search(r'<span class="sr-only">\s*([^<]+?)\s*</span>', b)
@@ -100,24 +100,24 @@ def linkedin_guest_search(
         except Exception as e:
             INCIDENTS["linkedin_reseau"][type(e).__name__] += 1
             break
-        _dormir(LI_PAUSE)  # poli : espace les pages
+        _dormir(LI_PAUSE)  # polite: spaces out the pages
     return out
 
 
-# LIMITE DE DEBIT LINKEDIN. Mesure du 2026-10-17 : a 1,2 s entre pages, l'API
-# invite repond 429 des la premiere poignee de requetes — 13 mots-cles sur 14
-# coupes en 32 s. Le code faisait `break` : page perdue, mot-cle suivant, 429 a
-# nouveau. Du 13 au 16/10, la collecte LinkedIn est tombee de 200-640 offres
-# par jour a 0-28, sans rien de visible hors du compteur d'incidents.
-# Regle du projet : un 429 dit « reviens plus tard » — on espace davantage, on
-# attend (Retry-After, sinon 60 s doublees jusqu'a 240), on reprend la MEME
-# page. 403/999 sont des refus : arret immediat, aucune reprise.
+# LINKEDIN RATE LIMIT. Measurement of 2026-10-17: at 1.2 s between pages, the guest
+# API answers 429 from the first handful of requests — 13 keywords out of 14
+# cut in 32 s. The code did `break`: page lost, next keyword, 429
+# again. From 13 to 16/10, the LinkedIn collection fell from 200-640 offers
+# per day to 0-28, with nothing visible outside the incident counter.
+# Project rule: a 429 says "come back later" — we space out more, we
+# wait (Retry-After, otherwise 60 s doubled up to 240), we resume the SAME
+# page. 403/999 are refusals: immediate stop, no resumption.
 #
-# DUREE MAXIMALE DE LA PASSE, pas budget d'attente. Mesure du 17/10 avec un
-# budget de 900 s d'attente : 184 offres (101 neuves) au lieu de 96, mais
-# arret a 10 mots-cles sur 14, France seule — « Worldwide » n'aurait rien eu.
-# La passe LinkedIn du pipeline est tuee a 3600 s, et une passe tuee perd TOUTE
-# sa collecte (fusion en fin de passe) : on s'arrete proprement a 45 min.
+# MAXIMUM DURATION OF THE PASS, not a waiting budget. Measurement of 17/10 with a
+# waiting budget of 900 s: 184 offers (101 new) instead of 96, but
+# stopped at 10 keywords out of 14, France only — "Worldwide" would have had nothing.
+# The pipeline's LinkedIn pass is killed at 3600 s, and a killed pass loses ALL
+# its collection (merge at the end of the pass): we stop cleanly at 45 min.
 LI_PAUSE = 3.0
 
 LI_ATTENTES = (60, 120, 240)
@@ -126,7 +126,7 @@ LI_DUREE_MAX = 2700
 
 _LI: dict[str, Any] = {"stop": None, "attendu": 0.0, "suite_429": 0, "debut": 0.0}
 
-_dormir = time.sleep  # les tests le remplacent
+_dormir = time.sleep  # the tests replace it
 
 _horloge = time.monotonic  # idem
 
@@ -137,7 +137,7 @@ def _li_ecoule() -> float:
 
 
 def _li_pause_429(r: Any) -> bool:
-    """Attend avant de redemander apres un 429. False si la passe n'a plus le temps."""
+    """Waits before asking again after a 429. False if the pass has no time left."""
     ra = (getattr(r, "headers", None) or {}).get("Retry-After", "")
     n = _LI["suite_429"]
     pause = int(ra) if str(ra).isdigit() else LI_ATTENTES[min(n, len(LI_ATTENTES) - 1)]
@@ -151,40 +151,40 @@ def _li_pause_429(r: Any) -> bool:
     return True
 
 
-# POURQUOI PLUS DE LISTE DE PAYS. Le critere n'est pas le pays, c'est la
-# langue que l'annonce demande — et un pays ne la dit pas. Mesure du
-# 2026-09-22 : la recherche publique LinkedIn accepte le lieu « Worldwide », et
-# elle pagine en profondeur.
+# WHY NO MORE LIST OF COUNTRIES. The criterion is not the country, it is the
+# language the posting asks for — and a country does not say it. Measurement of
+# 2026-09-22: LinkedIn's public search accepts the place "Worldwide", and
+# it paginates deep.
 #
-#   lieu=""            -> retombe sur les ETATS-UNIS (Oxnard, Indianapolis…)
-#   lieu="Worldwide"   ->  2 pages : 17 offres, 12 pays
-#                         10 pages : 78 offres, 37 pays
+#   lieu=""            -> falls back on the UNITED STATES (Oxnard, Indianapolis…)
+#   lieu="Worldwide"   ->  2 pages: 17 offers, 12 countries
+#                         10 pages: 78 offers, 37 countries
 #
-# Enumerer seize pays coutait 1 760 requetes pour seize pays. « Worldwide » en
-# profondeur en coute 550 pour trente-sept et plus. Strictement meilleur.
+# Enumerating sixteen countries cost 1,760 requests for sixteen countries. "Worldwide" in
+# depth costs 550 for thirty-seven and more. Strictly better.
 #
-# La France reste interrogee a part : c'est la que l'utilisateur vit, et une requete
-# mondiale y noie les offres locales sous le volume indien et americain.
+# France is still queried separately: it is where the user lives, and a worldwide
+# request drowns the local offers there under the Indian and American volume.
 #
-# Le dictionnaire donne la PROFONDEUR par lieu. Une liste simple reste acceptee
-# et utilise alors la profondeur passee en argument.
+# The dictionary gives the DEPTH per place. A plain list is still accepted
+# and then uses the depth passed as an argument.
 LIEUX_MONDE = {"France": 3, "Worldwide": 12}
 
 
 def scan_linkedin(
     pages: int = 2, days: int = 7, lieux: list[str] | dict[str, int] | None = None
 ) -> list[dict[str, Any]]:
-    """Days = fenetre de fraicheur LinkedIn (f_TPR).
+    """Days = LinkedIn freshness window (f_TPR).
 
-    Le defaut de 7 jours suffit au scan quotidien, mais il rend invisibles les offres
-    plus anciennes jamais captees : passer --days 31 pour rattraper un mois entier.
+    The default of 7 days is enough for the daily scan, but it makes invisible the older
+    offers never caught: pass --days 31 to catch up a whole month.
 
-    `lieux` : les zones interrogees. En recherche mondiale on ne peut pas se
-    contenter de retirer le filtre d'entree — il faut DEMANDER les autres pays.
+    `lieux`: the zones queried. In a worldwide search we cannot just
+    remove the entrance filter — the other countries must be ASKED for.
     """
     if lieux is None:
         lieux = LIEUX_MONDE if _commun.MONDE else ["France"]
-    # Un dict donne la profondeur par lieu, une liste garde celle de l'argument.
+    # A dict gives the depth per place, a list keeps the argument's.
     profondeur = dict(lieux) if isinstance(lieux, dict) else {x: pages for x in lieux}
     offers: list[dict[str, Any]] = []
     seen: set[str] = set()

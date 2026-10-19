@@ -1,4 +1,4 @@
-"""La commande unique `jobhunter <commande>` (phase 3.8) : aiguillage, aide, erreurs."""
+"""The single `jobhunter <command>` command (phase 3.8): dispatch, help, errors."""
 
 import importlib.util
 import os

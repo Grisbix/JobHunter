@@ -1,49 +1,47 @@
 #!/usr/bin/env python3
-"""audit_dispo.py — Verifie que les offres de la file sont encore ouvertes, et
-retire celles qui ne le sont plus.
+"""audit_dispo.py — Checks that the queue's offers are still open, and removes those that
+no longer are.
 
-DEUX VOIES, sans navigateur :
-  - LinkedIn : l'API guest `jobPosting/<id>` porte `closed-job` / « No longer
-    accepting applications » quand le poste est ferme (meme detecteur que
-    recheck_dead.linkedin_fast). ~1 s par offre.
-  - les autres sites : HTTP 404/410, ou un message d'expiration dans la page.
+TWO ROUTES, without a browser:
+  - LinkedIn: the guest API `jobPosting/<id>` carries `closed-job` / "No longer
+    accepting applications" when the job is closed (same detector as
+    recheck_dead.linkedin_fast). ~1 s per offer.
+  - the other sites: HTTP 404/410, or an expiry message in the page.
 
-LA BOUCLE, ET SA LIMITE. LinkedIn repond 429 (« trop de demandes ») au bout
-d'environ 1900 controles : c'est une limite de debit, qui dit « reessaie plus
-tard ». Le programme ATTEND alors — l'en-tete Retry-After s'il existe, sinon
-15 min, doublees a chaque refus jusqu'a 60 — puis reprend ou il s'etait
-arrete. Au bout de --pauses attentes, il sauvegarde et rend la main ; la
-relance suivante reprend grace a l'etat sur disque.
+THE LOOP, AND ITS LIMIT. LinkedIn answers 429 ("too many requests") after about 1900
+checks: it is a rate limit, which says "try again later". The program then WAITS —
+the Retry-After header if there is one, otherwise 15 min, doubled at each refusal up
+to 60 — then resumes where it stopped. After --pauses waits, it saves and gives
+control back; the next run resumes thanks to the state on disk.
 
-LA DUREE (--duree N, en minutes). Le programme s'arrete DE LUI-MEME au bout de
-N minutes de controle, puis retire ce qu'il a trouve ferme. Sans elle, c'est la
-minuterie du pipeline qui le tuait : du 08 au 18/10/2026, l'etape 4b a ete
-coupee a 45 min CHAQUE jour, avant d'arriver a la suppression — 30 a 60 offres
-fermees trouvees par jour, aucune retiree. Une attente de limite de debit qui
-depasserait la duree n'est pas commencee.
+THE DURATION (--duree N, in minutes). The program stops ON ITS OWN after N minutes of
+checking, then removes what it found closed. Without it, the pipeline's timer killed
+it: from 08 to 18/10/2026, step 4b was cut at 45 min EVERY day, before reaching the
+deletion — 30 to 60 closed offers found per day, none removed. A rate-limit wait that
+would exceed the duration is not started.
 
-Un 403, un 999 ou une page CAPTCHA sont un refus, pas une limite (ADR 0004 ci-dessous) :
-l'offre est notée « invérifiable » et le programme passe à la suivante.
+A 403, a 999 or a CAPTCHA page are a refusal, not a limit (ADR 0004 below): the offer
+is marked "invérifiable" and the program moves to the next one.
 
-L'ETAT vit dans `_audit_dispo.json` (oid -> [statut, note, url, date]). Une
-offre controlee depuis moins de --frais jours n'est pas recontrolee : un arret,
-voulu ou non, ne coute que le controle en cours.
+THE STATE lives in `_audit_dispo.json` (oid -> [status, note, url, date]). An offer
+checked less than --frais days ago is not checked again: a stop, intended or not,
+only costs the check in progress.
 
-LA SUPPRESSION (--supprime) passe par queue_io.transaction, apres copie de la
-file dans _sauvegardes/<date>_avant_audit/. Elle epargne TOUJOURS les offres de
-suivi.json et les lignes RECHERCHE. Motifs :
-  - fermee verifiee (API LinkedIn, 404/410) ;
-  - fermee d'apres le texte de la page ;
-  - deja marquee MORT / EXPIREE / FERMEE ;
-  - avec --age-max N : invérifiable ET collectee il y a plus de N jours.
+THE DELETION (--supprime) goes through queue_io.transaction, after copying the queue
+into _sauvegardes/<date>_avant_audit/. It ALWAYS spares the offers of suivi.json and
+the SEARCH rows. Reasons:
+  - closed, verified (LinkedIn API, 404/410);
+  - closed according to the page text;
+  - already marked MORT / EXPIREE / FERMEE;
+  - with --age-max N: unverifiable AND collected more than N days ago.
 
-Run :
-  python JobHunter.pyw dispo                    # controle, n'ecrit que l'etat
-  python JobHunter.pyw dispo --supprime         # controle puis retire les fermees
+Run:
+  python JobHunter.pyw dispo                    # check, only writes the state
+  python JobHunter.pyw dispo --supprime         # check then remove the closed ones
   python JobHunter.pyw dispo --supprime --age-max 60
-  python JobHunter.pyw dispo --rapport          # bilan de l'etat, sans reseau
+  python JobHunter.pyw dispo --rapport          # summary of the state, without network
 
-Decision : docs/adr/0004-429-attendre-403-arreter.md
+Decision: docs/adr/0004-429-attendre-403-arreter.md
 """
 
 import argparse
@@ -69,12 +67,12 @@ from jobhunter.stockage import suivi as suivi_io  # noqa: E402
 ETAT = HERE / "_audit_dispo.json"
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
-# Memes motifs que recheck_dead : deux formats d'URL d'offre LinkedIn.
+# Same patterns as recheck_dead: two formats of LinkedIn offer URL.
 _RX_LI_ID = re.compile(r"/jobs/view/(?:[^/?#]*?-)?(\d{6,})(?:[/?#]|$)")
 _RX_LI_FERME = re.compile(r"closed-job|no longer accepting applications", re.I)
 
-# Message d'expiration dans une page HTTP 200. Verifie sur Talent (« Cette
-# offre n'est plus disponible »), SmartRecruiters (« offre a expire »), WTJ.
+# Expiry message in an HTTP 200 page. Checked on Talent ("Cette
+# offre n'est plus disponible"), SmartRecruiters ("offre a expiré"), WTJ.
 _RX_MORT = re.compile(
     r"no longer (?:available|accepting|active)|job has expired"
     r"|this job (?:is|has been) (?:closed|filled|removed|expired)"
@@ -85,12 +83,12 @@ _RX_MORT = re.compile(
     re.I,
 )
 
-# Une page carrieres generique dit souvent « no longer available » quelque
-# part : le texte ne vaut que si l'URL designe une offre precise.
+# A generic careers page often says "no longer available" somewhere:
+# the text only counts if the URL designates a specific offer.
 _RX_URL_GENERIQUE = re.compile(r"^https?://[^/]+/?(?:[a-z]{2}(?:-[a-z]{2})?/?)?$", re.I)
 
-REFUS_DEBIT = {429}  # limite de debit : on attend et on reprend
-REFUS_ENTREE = {401, 403, 999}  # anti-bot : on ne boucle pas
+REFUS_DEBIT = {429}  # rate limit: we wait and resume
+REFUS_ENTREE = {401, 403, 999}  # anti-bot: we do not loop
 
 
 def _date_collecte(o):
@@ -115,7 +113,7 @@ def sauver_etat(etat):
 
 
 def _attente(r, n):
-    """Secondes a attendre apres le n-ieme 429 d'affilee."""
+    """Seconds to wait after the n-th 429 in a row."""
     try:
         ra = int(r.headers.get("Retry-After", ""))
         if 0 < ra <= 3600:
@@ -126,8 +124,8 @@ def _attente(r, n):
 
 
 def controle_autre(url):
-    # Client partage de job_sources : une connexion TLS par hote, pas par
-    # requete (~3 s epargnees a chaque appel, voir _client_partage).
+    # job_sources' shared client: one TLS connection per host, not per
+    # request (~3 s saved at each call, see _client_partage).
     from jobhunter import sources as job_sources
 
     try:
@@ -149,8 +147,8 @@ def controle_autre(url):
 
 
 def verifier(cibles, etat, pauses_max, aujourd_hui, fin=None):
-    """Controle les cibles ; rend True si toutes l'ont ete. `fin` : instant
-    (time.monotonic) ou s'arreter de soi-meme, None = pas de duree."""
+    """Checks the targets; returns True if all of them were. `fin`: instant
+    (time.monotonic) at which to stop on its own, None = no duration."""
     import httpx
 
     def temps_ecoule(marge=0):
@@ -187,7 +185,7 @@ def verifier(cibles, etat, pauses_max, aujourd_hui, fin=None):
             continue
         if r.status_code in REFUS_DEBIT:
             refus += 1
-            if refus < 3:  # un 429 isole : courte pause
+            if refus < 3:  # an isolated 429: short pause
                 time.sleep(30)
                 continue
             if pauses >= pauses_max or temps_ecoule(_attente(r, pauses + 1)):
@@ -232,12 +230,12 @@ def verifier(cibles, etat, pauses_max, aujourd_hui, fin=None):
     return i >= len(li)
 
 
-# ── RETROUVER L'OFFRE PAR LE CANAL QUI L'A TROUVEE ───────────────────────────
-# APEC, Glassdoor, Indeed et WTJ refusent les robots sur la PAGE de l'offre
-# (403, CAPTCHA, 202) : le controle direct rend « invérifiable » — 951 offres
-# le 2026-10-02. Mais ces offres sont entrees par un canal qui, lui, repond :
-# l'API de recherche APEC, le sitemap WTJ, la recherche Glassdoor. Ce qui a
-# servi a les trouver sert a les retrouver.
+# ── FIND THE OFFER AGAIN THROUGH THE CHANNEL THAT FOUND IT ───────────────────
+# APEC, Glassdoor, Indeed and WTJ refuse robots on the offer's PAGE
+# (403, CAPTCHA, 202): the direct check returns "invérifiable" — 951 offers
+# on 2026-10-02. But these offers came in through a channel that does answer:
+# the APEC search API, the WTJ sitemap, the Glassdoor search. What
+# served to find them serves to find them again.
 
 
 def _domaine(url):
@@ -247,11 +245,10 @@ def _domaine(url):
 
 
 def _wtj_urls():
-    """Toutes les URL d'offres du sitemap WTJ, ou None si illisible.
+    """All the offer URLs of the WTJ sitemap, or None if unreadable.
 
-    Le sitemap liste les annonces EN LIGNE (88 000 le 24/09) : une offre qui
-    n'y figure plus a ete retiree. Pas de page d'offre visitee, donc pas de
-    mur anti-bot."""
+    The sitemap lists the postings ONLINE (88,000 on 24/09): an offer that is no
+    longer in it was withdrawn. No offer page visited, hence no anti-bot wall."""
     import gzip
 
     import httpx
@@ -281,7 +278,7 @@ def _wtj_urls():
     except Exception as e:
         print(f"  ~ WTJ : sitemap illisible ({type(e).__name__})")
         return None
-    # Un sitemap tronque ferait passer toutes nos offres pour retirees.
+    # A truncated sitemap would make all our offers look withdrawn.
     return urls if len(urls) > 10000 else None
 
 
@@ -290,9 +287,9 @@ def _apec_numero(url):
     return m.group(1) if m else None
 
 
-# APEC est derriere DataDome : ~540 requetes en rafale l'ont fermee le 02/10
-# au soir, collecte comprise. Au plus 150 offres par passe (~300 requetes) :
-# le stock se verifie en quelques jours sans exposer la collecte.
+# APEC is behind DataDome: ~540 requests in a burst closed it on the evening of
+# 02/10, collection included. At most 150 offers per pass (~300 requests):
+# the stock is checked in a few days without exposing the collection.
 APEC_PAR_PASSE = 150
 
 
@@ -304,7 +301,7 @@ def par_la_source(q, etat, aujourd_hui, limite):
     for o in q:
         v = etat.get(queue_io.oid(o))
         if not v or v[0] is not None:
-            continue  # deja tranchee, ou jamais vue
+            continue  # already decided, or never seen
         if len(v) > 3 and str(v[1]).startswith("source") and v[3] >= limite:
             continue
         a_voir.append(o)
@@ -330,9 +327,9 @@ def par_la_source(q, etat, aujourd_hui, limite):
             break
         num, titre = _apec_numero(o["url"]), (o.get("poste") or "").strip()
         vus, total, refuse = set(), 0, False
-        # L'intitule exact, deux pages de 50. Absente ALORS QUE la recherche a
-        # tout rendu (total <= ce qu'on a lu) : retiree. Absente d'une recherche
-        # plus longue que deux pages : on ne sait pas, on ne tranche pas.
+        # The exact title, two pages of 50. Missing WHILE the search
+        # returned everything (total <= what we read): withdrawn. Missing from a search
+        # longer than two pages: we do not know, we do not decide.
         for page in range(2):
             res, total = job_sources._apec_page(titre, page * job_sources.APEC_PAR_PAGE)
             time.sleep(job_sources.APEC_PAUSE)
@@ -379,11 +376,11 @@ def motif(o, etat, suivi, seuil, absente=None):
         d = _date_collecte(o)
         if d and d < seuil:
             return "invérifiable et ancienne"
-    # PLUS SERVIE PAR SA SOURCE. Glassdoor et Indeed n'offrent ni sitemap ni
-    # recherche ciblee : seule la collecte quotidienne les revoit, et elle pose
-    # `vu_le`. Si le canal fonctionne (il a servi d'autres offres ces trois
-    # derniers jours) et ne sert plus celle-ci depuis `absente` jours, elle est
-    # retiree. Canal en panne : on ne conclut rien.
+    # NO LONGER SERVED BY ITS SOURCE. Glassdoor and Indeed offer neither a sitemap nor
+    # a targeted search: only the daily collection sees them again, and it sets
+    # `vu_le`. If the channel works (it served other offers in the last three
+    # days) and has not served this one for `absente` days, it is
+    # withdrawn. Channel down: we conclude nothing.
     if absente and st is None:
         limite_vue, canal_vivant = absente
         if canal_vivant.get(_domaine(o.get("url"))):
@@ -399,8 +396,8 @@ def supprimer(etat, age_max, aujourd_hui, copier=True, absente_jours=30):
         seuil = (
             datetime.date.fromisoformat(aujourd_hui) - datetime.timedelta(days=age_max)
         ).isoformat()
-    # Dans le pipeline, la sauvegarde du jour existe deja (prise avant toute
-    # etape) : une seconde copie compterait dans ses sept jours glissants.
+    # In the pipeline, today's backup already exists (taken before any
+    # step): a second copy would count in its seven rolling days.
     copie = None
     if copier:
         copie = HERE / "_sauvegardes" / f"{aujourd_hui}_avant_audit"
@@ -447,19 +444,19 @@ def _fit(o):
 
 
 def choisir_cibles(q, etat, suivi, j, frais=0):
-    """Les offres a controler aujourd'hui, les plus importantes d'abord.
+    """The offers to check today, the most important first.
 
-    Pose au passage, dans `etat`, « OK » pour celles qu'une source vient de
-    resservir : pas de requete pour une reponse connue."""
+    Sets in passing, in `etat`, "OK" for those that a source has just served again:
+    no request for a known answer."""
     jours = lambda n: (j - datetime.timedelta(days=n)).isoformat()
-    # LE RYTHME SUIT L'AGE. Mesure sur 5441 controles LinkedIn du 02/10 :
-    # 8 % d'offres fermees avant 7 jours, ~20 % entre 7 et 20, 37-40 % au-dela
-    # de trois semaines. Une offre jeune se recontrole tous les 10 jours, une
-    # offre de plus de deux semaines tous les 5.
-    # ETALEMENT. Un audit complet date toutes les offres du meme jour, qui
-    # reviendraient alors toutes ensemble : ~4000 controles le 6e jour, trois
-    # heures dans une etape bornee a 45 min. Chaque offre recoit un decalage
-    # fixe de 0 a 2 jours, tire de son identite (stable d'un jour a l'autre).
+    # THE PACE FOLLOWS THE AGE. Measured on 5441 LinkedIn checks of 02/10:
+    # 8% of offers closed before 7 days, ~20% between 7 and 20, 37-40% beyond
+    # three weeks. A young offer is checked again every 10 days, an
+    # offer older than two weeks every 5.
+    # SPREADING. A full audit dates all the offers on the same day, which
+    # would then all come back together: ~4000 checks on the 6th day, three
+    # hours in a step capped at 45 min. Each offer gets a fixed offset
+    # of 0 to 2 days, drawn from its identity (stable from one day to the next).
     import zlib
 
     def limite_pour(o):
@@ -470,9 +467,9 @@ def choisir_cibles(q, etat, suivi, j, frais=0):
         return jours(base + zlib.crc32(queue_io.oid(o).encode()) % 3)
 
     revue_recente = jours(2)
-    # Un site qui a refuse l'entree (APEC derriere DataDome, Glassdoor, Indeed)
-    # refusera encore demain : le redemander chaque jour ne prouve rien et
-    # l'expose a nous bannir AUSSI de la collecte. Une fois par mois suffit.
+    # A site that refused entry (APEC behind DataDome, Glassdoor, Indeed)
+    # will refuse again tomorrow: asking again every day proves nothing and
+    # exposes us to being banned from the collection TOO. Once a month is enough.
     limite_refus = jours(30)
     cibles = []
     for o in q:
@@ -481,9 +478,9 @@ def choisir_cibles(q, etat, suivi, j, frais=0):
             continue
         if not str(o.get("url") or "").startswith("http"):
             continue
-        # REVUE PAR LA COLLECTE = OUVERTE. Si une source a resservi l'offre ces
-        # deux derniers jours (vu_le, pose a la fusion), elle est en ligne : la
-        # recontroler couterait une requete pour une reponse connue.
+        # SEEN AGAIN BY THE COLLECTION = OPEN. If a source served the offer again in the
+        # last two days (vu_le, set at merge), it is online: checking
+        # it again would cost a request for a known answer.
         if str(o.get("vu_le") or "") >= revue_recente:
             etat[oid] = ["OK", "source: revue par la collecte", o["url"], o["vu_le"]]
             continue
@@ -493,9 +490,9 @@ def choisir_cibles(q, etat, suivi, j, frais=0):
             if v[3] >= (limite_refus if refus else limite_pour(o)):
                 continue
         cibles.append(o)
-    # LES MEILLEURES D'ABORD. Une limite de debit ou la duree maximale de
-    # l'etape coupent la passe ; ce qui reste a faire doit etre ce qui compte
-    # le moins. Fit decroissant, puis la plus ancienne (la plus souvent fermee).
+    # THE BEST FIRST. A rate limit or the maximum duration of
+    # the step cut the pass; what remains to be done must be what matters
+    # least. Decreasing fit, then the oldest (the most often closed).
     cibles.sort(key=lambda o: (-_fit(o), _date_collecte(o) or "9999"))
     return cibles
 

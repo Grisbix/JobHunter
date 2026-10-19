@@ -1,12 +1,12 @@
-"""Montre comment le profil traite des intitules d'offre, sans reseau.
+"""Shows how the profile treats offer titles, without network.
 
     python JobHunter.pyw verifier-profil "Chargé de communication" "Développeur Java" ...
-    python JobHunter.pyw verifier-profil            # intitules tires des domaines du profil
+    python JobHunter.pyw verifier-profil            # titles drawn from the profile's domains
 
-Pour chaque intitule : garde ou ecarte par le filtre de collecte (title_ok), domaine
-attribue, et note 1-10 calculee sur l'intitule seul (une vraie offre est notee avec sa
-description, donc souvent plus haut). Sert a regler profil/profil.json : un metier vise
-doit passer avec une note correcte, un metier hors cible doit etre ecarte ou noter bas.
+For each title: kept or set aside by the collection filter (title_ok), assigned domain,
+and score 1-10 computed on the title alone (a real offer is scored with its
+description, hence often higher). Used to tune profil/profil.json: a target job must
+pass with a correct score, an off-target job must be set aside or score low.
 """
 
 import sys

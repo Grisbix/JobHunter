@@ -1,8 +1,8 @@
-"""Une offre retiree par le tri ne revient pas a la collecte (rejets_tri, job_sources).
+"""An offer removed by the sort does not come back at collection (rejets_tri, job_sources).
 
-Memorisation, expiration a 30 jours, date d'origine conservee, et la fusion qui
-ignore une offre rejetee NOUVELLE sans toucher a une offre deja en file. Sans
-reseau, sur fichiers jetables. Converti depuis Scripts/test_rejets_tri.py.
+Memorisation, 30-day expiry, original date kept, and the merge that
+ignores a NEW rejected offer without touching an offer already in the queue. Without
+network, on throwaway files. Converted from Scripts/test_rejets_tri.py.
 """
 
 import datetime
@@ -57,7 +57,7 @@ def test_fichier_absent(tmp_path):
 
 @pytest.fixture
 def fusion(tmp_path, monkeypatch):
-    """Une file avec Mirova deja dedans ; Deloitte et Mirova rejetes par le tri."""
+    """A queue with Mirova already in it; Deloitte and Mirova rejected by the sort."""
     q = tmp_path / "q.json"
     q.write_text(
         json.dumps(

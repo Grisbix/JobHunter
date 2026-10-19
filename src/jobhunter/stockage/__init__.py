@@ -1,11 +1,11 @@
-"""Stockage : les fichiers de donnees, et la seule facon sure de les ecrire.
+"""Storage: the data files, and the only safe way to write them.
 
-    atomique   ecriture tmp + os.replace, reessais sous Windows
-    verrou     exclusion entre processus, par fichier .lock
-    file       apply_queue.json + descriptions.json   (ancien Scripts/queue_io.py)
-    suivi      suivi.json, les candidatures            (ancien Scripts/suivi_io.py)
+    atomique   tmp write + os.replace, retries under Windows
+    verrou     exclusion between processes, through a .lock file
+    file       apply_queue.json + descriptions.json   (formerly Scripts/queue_io.py)
+    suivi      suivi.json, the applications            (formerly Scripts/suivi_io.py)
 
-Dependances a sens unique : file et suivi s'appuient sur atomique et verrou, jamais
-l'inverse. L'ancien cycle jutil <-> queue_io venait de ce que jutil.jwrite, garde-fou
-de la file, appelait queue_io, qui importait jutil.
+One-way dependencies: file and suivi rely on atomique and verrou, never
+the reverse. The old jutil <-> queue_io cycle came from jutil.jwrite, the queue's
+safeguard, calling queue_io, which imported jutil.
 """

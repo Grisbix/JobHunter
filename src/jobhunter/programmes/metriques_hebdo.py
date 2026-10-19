@@ -1,24 +1,22 @@
 #!/usr/bin/env python3
-"""metriques_hebdo.py — Bilan hebdomadaire de la recherche d'emploi.
+"""metriques_hebdo.py — Weekly summary of the job search.
 
-POURQUOI CE FICHIER EXISTE. Le bilan du lundi était produit par un script
-Hermes (`hermes/scripts/run_job_metrics_with_insight.py`) qui lisait une table
-`jobs` de veille.db et le dossier `Job Search/Applications/` du vault. Les deux
-avaient disparu : le script sortait en code 0 avec des zéros partout, et
-personne ne pouvait le distinguer d'une semaine creuse (constaté le
-2026-10-07). Les vraies données sont ici :
+WHY THIS FILE EXISTS. The Monday summary was produced by a Hermes script
+(`hermes/scripts/run_job_metrics_with_insight.py`) that read a `jobs` table of
+veille.db and the vault's `Job Search/Applications/` folder. Both had disappeared: the
+script exited with code 0 with zeros everywhere, and nobody could tell it from a quiet
+week (noticed on 2026-10-07). The real data is here:
 
-    Scripts/suivi.json            les candidatures      (lu par suivi_io)
-    Scripts/_logs/pipeline_*.log  ce que le pipeline a fusionné chaque jour
+    Scripts/suivi.json            the applications      (read by suivi_io)
+    Scripts/_logs/pipeline_*.log  what the pipeline merged each day
 
-LIMITE À CONNAÎTRE. Une entrée du suivi ne garde que son DERNIER statut et la
-date de ce statut (`d`). Une candidature passée à « entretien » n'a donc plus
-sa date d'envoi : « envoyées cette semaine » compte les `postulé`/`relancé`
-datés de la semaine, et les réponses se comptent à la date de la réponse.
-Certaines entrées n'ont pas de date, ou une date `jj/mm` sans année : elles
-sont comptées à part plutôt que devinées.
+LIMIT TO KNOW. A tracking entry only keeps its LAST status and the date of that
+status (`d`). An application that moved to "entretien" therefore no longer has its
+sending date: "sent this week" counts the `postulé`/`relancé` dated within the week,
+and answers are counted at the date of the answer. Some entries have no date, or a
+`dd/mm` date without a year: they are counted separately rather than guessed.
 
-Run : python JobHunter.pyw metriques_hebdo [--jours 7]
+Run: python JobHunter.pyw metriques_hebdo [--jours 7]
 """
 
 import argparse
@@ -35,7 +33,7 @@ LOGS = _racine.scripts() / "_logs"
 EN_ATTENTE = ("postulé", "relancé")
 REPONSES = ("entretien", "refus")
 ENVOYEES = EN_ATTENTE + REPONSES
-# Même seuil que relances.a_relancer() par défaut.
+# Same threshold as relances.a_relancer() by default.
 RELANCE_JOURS = 10
 
 _MERGE = re.compile(r"Merge[^:\n]*: \+(\d+) nouvelles")
@@ -43,8 +41,8 @@ _LOG_DATE = re.compile(r"pipeline_(\d{4}-\d{2}-\d{2})_\d{4}\.log$")
 
 
 def lire_date(texte, aujourdhui):
-    """`AAAA-MM-JJ` ou `JJ/MM` (année courante, l'an passé si ça tombe dans le
-    futur). Rend None pour une date absente ou illisible."""
+    """`YYYY-MM-DD` or `DD/MM` (current year, last year if that falls in the
+    future). Returns None for a missing or unreadable date."""
     texte = (texte or "").strip()
     try:
         return datetime.strptime(texte, "%Y-%m-%d").date()
@@ -59,7 +57,7 @@ def lire_date(texte, aujourdhui):
 
 
 def bilan_suivi(suivi, aujourdhui, jours=7):
-    """Compte les candidatures. `suivi` est le dict de suivi_io.charger()."""
+    """Counts the applications. `suivi` is the dict from suivi_io.charger()."""
     debut = aujourdhui - timedelta(days=jours)
     debut_30 = aujourdhui - timedelta(days=30)
     b = {
@@ -144,8 +142,8 @@ def rapport(bs, bp, aujourdhui, jours=7):
     for s, n in sorted(bs["statuts"].items(), key=lambda t: -t[1]):
         l.append(f"- {s} : {n}")
     l.append("")
-    # « +N nouvelles » est compté à chaque fusion, AVANT le tri de la file :
-    # une offre écartée ensuite par tri_file y figure quand même.
+    # "+N nouvelles" is counted at each merge, BEFORE the queue sorting:
+    # an offer later set aside by tri_file appears in it anyway.
     l.append(f"## Pipeline : {bp['total']} offres nouvelles fusionnées (avant tri)")
     for d, n in sorted(bp["par_jour"].items()):
         l.append(f"- {d.isoformat()} : +{n}")

@@ -1,9 +1,9 @@
-"""Les ADR et le code se citent mutuellement (phase 8 du plan).
+"""ADRs and code cite each other (phase 8 of the plan).
 
-Chaque décision de docs/adr/ est citée par au moins un fichier de code — celui où elle
-s'applique —, et toute citation `docs/adr/NNNN-….md` du code désigne un ADR qui existe.
-Un ADR que rien ne cite est une décision dont on a perdu la trace dans le code ; une
-citation morte envoie le lecteur nulle part.
+Each decision in docs/adr/ is cited by at least one code file — the one where it
+applies —, and every `docs/adr/NNNN-….md` citation in the code designates an ADR that exists.
+An ADR that nothing cites is a decision whose trace has been lost in the code; a
+dead citation sends the reader nowhere.
 """
 
 import re
