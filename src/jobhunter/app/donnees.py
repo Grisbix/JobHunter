@@ -7,23 +7,25 @@ import importlib
 import json
 import subprocess
 import threading
+from typing import Any
 from urllib.parse import urlparse
 
 from jobhunter.app import commun as _commun
+from jobhunter.app._type_app import AppTypee
 from jobhunter.app.commun import LF, PY, QUEUE, SCRAPE_TAG, SCRIPTS
 from jobhunter.stockage import file as queue_io
 
 
 class DonneesMixin:
     # ── données ──
-    def _oid(self, o):
+    def _oid(self: "AppTypee", o: Any) -> Any:
         return f"{(o.get('entreprise') or '').strip()}|{(o.get('poste') or '').strip()}"
 
-    def _host(self, o):
+    def _host(self: "AppTypee", o: Any) -> Any:
         u = o.get("url") or ""
         return urlparse(u).netloc.replace("www.", "").lower() if u.startswith("http") else ""
 
-    def _acct_of(self, o):
+    def _acct_of(self: "AppTypee", o: Any) -> Any:
         """Compte connu pour ce site ? Match host (exact ou sous-domaine). Retour info|None."""
         host = self._host(o)
         if not host:
@@ -40,7 +42,7 @@ class DonneesMixin:
                 return info
         return None
 
-    def load_offers(self):
+    def load_offers(self: "AppTypee") -> None:
         # la queue change (scan, suppressions) : le texte cherchable mis en cache
         # decrirait sinon des offres qui n'existent plus
         self._search_cache.clear()
@@ -58,7 +60,7 @@ class DonneesMixin:
             self.comptes = {}
         self.refresh_table()
 
-    def _missing_desc(self):
+    def _missing_desc(self: "AppTypee") -> Any:
         """Offres avec URL http mais sans description (à enrichir auto)."""
         return [
             o
@@ -67,7 +69,7 @@ class DonneesMixin:
             and not (o.get("description") or "").strip()
         ]
 
-    def _auto_enrich(self):
+    def _auto_enrich(self: "AppTypee") -> None:
         """AUTO (pas de bouton) : récupère en fond les descriptions manquantes par lots,
         puis re-score ATS, recharge, et enchaîne tant qu'il en reste. Headless, silencieux.
         VERROU _bg_busy partagé avec _auto_sync : jamais 2 jobs qui écrivent la queue en même temps."""
@@ -85,7 +87,7 @@ class DonneesMixin:
         n = len(todo)
         self._log(f"ℹ {n} description(s) manquante(s) — récupération auto en fond…\n")
 
-        def work():
+        def work() -> None:
             try:
                 subprocess.run(
                     [PY, "-m", "jobhunter.programmes.scrape_desc", "--all", "--limit", "40"],
@@ -108,7 +110,7 @@ class DonneesMixin:
                 self.root.after(0, lambda n=err: self._log(f"! auto-desc: {n}\n"))
             self.root.after(0, done)
 
-        def done():
+        def done() -> None:
             self._desc_busy = False
             self._bg_busy = False
             self.load_offers()  # recharge (descriptions + ATS mis à jour) → table rafraîchie
@@ -122,7 +124,7 @@ class DonneesMixin:
 
         threading.Thread(target=work, daemon=True).start()
 
-    def _auto_sync(self):
+    def _auto_sync(self: "AppTypee") -> None:
         """AUTO : sync_docs.py en fond — docx modifiés → pdf régénérés, liens queue réparés.
         Relancé toutes les 10 min tant que l'app tourne."""
         if getattr(self, "_sync_busy", False) or getattr(self, "_bg_busy", False):
@@ -131,7 +133,7 @@ class DonneesMixin:
         self._sync_busy = True
         self._bg_busy = True
 
-        def work():
+        def work() -> None:
             try:
                 r = subprocess.run(
                     [PY, "-m", "jobhunter.programmes.sync_docs"],
@@ -148,7 +150,7 @@ class DonneesMixin:
             except Exception as e:
                 msg = f"! {type(e).__name__}"
 
-            def done():
+            def done() -> None:
                 self._sync_busy = False
                 self._bg_busy = False
                 if msg and not msg.startswith("pdf créés: 0 · pdf resynchronisés: 0"):
@@ -161,13 +163,13 @@ class DonneesMixin:
 
     _SCRAPE_COOLDOWN_S = 1800  # 30 min minimum entre deux scans declenches
 
-    def _scrape_cooldown_ok(self):
+    def _scrape_cooldown_ok(self: "AppTypee") -> Any:
         last = getattr(self, "_scrape_last", None)
         if last is None:
             return True
         return (datetime.datetime.now() - last).total_seconds() >= self._SCRAPE_COOLDOWN_S
 
-    def _on_focus_scrape(self, e=None):
+    def _on_focus_scrape(self: "AppTypee", e: Any = None) -> None:
         """La fenetre reprend le focus : on revient dans l'app, on rafraichit.
 
         Declenchement par evenement plutot que minuterie : pas de scan pendant
@@ -179,7 +181,7 @@ class DonneesMixin:
         if self._scrape_cooldown_ok():
             self._auto_scrape()
 
-    def _auto_scrape(self):
+    def _auto_scrape(self: "AppTypee") -> None:
         """AUTO : scrape_jobs.py en fond — nouvelles offres des sites entreprises.
 
         Meme motif que _auto_sync, mais espace de 3 h : un scan trop frequent se
@@ -200,7 +202,7 @@ class DonneesMixin:
         self._scrape_runs = getattr(self, "_scrape_runs", 0) + 1
         avant = len(getattr(self, "offers", []) or [])
 
-        def work():
+        def work() -> None:
             try:
                 r = subprocess.run(
                     [PY, "-m", "jobhunter.programmes.scrape_jobs", "--headless"],
@@ -224,7 +226,7 @@ class DonneesMixin:
             except Exception as e:
                 msg = "! %s" % type(e).__name__
 
-            def done():
+            def done() -> None:
                 self._scrape_busy = False
                 self._bg_busy = False
                 self.load_offers()  # table rafraichie
@@ -241,10 +243,10 @@ class DonneesMixin:
 
         threading.Thread(target=work, daemon=True).start()
 
-    def _check_relances(self):
+    def _check_relances(self: "AppTypee") -> None:
         """Signale au démarrage les candidatures « postulé » depuis ≥ 10 j sans réponse."""
 
-        def work():
+        def work() -> None:
             try:
                 import sys as _s
 
@@ -267,11 +269,11 @@ class DonneesMixin:
 
         threading.Thread(target=work, daemon=True).start()
 
-    def _relance_draft(self, o):
+    def _relance_draft(self: "AppTypee", o: Any) -> None:
         """Brouillon de relance (.txt + mailto ouvert) — TU envoies, puis statut → relancé."""
         key = self._oid(o)
 
-        def work():
+        def work() -> None:
             try:
                 subprocess.run(
                     [PY, "-m", "jobhunter.programmes.relances", "--draft", key],

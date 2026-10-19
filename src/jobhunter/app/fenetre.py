@@ -7,6 +7,7 @@ import queue
 import threading
 import tkinter as tk
 from tkinter import messagebox
+from typing import Any
 
 import customtkinter as ctk
 
@@ -54,21 +55,23 @@ class App(
 ):
     """La fenetre JobHunter. Chaque mixin porte un domaine ; ils ne se partagent que `self`."""
 
-    def __init__(self, root):
+    def __init__(self, root: Any) -> None:
         _resoudre_polices()  # une fenetre existe : on sait quelles familles sont installees
         _resoudre_espacements(root)
         self.root = root
-        self.proc = None
-        self.q = queue.Queue()
+        self.proc: Any = None
+        self.q: Any = queue.Queue()
         # Une exception dans un rappel Tk s'imprime sur stderr. Dans un .pyw il
         # n'y a pas de console : elle part dans le vide, le bouton ne fait rien
         # et rien ne le dit. On la range dans un fichier et on l'affiche.
         root.report_callback_exception = self._panne_tk
         self.offers = []
         self.suivi = {}
-        self.rowmap = {}
+        self.rowmap: dict[str, Any] = {}
         self.comptes = {}
-        self._search_cache = {}  # oid -> texte cherchable (vide a chaque load_offers)
+        self._search_cache: dict[
+            str, Any
+        ] = {}  # oid -> texte cherchable (vide a chaque load_offers)
         self._search_termes_actifs = []  # termes REELLEMENT appliques au tableau
         self._search_job = None  # after() en attente (anti-saccade)
         try:
@@ -82,7 +85,7 @@ class App(
         root.minsize(1080, 680)
         root.configure(fg_color=BG)
 
-        def _maximiser():
+        def _maximiser() -> None:
             try:
                 root.state("zoomed")
             except Exception:
@@ -130,7 +133,7 @@ class App(
             b = CB(
                 self.sidebar,
                 text=texte,
-                command=lambda c=cle, f=fn: (f(), self._nav_actif(c)),
+                command=lambda c=cle, f=fn: (f(), self._nav_actif(c)),  # type: ignore[func-returns-value]  # lambda Tk qui enchaine des appels sans valeur
                 bg=SIDE,
                 fg=SIDE_MUT,
                 activebackground=SIDE_H,
@@ -260,7 +263,7 @@ class App(
             font=(_theme.FONT_UI, 13),
         ).pack(side="left", padx=(2, 0), pady=2)
         # Retour de disposition : voir _dispo_retour.
-        self._dispo_pile = []
+        self._dispo_pile: list[Any] = []
         self.b_dispo = CB(
             tp,
             text="↶ Retour",
@@ -294,7 +297,7 @@ class App(
         self._build_dash(self.dash)
         self.viewer = None  # panneau CV & Lettres, construit au 1er usage
         self._dv = None  # panneau détail offre plein écran
-        self._panels = {}  # panneaux Entreprises / Sites d'offres
+        self._panels: dict[str, Any] = {}  # panneaux Entreprises / Sites d'offres
         # Navigation CRM visible au démarrage ; Outils / Ctrl+B la replie
         # pour les écrans plus étroits. La ligne d'état reste visible.
         self._desc_busy = False
@@ -319,7 +322,7 @@ class App(
         self.root.after(120000, self._auto_scrape)
         self.root.bind("<FocusIn>", self._on_focus_scrape, add="+")
 
-    def _raccourcis(self):
+    def _raccourcis(self) -> None:
         """Couche clavier sur les actions DEJA existantes — aucune nouvelle.
 
         448 offres a traiter une par une : chaque aller-retour a la souris est
@@ -347,7 +350,7 @@ class App(
             ("<Control-d>", lambda: self._check_all(False)),
             ("<Control-z>", self._annuler_dernier),
         ):
-            self.tree.bind(touches, lambda e, f=action: (f(), "break")[1])
+            self.tree.bind(touches, lambda e, f=action: (f(), "break")[1])  # type: ignore[misc]  # lambda a parametre par defaut (capture de boucle)
         self._log(
             "Raccourcis : Echap retour · Alt+Gauche annule agrandir/rétrécir · "
             "Ctrl+R recharger · F5 tout faire · "
@@ -356,7 +359,7 @@ class App(
             "Ctrl+L coller un lien · Ctrl+W arreter · Suppr pas intéressé" + chr(10)
         )
 
-    def _nav_actif(self, cle):
+    def _nav_actif(self, cle: Any) -> None:
         contexte = getattr(self, "nav_context", None)
         if contexte is not None:
             contexte.configure(
@@ -375,7 +378,7 @@ class App(
             else:
                 b.configure(fg_color=SIDE, text_color=SIDE_MUT, hover_color=SIDE_H)
 
-    def _toggle_maint(self):
+    def _toggle_maint(self) -> None:
         if self._maint_on:
             self.maint.pack_forget()
             self.b_maint.configure(text="Maintenance ▸")
@@ -391,7 +394,7 @@ class App(
     # disposition AVANT chaque geste ; « ↶ Retour » (Alt+Gauche) la remet, et
     # chaque appui remonte d'un geste. Le contenu (suivi, statuts) n'y est
     # pas : c'est Ctrl+Z, dans le tableau.
-    def _dispo_etat(self):
+    def _dispo_etat(self) -> Any:
         etat = {
             "dash": self.dash.winfo_manager() == "pack",
             "barre": bool(getattr(self, "_sidebar_on", True)),
@@ -406,7 +409,7 @@ class App(
             pass
         return etat
 
-    def _dispo_memo(self, etat=None):
+    def _dispo_memo(self, etat: Any = None) -> None:
         """Empile la disposition `etat` (par defaut : l'actuelle)."""
         etat = etat or self._dispo_etat()
         if not self._dispo_pile or self._dispo_pile[-1] != etat:
@@ -414,13 +417,13 @@ class App(
             del self._dispo_pile[:-30]
         self._dispo_maj_bouton()
 
-    def _dispo_maj_bouton(self):
+    def _dispo_maj_bouton(self) -> None:
         try:
             self.b_dispo.configure(fg=TX if self._dispo_pile else MUT)
         except Exception:
             pass
 
-    def _dispo_retour(self):
+    def _dispo_retour(self) -> None:
         if not self._dispo_pile:
             self._log("Retour : aucune disposition à rétablir.\n")
             return
@@ -443,14 +446,14 @@ class App(
                 pass
         self._dispo_maj_bouton()
 
-    def _dispo_suivre(self, widget):
+    def _dispo_suivre(self, widget: Any) -> None:
         """Memorise la disposition d'avant tout glisser sur `widget`
         (separateur de panneaux, bord d'une colonne)."""
 
-        def _avant(_e):
+        def _avant(_e: Any) -> None:
             self._dispo_avant = self._dispo_etat()
 
-        def _apres(_e):
+        def _apres(_e: Any) -> None:
             avant = getattr(self, "_dispo_avant", None)
             if avant is not None and avant != self._dispo_etat():
                 self._dispo_memo(avant)
@@ -459,7 +462,7 @@ class App(
         widget.bind("<ButtonPress-1>", _avant, add="+")
         widget.bind("<ButtonRelease-1>", _apres, add="+")
 
-    def _toggle_sidebar(self, memo=True):
+    def _toggle_sidebar(self, memo: Any = True) -> None:
         if memo and hasattr(self, "_dispo_pile"):
             self._dispo_memo()
         if self._sidebar_on:
@@ -469,11 +472,11 @@ class App(
         self._sidebar_on = not self._sidebar_on
 
 
-def _annonce_mise_a_jour(root, app):
+def _annonce_mise_a_jour(root: Any, app: Any) -> None:
     """Au demarrage, en arriere-plan : une version plus recente sur GitHub ?
     Au plus une verification par jour ; hors ligne, rien ne s'affiche."""
 
-    def proposer(v, installee):
+    def proposer(v: Any, installee: Any) -> None:
         if messagebox.askyesno(
             "JobHunter — mise à jour disponible",
             f"La version {v} est disponible (installée : {installee}).\n\n"
@@ -483,7 +486,7 @@ def _annonce_mise_a_jour(root, app):
         ):
             app.mettre_a_jour()
 
-    def verifier():
+    def verifier() -> None:
         try:
             from jobhunter.programmes import mise_a_jour
 
@@ -497,7 +500,7 @@ def _annonce_mise_a_jour(root, app):
     threading.Thread(target=verifier, daemon=True).start()
 
 
-def main():
+def main() -> None:
     _racine.exporter_paquet()  # les etapes lancent `python -m jobhunter...`
     r = ctk.CTk()
     a = App(r)

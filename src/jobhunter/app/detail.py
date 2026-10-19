@@ -14,6 +14,7 @@ from typing import Any
 
 from jobhunter import paresseux as _paresseux
 from jobhunter.app import theme as _theme
+from jobhunter.app._type_app import AppTypee
 from jobhunter.app.commun import CV_ATS_DIR, PY, SCRIPTS
 from jobhunter.app.theme import (
     ACC,
@@ -55,7 +56,7 @@ _PARESSEUX["LETTRES_DIR"] = lambda: importlib.import_module("jobhunter.app.commu
 
 
 class DetailMixin:
-    def _detail_full(self, o=None):
+    def _detail_full(self: "AppTypee", o: Any = None) -> None:
         """Détails PLEIN ÉCRAN, fenêtre COUPÉE EN DEUX : infos offre à GAUCHE,
         CV / lettre liés à DROITE (aperçu PDF ou docx ÉDITABLE + 💾)."""
         o = o or self._cur
@@ -167,9 +168,9 @@ class DetailMixin:
             padx=14,
             pady=10,
         )
-        st = {"path": None, "imgs": []}
+        st: dict[str, Any] = {"path": None, "imgs": []}
 
-        def surface(kind):
+        def surface(kind: Any) -> None:
             rcv.pack_forget()
             rsb.pack_forget()
             rtxt.pack_forget()
@@ -179,7 +180,7 @@ class DetailMixin:
             else:
                 rtxt.pack(fill="both", expand=True)
 
-        def load(path):
+        def load(path: Any) -> None:
             """Charge le doc à droite. Lettre .docx → texte ÉDITABLE ; sinon PDF empilé."""
             # pour l'édition : préfère le .docx jumeau des lettres
             if (
@@ -242,7 +243,7 @@ class DetailMixin:
             except Exception as ex:
                 rtxt.insert("end", f"lecture KO: {type(ex).__name__}")
 
-        def save_doc():
+        def save_doc() -> None:
             p = st["path"]
             if not p:
                 return
@@ -286,7 +287,7 @@ class DetailMixin:
             tw = p.with_suffix(".pdf")
             if ext == ".docx" and tw.exists():
 
-                def regen():
+                def regen() -> None:
                     for exe in (
                         r"C:\Program Files\LibreOffice\program\soffice.exe",
                         r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
@@ -350,7 +351,7 @@ class DetailMixin:
         CB(
             rbar,
             text="Ouvrir",
-            command=lambda: st["path"] and os.startfile(str(st["path"])),
+            command=lambda: st["path"] and os.startfile(str(st["path"])),  # type: ignore[func-returns-value]  # lambda Tk qui enchaine des appels sans valeur
             bg=BTN,
             fg=TX,
             relief="flat",
@@ -366,7 +367,7 @@ class DetailMixin:
             load(cvp)
         self._dv.pack(fill="both", expand=True)
 
-    def _cv_viewer(self, preselect=None):
+    def _cv_viewer(self: "AppTypee", preselect: Any = None) -> None:
         self._hide_all()
         if self.viewer is not None:  # déjà construit → réaffiche
             self.viewer.pack(fill="both", expand=True)
@@ -414,11 +415,11 @@ class DetailMixin:
         lb.pack(side="left", fill="both", expand=True, padx=(8, 0), pady=8)
         sb.pack(side="right", fill="y", pady=24)
 
-        def _letters(flt=""):
+        def _letters(flt: Any = "") -> Any:
             """Lettres : préfère le .DOCX (ÉDITABLE dans le panneau) — le pdf suit via sync."""
             if not _ici.LETTRES_DIR.exists():
                 return []
-            by_stem = {}
+            by_stem: dict[str, Any] = {}
             for f in _ici.LETTRES_DIR.iterdir():
                 if f.suffix.lower() not in (".pdf", ".docx"):
                     continue
@@ -429,9 +430,9 @@ class DetailMixin:
                     by_stem[f.stem] = f
             return sorted(by_stem.values(), key=lambda f: f.name.lower())
 
-        files = []  # aligné avec lb
+        files: list[Any] = []  # aligné avec lb
 
-        def fill(flt=""):
+        def fill(flt: Any = "") -> None:
             lb.delete(0, "end")
             files.clear()
             ats = sorted(CV_ATS_DIR.glob("*.pdf")) if CV_ATS_DIR.exists() else []
@@ -487,7 +488,7 @@ class DetailMixin:
         pginfo.pack(side="right", padx=12)
 
         # deux surfaces d'aperçu : canvas (PDF, scrollable) / texte (docx-txt, scrollable)
-        state = {"doc": None, "path": None, "imgs": [], "zoom": 1.4}
+        state: dict[str, Any] = {"doc": None, "path": None, "imgs": [], "zoom": 1.4}
         holder = CF(right, bg=BG)
         holder.pack(fill="both", expand=True, pady=(4, 4))
         cv_canvas = tk.Canvas(holder, bg="#f8fafc", highlightthickness=0)
@@ -504,7 +505,7 @@ class DetailMixin:
             pady=10,
         )
 
-        def show_surface(kind):
+        def show_surface(kind: Any) -> None:
             cv_canvas.pack_forget()
             vsb.pack_forget()
             txtv.pack_forget()
@@ -514,7 +515,7 @@ class DetailMixin:
             else:
                 txtv.pack(fill="both", expand=True)
 
-        def render():
+        def render() -> None:
             """Rend TOUTES les pages empilées → molette déroule le document en entier."""
             doc = state["doc"]
             if not doc:
@@ -545,7 +546,7 @@ class DetailMixin:
                     20, 20, text=f"aperçu KO: {type(ex).__name__}", fill="#dc2626", anchor="nw"
                 )
 
-        def show(path):
+        def show(path: Any) -> None:
             # ferme le doc PDF précédent (sinon fichier verrouillé → regen LibreOffice impossible)
             if state.get("doc") is not None:
                 try:
@@ -594,15 +595,15 @@ class DetailMixin:
                     "end", f"lecture KO: {type(ex).__name__} — clique « Ouvrir » pour Word."
                 )
 
-        def on_sel(e=None):
-            c = lb.curselection()
+        def on_sel(e: Any = None) -> None:
+            c = lb.curselection()  # type: ignore[no-untyped-call]  # curselection : typeshed : non annotee
             if c and files[c[0]] is not None:
                 show(files[c[0]])
 
         lb.bind("<<ListboxSelect>>", on_sel)
 
         # ── ÉDITION intégrée : lettres (.docx) + .txt. CV .docx = mise en page complexe → Word.
-        def save_doc():
+        def save_doc() -> None:
             p = state["path"]
             if not p:
                 return
@@ -652,7 +653,7 @@ class DetailMixin:
             tw = p.with_suffix(".pdf")
             if ext == ".docx" and tw.exists():
 
-                def regen():
+                def regen() -> None:
                     for exe in (
                         r"C:\Program Files\LibreOffice\program\soffice.exe",
                         r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
@@ -681,11 +682,11 @@ class DetailMixin:
 
                 threading.Thread(target=regen, daemon=True).start()
 
-        def zoom(d):
+        def zoom(d: Any) -> None:
             state["zoom"] = max(0.6, min(3.0, state["zoom"] + d))
             render()
 
-        def _wheel(e):
+        def _wheel(e: Any) -> None:
             cv_canvas.yview_scroll(-1 if e.delta > 0 else 1, "units")
 
         cv_canvas.bind("<MouseWheel>", _wheel)
@@ -715,7 +716,7 @@ class DetailMixin:
         CB(
             bt,
             text="Ouvrir",
-            command=lambda: state["path"] and os.startfile(str(state["path"])),
+            command=lambda: state["path"] and os.startfile(str(state["path"])),  # type: ignore[func-returns-value]  # lambda Tk qui enchaine des appels sans valeur
             bg=ACC,
             fg=ACC_TX,
             relief="flat",
@@ -733,7 +734,7 @@ class DetailMixin:
         CB(
             bt,
             text="Lettres",
-            command=lambda: _ici.LETTRES_DIR.exists() and os.startfile(str(_ici.LETTRES_DIR)),
+            command=lambda: _ici.LETTRES_DIR.exists() and os.startfile(str(_ici.LETTRES_DIR)),  # type: ignore[func-returns-value]  # lambda Tk qui enchaine des appels sans valeur
             bg=BTN,
             fg=TX,
             relief="flat",
@@ -741,10 +742,10 @@ class DetailMixin:
         ).pack(side="left", padx=6)
 
         # outils de masse : MAJ date/ordre/destinataire des lettres · renommage à mon nom
-        def _tool(script, label, btn):
+        def _tool(script: Any, label: Any, btn: Any) -> None:
             btn.configure(state="disabled", text="En cours : " + label)
 
-            def work():
+            def work() -> None:
                 try:
                     r = subprocess.run(
                         [PY, "-m", script],
@@ -761,7 +762,7 @@ class DetailMixin:
                 except Exception as e:
                     msg = f"! {type(e).__name__}"
 
-                def done():
+                def done() -> None:
                     btn.configure(state="normal", text=label)
                     self._log(f"✅ {label}: {msg}\n")
                     fill(srch.get().strip().lower())
@@ -798,7 +799,7 @@ class DetailMixin:
         cv_canvas.bind("<Next>", lambda e: cv_canvas.yview_scroll(1, "pages"))
         self._viewer_show = show  # réutilisé quand le panneau est réaffiché avec preselect
 
-        def _close_doc():
+        def _close_doc() -> None:
             if state.get("doc") is not None:
                 try:
                     state["doc"].close()
@@ -813,16 +814,16 @@ class DetailMixin:
             if p.exists():
                 show(p)
 
-    def _doc_of(self, o, key):
+    def _doc_of(self: "AppTypee", o: Any, key: Any) -> Any:
         """Chemin disque du doc lié à l'offre (cv/lettre, décode file:///…). None si absent."""
         u = o.get(key) or ""
         if not u:
             return None
         p = chemin_de(u)
-        return p if p.exists() else None
+        return p if p is not None and p.exists() else None
 
-    def _cv_of(self, o):
+    def _cv_of(self: "AppTypee", o: Any) -> Any:
         return self._doc_of(o, "cv")
 
-    def _lettre_of(self, o):
+    def _lettre_of(self: "AppTypee", o: Any) -> Any:
         return self._doc_of(o, "lettre")

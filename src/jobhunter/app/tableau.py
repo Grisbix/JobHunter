@@ -5,11 +5,13 @@ Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
 import json
 import tkinter as tk
 from tkinter import ttk
+from typing import Any
 from urllib.parse import urlparse
 
 import customtkinter as ctk
 
 from jobhunter.app import theme as _theme
+from jobhunter.app._type_app import AppTypee
 from jobhunter.app.commun import (
     _RUBRIQUES,
     _RX_ALT,
@@ -59,8 +61,8 @@ from jobhunter.texte import sans_accent
 
 class TableauMixin:
     # ── dashboard plein écran : filtres Excel (clic entête) + table + détail + édition ──
-    def _build_dash(self, parent):
-        self.colsel = {}  # key -> ("keep"|"excl", set) | None (None = toutes)
+    def _build_dash(self: "AppTypee", parent: Any) -> None:
+        self.colsel: dict[str, Any] = {}  # key -> ("keep"|"excl", set) | None (None = toutes)
         self._colidx = {k: i for i, (k, _, _) in enumerate(COLS)}
         style = ttk.Style()
         style.theme_use("clam")
@@ -104,9 +106,9 @@ class TableauMixin:
                 relief="flat",
             )
             style.map(f"{orient}.TScrollbar", background=[("active", BTN_H)])
-        self.checked = set()  # oids des offres cochées (à postuler en lot)
+        self.checked: set[Any] = set()  # oids des offres cochées (à postuler en lot)
         self._voir_masquees = False
-        self._annuler = []  # pile Ctrl+Z : [(oid, entree de suivi AVANT), ...] par geste
+        self._annuler: list[Any] = []  # pile Ctrl+Z : [(oid, entree de suivi AVANT), ...] par geste
 
         # ── ligne 1 : chercher · voir masquées ········· coller un lien ──
         # Deux lignes au lieu d'une : sur une seule, les cinq boutons de
@@ -273,7 +275,7 @@ class TableauMixin:
             cmd = (
                 (lambda: self._check_all(None))
                 if key == "_chk"
-                else (lambda k=key: self._col_menu(k))
+                else (lambda k=key: self._col_menu(k))  # type: ignore[misc]  # lambda a parametre par defaut (capture de boucle)
             )
             self.tree.heading(key, text=lbl, command=cmd, anchor=anc)
             compact = {
@@ -435,7 +437,7 @@ class TableauMixin:
         self.b_acct.grid(row=2, column=0, columnspan=2, sticky="w", pady=(4, 0))
         self._cur = None
 
-    def _toggle_columns(self):
+    def _toggle_columns(self: "AppTypee") -> None:
         """Vue compacte par défaut, toutes les colonnes restent accessibles."""
         all_cols = tuple(c[0] for c in COLS)
         current = tuple(self.tree.cget("displaycolumns"))
@@ -443,7 +445,7 @@ class TableauMixin:
         self.tree.configure(displaycolumns=visible)
         self._urlcol = "#%d" % (visible.index("_url") + 1) if "_url" in visible else None
 
-    def _toggle_suivi(self):
+    def _toggle_suivi(self: "AppTypee") -> None:
         self._suivi_open = not self._suivi_open
         if self._suivi_open:
             self._suivi_fields.grid()
@@ -451,7 +453,7 @@ class TableauMixin:
             self._suivi_fields.grid_remove()
         self.b_suivi.configure(text="Suivi et note " + ("▾" if self._suivi_open else "▸"))
 
-    def _zone_texte(self, parent, height=7, bg=ROW0):
+    def _zone_texte(self: "AppTypee", parent: Any, height: Any = 7, bg: Any = ROW0) -> Any:
         """Texte en lecture, au theme : tk.Text + barre ttk stylee.
 
         ScrolledText impose une barre tk que Windows dessine toujours en gris
@@ -486,7 +488,7 @@ class TableauMixin:
         t.tag_configure("m", foreground=MUT)
         return t
 
-    def _detail_vide(self):
+    def _detail_vide(self: "AppTypee") -> None:
         d = self.detail
         d.configure(state="normal")
         d.delete("1.0", "end")
@@ -499,19 +501,19 @@ class TableauMixin:
         )
         d.configure(state="disabled")
 
-    def _basculer_masquees(self):
+    def _basculer_masquees(self: "AppTypee") -> None:
         self._voir_masquees = bool(self.sw_masq.get())
         self.refresh_table()
 
-    def _clear_filters(self):
+    def _clear_filters(self: "AppTypee") -> None:
         self.colsel.clear()
         self.refresh_table()
 
-    def _cell(self, o, key):
+    def _cell(self: "AppTypee", o: Any, key: Any) -> Any:
         """Valeur affichée d'une colonne (pour liste de valeurs + filtre)."""
         return str(self._row_vals(o)[self._colidx[key]])
 
-    def _col_menu(self, key):
+    def _col_menu(self: "AppTypee", key: Any) -> None:
         """Menu type Excel sur l'entête : tri croissant/décroissant + choisir les valeurs."""
         win = tk.Toplevel(self.root)
         win.overrideredirect(True)
@@ -521,7 +523,7 @@ class TableauMixin:
         fr = CF(win, bg=CARD)
         fr.pack(padx=2, pady=2)
 
-        def sort(asc):
+        def sort(asc: Any) -> None:
             self._sort = (key, asc)
             win.destroy()
             self.refresh_table()
@@ -570,7 +572,7 @@ class TableauMixin:
         cmode, cset = cur if cur else (None, set())
         shown = list(vals)
 
-        def fill(flt=""):
+        def fill(flt: Any = "") -> None:
             lb.delete(0, "end")
             shown.clear()
             for v in vals:
@@ -597,23 +599,23 @@ class TableauMixin:
         bt = CF(fr, bg=CARD)
         bt.pack(fill="x", pady=(2, 0))
 
-        def _sel():
-            return {shown[i] for i in lb.curselection()}
+        def _sel() -> Any:
+            return {shown[i] for i in lb.curselection()}  # type: ignore[no-untyped-call]  # curselection : typeshed : non annotee
 
-        def keep():  # garder seulement la sélection
+        def keep() -> None:  # garder seulement la sélection
             sel = _sel()
             self.colsel[key] = None if len(sel) >= len(vals) else ("keep", sel)
             win.destroy()
             self.refresh_table()
 
-        def excl():  # exclure la sélection, montrer le reste
+        def excl() -> None:  # exclure la sélection, montrer le reste
             sel = _sel()
             self.colsel[key] = ("excl", sel) if sel else None
             win.destroy()
             self.refresh_table()
 
-        def only(_e):  # double-clic une valeur → seulement celle-ci
-            c = lb.curselection()
+        def only(_e: Any) -> None:  # double-clic une valeur → seulement celle-ci
+            c = lb.curselection()  # type: ignore[no-untyped-call]  # curselection : typeshed : non annotee
             if not c:
                 return
             self.colsel[key] = ("keep", {shown[c[0]]})
@@ -622,7 +624,7 @@ class TableauMixin:
 
         lb.bind("<Double-Button-1>", only)
 
-        def tout():
+        def tout() -> None:
             self.colsel.pop(key, None)
             win.destroy()
             self.refresh_table()
@@ -640,7 +642,7 @@ class TableauMixin:
             side="right", padx=6
         )
 
-        def _close_if_out():
+        def _close_if_out() -> None:
             try:
                 f = win.focus_get()
             except Exception:
@@ -652,31 +654,31 @@ class TableauMixin:
         win.bind("<FocusOut>", lambda e: win.after(120, _close_if_out))
         win.after(50, win.focus_force)
 
-    def _statut_of(self, o):
+    def _statut_of(self: "AppTypee", o: Any) -> Any:
         """Statut effectif = suivi MANUEL uniquement (toi). apply_runner_done.json = essais
         machine (form rempli/test), PAS une vraie candidature → jamais affiché comme 'postulé'."""
         sv = self.suivi.get(self._oid(o), {})
         return (sv["s"], "manuel") if sv.get("s") else ("", "")
 
-    def _fitnum(self, o):
+    def _fitnum(self: "AppTypee", o: Any) -> Any:
         f = str(o.get("fit") or "").strip()
         return int(f) if f.isdigit() else -1
 
-    def _fitfin(self, o):
+    def _fitfin(self: "AppTypee", o: Any) -> Any:
         """Fit decimal (ats_match.fit_detail, 2026-10-09) : departage les ex aequo
         d'un meme fit entier. Absent sur une offre pas encore rescoree : le fit
         entier tient lieu."""
         f = o.get("fit_fin")
         return float(f) if isinstance(f, (int, float)) else float(self._fitnum(o))
 
-    def _fit_aff(self, o):
+    def _fit_aff(self: "AppTypee", o: Any) -> Any:
         """fit_fin a une decimale, SANS plafond : il va de fit - 0,45 a fit + 0,45,
         donc jusqu'a 10,4 au sommet. Plafonne a 10, tout le haut de la file
         affichait 10.0 et le tri ne se voyait plus."""
         f = o.get("fit_fin")
         return f"{f:.1f}" if isinstance(f, (int, float)) else o.get("fit", "")
 
-    def _sortkey(self, o, key):
+    def _sortkey(self: "AppTypee", o: Any, key: Any) -> Any:
         if key == "_st":
             return self._statut_of(o)[0] or "zzz"
         if key == "_url":
@@ -706,7 +708,7 @@ class TableauMixin:
         "BOARD_SEARCH": "≡",
     }
 
-    def _marque_lien(self, o):
+    def _marque_lien(self: "AppTypee", o: Any) -> Any:
         """Glyphe d'avertissement, ou '' si le lien ouvre bien une offre."""
         g = self._PAS_DIRECT.get(str(o.get("url_type") or ""), "")
         if g:
@@ -741,7 +743,7 @@ class TableauMixin:
     # _sansaccent vivait ici, en 4e copie de la meme normalisation.
     _sansaccent = staticmethod(sans_accent)
 
-    def _texte_offre(self, o):
+    def _texte_offre(self: "AppTypee", o: Any) -> Any:
         """Tout le texte cherchable d'une offre, mis en cache par identifiant.
 
         Sans cache, chaque frappe reconstruisait la chaine pour 2500 offres dont
@@ -772,23 +774,23 @@ class TableauMixin:
             self._search_cache[oid] = t
         return t
 
-    def _focus_search(self, e=None):
+    def _focus_search(self: "AppTypee", e: Any = None) -> None:
         """Ctrl+F : donne le focus au champ et efface l'invite."""
         self.e_search.focus_set()
         self._search_focus()
 
-    def _search_focus(self, e=None):
+    def _search_focus(self: "AppTypee", e: Any = None) -> None:
         if self.e_search.get() == SEARCH_HINT:
             self.e_search.delete(0, "end")
 
-    def _search_termes(self):
+    def _search_termes(self: "AppTypee") -> Any:
         """Termes saisis, ou [] si le champ est vide / affiche l'invite."""
         q = self.e_search.get().strip()
         if not q or q == SEARCH_HINT:
             return []
         return [m for m in self._sansaccent(q).split() if m]
 
-    def _search_differe(self, e=None):
+    def _search_differe(self: "AppTypee", e: Any = None) -> None:
         """Relance la recherche 300 ms apres la DERNIERE frappe.
 
         Sans ce delai, refresh_table() reconstruit les 2500 lignes du tableau a
@@ -801,7 +803,7 @@ class TableauMixin:
                 pass
         self._search_job = self.root.after(300, self._search_now)
 
-    def _search_now(self, e=None):
+    def _search_now(self: "AppTypee", e: Any = None) -> None:
         self._search_job = None
         termes = self._search_termes()
         if termes == self._search_termes_actifs:
@@ -809,14 +811,14 @@ class TableauMixin:
         self._search_termes_actifs = termes
         self.refresh_table()
 
-    def _search_clear(self, e=None):
+    def _search_clear(self: "AppTypee", e: Any = None) -> None:
         self.e_search.delete(0, "end")
         self.e_search.insert(0, SEARCH_HINT)
         self.root.focus_set()  # sinon l'invite serait effacee par le FocusIn
         self._search_termes_actifs = []
         self.refresh_table()
 
-    def _row_vals(self, o):
+    def _row_vals(self: "AppTypee", o: Any) -> Any:
         sv = self.suivi.get(self._oid(o), {})
         stt, src = self._statut_of(o)
         u = o.get("url") or ""
@@ -867,7 +869,7 @@ class TableauMixin:
             sv.get("d", ""),
         ]
 
-    def _contrats_exclus(self):
+    def _contrats_exclus(self: "AppTypee") -> Any:
         """Types de contrat masques, lus dans sources_config.json — le MEME
         fichier que le scan. Le reglage reste donc dans les parametres : il
         suffit de vider la liste pour tout revoir, sans toucher au code.
@@ -878,7 +880,7 @@ class TableauMixin:
         except Exception:
             return set()
 
-    def _exclu(self, o):
+    def _exclu(self: "AppTypee", o: Any) -> Any:
         """Le contrat vient du champ, sinon de l'intitule : les offres deja en
         file portent encore « CDI » la ou LinkedIn s'est trompe."""
         ex = self._exclus
@@ -892,7 +894,7 @@ class TableauMixin:
             return True
         return "Stage" in ex and _RX_STAGE.search(t)
 
-    def refresh_table(self):
+    def refresh_table(self: "AppTypee") -> None:
         for r in self.tree.get_children():
             self.tree.delete(r)
         self.rowmap.clear()

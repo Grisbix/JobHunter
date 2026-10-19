@@ -9,12 +9,14 @@ import sys
 import tkinter as tk
 import webbrowser
 from tkinter import messagebox
+from typing import Any
 from urllib.parse import quote
 
 import customtkinter as ctk
 
 from jobhunter.app import commun as _commun
 from jobhunter.app import theme as _theme
+from jobhunter.app._type_app import AppTypee
 from jobhunter.app.commun import EXPIRE, PAS_INTERESSE, PY, QUEUE, SCRIPTS, ST_EMOJI
 from jobhunter.app.theme import BG, BTN, BTN_H, CARD, CB, CE, CF, CL, DEL, MUT, TX, WORK
 from jobhunter.stockage import file as queue_io
@@ -22,7 +24,7 @@ from jobhunter.stockage import suivi as suivi_io
 
 
 class ActionsMixin:
-    def _set_statut(self, o, statut):
+    def _set_statut(self: "AppTypee", o: Any, statut: Any) -> None:
         """Écrit un statut dans suivi.json (date auto = aujourd'hui si absente). Manuel > auto."""
         if not o:
             return
@@ -42,7 +44,7 @@ class ActionsMixin:
         self._log(f"📌 statut: {o.get('entreprise', '')} → {statut or '(vidé)'}\n")
         self.refresh_table()
 
-    def _pas_interesse(self, o):
+    def _pas_interesse(self: "AppTypee", o: Any) -> None:
         """Suppr / bouton / clic droit : l'offre sort du tableau, reste en file.
 
         Le curseur passe a la ligne suivante AVANT le rafraichissement : sinon
@@ -63,7 +65,7 @@ class ActionsMixin:
         if suivante:
             self._focus_oid(suivante)
 
-    def _focus_oid(self, oid):
+    def _focus_oid(self: "AppTypee", oid: Any) -> None:
         for iid, x in self.rowmap.items():
             if self._oid(x) == oid:
                 self.tree.selection_set(iid)
@@ -72,15 +74,16 @@ class ActionsMixin:
                 self.tree.focus_set()
                 return
 
-    def _pas_interesse_checked(self):
+    def _pas_interesse_checked(self: "AppTypee") -> None:
         """Toutes les offres cochees d'un coup. Un seul Ctrl+Z les rend toutes."""
         oids = [k for k in self.checked if self._find_by_oid(k)]
         if not oids:
             self._log("Coche d'abord des offres (colonne ☐).\n")
             return
-        geste, jour = [], datetime.date.today().isoformat()
+        geste: list[Any] = []
+        jour = datetime.date.today().isoformat()
 
-        def _f(s):  # UNE transaction : verrou, relecture, ecriture
+        def _f(s: Any) -> None:  # UNE transaction : verrou, relecture, ecriture
             geste.clear()
             for oid in oids:
                 avant = dict(s.get(oid, {}))
@@ -104,14 +107,14 @@ class ActionsMixin:
         self.refresh_table()
         self._log(f"⊖ {len(geste)} offre(s) « pas intéressé » — masquées, Ctrl+Z pour annuler.\n")
 
-    def _annuler_dernier(self):
+    def _annuler_dernier(self: "AppTypee") -> None:
         """Ctrl+Z : remet le suivi du dernier geste tel qu'il etait avant."""
         if not self._annuler:
             self._log("Rien à annuler.\n")
             return
         geste = self._annuler.pop()
 
-        def _f(s):
+        def _f(s: Any) -> None:
             for oid, avant in geste:
                 if avant:
                     s[oid] = avant
@@ -130,7 +133,7 @@ class ActionsMixin:
             self._focus_oid(geste[0][0])
         self._log(f"↶ annulé ({len(geste)} offre(s)).\n")
 
-    def _postuler(self, o):
+    def _postuler(self: "AppTypee", o: Any) -> None:
         """Enregistre uniquement un envoi explicitement confirmé par l'utilisateur."""
         if not o:
             return
@@ -139,7 +142,7 @@ class ActionsMixin:
         ):
             self._set_statut(o, "postulé")
 
-    def _apply_checked(self):
+    def _apply_checked(self: "AppTypee") -> None:
         """Postule TOUTES les offres cochées : runner semi-auto (remplit + upload, STOP sur
         Envoyer = toi). Écrit la sélection dans apply_selection.json, lance la console."""
         oids = [o for o in [self._find_by_oid(k) for k in self.checked] if o]
@@ -161,13 +164,13 @@ class ActionsMixin:
             f"Postuler sélection ({len(sel)})",
         )
 
-    def _find_by_oid(self, oid):
+    def _find_by_oid(self: "AppTypee", oid: Any) -> Any:
         for o in self.offers:
             if self._oid(o) == oid:
                 return o
         return None
 
-    def _row_menu(self, e):
+    def _row_menu(self: "AppTypee", e: Any) -> None:
         """Clic droit sur une ligne → actions par offre (Postuler + statuts rapides)."""
         iid = self.tree.identify_row(e.y)
         if not iid:
@@ -207,7 +210,8 @@ class ActionsMixin:
         m.add_separator()
         for s in ("à postuler", "à vérifier", "postulé", "relancé", "entretien", "refus"):
             m.add_command(
-                label=f"{ST_EMOJI.get(s, '')} {s}", command=lambda s=s: self._set_statut(o, s)
+                label=f"{ST_EMOJI.get(s, '')} {s}",
+                command=lambda s=s: self._set_statut(o, s),  # type: ignore[misc]  # lambda a parametre par defaut (capture de boucle)
             )
         # « mauvaise » a part, apres un separateur : ce n'est pas une etape du
         # parcours de candidature mais un jugement sur l'offre elle-meme.
@@ -227,7 +231,7 @@ class ActionsMixin:
         finally:
             m.grab_release()
 
-    def _open_offer(self, o):
+    def _open_offer(self: "AppTypee", o: Any) -> None:
         """Ouvre l'URL de l'offre ; sinon recherche web (entreprise + poste)."""
         if not o:
             return
@@ -251,14 +255,14 @@ class ActionsMixin:
             + chr(10)
         )
 
-    def _search_web(self, o):
+    def _search_web(self: "AppTypee", o: Any) -> None:
         if not o:
             return
         qy = quote(f"{o.get('entreprise', '')} {o.get('poste', '')} recrutement")
         webbrowser.open(f"https://www.google.com/search?q={qy}")
         self._log(f"🔍 recherche web: {o.get('entreprise', '')}\n")
 
-    def _click_cell(self, e):
+    def _click_cell(self: "AppTypee", e: Any) -> None:
         """Clic colonne ☐ = coche/décoche ; colonne Lien = ouvre l'offre."""
         if self.tree.identify_region(e.x, e.y) != "cell":
             return
@@ -272,7 +276,7 @@ class ActionsMixin:
         if col == self._urlcol:
             self._open_offer(o)
 
-    def _toggle_check(self, o):
+    def _toggle_check(self: "AppTypee", o: Any) -> None:
         oid = self._oid(o)
         if oid in self.checked:
             self.checked.discard(oid)
@@ -281,7 +285,7 @@ class ActionsMixin:
         self.refresh_table()
         self._upd_apply_btn()
 
-    def _check_all(self, val):
+    def _check_all(self: "AppTypee", val: Any) -> None:
         """val True=coche tout (lignes filtrées visibles), False=décoche tout, None=bascule."""
         vis = [self.rowmap[i] for i in self.tree.get_children()]
         oids = [self._oid(o) for o in vis]
@@ -297,7 +301,7 @@ class ActionsMixin:
         self.refresh_table()
         self._upd_apply_btn()
 
-    def _upd_apply_btn(self):
+    def _upd_apply_btn(self: "AppTypee") -> None:
         n = len(self.checked)
         try:
             if n:
@@ -310,7 +314,7 @@ class ActionsMixin:
         except Exception:
             pass
 
-    def _ecarter_checked(self):
+    def _ecarter_checked(self: "AppTypee") -> None:
         """Écarte les offres cochées AVEC un motif, et retient le refus.
 
         Supprimer ne suffit pas : le scan retrouve l'offre à la source et la
@@ -362,7 +366,7 @@ class ActionsMixin:
             f"   Bilan de ce que la notation rate : python JobHunter.pyw exclusions\n"
         )
 
-    def _demander_motif(self, n):
+    def _demander_motif(self: "AppTypee", n: Any) -> Any:
         """Petite boîte : motifs fréquents en boutons, plus un champ libre.
 
         Rend le motif choisi, ou None si l'utilisateur annule.
@@ -410,7 +414,7 @@ class ActionsMixin:
             justify="left",
         ).pack(fill="x", padx=18, pady=(0, 12))
 
-        def prendre(m):
+        def prendre(m: Any) -> None:
             choix["v"] = m
             dlg.destroy()
 
@@ -450,7 +454,7 @@ class ActionsMixin:
 
     CORBEILLE = SCRIPTS / "_corbeille"
 
-    def _delete_checked(self):
+    def _delete_checked(self: "AppTypee") -> None:
         """Supprime les offres cochées de apply_queue.json, après copie en corbeille.
 
         La boîte promettait « récupérable via git ». C'était faux le jour où je
@@ -522,7 +526,7 @@ class ActionsMixin:
     # PDF → PyMuPDF (toutes les pages EMPILÉES, molette = dérouler en entier)
     # DOCX/TXT → texte extrait (python-docx) dans un panneau scrollable
     @staticmethod
-    def _verrou_queue(prendre, _attente=20):
+    def _verrou_queue(prendre: Any, _attente: Any = 20) -> Any:
         """Prend / rend le verrou inter-processus de la queue. True si obtenu.
 
         `jutil` vit dans Scripts/ : import differe, pour que l'app demarre meme si
@@ -550,7 +554,7 @@ class ActionsMixin:
             return not prendre
 
     @staticmethod
-    def _jwrite(path, obj):
+    def _jwrite(path: Any, obj: Any) -> None:
         """Écriture JSON ATOMIQUE (tmp + replace) : un crash mi-écriture ne corrompt jamais le fichier."""
         tmp = path.with_suffix(path.suffix + ".tmp")
         tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")

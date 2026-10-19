@@ -131,6 +131,7 @@ module = [
     "jobhunter.documents.*",
     "jobhunter.navigation.*",
     "jobhunter.sources.*",
+    "jobhunter.app.*",
 ]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

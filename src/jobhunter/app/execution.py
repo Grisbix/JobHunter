@@ -8,8 +8,10 @@ import queue
 import subprocess
 import threading
 from tkinter import messagebox, scrolledtext, simpledialog
+from typing import Any
 
 from jobhunter.app import theme as _theme
+from jobhunter.app._type_app import AppTypee
 from jobhunter.app.commun import INTERACTIVE, PY, QUEUE, ROOT, SCRIPTS
 from jobhunter.app.theme import ACC, CB, CF, DEL, DEL_TX, LOGBG, LOGFG, SIDE, SIDE_H, SIDE_TX
 from jobhunter.liens import existe as _doc_existe
@@ -17,7 +19,7 @@ from jobhunter.stockage import file as queue_io
 
 
 class ExecutionMixin:
-    def _build_log(self, parent):
+    def _build_log(self: "AppTypee", parent: Any) -> None:
         qf = CF(parent, bg=SIDE, plat=True)
         qf.pack(fill="x", padx=12, pady=(8, 2))
         CB(
@@ -46,7 +48,7 @@ class ExecutionMixin:
         self._log("Prêt. « ▶ TOUT FAIRE » régénère.\n")
 
     # ── UI helpers ──
-    def _log(self, txt):
+    def _log(self: "AppTypee", txt: Any) -> None:
         self.log.insert("end", txt)
         self.log.see("end")
         # Meme repli, le journal doit pouvoir se resumer en un coup d'oeil.
@@ -55,7 +57,7 @@ class ExecutionMixin:
             self.status.configure(text=ligne[:96])
 
     # ── exécution ──
-    def run_step(self, cmd, label):
+    def run_step(self: "AppTypee", cmd: Any, label: Any) -> None:
         # scripts interactifs OU réutilisant Chrome (--chrome) -> nouvelle console (Chrome visible)
         if any(s in cmd for s in INTERACTIVE) or "--chrome" in cmd:
             self.run_console(cmd, label)
@@ -65,7 +67,7 @@ class ExecutionMixin:
         self._log(f"\n{'=' * 56}\n▶ {label}\n{'=' * 56}\n")
         threading.Thread(target=self._exec, args=(cmd, cmd[-1]), daemon=True).start()
 
-    def _occupe(self):
+    def _occupe(self: "AppTypee") -> Any:
         """Quelque chose écrit-il déjà la file ? Le dit, et rend True si oui.
 
         `_bg_busy` couvrait les deux jobs automatiques entre eux, mais PAS les
@@ -84,7 +86,7 @@ class ExecutionMixin:
             return True
         return False
 
-    def run_console(self, cmd, label):
+    def run_console(self: "AppTypee", cmd: Any, label: Any) -> None:
         """Lance dans une console dédiée : Chrome visible + prompt clavier (Entrée par offre)."""
         self._log(
             f"\n▶ {label} — fenêtre CONSOLE ouverte. Chrome s'ouvre ; "
@@ -97,7 +99,7 @@ class ExecutionMixin:
         except Exception as e:
             self._log(f"! lancement console KO: {e}\n")
 
-    def run_all(self):
+    def run_all(self: "AppTypee") -> None:
         if self._occupe():
             return
         # Version COURTE du pipeline : six etapes, a la main. La tache planifiee
@@ -134,7 +136,7 @@ class ExecutionMixin:
         self._log(f"\n{'=' * 56}\n▶ TOUT FAIRE — pipeline complet (6 etapes)\n{'=' * 56}\n")
         threading.Thread(target=self._exec_seq, args=(seq,), daemon=True).start()
 
-    def mettre_a_jour(self, en_attente=False):
+    def mettre_a_jour(self: "AppTypee", en_attente: Any = False) -> None:
         """mise_a_jour.py dans le journal de l'app, puis propose de relancer
         JobHunter sur la nouvelle version (le code deja charge reste l'ancien).
 
@@ -152,17 +154,17 @@ class ExecutionMixin:
 
             avant = mise_a_jour.version_locale()
         except Exception:
-            mise_a_jour, avant = None, "?"
+            mise_a_jour, avant = None, "?"  # type: ignore[assignment]  # module absent : None, teste plus bas
         self._log(f"\n{'=' * 56}\n▶ Mise à jour de JobHunter\n{'=' * 56}\n")
 
-        def tache():
+        def tache() -> None:
             ok = self._exec([PY, "-m", "jobhunter.programmes.mise_a_jour"], "mise à jour")
             apres = mise_a_jour.version_locale() if mise_a_jour else "?"
             self.q.put(("maj_fin", (ok, avant, apres)))
 
         threading.Thread(target=tache, daemon=True).start()
 
-    def _apres_mise_a_jour(self, ok, avant, apres):
+    def _apres_mise_a_jour(self: "AppTypee", ok: Any, avant: Any, apres: Any) -> None:
         if not ok:
             messagebox.showwarning(
                 "JobHunter — mise à jour",
@@ -181,7 +183,7 @@ class ExecutionMixin:
             subprocess.Popen([PY, str(ROOT / "JobHunter.pyw")], cwd=str(ROOT))
             self.root.destroy()
 
-    def _exec_seq(self, seq):
+    def _exec_seq(self: "AppTypee", seq: Any) -> None:
         """seq : liste de (libelle, commande). Le libelle sert au log — cmd[-1]
         affichait le dernier ARGUMENT (« 8 », « linkedin »), pas l'etape."""
         for label, cmd in seq:
@@ -189,7 +191,7 @@ class ExecutionMixin:
                 break
         self.q.put(("done_all", None))
 
-    def _exec(self, cmd, label, announce=False):
+    def _exec(self: "AppTypee", cmd: Any, label: Any, announce: Any = False) -> Any:
         if announce:
             self.q.put(("line", f"\n--- {label} ---\n"))
         try:
@@ -228,7 +230,7 @@ class ExecutionMixin:
     # ── journal des pannes ───────────────────────────────────────────────────
     JOURNAL = SCRIPTS / "_logs" / "app_erreurs.log"
 
-    def _journal_panne(self, contexte, exc=None):
+    def _journal_panne(self: "AppTypee", contexte: Any, exc: Any = None) -> None:
         """Range une trace dans _logs/app_erreurs.log et la résume dans l'UI.
 
         Sans ça, une panne dans un rappel Tk est invisible : `.pyw` n'a pas de
@@ -257,11 +259,11 @@ class ExecutionMixin:
         except Exception:
             pass
 
-    def _panne_tk(self, typ, val, tb):
+    def _panne_tk(self: "AppTypee", typ: Any, val: Any, tb: Any) -> None:
         """Rappel d'exception global de Tk (bouton, menu, binding)."""
         self._journal_panne("rappel Tk", val)
 
-    def _drain(self):
+    def _drain(self: "AppTypee") -> None:
         try:
             while True:
                 kind, val = self.q.get_nowait()
@@ -290,7 +292,7 @@ class ExecutionMixin:
             # ARRIVE. Une ligne perdue vaut mieux qu'une application figee.
             self.root.after(100, self._drain)
 
-    def stop(self):
+    def stop(self: "AppTypee") -> None:
         """Arrete la tache en cours, ENFANTS COMPRIS.
 
         proc.terminate() ne tue que le Python lance ; Playwright et Chrome sont
@@ -317,7 +319,7 @@ class ExecutionMixin:
             except Exception:
                 pass
 
-    def _gen_docs(self):
+    def _gen_docs(self: "AppTypee") -> None:
         """Genere CV + lettre pour les N offres les mieux notees qui n'en ont pas.
 
         Le nombre etait fige a 30 : avec 284 offres sans documents, il fallait
@@ -327,7 +329,7 @@ class ExecutionMixin:
         except Exception:
             q = list(self.offers)
 
-        def _f(u):
+        def _f(u: Any) -> Any:
             if not u:
                 return False
             try:

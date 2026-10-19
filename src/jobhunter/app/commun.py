@@ -200,7 +200,7 @@ STEPS = [
 
 # 19 items empiles a plat ne se lisent pas. Regroupes par INTENTION : on
 # cherche « ou vont mes offres », pas un nom de script.
-MAINT = [
+MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
     (
         "Sources & offres",
         [
@@ -380,7 +380,7 @@ class _ChoixStatut(ctk.CTkOptionMenu):
 
     VIDE = "—"
 
-    def __init__(self, parent):
+    def __init__(self, parent: Any) -> None:
         super().__init__(
             parent,
             values=[self.VIDE] + STATUTS[1:],
@@ -399,9 +399,9 @@ class _ChoixStatut(ctk.CTkOptionMenu):
         )
         self.set("")
 
-    def get(self):
+    def get(self) -> Any:
         v = super().get()
         return "" if v == self.VIDE else v
 
-    def set(self, v):
+    def set(self, v: Any) -> None:
         super().set(v or self.VIDE)

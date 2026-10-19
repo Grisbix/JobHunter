@@ -9,10 +9,12 @@ import sys
 import threading
 import webbrowser
 from tkinter import ttk
+from typing import Any
 from urllib.parse import quote, urlparse
 
 from jobhunter.app import commun as _commun
 from jobhunter.app import theme as _theme
+from jobhunter.app._type_app import AppTypee
 from jobhunter.app.commun import DOM_SHORT, PAS_INTERESSE, PY, QUEUE, SCRIPTS
 from jobhunter.app.theme import (
     ACC,
@@ -44,7 +46,7 @@ from jobhunter.stockage import file as queue_io
 
 
 class PanneauxMixin:
-    def _hide_all(self):
+    def _hide_all(self: "AppTypee") -> None:
         """Cache tous les panneaux (dash, visionneuse, détail, listes)."""
         self.dash.pack_forget()
         if self.viewer is not None:
@@ -54,14 +56,14 @@ class PanneauxMixin:
         for p in self._panels.values():
             p.pack_forget()
 
-    def _show_dash(self):
+    def _show_dash(self: "AppTypee") -> None:
         self._hide_all()
         if getattr(self, "_viewer_close", None):
             self._viewer_close()  # déverrouille le pdf affiché
         self.dash.pack(fill="both", expand=True)
         self._nav_actif("offres")
 
-    def _stats_panel(self):
+    def _stats_panel(self: "AppTypee") -> None:
         """📊 STATS : vue synthétique de la queue (les données existent dans
         apply_queue.json + suivi.json mais n'étaient visibles nulle part)."""
         self._hide_all()
@@ -135,12 +137,12 @@ class PanneauxMixin:
             ("bar", "Répartition", 520, "w"),
         ):
             tv.heading(k, text=lbl)
-            tv.column(k, width=wd, anchor=anc, stretch=(k == "bar"))
+            tv.column(k, width=wd, anchor=anc, stretch=(k == "bar"))  # type: ignore[call-overload]  # typeshed veut un Literal pour anchor
         tv.pack(fill="both", expand=True)
         tv.tag_configure("h", foreground=ACC, font=(_theme.FONT_UI, 13, "bold"))
         w._tv = tv
 
-        def reload_():
+        def reload_() -> None:
             # relit le DISQUE : le pipeline tourne en fond, self.offers peut être périmé
             try:
                 q = queue_io.charger(QUEUE)
@@ -166,7 +168,7 @@ class PanneauxMixin:
             # « fit >= 8 » seul est trompeur : une offre dont le CV ou la lettre
             # n'existe plus SUR LE DISQUE ne peut pas etre envoyee, et la queue
             # peut tres bien garder la reference d'un fichier efface.
-            def _fichier(u):
+            def _fichier(u: Any) -> Any:
                 if not u:
                     return False
                 try:
@@ -204,7 +206,7 @@ class PanneauxMixin:
 
             tv.delete(*tv.get_children())
 
-            def section(titre, pairs):
+            def section(titre: Any, pairs: Any) -> None:
                 if not pairs:
                     return
                 tv.insert("", "end", values=(titre, "", ""), tags=("h",))
@@ -214,8 +216,8 @@ class PanneauxMixin:
                     pct = f"{100 * n / len(q):.0f}%" if q else ""
                     tv.insert("", "end", values=(f"   {nom}", n, f"{bar} {pct}"))
 
-            def count(key, src=None):
-                d = {}
+            def count(key: Any, src: Any = None) -> Any:
+                d: dict[str, Any] = {}
                 for o in src or q:
                     v = str(o.get(key) or "—").strip() or "—"
                     d[v] = d.get(v, 0) + 1
@@ -271,7 +273,7 @@ class PanneauxMixin:
         reload_()
         w.pack(fill="both", expand=True)
 
-    def _acces_panel(self):
+    def _acces_panel(self: "AppTypee") -> None:
         """🔐 ACCÈS : état de connexion par site + clés d'API.
         AUCUN mot de passe n'est stocké ici — ils restent dans le gestionnaire
         de Chrome, qui remplit lui-même les formulaires quand les scripts
@@ -377,7 +379,7 @@ class PanneauxMixin:
         keys = CL(w, text="", bg=BG, fg=MUT, font=(_theme.FONT_UI, 13), anchor="w", justify="left")
         keys.pack(fill="x", padx=28, pady=(0, 8))
 
-        def reload_():
+        def reload_() -> None:
             from jobhunter.programmes import acces as m
 
             try:
@@ -416,7 +418,7 @@ class PanneauxMixin:
         reload_()
         w.pack(fill="both", expand=True)
 
-    def _acces_open(self, w):
+    def _acces_open(self: "AppTypee", w: Any) -> None:
         """Ouvre la page de connexion du site sélectionné dans le navigateur."""
         sel = w._tv.selection()
         if not sel:
@@ -443,10 +445,10 @@ class PanneauxMixin:
         "wttj",
     )
 
-    def _is_board(self, url):
+    def _is_board(self: "AppTypee", url: Any) -> Any:
         return any(b in url.lower() for b in self.BOARD_HOSTS)
 
-    def _domains_file(self):
+    def _domains_file(self: "AppTypee") -> Any:
         F = SCRIPTS / "unique_domains.txt"
         try:
             return F, [
@@ -457,7 +459,7 @@ class PanneauxMixin:
         except Exception:
             return F, []
 
-    def _companies_panel(self):
+    def _companies_panel(self: "AppTypee") -> None:
         """🏢 ENTREPRISES (boards exclus → panneau Sites) : tableau à colonnes,
         Entreprise | Type | Offres en queue | ATS | 🔗 Lien (dernière, clic = ouvre)."""
         self._hide_all()
@@ -506,12 +508,12 @@ class PanneauxMixin:
             ("url", "Lien", 400, "w"),
         ):
             tv.heading(k, text=lbl)
-            tv.column(k, width=wd, anchor=anc, stretch=(k == "url"))
+            tv.column(k, width=wd, anchor=anc, stretch=(k == "url"))  # type: ignore[call-overload]  # typeshed veut un Literal pour anchor
         tv.pack(fill="both", expand=True, padx=28, pady=18)
         tv.tag_configure("odd", background=ROW1)
         tv.tag_configure("even", background=ROW0)
 
-        def company_name(u):
+        def company_name(u: Any) -> Any:
             host = urlparse(u).netloc.lower()
             for p in (
                 "careers.",
@@ -526,7 +528,7 @@ class PanneauxMixin:
                 host = host.replace(p, "")
             return host.split(".")[0].replace("-", " ").title()
 
-        def site_type(u):
+        def site_type(u: Any) -> Any:
             h = urlparse(u).netloc.lower()
             return (
                 "carrières"
@@ -541,7 +543,7 @@ class PanneauxMixin:
                 else "corporate"
             )
 
-        def ats_of(u):
+        def ats_of(u: Any) -> Any:
             for a in (
                 "smartrecruiters",
                 "talent-soft",
@@ -560,12 +562,12 @@ class PanneauxMixin:
                     return a.split(".")[0]
             return "—"
 
-        def offers_stats(u):
+        def offers_stats(u: Any) -> Any:
             """(nb offres en queue, domaine majoritaire) pour ce site."""
             root_d = urlparse(u).netloc.lower().replace("www.", "")
             core = root_d.split(".")[-2] if "." in root_d else root_d  # axa-im.com -> axa-im
             n = 0
-            doms = {}
+            doms: dict[str, Any] = {}
             for o in self.offers:
                 ou = (o.get("url") or "").lower()
                 if core and core in ou:
@@ -573,10 +575,10 @@ class PanneauxMixin:
                     d = DOM_SHORT.get(o.get("domaine"), o.get("domaine") or "")
                     if d:
                         doms[d] = doms.get(d, 0) + 1
-            dom = max(doms, key=doms.get) if doms else "—"
+            dom = max(doms, key=lambda k: doms[k]) if doms else "—"
             return n, dom
 
-        def reload():
+        def reload() -> None:
             for r in tv.get_children():
                 tv.delete(r)
             _, urls = self._domains_file()
@@ -595,7 +597,7 @@ class PanneauxMixin:
 
         w._reload = reload
 
-        def click(e):
+        def click(e: Any) -> None:
             if tv.identify_region(e.x, e.y) != "cell":
                 return
             if tv.identify_column(e.x) != "#6":
@@ -612,7 +614,7 @@ class PanneauxMixin:
         ent = CE(bar, bg=ROW0, fg=TX, insertbackground=TX, relief="flat", width=60)
         ent.pack(side="left", ipady=4, fill="x", expand=True)
 
-        def add():
+        def add() -> None:
             v = ent.get().strip()
             if not v.startswith("http"):
                 self._log("✗ URL http requise (site carrière de l'entreprise)\n")
@@ -628,7 +630,7 @@ class PanneauxMixin:
             self._log(f"＋ entreprise ajoutée : {v}\n")
             reload()
 
-        def dele():
+        def dele() -> None:
             it = tv.focus()
             if not it:
                 return
@@ -674,11 +676,11 @@ class PanneauxMixin:
         reload()
         w.pack(fill="both", expand=True)
 
-    def _sources_panel(self):
+    def _sources_panel(self: "AppTypee") -> None:
         """Sources du Scan offres (job_sources) : mots-clés + slugs ATS. sources_config.json."""
         CFG = SCRIPTS / "sources_config.json"
 
-        def _cfg():
+        def _cfg() -> Any:
             try:
                 return json.loads(CFG.read_text(encoding="utf-8"))
             except Exception:
@@ -687,14 +689,14 @@ class PanneauxMixin:
                 try:
                     from jobhunter import sources as js
 
-                    return {"keywords": list(js.KEYWORDS), "ats_slugs": dict(js.ATS_SLUGS)}
+                    return {"keywords": list(js.KEYWORDS), "ats_slugs": dict(js.ATS_SLUGS)}  # type: ignore[attr-defined]  # KEYWORDS et ATS_SLUGS sont des valeurs paresseuses
                 except Exception:
                     return {"keywords": [], "ats_slugs": {}}
 
-        def _save(c):
+        def _save(c: Any) -> None:
             CFG.write_text(json.dumps(c, ensure_ascii=False, indent=1), encoding="utf-8")
 
-        def add(v):
+        def add(v: Any) -> Any:
             if ":" not in v:
                 return (
                     "✗ format « kw: mots clés » (recherche LinkedIn/WTJ), "
@@ -721,7 +723,7 @@ class PanneauxMixin:
                 return f"✗ type inconnu « {kind} »"
             _save(c)
 
-        def dele(v):
+        def dele(v: Any) -> None:
             if ":" not in v:
                 return
             kind, val = [s.strip() for s in v.split(":", 1)]
@@ -785,7 +787,7 @@ class PanneauxMixin:
             ("url", "Lien", 420, "w"),
         ):
             tv.heading(k, text=lbl)
-            tv.column(k, width=wd, anchor=anc, stretch=(k == "url"))
+            tv.column(k, width=wd, anchor=anc, stretch=(k == "url"))  # type: ignore[call-overload]  # typeshed veut un Literal pour anchor
         tv.pack(fill="both", expand=True, padx=28, pady=18)
         tv.tag_configure("odd", background=ROW1)
         tv.tag_configure("even", background=ROW0)
@@ -798,10 +800,10 @@ class PanneauxMixin:
             "smartrecruiters": "https://careers.smartrecruiters.com/{s}",
         }
 
-        def n_src(needle):
+        def n_src(needle: Any) -> Any:
             return sum(1 for o in self.offers if needle in (o.get("source") or "").lower())
 
-        def rows():
+        def rows() -> Any:
             c = _cfg()
             out = []
             for k in c.get("keywords", []):
@@ -827,7 +829,7 @@ class PanneauxMixin:
                     out.append(("board", host, n, u))
             return out
 
-        def reload():
+        def reload() -> None:
             for r in tv.get_children():
                 tv.delete(r)
             rs = rows()
@@ -837,7 +839,7 @@ class PanneauxMixin:
 
         w._reload = reload
 
-        def click(e):
+        def click(e: Any) -> None:
             if tv.identify_region(e.x, e.y) != "cell" or tv.identify_column(e.x) != "#4":
                 return
             it = tv.identify_row(e.y)
@@ -852,17 +854,17 @@ class PanneauxMixin:
         ent = CE(bar, bg=ROW0, fg=TX, insertbackground=TX, relief="flat", width=60)
         ent.pack(side="left", ipady=4, fill="x", expand=True)
 
-        def do_add():
+        def do_add() -> None:
             msg = add(ent.get().strip())
             self._log((msg or f"＋ ajouté : {ent.get().strip()}") + "\n")
             ent.delete(0, "end")
             reload()
 
-        def do_del():
+        def do_del() -> None:
             it = tv.focus()
             if not it:
                 return
-            t, s, _n, u = tv.item(it)["values"]
+            t, s, _n, u = tv.item(it)["values"]  # type: ignore[str-unpack]  # typeshed : values peut etre str ; ici toujours un tuple
             dele(f"{t}: {u if t == 'board' else s}")
             self._log(f"－ retiré : {t}: {s}\n")
             reload()
@@ -900,7 +902,7 @@ class PanneauxMixin:
         reload()
         w.pack(fill="both", expand=True)
 
-    def _add_offer_url(self):
+    def _add_offer_url(self: "AppTypee") -> None:
         """Analyse le lien collé (add_offer.py) : titre+entreprise+description → queue → CV/lettre."""
         url = self.e_url.get().strip()
         if not url.startswith("http"):
@@ -909,7 +911,7 @@ class PanneauxMixin:
         self.b_addurl.configure(text="Analyse…", state="disabled")
         self._log(f"🔎 analyse de l'offre : {url[:70]}…\n")
 
-        def work():
+        def work() -> None:
             try:
                 r = subprocess.run(
                     [PY, "-m", "jobhunter.programmes.add_offer", "--url", url],
@@ -926,7 +928,7 @@ class PanneauxMixin:
                 out = f"! {type(e).__name__}"
             self.root.after(0, lambda: done(out))
 
-        def done(out):
+        def done(out: Any) -> None:
             for line in out.splitlines():
                 if line.strip():
                     self._log("  " + line.strip()[:100] + "\n")

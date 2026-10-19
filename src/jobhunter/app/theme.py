@@ -4,6 +4,7 @@ Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
 
 import datetime
 import tkinter as tk
+from typing import Any
 
 import customtkinter as ctk
 
@@ -135,7 +136,7 @@ PAD_PAGE = 24  # marge exterieure    clamp(24px, 3vw,   56px)
 GAP = 16  # entre widgets       clamp(16px, 1.5vw, 28px)
 
 
-def _resoudre_espacements(fenetre):
+def _resoudre_espacements(fenetre: Any) -> None:
     global PAD_PAGE, GAP
     try:
         w = fenetre.winfo_screenwidth()
@@ -145,7 +146,7 @@ def _resoudre_espacements(fenetre):
     GAP = 12
 
 
-def _resoudre_polices():
+def _resoudre_polices() -> None:
     global FONT_UI, FONT_MONO
     import tkinter.font as _tkf
 
@@ -166,11 +167,11 @@ def _resoudre_polices():
 _TRANSPARENT = (BG,)  # seul le fond principal est "conteneur"
 
 
-def _fgcol(bg):
+def _fgcol(bg: Any) -> Any:
     return "transparent" if bg in _TRANSPARENT else bg
 
 
-def _session_presentation(session, verification, aujourd_hui=None):
+def _session_presentation(session: Any, verification: Any, aujourd_hui: Any = None) -> Any:
     """Un contrôle historique n'est pas une preuve de connexion actuelle."""
     aujourd_hui = aujourd_hui or datetime.date.today()
     try:
@@ -196,16 +197,16 @@ def _session_presentation(session, verification, aujourd_hui=None):
 
 
 def CF(
-    parent,
-    bg=None,
-    width=None,
-    height=None,
-    corner_radius=None,
-    highlightbackground=None,
-    highlightthickness=0,
-    plat=False,
-    **_,
-):
+    parent: Any,
+    bg: Any = None,
+    width: Any = None,
+    height: Any = None,
+    corner_radius: Any = None,
+    highlightbackground: Any = None,
+    highlightthickness: Any = 0,
+    plat: Any = False,
+    **_: Any,
+) -> Any:
     """plat=True : simple conteneur de mise en page, sans liser ni coins —
     une rangee de boutons posee DANS une carte n'est pas une carte de plus."""
     kw = {}
@@ -234,20 +235,20 @@ def CF(
 
 
 def CB(
-    parent,
-    text="",
-    command=None,
-    bg=None,
-    fg=None,
-    activebackground=None,
-    width=None,
-    pady=None,
-    anchor=None,
-    font=None,
-    corner_radius=None,
-    cursor=None,
-    **_,
-):
+    parent: Any,
+    text: Any = "",
+    command: Any = None,
+    bg: Any = None,
+    fg: Any = None,
+    activebackground: Any = None,
+    width: Any = None,
+    pady: Any = None,
+    anchor: Any = None,
+    font: Any = None,
+    corner_radius: Any = None,
+    cursor: Any = None,
+    **_: Any,
+) -> Any:
     kw = {
         "text": text,
         "command": command,
@@ -285,17 +286,17 @@ def CB(
 
 
 def CL(
-    parent,
-    text="",
-    bg=None,
-    fg=None,
-    font=None,
-    anchor=None,
-    justify=None,
-    wraplength=None,
-    width=None,
-    **_,
-):
+    parent: Any,
+    text: Any = "",
+    bg: Any = None,
+    fg: Any = None,
+    font: Any = None,
+    anchor: Any = None,
+    justify: Any = None,
+    wraplength: Any = None,
+    width: Any = None,
+    **_: Any,
+) -> Any:
     kw = {"text": text}
     if bg is not None:
         kw["fg_color"] = _fgcol(bg)
@@ -312,7 +313,9 @@ def CL(
     return ctk.CTkLabel(parent, **kw)
 
 
-def CE(parent, bg=None, fg=None, width=None, font=None, **_):
+def CE(
+    parent: Any, bg: Any = None, fg: Any = None, width: Any = None, font: Any = None, **_: Any
+) -> Any:
     # Focus visible : la bordure suffit, pas besoin d'un halo.
     kw = {"corner_radius": RAD_BTN, "border_width": 1, "border_color": LINE}
     if bg is not None:
@@ -326,7 +329,17 @@ def CE(parent, bg=None, fg=None, width=None, font=None, **_):
     return ctk.CTkEntry(parent, **kw)
 
 
-def make_btn(parent, text, bg=BTN, fg=TX, cmd=None, pw=10, ph=4, w=None, side=None):
+def make_btn(
+    parent: Any,
+    text: Any,
+    bg: Any = BTN,
+    fg: Any = TX,
+    cmd: Any = None,
+    pw: Any = 10,
+    ph: Any = 4,
+    w: Any = None,
+    side: Any = None,
+) -> Any:
     """Bouton solide, arrondi, moderne — aucun effet vitre."""
     b = CB(
         parent,

@@ -5,8 +5,10 @@ Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
 import subprocess
 import threading
 import tkinter as tk
+from typing import Any
 
 from jobhunter.app import commun as _commun
+from jobhunter.app._type_app import AppTypee
 from jobhunter.app.commun import PY, QUEUE, SCRIPTS
 from jobhunter.app.theme import ACC, ACC_H, ACC_TX, BG, BTN, BTN_H, CARD, CB, CF, TX
 from jobhunter.stockage import file as queue_io
@@ -15,7 +17,7 @@ from jobhunter.stockage import suivi as suivi_io
 
 class FicheMixin:
     # ── édition suivi (écrit suivi.json direct) ──
-    def _load_edit(self, e=None):
+    def _load_edit(self: "AppTypee", e: Any = None) -> None:
         it = self.tree.focus()
         o = self.rowmap.get(it)
         if not o:
@@ -32,7 +34,7 @@ class FicheMixin:
         self.e_date.insert(0, sv.get("d", ""))
         self._show_detail(o)
 
-    def _fill_detail(self, d, o):
+    def _fill_detail(self: "AppTypee", d: Any, o: Any) -> None:
         """Écrit TOUTES les colonnes Excel de l'offre dans le widget texte d."""
         d.configure(state="normal")
         d.delete("1.0", "end")
@@ -84,10 +86,10 @@ class FicheMixin:
         d.configure(state="disabled")
         d.see("1.0")
 
-    def _show_detail(self, o):
+    def _show_detail(self: "AppTypee", o: Any) -> None:
         self._fill_detail(self.detail, o)
 
-    def _fiche_popup(self, e=None):
+    def _fiche_popup(self: "AppTypee", e: Any = None) -> None:
         o = self.rowmap.get(self.tree.focus())
         if not o:
             return
@@ -112,7 +114,10 @@ class FicheMixin:
             relief="flat",
         ).pack(side="left")
         CB(
-            btn, text="Pas intéressé", command=lambda: (self._pas_interesse(o), w.destroy()), bg=BTN
+            btn,
+            text="Pas intéressé",
+            command=lambda: (self._pas_interesse(o), w.destroy()),  # type: ignore[func-returns-value]  # lambda Tk qui enchaine des appels sans valeur
+            bg=BTN,
         ).pack(side="left", padx=(12, 0))
         CB(
             btn,
@@ -131,7 +136,7 @@ class FicheMixin:
             CB(
                 btn,
                 text="Voir CV",
-                command=lambda: (w.destroy(), self._cv_viewer(str(cvp))),
+                command=lambda: (w.destroy(), self._cv_viewer(str(cvp))),  # type: ignore[func-returns-value]  # lambda Tk qui enchaine des appels sans valeur
                 bg=BTN,
                 fg=TX,
                 relief="flat",
@@ -141,14 +146,14 @@ class FicheMixin:
             CB(
                 btn,
                 text="Voir lettre",
-                command=lambda: (w.destroy(), self._cv_viewer(str(ltp))),
+                command=lambda: (w.destroy(), self._cv_viewer(str(ltp))),  # type: ignore[func-returns-value]  # lambda Tk qui enchaine des appels sans valeur
                 bg=BTN,
                 fg=TX,
                 relief="flat",
             ).pack(side="left", padx=12)
         CB(btn, text="Fermer", command=w.destroy, bg=BTN, fg=TX, relief="flat").pack(side="right")
 
-    def _fetch_desc(self, o, textwidget, btn):
+    def _fetch_desc(self: "AppTypee", o: Any, textwidget: Any, btn: Any) -> None:
         """Récupère la description de l'offre en ligne (scrape_desc.py, headless) → queue → détail."""
         key = self._oid(o)
         if not (o.get("url") or "").startswith("http"):
@@ -159,7 +164,7 @@ class FicheMixin:
         except Exception:
             pass
 
-        def work():
+        def work() -> None:
             try:
                 r = subprocess.run(
                     [PY, "-m", "jobhunter.programmes.scrape_desc", "--key", key],
@@ -174,7 +179,7 @@ class FicheMixin:
                 out = f"err {type(e).__name__}: {e}"
             self.root.after(0, lambda: done(out))
 
-        def done(out):
+        def done(out: Any) -> None:
             try:
                 q = queue_io.charger(QUEUE)
                 for x in q:
@@ -199,7 +204,7 @@ class FicheMixin:
 
         threading.Thread(target=work, daemon=True).start()
 
-    def _toggle_account(self):
+    def _toggle_account(self: "AppTypee") -> None:
         """Marque/retire un compte pour ce site (comptes_sites.json)."""
         o = self._cur
         if not o:
@@ -231,7 +236,7 @@ class FicheMixin:
         self.refresh_table()
         self._load_edit()
 
-    def save_edit(self):
+    def save_edit(self: "AppTypee") -> None:
         if not self._cur:
             self._log("Sélectionne d'abord une offre.\n")
             return
@@ -248,7 +253,7 @@ class FicheMixin:
         self._log(f"💾 suivi enregistré: {oid} → {rec or '(vidé)'}\n")
         self.refresh_table()
 
-    def _ecrire_suivi(self, oid, rec):
+    def _ecrire_suivi(self: "AppTypee", oid: Any, rec: Any) -> Any:
         """UNE candidature, écrite sous verrou sur l'état frais du disque.
 
         L'app écrivait `self.suivi`, son instantané mémoire : un clic « postulé »

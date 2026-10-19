@@ -185,7 +185,9 @@ file de 12 137 offres et sur les clés que le code lit ou écrit. `cli`, `accuei
 Puis `documents.rendu`, `llm`, `commun`, `cv_auto` et `cv` passent stricts (banc 0 écart) ;
 puis `lettre` et `message` : **tout `documents` est strict**, puis **tout `navigation`**
 (objets Playwright typés `Any` : `page.evaluate` rend Any de toute façon), puis **tout
-`sources`**. Restent `app` (1 024) et les programmes. Leçon : un renommage de variable
+`sources`**, puis **tout `app`** : un `Protocol` généré (`app/_type_app.py`) déclare ce que
+chaque mixin voit de `self` — un nom lu et défini nulle part devient une erreur, mais les
+types y restent `Any` (à préciser attribut par attribut). Restent les programmes. Leçon : un renommage de variable
 que mypy jugeait correct cassait `contrat_de_la_description` (32 écarts au banc, aucun
 test) — le banc reste obligatoire même pour du typage.
 
