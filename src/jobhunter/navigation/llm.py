@@ -3,6 +3,7 @@
 Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
 
 import random as _rnd
+from typing import Any
 
 from jobhunter.navigation.navigateur import human_click, human_scroll, human_type
 from jobhunter.navigation.page import analyze
@@ -39,7 +40,9 @@ def _click_by_text_js(label: str) -> str:
     )
 
 
-def vision_pick(page, task, model=None, host="http://localhost:11434"):
+def vision_pick(
+    page: Any, task: str, model: str | None = None, host: str = "http://localhost:11434"
+) -> dict[str, Any]:
     """Fallback vision : screenshot -> Ollama lit le bon bouton -> clic DOM.
     Auto-détecte le modèle vision disponible (qwen2.5vl, llava, etc.).
     Silencieux si Ollama absent/modèle absent. Retour {clicked, label, note}."""
@@ -95,7 +98,7 @@ def vision_pick(page, task, model=None, host="http://localhost:11434"):
     return {"clicked": False, "label": label, "note": "label vu mais introuvable au DOM"}
 
 
-def _detect_vision_model(host="http://localhost:11434") -> str | None:
+def _detect_vision_model(host: str = "http://localhost:11434") -> str | None:
     """Détecte le premier modèle vision disponible via l'API Ollama.
     Ordre de préférence : qwen2.5vl → llava → minicpm-v → bakllava."""
     import json
@@ -116,7 +119,7 @@ def _detect_vision_model(host="http://localhost:11434") -> str | None:
         req = urllib.request.Request(host + "/api/tags")
         with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read().decode())
-        models = [m.get("name", "") for m in data.get("models", [])]
+        models: list[str] = [m.get("name", "") for m in data.get("models", [])]
         for kw in VISION_KEYWORDS:
             for m in models:
                 if kw in m.lower():
@@ -131,7 +134,7 @@ def _detect_vision_model(host="http://localhost:11434") -> str | None:
     return None  # rien trouvé → fallback manuel
 
 
-def _detect_text_model(host="http://localhost:11434"):
+def _detect_text_model(host: str = "http://localhost:11434") -> str | None:
     """Détecte un modèle texte Ollama pour le raisonnement (mistral/llama/qwen/phi)."""
     import json
     import urllib.request
@@ -140,7 +143,9 @@ def _detect_text_model(host="http://localhost:11434"):
     try:
         req = urllib.request.Request(host + "/api/tags")
         with urllib.request.urlopen(req, timeout=5) as resp:
-            models = [m.get("name", "") for m in json.loads(resp.read().decode()).get("models", [])]
+            models: list[str] = [
+                m.get("name", "") for m in json.loads(resp.read().decode()).get("models", [])
+            ]
         for kw in PREF:
             for m in models:
                 if kw in m.lower() and "vl" not in m.lower() and "vision" not in m.lower():
@@ -172,7 +177,14 @@ _AGENT_DOM_JS = r"""
 """
 
 
-def llm_agent(page, goal, max_steps=8, model=None, host="http://localhost:11434", profile=None):
+def llm_agent(
+    page: Any,
+    goal: str,
+    max_steps: int = 8,
+    model: str | None = None,
+    host: str = "http://localhost:11434",
+    profile: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """#1 Agent plan-act : à chaque étape lit le DOM (digest), demande au LLM local
     (Ollama) l'action à faire pour atteindre `goal`, l'exécute, recommence.
     Actions : click / fill / scroll / done / stop. GARDE-FOUS : refuse submit final
@@ -195,7 +207,7 @@ def llm_agent(page, goal, max_steps=8, model=None, host="http://localhost:11434"
         r"(envoyer ma candidature|soumettre|submit application|confirmer et envoyer|valider et envoyer|finaliser.*candidature|envoyer definitivement)",
         _re.I,
     )
-    log = []
+    log: list[Any] = []
     for step in range(max(1, max_steps)):
         info = analyze(page)
         if info.get("captcha"):

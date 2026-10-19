@@ -2,6 +2,8 @@
 
 Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
 
+from typing import Any
+
 # ── OTP / code email (SEMI-AUTO : colle le code, surligne Verify, l'humain clique) ──
 _OTP_RX_ATTR = r"(otp|passcode|one.?time|verification|verif|\bcode\b|s[eé]cur|security|token|\bpin\b|2fa|mfa|activation|confirm)"
 
@@ -65,7 +67,7 @@ _OTP_VERIFY_JS = r"""
 """
 
 
-def otp_present(page):
+def otp_present(page: Any) -> bool:
     """True si la page attend un code OTP (champ code / boîtes 1-chiffre / texte)."""
     try:
         return bool(page.evaluate(_OTP_DETECT_JS).get("otp"))
@@ -73,7 +75,7 @@ def otp_present(page):
         return False
 
 
-def paste_otp(page, code):
+def paste_otp(page: Any, code: Any) -> Any:
     """Colle le code OTP dans le(s) champ(s). NE soumet PAS. Retour {filled, mode}."""
     if not code:
         return {"filled": 0, "mode": "no_code"}
@@ -83,7 +85,7 @@ def paste_otp(page, code):
         return {"filled": 0, "mode": "err:" + type(e).__name__}
 
 
-def highlight_otp_verify(page):
+def highlight_otp_verify(page: Any) -> Any:
     """Surligne en ROUGE le bouton Vérifier/Valider (data-wn-otp=verify). NE clique PAS.
     Retour le libellé du bouton, ou '' si introuvable."""
     try:
@@ -92,7 +94,7 @@ def highlight_otp_verify(page):
         return ""
 
 
-def otp_flow(page, code):
+def otp_flow(page: Any, code: Any) -> dict[str, Any]:
     """SEMI-AUTO : colle le code + surligne le bouton de validation. L'HUMAIN clique.
     Retour {pasted, mode, verify}."""
     r = paste_otp(page, code)

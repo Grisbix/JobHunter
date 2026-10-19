@@ -4,9 +4,10 @@ Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
 
 import random as _rnd
 import re as _re_block
+from typing import Any
 
 
-def human_pause(page, lo=350, hi=1100):
+def human_pause(page: Any, lo: int = 350, hi: int = 1100) -> None:
     """Pause fixe (moyenne de lo et hi), pour ne pas marteler le site."""
     try:
         page.wait_for_timeout((lo + hi) // 2)
@@ -14,7 +15,7 @@ def human_pause(page, lo=350, hi=1100):
         pass
 
 
-def human_type(page, selector, text, click_first=True):
+def human_type(page: Any, selector: str, text: str, click_first: bool = True) -> bool:
     """Remplit le champ. Retour True si champ trouve."""
     try:
         loc = page.locator(selector).first
@@ -26,7 +27,7 @@ def human_type(page, selector, text, click_first=True):
         return False
 
 
-def human_click(page, selector, steps=None, timeout=4000):
+def human_click(page: Any, selector: str, steps: int | None = None, timeout: int = 4000) -> bool:
     """Clique l'element. Retour True si clique."""
     try:
         page.locator(selector).first.click(timeout=timeout)
@@ -35,7 +36,7 @@ def human_click(page, selector, steps=None, timeout=4000):
         return False
 
 
-def human_scroll(page, steps=None):
+def human_scroll(page: Any, steps: int | None = None) -> None:
     """Fait defiler la page de quelques ecrans."""
     for _ in range(steps or 3):
         try:
@@ -62,13 +63,13 @@ _CAPTCHA_OK_RX = _re_block.compile(
 )
 
 
-def block_resources(ctx, images=False):
+def block_resources(ctx: Any, images: bool = False) -> None:
     """TURBO : abandonne les requêtes lourdes/inutiles (media, fonts, pubs, analytics ;
     images aussi si images=False). Accélère 2-5× le chargement. CSS gardé (layout/clics).
     Les ressources CAPTCHA passent toujours (sinon grille invisible = insoluble)."""
     heavy = {"media", "font"} | (set() if images else {"image"})
 
-    def _route(route):
+    def _route(route: Any) -> Any:
         try:
             rq = route.request
             if _CAPTCHA_OK_RX.search(rq.url):
@@ -88,7 +89,9 @@ def block_resources(ctx, images=False):
         pass
 
 
-def robust_goto(page, url, tries=3, wait_until="domcontentloaded"):
+def robust_goto(
+    page: Any, url: str, tries: int = 3, wait_until: str = "domcontentloaded"
+) -> dict[str, Any]:
     """goto avec retry + backoff sur erreurs réseau/timeout transitoires.
     Retour {ok, status, note}. Ne contourne pas captcha (détecté ailleurs)."""
     last = ""
@@ -113,14 +116,14 @@ def robust_goto(page, url, tries=3, wait_until="domcontentloaded"):
     return {"ok": False, "status": 0, "note": last or "goto échoué"}
 
 
-def apply_stealth(context_or_page):
+def apply_stealth(context_or_page: Any) -> bool:
     """RETIRE. Masquer l'automatisation au site (navigator.webdriver, empreinte
     WebGL...) est un contournement anti-bot, contraire aux regles du projet.
     Garde pour les appelants ; ne fait rien."""
     return False
 
 
-def available_engines():
+def available_engines() -> list[str]:
     """Moteurs installes : Playwright seul."""
     try:
         import playwright.sync_api  # noqa: F401
@@ -130,7 +133,7 @@ def available_engines():
         return []
 
 
-def get_sync_playwright(engine="auto"):
+def get_sync_playwright(engine: str = "auto") -> tuple[Any, str]:
     """Retourne (sync_playwright, "playwright"), quel que soit engine."""
     from playwright.sync_api import sync_playwright
 
@@ -147,20 +150,20 @@ class BrowserSession:
         page = bs.recover()  # relance navigateur + contexte + page fluo
     """
 
-    def __init__(self, headless: bool = False, engine: str = "playwright"):
+    def __init__(self, headless: bool = False, engine: str = "playwright") -> None:
         self.headless = headless
         self.engine = engine
-        self._playwright = None
-        self._browser = None
-        self._context = None
-        self._page = None
+        self._playwright: Any = None
+        self._browser: Any = None
+        self._context: Any = None
+        self._page: Any = None
         self._crashed = False
 
-    def _get_playwright(self):
+    def _get_playwright(self) -> Any:
         sp, self.engine = get_sync_playwright(self.engine)
         return sp
 
-    def start(self):
+    def start(self) -> Any:
         """Lance le navigateur et retourne la page active."""
         SyncPlaywright = self._get_playwright()
         self._playwright = SyncPlaywright().start()
@@ -181,7 +184,7 @@ class BrowserSession:
         self._crashed = False
         return self._page
 
-    def recover(self):
+    def recover(self) -> Any:
         """Relance navigateur après crash (même context, nouvelle page). Retour page."""
         import time as _t
 
@@ -223,7 +226,7 @@ class BrowserSession:
         except Exception:
             return False
 
-    def close(self):
+    def close(self) -> None:
         try:
             if self._page and not self._page.is_closed():
                 self._page.close()

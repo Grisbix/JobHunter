@@ -508,7 +508,7 @@ def get_category(domain: str) -> str:
     """Retourne la catégorie: blocked, ats_external, no_space, dead, unknown."""
     s = get_strategy(domain)
     if s:
-        return s.get("category", "unknown")
+        return str(s.get("category", "unknown"))
     return "unknown"
 
 

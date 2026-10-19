@@ -4,6 +4,7 @@ Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
 
 import random as _rnd
 import re as _re_lex
+from typing import Any
 
 from jobhunter import racine as _racine
 from jobhunter.navigation import navigateur as _navigateur
@@ -43,7 +44,7 @@ _WIZARD_NEXT_JS = r"""
 """
 
 
-def run_wizard(page, fill_fn=None, max_screens=6):
+def run_wizard(page: Any, fill_fn: Any = None, max_screens: int = 6) -> dict[str, Any]:
     """#3 Parcourt un formulaire de candidature MULTI-ÉCRANS (Workday/iCIMS/SmartRecruiters).
     Boucle : remplit l'écran (fill_fn) + coche CGU + clique "Suivant/Continuer"
     (jamais le submit final) → écran suivant → répète. S'arrête quand seul le submit
@@ -115,7 +116,7 @@ _FILEINPUT_JS = r"""
 """
 
 
-def accept_consent(page):
+def accept_consent(page: Any) -> Any:
     """Coche les cases de consentement OBLIGATOIRES (CGU, conditions, politique de confidentialité,
     traitement des données) nécessaires pour postuler. Ne coche PAS les opt-ins
     marketing (newsletter, offres commerciales)."""
@@ -145,7 +146,7 @@ def accept_consent(page):
         return 0
 
 
-def _handle_smartrecruiters_iframe(page):
+def _handle_smartrecruiters_iframe(page: Any) -> Any:
     """SmartRecruiters: click Apply button, wait for the application iframe,
     and return the frame object (or None if not applicable).
 
@@ -240,7 +241,14 @@ def _handle_smartrecruiters_iframe(page):
     return None
 
 
-def apply_to_offer(page, offer_url, profile, cv_path=None, lettre_path=None, submit_highlight=True):
+def apply_to_offer(
+    page: Any,
+    offer_url: str,
+    profile: dict[str, Any],
+    cv_path: Any = None,
+    lettre_path: Any = None,
+    submit_highlight: bool = True,
+) -> Any:
     """Navigue vers une offre d'emploi, remplit TOUS les champs du formulaire,
     upload CV + lettre de motivation, et surligne le bouton de soumission.
 
@@ -259,7 +267,7 @@ def apply_to_offer(page, offer_url, profile, cv_path=None, lettre_path=None, sub
     import time as _time
     from pathlib import Path as _P
 
-    result = {
+    result: dict[str, Any] = {
         "success": False,
         "filled_count": 0,
         "uploaded": [],
@@ -273,7 +281,7 @@ def apply_to_offer(page, offer_url, profile, cv_path=None, lettre_path=None, sub
 
     ROOT = _racine.racine()  # racine du projet (marqueur, JOBHUNTER_RACINE)
 
-    def _resolve_path(p):
+    def _resolve_path(p: Any) -> str | None:
         if not p:
             return None
         pp = _P(p)
@@ -292,16 +300,16 @@ def apply_to_offer(page, offer_url, profile, cv_path=None, lettre_path=None, sub
         # try from profile cv_paths
         for domain_key in ["ESG_Finance_Durable", "default"]:
             p = profile.get("cv_paths", {}).get(domain_key)
-            r = _resolve_path(p)
-            if r:
-                cv = r
+            trouve = _resolve_path(p)
+            if trouve:
+                cv = trouve
                 break
     if not letter:
         for domain_key in ["ESG_Finance_Durable", "default"]:
             p = profile.get("lettre_paths", {}).get(domain_key)
-            r = _resolve_path(p)
-            if r:
-                letter = r
+            trouve = _resolve_path(p)
+            if trouve:
+                letter = trouve
                 break
 
     # ── Step 1: Navigate ──
@@ -385,7 +393,7 @@ def apply_to_offer(page, offer_url, profile, cv_path=None, lettre_path=None, sub
         for alias in aliases:
             canonical_map[alias] = canonical
 
-    def _find_profile_value(ctx):
+    def _find_profile_value(ctx: str) -> Any:
         """Match field context to profile key and return the value."""
         # Check each canonical key's aliases
         for alias, canonical in canonical_map.items():
@@ -589,7 +597,7 @@ def apply_to_offer(page, offer_url, profile, cv_path=None, lettre_path=None, sub
     return result
 
 
-def smart_upload(page, cv, letter):
+def smart_upload(page: Any, cv: Any, letter: Any) -> Any:
     """Upload CV + lettre en matchant chaque input[type=file] par label (cv/lettre).
     Inputs cachés gérés (set_input_files marche même non visible)."""
     from pathlib import Path as _P
@@ -599,7 +607,7 @@ def smart_upload(page, cv, letter):
         metas = page.evaluate(_FILEINPUT_JS)
     except Exception:
         metas = []
-    files = {
+    files: dict[str, Any] = {
         "cv": cv if cv and _P(cv).exists() else None,
         "letter": letter if letter and _P(letter).exists() else None,
     }
@@ -708,7 +716,7 @@ _PROFILE_LEX = [
 ]
 
 
-def _match_profile_key(key):
+def _match_profile_key(key: str) -> str | None:
     for rx, pk in _PROFILE_LEX:
         if _re_lex.search(rx, key):
             return pk
@@ -734,7 +742,7 @@ _CONSENT_DIALOG_JS = r"""
 """
 
 
-def accept_consent_dialog(page):
+def accept_consent_dialog(page: Any) -> Any:
     """Clique Proceed/Continuer d'un dialogue de consentement obligatoire (≠ submit, ≠ Decline)."""
     try:
         return page.evaluate(_CONSENT_DIALOG_JS)
@@ -742,7 +750,7 @@ def accept_consent_dialog(page):
         return {"clicked": ""}
 
 
-def _best_form_target(page):
+def _best_form_target(page: Any) -> Any:
     """Renvoie le contexte (page OU iframe) qui contient le vrai formulaire.
     SmartRecruiters/Taleo/SuccessFactors chargent le form dans une iframe :
     on choisit le frame avec le plus de champs de saisie visibles."""
@@ -772,7 +780,9 @@ def _best_form_target(page):
     return best
 
 
-def fill_application(page, profile, cv=None, letter=None, docs=None):
+def fill_application(
+    page: Any, profile: dict[str, Any], cv: Any = None, letter: Any = None, docs: Any = None
+) -> dict[str, Any]:
     """POSTULER UNIVERSEL : reconnait TOUS les patterns de champs et remplit tout —
     texte/email/tel/date/select(dropdown)/radio(civilité)/checkbox(CGU)/textarea +
     upload de TOUS les documents (CV, lettre, + docs extra par label).
@@ -906,7 +916,7 @@ def fill_application(page, profile, cv=None, letter=None, docs=None):
     }
 
 
-def _fold(s):
+def _fold(s: str) -> str:
     """minuscule + sans accents (Française→francaise) pour matcher les <option>."""
     import unicodedata as _ud
 
@@ -915,7 +925,7 @@ def _fold(s):
     ).strip()
 
 
-def _pick_option(loc, options, val, extra=()):
+def _pick_option(loc: Any, options: Any, val: Any, extra: Any = ()) -> bool:
     """Sélectionne l'option d'un <select> matchant val (label/valeur), + variantes extra.
     Accent-insensible + match code ISO (option value='FR' pour 'France')."""
     cands = [_fold(val)] + [_fold(e) for e in extra]

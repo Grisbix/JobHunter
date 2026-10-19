@@ -129,6 +129,7 @@ module = [
     "jobhunter.accueil",
     "jobhunter.mise_a_jour",
     "jobhunter.documents.*",
+    "jobhunter.navigation.*",
 ]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

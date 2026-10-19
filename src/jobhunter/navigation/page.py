@@ -2,6 +2,8 @@
 
 Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
 
+from typing import Any
+
 # ── COOKIES ──
 COOKIE_JS = r"""
 (() => {
@@ -211,7 +213,7 @@ def pick_js(task: str) -> str:
     """ % (_DEEP_CLICKABLE, want, others, NEVER)
 
 
-def dismiss_cookies(page):
+def dismiss_cookies(page: Any) -> Any:
     try:
         return page.evaluate(COOKIE_JS)
     except Exception:
@@ -249,7 +251,7 @@ _OVERLAY_JS = r"""
 """
 
 
-def dismiss_overlays(page):
+def dismiss_overlays(page: Any) -> Any:
     """Ferme les widgets chat (Intercom/Drift/Zendesk/Crisp…) et modales non-essentielles
     qui interceptent les clics. NE touche PAS aux bannières cookies/formulaires d'offre/auth."""
     try:
@@ -258,7 +260,7 @@ def dismiss_overlays(page):
         return {"closed": 0, "kinds": []}
 
 
-def analyze(page):
+def analyze(page: Any) -> Any:
     try:
         return page.evaluate(ANALYZE_JS)
     except Exception:
@@ -278,7 +280,9 @@ _COUNT_VISIBLE_INPUTS_JS = r"""
 """
 
 
-def wait_for_form(page, min_inputs=1, timeout_ms=7000, timeout=None):
+def wait_for_form(
+    page: Any, min_inputs: int = 1, timeout_ms: int = 7000, timeout: int | None = None
+) -> Any:
     """Attend que les champs de saisie apparaissent (formulaire chargé
     dynamiquement). Retour nb d'inputs visibles (0 = jamais rendu)."""
     if timeout is not None:
@@ -301,7 +305,7 @@ def wait_for_form(page, min_inputs=1, timeout_ms=7000, timeout=None):
     return n
 
 
-def click_for_task(page, task):
+def click_for_task(page: Any, task: str) -> Any:
     try:
         r = page.evaluate(pick_js(task))
         if r and r.get("found"):

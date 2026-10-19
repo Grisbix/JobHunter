@@ -2,6 +2,8 @@
 
 Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
 
+from typing import Any
+
 # JS : reconnait la PLATEFORME/ATS (URL host + signatures DOM) et renvoie
 # {name, jobLinkRx (regex liens d'offre), searchSel (champ recherche), note}.
 _ATS_DETECT_JS = r"""
@@ -50,7 +52,7 @@ _ATS_DETECT_JS = r"""
 """
 
 
-def detect_ats(page):
+def detect_ats(page: Any) -> Any:
     """Reconnait la plateforme/ATS du site d'entreprise (Workday, iCIMS, TalentSoft,
     SmartRecruiters, Greenhouse, Lever, Taleo, SuccessFactors, Teamtailor, Breezy,
     Recruitee, Workable, WTTJ, … + 'generic'). Retour {name, jobLinkRx, searchSel}."""
@@ -144,7 +146,7 @@ _SEGMENT_JS = r"""
 """
 
 
-def segment_page(page):
+def segment_page(page: Any) -> Any:
     """RECONNAISSANCE COMPLÈTE : mappe toutes les parties de la page —
     régions (header/nav/main/footer/aside/iframes), overlays (cookie/captcha/chat/
     modal/newsletter), chaque bouton classé par rôle (cookie/login/register/apply/
@@ -163,7 +165,7 @@ def segment_page(page):
         }
 
 
-def plan_action(page, goal="apply"):
+def plan_action(page: Any, goal: str = "apply") -> dict[str, Any]:
     """CERVEAU déterministe : lit la carte complète (segment_page) et renvoie la
     MEILLEURE action suivante — {action, role, reason, seg}. Actions :
     stop(captcha) / cookies / ready / drill / careers / click / auth / register / search / none.
@@ -227,7 +229,7 @@ def plan_action(page, goal="apply"):
     return {"action": "none", "role": "other", "reason": "rien de concluant", "seg": s}
 
 
-def describe_page(page):
+def describe_page(page: Any) -> str:
     """Résumé lisible du segment (debug/log) : régions + overlays + rôles + forms."""
     s = segment_page(page)
     if s.get("error"):
@@ -318,7 +320,7 @@ _OPEN_RX = r"(postuler|postulez|candidater|je postule|je candidate|d[eé]poser (
 _SUBMIT_RX = r"(envoyer ma candidature|soumettre|submit application|submit your application|confirmer et envoyer|valider (et )?envoyer|finaliser (ma |la )?candidature|envoyer definitivement)"
 
 
-def try_open_form(page):
+def try_open_form(page: Any) -> Any:
     """Clique un bouton 'Postuler/Apply' pour ouvrir le formulaire. JAMAIS un submit final.
     Retour label cliqué ou ''. (Défini dans web_nav pour apply_to_offer — était absent → NameError)."""
     js = r"""
@@ -345,7 +347,7 @@ def try_open_form(page):
     return ""
 
 
-def highlight_submit(page):
+def highlight_submit(page: Any) -> Any:
     """Surligne le bouton d'envoi final en ROUGE + scroll. Ne clique PAS (l'humain clique).
     Retour label ou ''. (Défini dans web_nav pour apply_to_offer — était absent → NameError)."""
     js = r"""

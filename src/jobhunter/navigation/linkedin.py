@@ -2,11 +2,13 @@
 
 Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
 
+from typing import Any
+
 from jobhunter.navigation.formulaires import fill_application
 from jobhunter.navigation.segment import highlight_submit
 
 
-def linkedin_ready(page):
+def linkedin_ready(page: Any) -> Any:
     """LinkedIn : session connectée ? (aucun mdp tapé — on lit juste l'état).
     Retour True si nav globale connectée détectée, False si mur login/join."""
     js = r"""
@@ -37,7 +39,14 @@ _LI_NEXT_RX = (
 )
 
 
-def linkedin_easy_apply(page, profile, cv=None, letter=None, fast=False, max_screens=8):
+def linkedin_easy_apply(
+    page: Any,
+    profile: dict[str, Any],
+    cv: Any = None,
+    letter: Any = None,
+    fast: bool = False,
+    max_screens: int = 8,
+) -> dict[str, Any]:
     """LinkedIn « Candidature simplifiée » SEMI-AUTO :
       1. clique le bouton Easy Apply (si candidature EXTERNE → retour kind=external, pipeline générique prend le relais)
       2. dans la modale : remplit champs + upload CV à chaque écran

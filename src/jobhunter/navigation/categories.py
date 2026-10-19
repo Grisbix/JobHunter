@@ -2,6 +2,8 @@
 
 Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
 
+from typing import Any
+
 from jobhunter.navigation.strategies import (
     ATS_APPLY_REGISTER_DETECT_JS,
     BPCE_INPUT_JS,
@@ -12,7 +14,7 @@ from jobhunter.navigation.strategies import (
 )
 
 
-def click_first_job_offer(page):
+def click_first_job_offer(page: Any) -> Any:
     """Cat2/3 : trouve et clique la premiere offre d'emploi sur la page.
     Retour {found, href, label, total_offers}."""
     try:
@@ -34,7 +36,7 @@ def click_first_job_offer(page):
             return {"found": False, "error": "click and goto failed", "href": r.get("href", "")}
 
 
-def check_apply_for_register(page):
+def check_apply_for_register(page: Any) -> Any:
     """Cat2/3 : apres avoir clique une offre, verifie si le flux apply
     inclut une creation de compte (email + password demandes).
     Retour {kind, hasEmail, hasNewPwd, ...}."""
@@ -44,7 +46,7 @@ def check_apply_for_register(page):
         return {"kind": "error"}
 
 
-def probe_auth_endpoints(page):
+def probe_auth_endpoints(page: Any) -> Any:
     """Cat3 : scanne les liens /login, /register, /signin dans la page.
     Retour {found, authLinks, footerAuthLinks}."""
     try:
@@ -53,7 +55,7 @@ def probe_auth_endpoints(page):
         return {"found": 0, "authLinks": [], "footerAuthLinks": []}
 
 
-def check_root_domain(page):
+def check_root_domain(page: Any) -> Any:
     """Cat4 : verifie si le domaine racine est accessible et a des liens carriere.
     Retour {title, bodyPreview, hasCareerLinks, careerLinks, url, status}."""
     try:
@@ -68,7 +70,7 @@ def check_root_domain(page):
         }
 
 
-def didomi_reject_and_wait(page, wait_ms=12000):
+def didomi_reject_and_wait(page: Any, wait_ms: int = 12000) -> Any:
     """Ferme la banniere Didomi (Bpifrance) et attend le chargement React.
     Retour {done, ...}."""
     try:
@@ -79,7 +81,7 @@ def didomi_reject_and_wait(page, wait_ms=12000):
     return r
 
 
-def scan_nonstandard_inputs(page):
+def scan_nonstandard_inputs(page: Any) -> Any:
     """Scan les inputs non-standards (BPCE, Engagement Jeunes) pour diagnostic.
     Retour {found, inputs}."""
     try:

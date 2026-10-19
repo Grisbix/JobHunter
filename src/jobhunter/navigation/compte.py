@@ -2,6 +2,8 @@
 
 Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
 
+from typing import Any
+
 from jobhunter.navigation.page import analyze
 
 # ── LOGIN multi-étapes (SmartRecruiters email→continue→password + génériques) ──
@@ -69,7 +71,7 @@ _REQSUBMIT_JS = r"""
 """
 
 
-def react_submit(page):
+def react_submit(page: Any) -> bool:
     """Soumission native HTML (form.requestSubmit) quand le clic bouton est avalé
     par React/SPA. Retour True si un form a été soumis."""
     try:
@@ -78,7 +80,7 @@ def react_submit(page):
         return False
 
 
-def login_flow(page, email, pwd, max_steps=3):
+def login_flow(page: Any, email: str, pwd: str, max_steps: int = 3) -> dict[str, Any]:
     """Login multi-étapes (SmartRecruiters : email→continue→password→login).
     Remplit les champs vides + clique continue/login à chaque étape.
     Fallback requestSubmit() si le clic ne fait pas avancer (React).
@@ -149,7 +151,7 @@ _SWITCH_REG_JS = r"""
 """
 
 
-def switch_to_register(page):
+def switch_to_register(page: Any) -> dict[str, Any]:
     """Bascule d'un écran login vers l'écran création de compte (toggle/onglet).
     Retour {switched, label, kind}. kind = analyze après clic."""
     try:

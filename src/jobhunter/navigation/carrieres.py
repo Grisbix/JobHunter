@@ -4,6 +4,7 @@ Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6)."""
 
 import importlib
 import sys
+from typing import Any
 
 from jobhunter import racine as _racine
 
@@ -32,7 +33,12 @@ from jobhunter.navigation.page import (
 from jobhunter.navigation.segment import detect_ats
 
 
-def smart_step(page, task, target_kinds=("apply_form", "register", "login"), max_tries=6):
+def smart_step(
+    page: Any,
+    task: str,
+    target_kinds: tuple[str, ...] = ("apply_form", "register", "login"),
+    max_tries: int = 6,
+) -> dict[str, Any]:
     strategies = [
         "cookies",
         "click",
@@ -214,7 +220,7 @@ _SEARCH_JS = r"""
 """
 
 
-def search_careers(page, query):
+def search_careers(page: Any, query: str) -> dict[str, Any]:
     """Tape le rôle dans le champ recherche d'offres de la page carrière puis
     soumet (Enter). Fait surgir l'offre quand la liste ne la montre pas.
     Retour {searched, ph}."""
@@ -503,7 +509,7 @@ _DEEP_CAREER_SCAN_JS = r"""
 """
 
 
-def goto_careers(page):
+def goto_careers(page: Any) -> dict[str, Any]:
     """Depuis la home corporate, atteint la section Carrières / Nous rejoindre /
     Careers / Join us (FR/EN/DE/NL, shadow DOM, data-attributes, JS-only links).
     Utilise un scan DOM profond multi-passes.
@@ -744,7 +750,7 @@ _CAREERS_AUTH_JS = r"""
 
 
 # ── FALLBACK SITEMAP.XML : dernier recours quand aucun lien carrière trouvé ──
-def fetch_sitemap_careers(page, base_url: str = "") -> list:
+def fetch_sitemap_careers(page: Any, base_url: str = "") -> list[Any]:
     """Récupère /sitemap.xml et en extrait les URLs contenant des patterns
     carrière. Retour liste de {url, label, score}.
     À utiliser quand goto_careers() échoue (no_career_links)."""
@@ -814,7 +820,7 @@ def fetch_sitemap_careers(page, base_url: str = "") -> list:
     return results
 
 
-def drill_to_offer(page, role_hint="", job_rx=""):
+def drill_to_offer(page: Any, role_hint: str = "", job_rx: str = "") -> dict[str, Any]:
     """Page carrière = liste d'offres, pas d'offre précise. Clique le lien d'offre
     qui matche le mieux le rôle visé (sinon le 1er). `job_rx` = pattern liens
     spécifique à l'ATS (via detect_ats). Retour {clicked, label, n}."""
@@ -833,7 +839,7 @@ def drill_to_offer(page, role_hint="", job_rx=""):
 
 
 # ── RECHERCHE D'OFFRE UNIFIÉE : reconnait l'ATS -> cherche -> entre dans l'offre ─
-def find_offer(page, role_hint="", max_tries=3):
+def find_offer(page: Any, role_hint: str = "", max_tries: int = 3) -> Any:
     """Point d'entrée UNIQUE pour atteindre une offre sur un site carrière.
     1) detect_ats (Workday/iCIMS/TalentSoft/… + pattern liens & champ recherche)
     2) si déjà sur form/CTA -> ok
@@ -943,7 +949,9 @@ _ANNUAIRES = (
 )
 
 
-def homepage_fallback(page, entreprise, role="", homepage=None):
+def homepage_fallback(
+    page: Any, entreprise: str, role: str = "", homepage: str | None = None
+) -> dict[str, Any]:
     """PIPELINE DE BASE quand l'URL d'offre est morte :
     nom entreprise → site officiel (cache homepages.json, sinon résolution
     enrich_homepages : slug+validation+web) → section Carrières → offre.
