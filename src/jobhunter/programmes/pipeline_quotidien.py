@@ -94,6 +94,7 @@ _COMPTEURS = {
     "dispo": re.compile(r"(\d+)\s+retirees"),
     "site": re.compile(r"(\d+)\s+offre\(s\)\s+retrouvee"),
     "docs": re.compile(r"(\d+)\s*/\s*\d+\s+offres\s+[ée]quip"),
+    "controle": re.compile(r"(\d+)\s+[àa]\s+revoir"),
 }
 
 
@@ -434,6 +435,17 @@ def main():
             "docs",
         )
         bilan.append(("dossiers", code, n))
+        # 5b : ce qui partira vraiment (PDF lisible, une page, coordonnees, gabarit
+        # rempli). Lecture seule ; un dossier a revoir ne doit pas partir tel quel.
+        code, n, _ = etape(
+            "5b/5 Controle des dossiers",
+            ["-m", "jobhunter.programmes.controle_dossiers", "--fit", "8"],
+            "controle",
+            timeout=10 * 60,
+        )
+        if n:
+            alertes.append(f"{n} dossier(s) a revoir avant envoi — python JobHunter.pyw controle")
+        bilan.append(("controle dossiers", code, n))
 
     print(f"\n{'═' * 62}\nBILAN")
     for nom, code, n in bilan:

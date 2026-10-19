@@ -70,8 +70,8 @@ def lire_evenement(ligne: str) -> dict[str, Any] | None:
 def texte_evenement(ev: dict[str, Any]) -> tuple[str, str, str] | None:
     """(zone, texte, couleur) à afficher pour un événement, ou None s'il n'affiche rien.
 
-    Zones : « offre » (l'offre en cours), « etat » (ce qui se passe), « resultat »
-    (l'issue de l'offre précédente).
+    Zones : « offre » (l'offre en cours), « dossier » (CV et lettre contrôlés), « etat »
+    (ce qui se passe), « resultat » (l'issue de l'offre précédente).
     """
     t = ev.get("type")
     if t == "offre":
@@ -105,6 +105,15 @@ def texte_evenement(ev: dict[str, Any]) -> tuple[str, str, str] | None:
         return "resultat", texte, couleur
     if t == "fin":
         return "etat", "Toutes les offres sont passées. « Arrêter » ferme Chrome.", MUT
+    if t == "dossier":
+        problemes = [str(p) for p in ev.get("problemes") or []]
+        if not problemes:
+            return "dossier", "Dossier vérifié : CV et lettre lisibles, une page, coordonnées.", OK
+        return (
+            "dossier",
+            "Dossier à revoir avant d'envoyer : " + " ; ".join(problemes),
+            BAD,
+        )
     return None
 
 
@@ -123,7 +132,7 @@ class CandidatureMixin:
         carte = CF(win, bg=BG, plat=True)
         carte.pack(fill="both", expand=True, padx=16, pady=14)
         self._cand_lbl = {}
-        for zone, police in (("offre", 14), ("etat", 12), ("resultat", 12)):
+        for zone, police in (("offre", 14), ("dossier", 11), ("etat", 12), ("resultat", 12)):
             lbl = CL(
                 carte,
                 text="",

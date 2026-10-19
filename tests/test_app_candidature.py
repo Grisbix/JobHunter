@@ -152,3 +152,21 @@ def test_fiche_dit_l_etat_de_la_preuve():
         == "Candidature : postulé le 2026-10-19 · envoi NON confirmé par le site (à vérifier)"
     )
     assert "p.png" in lignes[2]
+
+
+# ── contrôle du dossier (documents.controle) ──────────────────────────────────
+def test_texte_dossier_pret():
+    zone, texte, _ = cand.texte_evenement({"type": "dossier", "problemes": []})
+    assert zone == "dossier" and texte.startswith("Dossier vérifié")
+
+
+def test_texte_dossier_a_revoir():
+    _, texte, couleur = cand.texte_evenement(
+        {"type": "dossier", "problemes": ["lettre n'est pas un PDF : l.docx"]}
+    )
+    assert "à revoir" in texte and "l.docx" in texte and couleur == cand.BAD
+
+
+def test_fiche_sans_dossier_ne_dit_rien():
+    a = object.__new__(ui.App)
+    assert a._etat_dossier({"entreprise": "Acme", "poste": "P"}) == []

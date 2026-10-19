@@ -143,6 +143,15 @@ AUTOFILL_JS = r"""
 """
 
 
+def _piece(u):
+    """Chemin de la piece a joindre : le PDF a jour plutot que son .docx source."""
+    from jobhunter.documents.controle import piece_finale
+
+    brut = _unquote_path(u)
+    finale = piece_finale(Path(brut)) if brut else None
+    return str(finale) if finale else brut
+
+
 def autofill(page):
     metas = page.evaluate(AUTOFILL_JS)
     filled = 0
@@ -593,8 +602,8 @@ def main():
                 comp=x["entreprise"],
                 role=x["poste"],
                 url=x.get("url") or "",
-                cv=_unquote_path(x.get("cv")),
-                lt=_unquote_path(x.get("lettre")),
+                cv=_piece(x.get("cv")),
+                lt=_piece(x.get("lettre")),
                 status=queue_done.get(key, ""),
             )
         )
@@ -685,6 +694,18 @@ def main():
                         poste=d["role"],
                         url=d["url"],
                     )
+                    try:
+                        from jobhunter.documents.controle import controler_dossier
+
+                        _dossier = controler_dossier({"cv": d["cv"], "lettre": d["lt"]})
+                    except Exception as e:
+                        _dossier = [f"contrôle impossible ({type(e).__name__})"]
+                    print(
+                        "  🗂 dossier : prêt"
+                        if not _dossier
+                        else "  ⚠ dossier à revoir : " + " ; ".join(_dossier)
+                    )
+                    ui.evenement("dossier", problemes=_dossier)
                     print("  URL :", d["url"])
                     print(
                         "  CV  :",

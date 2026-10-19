@@ -62,6 +62,7 @@ class FicheMixin:
         if yrs:  # années d'expérience exigées (l'utilisateur junior → fit pénalisé si ≥3)
             meta.append(f"⚠️ Exp requise: {yrs} ans" if yrs >= 3 else f"Exp requise: {yrs} ans")
         meta.extend(self._etat_candidature(o))
+        meta.extend(self._etat_dossier(o))
         if meta:
             d.insert("end", "\n".join(meta) + "\n", "m")
         desc = (o.get("description") or "").strip()
@@ -86,6 +87,17 @@ class FicheMixin:
                 d.insert("end", v)
         d.configure(state="disabled")
         d.see("1.0")
+
+    def _etat_dossier(self: "AppTypee", o: Any) -> list[str]:
+        """Le dossier (CV, lettre) est-il prêt à partir ? Rien si l'offre n'en a pas."""
+        if not (o.get("cv") or o.get("lettre")):
+            return []
+        from jobhunter.documents.controle import controler_dossier
+
+        problemes = controler_dossier(o)
+        if not problemes:
+            return ["Dossier : prêt (CV et lettre lisibles, une page, coordonnées)"]
+        return ["Dossier à revoir : " + " ; ".join(problemes)]
 
     def _etat_candidature(self: "AppTypee", o: Any) -> list[str]:
         """Le statut de suivi et l'état de la preuve d'envoi (ADR 0009), pour la fiche."""
