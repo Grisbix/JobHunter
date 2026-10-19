@@ -36,16 +36,23 @@ Contraintes :
 - **Pas de Chromium embarqué** : sans le Chromium de Playwright, la collecte lance Chrome ou
   Edge du système (`navigation.navigateur.lancer`) ; Edge est présent sur tout Windows 10/11.
   La candidature et les connexions utilisaient déjà Chrome.
-- **Mise à jour** : l'application installée ne remplace pas ses fichiers un par un ; elle
-  annonce la nouvelle version et ouvre la page de la release, où l'on télécharge le nouvel
-  installateur.
+- **Mise à jour** : l'application installée ne remplace pas ses fichiers un par un. Depuis
+  la 2.18, elle télécharge le nouvel installateur, le contrôle (signature de l'auteur,
+  ADR 0012 ; à défaut l'empreinte publiée) et l'ouvre ; Inno Setup ferme l'application
+  (`CloseApplications`) et garde les données. Hors ligne, elle ouvre la page de la release.
 
 ## Conséquences
 
 - Deux publics, deux chemins : l'installateur pour l'usage, le code source (ZIP ou clone,
   avec Python) pour personnaliser ; le README présente les deux.
 - L'application installée occupe environ 245 Mo (Python, Playwright, bibliothèques).
-- La tâche planifiée du matin (`planifier.bat`) reste réservée à l'installation depuis le
-  code source ; l'application installée collecte depuis son bouton « Actualiser les offres ».
+- La tâche planifiée du matin : `planifier.bat` pour le code source ; depuis la 2.19,
+  l'application (installée ou non) la crée elle-même, Maintenance → « Collecte chaque
+  matin… » (`jobhunter.planification`, même nom de tâche, `jobhunter-cli.exe pipeline`).
+- **Essai à chaque construction** (2.19) : la CI installe sans Python sur le PATH, puis
+  `outils/installateur/essai_installe.py`, exécuté par le Python embarqué, lance le
+  navigateur du système, fusionne un scan fictif, écrit un dossier et prépare la mise à
+  jour ; la fenêtre doit s'ouvrir et rester ouverte ; l'installateur suivant s'installe
+  par-dessus en gardant les données.
 - Les programmes de test réseau (`test_*`) lisent la file à l'import : ils sont exclus du
   contrôle de chargement de l'exécutable.

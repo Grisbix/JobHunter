@@ -55,6 +55,54 @@ jobs:
           & "$dest\jobhunter-cli.exe" --help
           if ($LASTEXITCODE -ne 0) { exit 1 }
           if (-not (Test-Path "$env:JOBHUNTER_RACINE\profil\exemple_finance_esg.json")) { exit 1 }
+      # Critère de fin de F4 : sur un Windows sans Python, l'application s'ouvre, collecte
+      # (navigateur du système, fusion d'un scan fictif), écrit un dossier et se met à
+      # jour. Python est retiré du PATH : seul le Python embarqué peut répondre.
+      - name: Sans Python - navigateur, collecte, dossier, mise à jour
+        shell: pwsh
+        run: |
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notmatch '(?i)python' }) -join ';'
+          # (l'alias du Microsoft Store, dans WindowsApps, n'est pas un Python)
+          $reste = Get-Command python -All -ErrorAction SilentlyContinue | Where-Object { $_.Source -notmatch 'WindowsApps' }
+          if ($reste) { Write-Error "python encore sur le PATH : $($reste.Source)"; exit 1 }
+          $dest = "$env:RUNNER_TEMP\JobHunterInstall"
+          $env:JOBHUNTER_RACINE = "$env:RUNNER_TEMP\JobHunterEssai"
+          $env:ESSAI_SETUP = (Resolve-Path dist\JobHunterSetup.exe).Path
+          $env:ESSAI_SORTIE = "$env:RUNNER_TEMP\maj_setup.txt"
+          $env:PYTHONIOENCODING = "utf-8"
+          & "$dest\jobhunter-cli.exe" -c "exec(open(r'outils/installateur/essai_installe.py', encoding='utf-8').read())"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: Sans Python - la fenêtre s'ouvre et reste ouverte
+        shell: pwsh
+        run: |
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notmatch '(?i)python' }) -join ';'
+          $env:JOBHUNTER_RACINE = "$env:RUNNER_TEMP\JobHunterEssai"
+          $env:JOBHUNTER_SANS_FOND = "1"   # aucun travail de fond : rien ne sort sur le web
+          $p = Start-Process "$env:RUNNER_TEMP\JobHunterInstall\JobHunter.exe" -PassThru
+          $titre = ""
+          for ($i = 0; $i -lt 60 -and -not $titre; $i++) {
+            Start-Sleep -Seconds 2
+            if ($p.HasExited) { Write-Error "l'application s'est fermée (code $($p.ExitCode))"; exit 1 }
+            $p.Refresh(); $titre = $p.MainWindowTitle
+          }
+          if (-not $titre) { Write-Error "aucune fenêtre en 2 minutes"; exit 1 }
+          Start-Sleep -Seconds 10
+          if ($p.HasExited) { Write-Error "fermée après ouverture"; exit 1 }
+          Write-Output "fenêtre : $titre"
+          Stop-Process -Id $p.Id -Force
+      - name: Mise à jour par-dessus l'installation, données gardées
+        shell: pwsh
+        run: |
+          $dest = "$env:RUNNER_TEMP\JobHunterInstall"
+          $setup = Get-Content "$env:RUNNER_TEMP\maj_setup.txt" -Raw
+          Start-Process $setup.Trim() -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/DIR=$dest" -Wait
+          $env:JOBHUNTER_RACINE = "$env:RUNNER_TEMP\JobHunterEssai"
+          & "$dest\jobhunter-cli.exe" --help | Out-Null
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          foreach ($f in "profil\profil.json", "Scripts\apply_queue.json") {
+            if (-not (Test-Path "$env:JOBHUNTER_RACINE\$f")) { Write-Error "$f perdu"; exit 1 }
+          }
+          Write-Output "mise à jour installée, données gardées"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: JobHunterSetup
