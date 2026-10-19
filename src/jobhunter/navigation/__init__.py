@@ -13,6 +13,7 @@ llm           repli par modele local (Ollama) : vision, agent pas a pas
 otp           code recu par courriel : colle, surligne Verifier, l'humain clique
 navigateur    Playwright standard seul, aides de saisie, chargement robuste, session
 categories    strategies par categorie de site ; leurs tableaux sont dans strategies
+confirmation  apres l'envoi (fait par l'humain) : la page confirme-t-elle ? preuve
 
 Captcha et anti-bot sont DETECTES pour passer la main a l'humain, jamais contournes ;
 aucun moteur furtif. Le clic final d'envoi est toujours celui de l'utilisateur.
@@ -37,5 +38,6 @@ _MODULES = _facade.installer(
         "navigateur",
         "otp",
         "categories",
+        "confirmation",
     ),
 )
