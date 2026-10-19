@@ -36,6 +36,10 @@ COMMANDES = {
     "message": ("jobhunter.documents.message", "message court des formulaires"),
     "cv-auto": ("jobhunter.documents.cv_auto", "banque de faits du CV automatique"),
     "dispo": ("jobhunter.programmes.audit_dispo", "controle les offres fermees"),
+    "controle": (
+        "jobhunter.programmes.controle_dossiers",
+        "verifie les dossiers (CV, lettre) avant envoi",
+    ),
     "postuler": (
         "jobhunter.programmes.apply_runner",
         "candidature semi-automatique (l'envoi reste humain)",
