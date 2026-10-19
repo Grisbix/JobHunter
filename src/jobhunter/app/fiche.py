@@ -68,6 +68,10 @@ class FicheMixin:
         meta.extend(self._etat_dossier(o))
         if meta:
             d.insert("end", "\n".join(meta) + "\n", "m")
+        raisons = self._raisons_fit(o)
+        if raisons:
+            d.insert("end", "\n" + _t("Pourquoi ce fit") + "\n", "k")
+            d.insert("end", "\n".join("· " + r for r in raisons) + "\n", "m")
         desc = (o.get("description") or "").strip()
         if desc:
             d.insert("end", "\nDescription\n", "k")
@@ -90,6 +94,25 @@ class FicheMixin:
                 d.insert("end", v)
         d.configure(state="disabled")
         d.see("1.0")
+
+    def _raisons_fit(self: "AppTypee", o: Any) -> list[str]:
+        """Le calcul du fit en clair (scoring.fit.expliquer) ; [] sans texte ou en cas d'erreur.
+
+        Recalculé sur le texte de l'offre : si le fit de la file diffère (profil modifié
+        depuis), la dernière ligne le dit.
+        """
+        texte = f"{o.get('poste', '')} {o.get('description', '')}".strip()
+        if not texte:
+            return []
+        try:
+            from jobhunter.scoring.fit import expliquer
+
+            raisons = expliquer(texte, o.get("poste", ""))
+        except Exception:  # la fiche s'affiche même si le profil est incomplet
+            return []
+        if raisons and str(o.get("fit")) not in ("", "None") and raisons[-1] != f"fit {o['fit']}":
+            raisons[-1] += f" (file : {o['fit']}, recalcul au prochain re-score)"
+        return raisons
 
     def _etat_dossier(self: "AppTypee", o: Any) -> list[str]:
         """Le dossier (CV, lettre) est-il prêt à partir ? Rien si l'offre n'en a pas."""

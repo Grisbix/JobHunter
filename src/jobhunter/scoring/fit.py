@@ -503,8 +503,13 @@ def plafond_langue(t: str | None) -> tuple[float, str]:
     return 10.0, ""
 
 
-def fit_detail(text: str | None, title: str | None = "") -> tuple[int, int, float]:
+def fit_detail(
+    text: str | None, title: str | None = "", raisons: list[str] | None = None
+) -> tuple[int, int, float]:
     """(fit, yrs, fit_fin). `fit_fin` departage les ex aequo d'un meme fit.
+
+    `raisons`, si on la passe, recoit en clair chaque etape du calcul (voir
+    `expliquer`) ; le calcul est le meme avec ou sans.
 
     l'utilisateur, 2026-10-09 : 546 offres a 10, 1203 a 8, 3321 a 6 — dans un niveau,
     l'ordre ne voulait rien dire. fit_fin = fit +/- 0,45 : son arrondi rend
@@ -526,6 +531,15 @@ def fit_detail(text: str | None, title: str | None = "") -> tuple[int, int, floa
     sc = axis_scores(t)
     raw = sum(sc[a] * _ici.POIDS[a] for a in _ici.AXES)
     fit = 1 + 9 * min(1.0, raw / _ici._TARGET)  # 1..10, pas de magic number empilé
+    if raisons is not None:
+        got = skills_in(t)
+        for axe, labels in _ici.AXES.items():
+            trouves = [l for l in labels if l in got]
+            if trouves:
+                raisons.append(
+                    f"{axe} {sc[axe]:.0%} (x{_ici.POIDS[axe]:g}) : " + ", ".join(trouves[:6])
+                )
+        raisons.append(f"vocabulaire : {fit:.1f}/10")
     # PLAFOND PAR PRIORITE DE PROFIL. Sans lui, finance + risk + conseil suffisent
     # a atteindre _TARGET sans le moindre signal ESG : 251 offres sortaient a
     # fit >= 8 avec l'axe ESG a ZERO, et le TOP 25 ne contenait plus que 3
@@ -546,12 +560,18 @@ def fit_detail(text: str | None, title: str | None = "") -> tuple[int, int, floa
         cap = max(
             cap, _ici._PLAFOND_SECOND + (10.0 - _ici._PLAFOND_SECOND) * coeur
         )  # metier vise en second
+        if raisons is not None:
+            raisons.append("intitulé du métier visé en second (finance)")
     # Un intitule explicitement ESG leve le plafond : le titre dit ce QU'EST le
     # poste, la description ne fait que mentionner des sujets.
     fort = _c(_ici._ESG_TITRE_FORT, role)
     hors = _titre_hors_cible(role)
     if fort or (_c(_ici._ESG_TITLE_RX, role) and not hors):
         cap = 10.0
+        if raisons is not None:
+            raisons.append("intitulé du cœur de cible : plafond 10")
+    elif raisons is not None:
+        raisons.append(f"plafond {cap:.1f} (cœur {coeur:.0%}, complément {compl:.0%})")
     # Vetos en dernier : HSE, metier technique ou hors finance l'emportent sur
     # le vocabulaire environnemental de l'intitule ET de la description, jamais
     # sur un marqueur ESG-finance. Le metier technique ne faisait que perdre la
@@ -562,8 +582,12 @@ def fit_detail(text: str | None, title: str | None = "") -> tuple[int, int, floa
     # points a 137 postes « AI Engineer » que personne ne jugeait trop hauts.
     if not fort and _titre_hse(role):
         cap = min(cap, _ici._PLAFOND_VETO)
+        if raisons is not None:
+            raisons.append(f"intitulé HSE : plafond {cap:g}")
     elif not fort and hors:
         cap = min(cap, _ici._PLAFOND_COMPLEMENT if compl >= 0.5 else _ici._PLAFOND_VETO)
+        if raisons is not None:
+            raisons.append(f"métier hors cible dans l'intitulé : plafond {cap:g}")
     # LES BONUS D'ABORD, LE PLAFOND ENSUITE. Le plafond etait applique avant, et
     # le bonus junior le franchissait : « Auditeur junior analyste » sortait a
     # 10 avec un plafond calcule a 8.7. Un plafond qu'un bonus peut depasser ne
@@ -575,16 +599,29 @@ def fit_detail(text: str | None, title: str | None = "") -> tuple[int, int, floa
     # le faux positif deja corrige pour les deux autres listes, laisse ici.
     if any(k in role for k in _ici.JUNIOR):
         fit += _ici._BONUS_JUNIOR
+        if raisons is not None:
+            mot = next(k for k in _ici.JUNIOR if k in role)
+            raisons.append(f"intitulé junior « {mot.strip()} » : +{_ici._BONUS_JUNIOR:g}")
     if any(k in role for k in _ici.SENIOR) or _c(_ici._RX_SENIOR_FIN, role):
         fit -= _ici._MALUS_SENIOR
+        if raisons is not None:
+            raisons.append(f"intitulé senior : -{_ici._MALUS_SENIOR:g}")
     if any(k in role for k in _ici.NEG):
         fit -= 2
+        if raisons is not None:
+            mot = next(k for k in _ici.NEG if k in role)
+            raisons.append(f"intitulé écarté « {mot.strip()} » : -2")
     # La langue en dernier : aucun intitule ni bonus ne rend lisible une
     # annonce dans une langue que l'utilisateur ne parle pas.
-    cap = min(cap, plafond_langue(text or "")[0])
+    plafond_lg, motif_lg = plafond_langue(text or "")
+    cap = min(cap, plafond_lg)
+    if raisons is not None and motif_lg:
+        raisons.append(f"annonce {motif_lg} : plafond {plafond_lg:g}")
     fit = min(fit, cap)
     yrs = experience_years(t)
     fit -= _malus_experience(yrs)
+    if raisons is not None and _malus_experience(yrs):
+        raisons.append(f"{yrs} an(s) d'expérience demandés : -{_malus_experience(yrs):g}")
     entier = max(1, min(10, round(fit)))
     return entier, yrs, round(entier - 0.45 + 0.9 * _departage(t, role, fit, entier, yrs), 3)
 
@@ -644,3 +681,15 @@ __import__("jobhunter.texte", fromlist=["x"]).verifier_motifs(globals(), minimum
 
 if __name__ == "__main__":
     print("Module de scoring (score_offer/fit_score). CLI : rescore_ats.py")
+
+
+def expliquer(text: str | None, title: str | None = "") -> list[str]:
+    """Pourquoi l'offre a ce fit, étape par étape, en clair.
+
+    Les compétences trouvées par axe, la note de vocabulaire, le plafond et sa raison,
+    les bonus et malus de l'intitulé, la langue, l'expérience demandée, puis le fit.
+    """
+    raisons: list[str] = []
+    fit, _yrs, _fin = fit_detail(text, title, raisons)
+    raisons.append(f"fit {fit}")
+    return raisons

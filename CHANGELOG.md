@@ -4,6 +4,14 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.15.0 — 2026-10-19
+
+- **« Pourquoi ce fit »** dans la fiche de chaque offre : les compétences trouvées par
+  axe, la note de vocabulaire, le plafond et sa raison (intitulé du cœur de cible,
+  métier visé en second, veto HSE ou hors cible), les bonus et malus de l'intitulé, la
+  langue de l'annonce et l'expérience demandée. La note ne change pas : c'est le même
+  calcul, raconté (`scoring.fit.expliquer`).
+
 ## 2.14.0 — 2026-10-19
 
 - **Relecture des lettres** (`jobhunter relecture`, ou Maintenance → Documents →

@@ -457,3 +457,24 @@ def test_langue_exigee(texte, attendu):
 )
 def test_langue_parlee_sans_plafond(texte):
     assert ats_match.plafond_langue(texte)[0] == 10.0
+
+
+# ── expliquer : le calcul en clair, sans changer le calcul (G3) ────────────────
+
+
+def test_raisons_ne_changent_pas_le_fit():
+    for t, x in TEXTES:
+        assert fit_detail(x, t, []) == fit_detail(x, t), t
+
+
+def test_expliquer_cite_ce_qui_compte():
+    from jobhunter.scoring.fit import expliquer
+
+    raisons = expliquer(f"Analyste ESG junior {ESG_PUR}", "Analyste ESG junior")
+    assert (
+        raisons[-1]
+        == f"fit {fit_detail(f'Analyste ESG junior {ESG_PUR}', 'Analyste ESG junior')[0]}"
+    )
+    assert any(r.startswith("esg ") for r in raisons)
+    assert any("junior" in r for r in raisons)
+    assert any("plafond 10" in r for r in raisons)

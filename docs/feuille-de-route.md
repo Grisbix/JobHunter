@@ -113,7 +113,7 @@ fois les textes stabilisés.
 |---|---|---|
 | G1 ✅ (v2.13.0) | **Annuaires d'entreprises** Lever, Ashby, Greenhouse (jobsync, MIT) dans le panneau Entreprises | taper un nom, choisir, suivre ; `outils/annuaires.py --verifier` en reproduit les fichiers |
 | G2 ✅ (v2.14.0) | **Relecteur des lettres** : une seconde passe, sans le contexte de la rédaction, qui confronte la lettre au guide de style et aux faits ; l'annonce est une entrée non fiable (injection) | chaque défaut signalé est reproduit par un test ; aucune lettre réécrite sans accord |
-| G3 | **Note d'adéquation justifiée** (C1 bis) : chaque point du fit cite le passage de l'annonce qui le donne | `jobhunter evaluation` fait mieux que l'AUC de 0,46 de la 2.5.0, sur les mêmes jugements |
+| G3 ◐ (v2.15.0 : chaque fit expliqué dans la fiche ; reste à mieux classer, quand il y aura assez de jugements) | **Note d'adéquation justifiée** (C1 bis) : chaque point du fit cite le passage de l'annonce qui le donne | `jobhunter evaluation` fait mieux que l'AUC de 0,46 de la 2.5.0, sur les mêmes jugements |
 | G4 | **Statuts depuis Gmail**, lecture seule, propositions validées une à une — seulement si Gabriel le demande | — |
 
 ## Ordre proposé

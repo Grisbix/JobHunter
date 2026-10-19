@@ -190,6 +190,7 @@ EN: dict[str, str] = {
     "Sync docs+format": "Sync docs + format",
     "Export CSV": "Export CSV",
     "Relire les lettres": "Review letters",
+    "Pourquoi ce fit": "Why this fit",
     "Contrôler les dossiers": "Check application files",
     "URLs mortes": "Dead URLs",
     "Recheck 404": "Recheck 404",
