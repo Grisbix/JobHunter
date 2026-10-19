@@ -1,27 +1,27 @@
-# Architecture de JobHunter
+# JobHunter architecture
 
-Ce document décrit l'état au 18 octobre 2026 (version 1.12). Les choix structurants ont
-chacun leur ADR dans [`docs/adr/`](adr/) ; le plan qui a mené ici est
+This document describes the state as of 18 October 2026 (version 1.12). Each structuring
+choice has its own ADR in [`docs/adr/`](adr/); the plan that led here is
 [`plan-professionnalisation.md`](plan-professionnalisation.md).
 
-## Vue d'ensemble
+## Overview
 
 ```
-                 profil/profil.json  (identité, métiers, mots-clés, scoring, textes)
-                          │  lu par jobhunter.profil
+                 profil/profil.json  (identity, jobs, keywords, scoring, texts)
+                          │  read by jobhunter.profil
                           ▼
-  ┌────────────── collecte ──────────────┐     ┌──────── tri et note ────────┐
+  ┌────────────── collection ────────────┐     ┌──── triage and scoring ─────┐
   │ jobhunter.sources                    │     │ jobhunter.scoring           │
-  │  ats · workday · linkedin · wtj · efc│     │  fit (note 1-10, fit_fin)   │
+  │  ats · workday · linkedin · wtj · efc│     │  fit (score 1-10, fit_fin)  │
   │  eures · indeed · apec · glassdoor   │ ──▶ │  langue · zones · domaines  │
-  │  vie · fir · talent · francetravail  │     │  tri (sort ce qui ne colle  │
-  │  agregateurs                         │     │  pas au profil)             │
-  │  fusion ── dédoublonne, note, écrit ─┼──┐  └─────────────────────────────┘
+  │  vie · fir · talent · francetravail  │     │  tri (removes what does not │
+  │  agregateurs                         │     │  fit the profile)           │
+  │  fusion ── dedupes, scores, writes ──┼──┐  └─────────────────────────────┘
   └──────────────────────────────────────┘  │
                                             ▼
                          Scripts/apply_queue.json  ◀── jobhunter.stockage.file
-                         Scripts/descriptions.json      (verrou, écriture atomique,
-                         Scripts/suivi.json        ◀──   descriptions à part)
+                         Scripts/descriptions.json      (lock, atomic write,
+                         Scripts/suivi.json        ◀──   descriptions apart)
                                             │          jobhunter.stockage.suivi
              ┌──────────────────────────────┼───────────────────────────┐
              ▼                              ▼                           ▼
@@ -29,97 +29,97 @@ chacun leur ADR dans [`docs/adr/`](adr/) ; le plan qui a mené ici est
   │ jobhunter.documents   │   │ jobhunter.app          │   │ jobhunter.navigation   │
   │  cv · lettre · message│   │  fenetre.App = mixins  │   │  page · carrieres      │
   │  cv_auto · llm · rendu│   │  tableau · fiche ·     │   │  formulaires · segment │
-  │  (.docx puis .pdf)    │   │  actions · panneaux…   │   │  compte · linkedin…    │
+  │  (.docx then .pdf)    │   │  actions · panneaux…   │   │  compte · linkedin…    │
   └───────────────────────┘   └────────────────────────┘   └────────────────────────┘
-                                                              remplit, SURLIGNE l'envoi :
-                                                              le clic final est humain
+                                                              fills in, HIGHLIGHTS submit:
+                                                              the final click is human
 ```
 
-## Les paquets
+## The packages
 
-| Paquet | Rôle | Dépend de |
+| Package | Role | Depends on |
 |---|---|---|
-| `jobhunter.racine` | racine de l'installation (marqueur `Scripts/` + `profil/`, ou `JOBHUNTER_RACINE`) | — |
-| `jobhunter.profil` | lecture du profil, motifs compilés depuis ses listes ; `utiliser()` injecte un profil | racine, paresseux |
-| `jobhunter.paresseux` | valeurs de module calculées à la première lecture ([ADR 0007](adr/0007-valeurs-du-profil-paresseuses.md)) | — |
-| `jobhunter.journal` | `logging` du moteur : console à l'identique, fichier horodaté par exécution | — |
-| `jobhunter.reseau` | requêtes HTTP bornées en durée totale, client partagé, compteur des refus `INCIDENTS` | — |
-| `jobhunter.texte`, `liens` | normalisation de texte, chemins ↔ `file:///` | — |
-| `jobhunter.stockage` | file, descriptions, suivi : verrou, atomicité | racine |
-| `jobhunter.scoring` | note, langue, zones, domaine, tri | profil, texte, chemins |
-| `jobhunter.sources` | collecte par source, fusion dans la file | reseau, scoring, stockage |
-| `jobhunter.documents` | CV, lettre, message court, PDF | profil, scoring.lexique, chemins |
-| `jobhunter.navigation` | Playwright : du site de la société au formulaire rempli | racine |
-| `jobhunter.app` | l'application bureau (customtkinter) | tout ce qui précède |
-| `jobhunter.programmes` | les programmes (pipeline, documents, candidature, audits, sondes) | tout ce qui précède |
-| `jobhunter.cli` | `python -m jobhunter <commande>`, et tout programme par son nom | racine |
+| `jobhunter.racine` | installation root (marker `Scripts/` + `profil/`, or `JOBHUNTER_RACINE`) | — |
+| `jobhunter.profil` | reading the profile, patterns compiled from its lists; `utiliser()` injects a profile | racine, paresseux |
+| `jobhunter.paresseux` | module values computed on first read ([ADR 0007](adr/0007-valeurs-du-profil-paresseuses.md)) | — |
+| `jobhunter.journal` | the engine's `logging`: console unchanged, one timestamped file per run | — |
+| `jobhunter.reseau` | HTTP requests bounded in total duration, shared client, `INCIDENTS` counter of refusals | — |
+| `jobhunter.texte`, `liens` | text normalisation, paths ↔ `file:///` | — |
+| `jobhunter.stockage` | queue, descriptions, tracking: lock, atomicity | racine |
+| `jobhunter.scoring` | score, language, zones, domain, triage | profil, texte, chemins |
+| `jobhunter.sources` | collection per source, merge into the queue | reseau, scoring, stockage |
+| `jobhunter.documents` | CV, letter, short message, PDF | profil, scoring.lexique, chemins |
+| `jobhunter.navigation` | Playwright: from the company's site to the filled-in form | racine |
+| `jobhunter.app` | the desktop application (customtkinter) | everything above |
+| `jobhunter.programmes` | the programs (pipeline, documents, application, audits, probes) | everything above |
+| `jobhunter.cli` | `python -m jobhunter <commande>`, and any program by its name | racine |
 
-Les dépendances vont dans un seul sens (de haut en bas du tableau). Quelques imports
-différés vers `jobhunter.programmes` restent, marqués `TRANSITION` dans le code :
+Dependencies go in one direction only (from top to bottom of the table). A few deferred
+imports towards `jobhunter.programmes` remain, marked `TRANSITION` in the code:
 `doublons`, `rejets_tri`, `exclusions`, `wtj_desc`, `enrich_homepages`, `relances`,
 `mise_a_jour`.
 
-**Lancer sans installer** : `python JobHunter.pyw` (l'application) ou
-`python JobHunter.pyw <commande>` ; c'est le seul fichier qui ajoute `src/` au chemin
-d'import, et les `.bat`/`.sh` comme la tâche planifiée passent par lui. Installé par
-`pip`, le paquet trouve le dossier des données par `JOBHUNTER_RACINE` ou en remontant
-depuis le dossier courant ([ADR 0008](adr/0008-programmes-dans-le-paquet.md)).
+**Running without installing**: `python JobHunter.pyw` (the application) or
+`python JobHunter.pyw <commande>`; it is the only file that adds `src/` to the import
+path, and the `.bat`/`.sh` files as well as the scheduled task go through it. Installed with
+`pip`, the package finds the data folder through `JOBHUNTER_RACINE` or by walking up
+from the current folder ([ADR 0008](adr/0008-programmes-dans-le-paquet.md)).
 
-## Les données
+## The data
 
-Trois fichiers JSON dans `Scripts/`, trois contrats d'accès
-([ADR 0002](adr/0002-trois-fichiers-trois-contrats.md)) :
+Three JSON files in `Scripts/`, three access contracts
+([ADR 0002](adr/0002-trois-fichiers-trois-contrats.md)):
 
-- **`apply_queue.json`** — les offres. Identité : `oid = "entreprise|poste"`, jamais
-  l'URL. Écriture uniquement par `stockage.file.transaction()`.
-- **`descriptions.json`** — le texte des annonces, à part : il pesait 64 % de la file.
-  Réinjecté à la lecture, ressorti à l'écriture, de façon transparente.
-- **`suivi.json`** — les candidatures. La donnée la moins reconstituable : seul fichier
-  versionné, écrit entrée par entrée (`stockage.suivi.poser`) sur l'état relu sous verrou.
+- **`apply_queue.json`** — the offers. Identity: `oid = "entreprise|poste"`, never
+  the URL. Written only by `stockage.file.transaction()`.
+- **`descriptions.json`** — the text of the postings, apart: it weighed 64% of the queue.
+  Reinjected on read, taken out again on write, transparently.
+- **`suivi.json`** — the applications. The least reconstructible data: the only versioned
+  file, written entry by entry (`stockage.suivi.poser`) on the state re-read under lock.
 
-Un programme qui trouve la file verrouillée sort en **code 3** sans rien modifier
+A program that finds the queue locked exits with **code 3** without modifying anything
 ([ADR 0003](adr/0003-verrou-fichier-code-3.md)).
 
-## Le pipeline quotidien
+## The daily pipeline
 
-`jobhunter.programmes.pipeline_quotidien` (`python JobHunter.pyw pipeline`), lancé chaque
-matin par la tâche que pose `planifier.bat` :
+`jobhunter.programmes.pipeline_quotidien` (`python JobHunter.pyw pipeline`), launched every
+morning by the task that `planifier.bat` sets up:
 
-1. **collecte**, en cinq passes fusionnées chacune (ATS/Workday/V.I.E ; LinkedIn ;
-   eFC/EURES ; APEC/France Travail/Adzuna/Jooble ; Glassdoor/WTJ) — une passe qui dépasse
-   son temps ne perd que la sienne ;
-2. **fiches détaillées** des V.I.E, **descriptions** LinkedIn et sites carrière ;
-3. **tri** : séniorité, expérience exigée, métier — les candidatures sont épargnées ;
-4. **disponibilité**, le dimanche : offres fermées retirées (API publique, 404/410) ;
-5. **documents** : CV et lettre pour le haut de la file.
+1. **collection**, in five passes each merged (ATS/Workday/V.I.E; LinkedIn;
+   eFC/EURES; APEC/France Travail/Adzuna/Jooble; Glassdoor/WTJ) — a pass that exceeds
+   its time loses only its own;
+2. **detail pages** of the V.I.E, **descriptions** from LinkedIn and career sites;
+3. **triage**: seniority, required experience, job — applications are spared;
+4. **availability**, on Sunday: closed offers removed (public API, 404/410);
+5. **documents**: CV and letter for the top of the queue.
 
-Une sauvegarde de la file, des descriptions et des scans est faite avant toute étape
-(`Scripts/_sauvegardes/<date>/`, sept jours glissants).
+A backup of the queue, the descriptions and the scans is made before any step
+(`Scripts/_sauvegardes/<date>/`, seven rolling days).
 
-Journaux : `Scripts/_logs/pipeline_<date>_<heure>.log` garde la console de chaque étape ;
-`…_moteur.log` à côté garde les messages du moteur avec heure, niveau et module
-(`jobhunter.journal`, variable `JOBHUNTER_JOURNAL`). Dans le moteur, `print` est réservé
-à la sortie des commandes (`main()`) ; le reste passe par `logging`.
+Logs: `Scripts/_logs/pipeline_<date>_<heure>.log` keeps the console of each step;
+`…_moteur.log` beside it keeps the engine's messages with time, level and module
+(`jobhunter.journal`, variable `JOBHUNTER_JOURNAL`). In the engine, `print` is reserved for
+command output (`main()`); everything else goes through `logging`.
 
-## Réseau : ce qui est permis
+## Network: what is allowed
 
-Pages et API **publiques** seulement. Une limite de débit (429) s'attend et la passe
-reprend où elle s'était arrêtée ; un refus (403, 999, CAPTCHA) arrête la source, sans
-nouvelle tentative avant 30 jours ([ADR 0004](adr/0004-429-attendre-403-arreter.md)).
-Aucun contournement anti-bot, aucun moteur furtif, aucun mot de passe manipulé, aucune
-soumission automatique ([ADR 0005](adr/0005-aucune-soumission-automatique.md)).
+**Public** pages and APIs only. A rate limit (429) is waited out and the pass
+resumes where it stopped; a refusal (403, 999, CAPTCHA) stops the source, with no
+new attempt before 30 days ([ADR 0004](adr/0004-429-attendre-403-arreter.md)).
+No anti-bot circumvention, no stealth engine, no password handled, no automatic
+submission ([ADR 0005](adr/0005-aucune-soumission-automatique.md)).
 
-## Paquets découpés : un seul espace de noms
+## Split packages: a single namespace
 
-Un paquet découpé (`sources`, `documents`, `navigation`, `app`) voit les noms de tous
-ses sous-modules, et une affectation va au module qui possède le nom
-([ADR 0001](adr/0001-facades-alias.md)) : `jobhunter.sources.title_ok` et un
-`monkeypatch` sur `jobhunter.sources._get_borne` marchent. Les anciens `Scripts/x.py`
-(alias de ces modules) ont été retirés en 2.0.
+A split package (`sources`, `documents`, `navigation`, `app`) sees the names of all
+its submodules, and an assignment goes to the module that owns the name
+([ADR 0001](adr/0001-facades-alias.md)): `jobhunter.sources.title_ok` and a
+`monkeypatch` on `jobhunter.sources._get_borne` both work. The old `Scripts/x.py`
+files (aliases of these modules) were removed in 2.0.
 
-## Vérifier qu'un changement ne change rien
+## Checking that a change changes nothing
 
-- `outils/banc.py comparer outils/banc_reference.json` : 384 offres fictives, chaque
-  décision (titre gardé, note, domaine, tri, zone, pays, contrat, langue, message, lettre
-  et CV) comparée à la référence. 0 écart attendu ([ADR 0006](adr/0006-banc-de-non-regression.md)).
-- `pytest` : ~1 450 tests sans réseau ; `mypy` : strict sur le socle.
+- `outils/banc.py comparer outils/banc_reference.json`: 384 fictitious offers, every
+  decision (title kept, score, domain, triage, zone, country, contract, language, message, letter
+  and CV) compared to the reference. 0 differences expected ([ADR 0006](adr/0006-banc-de-non-regression.md)).
+- `pytest`: ~1,450 tests without network; `mypy`: strict on the core.

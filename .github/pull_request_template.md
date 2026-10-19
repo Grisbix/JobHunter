@@ -1,8 +1,8 @@
-## What / Quoi
+## What
 
 <!-- One or two sentences: what changes, and why. -->
 
-## Checks / Vérifications
+## Checks
 
 - [ ] `uv run pytest -q` passes (offline)
 - [ ] `uv run mypy` passes
@@ -11,7 +11,7 @@
 - [ ] `CHANGELOG.md` updated if users will notice
 - [ ] No personal data (profile, offers, letters, CVs, keys) — `python outils/donnees_perso.py`
 
-## Project rules / Règles du projet
+## Project rules
 
 - [ ] Nothing is sent automatically: the final “Send” click stays human
 - [ ] No anti-bot circumvention, no CAPTCHA solving, no password handled by the code

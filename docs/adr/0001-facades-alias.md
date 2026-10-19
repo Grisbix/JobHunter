@@ -1,33 +1,33 @@
-# 0001 — Les anciens modules deviennent des alias du paquet
+# 0001 — The old modules become aliases of the package
 
-**Statut** : accepté, 2026-10-18 (phases 3.1 à 3.7). Les alias `Scripts/x.py` sont retirés en 2.0 ([0008](0008-programmes-dans-le-paquet.md)) ; la façade de paquet (`_facade`) reste.
+**Status**: accepted, 2026-10-18 (phases 3.1 to 3.7). The `Scripts/x.py` aliases are removed in 2.0 ([0008](0008-programmes-dans-le-paquet.md)); the package facade (`_facade`) remains.
 
-## Contexte
+## Context
 
-Le moteur vivait dans `Scripts/` : une centaine de programmes qui s'importent par leur nom
-(`import queue_io`, `from job_sources import title_ok`), plus les scripts personnels des
-utilisateurs, les tâches planifiées et les lignes de commande du README. Le déplacer dans
-`src/jobhunter` sans casser tout cela exigeait de garder les anciens noms.
+The engine lived in `Scripts/`: about a hundred programs that import each other by name
+(`import queue_io`, `from job_sources import title_ok`), plus users' personal scripts,
+scheduled tasks and the command lines in the README. Moving it into
+`src/jobhunter` without breaking all of that required keeping the old names.
 
-Une copie des noms (`from jobhunter.stockage.file import *`) aurait cassé les tests : un
-`monkeypatch.setattr(queue_io, "CHEMIN", ...)` aurait modifié la copie, pas le code réel —
-et un test qui croit rediriger la file écrirait dans la vraie.
+A copy of the names (`from jobhunter.stockage.file import *`) would have broken the tests: a
+`monkeypatch.setattr(queue_io, "CHEMIN", ...)` would have modified the copy, not the real code —
+and a test that believes it is redirecting the queue would write into the real one.
 
-## Décision
+## Decision
 
-- `Scripts/x.py` remplace son entrée dans `sys.modules` par le module du paquet :
-  `import queue_io` **est** `jobhunter.stockage.file`. Lancé directement, il exécute le
-  module par `runpy`.
-- Un ancien gros module découpé (`job_sources`, `tailor_application`, `web_nav`,
-  `JobHunter.pyw`) devient un paquet dont `jobhunter._facade` fait une façade : lire un nom
-  le cherche dans les sous-modules ; l'affecter va au module qui le possède ; le `delattr`
-  de sortie de `unittest.mock.patch` remet la valeur d'origine.
-- Un nom réglable de l'extérieur (`KEYWORDS`, `MONDE`, `_get_borne`, polices du thème) n'est
-  jamais importé par copie dans un autre sous-module : il s'y lit `_proprietaire.NOM`.
+- `Scripts/x.py` replaces its entry in `sys.modules` with the package module:
+  `import queue_io` **is** `jobhunter.stockage.file`. When run directly, it executes the
+  module through `runpy`.
+- An old large module that was split up (`job_sources`, `tailor_application`, `web_nav`,
+  `JobHunter.pyw`) becomes a package for which `jobhunter._facade` provides a facade: reading a name
+  looks it up in the submodules; assigning it goes to the module that owns it; the exit `delattr`
+  of `unittest.mock.patch` restores the original value.
+- A name that can be set from outside (`KEYWORDS`, `MONDE`, `_get_borne`, theme fonts) is
+  never imported by copy into another submodule: it is read there as `_proprietaire.NOM`.
 
-## Conséquences
+## Consequences
 
-- Rien ne change pour les appelants ; `test_coherence_imports.py` vérifie que chaque
-  `module.nom` utilisé entre modules existe encore.
-- Coût : un niveau d'indirection à comprendre. Les façades disparaissent quand le paquet
-  s'installe par `pip` et que les appelants importent `jobhunter.*` (phase 6).
+- Nothing changes for callers; `test_coherence_imports.py` checks that every
+  `module.nom` used between modules still exists.
+- Cost: one level of indirection to understand. The facades disappear once the package
+  is installed by `pip` and callers import `jobhunter.*` (phase 6).

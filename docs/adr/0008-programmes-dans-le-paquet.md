@@ -1,50 +1,50 @@
-# 0008 — Tout le code dans le paquet ; `JobHunter.pyw` lance sans installation
+# 0008 — All the code in the package; `JobHunter.pyw` launches without installation
 
-**Statut** : accepté, 2026-10-18 (phase 3.9 et phase 6 du plan, version 2.0).
+**Status**: accepted, 2026-10-18 (phase 3.9 and phase 6 of the plan, version 2.0).
 
-## Contexte
+## Context
 
-Après la phase 3, le moteur vivait dans `src/jobhunter`, mais 57 programmes restaient
-dans `Scripts/` (pipeline, documents, candidature, audits, sondes), à côté de 14 façades
-qui gardaient les anciens noms (`job_sources`, `queue_io`…) et de 55 `sys.path.insert`.
-Le paquet seul ne suffisait donc pas à faire tourner JobHunter : un dépôt qui voulait
-dépendre d'une version installée devait encore recopier `Scripts/`.
+After phase 3, the engine lived in `src/jobhunter`, but 57 programs remained
+in `Scripts/` (pipeline, documents, application, audits, probes), next to 14 facades
+that kept the old names (`job_sources`, `queue_io`…) and 55 `sys.path.insert` calls.
+The package alone was therefore not enough to run JobHunter: a repository that wanted to
+depend on an installed version still had to copy `Scripts/`.
 
-Deux contraintes :
+Two constraints:
 
-- Les installations par ZIP (sans `pip install`) doivent continuer de marcher, y compris
-  si on déplace le dossier — les racines codées en dur ont cassé quatre fois.
-- Une installation 1.x se met à jour avec SON `mise_a_jour`, qui contrôlait le nouvel
-  arbre en important ses propres noms (`queue_io`, `job_sources`…) : retirer les façades
-  aurait fait annuler la 2.0 par toutes les 1.x.
+- ZIP installations (without `pip install`) must keep working, even
+  if the folder is moved — hard-coded roots have broken four times.
+- A 1.x installation updates itself with ITS OWN `mise_a_jour`, which checked the new
+  tree by importing its own names (`queue_io`, `job_sources`…): removing the facades
+  would have made every 1.x roll back 2.0.
 
-## Décision
+## Decision
 
-- Les programmes entrent dans `jobhunter.programmes` (noms inchangés) ; les façades et
-  tous les `sys.path.insert` du code disparaissent. `Scripts/` ne garde que les données.
-  Les chemins de données viennent de `jobhunter.racine`, plus de `__file__`.
-- Le déplacement a été GÉNÉRÉ (git mv + réécriture des imports par l'arbre syntaxique,
-  même nom local, donc même objet) et vérifié par le banc : 0 écart.
-- `python -m jobhunter <commande>` lance une commande nommée (`collecte`, `pipeline`…)
-  ou tout programme par son nom (`probe_ats`).
-- **Sans installation**, `JobHunter.pyw` est l'entrée : sans argument l'application, avec
-  arguments la ligne de commande. C'est le seul fichier qui ajoute `src/` au chemin
-  d'import (calculé depuis son propre emplacement) ; les `.bat`/`.sh` et la tâche
-  planifiée passent par lui. Les étapes lancées en sous-processus héritent de
+- The programs move into `jobhunter.programmes` (names unchanged); the facades and
+  all the `sys.path.insert` calls in the code disappear. `Scripts/` keeps only the data.
+  Data paths come from `jobhunter.racine`, no longer from `__file__`.
+- The move was GENERATED (git mv + import rewriting via the syntax tree,
+  same local name, hence same object) and checked by the bench: 0 differences.
+- `python -m jobhunter <commande>` launches a named command (`collecte`, `pipeline`…)
+  or any program by its name (`probe_ats`).
+- **Without installation**, `JobHunter.pyw` is the entry point: with no argument the application, with
+  arguments the command line. It is the only file that adds `src/` to the import
+  path (computed from its own location); the `.bat`/`.sh` files and the scheduled
+  task go through it. Steps launched as subprocesses inherit
   `PYTHONPATH` (`racine.exporter_paquet()`).
-- **Installé par pip**, le paquet trouve le dossier des données par `JOBHUNTER_RACINE`
-  ou en remontant depuis le dossier courant.
-- **Passerelle 1.15.0** : `mise_a_jour` contrôle la version installée avec le code de
-  celle-ci (`python -m jobhunter maj --controler`). La 1.15 doit précéder la 2.0 ; une
-  1.x plus ancienne qui sauterait directement en 2.0 serait ramenée à sa version, sans
-  perte.
-- Le contrôle d'après mise à jour signale une collecte planifiée qui vise encore
-  `Scripts/pipeline_quotidien.py` (à recréer avec `planifier.bat`/`planifier.sh`).
+- **Installed by pip**, the package finds the data folder through `JOBHUNTER_RACINE`
+  or by walking up from the current folder.
+- **Bridge 1.15.0**: `mise_a_jour` checks the installed version with its code
+  (`python -m jobhunter maj --controler`). 1.15 must precede 2.0; an
+  older 1.x that jumped straight to 2.0 would be brought back to its version, with no
+  loss.
+- The post-update check flags a scheduled collection that still targets
+  `Scripts/pipeline_quotidien.py` (to be recreated with `planifier.bat`/`planifier.sh`).
 
-## Conséquences
+## Consequences
 
-Un dépôt de données (comme celui de l'auteur) peut dépendre d'une version étiquetée
-(`pip install "jobhunter @ git+https://github.com/Grisbix/JobHunter@v2.0.0"`) au lieu de
-recopier le code. Les programmes ne sont pas encore typés (exclus de mypy, à résorber).
-Les noms historiques (`job_sources`…) restent comme alias locaux dans le code
-(`from jobhunter import sources as job_sources`) : un renommage serait un autre chantier.
+A data repository (like the author's) can depend on a tagged version
+(`pip install "jobhunter @ git+https://github.com/Grisbix/JobHunter@v2.0.0"`) instead of
+copying the code. The programs are not typed yet (excluded from mypy, to be worked off).
+The historical names (`job_sources`…) remain as local aliases in the code
+(`from jobhunter import sources as job_sources`): a rename would be another project.

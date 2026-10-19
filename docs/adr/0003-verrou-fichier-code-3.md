@@ -1,24 +1,24 @@
-# 0003 — Verrou par fichier, et le code de sortie 3
+# 0003 — File lock, and exit code 3
 
-**Statut** : accepté.
+**Status**: accepted.
 
-## Contexte
+## Context
 
-L'application, le pipeline planifié et les programmes lancés à la main peuvent toucher la
-file en même temps. Un verrou cassé « parce qu'il semble vieux » a déjà laissé deux
-programmes écrire ensemble.
+The application, the scheduled pipeline and programs launched by hand can touch the
+queue at the same time. A lock broken "because it looks old" once let two
+programs write together.
 
-## Décision
+## Decision
 
-- Exclusion inter-processus par fichier `.lock` (PID et date), réentrante dans un même
-  processus ; `rendre_verrou` ne l'est pas — ne rendre que ce qu'on a pris (`tenu`).
-- Un verrou tenu par un processus VIVANT ne se casse jamais. Un PID recyclé (processus né
-  après le verrou) ne compte pas comme vivant.
-- Un programme qui trouve la file occupée sort en **code 3** sans rien modifier. Le pipeline
-  et l'app savent l'afficher (« un autre programme travaille, relance plus tard »).
+- Inter-process exclusion through a `.lock` file (PID and date), reentrant within a single
+  process; `rendre_verrou` is not — release only what you took (`tenu`).
+- A lock held by a LIVE process is never broken. A recycled PID (a process born
+  after the lock) does not count as alive.
+- A program that finds the queue busy exits with **code 3** without modifying anything. The pipeline
+  and the app know how to display it ("another program is working, retry later").
 
-## Conséquences
+## Consequences
 
-- Aucune écriture concurrente ; un programme bloqué ne fait aucun dégât.
-- Toute requête réseau passe par les fonctions bornées de `jobhunter.reseau`, sinon un
-  serveur lent tiendrait le verrou des heures (vu : 12 h 25, le 2026-09-22).
+- No concurrent writes; a blocked program does no damage.
+- Every network request goes through the bounded functions of `jobhunter.reseau`, otherwise a slow
+  server would hold the lock for hours (seen: 12 h 25, on 2026-09-22).

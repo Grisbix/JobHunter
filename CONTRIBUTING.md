@@ -1,120 +1,122 @@
-# Contribuer à JobHunter
+# Contributing to JobHunter
 
-> **In English.** The code, comments and commit messages are in French; issues and pull
-> requests in English are welcome. Set up with `uv sync`, then before each commit run
-> `uv run pytest -q` (about 1,850 offline tests), `uv run mypy` and
-> `uv run python outils/banc.py comparer outils/banc_reference.json` (0 difference expected).
-> Architecture and conventions: [`AGENTS.md`](AGENTS.md) and [`docs/adr/`](docs/adr/). The
-> Windows installer is built by `outils/installateur/construire.py` (see ADR 0011). Rules
-> that are not up for debate: nothing is ever sent automatically, no anti-bot circumvention,
-> no password handled by the programs.
+Documentation, comments and docstrings are in English. Identifiers (function and module
+names), profile keys and JSON keys stay in French, as do the CLI command names. The French
+README is `README.fr.md`. Issues and pull requests in English are welcome. Set up with
+`uv sync`, then before each commit run `uv run pytest -q` (about 1,850 offline tests),
+`uv run mypy` and `uv run python outils/banc.py comparer outils/banc_reference.json` (0
+difference expected). Architecture and conventions: [`AGENTS.md`](AGENTS.md) and
+[`docs/adr/`](docs/adr/). The Windows installer is built by
+`outils/installateur/construire.py` (see ADR 0011). Rules that are not up for debate:
+nothing is ever sent automatically, no anti-bot circumvention, no password handled by the
+programs.
 
-## Installer l'environnement de développement
+## Setting up the development environment
 
 ```bash
-uv sync                                           # .venv + dépendances verrouillées (uv.lock)
-uv run python -m playwright install chromium      # navigateur des tests de navigation
-uv run pre-commit install                         # contrôles avant chaque commit
+uv sync                                           # .venv + locked dependencies (uv.lock)
+uv run python -m playwright install chromium      # browser for the navigation tests
+uv run pre-commit install                         # checks before each commit
 ```
 
-Python 3.12 ou plus récent. Sans uv : `python -m venv .venv`, puis
+Python 3.12 or newer. Without uv: `python -m venv .venv`, then
 `pip install -r requirements.txt ruff pytest pre-commit`.
 
-## Avant chaque commit
+## Before each commit
 
 ```bash
-uv run pytest -q                                                   # ~1 850 tests, sans réseau
-uv run python outils/banc.py comparer outils/banc_reference.json   # 0 écart attendu
-uv run mypy                                                        # types ; strict hors programmes
+uv run pytest -q                                                   # ~1,850 tests, no network
+uv run python outils/banc.py comparer outils/banc_reference.json   # 0 difference expected
+uv run mypy                                                        # types; strict except for programs
 ```
 
-pre-commit lance ruff (lint et format), vérifie YAML/TOML, les gros fichiers, les clés
-privées et la cohérence `VERSION` / `pyproject.toml`. La CI GitHub refait tout, sous Windows
-et Linux.
+pre-commit runs ruff (lint and format), checks YAML/TOML, large files, private keys and the
+consistency of `VERSION` / `pyproject.toml`. GitHub CI redoes everything, under Windows
+and Linux.
 
-**Types et docstrings.** mypy est strict sur tout le paquet sauf les programmes
-(`jobhunter.programmes`), vérifiés en mode normal. Toute fonction publique hors programmes
-et fenêtre (`jobhunter.app`) a une docstring au format Google : ruff (`D`) l'exige.
+**Types and docstrings.** mypy is strict on the whole package except the programs
+(`jobhunter.programmes`), which are checked in normal mode. Every public function outside
+the programs and the window (`jobhunter.app`) has a Google-format docstring: ruff (`D`)
+requires it.
 
-**Une source change sa réponse ?** `tests/test_rejeu_sources.py` rejoue de vraies réponses
-enregistrées (`tests/reponses/`). Si un site a changé et que le parseur est adapté,
-réenregistrer la source (réseau, à lancer exprès) :
-`uv run python outils/rejeu.py enregistrer lever`. APEC, WTJ et les sources à clé n'y sont
-pas : refus d'entrée, défi anti-bot ou identifiants.
+**A source changes its response?** `tests/test_rejeu_sources.py` replays real recorded
+responses (`tests/reponses/`). If a site has changed and the parser has been adapted,
+record the source again (network, to be run on purpose):
+`uv run python outils/rejeu.py enregistrer lever`. APEC, WTJ and the sources that need a
+key are not there: entry refusal, anti-bot challenge or credentials.
 
-## Installer le paquet
+## Installing the package
 
-`uv sync` installe `src/jobhunter` en mode éditable ; `pip install -e .` aussi. La commande
-`jobhunter <commande>` existe alors (`jobhunter` seul liste les commandes). Hors du dépôt,
-`JOBHUNTER_RACINE` désigne le dossier qui contient `Scripts/` et `profil/` (sinon le paquet
-le cherche en remontant depuis le dossier courant). Sans installation : `python JobHunter.pyw
-<commande>`.
+`uv sync` installs `src/jobhunter` in editable mode; `pip install -e .` does too. The
+`jobhunter <commande>` command then exists (`jobhunter` alone lists the commands). Outside
+the repository, `JOBHUNTER_RACINE` designates the folder that contains `Scripts/` and
+`profil/` (otherwise the package looks for it going upward from the current folder).
+Without installation: `python JobHunter.pyw <commande>`.
 
-## Comprendre le code
+## Understanding the code
 
-[`docs/architecture.md`](docs/architecture.md) : paquets, données, pipeline.
-[`docs/adr/`](docs/adr/) : les décisions qui ne se rediscutent pas au détour d'une tâche.
+[`docs/architecture.md`](docs/architecture.md): packages, data, pipeline.
+[`docs/adr/`](docs/adr/): the decisions that are not reopened in passing during a task.
 
-## Écrire un test
+## Writing a test
 
-Dans `tests/`, en pytest, avec les fixtures de `tests/conftest.py` (faux réseau, horloge,
-file et suivi jetables, navigateur). Jamais d'affectation directe d'une globale du moteur :
-`monkeypatch`. Données fictives et profil d'exemple uniquement. Un test qui a besoin d'un
-autre profil le construit et le passe à `profil.utiliser(donnees)`, puis
-`profil.recharger()` en fin de test.
+In `tests/`, with pytest, using the fixtures of `tests/conftest.py` (fake network, clock,
+throwaway queue and tracking file, browser). Never assign an engine global directly:
+`monkeypatch`. Fictitious data and the sample profile only. A test that needs another
+profile builds it and passes it to `profil.utiliser(donnees)`, then
+`profil.recharger()` at the end of the test.
 
-## Diagnostiquer une lenteur (py-spy)
+## Diagnosing a slowdown (py-spy)
 
-Quand une étape dépasse sa durée (collecte, disponibilité, documents), on localise avant
-de supposer. [py-spy](https://github.com/benfred/py-spy) lit la pile d'un programme
-Python en cours sans l'arrêter ni le modifier. C'est un outil externe, pas une
-dépendance du projet :
+When a step exceeds its duration (collection, availability, documents), locate the cause
+before assuming. [py-spy](https://github.com/benfred/py-spy) reads the stack of a running
+Python program without stopping or modifying it. It is an external tool, not a dependency
+of the project:
 
 ```powershell
-# 1. trouver le PID du programme lent
+# 1. find the PID of the slow program
 Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*jobhunter*' } | Select ProcessId, CommandLine
 
-# 2. la pile de chaque fil, maintenant
+# 2. the stack of each thread, right now
 uvx --from py-spy py-spy dump --pid <PID>
 
-# 3. où passe le temps, sur 60 s (fichier SVG à ouvrir dans un navigateur)
+# 3. where the time goes, over 60 s (SVG file to open in a browser)
 uvx --from py-spy py-spy record --pid <PID> --duration 60 -o lenteur.svg
 ```
 
-**Jamais `--locals`** : il imprime les variables de chaque cadre, donc des offres, des
-lettres, des chemins personnels. Sans lui, le rapport ne contient que des noms de
-fonctions et de fichiers du paquet ; on peut le joindre à une issue.
+**Never `--locals`**: it prints the variables of each frame, hence offers, letters,
+personal paths. Without it, the report contains only function and file names of the
+package; it can be attached to an issue.
 
-Vérifié le 19/10/2026 sur Python 3.14 : un `time.sleep` provoqué dans une fonction
-`etape_bloquee` sort en tête du `dump`, avec son fichier et sa ligne.
+Verified on 19/10/2026 on Python 3.14: a `time.sleep` triggered in a function
+`etape_bloquee` comes out at the top of the `dump`, with its file and line.
 
-## Règles
+## Rules
 
-- **Comportement inchangé, sauf intention explicite.** Le banc le prouve. Un changement
-  voulu régénère la référence dans le même commit, et le message dit pourquoi.
-- **Un sujet par commit**, message clair qui explique le pourquoi.
-- **Le moteur ne connaît personne** : tout ce qui est propre à une personne vit dans
-  `profil/profil.json` (voir `AGENTS.md`).
-- **Rien à l'import** : ni lecture, ni écriture, ni réseau (`tests/test_effets_import.py`).
-  Une valeur tirée du profil s'écrit `_PARESSEUX["NOM"] = lambda: ...` et se lit
-  `_ici.NOM` dans son module ([ADR 0007](docs/adr/0007-valeurs-du-profil-paresseuses.md)).
-- **`print` pour la sortie d'une commande (`main()`), `logging` pour le reste** :
+- **Behaviour unchanged, unless explicitly intended.** The bench proves it. A deliberate
+  change regenerates the reference in the same commit, and the message says why.
+- **One subject per commit**, clear message that explains the why.
+- **The engine knows nobody**: everything specific to a person lives in
+  `profil/profil.json` (see `AGENTS.md`).
+- **Nothing at import**: no reading, no writing, no network (`tests/test_effets_import.py`).
+  A value taken from the profile is written `_PARESSEUX["NOM"] = lambda: ...` and read as
+  `_ici.NOM` in its module ([ADR 0007](docs/adr/0007-valeurs-du-profil-paresseuses.md)).
+- **`print` for a command's output (`main()`), `logging` for the rest**:
   `_log = journal.journal(__name__)`.
-- **Limites non négociables** : aucune soumission automatique de candidature, aucun
-  contournement anti-bot ni résolution de CAPTCHA, aucun mot de passe manipulé par les
-  programmes. Détail : `AGENTS.md`.
-- Les tests tournent sur le **profil d'exemple** et des **offres fictives**, jamais sur des
-  données réelles.
+- **Non-negotiable limits**: no automatic submission of an application, no anti-bot
+  circumvention or CAPTCHA solving, no password handled by the programs. Details:
+  `AGENTS.md`.
+- The tests run on the **sample profile** and **fictitious offers**, never on real data.
 
-## Publier une version
+## Publishing a release
 
-1. Monter `VERSION` **et** `version` dans `pyproject.toml` (identiques).
-2. Ajouter la section `## X.Y.Z — date` en tête de `CHANGELOG.md`.
-3. CI verte sur `main`, puis `gh release create vX.Y.Z` avec la section du CHANGELOG :
-   l'étiquette sert de référence à la mise à jour des installations par ZIP.
-4. **Signer** (ADR 0012), une fois le workflow « installateur » fini, sur l'ordinateur
-   qui détient la clé privée :
-   `uv run python outils/signature.py signer X.Y.Z --publier`. Sans `signature.json`,
-   les installations qui ont la clé publique refusent la version. La toute première
-   fois : `uv run python outils/signature.py cle`, puis commiter `src/jobhunter/signature.py`
-   et sauvegarder `~/.jobhunter/cle_signature` hors de l'ordinateur.
+1. Bump `VERSION` **and** `version` in `pyproject.toml` (identical).
+2. Add the section `## X.Y.Z — date` at the top of `CHANGELOG.md`.
+3. CI green on `main`, then `gh release create vX.Y.Z` with the CHANGELOG section: the tag
+   serves as the reference for updating ZIP installations.
+4. **Sign** (ADR 0012), once the "installateur" workflow has finished, on the computer
+   that holds the private key:
+   `uv run python outils/signature.py signer X.Y.Z --publier`. Without `signature.json`,
+   installations that have the public key refuse the release. The very first time:
+   `uv run python outils/signature.py cle`, then commit `src/jobhunter/signature.py`
+   and back up `~/.jobhunter/cle_signature` off the computer.

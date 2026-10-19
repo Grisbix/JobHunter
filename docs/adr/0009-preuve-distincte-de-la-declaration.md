@@ -1,40 +1,40 @@
-# 0009 — La preuve d'envoi est distincte de la déclaration
+# 0009 — Proof of sending is distinct from the declaration
 
-**Statut** : accepté le 2026-10-19 (JobHunter 2.2.0).
+**Status**: accepted on 2026-10-19 (JobHunter 2.2.0).
 
-## Contexte
+## Context
 
-Jusqu'à la 2.1, une candidature passait à « postulé » quand l'utilisateur le disait : une
-touche dans la console du programme de candidature, puis, une seconde fois, une
-confirmation dans l'application. Rien ne gardait la trace de ce que le site avait affiché.
-Or un envoi peut échouer sans bruit : champ obligatoire oublié, session expirée, bouton
-cliqué deux fois. « J'ai cliqué Envoyer » et « le site a reçu ma candidature » sont deux
-faits différents.
+Up to 2.1, an application moved to "postulé" (applied) when the user said so: a
+keypress in the application program's console, then, a second time, a
+confirmation in the app. Nothing kept a trace of what the site had displayed.
+Yet a submission can fail silently: a required field forgotten, an expired session, a button
+clicked twice. "I clicked Send" and "the site received my application" are two different
+facts.
 
-## Décision
+## Decision
 
-- Le clic d'envoi reste celui de l'utilisateur ([0005](0005-aucune-soumission-automatique.md)) ;
-  il le **déclare** ensuite (bouton « J'ai envoyé » de l'application, ou touche en mode
-  terminal).
-- Après la déclaration, le programme **observe** la page sans rien cliquer ni saisir, et
-  écrit dans le suivi, en une seule fois : `s: "postulé"`, `envoi` et `preuve`.
-  - `envoi: "confirmé"` seulement si la page montre une phrase de confirmation
-    (« Merci pour votre candidature », « Application submitted »…) ou une adresse de
-    confirmation, **et** que le formulaire a disparu.
-  - `envoi: "incertain"` dans tous les autres cas : formulaire encore là, message
-    d'erreur, page muette.
-  - `envoi: "déclaré"` quand l'utilisateur confirme à la main, sans observation.
-  - `preuve` : l'extrait vu, l'adresse, la date et une capture de la page
-    (`Scripts/_preuves/`, données locales).
-- Le statut reste « postulé » dans les trois cas : relances et métriques n'en dépendent pas.
-- « Incertain » ne relance **jamais** un envoi : c'est un signal à vérifier, pas une erreur
-  à réparer.
-- Un formulaire rempli mais non envoyé (« préparé ») n'est pas une candidature : il reste
-  dans le journal du programme (`apply_runner_done.json`), pas dans le suivi.
+- The send click remains the user's ([0005](0005-aucune-soumission-automatique.md));
+  they then **declare** it ("J'ai envoyé" (I have sent it) button in the app, or keypress in terminal
+  mode).
+- After the declaration, the program **observes** the page without clicking or typing anything, and
+  writes to the tracking file, in a single operation: `s: "postulé"`, `envoi` and `preuve`.
+  - `envoi: "confirmé"` only if the page shows a confirmation sentence
+    ("Merci pour votre candidature", "Application submitted"…) or a confirmation
+    address, **and** the form has disappeared.
+  - `envoi: "incertain"` in all other cases: form still there, error
+    message, silent page.
+  - `envoi: "déclaré"` when the user confirms by hand, without observation.
+  - `preuve`: the excerpt seen, the address, the date and a capture of the page
+    (`Scripts/_preuves/`, local data).
+- The status remains "postulé" in all three cases: follow-ups and metrics do not depend on it.
+- "Incertain" **never** retries a submission: it is a signal to check, not an error
+  to repair.
+- A form that was filled in but not sent ("préparé") is not an application: it stays
+  in the program's log (`apply_runner_done.json`), not in the tracking file.
 
-## Conséquences
+## Consequences
 
-Le suivi dit ce qui a été observé, pas seulement ce qui a été dit. La détection est
-volontairement prudente : une page de confirmation inhabituelle donnera « incertain »,
-jamais l'inverse. Les motifs vivent dans `jobhunter/navigation/confirmation.py` et
-s'enrichissent avec les pages réellement rencontrées.
+The tracking file says what was observed, not only what was said. Detection is
+deliberately cautious: an unusual confirmation page will yield "incertain",
+never the reverse. The patterns live in `jobhunter/navigation/confirmation.py` and
+are enriched with the pages actually encountered.

@@ -1,55 +1,55 @@
-# 0012 — Mises à jour signées par l'auteur, hors de GitHub
+# 0012 — Updates signed by the author, outside GitHub
 
-**Statut** : accepté le 2026-10-19 (étape E2 de la feuille de route, JobHunter 2.18.0).
-Actif dès que l'auteur a publié sa clé publique (`signature.CLE_PUBLIQUE`).
+**Status**: accepted on 2026-10-19 (step E2 of the roadmap, JobHunter 2.18.0).
+Active as soon as the author has published their public key (`signature.CLE_PUBLIQUE`).
 
-## Contexte
+## Context
 
-La mise à jour télécharge du code exécutable : le ZIP d'une étiquette (installation depuis
-les sources) ou `JobHunterSetup.exe` (application installée). HTTPS prouve que les octets
-viennent de GitHub, pas qu'ils viennent de l'auteur. Un compte GitHub volé, un jeton de
-workflow détourné ou une action compromise publieraient une version piégée que chaque
-installation prendrait au lancement suivant.
+The update downloads executable code: the ZIP of a tag (installation from
+sources) or `JobHunterSetup.exe` (installed application). HTTPS proves that the bytes
+come from GitHub, not that they come from the author. A stolen GitHub account, a hijacked
+workflow token or a compromised action would publish a booby-trapped version that every
+installation would pick up at the next launch.
 
-L'attestation de provenance Sigstore (2.10.1) prouve qu'un exécutable sort du workflow du
-dépôt ; elle ne protège pas d'un dépôt compromis, et l'application ne la vérifie pas.
+The Sigstore provenance attestation (2.10.1) proves that an executable comes out of the repository's
+workflow; it does not protect against a compromised repository, and the application does not verify it.
 
-Pistes écartées :
-- **tufup** : sa purge du dossier de destination est incompatible avec un dossier qui
-  contient des données de l'utilisateur, et il apporte un format de dépôt TUF à héberger ;
-- **WinSparkle** : Windows seulement, et sa signature DSA/EdDSA est la même idée avec une
-  bibliothèque C en plus ;
-- **signature Authenticode** : certificat payant, et ne couvre pas le ZIP des sources ;
-- **signature faite par la CI** : la clé serait un secret du dépôt, donc à la portée de
-  qui compromet le dépôt — exactement le cas à couvrir.
+Options ruled out:
+- **tufup**: its purge of the destination folder is incompatible with a folder that
+  contains user data, and it brings a TUF repository format to host;
+- **WinSparkle**: Windows only, and its DSA/EdDSA signature is the same idea with a
+  C library on top;
+- **Authenticode signature**: paid certificate, and does not cover the sources ZIP;
+- **signature done by the CI**: the key would be a repository secret, hence within reach of
+  whoever compromises the repository — exactly the case to cover.
 
-## Décision
+## Decision
 
-- **Ed25519 en Python pur** (`jobhunter.signature`, RFC 8032 section 6, vecteurs de la RFC
-  en test) : aucune dépendance nouvelle, ni dans le paquet ni dans l'installateur.
-- **La clé privée ne quitte jamais l'ordinateur de l'auteur** (`~/.jobhunter/cle_signature`,
-  créée par `outils/signature.py cle`). La clé publique est écrite dans le code.
-- **On signe un manifeste**, pas une archive : la version, l'empreinte SHA-256 de chaque
-  fichier du ZIP de l'étiquette, et celle de `JobHunterSetup.exe`. Les ZIP que GitHub
-  fabrique ne sont pas garantis identiques octet pour octet ; leur contenu, si. Le manifeste
-  signé est attaché à la release (`signature.json`), après la CI de l'installateur.
-- **À l'installation** :
-  - sources : le ZIP de l'étiquette de la version annoncée ; chaque fichier doit avoir son
-    empreinte signée, aucun ne doit manquer ni s'ajouter ; sinon rien n'est écrit ;
-  - application : l'installateur doit avoir l'empreinte signée ; sinon il n'est pas ouvert.
-    Vérifié, il est ouvert normalement : l'utilisateur le fait avancer.
-- **Pas de retour en arrière** : le manifeste porte sa version, qui doit être celle
-  annoncée ; une ancienne signature valide ne fait pas réinstaller une vieille version.
-- **Transition** : tant que `CLE_PUBLIQUE` est vide, la mise à jour se fait comme avant et le
-  dit ; l'application contrôle au moins l'empreinte publiée de l'installateur. La première
-  version qui porte la clé est installée sans signature (elle n'en a pas encore) ; toutes
-  les suivantes l'exigent.
+- **Ed25519 in pure Python** (`jobhunter.signature`, RFC 8032 section 6, the RFC's vectors
+  in tests): no new dependency, neither in the package nor in the installer.
+- **The private key never leaves the author's computer** (`~/.jobhunter/cle_signature`,
+  created by `outils/signature.py cle`). The public key is written in the code.
+- **A manifest is signed**, not an archive: the version, the SHA-256 fingerprint of each
+  file in the tag's ZIP, and that of `JobHunterSetup.exe`. The ZIPs that GitHub
+  produces are not guaranteed to be identical byte for byte; their content is. The signed
+  manifest is attached to the release (`signature.json`), after the installer's CI.
+- **On installation**:
+  - sources: the ZIP of the announced version's tag; each file must have its signed
+    fingerprint, none may be missing or added; otherwise nothing is written;
+  - application: the installer must have the signed fingerprint; otherwise it is not opened.
+    Once verified, it is opened normally: the user moves it forward.
+- **No going backwards**: the manifest carries its version, which must be the one
+  announced; an old valid signature does not cause an old version to be reinstalled.
+- **Transition**: as long as `CLE_PUBLIQUE` is empty, the update works as before and says
+  so; the application checks at least the installer's published fingerprint. The first
+  version that carries the key is installed without a signature (it does not have one yet); all
+  the following ones require it.
 
-## Conséquences
+## Consequences
 
-- Publier une version demande une étape de plus, chez l'auteur :
-  `uv run python outils/signature.py signer X.Y.Z --publier`, une fois la CI finie.
-  Une release sans `signature.json` est refusée par les installations qui ont la clé.
-- **Perdre la clé privée** empêche toute mise à jour automatique : chaque installation
-  devra reprendre l'installateur à la main. L'auteur la sauvegarde hors de l'ordinateur.
-- Un dépôt cloné avec git (développeur) n'est pas concerné : `git pull` suit le dépôt.
+- Publishing a version takes one more step, on the author's side:
+  `uv run python outils/signature.py signer X.Y.Z --publier`, once the CI has finished.
+  A release without `signature.json` is refused by installations that have the key.
+- **Losing the private key** prevents any automatic update: every installation
+  would have to take the installer by hand. The author backs it up off the computer.
+- A repository cloned with git (developer) is not concerned: `git pull` follows the repository.

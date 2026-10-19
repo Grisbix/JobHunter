@@ -1,43 +1,43 @@
-# 0007 — Ce qui vient du profil se calcule à la première lecture
+# 0007 — What comes from the profile is computed on first read
 
-**Statut** : accepté, 2026-10-18 (phase 4 du plan).
+**Status**: accepted, 2026-10-18 (phase 4 of the plan).
 
-## Contexte
+## Context
 
-Une centaine de constantes de module étaient calculées au chargement à partir du profil
-(motifs du filtre d'intitulé, axes et plafonds du scoring, textes de lettre et de
-message, secteurs) ou de `Scripts/chemins.json` (dossiers des documents). Importer
-`jobhunter.sources.linkedin` lisait donc le profil ; un test ne pouvait pas changer de
-profil sans recharger tous les modules ; `premier_lancement` changeait de profil en
-cours de route et gardait les valeurs de l'ancien.
+About a hundred module constants were computed at load time from the profile
+(title-filter patterns, scoring axes and caps, letter and
+message texts, sectors) or from `Scripts/chemins.json` (document folders). Importing
+`jobhunter.sources.linkedin` therefore read the profile; a test could not switch
+profile without reloading every module; `premier_lancement` changed profile
+midway and kept the values of the old one.
 
-## Décision
+## Decision
 
-- Chaque module concerné déclare ces valeurs comme **fabriques** dans son dictionnaire
-  `_PARESSEUX`, et son `__getattr__` de module (PEP 562) les calcule à la première
-  lecture puis les range dans le module (`jobhunter.paresseux`).
-- Dans le module, le code les lit par `_ici.NOM` (`_ici` = le module lui-même) : un nom
-  global nu ne passe pas par `__getattr__`. Les autres modules lisent `module.NOM` ou
-  `from module import NOM` à l'intérieur d'une fonction ; un `from module import NOM` de
-  niveau module y est remplacé par une fabrique qui relit le nom au premier usage.
-- Les façades `Scripts/x.py` lancent leur module par `runpy.run_module(...,
-  alter_sys=True)` : sans cela `sys.modules["__main__"]` reste la façade et `_ici`
-  la désignerait.
-- `profil.utiliser(donnees)` injecte un profil en mémoire ; `profil.recharger(fichier)`
-  revient au fichier. Les deux oublient les valeurs déjà calculées.
-- Les noms et les valeurs ne changent pas : `monkeypatch.setattr(module, "NOM", ...)` et
-  les façades ([ADR 0001](0001-facades-alias.md)) continuent de marcher. La façade
-  connaît les noms paresseux de ses sous-modules.
-- La transformation a été GÉNÉRÉE depuis l'arbre syntaxique, puis vérifiée par le banc
-  ([ADR 0006](0006-banc-de-non-regression.md)) : 0 écart.
+- Each module concerned declares these values as **factories** in its `_PARESSEUX`
+  dictionary, and its module-level `__getattr__` (PEP 562) computes them on first
+  read and then stores them in the module (`jobhunter.paresseux`).
+- Inside the module, the code reads them as `_ici.NOM` (`_ici` = the module itself): a bare
+  global name does not go through `__getattr__`. Other modules read `module.NOM` or
+  `from module import NOM` inside a function; a module-level `from module import NOM` is
+  replaced there by a factory that re-reads the name on first use.
+- The `Scripts/x.py` facades launch their module through `runpy.run_module(...,
+  alter_sys=True)`: without that, `sys.modules["__main__"]` remains the facade and `_ici`
+  would point to it.
+- `profil.utiliser(donnees)` injects an in-memory profile; `profil.recharger(fichier)`
+  goes back to the file. Both forget the values already computed.
+- Names and values do not change: `monkeypatch.setattr(module, "NOM", ...)` and
+  the facades ([ADR 0001](0001-facades-alias.md)) keep working. The facade
+  knows the lazy names of its submodules.
+- The transformation was GENERATED from the syntax tree, then checked by the bench
+  ([ADR 0006](0006-banc-de-non-regression.md)): 0 differences.
 
-## Conséquences
+## Consequences
 
-Charger tout le moteur ne lit aucun fichier, n'écrit rien et ne sort pas sur le réseau ;
-`tests/test_effets_import.py` le vérifie (cliquet). Une nouvelle constante tirée du
-profil s'écrit `_PARESSEUX["NOM"] = lambda: ...` et se lit `_ici.NOM` ; une lecture du
-profil au niveau module ferait échouer ce test.
+Loading the whole engine reads no file, writes nothing and does not go out on the network;
+`tests/test_effets_import.py` checks it (ratchet). A new constant drawn from the
+profile is written `_PARESSEUX["NOM"] = lambda: ...` and read `_ici.NOM`; a read of the
+profile at module level would make this test fail.
 
-mypy voit ces valeurs comme `Any` : c'est le prix de la compatibilité des noms. Les
-remplacer par des objets de configuration typés (`Profil`) est possible plus tard, sans
-toucher aux appelants extérieurs.
+mypy sees these values as `Any`: that is the price of keeping the names compatible. Replacing
+them with typed configuration objects (`Profil`) is possible later, without
+touching outside callers.

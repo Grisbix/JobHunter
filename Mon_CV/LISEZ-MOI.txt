@@ -1,3 +1,7 @@
 Depose ici ton CV (.docx de preference, sinon .pdf), un seul fichier.
 Puis double-clique sur lancer.bat a la racine du dossier.
 Ce dossier est ignore par git : ton CV ne sera jamais publie.
+
+English: put your CV here (.docx preferably, otherwise .pdf), a single file.
+Then double-click lancer.bat (or run ./lancer.sh) at the root of the folder.
+This folder is ignored by git: your CV will never be published.

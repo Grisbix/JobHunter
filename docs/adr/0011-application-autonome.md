@@ -1,58 +1,58 @@
-# 0011 — Une application autonome pour l'utilisateur, le code source pour qui le modifie
+# 0011 — A standalone application for the user, the source code for whoever modifies it
 
-**Statut** : accepté le 2026-10-19 (étape F4 de la feuille de route, JobHunter 2.9.0).
+**Status**: accepted on 2026-10-19 (step F4 of the roadmap, JobHunter 2.9.0).
 
-## Contexte
+## Context
 
-Installer JobHunter demandait Python 3.12+, un ZIP à dézipper, `installer.bat` (bibliothèques
-et navigateur Chromium), puis `lancer.bat`. C'est raisonnable pour qui veut modifier le code,
-dissuasif pour qui veut seulement chercher un emploi. L'utilisateur voulait un bouton
-« Télécharger » qui donne un installateur, comme le projet Ibaraki, sans Python obligatoire,
-le code restant téléchargeable pour qui veut personnaliser.
+Installing JobHunter required Python 3.12+, a ZIP to unzip, `installer.bat` (libraries
+and Chromium browser), then `lancer.bat`. That is reasonable for someone who wants to modify the code,
+off-putting for someone who just wants to look for a job. The user wanted a
+"Download" button that gives an installer, like the Ibaraki project, with no Python required,
+while the code remains downloadable for anyone who wants to customise it.
 
-Contraintes :
-- l'application lance ses programmes en sous-processus, par `[PY, "-m", module]` : sans
-  Python, il faut un exécutable qui comprenne `-m` ;
-- les données de l'utilisateur ne doivent jamais vivre dans le dossier du programme, que la
-  mise à jour remplace ;
-- embarquer Chromium alourdirait l'installateur d'environ 150 Mo.
+Constraints:
+- the application launches its programs as subprocesses, through `[PY, "-m", module]`: without
+  Python, an executable that understands `-m` is needed;
+- the user's data must never live in the program folder, which the
+  update replaces;
+- embedding Chromium would make the installer about 150 MB heavier.
 
-## Décision
+## Decision
 
-- **Deux exécutables compilés par PyInstaller, dans un même dossier** :
-  `JobHunter.exe` (fenêtre, sans console) et `jobhunter-cli.exe` (console). Le second sert
-  d'interpréteur aux sous-processus : il comprend `-m module`, `-c code` et les commandes de
-  `jobhunter` (`jobhunter.gele.aiguiller`). `jobhunter.gele.interpreteur()` le désigne ;
-  sous Python, c'est `python.exe` (jamais `pythonw.exe`, sans sortie standard).
-- **Données dans `Documents/JobHunter`** (ou `JOBHUNTER_RACINE`). Au premier lancement, le
-  squelette livré y est copié (profils d'exemple, réglages des sources, dossier du CV),
-  sans jamais remplacer un fichier présent.
-- **Installateur Inno Setup**, pour l'utilisateur seul et sans droits d'administrateur
-  (`%LOCALAPPDATA%\Programs\JobHunter`). Il remplace le dossier du programme en entier ; la
-  désinstallation ne touche pas aux données.
-- **Construit par la CI** (`.github/workflows/installateur.yml`) à chaque release, contrôlé
-  (installation silencieuse, premier lancement), et attaché à la release. Le README pointe
-  sur `releases/latest/download/JobHunterSetup.exe`.
-- **Pas de Chromium embarqué** : sans le Chromium de Playwright, la collecte lance Chrome ou
-  Edge du système (`navigation.navigateur.lancer`) ; Edge est présent sur tout Windows 10/11.
-  La candidature et les connexions utilisaient déjà Chrome.
-- **Mise à jour** : l'application installée ne remplace pas ses fichiers un par un. Depuis
-  la 2.18, elle télécharge le nouvel installateur, le contrôle (signature de l'auteur,
-  ADR 0012 ; à défaut l'empreinte publiée) et l'ouvre ; Inno Setup ferme l'application
-  (`CloseApplications`) et garde les données. Hors ligne, elle ouvre la page de la release.
+- **Two executables compiled by PyInstaller, in the same folder**:
+  `JobHunter.exe` (window, no console) and `jobhunter-cli.exe` (console). The second serves
+  as the interpreter for subprocesses: it understands `-m module`, `-c code` and the
+  `jobhunter` commands (`jobhunter.gele.aiguiller`). `jobhunter.gele.interpreteur()` designates it;
+  under Python, it is `python.exe` (never `pythonw.exe`, which has no standard output).
+- **Data in `Documents/JobHunter`** (or `JOBHUNTER_RACINE`). On first launch, the
+  shipped skeleton is copied there (example profiles, source settings, CV folder),
+  never replacing a file that is already present.
+- **Inno Setup installer**, for the single user and without administrator rights
+  (`%LOCALAPPDATA%\Programs\JobHunter`). It replaces the program folder entirely; the
+  uninstall does not touch the data.
+- **Built by the CI** (`.github/workflows/installateur.yml`) at every release, checked
+  (silent installation, first launch), and attached to the release. The README points
+  to `releases/latest/download/JobHunterSetup.exe`.
+- **No embedded Chromium**: without Playwright's Chromium, the collection launches the system's Chrome or
+  Edge (`navigation.navigateur.lancer`); Edge is present on every Windows 10/11.
+  Applications and logins already used Chrome.
+- **Update**: the installed application does not replace its files one by one. Since
+  2.18, it downloads the new installer, checks it (the author's signature,
+  ADR 0012; failing that, the published fingerprint) and opens it; Inno Setup closes the application
+  (`CloseApplications`) and keeps the data. Offline, it opens the release page.
 
-## Conséquences
+## Consequences
 
-- Deux publics, deux chemins : l'installateur pour l'usage, le code source (ZIP ou clone,
-  avec Python) pour personnaliser ; le README présente les deux.
-- L'application installée occupe environ 245 Mo (Python, Playwright, bibliothèques).
-- La tâche planifiée du matin : `planifier.bat` pour le code source ; depuis la 2.19,
-  l'application (installée ou non) la crée elle-même, Maintenance → « Collecte chaque
-  matin… » (`jobhunter.planification`, même nom de tâche, `jobhunter-cli.exe pipeline`).
-- **Essai à chaque construction** (2.19) : la CI installe sans Python sur le PATH, puis
-  `outils/installateur/essai_installe.py`, exécuté par le Python embarqué, lance le
-  navigateur du système, fusionne un scan fictif, écrit un dossier et prépare la mise à
-  jour ; la fenêtre doit s'ouvrir et rester ouverte ; l'installateur suivant s'installe
-  par-dessus en gardant les données.
-- Les programmes de test réseau (`test_*`) lisent la file à l'import : ils sont exclus du
-  contrôle de chargement de l'exécutable.
+- Two audiences, two paths: the installer for use, the source code (ZIP or clone,
+  with Python) for customising; the README presents both.
+- The installed application takes up about 245 MB (Python, Playwright, libraries).
+- The morning scheduled task: `planifier.bat` for the source code; since 2.19,
+  the application (installed or not) creates it itself, Maintenance → "Collecte chaque
+  matin…" (Collect every morning…) (`jobhunter.planification`, same task name, `jobhunter-cli.exe pipeline`).
+- **Test on every build** (2.19): the CI installs with no Python on the PATH, then
+  `outils/installateur/essai_installe.py`, run by the embedded Python, launches the
+  system browser, merges a fictitious scan, writes a folder and prepares the
+  update; the window must open and stay open; the next installer installs
+  over it, keeping the data.
+- The network test programs (`test_*`) read the queue at import: they are excluded from the
+  executable's load check.

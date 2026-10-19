@@ -1,24 +1,24 @@
-# 0006 — Un banc de non-régression avant toute refonte
+# 0006 — A non-regression bench before any overhaul
 
-**Statut** : accepté, 2026-10-17 (phase 0 du plan).
+**Status**: accepted, 2026-10-17 (phase 0 of the plan).
 
-## Contexte
+## Context
 
-Le moteur décide quelles offres entrent, leur note, la variante de CV et le texte de la
-lettre. Une refonte (déplacer 15 000 lignes dans un paquet) doit prouver qu'elle ne change
-AUCUNE de ces décisions — les tests unitaires ne couvrent pas tout.
+The engine decides which offers get in, their score, the CV variant and the text of the
+letter. An overhaul (moving 15,000 lines into a package) must prove that it changes
+NONE of these decisions — unit tests do not cover everything.
 
-## Décision
+## Decision
 
-- `outils/banc.py` enregistre, pour chaque offre, toutes les décisions et le texte complet
-  de la lettre et du CV (date neutralisée), et compare à une référence.
-- Référence de CI : 384 offres fictives (`outils/banc_offres.py`), profil d'exemple.
-- Sur les vraies données (11 710 offres, 99 lettres et CV) : instantané avant la
-  synchronisation, comparaison après — à chaque version.
-- Les découpages de fichiers sont GÉNÉRÉS depuis l'arbre syntaxique de l'original par des
-  scripts rejouables, jamais retapés.
+- `outils/banc.py` records, for each offer, all the decisions and the full text of the
+  letter and CV (date neutralised), and compares them with a reference.
+- CI reference: 384 fictitious offers (`outils/banc_offres.py`), example profile.
+- On the real data (11,710 offers, 99 letters and CVs): snapshot before the
+  synchronisation, comparison after — at every version.
+- File splits are GENERATED from the syntax tree of the original by
+  replayable scripts, never retyped.
 
-## Conséquences
+## Consequences
 
-Chaque étape des phases 3 à 5 est sortie avec 0 écart. Un changement voulu de décision se
-fait dans un commit séparé qui réenregistre la référence et dit pourquoi.
+Every step of phases 3 to 5 shipped with 0 differences. An intended change of decision
+is made in a separate commit that re-records the reference and says why.

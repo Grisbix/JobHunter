@@ -7,21 +7,21 @@ paths:
   - src/jobhunter/scoring/*.py
   - src/jobhunter/texte.py
 ---
-# Motifs regex — pièges mesurés
+# Regex patterns — measured traps
 
-**Les regex ne s'écrivent pas via un heredoc shell.** `\b` y devient le caractère
-backspace `\x08` ou un antislash littéral ; le motif compile, ne lève rien, et ne
-matche plus jamais. Trois occurrences dans l'histoire du projet. Utiliser Write/Edit.
+**Regexes are not written through a shell heredoc.** `\b` becomes the backspace
+character `\x08` or a literal backslash there; the pattern compiles, raises nothing, and
+never matches again. Three occurrences in the project's history. Use Write/Edit.
 
-`jutil.verifier_motifs(globals())` s'exécute en fin de module dans `ats_match.py` et
-`job_sources.py` : ils refusent de démarrer si un de leurs motifs est corrompu. Il
-balaie **toute** `re.Pattern` du module, pas seulement celles préfixées `_RX_` — un
-garde-fou qui choisit ses cibles par le nom finit par en rater.
+`jutil.verifier_motifs(globals())` runs at the end of the module in `ats_match.py` and
+`job_sources.py`: they refuse to start if one of their patterns is corrupted. It
+sweeps **every** `re.Pattern` in the module, not only those prefixed `_RX_` — a
+safeguard that picks its targets by name ends up missing some.
 
-**Attention aux sous-chaînes.** Famille de bugs la plus fréquente ici :
-« sin**GAP**ore », « dive**RSE** », « **CLIMAT**isation », « trans**VERSE** »,
-« **bp** dans BPCE ».
+**Beware of substrings.** The most frequent family of bugs here:
+"sin**GAP**ore", "dive**RSE**", "**CLIMAT**isation", "trans**VERSE**",
+"**bp** in BPCE".
 
-Inversement, un `\b` **final** sur un radical tue ses flexions : `sustainab\b` ne voit
-pas « Sustainability », `alternan[ct]\b` ne voit pas « Alternance ».
-**Les sigles gardent leurs deux bornes, les radicaux perdent la droite.**
+Conversely, a **trailing** `\b` on a stem kills its inflections: `sustainab\b` does not see
+"Sustainability", `alternan[ct]\b` does not see "Alternance".
+**Acronyms keep both of their boundaries, stems lose the right-hand one.**

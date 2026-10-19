@@ -1,24 +1,24 @@
-# 0004 — Une limite de débit s'attend, un refus d'entrée s'arrête
+# 0004 — A rate limit is waited out, a refusal of entry is a stop
 
-**Statut** : accepté (2026-10-03 ; LinkedIn le 2026-10-17).
+**Status**: accepted (2026-10-03; LinkedIn on 2026-10-17).
 
-## Contexte
+## Context
 
-Une collecte vide a deux causes opposées : rien à prendre, ou refus d'entrée. Les relancer
-de la même façon est exactement ce qu'il ne faut pas faire face à un quota.
+An empty collection has two opposite causes: nothing to take, or refusal of entry. Retrying them
+the same way is exactly what must not be done against a quota.
 
-## Décision
+## Decision
 
-- **429** (« reviens plus tard ») : pause (`Retry-After`, sinon une attente croissante), puis
-  la même page est redemandée ; l'état est gardé pour reprendre d'une exécution à l'autre.
-  Durée de passe bornée (LinkedIn : 45 min).
-- **403, 999, CAPTCHA** : refus. La source s'arrête, sans boucle, et ne réessaie pas avant
-  30 jours.
-- `INCIDENTS` compte les refus ; la collecte les affiche, pour qu'un scan bridé ne
-  ressemble pas à une journée calme.
-- Jamais de contournement : ni rotation d'IP, ni empreinte TLS imitée, ni résolution de
-  CAPTCHA, ni moteur « furtif ».
+- **429** ("come back later"): pause (`Retry-After`, otherwise a growing wait), then
+  the same page is requested again; the state is kept so as to resume from one run to the next.
+  Pass duration is bounded (LinkedIn: 45 min).
+- **403, 999, CAPTCHA**: refusal. The source stops, with no loop, and does not retry for
+  30 days.
+- `INCIDENTS` counts the refusals; the collection displays them, so that a throttled scan does not
+  look like a quiet day.
+- Never a workaround: no IP rotation, no imitated TLS fingerprint, no CAPTCHA
+  solving, no "stealth" engine.
 
-## Conséquences
+## Consequences
 
-Moins d'offres certains jours, mais aucun blocage durable et aucun compte sanctionné.
+Fewer offers on some days, but no lasting block and no sanctioned account.

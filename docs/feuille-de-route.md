@@ -1,177 +1,176 @@
-# Feuille de route après le plan de professionnalisation
+# Roadmap after the professionalisation plan
 
-Le plan de professionnalisation (`docs/plan-professionnalisation.md`) est fini. Les
-phases 0 à 6 et 8 sont faites, la phase 7 est écartée faute de besoin. Trois axes du
-premier document de propositions de Codex (18/10) sont livrés :
+The professionalisation plan (`docs/plan-professionnalisation.md`) is finished. Phases 0 to 6 and 8
+are done, phase 7 is set aside for lack of need. Three workstreams from Codex's first
+proposals document (18/10) are delivered:
 
-- candidature depuis l'app avec preuve d'envoi (2.2) ;
-- dossiers contrôlés (2.3) ;
-- rendement par source (2.4).
+- applying from the app with proof of sending (2.2);
+- checked folders (2.3);
+- yield per source (2.4).
 
-Cette feuille de route croise ce qui reste avec le second document de Codex (19/10,
-« Exploration transversale des dépôts », dix pistes d'outillage). Elle classe le tout par
-valeur pour la recherche d'emploi et par coût.
+This roadmap crosses what remains with Codex's second document (19/10,
+"Cross-repository exploration", ten tooling leads). It ranks everything by
+value for the job search and by cost.
 
-Règle inchangée : chaque étape livre seule, banc à 0 écart, et ne s'adopte que sur un
-échec reproduit ou un gain mesuré. Pas de dépendance installée « en bloc ».
+Rule unchanged: each step delivers on its own, bench at 0 differences, and is adopted only on
+a reproduced failure or a measured gain. No dependency installed "in bulk".
 
-## Étape A — Faire vivre ce qui vient d'être livré (avant tout nouveau code)
+## Step A — Make what was just delivered live (before any new code)
 
-| # | Quoi | Qui | Fini quand |
+| # | What | Who | Done when |
 |---|---|---|---|
-| A1 | Essai réel du panneau Candidatures sur une offre ; ajouter au détecteur de confirmation les formules réelles qu'il aurait manquées | Gabriel, puis code | une vraie candidature notée `confirmé`, ou une page non reconnue ajoutée aux motifs et testée |
-| A2 | Dimanche 25/10 : premier contrôle de disponibilité hebdomadaire | lecture du bilan | les ~143 offres fermées repérées sont retirées, étape sous 110 min |
-| A3 | Après une à deux semaines de journal : `jobhunter rendement` | lecture + décision | chaque source a un verdict stable ; décider (à la main) le sort d'une source refusée à chaque fois |
+| A1 | Real trial of the Candidatures panel on one offer; add to the confirmation detector the real phrasings it would have missed | Gabriel, then code | a real application recorded as `confirmé`, or an unrecognised page added to the patterns and tested |
+| A2 | Sunday 25/10: first weekly availability check | reading the summary | the ~143 closed offers found are removed, step under 110 min |
+| A3 | After one to two weeks of log: `jobhunter rendement` | reading + decision | each source has a stable verdict; decide (by hand) the fate of a source refused every time |
 
-## Étape B — Des preuves de non-régression qui manquent (Codex 19/10, P1, effort faible)
+## Step B — Missing non-regression proofs (Codex 19/10, P1, low effort)
 
-| # | Quoi | Pourquoi ici | Fini quand |
+| # | What | Why here | Done when |
 |---|---|---|---|
-| B1 ✅ (v2.4.1) | **Test d'architecture** : le moteur (`jobhunter.*` hors `app`, `accueil`) n'importe ni `tkinter` ni `customtkinter` ni `jobhunter.app` | Le plan dit « vérifié en CI par import-linter », mais rien n'est branché : un test pytest de quelques lignes suffit, sans ArchUnitPython ni import-linter | un import volontaire de Tkinter dans `scoring` fait échouer le test ; le retirer le fait passer |
-| B2 ✅ (v2.4.3) | **Réponses enregistrées des connecteurs** (pytest-recording / VCR.py, dépendance de test seule) : APEC (API), LinkedIn guest, sitemap WTJ, Workday, Greenhouse/Lever | Les doublures actuelles (`faux_reseau`) sont écrites à la main : elles ne disent pas si le parseur lit encore la vraie réponse d'aujourd'hui. Une réponse réelle enregistrée, expurgée (cookies, en-têtes), rend le parseur reproductible | dix réponses rejouées sans réseau donnent les mêmes offres ; un échange manquant fait échouer ; aucun cookie ni identifiant dans les fichiers versionnés |
-| B3 ✅ (CONTRIBUTING, 19/10) | **Diagnostic de lenteur** : procédure py-spy (outil externe, pas une dépendance) dans `CONTRIBUTING.md` | Utile la prochaine fois qu'une étape dépasse sa durée (collecte, disponibilité) : localiser au lieu de supposer | la procédure retrouve la fonction d'un blocage provoqué exprès, rapport sans données personnelles (`--locals` désactivé) |
+| B1 ✅ (v2.4.1) | **Architecture test**: the engine (`jobhunter.*` except `app`, `accueil`) imports neither `tkinter` nor `customtkinter` nor `jobhunter.app` | The plan says "checked in CI by import-linter", but nothing is wired in: a pytest test of a few lines is enough, without ArchUnitPython or import-linter | a deliberate Tkinter import in `scoring` fails the test; removing it makes it pass |
+| B2 ✅ (v2.4.3) | **Recorded connector responses** (pytest-recording / VCR.py, test-only dependency): APEC (API), LinkedIn guest, WTJ sitemap, Workday, Greenhouse/Lever | The current doubles (`faux_reseau`) are written by hand: they do not say whether the parser still reads today's real response. A recorded real response, scrubbed (cookies, headers), makes the parser reproducible | ten responses replayed without network give the same offers; a missing exchange fails; no cookie or identifier in the versioned files |
+| B3 ✅ (CONTRIBUTING, 19/10) | **Slowness diagnosis**: py-spy procedure (external tool, not a dependency) in `CONTRIBUTING.md` | Useful the next time a step exceeds its duration (collection, availability): locate instead of guessing | the procedure finds the function of a deliberately provoked stall, report without personal data (`--locals` disabled) |
 
-## Étape C — Les deux axes métier restants (Codex 18/10)
+## Step C — The two remaining business workstreams (Codex 18/10)
 
-| # | Quoi | Pourquoi | Fini quand |
+| # | What | Why | Done when |
 |---|---|---|---|
-| C1 ✅ (v2.5.0) | **Classement évalué sur les jugements réels** : constituer le jeu de référence à partir de ce qui existe déjà. Pertinentes : les offres postulées, relancées ou en entretien du suivi. Inutiles : « pas intéressé » et `exclusions.json`. Puis mesurer le classement actuel (précision des N premières). | Aucune mesure aujourd'hui de « les premières offres sont-elles les bonnes ». C'est le préalable à toute variante, sémantique ou autre. | un chiffre de référence reproductible (`jobhunter evaluation`) ; toute modification du scoring est comparée à lui, avec le banc |
-| C2 ✅ (v2.6.0) | **Identité d'offre plus robuste** : d'abord une **étude**. Compter sur la vraie file les homonymes (même `entreprise\|poste`, lieu ou référence différents) et les doublons sous deux intitulés. | La clé `entreprise\|poste` est celle de `suivi.json`, la donnée la moins reconstituable. On ne migre rien sans un problème mesuré. | une ADR qui chiffre le problème et tranche : identité secondaire (référence de source) en complément, ou statu quo |
+| C1 ✅ (v2.5.0) | **Ranking evaluated on real judgements**: build the reference set from what already exists. Relevant: the offers applied to, followed up or at interview in the tracking. Useless: "not interested" and `exclusions.json`. Then measure the current ranking (precision of the top N). | There is no measure today of "are the top offers the right ones". It is the prerequisite for any variant, semantic or otherwise. | a reproducible reference figure (`jobhunter evaluation`); any change to scoring is compared against it, together with the bench |
+| C2 ✅ (v2.6.0) | **More robust offer identity**: first a **study**. Count on the real queue the namesakes (same `entreprise\|poste`, different location or reference) and the duplicates under two titles. | The `entreprise\|poste` key is the one of `suivi.json`, the least reconstructable data. Nothing is migrated without a measured problem. | an ADR that quantifies the problem and decides: secondary identity (source reference) as a complement, or status quo |
 
-## Étape D — L'application testée comme elle tourne (Codex 19/10, P1, effort moyen)
+## Step D — The application tested as it runs (Codex 19/10, P1, medium effort)
 
-| # | Quoi | Fini quand |
+| # | What | Done when |
 |---|---|---|
-| D1 ✅ (19/10, décision : non) | **Sondage pywinauto, borné à une demi-journée** : inspecter l'arbre des contrôles de la fenêtre réelle. CustomTkinter dessine ses widgets sur un canvas : ils peuvent être invisibles pour UI Automation. | décision écrite. Si les contrôles sont visibles : un parcours avec un profil fictif (ouvrir, filtrer, fiche, panneau Candidatures avec le faux programme). Sinon : on garde les tests Tk internes et le smoke du panneau, et on le note. |
+| D1 ✅ (19/10, decision: no) | **pywinauto probe, limited to half a day**: inspect the control tree of the real window. CustomTkinter draws its widgets on a canvas: they may be invisible to UI Automation. | written decision. If the controls are visible: a walkthrough with a fictitious profile (open, filter, sheet, Candidatures panel with the fake program). Otherwise: we keep the internal Tk tests and the panel smoke test, and note it. |
 
-**Résultat de D1 (19/10/2026).** L'app lancée sur un profil fictif, lue par pywinauto
-(backend UIA) : 206 éléments, dont 153 panneaux et 43 images **sans nom**. Les 5 seuls
-boutons nommés sont ceux de la barre de titre de Windows. Aucun bouton, champ ni tableau
-de JobHunter n'est visible : CustomTkinter les dessine sur un canevas. Décision : pas de
-parcours pywinauto. On garde les tests Tk internes (`test_app_design`, panneaux ouverts
-sur une file jetable) et les captures d'écran faites depuis Python. Conséquence pour E3 :
-un lecteur d'écran ne voit pas l'application non plus. Le corriger demanderait de
-quitter CustomTkinter, ou de lui ajouter une couche d'accessibilité.
+**Result of D1 (19/10/2026).** The app launched on a fictitious profile, read by pywinauto
+(UIA backend): 206 elements, of which 153 panes and 43 images **without a name**. The only 5
+named buttons are those of the Windows title bar. No JobHunter button, field or table
+is visible: CustomTkinter draws them on a canvas. Decision: no pywinauto
+walkthrough. We keep the internal Tk tests (`test_app_design`, panels opened
+on a throwaway queue) and the screenshots taken from Python. Consequence for E3:
+a screen reader does not see the application either. Fixing it would require
+leaving CustomTkinter, or adding an accessibility layer to it.
 
-## Étape E — Distribution au-delà de Gabriel (quand le PC de l'ami et le Mac reviennent)
+## Step E — Distribution beyond Gabriel (when the friend's PC and the Mac are back)
 
-| # | Quoi | Fini quand |
+| # | What | Done when |
 |---|---|---|
-| E1 ✅ (v2.17.0 `.venv` ; v2.18.0 workflow « installation » : `installer.bat` et `installer.sh` sur des machines GitHub neuves, Windows et Linux) | Environnement Python dédié créé par `installer.bat` (reporté depuis la phase 1) | une installation neuve sur un Windows vierge lance l'app sans toucher au Python système |
-| E2 ✅ (v2.18.0, ADR 0012 : Ed25519 en Python pur, clé privée hors de GitHub, `outils/signature.py` ; l'app télécharge, contrôle et ouvre l'installateur. Actif dès que Gabriel crée sa clé) | Mises à jour **signées** : WinSparkle ou tufup (Codex P2), à choisir sur prototype. Attention : la purge de destination de tufup est incompatible avec un dossier qui contient le profil. | un paquet altéré est refusé ; le profil survit à une mise à jour interrompue |
-| E3 ◐ (v2.20.0 : chaque bouton se joue au clavier — Tab, Entrée, Espace — avec un anneau de focus visible sur chaque fond ; contour des champs à 3:1 ; contrastes du texte vérifiés en test, WCAG AA. Reste impossible sans quitter CustomTkinter : donner un nom aux contrôles pour un lecteur d'écran, et le focus clavier des onglets segmentés) | Accessibilité (axe-windows, Accessibility Insights) | les contrôles principaux ont un nom ; la tabulation suit l'ordre visuel |
+| E1 ✅ (v2.17.0 `.venv`; v2.18.0 "installation" workflow: `installer.bat` and `installer.sh` on fresh GitHub machines, Windows and Linux) | Dedicated Python environment created by `installer.bat` (postponed from phase 1) | a fresh installation on a blank Windows launches the app without touching the system Python |
+| E2 ✅ (v2.18.0, ADR 0012: Ed25519 in pure Python, private key outside GitHub, `outils/signature.py`; the app downloads, checks and opens the installer. Active as soon as Gabriel creates his key) | **Signed** updates: WinSparkle or tufup (Codex P2), to be chosen on a prototype. Caution: tufup's destination purge is incompatible with a folder that contains the profile. | a tampered package is refused; the profile survives an interrupted update |
+| E3 ◐ (v2.20.0: every button can be operated by keyboard — Tab, Enter, Space — with a visible focus ring on every background; field outline at 3:1; text contrasts checked in tests, WCAG AA. Still impossible without leaving CustomTkinter: giving the controls a name for a screen reader, and keyboard focus on the segmented tabs) | Accessibility (axe-windows, Accessibility Insights) | the main controls have a name; tabbing follows the visual order |
 
-## Écarté ou différé, avec la raison
+## Set aside or deferred, with the reason
 
-| Piste (Codex 19/10) | Décision |
+| Lead (Codex 19/10) | Decision |
 |---|---|
-| File durable (litequeue, persist-queue) | Aucune perte de travail observée : chaque étape du pipeline reprend où elle s'était arrêtée (`_audit_dispo.json`, `apply_runner_done.json`, budget de durée). Codex le rappelle lui-même : aucune file ne garantit un effet réseau exécuté une seule fois. À rouvrir sur une perte constatée. |
-| DocRefract (comparaison de documents) | Le banc compare déjà le texte de 99 lettres et CV à chaque changement, et `documents.controle` vérifie les fichiers finaux. Gain marginal. |
-| sqlite-utils / FTS5 (recherche locale) | La recherche de l'app répond sur 12 000 offres. À rouvrir si elle devient lente. |
-| ArchUnitPython | Remplacé par le test B1, plus simple, sans dépendance. |
-| Modèle d'annulation de confluence-exporter | Le panneau a « Arrêter », le pipeline des budgets de durée et des reprises. |
-| Huey, DurableFlow, spoolctl, outils de distribution en bêta, comparateurs PDF sous GPL/AGPL ou sans Windows | Déjà écartés par Codex, pour les raisons qu'il documente. |
+| Durable queue (litequeue, persist-queue) | No loss of work observed: each pipeline step resumes where it stopped (`_audit_dispo.json`, `apply_runner_done.json`, duration budget). Codex himself points out that no queue guarantees a network effect executed only once. To be reopened on an observed loss. |
+| DocRefract (document comparison) | The bench already compares the text of 99 letters and CVs at every change, and `documents.controle` checks the final files. Marginal gain. |
+| sqlite-utils / FTS5 (local search) | The app's search answers over 12,000 offers. To be reopened if it becomes slow. |
+| ArchUnitPython | Replaced by test B1, simpler, no dependency. |
+| confluence-exporter cancellation model | The panel has "Arrêter" ("Stop"), the pipeline has duration budgets and resumptions. |
+| Huey, DurableFlow, spoolctl, beta distribution tools, PDF comparers under GPL/AGPL or without Windows | Already set aside by Codex, for the reasons he documents. |
 
-## Étape F — Un produit qu'on télécharge et qu'on comprend (demandée le 2026-10-19)
+## Step F — A product you download and understand (requested on 2026-10-19)
 
-Décisions de l'utilisateur :
-- **application autonome**, sans Python sur la machine ;
-- **français et anglais** ;
-- **vitrine du dépôt en anglais**, le code gardant ses noms français ;
-- **nettoyage complet**, anciennes releases comprises.
+User's decisions:
+- **standalone application**, without Python on the machine;
+- **French and English**;
+- **repository showcase in English**, the code keeping its French names;
+- **complete clean-up**, old releases included.
 
-| # | Quoi | Fini quand |
+| # | What | Done when |
 |---|---|---|
-| F1 ✅ (v2.7.0) | **Faire le tri**, en trois volets (voir le détail sous le tableau) | chaque fichier restant a un rôle écrit ; l'arborescence se lit d'un coup d'œil |
-| F2 ✅ (v2.8.0) | **Panneaux de l'app à jour**, un par un (voir le détail sous le tableau) | chaque chiffre affiché est juste et chaque ligne a une action |
-| F3 ⛔ écarté | **Source HelloWork** : pages publiques de recherche, sans contournement ; robots.txt et conditions vérifiés d'abord | offres HelloWork dans la file, réponse enregistrée et rejouée (B2), verdict dans `rendement` |
-| F4 ✅ (v2.9.0 ; v2.19.0 critère de fin vérifié à chaque construction : sans Python sur le PATH, fenêtre, navigateur du système, fusion, dossier, mise à jour par-dessus avec données gardées ; collecte du matin depuis l’app) | **Installateur autonome** `JobHunterSetup.exe` (voir le détail sous le tableau) | sur un Windows sans Python : installation, ouverture, collecte et dossier |
-| F5 ✅ (v2.10.0 navigation, panneaux, menus ; v2.13.0 journal et boîtes de dialogue ; v2.17.0 bilans des programmes lancés, le détail offre par offre restant tel quel) | **Français et anglais** : textes de l'interface dans des catalogues, choix dans les réglages ; vitrine du dépôt en anglais (README, docs utilisateur, notes de version), version française à côté | l'app entière en anglais d'un réglage ; README anglais avec le lien français |
+| F1 ✅ (v2.7.0) | **Sort things out**, in three parts (see the detail under the table) | every remaining file has a written role; the tree can be read at a glance |
+| F2 ✅ (v2.8.0) | **App panels brought up to date**, one by one (see the detail under the table) | every figure displayed is right and every line has an action |
+| F3 ⛔ set aside | **HelloWork source**: public search pages, without circumvention; robots.txt and terms checked first | HelloWork offers in the queue, response recorded and replayed (B2), verdict in `rendement` |
+| F4 ✅ (v2.9.0; v2.19.0 completion criterion checked at every build: without Python on the PATH, window, system browser, merge, folder, update over the top with data kept; morning collection from the app) | **Standalone installer** `JobHunterSetup.exe` (see the detail under the table) | on a Windows without Python: installation, opening, collection and folder |
+| F5 ✅ (v2.10.0 navigation, panels, menus; v2.13.0 log and dialog boxes; v2.17.0 summaries of launched programs, the offer-by-offer detail remaining as it is) | **French and English**: interface texts in catalogues, choice in the settings; repository showcase in English (README, user docs, release notes), French version alongside | the whole app in English from one setting; English README with the link to the French one |
 
-**F1 — faire le tri**
-- Retirer des deux dépôts les programmes morts ou en double, les documents périmés,
-  `Archive/` et les `.bak`.
-- Supprimer les anciennes releases GitHub, sur une liste préparée. La suppression est
-  irréversible : elle est lancée par l'utilisateur, en gardant au minimum la 1.15 (la
-  passerelle) et les 2.x.
-- Ranger l'arborescence.
+**F1 — sort things out**
+- Remove from both repositories the dead or duplicate programs, the outdated documents,
+  `Archive/` and the `.bak` files.
+- Delete the old GitHub releases, from a prepared list. Deletion is
+  irreversible: it is launched by the user, keeping at least 1.15 (the bridge) and
+  the 2.x ones.
+- Tidy the tree.
 
-**F2 — panneaux de l'app à jour, un par un**
-- « Mes CV » : variantes du profil, banque de faits, état des dossiers (2.3), CV par
-  offre retrouvés depuis l'offre plutôt qu'une liste de 1 983.
-- « Entreprises » : les flux réellement collectés (ATS, Workday, autres flux), avec
-  rendement et verdict (2.4) ; comptes d'offres justes.
-- « Accès » : sources actives seulement, état réel (refus, limite, clé manquante),
-  Adzuna et Jooble compris.
+**F2 — app panels brought up to date, one by one**
+- "Mes CV" ("My CVs"): profile variants, fact bank, state of the folders (2.3), CVs per
+  offer retrieved from the offer rather than a list of 1,983.
+- "Entreprises" ("Companies"): the feeds actually collected (ATS, Workday, other feeds), with
+  yield and verdict (2.4); correct offer counts.
+- "Accès" ("Access"): active sources only, real state (refusal, limit, missing key),
+  Adzuna and Jooble included.
 
-**F4 — installateur autonome**
-- Application compilée (PyInstaller) et installateur Windows.
-- Construits par la CI et attachés à chaque release.
-- Deux badges dans le README, comme Ibaraki : « Télécharger l'installeur » et « Code
-  source ».
-- Chrome et LibreOffice détectés, avec un lien s'ils manquent.
-- Mise à jour de l'app installée par la release suivante.
+**F4 — standalone installer**
+- Compiled application (PyInstaller) and Windows installer.
+- Built by CI and attached to every release.
+- Two badges in the README, like Ibaraki: "Télécharger l'installeur" ("Download the installer") and "Code
+  source" ("Source code").
+- Chrome and LibreOffice detected, with a link if they are missing.
+- Update of the installed app by the next release.
 
-Ordre : **F1 → F2 → F3 → F4 → F5**. On trie d'abord, pour ne pas compiler ni traduire du
-code mort. L'installateur se construit sur une base propre. On traduit en dernier, une
-fois les textes stabilisés.
+Order: **F1 → F2 → F3 → F4 → F5**. We sort first, so as not to compile or translate dead
+code. The installer is built on a clean base. We translate last, once the texts
+have stabilised.
 
-## Étape G — Idées de la veille GitHub (19/10)
+## Step G — Ideas from the GitHub watch (19/10)
 
-| # | Quoi | Fini quand |
+| # | What | Done when |
 |---|---|---|
-| G1 ✅ (v2.13.0) | **Annuaires d'entreprises** Lever, Ashby, Greenhouse (jobsync, MIT) dans le panneau Entreprises | taper un nom, choisir, suivre ; `outils/annuaires.py --verifier` en reproduit les fichiers |
-| G2 ✅ (v2.14.0) | **Relecteur des lettres** : une seconde passe, sans le contexte de la rédaction, qui confronte la lettre au guide de style et aux faits ; l'annonce est une entrée non fiable (injection) | chaque défaut signalé est reproduit par un test ; aucune lettre réécrite sans accord |
-| G3 ◐ (v2.15.0 : chaque fit expliqué dans la fiche ; reste à mieux classer, quand il y aura assez de jugements) | **Note d'adéquation justifiée** (C1 bis) : chaque point du fit cite le passage de l'annonce qui le donne | `jobhunter evaluation` fait mieux que l'AUC de 0,46 de la 2.5.0, sur les mêmes jugements |
-| G4 ✅ (v2.20.0 : `jobhunter statuts-mail`, export .mbox/.eml ou API Gmail en lecture seule ; fenêtre dans l'app) | **Statuts depuis Gmail**, lecture seule, propositions validées une à une — seulement si Gabriel le demande | — |
+| G1 ✅ (v2.13.0) | **Company directories** Lever, Ashby, Greenhouse (jobsync, MIT) in the Entreprises panel | type a name, choose, follow; `outils/annuaires.py --verifier` reproduces the files |
+| G2 ✅ (v2.14.0) | **Letter reviewer**: a second pass, without the context of the drafting, that checks the letter against the style guide and the facts; the job posting is an untrusted input (injection) | each flaw reported is reproduced by a test; no letter rewritten without agreement |
+| G3 ◐ (v2.15.0: each fit explained in the sheet; remaining: rank better, once there are enough judgements) | **Justified fit score** (C1 bis): each point of the fit cites the passage of the posting that gives it | `jobhunter evaluation` does better than the 0.46 AUC of 2.5.0, on the same judgements |
+| G4 ✅ (v2.20.0: `jobhunter statuts-mail`, .mbox/.eml export or read-only Gmail API; window in the app) | **Statuses from Gmail**, read-only, proposals validated one by one — only if Gabriel asks | — |
 
-## Ordre proposé
+## Proposed order
 
-**A** (en continu, surtout de l'observation) → **B1** (une heure) → **B2** → **C1** →
-**C2 (étude)** → **D1 (sondage)** → **B3** quand une lenteur se présente → **E** quand
-la distribution revient.
+**A** (ongoing, mostly observation) → **B1** (one hour) → **B2** → **C1** →
+**C2 (study)** → **D1 (probe)** → **B3** when a slowness shows up → **E** when
+distribution comes back.
 
-Ce qui reste hors d'atteinte, quoi qu'il arrive :
-- aucune soumission automatique ;
-- aucun contournement anti-bot ;
-- aucun mot de passe manipulé.
+What remains out of reach, whatever happens:
+- no automatic submission;
+- no anti-bot circumvention;
+- no password handled.
 
-## Fait
+## Done
 
-- **B1** (v2.4.1) : `tests/test_architecture.py`.
-- **B2** (v2.4.3) : `outils/rejeu.py` enregistre une vraie réponse publique de sept sources
-  (Greenhouse, Lever, Ashby, Workday, LinkedIn, EURES, FIR), nettoyée ;
-  `tests/test_rejeu_sources.py` la rejoue sans réseau et exige les mêmes offres.
-  - Pas de VCR.py : toutes les requêtes des sources passent déjà par `_get_borne` et
-    `_post_borne`, c'est là qu'on enregistre et qu'on rejoue.
-  - Un échange manquant fait échouer, même quand la source avale l'exception (le cas de
+- **B1** (v2.4.1): `tests/test_architecture.py`.
+- **B2** (v2.4.3): `outils/rejeu.py` records a real public response from seven sources
+  (Greenhouse, Lever, Ashby, Workday, LinkedIn, EURES, FIR), scrubbed;
+  `tests/test_rejeu_sources.py` replays it without network and requires the same offers.
+  - No VCR.py: all the sources' requests already go through `_get_borne` and
+    `_post_borne`, which is where we record and replay.
+  - A missing exchange fails, even when the source swallows the exception (the case of
     LinkedIn).
-  - Trouvé en route : 10 des 16 comptes Greenhouse de la configuration répondaient 404
-    (entreprises parties de Greenhouse), retirés de la configuration d'exemple.
-- **C1** (v2.5.0) : `jobhunter evaluation` mesure le classement (`fit_fin`) face aux
-  jugements du suivi. Pertinentes : postulé, relancé, entretien, refus, à postuler.
-  Inutiles : mauvaise, pas intéressé ; une « mauvaise » dont la note dit un fait (pourvu,
-  page sans offre) ne compte pas. La commande donne l'AUC avec un intervalle à 90 %,
-  la précision des premières, et les pires erreurs.
-  `--enregistrer` garde une référence pour juger toute variante.
-  - **Premier constat**, sur les 37 jugements d'un utilisateur : **AUC 0,46**
-    (intervalle 0,31 – 0,62), c'est-à-dire pas mieux que le hasard **sur les offres
-    jugées**.
-  - Beaucoup d'offres écartées sont notées au maximum, souvent sans note qui dise
-    pourquoi : le moteur ne peut pas apprendre ce qu'il ne voit pas.
-  - **Suite logique (C1 bis)** : un motif en un clic quand on écarte une offre (stage,
-    langue, séniorité, métier, lieu…), pour savoir ce que le scoring rate avant de le
-    modifier.
-- **C2** (v2.6.0, [ADR 0010](adr/0010-identite-entreprise-poste.md)) : étude chiffrée.
-  - Constats : 12 offres sur 86 perdues comme même poste dans plusieurs villes ; 9 URL
-    portent 2 ou 3 clés dans une file de 12 169 offres.
-  - Décision : la clé `entreprise|poste` reste, il n'y a pas de migration du suivi.
-  - Le dédoublonnage du scan garde la ville de la meilleure zone et note les autres
+  - Found along the way: 10 of the 16 Greenhouse accounts in the configuration answered 404
+    (companies that left Greenhouse), removed from the example configuration.
+- **C1** (v2.5.0): `jobhunter evaluation` measures the ranking (`fit_fin`) against the
+  judgements in the tracking. Relevant: applied, followed up, interview, rejection, to apply.
+  Useless: bad, not interested; a "bad" whose note states a fact (filled,
+  page without an offer) does not count. The command gives the AUC with a 90% interval,
+  the precision of the top ones, and the worst errors.
+  `--enregistrer` keeps a reference to judge any variant.
+  - **First finding**, on one user's 37 judgements: **AUC 0.46**
+    (interval 0.31 – 0.62), that is, no better than chance **on the judged offers**.
+  - Many discarded offers are scored at the maximum, often without a note saying
+    why: the engine cannot learn what it does not see.
+  - **Logical follow-up (C1 bis)**: a one-click reason when discarding an offer (internship,
+    language, seniority, job, location…), to know what scoring misses before
+    modifying it.
+- **C2** (v2.6.0, [ADR 0010](adr/0010-identite-entreprise-poste.md)): quantified study.
+  - Findings: 12 offers out of 86 lost as the same job in several cities; 9 URLs
+    carry 2 or 3 keys in a queue of 12,169 offers.
+  - Decision: the `entreprise|poste` key stays, there is no migration of the tracking.
+  - The scan's deduplication keeps the city of the best zone and notes the others
     (`autres_lieux`).
-  - `doublons` réunit les offres de même URL d'annonce, en gardant l'offre suivie puis
-    l'intitulé actuel.
-- **F3** écarté le 2026-10-19 : les conditions d'utilisation de HelloWork (art. 8.2)
-  interdisent toute extraction automatisée, même non commerciale, sans licence écrite ;
-  robots.txt interdit aussi les pages de recherche. Pistes conformes : Adzuna et Jooble
-  (API officielles, qui reprennent une partie de ces offres), l'ajout d'une offre par son
-  lien, ou une licence demandée à HelloWork.
+  - `doublons` brings together the offers with the same posting URL, keeping the tracked offer, then
+    the current title.
+- **F3** set aside on 2026-10-19: HelloWork's terms of use (art. 8.2)
+  forbid any automated extraction, even non-commercial, without a written licence;
+  robots.txt also forbids the search pages. Compliant leads: Adzuna and Jooble
+  (official APIs, which carry over part of these offers), adding an offer by its
+  link, or a licence requested from HelloWork.

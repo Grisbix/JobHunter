@@ -1,24 +1,24 @@
-# 0005 — Aucune soumission automatique, aucun mot de passe manipulé
+# 0005 — No automatic submission, no password handled
 
-**Statut** : accepté depuis le début du projet ; ne se rediscute pas au détour d'une tâche.
+**Status**: accepted since the start of the project; not to be reopened in passing during a task.
 
-## Contexte
+## Context
 
-Remplir un formulaire de candidature fait gagner du temps ; l'envoyer à la place de la
-personne engage sa candidature sans relecture, et l'expose aux erreurs de l'automate.
-Les mots de passe des sites d'emploi donnent accès à des données personnelles.
+Filling in an application form saves time; sending it in place of the
+person commits their application without review, and exposes it to the automaton's mistakes.
+Passwords for job sites give access to personal data.
 
-## Décision
+## Decision
 
-- La navigation remplit, dépose les documents et **surligne** le bouton d'envoi ; le clic
-  final est toujours humain. Aucun drapeau `--auto` / `--submit`, ni commande d'envoi dans
-  la CLI (testé).
-- `login_flow` ne tape jamais de mot de passe, quel que soit son argument (testé) ; le
-  profil de formulaire n'en contient jamais.
-- Pas de création de compte automatique ; un code reçu par courriel est collé, le bouton
-  « Vérifier » surligné, l'humain clique.
+- Navigation fills in, uploads the documents and **highlights** the send button; the final
+  click is always human. No `--auto` / `--submit` flag, and no send command in
+  the CLI (tested).
+- `login_flow` never types a password, whatever its argument (tested); the form
+  profile never contains one.
+- No automatic account creation; a code received by email is pasted, the "Vérifier" (Verify) button
+  highlighted, and the human clicks.
 
-## Conséquences
+## Consequences
 
-Chaque candidature passe sous les yeux de son auteur. Le temps gagné reste l'essentiel :
-la saisie.
+Every application passes under its author's eyes. The time saved remains the essential part:
+data entry.

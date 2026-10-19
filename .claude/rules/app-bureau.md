@@ -4,75 +4,75 @@ paths:
   - src/jobhunter/app/*.py
   - src/jobhunter/accueil.py
 ---
-# Application bureau
+# Desktop application
 
-Depuis la phase 3.7, `JobHunter.pyw` n'est que le lanceur : l'app vit dans
-`src/jobhunter/app` — `fenetre.App` assemble un mixin par domaine (`tableau`, `donnees`,
-`fiche`, `actions`, `panneaux`, `detail`, `execution`). Un réglage rebindu par `global`
-(polices, espacements du `theme`) se lit `_theme.NOM`, jamais importé par copie.
+Since phase 3.7, `JobHunter.pyw` is only the launcher: the app lives in
+`src/jobhunter/app` — `fenetre.App` assembles one mixin per domain (`tableau`, `donnees`,
+`fiche`, `actions`, `panneaux`, `detail`, `execution`). A setting rebound through `global`
+(fonts, `theme` spacings) is read as `_theme.NOM`, never imported by copy.
 
-**Le tableau est indexé par position.** Retirer une colonne oblige à retirer *aussi*
-la valeur correspondante dans `_row_vals`, sinon tout se décale d'un cran.
+**The table is indexed by position.** Removing a column requires removing *also*
+the matching value in `_row_vals`, otherwise everything shifts by one.
 
-La racine vient de `jobhunter.racine` (marqueur `Scripts/` + `profil/`, ou
-`JOBHUNTER_RACINE`) : l'app fonctionne où qu'on la place. Ne jamais y coder une racine en dur — les chemins du projet ont bougé
-quatre fois en deux jours.
+The root comes from `jobhunter.racine` (marker `Scripts/` + `profil/`, or
+`JOBHUNTER_RACINE`): the app works wherever it is placed. Never hard-code a root in it — the project's paths moved
+four times in two days.
 
-`_auto_scrape()` (2026-09-21) lance `scrape_jobs.py --headless` au démarrage
-puis au retour de focus. Trois garde-fous, tous nécessaires :
+`_auto_scrape()` (2026-09-21) launches `scrape_jobs.py --headless` at startup
+and on return of focus. Three safeguards, all necessary:
 
-| Garde-fou | Valeur | Pourquoi |
+| Safeguard | Value | Why |
 |---|---|---|
-| verrou `_bg_busy` | partagé avec `_auto_sync` | `job_sources.main()` garde le verrou de file pendant tout le scan |
-| `_SCRAPE_COOLDOWN_S` | 1800 s | sans lui, chaque clic sur la fenêtre relançait un scan |
-| plafond session | 4 | borne le coût d'une journée d'allers-retours |
+| `_bg_busy` lock | shared with `_auto_sync` | `job_sources.main()` holds the queue lock for the whole scan |
+| `_SCRAPE_COOLDOWN_S` | 1800 s | without it, every click on the window relaunched a scan |
+| session cap | 4 | bounds the cost of a day of back-and-forth |
 
-Sans eux, un simple retour de focus pouvait geler l'app le temps d'un scan complet.
+Without them, a simple return of focus could freeze the app for the length of a full scan.
 
-## Un `.pyw` ne dit jamais pourquoi il ne s'ouvre pas
+## A `.pyw` never says why it does not open
 
-L'extension `.pyw` supprime la console : une exception au démarrage ferme la fenêtre sans
-un mot. Pour diagnostiquer, relancer avec l'interpréteur **console** et lire la trace :
+The `.pyw` extension suppresses the console: an exception at startup closes the window without
+a word. To diagnose, relaunch with the **console** interpreter and read the trace:
 
 ```bash
 PYTHONIOENCODING=utf-8 python JobHunter.pyw
 ```
 
-Mesuré le 2026-09-22 : l'app ne s'ouvrait plus depuis le 20/09 17:27, et le commit
-`85e5d58c` — celui-là même qui ajoutait `_auto_scrape` — avait perdu sa ligne
-`def _auto_scrape(self):`. Le corps de la méthode, indenté de huit espaces, avait été
-absorbé par `_on_focus_scrape` juste au-dessus. **Le fichier compilait sans erreur** :
-`py_compile` passe, l'attribut ne manque qu'à l'exécution.
+Measured on 2026-09-22: the app had not opened since 20/09 17:27, and commit
+`85e5d58c` — the very one that added `_auto_scrape` — had lost its
+`def _auto_scrape(self):` line. The method body, indented by eight spaces, had been
+absorbed by `_on_focus_scrape` just above. **The file compiled without error**:
+`py_compile` passes, the attribute is only missing at runtime.
 
-Corollaire : après toute édition de ce fichier, vérifier que chaque `self._methode`
-appelée existe bien comme `def` de la classe `App`, puis **lancer l'app** — la compilation
-ne prouve rien ici.
+Corollary: after any edit of this file, check that every `self._methode`
+called exists as a `def` of the `App` class, then **run the app** — compilation
+proves nothing here.
 
-## « ↶ Retour » de disposition (Alt+Gauche)
+## Layout "↶ Retour" (Back) (Alt+Left)
 
-`_dispo_pile` mémorise la disposition **avant** chaque geste : séparateur tableau | fiche,
-largeur des colonnes (`_dispo_suivre` sur presser/relâcher), « Agrandir » la fiche, barre
-Outils. `_dispo_retour` remonte d'un geste. Tout nouveau geste d'agrandissement appelle
-`_dispo_memo()` avant d'agir. Le contenu (statuts) relève de Ctrl+Z, pas de cette pile.
+`_dispo_pile` remembers the layout **before** each gesture: table | card separator,
+column width (`_dispo_suivre` on press/release), "Agrandir" (Enlarge) the card, Tools bar.
+`_dispo_retour` goes back one gesture. Any new enlarging gesture calls
+`_dispo_memo()` before acting. The content (statuses) falls under Ctrl+Z, not this stack.
 
-## Statuts qui masquent, statuts qui grisent
+## Statuses that hide, statuses that grey out
 
-La colonne Lieu affiche `zones.ville_affichee` (IDF = « Paris »), la colonne Pays `zones.pays_lieu` ; `_sortkey` trie sur ces mêmes valeurs.
+The Lieu (Location) column displays `zones.ville_affichee` (IDF = "Paris"), the Pays (Country) column `zones.pays_lieu`; `_sortkey` sorts on those same values.
 
-`pas intéressé` et `expiré` **masquent** la ligne (`MASQUANTS`, interrupteur « Voir les
-masquées » pour la revoir), `mauvaise` la **grise**. `expiré` = annonce fermée, un fait,
-pas un jugement : ne pas le confondre avec `mauvaise` ni `refus`. Les deux vivent dans `suivi.json` ; aucun ne retire l'offre de
-la file — c'est le rôle d'« Écarter », qui passe par `exclusions.py`. Tout nouveau
-statut va dans `STATUTS`, `ST_EMOJI` et, s'il colore la ligne, `ST_COULEUR`.
-Le suivi s'écrit par `suivi_io` (clé du statut : **`s`**, pas `statut` — le panneau
-Stats comptait 0 postulé pour 10 candidatures, le 2026-09-23, sur cette confusion).
+`pas intéressé` (not interested) and `expiré` (expired) **hide** the row (`MASQUANTS`, "Voir les
+masquées" (Show hidden) switch to see it again), `mauvaise` (bad) **greys it out**. `expiré` = closed posting, a fact,
+not a judgement: do not confuse it with `mauvaise` or `refus` (rejection). Both live in `suivi.json`; neither removes the offer from
+the queue — that is the role of "Écarter" (Discard), which goes through `exclusions.py`. Any new
+status goes into `STATUTS`, `ST_EMOJI` and, if it colours the row, `ST_COULEUR`.
+Tracking is written through `suivi_io` (status key: **`s`**, not `statut` — the Stats
+panel counted 0 applied for 10 applications, on 2026-09-23, because of that confusion).
 
-Un dialogue se parente à **`self.root`**, jamais à `self` : `App` n'est pas un widget.
-`Toplevel(self)` compile, et lève au clic — « Écarter » ne s'ouvrait pas, constaté et
-corrigé le 2026-09-23.
+A dialog is parented to **`self.root`**, never to `self`: `App` is not a widget.
+`Toplevel(self)` compiles, and raises on click — "Écarter" did not open, observed and
+fixed on 2026-09-23.
 
-## Vérifier visuellement sans lancer de scan
+## Checking visually without launching a scan
 
-`JOBHUNTER_SANS_FOND=1` coupe scan, descriptions et sync ; `JOBHUNTER_ACTION` (avec la
-précédente) exécute du Python dans l'app 1,5 s après l'ouverture, `app` désignant
-l'instance — pour se placer sur un panneau avant une capture.
+`JOBHUNTER_SANS_FOND=1` turns off scan, descriptions and sync; `JOBHUNTER_ACTION` (together with the
+previous one) runs Python in the app 1.5 s after opening, `app` designating the
+instance — to get to a panel before a screenshot.

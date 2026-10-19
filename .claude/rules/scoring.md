@@ -6,41 +6,41 @@ paths:
 ---
 # Scoring — `ats_match.fit_score`
 
-`fit_score(text, title)` rend un entier 1–10. Six axes pondérés : ESG ×3, finance ×2,
-IA ×1,5, data/risk/conseil ×1.
+`fit_score(text, title)` returns an integer 1–10. Six weighted axes: ESG ×3, finance ×2,
+AI ×1.5, data/risk/consulting ×1.
 
-Trois mécanismes qu'on ne devine pas en lisant la formule :
+Three mechanisms you do not guess by reading the formula:
 
-- **Un plafond proportionnel à la densité ESG.** Sans lui, finance + risk + conseil
-  suffisent à saturer le score sans le moindre signal ESG. Le plafond suit la densité
-  de marqueurs, pas leur simple présence : une description d'entreprise de 8000
-  caractères qui dit une fois « sustainability » n'est pas une offre ESG. Un intitulé
-  explicitement ESG lève le plafond à 10.
-- **La langue plafonne en dernier** (`plafond_langue`) : `langues_parlees` du profil. Annonce
-  **rédigée** dans une autre langue → 2 (mots-outils ; l'en-tête compte à part, car EURES traduit
-  des annonces) ; annonce qui **exige** une langue non parlée → 4. « Dutch is a plus »,
-  « preferably Dutch », « Dutch and/or French », « Chinese markets » n'exigent rien.
-- **L'analyste financier classique monte à 8** (`_TITRE_FINANCE`, 2026-10-07) : sans ESG ni
-  IA, le plafond général est 6, mais un intitulé finance (financial/investment/credit analyst,
-  M&A, FP&A, contrôleur de gestion…) plafonne à 8 + 2 × axe ESG. L'ESG reste devant.
-- **Des vetos de métier sur l'intitulé**, qui l'emportent sur tout vocabulaire vert
-  sauf un marqueur ESG-finance fort (`_ESG_TITRE_FORT`) : HSE → 6 ; métier technique
-  ou hors finance (`_titre_hors_cible` : recherche académique, achats, supply chain,
-  bâtiment, administratif, sciences) → 6, ou 8 si le poste parle d'IA. Un mot
-  générique — sustainab, durable, green, climat — levait sinon le plafond de n'importe
-  quel métier. Un intitulé technique qui nomme un métier financier (audit, analyste,
-  crédit) reste dans la cible.
-- **Les malus s'appliquent au seul INTITULÉ**, jamais à la description. Cherchés dans
-  le texte entier, « Lead Generation » déclenchait le malus SENIOR et « présence
-  commerciale » le malus NEG, soit −4 sur une offre ni senior ni commerciale.
+- **A cap proportional to ESG density.** Without it, finance + risk + consulting
+  are enough to saturate the score without the slightest ESG signal. The cap follows the density
+  of markers, not their mere presence: an 8000-character company description
+  that says "sustainability" once is not an ESG offer. An explicitly ESG
+  title lifts the cap to 10.
+- **Language caps last** (`plafond_langue`): the profile's `langues_parlees`. A posting
+  **written** in another language → 2 (stop words; the header counts separately, because EURES translates
+  postings); a posting that **requires** a language not spoken → 4. "Dutch is a plus",
+  "preferably Dutch", "Dutch and/or French", "Chinese markets" require nothing.
+- **The classic financial analyst goes up to 8** (`_TITRE_FINANCE`, 2026-10-07): without ESG or
+  AI, the general cap is 6, but a finance title (financial/investment/credit analyst,
+  M&A, FP&A, contrôleur de gestion…) caps at 8 + 2 × ESG axis. ESG stays ahead.
+- **Trade vetoes on the title**, which override any green vocabulary
+  except a strong ESG-finance marker (`_ESG_TITRE_FORT`): HSE → 6; technical
+  or non-finance trade (`_titre_hors_cible`: academic research, procurement, supply chain,
+  construction, administrative, sciences) → 6, or 8 if the position mentions AI. A generic
+  word — sustainab, durable, green, climat — would otherwise lift the cap of any
+  trade. A technical title that names a financial trade (audit, analyst,
+  credit) stays in the target.
+- **Penalties apply to the TITLE only**, never to the description. Searched in
+  the whole text, "Lead Generation" triggered the SENIOR penalty and "présence
+  commerciale" the NEG penalty, i.e. −4 on an offer that is neither senior nor commercial.
 
-**`fit_fin` départage les ex aequo** (`fit_detail`, 2026-10-09) : décimal, toujours à ±0,45 du
-`fit` entier — son arrondi rend `fit`, aucun seuil ne bouge. Dans le niveau, `_departage`
-pèse intitulé ESG, densité ESG, compétences ESG/finance citées (non plafonnées), place du
-brut, expérience exigée. Tout code qui écrit `fit` écrit aussi `fit_fin` ; l'app, les
-dossiers, top et alertes trient dessus.
+**`fit_fin` breaks ties** (`fit_detail`, 2026-10-09): decimal, always within ±0.45 of the
+integer `fit` — its rounding gives `fit`, no threshold moves. Within a level, `_departage`
+weighs ESG title, ESG density, ESG/finance skills cited (uncapped), position of the
+raw score, required experience. Any code that writes `fit` also writes `fit_fin`; the app,
+the folders, top and alerts sort on it.
 
-**Le `fit` mesure la densité de vocabulaire, pas l'accessibilité du poste.** Un
-« 2027 Corporate & Investment Bank » sort à 6, un « AI Tech Lead » à 7. Pour trier ce
-qui colle vraiment au profil, c'est `tri_file.py` qui tranche — sur l'intitulé et
-l'expérience exigée.
+**The `fit` measures vocabulary density, not the accessibility of the position.** A
+"2027 Corporate & Investment Bank" comes out at 6, an "AI Tech Lead" at 7. To sort
+what really fits the profile, it is `tri_file.py` that decides — on the title and
+the required experience.

@@ -1,259 +1,259 @@
 # AGENTS.md
 
-Instructions pour tout agent de code travaillant sur ce dépôt. Source unique :
-`CLAUDE.md` n'est qu'un import d'une ligne vers ce fichier.
+Instructions for any coding agent working on this repository. Single source:
+`CLAUDE.md` is only a one-line import of this file.
 
-Langue : **français**. Le code, les commentaires, les commits et les docs le sont déjà.
+Language: documentation, comments and docstrings are in English; identifiers, profile keys and JSON keys stay in French (renaming them would break users' profiles and data). The user-facing French README is README.fr.md.
 
-## Version partagée : le moteur ne connaît personne
+## Shared version: the engine knows nobody
 
-Tout ce qui est PROPRE À LA PERSONNE vit dans `profil/profil.json`, lu par
-`src/jobhunter/profil.py` : identité, métiers visés (`domaines`), compétences, axes et
-plafonds du scoring, filtres d'intitulé, niveau, familles retirées par le tri, zones,
-mots-clés de collecte, textes des lettres et messages. **Aucun module ne code un
-métier, une ville ou un nom.** Pour changer de cible, on change le profil.
+Everything SPECIFIC TO THE PERSON lives in `profil/profil.json`, read by
+`src/jobhunter/profil.py`: identity, target jobs (`domaines`), skills, scoring axes and
+caps, title filters, level, families removed by the triage, zones, collection keywords,
+texts of the letters and messages. **No module hard-codes a job, a city or a name.** To
+change target, change the profile.
 
-- Créer le profil : `python -m jobhunter profil <cv.pdf|docx>`.
-- Profil complet de référence : `profil/exemple_finance_esg.json` (junior en finance
-  durable). C'est sur lui que tournent **tous les tests** — `_profil_test.py`, importé
-  en tête de chaque `test_*.py`, force `PROFIL_JOBHUNTER` vers ce fichier.
-- Une liste de mots du profil accepte `"mot"` (borné à gauche) ou `"re:motif"` (pris tel
-  quel). `profil.motif()` les compile.
-- Guide utilisateur : `README.md` (anglais) et `README.fr.md`. Paramétrage par Claude Code : `/configurer-profil` (`.claude/commands/configurer-profil.md`).
-- Outils à double-clic (racine) : `installer.bat`, `lancer.bat` (CV pris dans `Mon_CV/`), `planifier.bat`
-  (tâche planifiée quotidienne), `mettre_a_jour.bat` → `src/jobhunter/programmes/mise_a_jour.py` (git pull, ou ZIP
-  GitHub fichier par fichier : données jamais touchées, fichier modifié gardé + `.nouveau`,
-  fichier retiré enlevé s'il est intact, contrôle de chargement puis retour arrière automatique,
-  `--annuler`). **À chaque publication : monter `VERSION`, ajouter sa section en tête de
-  `CHANGELOG.md`, et créer la release `v<version>`** — l'étiquette sert de référence à la
-  première mise à jour d'une installation par ZIP (sans elle, un fichier modifié par
-  l'utilisateur ne peut pas être reconnu).
-- `langues_parlees` (profil) : annonce rédigée dans une autre langue plafonnée à 2, langue
-  exigée à 4 (`ats_match.plafond_langue`).
-- CI : `.github/workflows/tests.yml` passe les suites sans réseau à chaque push.
+- Create the profile: `python -m jobhunter profil <cv.pdf|docx>`.
+- Full reference profile: `profil/exemple_finance_esg.json` (junior in sustainable
+  finance). **All the tests** run on it — `_profil_test.py`, imported at the top of every
+  `test_*.py`, forces `PROFIL_JOBHUNTER` to this file.
+- A word list in the profile accepts `"mot"` (bounded on the left) or `"re:motif"` (taken
+  as is). `profil.motif()` compiles them.
+- User guide: `README.md` (English) and `README.fr.md`. Setup through Claude Code: `/configurer-profil` (`.claude/commands/configurer-profil.md`).
+- Double-click tools (root): `installer.bat`, `lancer.bat` (CV taken from `Mon_CV/`), `planifier.bat`
+  (daily scheduled task), `mettre_a_jour.bat` → `src/jobhunter/programmes/mise_a_jour.py` (git pull, or GitHub
+  ZIP file by file: data never touched, modified file kept + `.nouveau`,
+  removed file deleted if intact, load check then automatic rollback,
+  `--annuler`). **At every release: bump `VERSION`, add its section at the top of
+  `CHANGELOG.md`, and create the `v<version>` release** — the tag is the reference for the
+  first update of a ZIP installation (without it, a file modified by the user cannot be
+  recognised).
+- `langues_parlees` (profile): a posting written in another language is capped at 2, a
+  required language at 4 (`ats_match.plafond_langue`).
+- CI: `.github/workflows/tests.yml` runs the network-free suites on every push.
 
-## À lire avant de toucher au code
+## Read before touching the code
 
-**`docs/programmes.md`** — ce que fait chaque programme, et surtout sa section finale
-« Pièges du code, appris à la dure ». Chaque piège y est un bug réel, mesuré, avec son
-symptôme. Ne pas redécouvrir ces bugs. `README.md` à la racine s'adresse à l'utilisateur ;
-l'historique des changements est dans les messages de commit.
+**`docs/programmes.md`** — what each program does, and above all its final section
+"Code pitfalls, learned the hard way". Each pitfall there is a real, measured bug, with
+its symptom. Do not rediscover these bugs. `README.md` at the root is addressed to the
+user; the history of changes is in the commit messages.
 
-## Commandes
+## Commands
 
 ```bash
-# L'application — point d'entrée quotidien, à la racine
+# The application — daily entry point, at the root
 python JobHunter.pyw
 
-# Collecte + fusion dans la file (voir --help : ~20 sources activables séparément)
+# Collection + merge into the queue (see --help: ~20 sources that can be enabled separately)
 python -m jobhunter collecte --all
 python -m jobhunter collecte --linkedin --apec --efc
-python -m jobhunter collecte --efc --efc-sites monde --eures   # étranger : eFC ×9 sites, EURES
+python -m jobhunter collecte --efc --efc-sites monde --eures   # abroad: eFC ×9 sites, EURES
 
-# Documents : CV + lettre par offre
+# Documents: CV + letter per offer
 python -m jobhunter documents --top 30
 python -m jobhunter documents --all --dry
-python -m jobhunter regenerer --cv        # régénère l'existant après un changement de gabarit
-python -m jobhunter cv-auto --liste           # banque de faits du CV automatique (CV/Faits.json)
-python -m jobhunter documents --url <extrait>   # refait CV et lettre d'une offre
+python -m jobhunter regenerer --cv        # regenerates existing documents after a template change
+python -m jobhunter cv-auto --liste           # fact bank of the automatic CV (CV/Faits.json)
+python -m jobhunter documents --url <extrait>   # redoes CV and letter of one offer
 
-# Offres fermées : contrôle (API guest LinkedIn, 404/410) puis retrait, reprise auto sur 429
+# Closed offers: check (LinkedIn guest API, 404/410) then removal, automatic resume on 429
 python -m jobhunter dispo --supprime
-python -m jobhunter dispo --rapport     # bilan de l'état, sans réseau
+python -m jobhunter dispo --rapport     # status report, no network
 
-# Candidature semi-automatique — DANS UN VRAI TERMINAL, il attend le clavier
+# Semi-automatic application — IN A REAL TERMINAL, it waits for the keyboard
 python -m jobhunter postuler --canal linkedin
 ```
 
-### Tests et contrôles
+### Tests and checks
 
 ```bash
-uv sync                                  # venv .venv, versions verrouillées (uv.lock)
-uv run pytest -q                         # 1 142 tests sans réseau (~2 min)
-uv run pytest -q tests/test_scoring.py   # un fichier ; -k mot pour filtrer les cas
-uv run pytest -q --cov --cov-report=term # avec la couverture (seuil en CI)
-uv run python outils/banc.py comparer outils/banc_reference.json   # non-régression
+uv sync                                  # .venv, pinned versions (uv.lock)
+uv run pytest -q                         # 1,142 tests without network (~2 min)
+uv run pytest -q tests/test_scoring.py   # one file; -k word to filter cases
+uv run pytest -q --cov --cov-report=term # with coverage (threshold in CI)
+uv run python outils/banc.py comparer outils/banc_reference.json   # non-regression
 uv run ruff check . && uv run ruff format --check .
 ```
 
-**Le banc de non-régression** (`outils/banc.py`) enregistre ce que le moteur décide sur
-384 offres fictives — filtre d'intitulé, fit, fit_fin, domaine, tri, zone, pays, contrat,
-langue, message, et le texte de lettres. Il doit rester à **0 écart** à chaque commit. Si
-un changement de comportement est voulu, régénérer la référence (`banc.py enregistrer …`)
-**dans le même commit**, et dire pourquoi dans le message.
+**The non-regression bench** (`outils/banc.py`) records what the engine decides on
+384 fictitious offers — title filter, fit, fit_fin, domain, triage, zone, country, contract,
+language, message, and the text of letters. It must stay at **0 differences** on every
+commit. If a change of behaviour is intended, regenerate the reference (`banc.py enregistrer …`)
+**in the same commit**, and say why in the message.
 
-**Les tests vivent dans `tests/`**, en pytest (les 27 anciennes suites de `Scripts/` y ont
-été converties le 2026-10-18, cas pour cas). `tests/conftest.py` fixe le profil d'exemple
-AVANT tout import du moteur et fournit les fixtures : `faux_reseau` (doublure de
-`_get_borne`/`_post_borne`), `horloge` (temps et pauses simulés), `file_temporaire` et
-`suivi_temporaire` (file et suivi jetables), `navigateur`/`page` (un Chromium headless par
-session, une page neuve par test). **Jamais d'affectation directe d'une globale du moteur
-dans un test : `monkeypatch`**, sinon l'état fuit d'un test à l'autre. Un test qui lit les
-données réelles d'un utilisateur porte la marque `donnees_reelles` et ne tourne qu'à la
-demande (`pytest -m donnees_reelles`). `tests/test_pas_de_suite_historique.py` refuse tout
-programme dans `Scripts/`. `programmes/test_live_nav` et `programmes/test_acces_sites`
-sortent vraiment sur le web — hors pytest, ne pas les lancer machinalement.
+**The tests live in `tests/`**, in pytest (the 27 old suites of `Scripts/` were converted
+there on 2026-10-18, case for case). `tests/conftest.py` sets the example profile
+BEFORE any import of the engine and provides the fixtures: `faux_reseau` (double for
+`_get_borne`/`_post_borne`), `horloge` (simulated time and pauses), `file_temporaire` and
+`suivi_temporaire` (throwaway queue and tracking file), `navigateur`/`page` (one headless Chromium per
+session, a fresh page per test). **Never assign an engine global directly
+in a test: use `monkeypatch`**, otherwise state leaks from one test to the next. A test that reads
+a user's real data carries the `donnees_reelles` mark and runs only on
+demand (`pytest -m donnees_reelles`). `tests/test_pas_de_suite_historique.py` refuses any
+program in `Scripts/`. `programmes/test_live_nav` and `programmes/test_acces_sites`
+really go out on the web — outside pytest, do not run them mechanically.
 
-`test_scoring` génère un cas « sans backspace » **par motif du module** : ajouter un
-motif à `ats_match` fait monter son compte sans qu'aucun test ait été écrit.
+`test_scoring` generates a "no backspace" case **per pattern of the module**: adding a
+pattern to `ats_match` raises its count without any test having been written.
 
 ## Architecture
 
-### Le paquet `src/jobhunter` (2.0 : tout le code y est)
+### The `src/jobhunter` package (2.0: all the code is there)
 
-`Scripts/` ne garde que les données ; le code vit dans `src/jobhunter`
-(`docs/plan-professionnalisation.md`) :
+`Scripts/` keeps only the data; the code lives in `src/jobhunter`
+(`docs/plan-professionnalisation.md`):
 
-| Paquet | Contenu (ancien nom) |
+| Package | Contents (former name) |
 |---|---|
 | `jobhunter.stockage` | `atomique`, `verrou`, `file` (`queue_io`), `suivi` (`suivi_io`) |
 | `jobhunter.scoring` | `fit` (`ats_match`), `langue`, `zones`, `tri` (`tri_file`), `lexique`, `domaines` |
-| `jobhunter.sources` | `job_sources` : une source par module, `commun`, `fusion`, `cli` — affectation routée au propriétaire |
+| `jobhunter.sources` | `job_sources`: one source per module, `commun`, `fusion`, `cli` — assignment routed to the owner |
 | `jobhunter.documents` | `tailor_application` (`commun`, `cv`, `lettre`, `llm`, `rendu`), `message` (`message_offre`), `cv_auto` |
-| `jobhunter.navigation` | `web_nav` : une section par module (`page`, `carrieres`, `formulaires`…), `strategies` (`site_strategies`) |
-| `jobhunter.app` | `JobHunter.pyw` (désormais lanceur) : `fenetre.App` = un mixin par domaine, `theme`, `commun` |
-| `jobhunter.programmes` | les ~57 programmes (anciens `Scripts/*.py`) : `pipeline_quotidien`, `generate_docs`, `apply_runner`, `audit_dispo`, `jutil`… |
-| `jobhunter` | `racine`, `profil`, `reseau` (requêtes bornées), `chemins`, `texte`, `liens`, `accueil`, `cli` (`python -m jobhunter <commande>`) |
+| `jobhunter.navigation` | `web_nav`: one section per module (`page`, `carrieres`, `formulaires`…), `strategies` (`site_strategies`) |
+| `jobhunter.app` | `JobHunter.pyw` (now a launcher): `fenetre.App` = one mixin per domain, `theme`, `commun` |
+| `jobhunter.programmes` | the ~57 programs (former `Scripts/*.py`): `pipeline_quotidien`, `generate_docs`, `apply_runner`, `audit_dispo`, `jutil`… |
+| `jobhunter` | `racine`, `profil`, `reseau` (bounded requests), `chemins`, `texte`, `liens`, `accueil`, `cli` (`python -m jobhunter <commande>`) |
 
-Dépendances à sens unique, vérifiées en test (cycles `jutil`↔`queue_io`, `ats_match`↔`tailor`,
-`job_sources`↔`scrape_jobs` cassés). Un paquet découpé voit les noms de ses sous-modules
-(`_facade`) : `jobhunter.sources.title_ok` marche. Sans installation, `python JobHunter.pyw
-<commande>` lance tout (c'est le seul fichier qui ajoute `src/` au chemin) ; installé
-(`pip install -e .`), `python -m jobhunter <commande>` ou `jobhunter <commande>`.
-`test_coherence_imports.py` vérifie que chaque `module.nom` utilisé entre modules existe.
+One-way dependencies, checked in tests (cycles `jutil`↔`queue_io`, `ats_match`↔`tailor`,
+`job_sources`↔`scrape_jobs` broken). A split package sees the names of its submodules
+(`_facade`): `jobhunter.sources.title_ok` works. Without installation, `python JobHunter.pyw
+<commande>` runs everything (it is the only file that adds `src/` to the path); installed
+(`pip install -e .`), `python -m jobhunter <commande>` or `jobhunter <commande>`.
+`test_coherence_imports.py` checks that every `module.nom` used between modules exists.
 
-### Trois fichiers de données, trois contrats d'accès
+### Three data files, three access contracts
 
 ```
-Scripts/apply_queue.json    les offres          → passer par queue_io
-Scripts/descriptions.json   leur texte, à part  → queue_io le réinjecte, transparent
-Scripts/suivi.json          les candidatures    → passer par suivi_io
+Scripts/apply_queue.json    the offers          → go through queue_io
+Scripts/descriptions.json   their text, apart   → queue_io reinjects it, transparently
+Scripts/suivi.json          the applications    → go through suivi_io
 ```
 
-**Ne jamais lire ou écrire ces fichiers en `json.load`/`json.dump` direct.**
+**Never read or write these files with a direct `json.load`/`json.dump`.**
 
-- `queue_io.charger()` lit sans verrou (les écritures sont atomiques, donc une lecture ne
-  voit jamais un fichier à moitié écrit) et réinjecte les descriptions.
-  `queue_io.transaction()` est le seul chemin d'écriture : verrou, **relecture fraîche à
-  l'intérieur du verrou**, écriture atomique à la sortie, annulation si le bloc lève.
-- Les descriptions vivent à part parce qu'elles pesaient 64 % du fichier que treize
-  programmes réécrivaient en entier pour changer un seul champ. `transaction(descriptions=False)`
-  saute leur lecture quand on ne touche qu'à un `fit` ou un statut.
-- `suivi.json` est la donnée **la moins reconstituable** du projet : une offre perdue, le
-  scan la retrouve demain ; une candidature perdue ne revient jamais. `suivi_io.poser()`
-  écrit une entrée sous verrou sur l'état relu — jamais un instantané mémoire.
-- **Seul `suivi.json` est versionné.** La file, les descriptions et les scans sont hors
-  git depuis le 2026-09-23 : `pipeline_quotidien.sauvegarder()` les copie chaque jour dans
-  `Scripts/_sauvegardes/<date>/`, avant toute étape, sept jours glissants. Les documents
-  générés sont hors git depuis le 20/09 ; l'historique complet d'avant la purge, 978 Mo,
-  est dans `../_sauvegardes/Recherche_emploi_historique_complet_2026-09-23.bundle`.
+- `queue_io.charger()` reads without a lock (writes are atomic, so a read never sees a
+  half-written file) and reinjects the descriptions.
+  `queue_io.transaction()` is the only write path: lock, **fresh re-read inside the
+  lock**, atomic write on exit, rollback if the block raises.
+- The descriptions live apart because they weighed 64% of the file that thirteen
+  programs rewrote in full to change a single field. `transaction(descriptions=False)`
+  skips reading them when only a `fit` or a status is touched.
+- `suivi.json` is the project's **least reconstructible** data: a lost offer is found
+  again by the scan tomorrow; a lost application never comes back. `suivi_io.poser()`
+  writes one entry under lock on the re-read state — never a memory snapshot.
+- **Only `suivi.json` is versioned.** The queue, the descriptions and the scans have been out of
+  git since 2026-09-23: `pipeline_quotidien.sauvegarder()` copies them every day into
+  `Scripts/_sauvegardes/<date>/`, before any step, seven rolling days. The generated
+  documents have been out of git since 20/09; the complete history from before the purge, 978 MB,
+  is in `../_sauvegardes/Recherche_emploi_historique_complet_2026-09-23.bundle`.
 
-L'identité d'une offre est `queue_io.oid(offre)` = `"entreprise|poste"`. Surtout pas
-l'URL : elle change quand un doublon mieux classé la promeut.
+The identity of an offer is `queue_io.oid(offre)` = `"entreprise|poste"`. Never the
+URL: it changes when a better-ranked duplicate promotes it.
 
-### Le verrou, et le code de sortie 3
+### The lock, and exit code 3
 
-Exclusion inter-processus par fichier (`jutil.prendre_verrou` / `rendre_verrou` / `garder`).
-**Un programme qui trouve la file occupée sort en code 3 sans rien modifier.** Un verrou
-vivant ne se casse jamais ; toute requête réseau passe par les fonctions bornées.
-Détail (réentrance, PID recyclés, double verrou de `job_sources`, timeouts httpx) :
+Inter-process exclusion by file (`jutil.prendre_verrou` / `rendre_verrou` / `garder`).
+**A program that finds the queue busy exits with code 3 without modifying anything.** A
+live lock is never broken; every network request goes through the bounded functions.
+Details (reentrancy, recycled PIDs, double lock of `job_sources`, httpx timeouts):
 `.claude/rules/verrous.md`.
 
-**La collecte du pipeline est en cinq passes, fusionnées chacune** (ATS/Workday/V.I.E ;
-LinkedIn ; eFC/EURES ; APEC/France Travail/Adzuna/Jooble ; Glassdoor/WTJ en dernier).
-Talent et Indeed sont hors de `--all` depuis le 2026-10-03 (0 offre, 403) ; Adzuna et
-Jooble passent par leur API officielle, clé dans les fichiers adzuna.json / jooble.json du dossier Scripts
-(ignorés par git, à créer par l'utilisateur ; absents = source ignorée).
-`job_sources` ne fusionne qu'à la fin de sa passe : en une seule passe `--all`, un
-dépassement de durée perdait toute la collecte du jour — quatre matins sur cinq du 24 au
-28/09/2026 ; en trois passes, deux dépassaient encore le 30/09.
+**The pipeline collection runs in five passes, each merged** (ATS/Workday/V.I.E;
+LinkedIn; eFC/EURES; APEC/France Travail/Adzuna/Jooble; Glassdoor/WTJ last).
+Talent and Indeed have been out of `--all` since 2026-10-03 (0 offers, 403); Adzuna and
+Jooble go through their official API, key in the files adzuna.json / jooble.json of the Scripts folder
+(ignored by git, to be created by the user; absent = source ignored).
+`job_sources` only merges at the end of its pass: in a single `--all` pass, an
+overrun lost the whole day's collection — four mornings out of five from 24 to
+28/09/2026; with three passes, two still overran on 30/09.
 
-**`_req_borne` réutilise les connexions.** Appelée avec le module `httpx`, elle passe par
-un `httpx.Client` partagé : rouvrir une connexion TLS par requête triplait la durée
-(talan 8 min → 1,7 ; un flux Workday 7,8 → 1,6). Talent ne recharge plus les fiches déjà
-dans la file.
+**`_req_borne` reuses connections.** Called with the `httpx` module, it goes through a
+shared `httpx.Client`: reopening a TLS connection per request tripled the duration
+(talan 8 min → 1.7; a Workday feed 7.8 → 1.6). Talent no longer reloads the postings already
+in the queue.
 
-**Une limite de débit s'attend, un refus d'entrée s'arrête.** Un 429 dit « reviens plus
-tard » : `audit_dispo` fait une pause (Retry-After, sinon 15 min doublées jusqu'à 60),
-reprend où il s'était arrêté, et garde son état dans `_audit_dispo.json` pour reprendre
-d'une exécution à l'autre. Un 403/999/CAPTCHA (APEC derrière DataDome) est un refus :
-pas de boucle dessus, et pas de nouvelle tentative avant 30 jours. Dans le pipeline,
-l'étape 4b ne tourne que le dimanche (`--dispo-jour`, `--dispo` pour la forcer), s'arrête
-d'elle-même au bout de 100 min (`audit_dispo --duree`) puis retire les fermées ; une seule
-pause, code 4 s'il reste à faire — normal. Avant, coupée chaque jour par la minuterie à
-45 min, elle n'arrivait jamais à la suppression (08-18/10/2026).
+**A rate limit is waited out, a refusal of entry stops.** A 429 says "come back later":
+`audit_dispo` pauses (Retry-After, otherwise 15 min doubled up to 60),
+resumes where it stopped, and keeps its state in `_audit_dispo.json` to resume
+from one run to the next. A 403/999/CAPTCHA (APEC behind DataDome) is a refusal:
+no looping on it, and no new attempt before 30 days. In the pipeline,
+step 4b only runs on Sunday (`--dispo-jour`, `--dispo` to force it), stops
+by itself after 100 min (`audit_dispo --duree`) then removes the closed offers; a single
+pause, code 4 if work remains — normal. Before, cut off every day by the 45-min
+timer, it never reached the removal (08-18/10/2026).
 
-### Règles chargées à la demande
+### Rules loaded on demand
 
-Le détail par domaine vit dans `.claude/rules/`. Chaque fichier déclare en
-frontmatter `paths:` les fichiers qu'il gouverne, et Claude Code ne l'injecte que
-quand on touche l'un d'eux — donc zéro coût de contexte le reste du temps. Les autres
-agents (Codex, Cursor) les lisent en suivant le lien.
+The per-domain details live in `.claude/rules/`. Each file declares in its
+frontmatter the `paths:` it governs, and Claude Code only injects it when one of them is
+touched — so zero context cost the rest of the time. The other agents (Codex, Cursor) read
+them by following the link.
 
-| Règle | Se déclenche sur |
+| Rule | Triggers on |
 |---|---|
-| `.claude/rules/scoring.md` | `ats_match.py`, `tri_file.py` — `fit_score`, plafond ESG, malus sur l'intitulé seul |
-| `.claude/rules/motifs.md` | `ats_match.py`, `job_sources.py`, `tri_file.py` — regex, heredoc, sous-chaînes, `\b` final |
+| `.claude/rules/scoring.md` | `ats_match.py`, `tri_file.py` — `fit_score`, ESG cap, penalty on the title alone |
+| `.claude/rules/motifs.md` | `ats_match.py`, `job_sources.py`, `tri_file.py` — regex, heredoc, substrings, final `\b` |
 | `.claude/rules/documents.md` | `tailor_application.py`, `generate_docs.py`, `regenere_docs.py`, `sync_docs.py`, `chemins.py` |
 | `.claude/rules/navigation-web.md` | `web_nav.py`, `site_strategies.py`, `apply_runner.py`, `acces.py` |
 | `.claude/rules/app-bureau.md` | `JobHunter.pyw` |
 | `.claude/rules/verrous.md` | `jutil.py`, `job_sources.py`, `linkedin_desc.py`, `pipeline_quotidien.py`, `audit_dispo.py` |
 
-## Limites qui sont des décisions, pas des manques
+## Limits that are decisions, not gaps
 
-Elles tiennent depuis le début du projet et ne se rediscutent pas au détour d'une tâche.
-Le détail est dans `.claude/rules/navigation-web.md` ; la version courte, qui vaut partout :
+They have held since the start of the project and are not reopened in passing during a task.
+The detail is in `.claude/rules/navigation-web.md`; the short version, which holds everywhere:
 
-- **Aucune soumission automatique.** Le clic final d'envoi est celui de l'utilisateur.
-  N'ajouter aucun drapeau `--auto` / `--submit` à `apply_runner.py`, ni ailleurs. Le mode
-  `--pilote` (panneau Candidatures de l'app) ne clique rien non plus : « J'ai envoyé »
-  DÉCLARE, puis la page est observée (`envoi` = confirmé / incertain, ADR 0009) — et
-  « incertain » ne relance jamais un envoi.
-- **Aucun contournement anti-bot**, aucune résolution de CAPTCHA.
-  Ni moteur furtif, ni masquage de l'automatisation, ni profil Chrome personnel :
-  le navigateur se présente comme automatisé (détail : `.claude/rules/navigation-web.md`).
-- **Aucun mot de passe manipulé par les programmes.**
-- **Aucune création de compte automatique**, aucune lecture de boîte mail par programme.
-- Le dépôt est **local, sans remote**, parce qu'il contient des données personnelles.
+- **No automatic submission.** The final click to send is the user's.
+  Add no `--auto` / `--submit` flag to `apply_runner.py`, or anywhere else. The
+  `--pilote` mode (Candidatures panel of the app) clicks nothing either: "J'ai envoyé"
+  (I have sent it) DECLARES, then the page is observed (`envoi` = confirmed / uncertain, ADR 0009) — and
+  "uncertain" never triggers a re-send.
+- **No anti-bot circumvention**, no CAPTCHA solving.
+  No stealth engine, no masking of automation, no personal Chrome profile:
+  the browser presents itself as automated (details: `.claude/rules/navigation-web.md`).
+- **No password handled by the programs.**
+- **No automatic account creation**, no reading of a mailbox by a program.
+- The repository is **local, with no remote**, because it contains personal data.
 
-## Invariants à ne pas casser
+## Invariants not to break
 
-**Ne jamais coder une racine en dur.** Les chemins du projet ont bougé quatre fois en deux
-jours et tout ce qui codait une racine a cassé en silence — dont une veille qui s'est
-déclarée `success` pendant deux mois en ne suivant plus que 2 comptes sur 44. Détecter par
-marqueur : le premier dossier candidat, en remontant, qui contient réellement un fichier
-témoin. `jobhunter.racine` cherche `Scripts/` + `profil/` (ou `JOBHUNTER_RACINE`) : l'app
-et le moteur fonctionnent où qu'on les place.
+**Never hard-code a root.** Project paths moved four times in two
+days and everything that hard-coded a root broke silently — including a watch job that
+declared itself `success` for two months while tracking only 2 accounts out of 44. Detect by
+marker: the first candidate folder, going upward, that really contains a
+witness file. `jobhunter.racine` looks for `Scripts/` + `profil/` (or `JOBHUNTER_RACINE`): the app
+and the engine work wherever they are placed.
 
-**Les regex ne s'écrivent pas via un heredoc shell** — détail et pièges de motifs dans
+**Regexes are not written through a shell heredoc** — details and pattern pitfalls in
 `.claude/rules/motifs.md`.
 
-**Toute suppression automatique doit épargner les offres présentes dans `suivi.json`.**
-Une annonce ferme *après* qu'on y a postulé : sans cette garde, la purge efface en priorité
-celles auxquelles l'utilisateur a candidaté.
+**Every automatic deletion must spare the offers present in `suivi.json`.**
+A posting closes *after* one has applied to it: without this guard, the purge deletes first
+those the user applied to.
 
-**`sys.stdout.reconfigure(encoding="utf-8", errors="replace")` en tête de tout programme
-qui affiche un emoji ou un accent.** Sans lui, la sortie redirigée — tuyau, log, tâche
-planifiée — retombe sur cp1252 et lève `UnicodeEncodeError` à la première ligne.
+**`sys.stdout.reconfigure(encoding="utf-8", errors="replace")` at the top of any program
+that prints an emoji or an accent.** Without it, redirected output — pipe, log, scheduled
+task — falls back to cp1252 and raises `UnicodeEncodeError` on the first line.
 
-**Windows ignore la casse des noms de fichiers.** Deux noms qui ne diffèrent que par la
-casse sont un seul fichier : toute déduplication de noms groupe en minuscules.
+**Windows ignores the case of file names.** Two names that differ only by
+case are a single file: any name deduplication groups in lowercase.
 
-**Vérifier un import en chargeant le module, jamais en parsant l'AST.** `ast.parse` passe
-sur un `import` manquant ; l'erreur ne sort qu'à l'exécution.
+**Check an import by loading the module, never by parsing the AST.** `ast.parse` passes
+on a missing `import`; the error only comes out at run time.
 
-**Une collecte vide a deux causes opposées** — rien à prendre, ou refus d'entrée.
-`job_sources.INCIDENTS` compte les refus et `main()` les affiche, pour qu'un scan
-entièrement bridé ne ressemble pas à une journée calme (et qu'on ne le relance pas, ce qui
-est exactement ce qu'il ne faut pas faire face à un quota).
+**An empty collection has two opposite causes** — nothing to take, or refusal of entry.
+`job_sources.INCIDENTS` counts the refusals and `main()` prints them, so that an entirely
+throttled scan does not look like a quiet day (and so that it is not relaunched, which is
+exactly what must not be done facing a quota).
 
-## Environnement
+## Environment
 
-Développement : **uv** (`uv sync` crée `.venv` depuis `pyproject.toml` et `uv.lock`),
-**ruff** (lint et format, règles et exceptions dans `pyproject.toml`), **pre-commit**
-(`uv run pre-commit install`, une fois). Détail : `CONTRIBUTING.md`. Feuille de route :
+Development: **uv** (`uv sync` creates `.venv` from `pyproject.toml` and `uv.lock`),
+**ruff** (lint and format, rules and exceptions in `pyproject.toml`), **pre-commit**
+(`uv run pre-commit install`, once). Details: `CONTRIBUTING.md`. Roadmap:
 `docs/plan-professionnalisation.md`.
 
-Utilisateur final : `installer.bat` / `installer.sh` installent `requirements.txt` (mêmes
-bornes que `pyproject.toml`) dans le Python du système. `VERSION` et la version de
-`pyproject.toml` doivent rester égales (`outils/verifie_version.py`, en CI).
+End user: `installer.bat` / `installer.sh` install `requirements.txt` (same
+bounds as `pyproject.toml`) into the system Python. `VERSION` and the version of
+`pyproject.toml` must stay equal (`outils/verifie_version.py`, in CI).

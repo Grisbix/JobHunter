@@ -9,44 +9,43 @@ paths:
   - src/jobhunter/programmes/pipeline_quotidien.py
   - src/jobhunter/programmes/audit_dispo.py
 ---
-# Verrous, code de sortie 3, requêtes bornées
+# Locks, exit code 3, bounded requests
 
-`jutil.prendre_verrou` / `rendre_verrou` / `garder` implémentent une exclusion
-inter-processus par fichier, qui casse le verrou d'un processus mort. Convention du
-projet : **un programme qui trouve la file occupée sort en code 3 sans rien modifier.**
+`jutil.prendre_verrou` / `rendre_verrou` / `garder` implement a file-based
+inter-process exclusion, which breaks the lock of a dead process. Project convention:
+**a program that finds the queue busy exits with code 3 without modifying anything.**
 
-`prendre_verrou` est réentrant, `rendre_verrou` ne l'est pas. Une fonction qui prend puis
-rend, alors que son appelant tenait le verrou pour tout le programme, le lui retire.
-`jutil.tenu(chemin)` répond avant de prendre.
+`prendre_verrou` is reentrant, `rendre_verrou` is not. A function that takes then
+releases, while its caller held the lock for the whole program, takes it away from the caller.
+`jutil.tenu(chemin)` answers before taking.
 
-**Un verrou vivant ne se casse pas.** `perime` (30 min) ne s'applique plus qu'à un verrou
-dont on ne peut pas lire le propriétaire. Tant que le PID inscrit tourne, on attend, puis
-l'appelant sort en code 3. Avant le 2026-09-23, l'âge suffisait : un travail de trois heures
-voyait son verrou cassé au bout de trente minutes, par un programme qui allait ensuite
-écrire par-dessus.
+**A live lock is not broken.** `perime` (30 min) now applies only to a lock
+whose owner cannot be read. As long as the recorded PID is running, we wait, then
+the caller exits with code 3. Before 2026-09-23, age was enough: a three-hour job
+had its lock broken after thirty minutes, by a program that then went on to
+write over it.
 
-**Windows recycle les PID.** « Vivant » veut dire : le PID existe ET le processus est né
-avant le verrou (`GetProcessTimes` contre l'horodatage du fichier). Le 2026-10-02, le
-PID d'une collecte morte a été réattribué à l'extension Chrome : le verrou orphelin
-passait pour tenu, et toute collecte sortait en code 3.
+**Windows recycles PIDs.** "Alive" means: the PID exists AND the process was born
+before the lock (`GetProcessTimes` against the file's timestamp). On 2026-10-02, the
+PID of a dead collection was reassigned to the Chrome extension: the orphan lock
+passed for held, and every collection exited with code 3.
 
-**`job_sources.main()` tient deux verrous, pour deux rôles.** Le verrou de
-`offres_scan.json` dure toute la collecte : il n'y a qu'un scan à la fois. Celui de
-`apply_queue.json` n'est pris que pour la fusion, pendant quelques secondes, avec une
-attente de 30 min au lieu de 3. Si la fusion échoue quand même, la collecte est déjà
-écrite dans `offres_scan.json`, et `--fusion-seule` la refusionne sans rescanner.
-Jusqu'au 2026-09-23, la file était verrouillée pendant tout le scan, soit plus d'une heure.
+**`job_sources.main()` holds two locks, for two roles.** The lock on
+`offres_scan.json` lasts the whole collection: there is only one scan at a time. The one on
+`apply_queue.json` is taken only for the merge, for a few seconds, with a
+wait of 30 min instead of 3. If the merge fails anyway, the collection is already
+written to `offres_scan.json`, and `--fusion-seule` merges it again without rescanning.
+Until 2026-09-23, the queue was locked for the entire scan, i.e. over an hour.
 
-**Un travail long écrit par lots.** `linkedin_desc.py` collecte hors verrou et écrit
-par paquets de 500. Un arrêt ne coûte que le lot en cours.
+**A long job writes in batches.** `linkedin_desc.py` collects outside the lock and writes
+in packets of 500. A stop costs only the batch in progress.
 
-**Un `timeout=` httpx borne chaque paquet, pas la requête.** Un serveur qui distille un
-octet toutes les 19 s tient la connexion indéfiniment. Le 2026-09-22, fr.talent.com a
-bloqué ainsi le scan planifié pendant 12 h 25. Dans `job_sources`, **toute** requête passe
-par `_get_borne` / `_post_borne` (durée totale, vraie `httpx.Response`) et tout `urlopen`
-par `_lire_borne` — qui lit en `read1`, parce que `read(n)` attend que le tampon soit
-plein avant de rendre la main. `pipeline_quotidien.etape()` tue en plus toute étape qui
-dépasse sa durée maximale — **l'arbre de processus** (`taskkill /T`), sans quoi un enfant
-qui garde la sortie ouverte prolonge l'étape — sans tuer le pipeline. Le watchdog de 20 h
-lit le journal du pipeline.
-
+**An httpx `timeout=` bounds each packet, not the request.** A server that trickles one
+byte every 19 s holds the connection indefinitely. On 2026-09-22, fr.talent.com
+blocked the scheduled scan this way for 12 h 25. In `job_sources`, **every** request goes
+through `_get_borne` / `_post_borne` (total duration, a real `httpx.Response`) and every `urlopen`
+through `_lire_borne` — which reads with `read1`, because `read(n)` waits for the buffer to be
+full before handing control back. `pipeline_quotidien.etape()` additionally kills any step that
+exceeds its maximum duration — **the process tree** (`taskkill /T`), without which a child
+that keeps the output open prolongs the step — without killing the pipeline. The 20 h watchdog
+reads the pipeline's log.
