@@ -133,7 +133,7 @@ def scan_wtj(pages: int = 2) -> list[dict[str, Any]]:
         r = _commun._get_borne(client, url, headers=_WUA, timeout=90)
         if r.status_code != 200:
             return ""
-        b = r.content
+        b: bytes = r.content
         if b[:2] == b"\x1f\x8b":
             b = gzip.decompress(b)
         return b.decode("utf-8", "replace")
