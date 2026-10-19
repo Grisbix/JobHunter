@@ -36,6 +36,10 @@ COMMANDES = {
     "message": ("jobhunter.documents.message", "message court des formulaires"),
     "cv-auto": ("jobhunter.documents.cv_auto", "banque de faits du CV automatique"),
     "dispo": ("jobhunter.programmes.audit_dispo", "controle les offres fermees"),
+    "evaluation": (
+        "jobhunter.programmes.evaluation_classement",
+        "le classement face a mes jugements (postule, mauvaise...)",
+    ),
     "rendement": (
         "jobhunter.programmes.rendement_sources",
         "ce que chaque source de collecte rapporte",
