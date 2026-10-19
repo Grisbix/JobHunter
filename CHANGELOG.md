@@ -4,6 +4,15 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.1.1 — 2026-10-19
+
+- **Mac et Linux** : les boutons qui ouvrent un document ou un dossier (CV, lettres,
+  dossier du projet) plantaient — ils appelaient une fonction propre à Windows. Ils
+  passent maintenant par l'application du système (`open` sur Mac, `xdg-open` sur
+  Linux). Rien ne change sous Windows.
+- En coulisse, rien de visible : tout le programme est désormais vérifié par l'outil de
+  typage, et chaque décision de conception est reliée au code qui l'applique.
+
 ## 2.1.0 — 2026-10-18
 
 - **Les offres fermées sont enfin retirées.** Le contrôle de disponibilité était coupé
