@@ -1,12 +1,12 @@
 [project]
 name = "jobhunter"
-# Doit rester egal au fichier VERSION (lu par la mise a jour) : la CI le verifie.
-version = "2.20.0"
+# Must stay equal to the VERSION file (read by the update): CI checks it.
+version = "2.21.0"
 description = "Recherche d'emploi locale : collecte, notation, CV et lettre par offre, candidature semi-automatique."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12"
-# Memes bornes que requirements.txt, que gardent installer.bat / installer.sh.
+# Same bounds as requirements.txt, which installer.bat / installer.sh keep.
 dependencies = [
     "customtkinter>=5.2.2,<7",
     "playwright>=1.60,<2",
@@ -17,12 +17,12 @@ dependencies = [
     "requests>=2.34,<3",
 ]
 
-# `jobhunter <commande>` une fois le paquet installe (phase 6) ; avant : python -m jobhunter.
+# `jobhunter <command>` once the package is installed (phase 6); before: python -m jobhunter.
 [project.scripts]
 jobhunter = "jobhunter.cli:main"
 
-# Lecture des statuts dans Gmail (jobhunter statuts-mail --gmail), en option : l'export
-# .mbox / .eml n'en a pas besoin.
+# Reading statuses in Gmail (jobhunter statuts-mail --gmail), optional: the .mbox / .eml
+# export does not need it.
 [project.optional-dependencies]
 gmail = ["google-auth-oauthlib>=1.2,<2"]
 
@@ -39,9 +39,9 @@ dev = [
 requires = ["hatchling>=1.27,<2"]
 build-backend = "hatchling.build"
 
-# Le paquet installable est src/jobhunter, programmes compris (2.0). Les donnees
-# (Scripts/, profil/, CV, lettres) restent dans le dossier de l'utilisateur : le paquet
-# installe le trouve par JOBHUNTER_RACINE ou en remontant depuis le dossier courant.
+# The installable package is src/jobhunter, programs included (2.0). The data
+# (Scripts/, profil/, CVs, letters) stay in the user's folder: the installed
+# package finds it through JOBHUNTER_RACINE or by going up from the current folder.
 [tool.hatch.build.targets.wheel]
 packages = ["src/jobhunter"]
 
@@ -57,27 +57,27 @@ src = ["src", "outils"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "UP", "B", "D"]
-# Regles suspendues, A RESORBER (comptes au 2026-10-17). Chacune demande un
-# travail a la main ou depend du decoupage en paquet (phase 3) ; on ne les
-# ajoute pas en vrac a `ignore` sans compte ni raison.
+# Suspended rules, TO BE CLEARED (counts as of 2026-10-17). Each one needs
+# manual work or depends on the package split (phase 3); they are not
+# added in bulk to `ignore` without a count or a reason.
 ignore = [
-    "E402",   # 43 — imports apres du code (console UTF-8, profil d'exemple en tete)
-    "E501",   # lignes longues restantes : chaines et commentaires que le formateur ne coupe pas
-    "E741",   # 35 — variables nommees l / O / I
-    "UP031",  # 35 — formatage « % » a convertir en f-strings
-    "B007",   # 12 — variable de boucle inutilisee
-    "B905",   # 4 — zip() sans strict=
-    "B904",   # 3 — raise sans « from » dans un except
-    "B005",   # 2 — strip() avec plusieurs caracteres
-    "B023",   # 2 — fonction qui capture une variable de boucle
-    "E731",   # 4 — lambda affectee a un nom
-    "UP035",  # 1 — import deprecie
-    "F841",   # 11 — variable affectee jamais lue (a relire une par une)
+    "E402",   # 43 — imports after code (UTF-8 console, example profile first)
+    "E501",   # remaining long lines: strings and comments the formatter does not split
+    "E741",   # 35 — variables named l / O / I
+    "UP031",  # 35 — "%" formatting to convert to f-strings
+    "B007",   # 12 — unused loop variable
+    "B905",   # 4 — zip() without strict=
+    "B904",   # 3 — raise without "from" inside an except
+    "B005",   # 2 — strip() with several characters
+    "B023",   # 2 — function that captures a loop variable
+    "E731",   # 4 — lambda assigned to a name
+    "UP035",  # 1 — deprecated import
+    "F841",   # 11 — variable assigned but never read (to review one by one)
 ]
 
-# Docstrings au format Google (phase 8) : exigees sur toute l'API publique du paquet.
-# Exemptes : les programmes (jobhunter.programmes, des lignes de commande) et la
-# fenetre (jobhunter.app, des mixins d'interface), qui ne sont pas des bibliotheques.
+# Google-style docstrings (phase 8): required on the package's whole public API.
+# Exempt: the programs (jobhunter.programmes, command lines) and the
+# window (jobhunter.app, interface mixins), which are not libraries.
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
@@ -87,8 +87,8 @@ convention = "google"
 "src/jobhunter/app/*" = ["D"]
 
 [tool.ruff.lint.isort]
-# _profil_test doit rester le PREMIER import d'un test : il fixe le profil
-# d'exemple avant que le moteur ne lise le profil au chargement.
+# _profil_test must stay a test's FIRST import: it sets the example
+# profile before the engine reads the profile at load time.
 section-order = ["future", "profil", "standard-library", "third-party", "first-party", "local-folder"]
 
 [tool.ruff.lint.isort.sections]
@@ -102,18 +102,18 @@ markers = [
 ]
 addopts = "-m 'not donnees_reelles'"
 
-# ── couverture ───────────────────────────────────────────────────────────────
-# ── mypy (phase 5 du plan) ───────────────────────────────────────────────────
-# Tout le paquet est verifie ; le SOCLE l'est en mode strict. Un module rejoint la
-# liste stricte quand il est entierement annote — jamais de retour en arriere.
+# ── coverage ───────────────────────────────────────────────────────────────
+# ── mypy (phase 5 of the plan) ───────────────────────────────────────────────────
+# The whole package is checked; the CORE in strict mode. A module joins the
+# strict list when it is fully annotated — never going back.
 [tool.mypy]
 python_version = "3.12"
 files = ["src/jobhunter"]
 ignore_missing_imports = true
 warn_unused_ignores = true
-# Les programmes (anciens Scripts/*.py, entres dans le paquet en 2.0) sont verifies en
-# mode normal depuis le 2026-10-19 (82 erreurs resorbees) ; leurs fonctions restent pour
-# la plupart non annotees, d'ou l'exclusion ci-dessous des appels non types.
+# The programs (formerly Scripts/*.py, moved into the package in 2.0) are checked in
+# normal mode since 2026-10-19 (82 errors cleared); most of their functions remain
+# unannotated, hence the exclusion below of untyped calls.
 untyped_calls_exclude = ["jobhunter.programmes"]
 
 [[tool.mypy.overrides]]
@@ -150,12 +150,12 @@ strict_equality = true
 [tool.coverage.run]
 source = ["src/jobhunter"]
 omit = ["*/test_*.py", "*/_profil_test.py"]
-# Les suites historiques tournent en sous-processus : sans ceci, elles ne comptent pas.
+# The historical suites run in subprocesses: without this, they do not count.
 patch = ["subprocess"]
 
 [tool.coverage.report]
 skip_empty = true
-# Point de depart mesure le 2026-10-18 : 31 % du moteur (fichiers de test exclus). Le seuil ne descend jamais ; il monte
-# a mesure que les suites sont converties et que les modules a 0 % sont couverts.
+# Starting point measured on 2026-10-18: 31 % of the engine (test files excluded). The threshold never goes down; it rises
+# as the suites are converted and the modules at 0 % get covered.
 fail_under = 30
 

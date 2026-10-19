@@ -1,502 +1,509 @@
-# Nouveautés de JobHunter
+# What's new in JobHunter
 
-La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'application)
-affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
-récente en haut.
+The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's button)
+shows the sections newer than your version. Format: `## x.y.z — date`, the most
+recent at the top.
+
+## 2.21.0 — 2026-10-20
+
+- **The repository is in English.** Every comment and docstring of the code, the
+  documentation (architecture, programs and their pitfalls, decisions, plan, roadmap,
+  contributing guide, this changelog) and the instructions for coding agents are now in
+  English. Function names, profile keys and JSON keys stay in French: renaming them would
+  break existing profiles and data. The French README stays as `README.fr.md`.
+- **Tidier repository**: an index of the documentation (`docs/README.md`) and of the
+  developer tools (`outils/README.md`); `Mon_CV/LISEZ-MOI.txt` also says it in English.
+- Nothing changes in what the program does: the non-regression bench gives the same
+  decisions, offer for offer.
 
 ## 2.20.0 — 2026-10-20
 
-- **Statuts depuis tes courriels** (`jobhunter statuts-mail`, ou Maintenance →
-  « Statuts depuis mes courriels… ») : refus, entretiens et accusés de réception
-  reconnus en français, anglais et allemand, rapprochés de tes candidatures, et
-  proposés **un à un** ; rien n'est écrit sans ton accord, et un statut n'avance que
-  vers l'aval. Les courriels viennent d'un export (fichier .mbox de Google Takeout,
-  dossier de .eml), sans aucune clé, ou de l'API Gmail en **lecture seule**, avec un
-  client OAuth que tu crées toi-même (`pip install "jobhunter[gmail]"`) ; le programme
-  ne voit jamais de mot de passe.
-- **Au clavier** : chaque bouton s'atteint avec Tab et se déclenche avec Entrée ou
-  Espace, avec un anneau de focus visible ; contour des champs de saisie plus lisible
-  (3:1) ; contrastes du texte vérifiés (WCAG AA). Un lecteur d'écran ne voit toujours pas
-  les contrôles : la bibliothèque d'interface ne le permet pas.
+- **Statuses from your emails** (`jobhunter statuts-mail`, or Maintenance →
+  "Statuts depuis mes courriels…" (Statuses from my emails)): rejections, interviews and
+  acknowledgements of receipt recognised in French, English and German, matched to your
+  applications, and proposed **one by one**; nothing is written without your approval, and
+  a status only ever moves forward. The emails come from an export (a Google Takeout
+  .mbox file, a folder of .eml files), with no key at all, or from the Gmail API in
+  **read-only** mode, with an OAuth client that you create yourself
+  (`pip install "jobhunter[gmail]"`); the program never sees a password.
+- **Keyboard use**: every button can be reached with Tab and triggered with Enter or
+  Space, with a visible focus ring; the outline of input fields is easier to see (3:1);
+  text contrast checked (WCAG AA). A screen reader still cannot see the controls: the
+  interface library does not allow it.
 
 ## 2.19.0 — 2026-10-19
 
-- **La collecte chaque matin, depuis l'application** : Maintenance → « Collecte chaque
-  matin… » crée la tâche Windows à l'heure choisie (ou la retire). C'est la même tâche
-  que `planifier.bat` ; l'application installée, sans Python, peut enfin collecter seule.
-- **L'application installée est essayée à chaque construction de l'installateur**, sur
-  une machine Windows neuve et **sans Python sur le PATH** : la fenêtre s'ouvre et reste
-  ouverte ; le navigateur du système démarre ; un scan fictif est fusionné dans la file ;
-  un dossier de candidature est écrit ; la mise à jour télécharge, contrôle et prépare
-  l'installateur suivant, qui s'installe par-dessus en gardant les données.
-- Document d'architecture de l'application autonome (ADR 0011) mis à jour.
+- **Collection every morning, from the application**: Maintenance → "Collecte chaque
+  matin…" (Collection every morning) creates the Windows task at the chosen time (or
+  removes it). It is the same task as `planifier.bat`; the installed application, without
+  Python, can finally collect on its own.
+- **The installed application is tried at every build of the installer**, on a fresh
+  Windows machine **without Python on the PATH**: the window opens and stays open; the
+  system browser starts; a fictitious scan is merged into the queue; an application folder
+  is written; the update downloads, checks and prepares the next installer, which installs
+  over the old one while keeping the data.
+- Architecture document of the standalone application (ADR 0011) updated.
 
 ## 2.18.0 — 2026-10-19
 
-- **Mise à jour de l'application installée en un clic** : le bouton « Mettre à jour »
-  télécharge `JobHunterSetup.exe`, le contrôle, puis l'ouvre (il ferme JobHunter et garde
-  tes données). Avant, il ouvrait la page des versions.
-- **Mises à jour signées par l'auteur** (ADR 0012) : signature Ed25519 faite hors de
-  GitHub, avec une clé qui ne quitte pas l'ordinateur de l'auteur. Une version dont un
-  fichier, ou l'installateur, n'est pas celui que l'auteur a signé est refusée, et rien
-  n'est écrit ; une ancienne signature ne fait pas revenir en arrière. Active dès que la
-  clé publique de l'auteur est dans le code ; d'ici là, la mise à jour se fait comme
-  avant, et l'application contrôle au moins l'empreinte publiée de l'installateur.
-- Outil de l'auteur : `outils/signature.py cle` (une fois) et `signer X.Y.Z --publier`
-  (à chaque version). Procédure dans CONTRIBUTING.
-- **Installation depuis les sources testée sur des machines neuves** : le workflow
-  « installation » lance les vrais `installer.bat` et `installer.sh` (Windows, Linux) et
-  vérifie que les bibliothèques vont dans `.venv`, que le programme se charge et que la
-  mise à jour ignore `.venv`.
+- **One-click update of the installed application**: the "Mettre à jour" (Update) button
+  downloads `JobHunterSetup.exe`, checks it, then opens it (it closes JobHunter and keeps
+  your data). Before, it opened the releases page.
+- **Updates signed by the author** (ADR 0012): Ed25519 signature made outside GitHub, with
+  a key that never leaves the author's computer. A release in which a file, or the
+  installer, is not the one the author signed is refused, and nothing is written; an old
+  signature does not make you go back to an earlier version. Active as soon as the
+  author's public key is in the code; until then, the update works as before, and the
+  application at least checks the published fingerprint of the installer.
+- Author's tool: `outils/signature.py cle` (once) and `signer X.Y.Z --publier` (for each
+  release). Procedure in CONTRIBUTING.
+- **Installation from source tested on fresh machines**: the "installation" workflow runs
+  the real `installer.bat` and `installer.sh` (Windows, Linux) and checks that the
+  libraries go into `.venv`, that the program loads and that the update ignores `.venv`.
 
 ## 2.17.0 — 2026-10-19
 
-- **Le journal de l'app en anglais, programmes compris** : les bilans de la collecte
-  (sources, rendement, fusion) et des étapes de « TOUT FAIRE » (descriptions, re-score,
-  liens morts, export, alertes) sont traduits. Le détail offre par offre (noms
-  d'entreprise et de poste) reste tel quel.
-- Correctifs d'un second audit Codex, sur le code des versions 2.12 à 2.16 :
-  - **Le relecteur ne se laisse plus tromper par une adresse qui imite une connue** :
-    `acme.fr.evil.test` ou `evil.test/acme.fr` étaient pris pour le site `acme.fr`. Les
-    hôtes se comparent désormais entiers, à une frontière de point.
-  - **Chaque destinataire de la formule d'appel est vérifié** dans l'annonce
-    (« Madame Martin, Madame Dupont, »), pas seulement le premier.
-  - **Deux saisies simultanées d'une clé d'API ne s'effacent plus** : l'écriture se fait
-    sous verrou. Chaque écriture JSON utilise un fichier temporaire qui lui est propre.
-- **Installation depuis les sources : un environnement Python à part.** `installer.bat`
-  (et `installer.sh`) crée `.venv` dans le dossier de JobHunter et y installe les
-  bibliothèques, sans toucher au Python de l'ordinateur. `lancer`, `mettre_a_jour` et
-  `planifier` l'utilisent quand il existe ; une installation plus ancienne continue sur
-  le Python système. La mise à jour ne touche jamais `.venv`, ni
-  `Scripts/francetravail.json`.
-- Une file occupée pendant la fusion conseille `jobhunter collecte --fusion-seule` (le
-  message citait encore l'ancien `job_sources.py`).
+- **The app's log in English, programs included**: the summaries of the collection
+  (sources, yield, merge) and of the "TOUT FAIRE" (Do everything) steps (descriptions,
+  re-scoring, dead links, export, alerts) are translated. The offer-by-offer detail
+  (company and job titles) stays as it is.
+- Fixes from a second Codex audit, on the code of versions 2.12 to 2.16:
+  - **The reviewer is no longer fooled by an address that imitates a known one**:
+    `acme.fr.evil.test` or `evil.test/acme.fr` were taken for the site `acme.fr`. Hosts
+    are now compared whole, at a dot boundary.
+  - **Every addressee of the salutation is checked** against the job posting ("Madame
+    Martin, Madame Dupont,"), not only the first.
+  - **Two simultaneous entries of an API key no longer overwrite each other**: the write
+    is done under a lock. Every JSON write uses a temporary file of its own.
+- **Installation from source: a separate Python environment.** `installer.bat` (and
+  `installer.sh`) creates `.venv` in the JobHunter folder and installs the libraries
+  there, without touching the computer's Python. `lancer`, `mettre_a_jour` and `planifier`
+  use it when it exists; an older installation keeps running on the system Python. The
+  update never touches `.venv`, nor `Scripts/francetravail.json`.
+- A queue that is busy during the merge now advises `jobhunter collecte --fusion-seule`
+  (the message still quoted the old `job_sources.py`).
 
 ## 2.16.0 — 2026-10-19
 
-Correctifs d'un audit du dépôt (Codex, 19/10) : quatre pertes de données possibles et
-quatre défauts, chacun reproduit puis couvert par un test.
+Fixes from an audit of the repository (Codex, 19/10): four possible data losses and four
+defects, each reproduced then covered by a test.
 
-- **Le contrôle des liens n'écrase plus une collecte** qui fusionnait pendant ses
-  vérifications : le réseau se fait hors verrou, puis seuls les résultats sont appliqués
-  à la file relue. La purge des liens morts épargne les offres du suivi.
-- **Un suivi illisible n'est jamais remplacé** : si `suivi.json` existe mais ne se lit
-  pas (fichier tronqué), toute écriture est refusée et le fichier laissé tel quel, au
-  lieu de repartir d'un suivi vide qui effaçait toutes les candidatures.
-- **Une panne pendant l'écriture de la file ne perd plus de description** : les textes
-  orphelins ne sont purgés qu'une fois la file écrite.
-- **La fusion ne retire plus une offre suivie** quand un filtre ou un profil modifié la
-  rejette : une candidature garde sa fiche.
-- Une transaction imbriquée ne rend plus le verrou de son appelant.
-- Une annonce reconnue par son lien, sous un intitulé corrigé, reçoit sa description.
-- La mise à jour installe les dépendances avant de contrôler la nouvelle version, et un
-  échec de pip ramène à la version d'avant au lieu d'annoncer « à jour ».
-- « TOUT FAIRE terminé » ne s'affiche plus après un échec : le journal dit l'étape
-  interrompue.
-- CONTRIBUTING : procédure py-spy pour localiser une lenteur. Feuille de route : le
-  sondage pywinauto conclut que l'interface est invisible pour UI Automation.
+- **The link check no longer overwrites a collection** that was merging during its checks:
+  the network work is done outside the lock, then only the results are applied to the
+  re-read queue. The purge of dead links spares the offers in the tracking file.
+- **An unreadable tracking file is never replaced**: if `suivi.json` exists but cannot be
+  read (truncated file), every write is refused and the file left as it is, instead of
+  starting again from an empty tracking file that wiped out all the applications.
+- **A failure while writing the queue no longer loses a description**: orphan texts are
+  purged only once the queue has been written.
+- **The merge no longer removes a tracked offer** when a filter or a modified profile
+  rejects it: an application keeps its record.
+- A nested transaction no longer releases its caller's lock.
+- A posting recognised by its link, under a corrected title, receives its description.
+- The update installs the dependencies before checking the new version, and a pip failure
+  rolls back to the previous version instead of announcing "up to date".
+- "TOUT FAIRE terminé" (Everything done) is no longer displayed after a failure: the log
+  names the interrupted step.
+- CONTRIBUTING: py-spy procedure to locate a slowdown. Roadmap: the pywinauto probe
+  concludes that the interface is invisible to UI Automation.
 
 ## 2.15.0 — 2026-10-19
 
-- **« Pourquoi ce fit »** dans la fiche de chaque offre : les compétences trouvées par
-  axe, la note de vocabulaire, le plafond et sa raison (intitulé du cœur de cible,
-  métier visé en second, veto HSE ou hors cible), les bonus et malus de l'intitulé, la
-  langue de l'annonce et l'expérience demandée. La note ne change pas : c'est le même
-  calcul, raconté (`scoring.fit.expliquer`).
+- **"Pourquoi ce fit"** (Why this fit) in the record of each offer: the skills found per
+  axis, the vocabulary score, the cap and its reason (title of the core target, secondary
+  target job, HSE or off-target veto), the title's bonuses and penalties, the posting's
+  language and the experience requested. The score does not change: it is the same
+  calculation, explained (`scoring.fit.expliquer`).
 
 ## 2.14.0 — 2026-10-19
 
-- **Relecture des lettres** (`jobhunter relecture`, ou Maintenance → Documents →
-  « Relire les lettres ») : une seconde passe qui signale, sans rien réécrire, ce qui
-  cloche dans une lettre — candidat qui se dévalorise, superlatif creux, « excellent »
-  pour une langue, tiret cadratin ou barre oblique, redites, autre entreprise nommée
-  (copier-coller), destinataire que l'annonce ne nomme pas, et ce qu'une annonce piégée
-  aurait pu glisser dans une lettre écrite par IA (consigne au modèle, adresse inconnue).
-- **Contrôle des dossiers** : un intitulé entre crochets (« [Open to internal and
-  external applicants] ») n'est plus pris pour un gabarit oublié.
-- Menu Maintenance : « Contrôler les dossiers » ajouté ; « Tests live » relancé (il
-  pointait vers un fichier retiré en 2.0).
+- **Review of the letters** (`jobhunter relecture`, or Maintenance → Documents →
+  "Relire les lettres" (Review the letters)): a second pass that flags, without rewriting
+  anything, what is wrong in a letter — a candidate who undersells themselves, an empty
+  superlative, "excellent" for a language, an em dash or a slash, repetitions, another
+  company named (copy-paste), an addressee that the posting does not name, and what a
+  booby-trapped posting could have slipped into a letter written by AI (an instruction to
+  the model, an unknown address).
+- **Folder check**: a title in square brackets ("[Open to internal and external
+  applicants]") is no longer mistaken for a forgotten template.
+- Maintenance menu: "Contrôler les dossiers" (Check the folders) added; "Tests live"
+  relaunched (it pointed to a file removed in 2.0).
 
 ## 2.13.0 — 2026-10-19
 
-- **Annuaire de 3 600 entreprises** dans le panneau Entreprises : tape un nom (« Alan »,
-  « Qonto »…) dans le champ d'ajout ou clique « Annuaire », choisis, et l'entreprise est
-  suivie par l'API publique de Lever, Ashby ou Greenhouse dès la prochaine collecte.
-  Aucune recherche sur le web : les annuaires viennent du projet jobsync (licence MIT),
-  livrés avec l'application. Une entreprise déjà suivie est marquée.
-- **Interface en anglais, journal compris** : les messages de l'application (sélection,
-  annulation, sauvegarde, mises à jour, relances…) et ses boîtes de dialogue suivent
-  le réglage de langue. La sortie des programmes lancés reste en français.
+- **Directory of 3,600 companies** in the Companies panel: type a name ("Alan", "Qonto"…)
+  in the add field or click "Annuaire" (Directory), choose, and the company is followed
+  through the public API of Lever, Ashby or Greenhouse from the next collection. No web
+  search: the directories come from the jobsync project (MIT licence), shipped with the
+  application. A company that is already followed is marked.
+- **Interface in English, log included**: the application's messages (selection,
+  cancellation, backup, updates, reminders…) and its dialog boxes follow the language
+  setting. The output of the programs it launches stays in French.
 
 ## 2.12.0 — 2026-10-19
 
-- **Clés d'API saisies dans l'application, au bon endroit.** Panneau Accès : choisir
-  France Travail, Adzuna ou Jooble, puis « Saisir la clé » (ou double-clic). Une petite
-  fenêtre demande les champs, masque le secret, et écrit le fichier que la source lit
-  vraiment (`Scripts/francetravail.json`, `adzuna.json`, `jooble.json`). Avant, le
-  bouton France Travail rangeait la clé dans `api_keys.json`, qu'aucune source ne lit :
-  elle n'était jamais utilisée. `jobhunter acces --set-key francetravail` suit la même
-  règle.
-- **Collecter une source seule** depuis le panneau Accès, pour essayer une clé tout de
-  suite. Une source refusée il y a moins de 30 jours reste bloquée ; une API officielle
-  qui refuse la clé affiche « clé refusée — vérifie-la » et se réessaie dès la clé
-  corrigée.
-- Panneau Accès en deux onglets, « Collecte des offres » et « Connexions pour
-  candidater » : le second tableau ne sort plus de l'écran.
-- Panneau Entreprises : un filtre (nom, outil, adresse) et un champ d'ajout qui dit quoi
-  coller.
-- L'application sans console (`JobHunter.pyw`, l'exe) ne peut plus tomber sur un module
-  qui règle l'encodage de la console au chargement.
+- **API keys entered in the application, in the right place.** Access panel: choose
+  France Travail, Adzuna or Jooble, then "Saisir la clé" (Enter the key) (or double-click).
+  A small window asks for the fields, hides the secret, and writes the file that the
+  source really reads (`Scripts/francetravail.json`, `adzuna.json`, `jooble.json`). Before,
+  the France Travail button stored the key in `api_keys.json`, which no source reads: it
+  was never used. `jobhunter acces --set-key francetravail` follows the same rule.
+- **Collect a single source** from the Access panel, to try a key straight away. A source
+  refused less than 30 days ago stays blocked; an official API that refuses the key
+  displays "clé refusée — vérifie-la" (key refused — check it) and is retried as soon as
+  the key is corrected.
+- Access panel in two tabs, "Collecte des offres" (Offer collection) and "Connexions pour
+  candidater" (Logins for applying): the second table no longer runs off the screen.
+- Companies panel: a filter (name, tool, address) and an add field that says what to
+  paste.
+- The application without a console (`JobHunter.pyw`, the exe) can no longer trip over a
+  module that sets the console encoding at load time.
 
 ## 2.11.0 — 2026-10-19
 
-- **Lever en Europe.** Certaines entreprises sont hébergées dans la région européenne de
-  Lever : leur flux répondait « introuvable » et leurs offres manquaient. La collecte les
-  cherche désormais aussi sur `api.eu.lever.co`.
-- **Aucune donnée personnelle ne peut entrer dans le dépôt public** : un contrôle
-  (`outils/donnees_perso.py`, lancé avant chaque commit et par la CI) refuse profil, file,
-  suivi, lettres, CV et clés d'API, même ajoutés de force.
-- Dépôt : modèles d'issue et de PR, revue des dépendances (une vulnérabilité connue bloque
-  la PR), signalement privé des failles activé.
+- **Lever in Europe.** Some companies are hosted in Lever's European region: their feed
+  answered "not found" and their offers were missing. The collection now also looks for
+  them on `api.eu.lever.co`.
+- **No personal data can enter the public repository**: a check
+  (`outils/donnees_perso.py`, run before each commit and by the CI) refuses profile,
+  queue, tracking file, letters, CVs and API keys, even when added by force.
+- Repository: issue and PR templates, dependency review (a known vulnerability blocks the
+  PR), private vulnerability reporting enabled.
 
 ## 2.10.1 — 2026-10-19
 
-Sécurité, sans changement visible :
+Security, with no visible change:
 
-- seules les adresses `http(s)` sont ouvertes : une adresse `file://` venue d'une page ou
-  d'un réglage ne peut plus faire lire un fichier de ta machine ;
-- un plan de site XML avec DOCTYPE ou entités est refusé (bombe XML) ;
-- une archive de mise à jour ne peut plus écrire hors du dossier du programme ;
-- l'application installée ignore le crochet de test `JOBHUNTER_ACTION` ;
-- CI : actions épinglées par empreinte, droits en lecture seule sauf la publication,
-  analyse CodeQL ; l'installateur est publié avec son empreinte SHA-256 et une attestation
-  de provenance signée (`gh attestation verify`). Politique : `SECURITY.md`.
+- only `http(s)` addresses are opened: a `file://` address coming from a page or a setting
+  can no longer make a file on your machine be read;
+- an XML sitemap with a DOCTYPE or entities is refused (XML bomb);
+- an update archive can no longer write outside the program's folder;
+- the installed application ignores the `JOBHUNTER_ACTION` test hook;
+- CI: actions pinned by fingerprint, read-only permissions except for publishing, CodeQL
+  analysis; the installer is published with its SHA-256 fingerprint and a signed
+  provenance attestation (`gh attestation verify`). Policy: `SECURITY.md`.
 
 ## 2.10.0 — 2026-10-19
 
-- **L'interface en anglais.** Maintenance → « Langue : English », puis relance
-  JobHunter : la navigation, les boutons, les panneaux et les en-têtes passent en anglais
-  (« Language: français » pour revenir). Le profil, les lettres et les statuts du suivi
-  gardent leur langue. Un texte pas encore traduit reste en français.
-- **Le dépôt GitHub se présente en anglais** (`README.md`) ; la version française est dans
-  `README.fr.md`.
+- **The interface in English.** Maintenance → "Langue : English" (Language: English), then
+  restart JobHunter: navigation, buttons, panels and headers switch to English
+  ("Language: français" to go back). The profile, the letters and the tracking statuses
+  keep their language. A text that is not yet translated stays in French.
+- **The GitHub repository presents itself in English** (`README.md`); the French version
+  is in `README.fr.md`.
 
 *English: the interface can now be switched to English (Maintenance → “Langue : English”,
 then restart). The repository README is in English; the French one is `README.fr.md`.*
 
 ## 2.9.0 — 2026-10-19
 
-- **JobHunter s'installe sans Python.** `JobHunterSetup.exe`, attaché à chaque version sur
-  GitHub, installe l'application pour toi seul, sans droits d'administrateur, avec un
-  raccourci au menu Démarrer. Tes données vivent dans `Documents\JobHunter` : ni la mise à
-  jour ni la désinstallation n'y touchent. Le code source reste téléchargeable pour qui veut
-  personnaliser.
-- **Plus besoin du navigateur de Playwright pour collecter.** S'il n'est pas installé, la
-  collecte utilise Chrome ou Edge, déjà sur ta machine.
-- Dans l'application installée, « Mettre à jour » ouvre la page de la nouvelle version, où
-  tu télécharges le nouvel installateur.
+- **JobHunter installs without Python.** `JobHunterSetup.exe`, attached to each release on
+  GitHub, installs the application for you alone, without administrator rights, with a
+  Start menu shortcut. Your data lives in `Documents\JobHunter`: neither the update nor
+  the uninstall touches it. The source code remains downloadable for whoever wants to
+  customise it.
+- **No more need for Playwright's browser to collect.** If it is not installed, the
+  collection uses Chrome or Edge, already on your machine.
+- In the installed application, "Mettre à jour" (Update) opens the page of the new release,
+  where you download the new installer.
 
 ## 2.8.0 — 2026-10-19
 
-Les panneaux « Entreprises », « Accès » et « Mes CV » montrent enfin des chiffres justes.
+The "Entreprises" (Companies), "Accès" (Access) and "Mes CV" (My CVs) panels finally show
+correct figures.
 
-- **Entreprises** : une ligne par entreprise réellement suivie, avec l'outil qui lit ses
-  offres (Workday, Lever, SuccessFactors… ou son site carrière), le nombre d'offres de ta
-  file qui en viennent, le meilleur fit et la date de la dernière. Les comptes sont exacts :
-  l'ancien panneau comptait par bout d'adresse (546 offres pour « Bil », à cause de
-  « mobilité ») et laissait la colonne ATS vide.
-  - Colle l'adresse d'une page carrière et clique **Suivre** : un Greenhouse, Lever, Ashby,
-    Recruitee, SmartRecruiters, Teamtailor, Workable ou Workday est reconnu et lu par son
-    API dès la prochaine collecte ; un autre site est lu par le navigateur.
-  - **Ne plus suivre** retire l'entreprise de la collecte.
-- **Accès** : chaque source de la collecte, ce qu'il lui faut (rien, ou une clé
-  d'API) et l'état de sa dernière collecte (ok, refusé jusqu'à telle date, limité, clé à
-  créer). Adzuna et Jooble y figurent ; Indeed, sorti de la collecte, n'y est plus. Les
-  connexions pour candidater sont dans un second tableau. Aucune clé ni aucun mot de passe
-  n'est lu : seule la présence du fichier compte.
-- **Mes CV** : un dossier par offre, CV et lettre ensemble, les mieux classées d'abord,
-  avec son état (✓ prêt, ⚠ PDF à refaire, ✗ incomplet). Le bouton **CV ⇄ lettre** passe
-  de l'un à l'autre, **Faits du CV** affiche ta banque de faits. Avant : deux listes de
-  1 983 et 1 200 fichiers à plat.
-- L'en-tête de la fenêtre porte le nom de la page ouverte, au lieu de « Suivi des
-  candidatures » partout.
+- **Companies**: one line per company actually followed, with the tool that reads its
+  offers (Workday, Lever, SuccessFactors… or its careers site), the number of offers in
+  your queue that come from it, the best fit and the date of the latest. The counts are
+  exact: the old panel counted by address fragment (546 offers for "Bil", because of
+  "mobilité") and left the ATS column empty.
+  - Paste the address of a careers page and click **Suivre** (Follow): a Greenhouse,
+    Lever, Ashby, Recruitee, SmartRecruiters, Teamtailor, Workable or Workday is
+    recognised and read through its API from the next collection; any other site is read
+    by the browser.
+  - **Ne plus suivre** (Stop following) removes the company from the collection.
+- **Access**: each source of the collection, what it needs (nothing, or an API key) and the
+  state of its last collection (ok, refused until a given date, limited, key to create).
+  Adzuna and Jooble appear there; Indeed, which has left the collection, no longer does.
+  The logins for applying are in a second table. No key and no password is read: only the
+  presence of the file counts.
+- **My CVs**: one folder per offer, CV and letter together, the best ranked first, with its
+  state (✓ ready, ⚠ PDF to redo, ✗ incomplete). The **CV ⇄ lettre** (CV ⇄ letter) button
+  switches from one to the other, **Faits du CV** (CV facts) displays your fact bank.
+  Before: two flat lists of 1,983 and 1,200 files.
+- The window header carries the name of the open page, instead of "Suivi des candidatures"
+  (Application tracking) everywhere.
 
 ## 2.7.0 — 2026-10-19
 
-- **Dix programmes en moins.** Des outils de réparation ponctuelle, déjà passés sur les
-  données ou remplacés par mieux, quittaient rarement leur dossier et brouillaient la liste.
-  Ils sont retirés :
-  - `audit_fraicheur` et `verify_links` : remplacés par le contrôle de disponibilité
-    (`audit_dispo`) ;
-  - `offres_depuis_site`, `probe_ats_esg` et `homepages_linkedin` : remplacés par les flux
-    ATS suivis et `probe_ats_queue` ;
-  - `deplace_docs`, `reclasse_domaines`, `redetecte_contrats`, `refresh_desc_efc` et
-    `fix_wtj_urls` : réparations faites une fois, devenues inutiles. L'entrée « Fix WTJ »
-    quitte le menu Maintenance.
+- **Ten fewer programs.** One-off repair tools, already run on the data or replaced by
+  something better, rarely left their folder and cluttered the list. They are removed:
+  - `audit_fraicheur` and `verify_links`: replaced by the availability check
+    (`audit_dispo`);
+  - `offres_depuis_site`, `probe_ats_esg` and `homepages_linkedin`: replaced by the
+    followed ATS feeds and `probe_ats_queue`;
+  - `deplace_docs`, `reclasse_domaines`, `redetecte_contrats`, `refresh_desc_efc` and
+    `fix_wtj_urls`: repairs done once, now useless. The "Fix WTJ" entry leaves the
+    Maintenance menu.
 
-  Le code reste dans l'historique git pour qui en aurait besoin.
+  The code stays in the git history for whoever might need it.
 
 ## 2.6.0 — 2026-10-19
 
-- **Le bon exemplaire d'un poste publié dans plusieurs villes.** Quand une entreprise
-  publie le même poste à Paris, Lyon et Berlin, un seul entre dans ta file. Jusqu'ici,
-  c'était le premier vu, au hasard ; c'est désormais celui de ta zone la plus prioritaire.
-  Les autres villes sont notées, et la fiche les affiche (« Aussi à : »).
-- **Les intitulés retouchés ne s'accumulent plus.** Quand un employeur renomme son annonce
-  (même lien, nouveau titre), les anciennes versions restées dans la file sont retirées au
-  tri. Seule la version actuelle reste, sauf si tu as déjà agi sur une autre : celle de
-  ton suivi est toujours gardée.
+- **The right copy of a job posted in several cities.** When a company posts the same job
+  in Paris, Lyon and Berlin, only one enters your queue. Until now it was the first one
+  seen, at random; it is now the one in your highest-priority zone. The other cities are
+  noted, and the record displays them ("Aussi à :" (Also in:)).
+- **Reworded titles no longer pile up.** When an employer renames its posting (same link,
+  new title), the old versions left in the queue are removed during sorting. Only the
+  current version remains, unless you have already acted on another one: the one in your
+  tracking file is always kept.
 
 ## 2.5.0 — 2026-10-19
 
-- **Ton classement face à tes choix.** `python JobHunter.pyw evaluation` compare la note de
-  chaque offre à ce que tu en as fait : postulé ou à postuler d'un côté, « mauvaise » ou
-  « pas intéressé » de l'autre. Il dit si les offres que tu retiens sont bien mieux notées
-  que celles que tu écartes (avec la marge d'incertitude), et lesquelles le classement
-  surestime ou sous-estime le plus. `--enregistrer` garde le résultat pour comparer plus
-  tard. Plus tu marques d'offres, plus le chiffre est fiable.
+- **Your ranking against your choices.** `python JobHunter.pyw evaluation` compares the
+  score of each offer with what you did with it: applied or to apply on one side, "bad" or
+  "not interested" on the other. It tells whether the offers you keep are scored much
+  higher than those you set aside (with the margin of uncertainty), and which ones the
+  ranking overestimates or underestimates the most. `--enregistrer` keeps the result for
+  later comparison. The more offers you mark, the more reliable the figure.
 
 ## 2.4.3 — 2026-10-19
 
-- **Configuration d'exemple** : 10 des 16 comptes Greenhouse ne répondaient plus (404) :
-  ces entreprises recrutent ailleurs désormais. 7 ont été retrouvées et suivent leur
-  nouvel outil (Lever : Pigment, Swile, Vestiaire Collective ; Ashby : Back Market,
-  Sweep ; SmartRecruiters : EcoVadis ; Recruitee : iBanFirst). ClarityAI, Payfit et
-  Spendesk sont retirés. Si ta configuration les contient encore,
-  `python JobHunter.pyw probe_ats --slugs <nom>` cherche leur nouvel outil.
-- En coulisse : les sources sont testées sur de vraies réponses enregistrées, rejouées sans
-  réseau.
+- **Sample configuration**: 10 of the 16 Greenhouse accounts no longer answered (404):
+  those companies now recruit elsewhere. 7 were found again and follow their new tool
+  (Lever: Pigment, Swile, Vestiaire Collective; Ashby: Back Market, Sweep;
+  SmartRecruiters: EcoVadis; Recruitee: iBanFirst). ClarityAI, Payfit and Spendesk are
+  removed. If your configuration still contains them,
+  `python JobHunter.pyw probe_ats --slugs <nom>` looks for their new tool.
+- Behind the scenes: the sources are tested against real recorded responses, replayed
+  without network.
 
 ## 2.4.2 — 2026-10-19
 
-- En coulisse, rien de visible : chaque fonction publique du moteur est documentée au même
-  format, et l'outil de contrôle l'exige désormais.
+- Behind the scenes, nothing visible: every public function of the engine is documented in
+  the same format, and the checking tool now requires it.
 
 ## 2.4.1 — 2026-10-19
 
-- En coulisse : le dossier de tes données (`Scripts/`) n'est plus ajouté au chemin
-  d'import de Python. C'était un reste de l'ancienne organisation : un fichier `.py`
-  déposé là pouvait passer avant un module du programme portant le même nom. Rien ne
-  change à l'usage.
+- Behind the scenes: the folder of your data (`Scripts/`) is no longer added to Python's
+  import path. It was a leftover from the old organisation: a `.py` file dropped there
+  could take precedence over a program module of the same name. Nothing changes in use.
 
 ## 2.4.0 — 2026-10-19
 
-- **Ce que rapporte chaque source.** À la fin de chaque collecte, une ligne par source :
-  offres ramenées, nouvelles, pertinentes (fit ≥ 8), temps passé, et un verdict qui dit
-  POURQUOI : « ok », « rien à prendre » (journée calme), « limité » (le site a demandé de
-  ralentir), « partiel » (erreurs en route) ou « refusé » (accès refusé, CAPTCHA). Une
-  collecte vide ne ressemble plus à une journée sans nouveauté.
-- `python JobHunter.pyw rendement` : le bilan des 14 derniers jours (`--jours 30` pour
-  plus), les sources les plus rentables d'abord ; une source refusée à chaque collecte est
-  signalée. Aucun contournement : la retirer se décide à la main.
+- **What each source brings in.** At the end of each collection, one line per source:
+  offers returned, new ones, relevant ones (fit ≥ 8), time spent, and a verdict that says
+  WHY: "ok", "rien à prendre" (nothing to take; a quiet day), "limité" (limited; the site
+  asked to slow down), "partiel" (partial; errors along the way) or "refusé" (refused;
+  access denied, CAPTCHA). An empty collection no longer looks like a day without news.
+- `python JobHunter.pyw rendement`: the summary of the last 14 days (`--jours 30` for
+  more), the most profitable sources first; a source refused at every collection is
+  flagged. No circumvention: removing it is decided by hand.
 
 ## 2.3.0 — 2026-10-19
 
-- **Chaque dossier est contrôlé avant de partir.** Pour le CV et la lettre qui seront
-  vraiment joints : le fichier existe, s'ouvre, contient du texte, tient sur une page,
-  porte ton nom, ton courriel et ton téléphone, et aucun gabarit n'est resté vide
-  (« [nom du poste] »…). Le panneau Candidatures l'affiche pour chaque offre, la fiche
-  aussi ; un dossier à revoir ne bloque rien, c'est toi qui décides.
-- **Le bon fichier est joint** : quand une offre pointait sur la lettre en .docx alors que
-  son PDF à jour existait à côté, c'est désormais le PDF qui part.
-- `python JobHunter.pyw controle` : bilan de tous les dossiers, sans rien modifier. La
-  routine quotidienne le fait aussi après les dossiers et t'alerte s'il y en a à revoir.
+- **Every folder is checked before it goes out.** For the CV and letter that will really be
+  attached: the file exists, opens, contains text, fits on one page, carries your name,
+  email and phone, and no template was left empty ("[nom du poste]"…). The Applications
+  panel displays it for each offer, and so does the record; a folder to review blocks
+  nothing, you decide.
+- **The right file is attached**: when an offer pointed to the letter in .docx while its
+  up-to-date PDF existed next to it, the PDF is now the one that goes out.
+- `python JobHunter.pyw controle`: summary of all the folders, without modifying anything.
+  The daily routine does it too after the folders and alerts you if some need review.
 
 ## 2.2.0 — 2026-10-19
 
-- **Postuler depuis l'application, sans console.** Coche des offres, « Postuler la
-  sélection » : un panneau s'ouvre. Pour chaque offre, JobHunter ouvre la page dans
-  Chrome, remplit le formulaire, joint CV et lettre et surligne le bouton d'envoi. Tu
-  vérifies, **tu cliques Envoyer dans Chrome**, puis « J'ai envoyé » dans le panneau.
-  Boutons : Sauter, Re-remplir, Rouvrir l'offre, Arrêter. Un CAPTCHA ou une connexion
-  t'est signalé : c'est à toi, JobHunter ne contourne rien.
-- **Une preuve, pas seulement une déclaration.** Après « J'ai envoyé », JobHunter regarde
-  la page — sans rien cliquer — et note dans ton suivi :
-  - « envoi confirmé » si le site affiche sa confirmation (« Merci pour votre
-    candidature », « Application submitted »…) ;
-  - « envoi non confirmé » sinon : vérifie ta boîte mail ou ton espace candidat. Rien
-    n'est jamais renvoyé automatiquement.
-  Une capture de la page est gardée dans `Scripts/_preuves/` ; la fiche de l'offre montre
-  l'état et l'extrait.
-- Plus de double confirmation : « J'ai envoyé » suffit, la candidature passe à « postulé ».
-  « Confirmer une candidature envoyée… » (fiche, clic droit) reste là pour un envoi fait
-  ailleurs.
+- **Apply from the application, without a console.** Tick offers, "Postuler la sélection"
+  (Apply to the selection): a panel opens. For each offer, JobHunter opens the page in
+  Chrome, fills in the form, attaches the CV and letter and highlights the submit button.
+  You check, **you click Submit in Chrome**, then "J'ai envoyé" (I have sent it) in the
+  panel. Buttons: Sauter (Skip), Re-remplir (Fill again), Rouvrir l'offre (Reopen the
+  offer), Arrêter (Stop). A CAPTCHA or a login is reported to you: it is up to you,
+  JobHunter circumvents nothing.
+- **Proof, not only a declaration.** After "J'ai envoyé", JobHunter looks at the page —
+  without clicking anything — and notes in your tracking file:
+  - "envoi confirmé" (sending confirmed) if the site displays its confirmation ("Merci pour
+    votre candidature", "Application submitted"…);
+  - "envoi non confirmé" (sending not confirmed) otherwise: check your mailbox or your
+    candidate area. Nothing is ever resent automatically.
+  A capture of the page is kept in `Scripts/_preuves/`; the offer's record shows the state
+  and the excerpt.
+- No more double confirmation: "J'ai envoyé" is enough, the application moves to
+  "postulé" (applied). "Confirmer une candidature envoyée…" (Confirm a sent application…)
+  (record, right click) remains for a sending done elsewhere.
 
 ## 2.1.1 — 2026-10-19
 
-- **Mac et Linux** : les boutons qui ouvrent un document ou un dossier (CV, lettres,
-  dossier du projet) plantaient — ils appelaient une fonction propre à Windows. Ils
-  passent maintenant par l'application du système (`open` sur Mac, `xdg-open` sur
-  Linux). Rien ne change sous Windows.
-- En coulisse, rien de visible : tout le programme est désormais vérifié par l'outil de
-  typage, et chaque décision de conception est reliée au code qui l'applique.
+- **Mac and Linux**: the buttons that open a document or a folder (CVs, letters, project
+  folder) crashed — they called a Windows-specific function. They now go through the
+  system application (`open` on Mac, `xdg-open` on Linux). Nothing changes under Windows.
+- Behind the scenes, nothing visible: the whole program is now checked by the typing tool,
+  and every design decision is linked to the code that applies it.
 
 ## 2.1.0 — 2026-10-18
 
-- **Les offres fermées sont enfin retirées.** Le contrôle de disponibilité était coupé
-  chaque matin au bout de 45 min, avant d'arriver à la suppression : il trouvait 30 à 60
-  offres fermées par jour et n'en retirait aucune. Il s'arrête maintenant de lui-même à
-  temps, puis retire ce qu'il a trouvé.
-- **Une fois par semaine, le dimanche**, au lieu de chaque jour : la collecte des autres
-  jours dure ~45 min de moins. `python JobHunter.pyw pipeline --dispo-jour 2` le déplace
-  au mercredi ; `--dispo` le lance aujourd'hui.
-- Les tests n'écrivent plus dans le fichier d'état du contrôle de disponibilité de ton
-  dossier quand on les lance chez toi.
+- **Closed offers are finally removed.** The availability check was cut off every morning
+  after 45 min, before reaching the deletion: it found 30 to 60 closed offers a day and
+  removed none. It now stops by itself in time, then removes what it found.
+- **Once a week, on Sunday**, instead of every day: the collection on the other days is
+  ~45 min shorter. `python JobHunter.pyw pipeline --dispo-jour 2` moves it to Wednesday;
+  `--dispo` runs it today.
+- The tests no longer write to the availability check's state file in your folder when run
+  at your place.
 
 ## 2.0.0 — 2026-10-18
 
-Rien ne change dans ce que fait JobHunter ; ce qui change, c'est la façon de lancer les
-commandes à la main. Passe par la 1.15 avant (la mise à jour le fait d'elle-même si tu
-es à jour).
+Nothing changes in what JobHunter does; what changes is how you launch commands by hand.
+Go through 1.15 first (the update does it by itself if you are up to date).
 
-- Tout le programme vit maintenant dans `src/jobhunter` ; `Scripts/` ne garde que tes
-  données (file d'offres, suivi, réglages, journaux).
-- Les commandes se lancent par `python JobHunter.pyw <commande>` : `collecte`,
-  `documents`, `postuler`, `pipeline`, `maj`… (`python JobHunter.pyw aide` les liste), et
-  tout autre programme par son nom (`python JobHunter.pyw probe_ats`). Les anciennes
-  lignes `python Scripts/xxx.py` ne marchent plus.
-- Double-clic, `lancer.bat`, `mettre_a_jour.bat` : rien ne change.
-- **Collecte planifiée** : si tu l'avais programmée avec `planifier.bat` ou
-  `./planifier.sh`, relance-le une fois — l'ancienne tâche vise un fichier qui n'existe
-  plus. La mise à jour te le signale si c'est le cas.
+- The whole program now lives in `src/jobhunter`; `Scripts/` keeps only your data (offer
+  queue, tracking file, settings, logs).
+- Commands are launched with `python JobHunter.pyw <commande>`: `collecte`, `documents`,
+  `postuler`, `pipeline`, `maj`… (`python JobHunter.pyw aide` lists them), and any other
+  program by its name (`python JobHunter.pyw probe_ats`). The old `python Scripts/xxx.py`
+  lines no longer work.
+- Double-click, `lancer.bat`, `mettre_a_jour.bat`: nothing changes.
+- **Scheduled collection**: if you had scheduled it with `planifier.bat` or
+  `./planifier.sh`, run it once more — the old task points to a file that no longer
+  exists. The update tells you if that is the case.
 
 ## 1.15.0 — 2026-10-18
 
-Version de passage vers la 2.0 : installe-la avant la 2.0. Rien ne change dans ce que
-fait JobHunter.
+Transition release to 2.0: install it before 2.0. Nothing changes in what JobHunter does.
 
-- La mise à jour vérifie la nouvelle version avec le code de cette nouvelle version.
-  Sans cela, la 2.0, qui range autrement les programmes, serait refusée à tort.
-- Le moteur, les tests et l'application n'utilisent plus les anciens fichiers de
-  `Scripts/` (`job_sources.py`, `queue_io.py`…), qui disparaîtront en 2.0.
+- The update checks the new version with the code of that new version. Without this, 2.0,
+  which arranges the programs differently, would be wrongly refused.
+- The engine, the tests and the application no longer use the old files of `Scripts/`
+  (`job_sources.py`, `queue_io.py`…), which will disappear in 2.0.
 
 ## 1.14.0 — 2026-10-18
 
-Rien ne change dans ce que fait JobHunter.
+Nothing changes in what JobHunter does.
 
-- Charger le moteur ne lit plus aucun fichier : ce qui vient du profil se calcule au
-  premier usage. Changer de profil (premier lancement) vaut aussitôt partout.
-- Le pipeline du matin écrit, à côté de son journal habituel, un journal du moteur
-  horodaté (`Scripts/_logs/pipeline_<date>_<heure>_moteur.log`).
-- `python Scripts/chemins.py` remarche (il levait une erreur).
+- Loading the engine no longer reads any file: whatever comes from the profile is computed
+  on first use. Changing profile (first launch) takes effect everywhere at once.
+- The morning pipeline writes, next to its usual log, a timestamped engine log
+  (`Scripts/_logs/pipeline_<date>_<heure>_moteur.log`).
+- `python Scripts/chemins.py` works again (it raised an error).
 
 ## 1.13.0 — 2026-10-18
 
-Rien ne change dans ce que fait JobHunter.
+Nothing changes in what JobHunter does.
 
-- Charger le moteur ne crée plus de dossiers : ils le sont au moment d'écrire un CV, une
-  lettre ou un message.
-- Le socle (stockage, profil, réseau) et le calcul des notes sont entièrement typés,
-  vérifiés par mypy en CI.
-- Documentation : `docs/architecture.md` et les décisions d'architecture (`docs/adr/`).
-- Le moteur s'installe comme un paquet (`pip install -e .`) : la commande `jobhunter` existe
-  alors directement.
+- Loading the engine no longer creates folders: they are created at the time a CV, a
+  letter or a message is written.
+- The foundation (storage, profile, network) and the score calculation are fully typed,
+  checked by mypy in CI.
+- Documentation: `docs/architecture.md` and the architecture decisions (`docs/adr/`).
+- The engine installs as a package (`pip install -e .`): the `jobhunter` command then
+  exists directly.
 
 ## 1.12.0 — 2026-10-18
 
-Une entrée unique pour tous les programmes : `python -m jobhunter` liste les commandes
-(`collecte`, `documents`, `postuler`, `pipeline`, `maj`…). Les anciennes lignes
-(`python Scripts/generate_docs.py …`) marchent toujours.
+A single entry point for all programs: `python -m jobhunter` lists the commands
+(`collecte`, `documents`, `postuler`, `pipeline`, `maj`…). The old lines
+(`python Scripts/generate_docs.py …`) still work.
 
 ## 1.11.0 — 2026-10-18
 
-- L'application rejoint le paquet `src/jobhunter/app` ; `JobHunter.pyw` (double-clic)
-  ne fait plus que la lancer. Rien ne change à l'écran.
-- La mise à jour vérifie aussi que l'application et la navigation se chargent, et revient
-  en arrière sinon.
+- The application joins the `src/jobhunter/app` package; `JobHunter.pyw` (double-click)
+  now does nothing but launch it. Nothing changes on screen.
+- The update also checks that the application and the navigation load, and rolls back
+  otherwise.
 
 ## 1.10.0 — 2026-10-18
 
-Rien ne change dans ce que fait JobHunter. La navigation web (`web_nav.py`, près de
-4 000 lignes) et `site_strategies.py` rejoignent le paquet `src/jobhunter/navigation`,
-une section par module ; les anciens noms restent valables.
+Nothing changes in what JobHunter does. The web navigation (`web_nav.py`, nearly 4,000
+lines) and `site_strategies.py` join the `src/jobhunter/navigation` package, one section
+per module; the old names remain valid.
 
 ## 1.9.0 — 2026-10-18
 
-- CV, lettre et message court rejoignent le paquet `src/jobhunter/documents` ;
-  `tailor_application.py`, `message_offre.py` et `cv_auto.py` restent valables.
-- Correctif : lire la file par un chemin relatif (`apply_queue.json` depuis `Scripts/`)
-  rendait les offres sans leur description.
+- CV, letter and short message join the `src/jobhunter/documents` package;
+  `tailor_application.py`, `message_offre.py` and `cv_auto.py` remain valid.
+- Fix: reading the queue through a relative path (`apply_queue.json` from `Scripts/`)
+  returned the offers without their description.
 
 ## 1.8.0 — 2026-10-18
 
-Rien ne change dans ce que fait JobHunter. La collecte (`job_sources.py`, près de
-5 000 lignes) est découpée en un module par source dans `src/jobhunter/sources` ;
-`python Scripts/job_sources.py ...` marche comme avant, et `python -m jobhunter.sources`
-aussi.
+Nothing changes in what JobHunter does. The collection (`job_sources.py`, nearly 5,000
+lines) is split into one module per source in `src/jobhunter/sources`;
+`python Scripts/job_sources.py ...` works as before, and so does
+`python -m jobhunter.sources`.
 
 ## 1.7.0 — 2026-10-18
 
-Rien ne change dans ce que fait JobHunter. Le calcul des notes, de la langue, des zones et
-le tri des offres rejoignent le paquet `src/jobhunter/scoring` ; les anciens noms de
-programme (`tri_file.py`, `zones.py`…) restent valables, en ligne de commande comme dans
-le code.
+Nothing changes in what JobHunter does. The calculation of scores, language and zones, and
+the sorting of offers, join the `src/jobhunter/scoring` package; the old program names
+(`tri_file.py`, `zones.py`…) remain valid, on the command line as in the code.
 
 ## 1.6.0 — 2026-10-18
 
-Rien ne change dans ce que fait JobHunter. Le profil et les requêtes réseau (limitées en
-durée totale, pour qu'un site lent ne bloque jamais la collecte) rejoignent le paquet
-`src/jobhunter/`. Ces requêtes ont maintenant leurs propres tests, et un nouveau contrôle
-vérifie que chaque fonction qu'un programme appelle sur un autre existe bien.
+Nothing changes in what JobHunter does. The profile and the network requests (limited in
+total duration, so that a slow site never blocks the collection) join the
+`src/jobhunter/` package. These requests now have their own tests, and a new check
+verifies that every function that one program calls on another really exists.
 
 ## 1.5.0 — 2026-10-18
 
-Rien ne change dans ce que fait JobHunter. Le code de stockage (la file d'offres, le suivi
-des candidatures, l'écriture sûre et le verrou entre programmes) part dans un nouveau
-dossier `src/jobhunter/` : première étape du découpage du moteur en paquet. La mise à jour
-ajoute ce dossier ; les anciens noms (`queue_io`, `suivi_io`, `jutil`) restent valables.
-Les tests sont désormais écrits avec pytest (1 155 tests).
+Nothing changes in what JobHunter does. The storage code (the offer queue, the application
+tracking, safe writing and the lock between programs) moves into a new `src/jobhunter/`
+folder: first step of splitting the engine into a package. The update adds this folder;
+the old names (`queue_io`, `suivi_io`, `jutil`) remain valid. The tests are now written
+with pytest (1,155 tests).
 
 ## 1.4.0 — 2026-10-17
 
-Version « atelier » : rien ne change dans ce que fait JobHunter, mais le code est
-désormais vérifié comme un logiciel professionnel (voir `docs/plan-professionnalisation.md`).
+"Workshop" release: nothing changes in what JobHunter does, but the code is now checked
+like professional software (see `docs/plan-professionnalisation.md`).
 
-- **Banc de non-régression** : 384 offres fictives dont chaque décision (note, tri, zone,
-  langue, message, lettre) est comparée à une référence à chaque modification.
-- Code mis en forme et vérifié automatiquement (ruff), contrôles avant chaque commit,
-  environnement de développement reproductible (uv), tests lancés par pytest.
-- Deux séries de tests qui ne tournaient jamais (relances, navigation) sont branchées.
-- La mise à jour remplacera presque tous les fichiers du programme (mise en forme) : un
-  fichier que tu as modifié est gardé, la nouvelle version posée à côté en `.nouveau`.
+- **Non-regression bench**: 384 fictitious offers whose every decision (score, sorting,
+  zone, language, message, letter) is compared with a reference at each change.
+- Code formatted and checked automatically (ruff), checks before each commit, reproducible
+  development environment (uv), tests run by pytest.
+- Two test series that never ran (reminders, navigation) are hooked up.
+- The update will replace almost all the program's files (formatting): a file that you
+  modified is kept, the new version placed next to it as `.nouveau`.
 
 ## 1.3.2 — 2026-10-17
 
-- **LinkedIn : la collecte ne perd plus les pages limitées.** Depuis le 13/10, LinkedIn
-  répond « trop de requêtes » (429) dès les premières pages ; chaque page refusée était
-  perdue, et la collecte LinkedIn était tombée à quelques offres par jour. Désormais les
-  pages sont espacées, et un 429 fait attendre puis redemander la même page ; la passe
-  LinkedIn s'arrête proprement au bout de 45 min. Un refus (403/999) arrête LinkedIn pour la journée.
+- **LinkedIn: the collection no longer loses the rate-limited pages.** Since 13/10,
+  LinkedIn answers "too many requests" (429) from the first pages; each refused page was
+  lost, and the LinkedIn collection had fallen to a few offers a day. Now the pages are
+  spaced out, and a 429 makes it wait and ask for the same page again; the LinkedIn pass
+  stops cleanly after 45 min. A refusal (403/999) stops LinkedIn for the day.
 
 ## 1.3.1 — 2026-10-15
 
-- L'installeur note l'empreinte des fichiers installés : une installation faite depuis
-  le ZIP de `main` (entre deux versions) reconnaît, elle aussi, tes modifications.
-- Dans une copie sans fichier `VERSION`, la mise à jour le dit et ne tente rien.
-- Un fichier que tu as modifié et que la nouvelle version ne change pas n'est plus
-  signalé, et aucun `.nouveau` inutile n'est posé à côté.
+- The installer records the fingerprint of the installed files: an installation made from
+  the ZIP of `main` (between two releases) also recognises your modifications.
+- In a copy without a `VERSION` file, the update says so and attempts nothing.
+- A file that you modified and that the new version does not change is no longer flagged,
+  and no needless `.nouveau` is placed next to it.
 
 ## 1.3.0 — 2026-10-15
 
-- **Mise à jour depuis l'application** : quand une version sort, JobHunter propose de
-  l'installer tout de suite, montre le déroulé, puis se relance. Aussi dans
-  « 🔧 Maintenance ▾ → Accès & diagnostic → Mettre à jour JobHunter ».
-- **Nouveautés affichées** avant et après chaque mise à jour (ce fichier).
-- **Contrôle après installation** : tous les scripts sont compilés et les modules
-  centraux chargés ; en cas d'échec, retour automatique à la version d'avant.
-- **`--annuler`** : revient à la version d'avant la dernière mise à jour.
-- **Tes modifications sont reconnues dès la première mise à jour** : la référence est le
-  ZIP officiel de ta version. Un fichier que tu as changé n'est plus jamais écrasé.
-- **Les fichiers retirés du programme sont enlevés** (s'ils n'ont pas été modifiés),
-  avec copie dans la sauvegarde.
-- **Nouveaux réglages du profil signalés** après la mise à jour.
-- Un clone git neuf sous Windows ne voit plus les `.bat` comme modifiés (le premier
-  `git pull` échouait).
-- customtkinter 6 accepté (testé : l'application s'ouvre et fonctionne avec la 5 et la 6).
+- **Update from the application**: when a release comes out, JobHunter offers to install it
+  right away, shows the progress, then restarts. Also in "🔧 Maintenance ▾ → Accès &
+  diagnostic → Mettre à jour JobHunter" (Access & diagnostics → Update JobHunter).
+- **What's new displayed** before and after each update (this file).
+- **Check after installation**: all the scripts are compiled and the core modules loaded;
+  on failure, automatic return to the previous version.
+- **`--annuler`** (cancel): goes back to the version before the last update.
+- **Your modifications are recognised from the first update**: the reference is the
+  official ZIP of your version. A file that you changed is never overwritten again.
+- **Files removed from the program are deleted** (if they have not been modified), with a
+  copy in the backup.
+- **New profile settings flagged** after the update.
+- A fresh git clone under Windows no longer sees the `.bat` files as modified (the first
+  `git pull` failed).
+- customtkinter 6 accepted (tested: the application opens and works with 5 and 6).
 
 ## 1.2.0 — 2026-10-15
 
-- Plus aucune lecture de boîte mail par programme : un code reçu par mail se saisit à la main.
-- Dépendances bornées, tests automatiques sous Windows et Linux.
-- Profil d'exemple entièrement fictif ; documentation nettoyée.
-- Plafond de langue : une annonce dans une langue que tu ne parles pas ne monte plus à 10.
+- No more reading of a mailbox by a program: a code received by email is entered by hand.
+- Bounded dependencies, automatic tests under Windows and Linux.
+- Sample profile entirely fictitious; documentation cleaned up.
+- Language cap: a posting in a language you do not speak no longer rises to 10.
