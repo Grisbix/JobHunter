@@ -4,6 +4,31 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.8.0 — 2026-10-19
+
+Les panneaux « Entreprises », « Accès » et « Mes CV » montrent enfin des chiffres justes.
+
+- **Entreprises** : une ligne par entreprise réellement suivie, avec l'outil qui lit ses
+  offres (Workday, Lever, SuccessFactors… ou son site carrière), le nombre d'offres de ta
+  file qui en viennent, le meilleur fit et la date de la dernière. Les comptes sont exacts :
+  l'ancien panneau comptait par bout d'adresse (546 offres pour « Bil », à cause de
+  « mobilité ») et laissait la colonne ATS vide.
+  - Colle l'adresse d'une page carrière et clique **Suivre** : un Greenhouse, Lever, Ashby,
+    Recruitee, SmartRecruiters, Teamtailor, Workable ou Workday est reconnu et lu par son
+    API dès la prochaine collecte ; un autre site est lu par le navigateur.
+  - **Ne plus suivre** retire l'entreprise de la collecte.
+- **Accès** : chaque source de la collecte, ce qu'il lui faut (rien, ou une clé
+  d'API) et l'état de sa dernière collecte (ok, refusé jusqu'à telle date, limité, clé à
+  créer). Adzuna et Jooble y figurent ; Indeed, sorti de la collecte, n'y est plus. Les
+  connexions pour candidater sont dans un second tableau. Aucune clé ni aucun mot de passe
+  n'est lu : seule la présence du fichier compte.
+- **Mes CV** : un dossier par offre, CV et lettre ensemble, les mieux classées d'abord,
+  avec son état (✓ prêt, ⚠ PDF à refaire, ✗ incomplet). Le bouton **CV ⇄ lettre** passe
+  de l'un à l'autre, **Faits du CV** affiche ta banque de faits. Avant : deux listes de
+  1 983 et 1 200 fichiers à plat.
+- L'en-tête de la fenêtre porte le nom de la page ouverte, au lieu de « Suivi des
+  candidatures » partout.
+
 ## 2.7.0 — 2026-10-19
 
 - **Dix programmes en moins.** Des outils de réparation ponctuelle, déjà passés sur les

@@ -78,7 +78,7 @@ class AccesTest(unittest.TestCase):
             patch.object(acces.time, "sleep"),
             redirect_stdout(io.StringIO()),
         ):
-            resultat = acces.cmd_open("indeed.com")
+            resultat = acces.cmd_open("linkedin.com")
         ctx.close.assert_called_once()
         return resultat, page.evaluate.call_count
 

@@ -285,11 +285,10 @@ class App(
         self.b_dispo.pack(side="left", padx=(8, 0), pady=2)
         # La navigation principale habite la colonne gauche, pas en doublon
         # dans l'en-tête. Cette barre ne garde que le contexte du travail.
-        CL(tp, text="Suivi des candidatures", bg=BG, fg=TX, font=(_theme.FONT_UI, 17, "bold")).pack(
-            side="left", padx=(20, 0)
-        )
-        self.nav_context = CL(tp, text="Offres", bg=BG, fg=MUT, font=(_theme.FONT_UI, 12))
-        self.nav_context.pack(side="right", padx=(0, 12))
+        # Le titre suit la page ouverte (_nav_actif) : un titre fixe « Suivi des
+        # candidatures » coiffait aussi Mes CV, Entreprises et Accès.
+        self.nav_context = CL(tp, text="Offres", bg=BG, fg=TX, font=(_theme.FONT_UI, 17, "bold"))
+        self.nav_context.pack(side="left", padx=(20, 0))
         # Le journal vit dans la barre laterale, REPLIEE au demarrage : tout le
         # travail de fond (auto-enrichissement, relances dues, taches lancees
         # depuis la barre du haut) s'ecrivait dans un panneau que personne ne

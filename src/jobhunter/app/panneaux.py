@@ -12,9 +12,10 @@ from typing import Any
 from urllib.parse import quote, urlparse
 
 from jobhunter.app import commun as _commun
+from jobhunter.app import inventaire as _inventaire
 from jobhunter.app import theme as _theme
 from jobhunter.app._type_app import AppTypee
-from jobhunter.app.commun import DOM_SHORT, PAS_INTERESSE, PY, QUEUE, SCRIPTS
+from jobhunter.app.commun import PAS_INTERESSE, PY, QUEUE, SCRIPTS
 from jobhunter.app.theme import (
     ACC,
     ACC_H,
@@ -42,6 +43,12 @@ from jobhunter.app.theme import (
 )
 from jobhunter.liens import existe as _doc_existe
 from jobhunter.stockage import file as queue_io
+
+
+def _date_fr(iso: Any) -> str:
+    """« 2026-10-19… » → « 19/10/2026 » ; "" si vide ou illisible."""
+    t = str(iso or "")[:10]
+    return f"{t[8:10]}/{t[5:7]}/{t[:4]}" if len(t) == 10 and t[4] == "-" else ""
 
 
 class PanneauxMixin:
@@ -273,10 +280,13 @@ class PanneauxMixin:
         w.pack(fill="both", expand=True)
 
     def _acces_panel(self: "AppTypee") -> None:
-        """🔐 ACCÈS : état de connexion par site + clés d'API.
-        AUCUN mot de passe n'est stocké ici — ils restent dans le gestionnaire
-        de Chrome, qui remplit lui-même les formulaires quand les scripts
-        tournent avec --chrome sur le profil Chrome DÉDIÉ (jamais le profil personnel)."""
+        """ACCÈS : ce dont chaque source de la collecte a besoin, et son dernier état mesuré.
+
+        Deux tableaux. Les sources de la collecte : accès libre ou clé d'API, et le verdict
+        de leur dernière collecte (`_rendement.jsonl`) — refus, limite, rien à prendre.
+        Puis les sites où l'on se connecte soi-même pour candidater.
+        AUCUN mot de passe ni aucune clé n'est lu ici : seule la présence du fichier de
+        clé compte, et les mots de passe restent dans le gestionnaire de Chrome."""
         self._hide_all()
         if "acces" in self._panels:
             w = self._panels["acces"]
@@ -297,23 +307,108 @@ class PanneauxMixin:
             cursor="hand2",
             font=(_theme.FONT_UI, 13),
         ).pack(side="left", padx=12, pady=(2, 0))
-        CL(top, text="Accès aux sites", bg=BG, fg=TX, font=(_theme.FONT_UI, 16)).pack(
+        CL(top, text="Accès aux sources", bg=BG, fg=TX, font=(_theme.FONT_UI, 16)).pack(
             side="left", padx=28
         )
+        CB(
+            top,
+            text="Rafraîchir",
+            command=lambda: w._reload(),
+            bg=BTN,
+            fg=TX,
+            activebackground=BTN_H,
+            relief="flat",
+            cursor="hand2",
+        ).pack(side="right", padx=24)
+
         CL(
             w,
-            text="Ouvre un site pour te connecter, puis vérifie la session. "
-            "Les mots de passe restent dans Chrome.",
+            text="Collecte des offres — état de la dernière collecte de chaque source. "
+            "Un refus n'est pas réessayé avant 30 jours.",
             bg=BG,
             fg=MUT,
             font=(_theme.FONT_UI, 13),
             anchor="w",
             justify="left",
-            wraplength=700,
-        ).pack(fill="x", padx=28, pady=(2, 4))
+            wraplength=760,
+        ).pack(fill="x", padx=28, pady=(4, 0))
+        cols_s = ("src", "acces", "etat", "le")
+        tvs = ttk.Treeview(w, columns=cols_s, show="headings", selectmode="browse", height=13)
+        for k, lbl, wd in (
+            ("src", "Source", 420),
+            ("acces", "Accès", 80),
+            ("etat", "Dernier état", 300),
+            ("le", "Collecte du", 130),
+        ):
+            tvs.heading(k, text=lbl)
+            tvs.column(k, width=wd, anchor="w", stretch=(k == "etat"))
+        tvs.pack(fill="x", padx=28, pady=(0, 6))
+        for tv_ in (tvs,):
+            tv_.tag_configure("ok", foreground=TX_OK)
+            tv_.tag_configure("ko", foreground=TX_BAD)
+            tv_.tag_configure("ancien", foreground=TX_AMBRE)
+        bar_s = CF(w, bg=BG)
+        bar_s.pack(fill="x", padx=28, pady=(0, 10))
+        CB(
+            bar_s,
+            text="Saisir la clé France Travail",
+            command=lambda: self.run_step(
+                [PY, "-m", "jobhunter.programmes.acces", "--set-key", "francetravail"], "Clé API"
+            ),
+            bg=BTN,
+            fg=TX,
+            activebackground=BTN_H,
+            relief="flat",
+            cursor="hand2",
+        ).pack(side="left")
+        CB(
+            bar_s,
+            text="Rendement des sources",
+            command=lambda: self.run_step(
+                [PY, "-m", "jobhunter.programmes.rendement_sources"], "Rendement"
+            ),
+            bg=BTN,
+            fg=TX,
+            activebackground=BTN_H,
+            relief="flat",
+            cursor="hand2",
+        ).pack(side="left", padx=18)
+        CL(
+            bar_s,
+            text="Adzuna, Jooble : clé gratuite sur leur site → Scripts/adzuna.json, jooble.json",
+            bg=BG,
+            fg=MUT,
+            font=(_theme.FONT_UI, 12),
+        ).pack(side="left", padx=6)
 
+        CL(
+            w,
+            text="Connexions pour candidater — tu te connectes toi-même ; "
+            "les mots de passe restent dans Chrome.",
+            bg=BG,
+            fg=MUT,
+            font=(_theme.FONT_UI, 13),
+            anchor="w",
+            justify="left",
+            wraplength=760,
+        ).pack(fill="x", padx=28, pady=(0, 0))
+        cols = ("site", "id", "sess", "date")
+        tv = ttk.Treeview(w, columns=cols, show="headings", selectmode="browse", height=6)
+        for k, lbl, wd in (
+            ("site", "Site", 300),
+            ("id", "Identifiant (email)", 260),
+            ("sess", "Session", 170),
+            ("date", "Vérifiée le", 130),
+        ):
+            tv.heading(k, text=lbl)
+            tv.column(k, width=wd, anchor="w", stretch=(k == "id"))
+        tv.pack(fill="both", expand=True, padx=28, pady=(0, 6))
+        tv.tag_configure("ok", foreground=TX_OK)
+        tv.tag_configure("ko", foreground=TX_BAD)
+        tv.tag_configure("ancien", foreground=TX_AMBRE)
+        w._tv = tv
         bar = CF(w, bg=BG)
-        bar.pack(fill="x", padx=28, pady=(0, 4))
+        bar.pack(fill="x", padx=28, pady=(0, 10))
         CB(
             bar,
             text="Ouvrir la connexion",
@@ -336,51 +431,20 @@ class PanneauxMixin:
             relief="flat",
             cursor="hand2",
         ).pack(side="left", padx=18)
-        CB(
-            bar,
-            text="Saisir une clé d'API",
-            command=lambda: self.run_step(
-                [PY, "-m", "jobhunter.programmes.acces", "--set-key", "francetravail"], "Clé API"
-            ),
-            bg=BTN,
-            fg=TX,
-            activebackground=BTN_H,
-            relief="flat",
-            cursor="hand2",
-        ).pack(side="left")
-        CB(
-            bar,
-            text="Rafraîchir",
-            command=lambda: w._reload(),
-            bg=BTN,
-            fg=TX,
-            activebackground=BTN_H,
-            relief="flat",
-            cursor="hand2",
-        ).pack(side="right")
-
-        cols = ("site", "id", "sess", "date")
-        tv = ttk.Treeview(w, columns=cols, show="headings", selectmode="browse")
-        for k, lbl, wd in (
-            ("site", "Site", 300),
-            ("id", "Identifiant (email)", 260),
-            ("sess", "Dernier contrôle", 160),
-            ("date", "Vérifié le", 120),
-        ):
-            tv.heading(k, text=lbl)
-            tv.column(k, width=wd, anchor="w", stretch=(k == "id"))
-        tv.pack(fill="both", expand=True, padx=28, pady=12)
-        tv.tag_configure("ok", foreground=TX_OK)
-        tv.tag_configure("ko", foreground=TX_BAD)
-        tv.tag_configure("ancien", foreground=TX_AMBRE)
-        w._tv = tv
-
-        keys = CL(w, text="", bg=BG, fg=MUT, font=(_theme.FONT_UI, 13), anchor="w", justify="left")
-        keys.pack(fill="x", padx=28, pady=(0, 8))
 
         def reload_() -> None:
             from jobhunter.programmes import acces as m
+            from jobhunter.sources import rendement as _rendement
 
+            tvs.delete(*tvs.get_children())
+            journal = _rendement.lire_journal(SCRIPTS / "_rendement.jsonl")
+            for etat in _inventaire.etat_sources(journal, lambda f: (SCRIPTS / f).exists()):
+                tvs.insert(
+                    "",
+                    "end",
+                    values=(etat.libelle, etat.acces, etat.etat, _date_fr(etat.le) or "—"),
+                    tags=(etat.gravite,),
+                )
             try:
                 comptes = json.loads((SCRIPTS / "comptes.json").read_text(encoding="utf-8"))
             except Exception:
@@ -390,6 +454,8 @@ class PanneauxMixin:
                 e = comptes.get(host) or {}
                 s = str(e.get("session") or "?")
                 label, tag = _session_presentation(s, e.get("session_verif"))
+                if not e.get("session_verif"):
+                    label, tag = "Jamais vérifié", ""
                 tv.insert(
                     "",
                     "end",
@@ -397,21 +463,10 @@ class PanneauxMixin:
                         host,
                         e.get("identifiant") or "—",
                         label,
-                        e.get("session_verif") or "—",
+                        _date_fr(e.get("session_verif")) or "—",
                     ),
                     tags=(tag,),
                 )
-            kp = SCRIPTS / "api_keys.json"
-            try:
-                k = json.loads(kp.read_text(encoding="utf-8")) if kp.exists() else {}
-            except Exception:
-                k = {}
-            ft = "✓ installée" if (SCRIPTS / "francetravail.json").exists() else "✗ absente"
-            noms = ", ".join(sorted(k)) if k else "aucune"
-            keys.configure(
-                text=f"Clés d'API enregistrées : {noms}   ·   France Travail : {ft}"
-                "   (les valeurs ne sont jamais affichées)"
-            )
 
         w._reload = reload_
         reload_()
@@ -459,8 +514,13 @@ class PanneauxMixin:
             return F, []
 
     def _companies_panel(self: "AppTypee") -> None:
-        """🏢 ENTREPRISES (boards exclus → panneau Sites) : tableau à colonnes,
-        Entreprise | Type | Offres en queue | ATS | 🔗 Lien (dernière, clic = ouvre)."""
+        """ENTREPRISES : les flux réellement collectés et les offres de la file qui en viennent.
+
+        Une ligne par entreprise suivie, lue par son outil de recrutement (API publique :
+        `sources_config.json`) ou, à défaut, par son site carrière dans le navigateur
+        (`unique_domains.txt`). Les comptes viennent de jobhunter.app.inventaire : exacts,
+        par marqueur de source. Une URL collée est reconnue : un ATS lisible par API devient
+        un flux, un autre site va dans la liste lue par le navigateur."""
         self._hide_all()
         if "companies" in self._panels:
             w = self._panels["companies"]
@@ -481,168 +541,155 @@ class PanneauxMixin:
             cursor="hand2",
             font=(_theme.FONT_UI, 13),
         ).pack(side="left", padx=12, pady=(2, 0))
-        CL(top, text="Entreprises à scraper", bg=BG, fg="#b45309", font=(_theme.FONT_UI, 16)).pack(
+        CL(top, text="Entreprises suivies", bg=BG, fg=TX, font=(_theme.FONT_UI, 16)).pack(
             side="left", padx=28
         )
         w._count = CL(top, text="", bg=BG, fg=MUT)
         w._count.pack(side="right", padx=24)
         CL(
             w,
-            text="Sites CARRIÈRE d'entreprises (les sites d'offres généraux type LinkedIn/WTJ/Indeed "
-            "sont dans « Sites d'offres »). Clic sur la colonne Lien = ouvre le site.",
+            text="Chaque entreprise est lue par son outil de recrutement (API publique) "
+            "ou, à défaut, par son site carrière. Double-clic : ouvrir sa page. "
+            "Les sites d'offres généraux (LinkedIn, WTJ…) sont dans « Sites d'offres ».",
             bg=BG,
             fg=MUT,
             font=(_theme.FONT_UI, 13),
             anchor="w",
             justify="left",
+            wraplength=760,
         ).pack(fill="x", padx=28)
-        cols = ("ent", "dom", "type", "offres", "ats", "url")
+        cols = ("ent", "outil", "offres", "fit", "derniere", "url")
         tv = ttk.Treeview(w, columns=cols, show="headings", selectmode="browse")
         for k, lbl, wd, anc in (
-            ("ent", "Entreprise", 180, "w"),
-            ("dom", "Domaine", 95, "w"),
-            ("type", "Type", 95, "w"),
-            ("offres", "Offres en queue", 95, "center"),
-            ("ats", "ATS", 100, "w"),
-            ("url", "Lien", 400, "w"),
+            ("ent", "Entreprise", 230, "w"),
+            ("outil", "Lue par", 170, "w"),
+            ("offres", "Offres", 80, "center"),
+            ("fit", "Fit max", 95, "center"),
+            ("derniere", "Dernière", 130, "center"),
+            ("url", "Page", 340, "w"),
         ):
             tv.heading(k, text=lbl)
             tv.column(k, width=wd, anchor=anc, stretch=(k == "url"))  # type: ignore[call-overload]  # typeshed veut un Literal pour anchor
         tv.pack(fill="both", expand=True, padx=28, pady=18)
         tv.tag_configure("odd", background=ROW1)
         tv.tag_configure("even", background=ROW0)
+        tv.tag_configure("vide", foreground=MUT)
+        lignes: dict[str, _inventaire.Flux] = {}
 
-        def company_name(u: Any) -> Any:
-            host = urlparse(u).netloc.lower()
-            for p in (
-                "careers.",
-                "jobs.",
-                "recrutement.",
-                "talents.",
-                "career.",
-                "www.",
-                "rejoindre-",
-                "group.",
-            ):
-                host = host.replace(p, "")
-            return host.split(".")[0].replace("-", " ").title()
+        def _defauts() -> dict[str, Any]:
+            from jobhunter.sources import commun as _src
 
-        def site_type(u: Any) -> Any:
-            h = urlparse(u).netloc.lower()
-            return (
-                "carrières"
-                if any(
-                    h.startswith(p)
-                    for p in ("careers.", "jobs.", "recrutement.", "talents.", "career.")
-                )
-                or any(
-                    s in u.lower()
-                    for s in ("/careers", "/carriere", "/recrutement", "/nous-rejoindre")
-                )
-                else "corporate"
-            )
-
-        def ats_of(u: Any) -> Any:
-            for a in (
-                "smartrecruiters",
-                "talent-soft",
-                "talentsoft",
-                "workday",
-                "breezy",
-                "greenhouse",
-                "lever.co",
-                "recruitee",
-                "ashby",
-                "icims",
-                "successfactors",
-                "teamtailor",
-            ):
-                if a in u.lower():
-                    return a.split(".")[0]
-            return "—"
-
-        def offers_stats(u: Any) -> Any:
-            """(nb offres en queue, domaine majoritaire) pour ce site."""
-            root_d = urlparse(u).netloc.lower().replace("www.", "")
-            core = root_d.split(".")[-2] if "." in root_d else root_d  # axa-im.com -> axa-im
-            n = 0
-            doms: dict[str, Any] = {}
-            for o in self.offers:
-                ou = (o.get("url") or "").lower()
-                if core and core in ou:
-                    n += 1
-                    d = DOM_SHORT.get(o.get("domaine"), o.get("domaine") or "")
-                    if d:
-                        doms[d] = doms.get(d, 0) + 1
-            dom = max(doms, key=lambda k: doms[k]) if doms else "—"
-            return n, dom
+            return {
+                "ats_slugs": {k: list(v) for k, v in _src.ATS_SLUGS.items()},
+                "workday_flux": [list(x) for x in _src.WORKDAY_FLUX],
+                "autres_flux": [list(x) for x in _src.AUTRES_FLUX],
+            }
 
         def reload() -> None:
-            for r in tv.get_children():
-                tv.delete(r)
+            from jobhunter.sources import commun as _src
+
+            _src._load_cfg()
+            tv.delete(*tv.get_children())
+            lignes.clear()
             _, urls = self._domains_file()
-            ents = [u for u in urls if not self._is_board(u)]
-            for i, u in enumerate(sorted(ents, key=company_name)):
-                n, dom = offers_stats(u)
-                tv.insert(
+            sites = [u for u in urls if not self._is_board(u)]
+            flux = _inventaire.flux_suivis(
+                _src.ATS_SLUGS, _src.WORKDAY_FLUX, _src.AUTRES_FLUX, sites
+            )
+            comptes = _inventaire.compter(self.offers, flux)
+            ordre = sorted(flux, key=lambda f: (-comptes[f].offres, f.nom.lower()))
+            for i, f in enumerate(ordre):
+                c = comptes[f]
+                iid = tv.insert(
                     "",
                     "end",
-                    values=(company_name(u), dom, site_type(u), n, ats_of(u), u),
-                    tags=("odd" if i % 2 else "even",),
+                    values=(
+                        f.nom,
+                        _inventaire.NOMS_OUTILS.get(f.outil, f.outil),
+                        c.offres,
+                        c.meilleur_fit if c.offres else "—",
+                        _date_fr(c.derniere) or "—",
+                        f.lien,
+                    ),
+                    tags=("odd" if i % 2 else "even",) + (("vide",) if not c.offres else ()),
                 )
+                lignes[iid] = f
+            total = sum(c.offres for c in comptes.values())
+            vides = sum(1 for c in comptes.values() if not c.offres)
             w._count.configure(
-                text=f"{len(ents)} entreprises · {sum(1 for u in urls if self._is_board(u))} boards (→ Sites d'offres)"
+                text=f"{len(flux)} entreprises · {total} offres en file · {vides} sans offre en file"
             )
 
         w._reload = reload
 
-        def click(e: Any) -> None:
-            if tv.identify_region(e.x, e.y) != "cell":
-                return
-            if tv.identify_column(e.x) != "#6":
-                return
+        def ouvrir(e: Any) -> None:
             it = tv.identify_row(e.y)
-            if it:
-                webbrowser.open(tv.item(it)["values"][5])
-                self._log(f"🌐 {tv.item(it)['values'][5][:70]}\n")
+            f = lignes.get(it)
+            if f and f.lien:
+                webbrowser.open(f.lien)
+                self._log(f"🌐 {f.lien[:70]}\n")
 
-        tv.bind("<Button-1>", click)
+        tv.bind("<Double-1>", ouvrir)
 
         bar = CF(w, bg=BG)
         bar.pack(fill="x", padx=28, pady=(0, 10))
         ent = CE(bar, bg=ROW0, fg=TX, insertbackground=TX, relief="flat", width=60)
         ent.pack(side="left", ipady=4, fill="x", expand=True)
+        CFG = SCRIPTS / "sources_config.json"
+
+        def _lire_cfg() -> dict[str, Any]:
+            try:
+                c = json.loads(CFG.read_text(encoding="utf-8"))
+                return c if isinstance(c, dict) else {}
+            except Exception:
+                return {}
 
         def add() -> None:
             v = ent.get().strip()
             if not v.startswith("http"):
-                self._log("✗ URL http requise (site carrière de l'entreprise)\n")
+                self._log("✗ colle l'adresse de la page carrière de l'entreprise (http…)\n")
                 return
             if self._is_board(v):
                 self._log("↪ c'est un site d'offres général → ajoute-le dans « Sites d'offres »\n")
                 return
-            F, urls = self._domains_file()
-            if v in urls:
-                self._log("déjà présent\n")
-                return
-            F.write_text(("\n".join(urls + [v])).strip() + "\n", encoding="utf-8")
-            self._log(f"＋ entreprise ajoutée : {v}\n")
+            trouve = _inventaire.flux_depuis_url(v)
+            if trouve:
+                c = _lire_cfg()
+                self._log(_inventaire.ajouter_flux(c, _defauts(), trouve) + "\n")
+                self._jwrite(CFG, c)
+            else:
+                F, urls = self._domains_file()
+                if v in urls:
+                    self._log("déjà suivi\n")
+                    return
+                F.write_text(("\n".join(urls + [v])).strip() + "\n", encoding="utf-8")
+                self._log(f"＋ site carrière ajouté, lu par le navigateur : {v}\n")
+            ent.delete(0, "end")
             reload()
 
         def dele() -> None:
-            it = tv.focus()
-            if not it:
+            f = lignes.get(tv.focus())
+            if f is None:
+                self._log("Sélectionne d'abord une entreprise dans la liste.\n")
                 return
-            v = tv.item(it)["values"][5]
-            F, urls = self._domains_file()
-            F.write_text("\n".join(u for u in urls if u != v).strip() + "\n", encoding="utf-8")
-            self._log(f"－ retiré : {v}\n")
+            if f.outil == "site":
+                F, urls = self._domains_file()
+                F.write_text(
+                    "\n".join(u for u in urls if u != f.cle).strip() + "\n", encoding="utf-8"
+                )
+            else:
+                c = _lire_cfg()
+                if not _inventaire.retirer_flux(c, _defauts(), f):
+                    self._log(f"✗ {f.nom} : flux introuvable dans sources_config.json\n")
+                    return
+                self._jwrite(CFG, c)
+            self._log(f"－ {f.nom} ne sera plus collectée\n")
             reload()
 
         ent.bind("<Return>", lambda e: add())
         CB(
             bar,
-            text="Ajouter",
+            text="Suivre",
             command=add,
             bg=ACC,
             fg=ACC_TX,
@@ -652,7 +699,7 @@ class PanneauxMixin:
         ).pack(side="left", padx=18)
         CB(
             bar,
-            text="Retirer",
+            text="Ne plus suivre",
             command=dele,
             bg=DEL,
             fg=DEL_TX,
@@ -662,13 +709,14 @@ class PanneauxMixin:
         ).pack(side="left", padx=6)
         CB(
             bar,
-            text="Scraper ces sites",
+            text="Lire les sites carrière",
             command=lambda: self.run_step(
                 [PY, "-m", "jobhunter.programmes.scrape_jobs", "--headless"],
-                "Scrape sites entreprises",
+                "Sites carrière",
             ),
-            bg=ACC,
-            fg=ACC_TX,
+            bg=BTN,
+            fg=TX,
+            activebackground=BTN_H,
             relief="flat",
             cursor="hand2",
         ).pack(side="left", padx=28)

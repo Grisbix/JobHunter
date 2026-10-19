@@ -58,7 +58,6 @@ PROFIL = Path(_os.environ.get("LOCALAPPDATA", str(Path.home()))) / "apply_runner
 # Sites ou une session connectee change ce qu'on peut faire.
 SITES_CONNEXION = {
     "linkedin.com": "https://www.linkedin.com/login",
-    "indeed.com": "https://secure.indeed.com/account/login",
     "welcometothejungle.com": "https://www.welcometothejungle.com/fr/signin",
     "mon-vie-via.businessfrance.fr": "https://mon-vie-via.businessfrance.fr/",
     "glassdoor.fr": "https://www.glassdoor.fr/profile/login_input.htm",

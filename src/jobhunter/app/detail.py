@@ -12,6 +12,7 @@ from tkinter import scrolledtext, ttk
 from typing import Any
 
 from jobhunter import paresseux as _paresseux
+from jobhunter.app import inventaire as _inventaire
 from jobhunter.app import theme as _theme
 from jobhunter.app._type_app import AppTypee
 from jobhunter.app.commun import CV_ATS_DIR, PY, SCRIPTS, ouvrir
@@ -395,7 +396,7 @@ class DetailMixin:
         right = CF(w, bg=BG)
         right.pack(side="left", fill="both", expand=True, padx=(4, 8), pady=8)
 
-        CL(left, text="Recherche (CV par offre + lettres)", bg=CARD, fg=MUT).pack(
+        CL(left, text="Chercher une offre (entreprise, poste)", bg=CARD, fg=MUT).pack(
             anchor="w", padx=24, pady=(8, 0)
         )
         srch = CE(left, bg=ROW0, fg=TX, insertbackground=TX, relief="flat")
@@ -414,59 +415,34 @@ class DetailMixin:
         lb.pack(side="left", fill="both", expand=True, padx=(8, 0), pady=8)
         sb.pack(side="right", fill="y", pady=24)
 
-        def _letters(flt: Any = "") -> Any:
-            """Lettres : préfère le .DOCX (ÉDITABLE dans le panneau) — le pdf suit via sync."""
-            if not _ici.LETTRES_DIR.exists():
-                return []
-            by_stem: dict[str, Any] = {}
-            for f in _ici.LETTRES_DIR.iterdir():
-                if f.suffix.lower() not in (".pdf", ".docx"):
-                    continue
-                if flt and flt not in f.name.lower():
-                    continue
-                cur = by_stem.get(f.stem)
-                if cur is None or f.suffix.lower() == ".docx":
-                    by_stem[f.stem] = f
-            return sorted(by_stem.values(), key=lambda f: f.name.lower())
-
-        files: list[Any] = []  # aligné avec lb
+        files: list[Any] = []  # aligné avec lb : Path, Dossier ou None (titre de groupe)
+        MAX_LIGNES = 300
 
         def fill(flt: Any = "") -> None:
+            """CV de base, puis un dossier par offre (CV et lettre ensemble), mieux classées d'abord."""
             lb.delete(0, "end")
             files.clear()
-            ats = sorted(CV_ATS_DIR.glob("*.pdf")) if CV_ATS_DIR.exists() else []
-            if ats:
-                lb.insert("end", "── CV ATS (5 variantes) ──")
+            base = sorted(CV_ATS_DIR.glob("*.pdf")) if CV_ATS_DIR.exists() else []
+            if base and not flt:
+                lb.insert("end", f"── CV de base ({len(base)}) ──")
                 files.append(None)
-                for f in ats:
+                for f in base:
                     lb.insert(
                         "end", "  " + f.stem.replace(f"CV_{_ici._PREFIXE}_", "").replace("_", " ")
                     )
                     files.append(f)
-            per = sorted(_ici.CV_OFFRE_DIR.glob("*.pdf")) if _ici.CV_OFFRE_DIR.exists() else []
-            if flt:
-                per = [f for f in per if flt in f.name.lower()]
-            lb.insert("end", f"── CV par offre ({len(per)}) ──")
+            ds = _inventaire.dossiers(self.offers, flt)
+            prets = sum(1 for d in ds if d.etat == "prêt")
+            lb.insert("end", f"── Dossiers par offre ({len(ds)}, {prets} prêts) ──")
             files.append(None)
-            for f in per[:250]:
-                lb.insert(
-                    "end",
-                    "  "
-                    + f.stem.replace("CV_", "").replace(f"{_ici._PREFIXE}_", "").replace("_", " "),
-                )
-                files.append(f)
-            lets = _letters(flt)
-            lb.insert("end", f"── Lettres ({len(lets)}) ──")
-            files.append(None)
-            for f in lets[:250]:
-                lb.insert(
-                    "end",
-                    "  "
-                    + f.stem.replace("_cover_letter", "")
-                    .replace(f"{_ici._PREFIXE}_", "")
-                    .replace("_", " "),
-                )
-                files.append(f)
+            marque = {"prêt": "✓", "PDF à refaire": "⚠", "incomplet": "✗"}
+            for d in ds[:MAX_LIGNES]:
+                suffixe = "" if d.etat == "prêt" else f"  ({d.etat})"
+                lb.insert("end", f"  {marque.get(d.etat, '·')} {d.titre}{suffixe}")
+                files.append(d)
+            if len(ds) > MAX_LIGNES:
+                lb.insert("end", f"  … {len(ds) - MAX_LIGNES} autres : affine la recherche")
+                files.append(None)
 
         fill()
         srch.bind("<KeyRelease>", lambda e: fill(srch.get().strip().lower()))
@@ -596,8 +572,31 @@ class DetailMixin:
 
         def on_sel(e: Any = None) -> None:
             c = lb.curselection()  # type: ignore[no-untyped-call]  # curselection : typeshed : non annotee
-            if c and files[c[0]] is not None:
-                show(files[c[0]])
+            if not c or files[c[0]] is None:
+                return
+            choix = files[c[0]]
+            if isinstance(choix, _inventaire.Dossier):
+                state["dossier"] = choix
+                piece = choix.cv or choix.lettre
+                if piece is None:
+                    title.configure(text=f"{choix.titre} — aucune pièce sur le disque")
+                    return
+                show(piece)
+            else:
+                state["dossier"] = None
+                show(choix)
+
+        def basculer() -> None:
+            """Passe du CV à la lettre du même dossier, et retour."""
+            d = state.get("dossier")
+            if d is None:
+                self._log("Sélectionne d'abord un dossier d'offre dans la liste.\n")
+                return
+            autre = d.lettre if state.get("path") == d.cv else d.cv
+            if autre is None:
+                self._log(f"✗ {d.titre} : pièce manquante ({d.etat})\n")
+                return
+            show(autre)
 
         lb.bind("<<ListboxSelect>>", on_sel)
 
@@ -721,24 +720,27 @@ class DetailMixin:
             relief="flat",
             cursor="hand2",
         ).pack(side="left", padx=6)
+        # dans la barre du titre : la barre du bas est déjà pleine
         CB(
-            bt,
-            text="CV",
-            command=lambda: ouvrir(CV_ATS_DIR.parent),
+            bar,
+            text="CV ⇄ lettre",
+            command=basculer,
+            bg=ACC,
+            fg=ACC_TX,
+            relief="flat",
+            cursor="hand2",
+        ).pack(side="right", padx=6, before=pginfo)
+        CB(
+            bar,
+            text="Faits du CV",
+            command=lambda: self.run_step(
+                [PY, "-m", "jobhunter.documents.cv_auto", "--liste"], "Banque de faits"
+            ),
             bg=BTN,
             fg=TX,
             relief="flat",
             cursor="hand2",
-        ).pack(side="left", padx=6)
-        CB(
-            bt,
-            text="Lettres",
-            command=lambda: _ici.LETTRES_DIR.exists() and ouvrir(_ici.LETTRES_DIR),
-            bg=BTN,
-            fg=TX,
-            relief="flat",
-            cursor="hand2",
-        ).pack(side="left", padx=6)
+        ).pack(side="right", padx=6, before=pginfo)
 
         # outils de masse : MAJ date/ordre/destinataire des lettres · renommage à mon nom
         def _tool(script: Any, label: Any, btn: Any) -> None:
