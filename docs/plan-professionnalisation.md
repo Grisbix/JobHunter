@@ -187,7 +187,9 @@ puis `lettre` et `message` : **tout `documents` est strict**, puis **tout `navig
 (objets Playwright typés `Any` : `page.evaluate` rend Any de toute façon), puis **tout
 `sources`**, puis **tout `app`** : un `Protocol` généré (`app/_type_app.py`) déclare ce que
 chaque mixin voit de `self` — un nom lu et défini nulle part devient une erreur, mais les
-types y restent `Any` (à préciser attribut par attribut). Restent les programmes. Leçon : un renommage de variable
+types y restent `Any` (à préciser attribut par attribut). Enfin les **programmes** ne sont
+plus exclus : vérifiés en mode normal (82 erreurs résorbées), leurs fonctions restant pour la
+plupart non annotées. **Tout le paquet passe mypy** ; le strict couvre tout sauf les programmes. Leçon : un renommage de variable
 que mypy jugeait correct cassait `contrat_de_la_description` (32 écarts au banc, aucun
 test) — le banc reste obligatoire même pour du typage.
 

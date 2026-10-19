@@ -29,11 +29,11 @@ from jobhunter import racine as _racine
 
 HERE = _racine.scripts()
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
 from jobhunter.programmes import probe_ats
 from jobhunter.programmes.probe_ats_queue import _tous_les_titres, variantes
-from jobhunter.sources import title_ok
+from jobhunter.sources.commun import title_ok
 
 # Societes de gestion, boutiques AM, notation extra-financiere, acteurs climat.
 # Complete la liste de probe_ats.CANDIDATS avec des noms FR/EU du secteur.

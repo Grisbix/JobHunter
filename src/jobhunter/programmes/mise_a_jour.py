@@ -54,7 +54,7 @@ from jobhunter import racine as _racine
 
 # line_buffering : nos lignes s'intercalent dans le bon ordre avec la sortie de git et
 # pip, et s'affichent au fil de l'eau dans le journal de l'application.
-sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
 RACINE = _racine.racine()
 DEPOT = "Grisbix/JobHunter"
@@ -271,8 +271,8 @@ def controler():
             erreurs.append(sortie[-1] if sortie else f"import : code {r.returncode}")
     if erreurs:
         print("\n! Contrôle échoué :")
-        for e in erreurs[:10]:
-            print(f"  - {e}")
+        for err in erreurs[:10]:
+            print(f"  - {err}")
         return False
     print("\nContrôle : tous les scripts se chargent.")
     return True

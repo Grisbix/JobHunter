@@ -23,7 +23,7 @@ from urllib.parse import quote
 
 from jobhunter import racine as _racine
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
 HERE = _racine.scripts()
 ROOT = HERE.parent

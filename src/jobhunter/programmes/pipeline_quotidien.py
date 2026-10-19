@@ -73,7 +73,7 @@ from jobhunter import racine as _racine
 # silence. JOBHUNTER_RACINE surcharge.
 ROOT = _racine.racine()
 SCRIPTS = ROOT / "Scripts"
-sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
 # Lecteurs de sites carriere qui ne rapportent que le titre : leur page d'offre
 # est publique, scrape_desc la lit. Liste fermee — une source anti-bot n'y entre pas.

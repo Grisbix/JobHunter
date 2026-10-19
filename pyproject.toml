@@ -103,13 +103,10 @@ python_version = "3.12"
 files = ["src/jobhunter"]
 ignore_missing_imports = true
 warn_unused_ignores = true
-# Les programmes (anciens Scripts/*.py, entres dans le paquet en 2.0) n'ont jamais ete
-# types : 85 erreurs au 2026-10-18, A RESORBER programme par programme.
+# Les programmes (anciens Scripts/*.py, entres dans le paquet en 2.0) sont verifies en
+# mode normal depuis le 2026-10-19 (82 erreurs resorbees) ; leurs fonctions restent pour
+# la plupart non annotees, d'ou l'exclusion ci-dessous des appels non types.
 untyped_calls_exclude = ["jobhunter.programmes"]
-
-[[tool.mypy.overrides]]
-module = ["jobhunter.programmes.*"]
-ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = [

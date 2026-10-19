@@ -35,7 +35,7 @@ from jobhunter import racine as _racine
 
 HERE = _racine.scripts()
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
 API = "https://civiweb-api-prd.azurewebsites.net/api/Offers/details/{}"
 SITE = "https://mon-vie-via.businessfrance.fr/offres/{}"

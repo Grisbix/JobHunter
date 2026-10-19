@@ -25,9 +25,9 @@ from jobhunter import racine as _racine
 
 HERE = _racine.scripts()
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
-from jobhunter.sources import contrat_de_la_description, contrat_du_titre
+from jobhunter.sources.commun import contrat_de_la_description, contrat_du_titre
 
 
 def contrat_correct(o):

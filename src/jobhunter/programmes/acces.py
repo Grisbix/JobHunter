@@ -363,8 +363,8 @@ def cmd_check(limit_hosts=None):
                     etat = "connecte" if page.evaluate(_SESSION_JS) else "indetermine"
             except Exception as ex:
                 etat, kind = "erreur", type(ex).__name__
-            e = c.setdefault(h, {})
-            e["session"], e["session_verif"] = etat, today
+            entree = c.setdefault(h, {})
+            entree["session"], entree["session_verif"] = etat, today
             print(f"  {etat:<12} {h:<34} (kind={kind})")
         try:
             ctx.close()

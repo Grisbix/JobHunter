@@ -32,10 +32,11 @@ from jobhunter import racine as _racine
 
 HERE = _racine.scripts()
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
 from jobhunter.programmes import probe_ats
-from jobhunter.sources import rang_source, title_ok
+from jobhunter.sources.commun import title_ok
+from jobhunter.sources.fusion import rang_source
 from jobhunter.stockage import file as queue_io
 
 # Mots qui ne font pas partie du slug d'un ATS.

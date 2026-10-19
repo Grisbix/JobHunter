@@ -11,7 +11,7 @@ doit passer avec une note correcte, un metier hors cible doit etre ecarte ou not
 
 import sys
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
 from jobhunter import profil  # noqa: E402
 

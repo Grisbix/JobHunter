@@ -32,9 +32,10 @@ from jobhunter import racine as _racine
 
 HERE = _racine.scripts()
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
-from jobhunter.sources import contrat_du_titre, contrats_exclus, rang_source
+from jobhunter.sources.commun import contrat_du_titre, contrats_exclus
+from jobhunter.sources.fusion import rang_source
 
 # Intitule qui parle vraiment du metier vise, et niveau d'entree.
 RX_ESG = re.compile(

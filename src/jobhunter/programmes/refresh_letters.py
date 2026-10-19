@@ -20,7 +20,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 from jobhunter import racine as _racine
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
 ROOT = _racine.racine()
 
@@ -74,7 +74,7 @@ def _set_text(p, txt):
 
 
 # ── Nettoyage du titre de poste dans les lettres DEJA ecrites ────────────────
-from jobhunter.documents import _de, titre_poste  # source unique du nettoyage
+from jobhunter.documents.commun import _de, titre_poste  # source unique du nettoyage
 
 # Les deux formulations produites au fil du temps par le generateur.
 # On capture le titre jusqu'a un ancrage FIXE, pas jusqu'a la fin de ligne :

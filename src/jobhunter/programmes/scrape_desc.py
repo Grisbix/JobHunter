@@ -17,7 +17,7 @@ import time
 from jobhunter import racine as _racine
 
 # line_buffering : sinon rien ne sort quand la sortie est redirigée (run en fond = aveugle)
-sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)
+sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
 HERE = _racine.scripts()
 QUEUE = HERE / "apply_queue.json"

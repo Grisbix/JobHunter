@@ -11,7 +11,7 @@ import time
 from jobhunter import racine as _racine
 from jobhunter.programmes import _profil_exemple  # noqa: F401  — en tete : profil d'exemple
 
-sys.stdout.reconfigure(encoding="utf-8")
+sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console : TextIOWrapper
 from playwright.sync_api import sync_playwright
 
 from jobhunter import navigation as w

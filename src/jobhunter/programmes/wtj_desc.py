@@ -32,7 +32,7 @@ import time
 
 from jobhunter import racine as _racine
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
 HERE = _racine.scripts()
 
@@ -191,8 +191,8 @@ def _travail(q, a, ecrire):
         f"\n{ecrites} description(s) recuperee(s) sur {len(cibles)} — "
         f"{remontes} offres remontent en fit"
     )
-    for d, av, ap_, e, p in sorted(delta, reverse=True)[:10]:
-        print(f"   +{d}  fit {av} -> {ap_}  {e:26} {p}")
+    for d, av, ap_, ent, p in sorted(delta, reverse=True)[:10]:
+        print(f"   +{d}  fit {av} -> {ap_}  {ent:26} {p}")
     return 0
 
 

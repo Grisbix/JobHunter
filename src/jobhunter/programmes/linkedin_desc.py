@@ -30,7 +30,7 @@ import time
 
 from jobhunter import racine as _racine
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
 HERE = _racine.scripts()
 
@@ -57,7 +57,7 @@ BRIDAGES = {"n": 0}
 # Offres dont la fiche porte le marqueur de fermeture. On lit deja la page pour
 # sa description : y voir « No longer accepting applications » ne coute rien, et
 # evite a audit_dispo une requete de plus sur le meme endpoint.
-FERMEES = set()
+FERMEES: set[str] = set()
 
 
 def description(jid, client, essais=4):
@@ -239,8 +239,8 @@ def _travail(cibles, a, queue_io):
             f"   {manquantes} offre(s) restent sans description : relancer "
             f"le programme, il ne reprend que celles-la."
         )
-    for d, av, ap_, e, p in sorted(delta, reverse=True)[:10]:
-        print(f"   +{d}  fit {av} -> {ap_}  {e:26} {p}")
+    for d, av, ap_, ent, p in sorted(delta, reverse=True)[:10]:
+        print(f"   +{d}  fit {av} -> {ap_}  {ent:26} {p}")
     return 0
 
 

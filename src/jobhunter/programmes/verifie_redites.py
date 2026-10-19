@@ -43,7 +43,7 @@ ROOT = HERE.parent
 
 from jobhunter import chemins
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
 # Mots vides et formules de politesse : leur repetition ne dit rien.
 _BANALS = {

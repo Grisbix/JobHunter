@@ -7,7 +7,7 @@ import sys
 
 import requests
 
-sys.stdout.reconfigure(encoding="utf-8")
+sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console : TextIOWrapper
 
 # Phrases "offre morte" malgré HTTP 200 (FR/EN/DE) — soft 404 / expirée / pourvue
 SOFT_DEAD_RX = re.compile(

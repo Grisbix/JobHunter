@@ -35,8 +35,8 @@ from jobhunter import racine as _racine
 # Console Windows = cp1252 → les print d'emoji/accents (describe_page, fill…) levaient
 # UnicodeEncodeError et cassaient le remplissage. Force UTF-8 (remplace si impossible).
 try:
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 except Exception:
     pass
 

@@ -23,7 +23,7 @@ import sys
 
 from jobhunter import racine as _racine
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
 HERE = _racine.scripts()
 CFG = HERE / "francetravail.json"

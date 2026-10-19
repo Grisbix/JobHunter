@@ -19,7 +19,7 @@ import requests
 
 from jobhunter import racine as _racine
 
-sys.stdout.reconfigure(encoding="utf-8")
+sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console : TextIOWrapper
 
 SCRIPTS = _racine.scripts()
 QUEUE = SCRIPTS / "apply_queue.json"

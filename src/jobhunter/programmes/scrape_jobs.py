@@ -21,6 +21,7 @@ import random
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 from jobhunter import racine as _racine
 
@@ -30,8 +31,8 @@ from jobhunter import racine as _racine
 # UnicodeEncodeError des la premiere ligne — le scraping mourait avant d'ouvrir
 # le moindre site, sans qu'aucune offre ne soit collectee.
 try:
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 except Exception:
     pass
 
@@ -189,7 +190,7 @@ PAGE_ANALYZE_OFFERS_JS = r"""
 # Un robots.txt absent, illisible ou injoignable vaut AUTORISATION : c'est la
 # regle usuelle, et l'inverse ferait disparaitre des sites en silence au premier
 # incident reseau.
-_ROBOTS_CACHE = {}
+_ROBOTS_CACHE: dict[str, Any] = {}
 # On se nomme. Aucun site ne porte de regle « JobHunter » aujourd'hui, et
 # robotparser retombe alors sur le bloc « User-agent: * » — celui qui nous
 # gouverne. Mais si un site en ajoute une un jour, elle sera respectee, ce que
@@ -207,7 +208,7 @@ def robots_autorise(url: str) -> bool:
         hote = f"{s.scheme}://{s.netloc}"
     except Exception:
         return True
-    rp = _ROBOTS_CACHE.get(hote)
+    rp: Any = _ROBOTS_CACHE.get(hote)
     if rp is None:
         rp = robotparser.RobotFileParser()
         rp.set_url(hote + "/robots.txt")
@@ -544,7 +545,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
 
                 # Dismiss cookies
                 try:
-                    from jobhunter.navigation import COOKIE_JS
+                    from jobhunter.navigation.page import COOKIE_JS
 
                     page.evaluate(COOKIE_JS)
                     time.sleep(0.5)
@@ -609,7 +610,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                 page.goto(url, timeout=timeout_ms, wait_until="domcontentloaded")
                 time.sleep(2)
                 try:
-                    from jobhunter.navigation import COOKIE_JS
+                    from jobhunter.navigation.page import COOKIE_JS
 
                     page.evaluate(COOKIE_JS)
                 except Exception:
@@ -649,7 +650,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                     page.goto(url, timeout=timeout_ms, wait_until="domcontentloaded")
                     time.sleep(2)
                     try:
-                        from jobhunter.navigation import COOKIE_JS
+                        from jobhunter.navigation.page import COOKIE_JS
 
                         page.evaluate(COOKIE_JS)
                     except Exception:
@@ -703,7 +704,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
 
             # Cookie dismiss (via web_nav.COOKIE_JS si dispo)
             try:
-                from jobhunter.navigation import COOKIE_JS
+                from jobhunter.navigation.page import COOKIE_JS
 
                 page.evaluate(COOKIE_JS)
                 time.sleep(0.5)
@@ -746,12 +747,12 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
     # ── Fallback: try to find careers section from homepage ──
     if not offers:
         try:
-            from jobhunter.navigation import goto_careers
+            from jobhunter.navigation.carrieres import goto_careers
 
             page.goto(entry["url"], timeout=timeout_ms, wait_until="domcontentloaded")
             time.sleep(1)
             try:
-                from jobhunter.navigation import COOKIE_JS
+                from jobhunter.navigation.page import COOKIE_JS
 
                 page.evaluate(COOKIE_JS)
             except Exception:
@@ -790,7 +791,7 @@ def scrape_all_sites(
     output_file: str,
     headless: bool = True,
     stealth: bool = False,
-    site_range: tuple = None,
+    site_range: tuple[Any, ...] | None = None,
     skip: int = 0,
     max_sites: int = 0,
 ):
@@ -838,7 +839,7 @@ def scrape_all_sites(
         page = context.new_page()
         # TURBO : bloque images/polices/pubs → scan 2-5× plus rapide (texte suffit)
         try:
-            from jobhunter.navigation import block_resources
+            from jobhunter.navigation.navigateur import block_resources
 
             block_resources(context, images=False)
         except Exception:
@@ -892,13 +893,13 @@ def scrape_all_sites(
     importlib.import_module("jobhunter.programmes.jutil").jwrite(output_path, unique_offers)
 
     # Stats
-    domaines = {}
-    entreprises = {}
+    domaines: dict[str, int] = {}
+    entreprises: dict[str, int] = {}
     for o in unique_offers:
         d = o.get("domaine", "unknown")
         domaines[d] = domaines.get(d, 0) + 1
-        e = o.get("entreprise", "?")
-        entreprises[e] = entreprises.get(e, 0) + 1
+        ent = o.get("entreprise", "?")
+        entreprises[ent] = entreprises.get(ent, 0) + 1
 
     print("\n" + "=" * 70)
     print("✅ SCRAPING TERMINÉ")
