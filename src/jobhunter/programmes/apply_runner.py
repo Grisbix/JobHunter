@@ -163,7 +163,7 @@ def autofill(page):
         except Exception:
             pass
     filled += fill_selects_radios(page)  # civilité, pays, niveau via <select>/radio
-    filled += fill_passwords(page)
+    # Aucun champ mot de passe n'est rempli : regle du projet (ADR 0005).
     return filled
 
 
@@ -215,29 +215,6 @@ def fill_selects_radios(page):
     }"""
     try:
         n += int(page.evaluate(js) or 0)
-    except Exception:
-        pass
-    return n
-
-
-def fill_passwords(page):
-    """Ne remplit RIEN. Regle du projet : aucun mot de passe n'est manipule par
-    les programmes. Les champs mot de passe restent pour l'utilisateur."""
-    return 0
-    pw = None
-    if not pw:
-        return 0
-    n = 0
-    try:
-        inputs = page.locator('input[type="password"]')
-        for i in range(inputs.count()):
-            el = inputs.nth(i)
-            try:
-                if not (el.input_value(timeout=1000) or "").strip():
-                    el.fill(pw, timeout=2000)
-                    n += 1
-            except Exception:
-                pass
     except Exception:
         pass
     return n
