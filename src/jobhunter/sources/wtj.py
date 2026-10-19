@@ -5,6 +5,7 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 import json
 import re
 import time
+from typing import Any
 
 from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
@@ -37,7 +38,7 @@ _WTJ_JS = r"""
 }"""
 
 
-def _wtj_429(pg):
+def _wtj_429(pg: Any) -> bool:
     """WTJ nous bride-t-il ? Lisible MEME quand la navigation a echoue : la page
     d'erreur porte « Too Many Requests » alors que robust_goto rend ok=False."""
     try:
@@ -59,7 +60,7 @@ WTJ_PATIENCE = 2  # nombre maximum d'attentes par passe
 # dans une passe bornee a 60, pour un mur qui retombait aussitot la plupart du temps.
 
 
-def _wtj_fiche(url, client):
+def _wtj_fiche(url: str, client: Any) -> dict[str, Any] | None:
     """JobPosting d'une fiche WTJ, ou None. Meme balisage que eFinancialCareers :
     un <script type="application/ld+json"> destine a Google.
 
@@ -90,7 +91,7 @@ def _wtj_fiche(url, client):
     return None
 
 
-def scan_wtj(pages=2):
+def scan_wtj(pages: int = 2) -> list[dict[str, Any]]:
     """Offres Welcome to the Jungle, via le SITEMAP declare dans robots.txt.
 
     L'ANCIENNE VERSION VISAIT UNE ROUTE INTERDITE, ET MORTE. Elle construisait
@@ -126,9 +127,9 @@ def scan_wtj(pages=2):
     from jobhunter.programmes.wtj_desc import Bloque
 
     _EX = _commun.contrats_exclus()
-    offers = []
+    offers: list[dict[str, Any]] = []
 
-    def _lire(client, url):
+    def _lire(client: Any, url: str) -> str:
         r = _commun._get_borne(client, url, headers=_WUA, timeout=90)
         if r.status_code != 200:
             return ""
@@ -188,7 +189,7 @@ def scan_wtj(pages=2):
         # Ce n'est pas un contournement : on ralentit, on ne force rien.
         etat = {"attentes": 0}
 
-        def _fiche_patiente(url):
+        def _fiche_patiente(url: str) -> Any:
             """JobPosting, ou None si WTJ nous ferme la porte pour de bon.
 
             Rend None UNIQUEMENT quand la patience est epuisee : l'appelant sait

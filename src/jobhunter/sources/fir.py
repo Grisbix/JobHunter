@@ -3,6 +3,7 @@
 Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
 import re
+from typing import Any
 
 from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
@@ -21,7 +22,7 @@ _log = _journal.journal(__name__)
 FIR_URL = "https://www.frenchsif.org/isr_esg/emplois-et-stages/"
 
 
-def fetch_fir():
+def fetch_fir() -> list[dict[str, Any]]:
     import html as _html
 
     import httpx
@@ -63,7 +64,7 @@ def fetch_fir():
     return out
 
 
-def scan_fir():
+def scan_fir() -> list[dict[str, Any]]:
     o = fetch_fir()
     _log.info(f"  ✓ FIR / French SIF → {len(o)} offres (100 % ISR-ESG)")
     return o

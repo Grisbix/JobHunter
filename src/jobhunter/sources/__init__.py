@@ -22,6 +22,7 @@ collecte sortir sur le vrai reseau.
 """
 
 import re
+from typing import Any
 
 from jobhunter import _facade
 
@@ -47,7 +48,7 @@ _SOUS_MODULES = (
 _MODULES = _facade.installer(__name__, _SOUS_MODULES)
 
 
-def _motifs():
+def _motifs() -> Any:
     """Toutes les regex compilees des sous-modules : {(module, nom): motif}."""
     return {
         (m.__name__.rsplit(".", 1)[1], n): v
@@ -57,7 +58,7 @@ def _motifs():
     }
 
 
-def _verifier_motifs():
+def _verifier_motifs() -> None:
     # TOUTE regex compilee de la collecte, quel que soit son nom et son sous-module.
     # Le controle ne regardait autrefois que le prefixe `_RX_` et laissait passer
     # _DOMAIN_RX, _HARD_NEG_RX, _AI_RX... — exactement les motifs de title_ok, le filtre

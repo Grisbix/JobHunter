@@ -4,6 +4,7 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
 import re
 import time
+from typing import Any
 from urllib.parse import quote
 
 from jobhunter import journal as _journal
@@ -25,7 +26,9 @@ _LI_COMP = re.compile(r"base-search-card__subtitle[^>]*>.*?>([^<]+)<", re.S)
 _LI_LOC = re.compile(r"job-search-card__location[^>]*>([^<]+)<", re.S)
 
 
-def linkedin_guest_search(keyword, pages=2, days=7, lieu="France"):
+def linkedin_guest_search(
+    keyword: str, pages: int = 2, days: int = 7, lieu: str = "France"
+) -> list[dict[str, Any]]:
     """API guest LinkedIn (HTML fragments, AUCUN login, lecture publique).
     Pagination par start=0,25,50… f_TPR filtre fraîcheur (604800s=7j).
 
@@ -37,7 +40,7 @@ def linkedin_guest_search(keyword, pages=2, days=7, lieu="France"):
 
     import httpx
 
-    out = []
+    out: list[dict[str, Any]] = []
     for p in range(pages):
         if _LI["stop"]:
             return out
@@ -116,18 +119,19 @@ LI_ATTENTES = (60, 120, 240)
 
 LI_DUREE_MAX = 2700
 
-_LI = {"stop": None, "attendu": 0.0, "suite_429": 0, "debut": 0.0}
+_LI: dict[str, Any] = {"stop": None, "attendu": 0.0, "suite_429": 0, "debut": 0.0}
 
 _dormir = time.sleep  # les tests le remplacent
 
 _horloge = time.monotonic  # idem
 
 
-def _li_ecoule():
-    return _horloge() - _LI["debut"]
+def _li_ecoule() -> float:
+    debut: float = _LI["debut"]
+    return _horloge() - debut
 
 
-def _li_pause_429(r):
+def _li_pause_429(r: Any) -> bool:
     """Attend avant de redemander apres un 429. False si la passe n'a plus le temps."""
     ra = (getattr(r, "headers", None) or {}).get("Retry-After", "")
     n = _LI["suite_429"]
@@ -162,7 +166,9 @@ def _li_pause_429(r):
 LIEUX_MONDE = {"France": 3, "Worldwide": 12}
 
 
-def scan_linkedin(pages=2, days=7, lieux=None):
+def scan_linkedin(
+    pages: int = 2, days: int = 7, lieux: list[str] | dict[str, int] | None = None
+) -> list[dict[str, Any]]:
     """days = fenetre de fraicheur LinkedIn (f_TPR). Le defaut de 7 jours suffit
     au scan quotidien, mais il rend invisibles les offres plus anciennes jamais
     captees : passer --days 31 pour rattraper un mois entier.
@@ -174,7 +180,8 @@ def scan_linkedin(pages=2, days=7, lieux=None):
         lieux = LIEUX_MONDE if _commun.MONDE else ["France"]
     # Un dict donne la profondeur par lieu, une liste garde celle de l'argument.
     profondeur = dict(lieux) if isinstance(lieux, dict) else {x: pages for x in lieux}
-    offers, seen = [], set()
+    offers: list[dict[str, Any]] = []
+    seen: set[str] = set()
     _LI.update(stop=None, attendu=0.0, suite_429=0, debut=_horloge())
     for lieu in profondeur:
         n_lieu = 0

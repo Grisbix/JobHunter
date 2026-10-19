@@ -7,6 +7,7 @@ import html
 import json
 import re
 import time
+from typing import Any
 from urllib.parse import quote, unquote, urlparse
 
 from jobhunter import journal as _journal
@@ -18,7 +19,7 @@ _log = _journal.journal(__name__)
 
 
 # ═══════════════ 1. ATS APIs (httpx pur, pas de navigateur) — AVEC descriptions ═══════════════
-def _ats_ko(kind, slug, r):
+def _ats_ko(kind: str, slug: str, r: Any) -> bool:
     """Réponse inutilisable ? Et si oui, faut-il s'en inquiéter ?
 
     404 : le slug n'existe pas chez cet ATS. C'est le cas NORMAL — la liste est
@@ -79,7 +80,7 @@ ATS_NOMS = {
 }
 
 
-def nom_ats(slug):
+def nom_ats(slug: str) -> str:
     return ATS_NOMS.get(slug.lower()) or slug.title()
 
 
@@ -89,12 +90,12 @@ def nom_ats(slug):
 _RX_TT_ITEM = re.compile(r"<item>(.*?)</item>", re.S)
 
 
-def _tt(champ, item):
+def _tt(champ: str, item: Any) -> str:
     m = re.search(r"<" + re.escape(champ) + r">(.*?)</" + re.escape(champ) + r">", item, re.S)
     return html.unescape(m.group(1).strip()) if m else ""
 
 
-def fetch_ats(kind, slug):
+def fetch_ats(kind: str, slug: str) -> list[dict[str, Any]]:
     import httpx
 
     out = []
@@ -250,7 +251,7 @@ def fetch_ats(kind, slug):
 ATS_PAUSE = 0.5  # entre deux slugs : 40 appels d'affilee, autant les espacer
 
 
-def scan_ats():
+def scan_ats() -> list[dict[str, Any]]:
     offers = []
     for kind, slugs in _commun.ATS_SLUGS.items():
         for slug in slugs:
@@ -323,12 +324,12 @@ _RX_SM_ID = re.compile(r"^\d{3,}[\s/]+")
 _RX_SM_H1 = re.compile(r"<h1[^>]*>(.*?)</h1>", re.S)
 
 
-def _sans_cdata(s):
+def _sans_cdata(s: str) -> str:
     m = _RX_CDATA.match(s.strip())
     return m.group(1) if m else s
 
 
-def fetch_autre(kind, cle, nom):
+def fetch_autre(kind: str, cle: str, nom: str) -> list[dict[str, Any]]:
     import httpx
 
     out = []
@@ -433,7 +434,7 @@ def fetch_autre(kind, cle, nom):
             )
             if _ats_ko(kind, cle, r):
                 return []
-            champs = {}
+            champs: dict[str, Any] = {}
             for nom_champ, i, val in _RX_PS_CHAMP.findall(r.text):
                 champs.setdefault(i, {})[nom_champ] = html.unescape(val.strip())
             for i in sorted(champs, key=int):
@@ -557,7 +558,7 @@ def fetch_autre(kind, cle, nom):
     return [o for o in out if o["titre"] and o["url"] and title_ok(o["titre"])]
 
 
-def _cherche_autre(httpx, kind, cle, mot):
+def _cherche_autre(httpx: Any, kind: str, cle: str, mot: str) -> list[Any]:
     """[(titre, url, lieu, date, description)] pour un mot-cle, cote serveur."""
     if kind == "eightfold":
         hote, domaine = cle.split("|")
@@ -884,7 +885,7 @@ _RX_CSP_TITRE = re.compile(
 _RX_CSP_CHAMP = re.compile(r'<span class="sr-only">([^<]+?) : </span>\s*(.*?)\s*</li>', re.S)
 
 
-def fetch_service_public():
+def fetch_service_public() -> list[dict[str, Any]]:
     import httpx
 
     out, vus = [], set()
@@ -950,7 +951,7 @@ _RX_IP_CARTE = re.compile(
 )
 
 
-def fetch_impactpool():
+def fetch_impactpool() -> list[dict[str, Any]]:
     import httpx
 
     out, vus = [], set()
@@ -985,11 +986,11 @@ def fetch_impactpool():
     return [o for o in out if o["titre"] and o["url"] and title_ok(o["titre"])]
 
 
-def _texte_brut(fragment):
+def _texte_brut(fragment: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", fragment))).strip()
 
 
-def scan_autres():
+def scan_autres() -> list[dict[str, Any]]:
     offres = []
     for kind, cle, nom in _commun.AUTRES_FLUX:
         got = fetch_autre(kind, cle, nom)

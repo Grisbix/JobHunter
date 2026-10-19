@@ -4,6 +4,7 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
 import json
 import time
+from typing import Any
 
 from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
@@ -88,7 +89,7 @@ _APEC_CONTRAT = {101888: "CDI", 101887: "CDD", 597137: "Alternance"}
 APEC_ABANDON = 3
 
 
-def _apec_page(mot, debut):
+def _apec_page(mot: str, debut: int) -> tuple[Any, int]:
     """Une page de resultats APEC. Liste vide en cas de refus."""
     import urllib.error
     import urllib.request
@@ -118,7 +119,7 @@ def _apec_page(mot, debut):
     return d.get("resultats") or [], d.get("totalCount") or 0
 
 
-def scan_apec(mots=None, pages=2):
+def scan_apec(mots: list[str] | None = None, pages: int = 2) -> list[dict[str, Any]]:
     """Offres APEC : titre, societe, lieu, date, salaire, extrait de 283 car.
 
     `pages` : pages de 50 par mot-cle. Une page coute UNE requete, d'ou le

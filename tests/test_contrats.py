@@ -85,6 +85,11 @@ PAR_DESCRIPTION = [
     # un passe demande, pas un statut
     ("Erste Erfahrungen durch Praktika oder Werkstudententätigkeiten im Finanzbereich.", ""),
     ("Relevant experience through internships, working student roles, or research projects.", ""),
+    # sans libelle « Contrat : » : la mention seule, et l'enumeration qui ne declare rien
+    # (le 2026-10-19, un renommage cassait ce chemin sans qu'aucun test ne le voie)
+    ("Nous proposons un poste en CDI, basé à Paris.", "CDI"),
+    ("Mission de V.I.E de 12 mois à Singapour.", "V.I.E"),
+    ("Il ouvre la voie à des opportunités en alternance, VIE, CDD et CDI.", ""),
     # hors sujet
     ("Candidates currently pursuing certification may also be considered.", ""),
     ("Nous accompagnons les étudiants et les entreprises dans leur transition.", ""),

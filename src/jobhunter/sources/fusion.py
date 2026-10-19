@@ -4,6 +4,7 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
 import importlib
 import time
+from typing import Any
 
 from jobhunter.scoring import zones as _zones
 from jobhunter.sources import commun as _commun
@@ -71,7 +72,7 @@ _ATS = (
 )
 
 
-def rang_source(url):
+def rang_source(url: str | None) -> int:
     """Qualite de la source, du pire au meilleur. Sert a arbitrer les doublons.
 
     0 LinkedIn      mur de connexion, description illisible, redirige ailleurs
@@ -93,7 +94,7 @@ def rang_source(url):
     return 3  # domaine d'entreprise : c'est la source
 
 
-def merge_into_queue(fresh, dry=False, attente=180):
+def merge_into_queue(fresh: list[dict[str, Any]], dry: bool = False, attente: float = 180) -> Any:
     """Fusionne `fresh` dans la file. Lecture-modification-ECRITURE : sous verrou.
 
     `main()` prend deja le verrou pour tout le processus (`verrou.garder`), et
@@ -119,7 +120,9 @@ def merge_into_queue(fresh, dry=False, attente=180):
             verrou.rendre_verrou(_commun.QUEUE)
 
 
-def _merge_into_queue(fresh, dry, fit_detail, score_offer, queue_io):
+def _merge_into_queue(
+    fresh: list[dict[str, Any]], dry: bool, fit_detail: Any, score_offer: Any, queue_io: Any
+) -> dict[str, Any]:
     # QUEUE explicite : les tests remplacent cette constante par un fichier
     # jetable. Sans elle, charger() lirait la vraie file.
     q = queue_io.charger(_commun.QUEUE)  # descriptions reinjectees depuis descriptions.json

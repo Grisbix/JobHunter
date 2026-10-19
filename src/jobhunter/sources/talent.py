@@ -5,6 +5,7 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 import datetime
 import re
 import time
+from typing import Any
 
 from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
@@ -27,7 +28,7 @@ TALENT_SEARCH = "https://fr.talent.com/jobs?k={kw}&l=France"
 _TALENT_LINK_RX = re.compile(r'href="(/view\?id=\d+)"')
 
 
-def _talent_detail(httpx, url):
+def _talent_detail(httpx: Any, url: str) -> Any:
     """(titre, entreprise, lieu, date, description) depuis le JSON-LD JobPosting."""
     import html as _html
     import json as _json
@@ -44,7 +45,7 @@ def _talent_detail(httpx, url):
         except Exception:
             continue
         nodes = d.get("@graph") if isinstance(d, dict) and "@graph" in d else [d]
-        for n in nodes:
+        for n in nodes or []:
             if not (isinstance(n, dict) and n.get("@type") == "JobPosting"):
                 continue
             loc = ""
@@ -63,7 +64,7 @@ def _talent_detail(httpx, url):
     return None
 
 
-def fetch_talent(max_days=60, per_kw=20):
+def fetch_talent(max_days: int = 60, per_kw: int = 20) -> list[dict[str, Any]]:
     """Offres Talent.com pour chaque mot-cle. max_days ecarte les annonces
     anciennes : le site sert des offres de plus d'un an (vu : datePosted 2025-06)."""
     from urllib.parse import quote as _q
@@ -124,7 +125,7 @@ def fetch_talent(max_days=60, per_kw=20):
     return out
 
 
-def scan_talent():
+def scan_talent() -> list[dict[str, Any]]:
     o = fetch_talent()
     _log.info(f"  ✓ Talent.com → {len(o)} offres (avec description)")
     return o

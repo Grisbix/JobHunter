@@ -4,6 +4,7 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
 import re
 import time
+from typing import Any
 
 from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
@@ -27,7 +28,7 @@ VIE_BASE = "https://mon-vie-via.businessfrance.fr"
 _VIE_KEY_FALLBACK = "l+KwpoLPiXlsjxNT/NQ2iOFz8+iuygxAODs9FeAEWYM="
 
 
-def _vie_key():
+def _vie_key() -> str:
     """Clé lue en direct dans la config publique du site ; le fallback évite de
     tout casser si la page change, mais une clé figée finira par tourner.
 
@@ -49,14 +50,15 @@ def _vie_key():
     return _VIE_KEY_FALLBACK
 
 
-def fetch_vie(limit=1000):
+def fetch_vie(limit: int = 1000) -> list[dict[str, Any]]:
     """Offres V.I.E/V.I.A. Intérêt pour un profil junior : contrat 12-24 mois,
     indemnité nette, et beaucoup de postes finance/ESG en filiale à l'étranger."""
     import httpx
 
     key = _vie_key()
     H = {**UA, "Content-Type": "application/json", "Accept": "application/json", "x-api-key": key}
-    out, skip = [], 0
+    out: list[dict[str, Any]] = []
+    skip = 0
     while len(out) < limit:
         try:
             r = _commun._post_borne(
@@ -112,7 +114,7 @@ def fetch_vie(limit=1000):
     return out
 
 
-def scan_vie():
+def scan_vie() -> list[dict[str, Any]]:
     o = fetch_vie()
     _log.info(f"  ✓ V.I.E/V.I.A Business France → {len(o)} offres (après filtre métier)")
     return o

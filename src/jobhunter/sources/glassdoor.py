@@ -4,6 +4,7 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
 import re
 import time
+from typing import Any
 
 from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
@@ -67,14 +68,14 @@ _RX_GD_AGE = re.compile(r'data-test="job-age"[^>]*>(.*?)</div>', re.S)
 _RX_GD_EXTRAIT = re.compile(r'jobDescriptionSnippet[^"]*"[^>]*>(.*?)</div>', re.S)
 
 
-def _gd_texte(h):
+def _gd_texte(h: str) -> str:
     """Fragment HTML → texte nu."""
     import html as _h
 
     return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", _h.unescape(h or ""))).strip()
 
 
-def _gd_date(age):
+def _gd_date(age: Any) -> str:
     """« 3j » → la date d'il y a trois jours. « 30j+ » → rien.
 
     L'anciennete affichee est relative et parfois NON BORNEE : « 30j+ » couvre
@@ -92,7 +93,7 @@ def _gd_date(age):
     return time.strftime("%Y-%m-%d", time.localtime(time.time() - jours * 86400))
 
 
-def _gd_url(mot):
+def _gd_url(mot: str) -> str:
     """L'URL canonique de recherche. Le mot-cle est DANS le chemin.
 
     Piege verifie a la main : `?sc.keyword=analyste+financier` est ignore en
@@ -121,7 +122,7 @@ def _gd_url(mot):
     )
 
 
-def _gd_cartes(mot):
+def _gd_cartes(mot: str) -> list[Any]:
     """Les cartes de la page 1 pour un mot-cle, France entiere."""
     import urllib.error
     import urllib.request
@@ -157,7 +158,7 @@ def _gd_cartes(mot):
     return _gd_parse(texte)
 
 
-def _gd_parse(texte):
+def _gd_parse(texte: str) -> list[Any]:
     """HTML de la page de recherche → cartes. Separe du reseau pour etre
     testable sur une page enregistree, sans requete."""
     titres = list(_RX_GD_TITRE.finditer(texte))
@@ -186,7 +187,9 @@ def _gd_parse(texte):
     return cartes
 
 
-def scan_glassdoor(mots=None, pause=None):
+def scan_glassdoor(
+    mots: list[str] | None = None, pause: float | None = None
+) -> list[dict[str, Any]]:
     """Page 1 de la recherche Glassdoor, France entiere, un passage par mot-cle.
 
     30 cartes au maximum par requete. La zone est jugee apres coup sur le lieu
@@ -196,7 +199,8 @@ def scan_glassdoor(mots=None, pause=None):
     mots = mots or _commun.KEYWORDS
     pause = GD_PAUSE if pause is None else pause
     _EX = _commun.contrats_exclus()
-    offers, vus = [], set()
+    offers: list[dict[str, Any]] = []
+    vus: set[str] = set()
     refus = refuses = 0
     _log.info(
         f"  Glassdoor : {len(mots)} mots-cles ({pause} s entre chaque, "

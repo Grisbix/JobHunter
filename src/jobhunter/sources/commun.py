@@ -15,11 +15,14 @@ from jobhunter import reseau as _reseau
 
 # Requetes bornees : jobhunter.reseau (phase 3.2). Les anciens noms restent ici,
 # ce sont eux que les tests remplacent (via la facade jobhunter.sources).
-from jobhunter.reseau import client_partage as _client_partage  # noqa: F401
-from jobhunter.reseau import get_borne as _get_borne  # noqa: F401
-from jobhunter.reseau import lire_borne as _lire_borne  # noqa: F401
-from jobhunter.reseau import post_borne as _post_borne  # noqa: F401
-from jobhunter.reseau import req_borne as _req_borne  # noqa: F401
+
+# Affectations, pas `import … as` : les autres sources les lisent ici
+# (`_commun._get_borne`), et mypy strict n'exporte pas un nom importe.
+_client_partage = _reseau.client_partage
+_get_borne = _reseau.get_borne
+_lire_borne = _reseau.lire_borne
+_post_borne = _reseau.post_borne
+_req_borne = _reseau.req_borne
 from jobhunter.scoring.domaines import classify_domaine, matches_esg_finance
 
 _ici = sys.modules[__name__]
@@ -121,7 +124,7 @@ UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.3
 INCIDENTS = _reseau.INCIDENTS
 
 
-def incidents_resume():
+def incidents_resume() -> list[str]:
     """Les refus du run, en une ligne par source. Vide si tout s'est bien passe."""
     return INCIDENTS.resume()
 
@@ -130,7 +133,7 @@ def incidents_resume():
 SOURCES_CFG = HERE / "sources_config.json"
 
 
-def _load_cfg():
+def _load_cfg() -> None:
     """sources_config.json — écrase les défauts :
         keywords      [mots-clés]
         ats_slugs     {ats: [slugs]}
@@ -142,7 +145,7 @@ def _load_cfg():
     try:
         cfg = json.loads(SOURCES_CFG.read_text(encoding="utf-8"))
         if cfg.get("keywords"):
-            KEYWORDS = cfg["keywords"]
+            KEYWORDS = cfg["keywords"]  # type: ignore[name-defined]  # valeur paresseuse (_PARESSEUX)
         if "ats_slugs" in cfg:
             ATS_SLUGS = cfg["ats_slugs"] or {}
         if "workday_flux" in cfg:
@@ -153,7 +156,15 @@ def _load_cfg():
         pass
 
 
-def _mk(titre, url, entreprise, location="", date="", source="", description=""):
+def _mk(
+    titre: str,
+    url: str,
+    entreprise: str,
+    location: str = "",
+    date: str = "",
+    source: str = "",
+    description: str = "",
+) -> dict[str, Any]:
     return {
         "titre": titre.strip(),
         "url": url,
@@ -167,7 +178,7 @@ def _mk(titre, url, entreprise, location="", date="", source="", description="")
     }
 
 
-def _strip_html(h):
+def _strip_html(h: str) -> str:
     """HTML → texte propre (descriptions APIs ATS)."""
     import html as _html
 
@@ -226,7 +237,7 @@ _RX_VIE_MAJ = re.compile(r"\bVIE\b(?=\s*[-–—/:|,(])")  # sans re.I : « vie 
 # (le controle lui-meme est en FIN de module : voir _verifier_motifs)
 
 
-def contrats_exclus():
+def contrats_exclus() -> set[str]:
     """Types de contrat que l'utilisateur ne veut pas voir. Regle dans
     sources_config.json, pas en dur : il n'est pas etudiant aujourd'hui, il
     pourrait vouloir les revoir un jour. Liste vide = tout est affiche."""
@@ -238,7 +249,7 @@ def contrats_exclus():
         return set()
 
 
-def pays_exclus():
+def pays_exclus() -> list[str]:
     """Pays dont on ne veut plus aucune offre, par MOTIF applique au lieu.
 
     POURQUOI UN FILTRE ET PAS UNE PURGE. Supprimer 937 offres britanniques et
@@ -257,7 +268,7 @@ def pays_exclus():
         return []
 
 
-def _est_vie(o):
+def _est_vie(o: Any) -> bool:
     """L'offre vient-elle de Business France ?
 
     On regarde la SOURCE et l'URL, pas le nom de l'employeur : « ARCELORMITTAL
@@ -268,7 +279,7 @@ def _est_vie(o):
     ).lower().startswith("vie")
 
 
-def _rx_pays_exclus():
+def _rx_pays_exclus() -> re.Pattern[str] | None:
     """Le motif compile, ou None si rien n'est exclu.
 
     Les motifs viennent du reglage et sont assembles tels quels : c'est la
@@ -413,7 +424,7 @@ def demande_etudiant(desc: str | None) -> bool:
     return False
 
 
-def contrat_de_la_description(desc, defaut=""):
+def contrat_de_la_description(desc: str, defaut: str = "") -> str:
     """Type de contrat lu dans le CORPS de l'annonce, en deux passes.
 
     Un contrat FAUX est pire qu'un contrat vide : la colonne sert a filtrer.
@@ -445,15 +456,15 @@ def contrat_de_la_description(desc, defaut=""):
             if mot.startswith("v"):
                 return "V.I.E"
     for etiquette, motif in _DESC_CONTRAT:
-        m = motif.search(t)
-        if not m:
+        trouve = motif.search(t)
+        if not trouve:
             continue
         # UNE ENUMERATION N'EST PAS UNE DECLARATION. « …et d'opportunites en
         # alternance, VIE, CDD et CDI » decrit ce qui vient APRES le stage, pas
         # le contrat propose. C'est ce CDD-la qui a fait remonter quatre stages
         # du Credit Agricole en tete de liste. Quand plusieurs types se pressent
         # dans la meme phrase, aucun ne fait foi.
-        autour = t[max(0, m.start() - 90) : m.end() + 90]
+        autour = t[max(0, trouve.start() - 90) : trouve.end() + 90]
         if len(_RX_TOUS_CONTRATS.findall(autour)) > 1:
             continue
         return etiquette
@@ -479,7 +490,7 @@ _TITRE_CONTRAT = [
 ]
 
 
-def contrat_du_titre(titre, source="", defaut=""):
+def contrat_du_titre(titre: str, source: str = "", defaut: str = "") -> str:
     """Type de contrat deduit de l'intitule, sinon `defaut`.
 
     Ordre voulu : les contrats etudiants d'abord. Un titre « Stage puis CDI »
@@ -500,7 +511,7 @@ def contrat_du_titre(titre, source="", defaut=""):
     return defaut
 
 
-def title_ok(t):
+def title_ok(t: str) -> bool:
     """Filtre titre : mot-clé métier requis + pas un rôle hors-cible + lexique global.
     Exception IA : un titre estampillé IA passe même s'il contient « engineer »/
     « développeur », car c'est le marché visé en complément de l'ESG."""
@@ -699,7 +710,7 @@ _URL_JUNK = {
 }
 
 
-def _norm_url(u):
+def _norm_url(u: str | None) -> str:
     """Clé de dédup d'URL : hôte sans www, chemin sans / final, params de
     tracking retirés et reste trié. Les vrais identifiants (?jk=, ?id=) restent."""
     from urllib.parse import parse_qsl, urlencode, urlsplit
@@ -787,7 +798,7 @@ _RX_ETAT_US = re.compile(
 MONDE = True
 
 
-def en_france(lieu):
+def en_france(lieu: str | None) -> bool:
     """Le poste est-il en France (ou a distance) ?
 
     Rend toujours True quand MONDE est actif : la recherche mondiale ne filtre

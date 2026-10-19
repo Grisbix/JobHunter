@@ -6,7 +6,7 @@ import json
 import re
 import sys
 import time
-from typing import Any
+from typing import Any, NoReturn
 from urllib.parse import quote
 
 from jobhunter import journal as _journal
@@ -143,7 +143,7 @@ class _IndeedBride(Exception):
     scan suivant reprendra les mots-cles restants."""
 
 
-def _json_objet(texte, depart):
+def _json_objet(texte: str, depart: int) -> str:
     """L'objet JSON complet qui commence a l'accolade `depart`.
 
     Une expression non gourmande (\\{.*?\\};) s'arreterait au premier « }; »
@@ -182,7 +182,7 @@ class _IndeedBloque(Exception):
 INDEED_REQUETES = 0
 
 
-def _indeed_cartes(mot, lieu):
+def _indeed_cartes(mot: str, lieu: str) -> list[Any]:
     """Lit la page publique ; distingue refus, quota et réponse vide valide."""
     import urllib.error
     import urllib.request
@@ -191,7 +191,7 @@ def _indeed_cartes(mot, lieu):
     global INDEED_REQUETES
     url = f"{INDEED_HOTE}/jobs?q={quote(mot)}&l={quote(lieu)}"
 
-    def bloque(raison):
+    def bloque(raison: str) -> NoReturn:
         INCIDENTS["indeed"][raison] += 1
         raise _IndeedBloque(raison)
 
@@ -218,7 +218,7 @@ def _indeed_cartes(mot, lieu):
             INCIDENTS["indeed"][f"HTTP {code}"] += 1
             if code != 429:
                 raise _IndeedBloque(f"HTTP {code}")
-            attente = INDEED_REPOS
+            attente: float = INDEED_REPOS
             if retry_after:
                 try:
                     attente = max(0, int(retry_after))
@@ -244,7 +244,7 @@ def _indeed_cartes(mot, lieu):
     brut = _json_objet(texte, texte.find("{", m.end()))
     try:
         d = json.loads(brut)
-        resultats = d["metaData"]["mosaicProviderJobCardsModel"]["results"]
+        resultats: list[Any] = d["metaData"]["mosaicProviderJobCardsModel"]["results"]
         if not isinstance(resultats, list) or any(not isinstance(c, dict) for c in resultats):
             raise ValueError("results doit être une liste de cartes")
     except (ValueError, TypeError, KeyError):
@@ -252,7 +252,7 @@ def _indeed_cartes(mot, lieu):
     return resultats
 
 
-def _indeed_contrat(job_types):
+def _indeed_contrat(job_types: Any) -> str:
     """['Temps plein', 'CDI'] → 'CDI'. Rien de reconnu → ''."""
     import unicodedata
 
@@ -264,7 +264,7 @@ def _indeed_contrat(job_types):
     return ""
 
 
-def _indeed_date(ms):
+def _indeed_date(ms: int) -> str:
     """Epoch en millisecondes → 'AAAA-MM-JJ'. C'est la VRAIE date de parution.
 
     Elle vaut mieux que la date de scan : la file porte 2634 offres datees du
@@ -280,7 +280,13 @@ def _indeed_date(ms):
     return time.strftime("%Y-%m-%d", time.localtime(s))
 
 
-def scan_indeed(mots=None, lieux=None, pause=None, *, persist=True):
+def scan_indeed(
+    mots: list[str] | None = None,
+    lieux: list[str] | None = None,
+    pause: float | None = None,
+    *,
+    persist: bool = True,
+) -> list[dict[str, Any]]:
     """Page 1 des resultats Indeed, pour chaque couple (mot-cle, lieu).
 
     15 cartes au maximum par requete — c'est le mur de connexion de la page 2

@@ -4,6 +4,7 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
 import re
 import time
+from typing import Any
 
 from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
@@ -104,7 +105,7 @@ _RX_EURES_ANONYME = re.compile(
 )
 
 
-def _eures_corps(mot, page, par_page):
+def _eures_corps(mot: str, page: int, par_page: int) -> dict[str, Any]:
     return {
         "resultsPerPage": par_page,
         "page": page,
@@ -127,7 +128,7 @@ def _eures_corps(mot, page, par_page):
     }
 
 
-def _eures_offre(j, _EX):
+def _eures_offre(j: Any, _EX: Any) -> dict[str, Any] | None:
     """Une annonce EURES -> offre, ou None si l'intitule ne convient pas."""
     titre = __import__("html").unescape(str(j.get("title") or "")).strip()
     # FILTRE STRICT, mesure le 2026-09-24. Avec le seul filtre metier d'eFC,
@@ -165,7 +166,9 @@ def _eures_offre(j, _EX):
     )
 
 
-def scan_eures(pages=1, par_page=50, mots=None):
+def scan_eures(
+    pages: int = 1, par_page: int = 50, mots: list[str] | None = None
+) -> list[dict[str, Any]]:
     """Offres EURES de la derniere semaine, une page par mot-cle par defaut."""
     import httpx
 

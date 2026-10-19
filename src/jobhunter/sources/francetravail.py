@@ -3,6 +3,7 @@
 Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
 import time
+from typing import Any
 
 from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
@@ -31,7 +32,7 @@ FT_TOKEN_URL = (
 FT_SEARCH = "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search"
 
 
-def _ft_token():
+def _ft_token() -> str | None:
     import json as _json
 
     import httpx
@@ -54,13 +55,14 @@ def _ft_token():
         if r.status_code != 200:
             _log.info(f"  ✗ France Travail token http {r.status_code} — verifie les identifiants")
             return None
-        return r.json().get("access_token")
+        jeton: str | None = r.json().get("access_token")
+        return jeton
     except Exception as e:
         _log.info(f"  ✗ France Travail token {type(e).__name__}")
         return None
 
 
-def fetch_france_travail(par_mot=50):
+def fetch_france_travail(par_mot: int = 50) -> list[dict[str, Any]]:
     import httpx
 
     tok = _ft_token()
@@ -114,7 +116,7 @@ def fetch_france_travail(par_mot=50):
     return out
 
 
-def scan_france_travail():
+def scan_france_travail() -> list[dict[str, Any]]:
     o = fetch_france_travail()
     if not o and not FT_CFG.exists():
         _log.info(

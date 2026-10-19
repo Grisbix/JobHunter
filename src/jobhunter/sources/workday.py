@@ -3,6 +3,7 @@
 Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
 import time
+from typing import Any
 
 from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
@@ -33,7 +34,7 @@ WORKDAY_DETAILS = 25  # fiches detaillees par flux, au plus
 WORKDAY_PARALLELE = 6  # flux lus en meme temps (un tenant = un site) ; 42 flux au 2026-10-08
 
 
-def _workday_detail(httpx, base, tenant, site, chemin):
+def _workday_detail(httpx: Any, base: str, tenant: str, site: str, chemin: str) -> dict[str, Any]:
     """La fiche d'une offre : description, date reelle, pays, temps de travail."""
     try:
         r = _commun._post_borne(
@@ -66,7 +67,7 @@ def _workday_detail(httpx, base, tenant, site, chemin):
     }
 
 
-def fetch_workday(tenant, host, site, nom):
+def fetch_workday(tenant: str, host: str, site: str, nom: str) -> list[dict[str, Any]]:
     """Les offres d'un flux Workday qui passent title_ok, descriptions comprises."""
     import httpx
 
@@ -128,7 +129,7 @@ def fetch_workday(tenant, host, site, nom):
     return [o for o in out if o["titre"] and o["url"]]
 
 
-def scan_workday():
+def scan_workday() -> list[dict[str, Any]]:
     """Les flux en parallele, WORKDAY_PARALLELE a la fois. Chaque tenant est un
     site distinct : la pause par flux tient toujours, aucun n'est sollicite plus
     vite qu'avant. En serie, 27 flux a ~70 s depassaient le plafond de 30 min

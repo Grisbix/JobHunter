@@ -43,7 +43,7 @@ _PARESSEUX["INDEED_LIEUX"] = lambda: (
 )
 
 
-def main():
+def main() -> int:
     _load_cfg()  # sources éditées depuis l'app
     ap = argparse.ArgumentParser()
     ap.add_argument("--all", action="store_true")
@@ -298,7 +298,7 @@ def main():
     return code or (4 if a.indeed and INCIDENTS.get("indeed") else 0)
 
 
-def _fusionner(uniq, dry):
+def _fusionner(uniq: Any, dry: bool) -> int:
     """Fusionne le scan dans la file. Rend un code de sortie.
 
     Le verrou de la file n'est pris QU'ICI. Si un autre programme l'occupe, on

@@ -5,6 +5,7 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 import json
 import re
 import time
+from typing import Any
 from urllib.parse import unquote, urlparse
 
 from jobhunter import journal as _journal
@@ -46,7 +47,7 @@ EFC_DELAI = 10  # crawl-delay annonce par robots.txt — ne pas baisser
 EFC_SITES = ("fr", "com", "co.uk", "de", "ch", "nl", "lu", "ie", "sg")
 
 
-def _efc_sitemap(site):
+def _efc_sitemap(site: str) -> str:
     return f"https://www.efinancialcareers.{site}/sitemap-secure/latestjobs/xml"
 
 
@@ -94,7 +95,7 @@ _RX_EFC_GRAD = re.compile(
 _RX_EFC_VIE = re.compile(r"\bV\.?I\.?E\b")
 
 
-def _est_graduate(titre):
+def _est_graduate(titre: str) -> bool:
     """Programme jeune diplome ou V.I.E ?"""
     return bool(_RX_EFC_GRAD.search(titre) or _RX_EFC_VIE.search(titre))
 
@@ -135,12 +136,12 @@ _RX_EFC_SENIOR = re.compile(
 )
 
 
-def _est_metier(titre):
+def _est_metier(titre: str) -> bool:
     """Intitule compatible avec le profil, et pas deja trop senior ?"""
     return bool(_RX_EFC_METIER.search(titre)) and not _RX_EFC_SENIOR.search(titre)
 
 
-def _efc_urls(client, site="fr"):
+def _efc_urls(client: Any, site: str = "fr") -> list[tuple[Any, str]]:
     """(url, titre approximatif) de chaque offre du sitemap. Une seule requete."""
     r = _commun._get_borne(client, _efc_sitemap(site), headers=EFC_UA, timeout=60)
     if r.status_code != 200:
@@ -155,7 +156,7 @@ def _efc_urls(client, site="fr"):
     return out
 
 
-def _efc_fiche(url, client):
+def _efc_fiche(url: str, client: Any) -> dict[str, Any] | None:
     """JobPosting de la fiche, ou None. Ne leve jamais."""
     try:
         r = _commun._get_borne(client, url, headers=EFC_UA, timeout=30)
@@ -175,7 +176,7 @@ def _efc_fiche(url, client):
     return None
 
 
-def _efc_lieu(jp):
+def _efc_lieu(jp: Any) -> str:
     """Ville du JobPosting. jobLocation peut etre un objet ou une liste."""
     loc = jp.get("jobLocation")
     if isinstance(loc, list):
@@ -188,7 +189,9 @@ def _efc_lieu(jp):
     ).strip()
 
 
-def scan_efc(limit=40, filtre="esg", sites=("fr",)):
+def scan_efc(
+    limit: int = 40, filtre: str = "esg", sites: tuple[str, ...] = ("fr",)
+) -> list[dict[str, Any]]:
     """Offres eFinancialCareers, description comprise.
 
     filtre :
@@ -248,7 +251,7 @@ def scan_efc(limit=40, filtre="esg", sites=("fr",)):
         # A TOUR DE ROLE entre les sites. Pris dans l'ordre des sitemaps, les
         # `limit` places allaient toutes au .fr, lu en premier : a l'essai, 8
         # fiches sur 8 etaient parisiennes et l'etranger n'etait jamais atteint.
-        par_site = {}
+        par_site: dict[str, Any] = {}
         for u in neuves:
             par_site.setdefault(urlparse(u).netloc, []).append(u)
         alterne = []

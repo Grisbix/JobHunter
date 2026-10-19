@@ -184,8 +184,10 @@ file de 12 137 offres et sur les clés que le code lit ou écrit. `cli`, `accuei
 `documents` 187, `navigation` 175, `sources` 395, `app` 1 024, les programmes ~85.
 Puis `documents.rendu`, `llm`, `commun`, `cv_auto` et `cv` passent stricts (banc 0 écart) ;
 puis `lettre` et `message` : **tout `documents` est strict**, puis **tout `navigation`**
-(objets Playwright typés `Any` : `page.evaluate` rend Any de toute façon). Restent
-`sources` (395), `app` (1 024) et les programmes.
+(objets Playwright typés `Any` : `page.evaluate` rend Any de toute façon), puis **tout
+`sources`**. Restent `app` (1 024) et les programmes. Leçon : un renommage de variable
+que mypy jugeait correct cassait `contrat_de_la_description` (32 écarts au banc, aucun
+test) — le banc reste obligatoire même pour du typage.
 
 ## Phase 6 — Distribution (1 journée) → v2.x
 

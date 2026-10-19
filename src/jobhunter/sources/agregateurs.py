@@ -3,6 +3,8 @@
 Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4)."""
 
 import time
+from pathlib import Path
+from typing import Any
 
 from jobhunter import journal as _journal
 from jobhunter.sources import commun as _commun
@@ -83,7 +85,7 @@ AGREG_ABANDON = 3  # refus d'entree d'affilee (cle refusee, blocage)
 AGREG_REPOS_429 = 60  # une limite de debit s'attend ; deux fois au plus
 
 
-def _cle(chemin, *champs):
+def _cle(chemin: Path, *champs: str) -> tuple[str, ...] | None:
     """Les champs du fichier de cle, ou None. Ne leve jamais, n'affiche rien de la cle."""
     import json as _json
 
@@ -102,10 +104,10 @@ def _cle(chemin, *champs):
 class _Garde:
     """Compte les refus d'une source : 429 -> pause puis reprise, refus d'entree -> arret."""
 
-    def __init__(self, nom):
+    def __init__(self, nom: str) -> None:
         self.nom, self.refus, self.repos, self.fini = nom, 0, 0, False
 
-    def reponse(self, r):
+    def reponse(self, r: Any) -> bool:
         """True si la reponse est exploitable. Gere pauses et abandon."""
         if r.status_code == 429:
             INCIDENTS[self.nom]["HTTP 429"] += 1
@@ -137,7 +139,17 @@ class _Garde:
 _ADZUNA_CONTRAT = {"permanent": "CDI", "contract": "CDD"}
 
 
-def _agreg_offre(titre, url, entreprise, lieu, date, source, extrait, contrat, _EX):
+def _agreg_offre(
+    titre: str,
+    url: str,
+    entreprise: str | None,
+    lieu: str | None,
+    date: str,
+    source: str,
+    extrait: str | None,
+    contrat: str | None,
+    _EX: Any,
+) -> dict[str, Any] | None:
     titre = (titre or "").strip()
     if not titre or not url or not title_ok(titre):
         return None
@@ -159,7 +171,7 @@ def _agreg_offre(titre, url, entreprise, lieu, date, source, extrait, contrat, _
     return o
 
 
-def scan_adzuna():
+def scan_adzuna() -> list[dict[str, Any]]:
     import httpx
 
     cle = _cle(ADZUNA_CFG, "app_id", "app_key")
@@ -225,7 +237,7 @@ def scan_adzuna():
     return out
 
 
-def scan_jooble():
+def scan_jooble() -> list[dict[str, Any]]:
     import httpx
 
     cle = _cle(JOOBLE_CFG, "key")
