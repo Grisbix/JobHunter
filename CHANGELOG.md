@@ -4,6 +4,19 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.14.0 — 2026-10-19
+
+- **Relecture des lettres** (`jobhunter relecture`, ou Maintenance → Documents →
+  « Relire les lettres ») : une seconde passe qui signale, sans rien réécrire, ce qui
+  cloche dans une lettre — candidat qui se dévalorise, superlatif creux, « excellent »
+  pour une langue, tiret cadratin ou barre oblique, redites, autre entreprise nommée
+  (copier-coller), destinataire que l'annonce ne nomme pas, et ce qu'une annonce piégée
+  aurait pu glisser dans une lettre écrite par IA (consigne au modèle, adresse inconnue).
+- **Contrôle des dossiers** : un intitulé entre crochets (« [Open to internal and
+  external applicants] ») n'est plus pris pour un gabarit oublié.
+- Menu Maintenance : « Contrôler les dossiers » ajouté ; « Tests live » relancé (il
+  pointait vers un fichier retiré en 2.0).
+
 ## 2.13.0 — 2026-10-19
 
 - **Annuaire de 3 600 entreprises** dans le panneau Entreprises : tape un nom (« Alan »,

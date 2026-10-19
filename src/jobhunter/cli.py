@@ -48,6 +48,10 @@ COMMANDES = {
         "jobhunter.programmes.controle_dossiers",
         "verifie les dossiers (CV, lettre) avant envoi",
     ),
+    "relecture": (
+        "jobhunter.programmes.relecture",
+        "relit les lettres et signale ce qui cloche (rien n'est modifie)",
+    ),
     "postuler": (
         "jobhunter.programmes.apply_runner",
         "candidature semi-automatique (l'envoi reste humain)",

@@ -189,6 +189,8 @@ EN: dict[str, str] = {
     "Sonder mots-clés": "Probe keywords",
     "Sync docs+format": "Sync docs + format",
     "Export CSV": "Export CSV",
+    "Relire les lettres": "Review letters",
+    "Contrôler les dossiers": "Check application files",
     "URLs mortes": "Dead URLs",
     "Recheck 404": "Recheck 404",
     "Re-score": "Re-score",

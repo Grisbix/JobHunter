@@ -25,11 +25,13 @@ from jobhunter import profil as _profil
 PIECES = (("cv", "CV"), ("lettre", "lettre"))
 
 # Gabarits non remplis : crochets en capitales ou « nom du poste », accolades de format,
-# marqueurs de brouillon.
+# marqueurs de brouillon. Sensible à la casse, sauf « nom du poste » et « lorem ipsum » :
+# avec re.I sur tout le motif, « crochets en capitales » prenait n'importe quel texte
+# entre crochets — dont l'intitulé « Green Finance Analyst [Open to internal and external
+# applicants] » de l'ONU, signalé à tort comme gabarit oublié (vu le 19/10/2026).
 _RX_GABARIT = re.compile(
-    r"\[(?:nom du poste|[A-ZÉÈ][A-ZÉÈ _'-]{2,})\]|\{[a-z_]{3,}\}|<(?:DATE|NOM|POSTE)>|\bXXX+\b"
-    r"|lorem ipsum",
-    re.I,
+    r"\[(?i:nom du poste)\]|\[[A-ZÉÈ][A-ZÉÈ _'-]{2,}\]|\{[a-z_]{3,}\}|<(?:DATE|NOM|POSTE)>"
+    r"|\bXXX+\b|(?i:lorem ipsum)"
 )
 
 

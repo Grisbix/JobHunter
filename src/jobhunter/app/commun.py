@@ -237,6 +237,8 @@ MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
             ("CV/lettres…", None),  # None = commande construite a la volee
             ("Sync docs+format", [PY, "-m", "jobhunter.programmes.sync_docs", "--format"]),
             ("Export CSV", [PY, "-m", "jobhunter.programmes.export_queue_csv", "--keep", "8"]),
+            ("Relire les lettres", [PY, "-m", "jobhunter.programmes.relecture"]),
+            ("Contrôler les dossiers", [PY, "-m", "jobhunter.programmes.controle_dossiers"]),
         ],
     ),
     (
@@ -268,7 +270,10 @@ MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
                 "Tester accès aux sites",
                 [PY, "-m", "jobhunter.programmes.test_acces_sites", "--all", "--limit", "0"],
             ),
-            ("Tests live (lent, ouvre un navigateur)", [PY, "test_web_nav.py"]),
+            (
+                "Tests live (lent, ouvre un navigateur)",
+                [PY, "-m", "jobhunter.programmes.test_live_nav"],
+            ),
             ("Mettre à jour JobHunter", "maj"),  # "maj" = mise a jour + relance (App.mettre_a_jour)
             ("Langue : English", "langue"),  # bascule l'interface FR <-> EN (app.langue)
         ],
