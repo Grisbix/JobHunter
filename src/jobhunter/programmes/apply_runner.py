@@ -22,6 +22,15 @@ Per offer, console asks:
     [s] = marqué ENVOYÉ   [k] = SAUTÉ   [r] = re-remplir (après navigation manuelle)
     [o] = ré-ouvrir l'URL  [enter] = re-remplir   [q] = quitter (sauvegarde)
 
+`--pilote` : the same loop driven by the desktop app instead of the keyboard. Events go
+to stdout as `@JH {json}` lines (offre, pret, bloque, attente, resultat, fin); commands
+come on stdin, one per line (envoye, saute, reremplir, rouvrir, quitter). It adds no
+click: the submit button is still the user's.
+
+After "envoyé" (both modes) the page is OBSERVED, never clicked: suivi.json gets
+"postulé" with `envoi` = confirmé | incertain and a `preuve` (excerpt, address,
+screenshot in Scripts/_preuves/). See docs/adr/0009-preuve-distincte-de-la-declaration.md
+
 Decision : docs/adr/0005-aucune-soumission-automatique.md
 """
 
@@ -362,6 +371,108 @@ def accept_consent(page):
         return 0
 
 
+# ── Qui repond a « envoye ? » : le clavier (terminal) ou l'application (pilote) ──
+class _Terminal:
+    """Comportement historique : invites et touches dans une console."""
+
+    pilote = False
+
+    def evenement(self, type_, **champs):
+        pass  # les print du programme suffisent en console
+
+    def commande(self, invite):
+        return input(invite).strip().lower()
+
+    def fin(self):
+        try:
+            input(
+                "\n✅ Chrome reste OUVERT. Vérifie et clique ENVOYER sur chaque onglet.\n"
+                "   Quand tu as fini → [Entrée] pour fermer Chrome > "
+            )
+        except Exception:
+            time.sleep(120)  # pas de clavier (stdin fermé) → garde ouvert 2 min
+
+
+# Commandes de l'application → touches historiques de la boucle.
+_COMMANDES = {"envoye": "s", "saute": "k", "reremplir": "r", "rouvrir": "o", "quitter": "q"}
+
+
+class _Pilote:
+    """L'application pilote : evenements `@JH {json}` sur stdout, commandes sur stdin."""
+
+    pilote = True
+
+    def evenement(self, type_, **champs):
+        import json as _j
+
+        print("@JH " + _j.dumps({"type": type_, **champs}, ensure_ascii=False), flush=True)
+
+    def commande(self, invite):
+        self.evenement("attente")
+        ligne = sys.stdin.readline()
+        if not ligne:  # l'application a ferme le tuyau : on s'arrete proprement
+            return "q"
+        return _COMMANDES.get(ligne.strip().lower(), "")
+
+    def fin(self):
+        self.evenement("fin")
+        sys.stdin.readline()  # Chrome reste ouvert jusqu'a « quitter » (ou fermeture)
+
+
+def _chemin_preuve(d):
+    import datetime as _dt
+
+    nom = re.sub(r"[^A-Za-z0-9]+", "_", f"{d['comp']}_{d['role']}").strip("_")[:80]
+    return _racine.scripts() / "_preuves" / f"{_dt.date.today().isoformat()}_{nom}.png"
+
+
+def declarer_envoi(page, d):
+    """L'utilisateur dit avoir clique Envoyer : la page est OBSERVEE (rien n'est clique),
+    la preuve gardee, le suivi ecrit en une fois. Rend l'etat et la preuve.
+
+    Decision : docs/adr/0009-preuve-distincte-de-la-declaration.md"""
+    import datetime as _dt
+
+    from jobhunter.navigation.confirmation import capturer_preuve, observer_confirmation
+    from jobhunter.stockage import suivi as suivi_io
+
+    obs = observer_confirmation(page)
+    preuve = {
+        "texte": str(obs.get("texte") or "")[:300],
+        "url": str(obs.get("url") or ""),
+        "capture": capturer_preuve(page, _chemin_preuve(d)) or "",
+        "le": _dt.datetime.now().isoformat(timespec="seconds"),
+    }
+    oid = f"{(d['comp'] or '').strip()}|{(d['role'] or '').strip()}"
+    suivi_io.declarer_envoi(oid, obs["etat"], preuve)
+    return {"etat": obs["etat"], **preuve}
+
+
+def _decision_pilote(ui, page, d, marquer):
+    """Attend la decision de l'application pour une offre deja prete (LinkedIn Easy
+    Apply). Rend la touche finale : s (envoye), k (saute) ou q (quitter)."""
+    while True:
+        cmd = ui.commande("")
+        if cmd == "s":
+            marquer("ENVOYÉ")
+            try:
+                ui.evenement("resultat", **declarer_envoi(page, d))
+            except Exception as e:
+                ui.evenement("resultat", etat="erreur", texte=type(e).__name__)
+            return cmd
+        if cmd == "k":
+            marquer("SAUTÉ")
+            ui.evenement("resultat", etat="sauté")
+            return cmd
+        if cmd == "q":
+            return cmd
+        if cmd == "o":
+            try:
+                page.goto(d["url"], timeout=45000)
+            except Exception:
+                pass
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument(
@@ -420,7 +531,15 @@ def main():
         action="store_true",
         help="Agent LLM (Ollama) en dernier recours si bloqué : lit la page, décide l'action. Nécessite un modèle Ollama.",
     )
+    ap.add_argument(
+        "--pilote",
+        action="store_true",
+        help="piloté par l'application (événements sur stdout, commandes sur stdin) — aucun clic d'envoi",
+    )
     args = ap.parse_args()
+    ui = _Pilote() if args.pilote else _Terminal()
+    if args.pilote:
+        args.auto = True  # surligne Envoyer ; « envoye » vient de l'application
 
     # L'application passe --chrome après une connexion via acces.py. Ce profil
     # existe déjà : le cloner à nouveau effacerait les sessions enregistrées.
@@ -557,6 +676,15 @@ def main():
                 try:
                     print("=" * 70)
                     print(f"[{seen}/{total}] {d['comp']} — {d['role']}")
+                    fa: dict = {}  # remplissage de CETTE offre (vide si echec)
+                    ui.evenement(
+                        "offre",
+                        i=seen,
+                        total=total,
+                        entreprise=d["comp"],
+                        poste=d["role"],
+                        url=d["url"],
+                    )
                     print("  URL :", d["url"])
                     print(
                         "  CV  :",
@@ -612,12 +740,28 @@ def main():
                                     "     ⚠️  connecte-toi à LinkedIn dans la fenêtre, puis relance sur cette offre (--start)."
                                 )
                                 mark(ws, d, ix, "LOGIN LinkedIn")
+                                ui.evenement("bloque", raison="connexion LinkedIn")
                                 continue
                             if la.get("kind") == "ready_to_submit":
                                 print(
                                     f"     ⬛ ENVOYER surligné rouge: «{la.get('submit_label', '')}» — clique TOI-MÊME."
                                 )
                                 mark(ws, d, ix, "À VÉRIFIER LinkedIn")
+                                if ui.pilote:
+                                    # l'application attend la decision de l'utilisateur
+                                    ui.evenement(
+                                        "pret",
+                                        couverture=None,
+                                        documents="",
+                                        bouton=la.get("submit_label", ""),
+                                    )
+                                    if (
+                                        _decision_pilote(ui, page, d, lambda v: mark(ws, d, ix, v))
+                                        == "q"
+                                    ):
+                                        ctx.close()
+                                        return
+                                    continue
                                 time.sleep(0.5 if _fast else 3)
                                 continue
                             if la.get("kind") == "external":
@@ -711,6 +855,7 @@ def main():
                             print(
                                 f"  ⚠️  {r['kind'].upper()} détecté — À TOI (je ne contourne pas). Résous puis [r]."
                             )
+                            ui.evenement("bloque", raison=str(r["kind"]))
                         elif r["status"] == "ok":
                             print(f"  ✅ nav: {r['kind']} ({r['note']})")
                             if r["kind"] == "login":
@@ -793,11 +938,18 @@ def main():
                             )
                         except Exception as e:
                             print("  ! wizard:", type(e).__name__)
+                    sub = ""
                     if args.auto:
                         sub = highlight_submit(page)
                         print(
                             f"  ⬛ bouton à cliquer surligné rouge: «{sub or 'non trouvé — clique manuellement'}»"
                         )
+                    ui.evenement(
+                        "pret",
+                        couverture=fa.get("cover_pct"),
+                        documents=str(fa.get("docs") or ""),
+                        bouton=sub,
+                    )
                     if getattr(args, "no_input", False):
                         print("  ⏳ Chrome reste ouvert 30s — vérifie et clique Envoyer")
                         time.sleep(30)
@@ -812,6 +964,7 @@ def main():
                             print(
                                 "  📨 page de code email (OTP) détectée — saisis le code reçu par mail, puis continue"
                             )
+                            ui.evenement("bloque", raison="code reçu par courriel")
                     except Exception:
                         pass
                     while True:
@@ -823,13 +976,26 @@ def main():
                             prompt = (
                                 "  [s]envoyé [k]sauté [r]re-remplir [o]ouvrir-url [q]quitter > "
                             )
-                        cmd = input(prompt).strip().lower()
-                        if args.auto and cmd == "":
+                        cmd = ui.commande(prompt)
+                        if args.auto and cmd == "" and not ui.pilote:
                             cmd = "s"
-                        if cmd in ("s", "k"):
-                            mark(ws, d, ix, "ENVOYÉ" if cmd == "s" else "SAUTÉ")
+                        if cmd == "s":
+                            mark(ws, d, ix, "ENVOYÉ")
+                            try:
+                                res = declarer_envoi(page, d)
+                                print(f"  📮 envoi {res['etat']} — {res['texte'][:90]}")
+                                ui.evenement("resultat", **res)
+                            except Exception as e:
+                                print(
+                                    f"  ! suivi non écrit ({type(e).__name__}) — confirme dans l'app"
+                                )
+                                ui.evenement("resultat", etat="erreur", texte=type(e).__name__)
                             break
-                        elif cmd in ("r", ""):
+                        if cmd == "k":
+                            mark(ws, d, ix, "SAUTÉ")
+                            ui.evenement("resultat", etat="sauté")
+                            break
+                        elif cmd == "r" or (cmd == "" and not ui.pilote):
                             f = autofill(page)
                             try:
                                 from jobhunter.navigation import smart_upload as _su
@@ -853,14 +1019,8 @@ def main():
                         pass
                     continue
         print("\nFini. Toutes les offres parcourues.")
-        # NE PAS fermer Chrome tant que tu n'as pas validé/cliqué Envoyer. Attend un Entrée explicite.
-        try:
-            input(
-                "\n✅ Chrome reste OUVERT. Vérifie et clique ENVOYER sur chaque onglet.\n"
-                "   Quand tu as fini → [Entrée] pour fermer Chrome > "
-            )
-        except Exception:
-            time.sleep(120)  # pas de clavier (stdin fermé) → garde ouvert 2 min
+        # NE PAS fermer Chrome tant que tu n'as pas validé/cliqué Envoyer.
+        ui.fin()
         ctx.close()
 
 
