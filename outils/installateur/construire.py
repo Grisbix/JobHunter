@@ -59,6 +59,10 @@ def pyinstaller() -> Path:
             str(ICI / "JobHunter.spec"),
         ],
         check=True,
+        # collect_submodules("jobhunter") importe le paquet : celui de src/, jamais une
+        # version installée ailleurs (le runner de la CI n'en a pas, un poste de dev en
+        # a souvent une plus ancienne).
+        env=dict(os.environ, PYTHONPATH=str(RACINE / "src")),
     )
     return DIST / "JobHunter"
 
