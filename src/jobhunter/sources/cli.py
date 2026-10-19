@@ -10,6 +10,7 @@ from typing import Any
 
 from jobhunter import paresseux as _paresseux
 from jobhunter.sources import commun as _commun
+from jobhunter.sources import rendement as _rendement
 from jobhunter.sources.agregateurs import scan_adzuna, scan_jooble
 from jobhunter.sources.apec import scan_apec
 from jobhunter.sources.ats import scan_ats
@@ -139,6 +140,7 @@ def main() -> int:
         help="refusionne le dernier scan (offres_scan.json) sans rien collecter",
     )
     a = ap.parse_args()
+    _rendement.MESURES.clear()  # une mesure par collecte, meme appelee plusieurs fois
 
     # DEUX VERROUS, DEUX ROLES. Il n'y en avait qu'un, sur la FILE, pris au
     # demarrage et garde toute la collecte — plus d'une heure en --all. Le
@@ -195,37 +197,40 @@ def main() -> int:
     fresh = []
     if a.all or a.ats:
         print("── ATS APIs (greenhouse/lever/ashby/recruitee/smartrecruiters) ──")
-        fresh += scan_ats()
+        fresh += _rendement.mesurer("ats", scan_ats)
     if a.all or a.workday:
         print("── Workday (API publique des grands groupes) ──")
-        fresh += scan_workday()
+        fresh += _rendement.mesurer("workday", scan_workday)
     if a.all or a.linkedin:
         print("── LinkedIn recherche publique (guest) ──")
-        fresh += scan_linkedin(pages=a.pages, days=a.days)
+        fresh += _rendement.mesurer("linkedin", scan_linkedin, pages=a.pages, days=a.days)
     if a.all or a.vie:
         print("── V.I.E / V.I.A (Business France) ──")
-        fresh += scan_vie()
+        fresh += _rendement.mesurer("vie", scan_vie)
     if a.all or a.fir:
         print("── FIR / French SIF (100 % ISR-ESG) ──")
-        fresh += scan_fir()
+        fresh += _rendement.mesurer("fir", scan_fir)
     # TALENT ET INDEED HORS DE --all (2026-10-03). Talent : 0 offre en 30 min le
     # 30/09, 3 le 27/09. Indeed : 403 a la premiere requete depuis le 24/09.
     # Ils restent lancables a la main (--talent, --indeed) pour verifier s'ils
     # reviennent ; Adzuna et Jooble couvrent le meme vivier par une API.
     if a.talent:
         print("── Talent.com (agrégateur) ──")
-        fresh += scan_talent()
+        fresh += _rendement.mesurer("talent", scan_talent)
     if a.indeed:
         print("── Indeed (page 1 des résultats — voir le commentaire de scan_indeed) ──")
-        fresh += scan_indeed(
-            lieux=[v.strip() for v in a.indeed_lieux.split(",") if v.strip()], persist=not a.dry
+        fresh += _rendement.mesurer(
+            "indeed",
+            scan_indeed,
+            lieux=[v.strip() for v in a.indeed_lieux.split(",") if v.strip()],
+            persist=not a.dry,
         )
     if a.all or a.apec:
         print("── APEC (API publique, annonce entière dans la liste) ──")
-        fresh += scan_apec()
+        fresh += _rendement.mesurer("apec", scan_apec)
     if a.all or a.glassdoor:
         print("── Glassdoor (page 1 de la recherche, France entière) ──")
-        fresh += scan_glassdoor()
+        fresh += _rendement.mesurer("glassdoor", scan_glassdoor)
     # eFC dans --all, mais BORNE : filtre ESG, les neuf sites, 30 fiches au
     # plus (les fiches deja en file sont sautees, donc chaque jour avance dans
     # le reste). Neuf sitemaps + 30 fiches a 10 s font ~6 min. Les filtres
@@ -249,22 +254,22 @@ def main() -> int:
         print(
             f"── eFinancialCareers ({filtre}, {len(sites)} site(s), sitemap public, crawl-delay 10 s) ──"
         )
-        fresh += scan_efc(limit=limite, filtre=filtre, sites=sites)
+        fresh += _rendement.mesurer("efc", scan_efc, limit=limite, filtre=filtre, sites=sites)
     if a.all or a.eures:
         print("── EURES (portail officiel UE, API publique, crawl-delay 10 s) ──")
-        fresh += scan_eures()
+        fresh += _rendement.mesurer("eures", scan_eures)
     if a.all or a.ft:
         print("── France Travail (API officielle) ──")
-        fresh += scan_france_travail()
+        fresh += _rendement.mesurer("francetravail", scan_france_travail)
     if a.all or a.adzuna:
         print("── Adzuna (API officielle, France + 7 pays) ──")
-        fresh += scan_adzuna()
+        fresh += _rendement.mesurer("adzuna", scan_adzuna)
     if a.all or a.jooble:
         print("── Jooble (API officielle) ──")
-        fresh += scan_jooble()
+        fresh += _rendement.mesurer("jooble", scan_jooble)
     if a.all or a.wtj:
         print("── Welcome to the Jungle (sitemap public, débit bridé) ──")
-        fresh += scan_wtj(pages=a.pages)
+        fresh += _rendement.mesurer("wtj", scan_wtj, pages=a.pages)
 
     # dédup interne du scan
     seen, uniq = set(), []
@@ -317,6 +322,17 @@ def _fusionner(uniq: Any, dry: bool) -> int:
             f"`python job_sources.py --fusion-seule` le fusionnera."
         )
         return 3
+    # RENDEMENT PAR SOURCE : ce que chacune a rapporte, et pourquoi pas plus.
+    _rendement.completer(uniq, r.get("par_source") or {})
+    if _rendement.MESURES:
+        print("\nRendement par source :")
+        for ligne in _rendement.resume():
+            print(ligne)
+        if not dry:
+            try:
+                _rendement.enregistrer(_commun.HERE / "_rendement.jsonl")
+            except OSError as e:
+                print(f"  ! journal de rendement non écrit : {e}")
     print(
         f"Merge {'[DRY] ' if dry else ''}: +{r['added']} nouvelles, {r['updated']} enrichies (desc), "
         f"{r['promus']} liens promus (LinkedIn -> vrai site), "

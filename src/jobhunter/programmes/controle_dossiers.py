@@ -39,7 +39,7 @@ def main(argv=None):
         and int(o.get("fit") or 0) >= a.fit
     ]
     offres.sort(key=lambda o: -(o.get("fit_fin") or o.get("fit") or 0))
-    types: collections.Counter[str] = collections.Counter()
+    types = collections.Counter()
     a_revoir = 0
     for o in offres:
         problemes = controler_dossier(o, ident)

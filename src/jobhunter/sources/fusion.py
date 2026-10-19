@@ -139,6 +139,8 @@ def _merge_into_queue(
     par_url = {_norm_url(x.get("url")): x for x in q if x.get("url")}
     today = time.strftime("%Y-%m-%d")
     added = updated = promus = hors_zone = pays_ecartes = 0
+    # par source de la collecte (etiquette _passe, posee par rendement.mesurer)
+    par_source: dict[str, dict[str, int]] = {}
     _EXCLUS = _commun.contrats_exclus()
     _RX_PAYS = _rx_pays_exclus()
     # Offres ECARTEES a la main. Supprimer une offre ne la tue pas : le scan la
@@ -357,6 +359,11 @@ def _merge_into_queue(
         idx[key] = ligne
         par_url[_norm_url(o["url"])] = ligne
         added += 1
+        compte = par_source.setdefault(
+            str(o.get("_passe") or ""), {"nouvelles": 0, "pertinentes": 0}
+        )
+        compte["nouvelles"] += 1
+        compte["pertinentes"] += int(fit >= 8)
     if not dry:
         importlib.import_module("jobhunter.programmes.jutil").jwrite(_commun.QUEUE, q)
     return dict(
@@ -369,4 +376,5 @@ def _merge_into_queue(
         rejetees_tri=rejetees_tri,
         pays_ecartes=pays_ecartes,
         total=len(q),
+        par_source=par_source,
     )
