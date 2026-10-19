@@ -3,7 +3,9 @@
 Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
 
 import functools as _ft
+import os
 import re
+import subprocess
 import sys
 from typing import Any
 
@@ -14,6 +16,22 @@ from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _profil
 from jobhunter import racine as _racine
 from jobhunter.app import theme as _theme
+
+
+def ouvrir(chemin: object) -> bool:
+    """Ouvre un fichier ou un dossier avec l'application du systeme.
+
+    `os.startfile` n'existe que sous Windows : ailleurs, l'appeler levait
+    AttributeError. Rend True, pour s'enchainer dans une lambda Tk
+    (`lambda: p and ouvrir(p)`).
+    """
+    if sys.platform == "win32":
+        os.startfile(str(chemin))
+    else:
+        subprocess.Popen(["open" if sys.platform == "darwin" else "xdg-open", str(chemin)])
+    return True
+
+
 from jobhunter.app.theme import (
     ACC,
     AMBRE,

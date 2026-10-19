@@ -3,7 +3,6 @@
 Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
 
 import datetime
-import os
 import queue
 import subprocess
 import threading
@@ -12,7 +11,7 @@ from typing import Any
 
 from jobhunter.app import theme as _theme
 from jobhunter.app._type_app import AppTypee
-from jobhunter.app.commun import INTERACTIVE, PY, QUEUE, ROOT, SCRIPTS
+from jobhunter.app.commun import INTERACTIVE, PY, QUEUE, ROOT, SCRIPTS, ouvrir
 from jobhunter.app.theme import ACC, CB, CF, DEL, DEL_TX, LOGBG, LOGFG, SIDE, SIDE_H, SIDE_TX
 from jobhunter.liens import existe as _doc_existe
 from jobhunter.stockage import file as queue_io
@@ -25,7 +24,7 @@ class ExecutionMixin:
         CB(
             qf,
             text="Dossier",
-            command=lambda: os.startfile(ROOT),
+            command=lambda: ouvrir(ROOT),
             bg=SIDE_H,
             fg=SIDE_TX,
             activebackground=ACC,

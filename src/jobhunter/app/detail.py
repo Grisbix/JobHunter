@@ -3,7 +3,6 @@
 Partie de jobhunter.app (ancien JobHunter.pyw, phase 3.7)."""
 
 import importlib
-import os
 import subprocess
 import sys
 import threading
@@ -15,7 +14,7 @@ from typing import Any
 from jobhunter import paresseux as _paresseux
 from jobhunter.app import theme as _theme
 from jobhunter.app._type_app import AppTypee
-from jobhunter.app.commun import CV_ATS_DIR, PY, SCRIPTS
+from jobhunter.app.commun import CV_ATS_DIR, PY, SCRIPTS, ouvrir
 from jobhunter.app.theme import (
     ACC,
     ACC_H,
@@ -351,7 +350,7 @@ class DetailMixin:
         CB(
             rbar,
             text="Ouvrir",
-            command=lambda: st["path"] and os.startfile(str(st["path"])),  # type: ignore[func-returns-value]  # lambda Tk qui enchaine des appels sans valeur
+            command=lambda: st["path"] and ouvrir(st["path"]),
             bg=BTN,
             fg=TX,
             relief="flat",
@@ -716,7 +715,7 @@ class DetailMixin:
         CB(
             bt,
             text="Ouvrir",
-            command=lambda: state["path"] and os.startfile(str(state["path"])),  # type: ignore[func-returns-value]  # lambda Tk qui enchaine des appels sans valeur
+            command=lambda: state["path"] and ouvrir(state["path"]),
             bg=ACC,
             fg=ACC_TX,
             relief="flat",
@@ -725,7 +724,7 @@ class DetailMixin:
         CB(
             bt,
             text="CV",
-            command=lambda: os.startfile(str(CV_ATS_DIR.parent)),
+            command=lambda: ouvrir(CV_ATS_DIR.parent),
             bg=BTN,
             fg=TX,
             relief="flat",
@@ -734,7 +733,7 @@ class DetailMixin:
         CB(
             bt,
             text="Lettres",
-            command=lambda: _ici.LETTRES_DIR.exists() and os.startfile(str(_ici.LETTRES_DIR)),  # type: ignore[func-returns-value]  # lambda Tk qui enchaine des appels sans valeur
+            command=lambda: _ici.LETTRES_DIR.exists() and ouvrir(_ici.LETTRES_DIR),
             bg=BTN,
             fg=TX,
             relief="flat",
