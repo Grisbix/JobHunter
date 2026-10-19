@@ -1,5 +1,14 @@
 # Contribuer à JobHunter
 
+> **In English.** The code, comments and commit messages are in French; issues and pull
+> requests in English are welcome. Set up with `uv sync`, then before each commit run
+> `uv run pytest -q` (about 1,850 offline tests), `uv run mypy` and
+> `uv run python outils/banc.py comparer outils/banc_reference.json` (0 difference expected).
+> Architecture and conventions: [`AGENTS.md`](AGENTS.md) and [`docs/adr/`](docs/adr/). The
+> Windows installer is built by `outils/installateur/construire.py` (see ADR 0011). Rules
+> that are not up for debate: nothing is ever sent automatically, no anti-bot circumvention,
+> no password handled by the programs.
+
 ## Installer l'environnement de développement
 
 ```bash
@@ -14,7 +23,7 @@ Python 3.12 ou plus récent. Sans uv : `python -m venv .venv`, puis
 ## Avant chaque commit
 
 ```bash
-uv run pytest -q                                                   # ~1 800 tests, sans réseau
+uv run pytest -q                                                   # ~1 850 tests, sans réseau
 uv run python outils/banc.py comparer outils/banc_reference.json   # 0 écart attendu
 uv run mypy                                                        # types ; strict hors programmes
 ```
