@@ -4,6 +4,21 @@ La mise à jour (`mettre_a_jour.bat`, `./mettre_a_jour.sh` ou le bouton de l'app
 affiche les sections plus récentes que ta version. Format : `## x.y.z — date`, la plus
 récente en haut.
 
+## 2.20.0 — 2026-10-20
+
+- **Statuts depuis tes courriels** (`jobhunter statuts-mail`, ou Maintenance →
+  « Statuts depuis mes courriels… ») : refus, entretiens et accusés de réception
+  reconnus en français, anglais et allemand, rapprochés de tes candidatures, et
+  proposés **un à un** ; rien n'est écrit sans ton accord, et un statut n'avance que
+  vers l'aval. Les courriels viennent d'un export (fichier .mbox de Google Takeout,
+  dossier de .eml), sans aucune clé, ou de l'API Gmail en **lecture seule**, avec un
+  client OAuth que tu crées toi-même (`pip install "jobhunter[gmail]"`) ; le programme
+  ne voit jamais de mot de passe.
+- **Au clavier** : chaque bouton s'atteint avec Tab et se déclenche avec Entrée ou
+  Espace, avec un anneau de focus visible ; contour des champs de saisie plus lisible
+  (3:1) ; contrastes du texte vérifiés (WCAG AA). Un lecteur d'écran ne voit toujours pas
+  les contrôles : la bibliothèque d'interface ne le permet pas.
+
 ## 2.19.0 — 2026-10-19
 
 - **La collecte chaque matin, depuis l'application** : Maintenance → « Collecte chaque
