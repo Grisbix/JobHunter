@@ -17,7 +17,8 @@ set "HEURE=%~1"
 if "%HEURE%"=="" set "HEURE=08:00"
 
 set "PY="
-for /f "delims=" %%p in ('where python 2^>nul') do if not defined PY set "PY=%%p"
+if exist "%~dp0.venv\Scripts\python.exe" set "PY=%~dp0.venv\Scripts\python.exe"
+if not defined PY for /f "delims=" %%p in ('where python 2^>nul') do if not defined PY set "PY=%%p"
 if not defined PY (
   echo Python est introuvable : lance d'abord installer.bat.
   pause

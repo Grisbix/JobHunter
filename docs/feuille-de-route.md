@@ -57,8 +57,8 @@ quitter CustomTkinter, ou de lui ajouter une couche d'accessibilité.
 
 | # | Quoi | Fini quand |
 |---|---|---|
-| E1 | Environnement Python dédié créé par `installer.bat` (reporté depuis la phase 1) | une installation neuve sur un Windows vierge lance l'app sans toucher au Python système |
-| E2 | Mises à jour **signées** : WinSparkle ou tufup (Codex P2), à choisir sur prototype. Attention : la purge de destination de tufup est incompatible avec un dossier qui contient le profil. | un paquet altéré est refusé ; le profil survit à une mise à jour interrompue |
+| E1 ◐ (v2.17.0 : `installer.bat` / `installer.sh` créent `.venv`, les autres scripts l'utilisent, la mise à jour ne le touche jamais ; reste l'essai sur un Windows vierge) | Environnement Python dédié créé par `installer.bat` (reporté depuis la phase 1) | une installation neuve sur un Windows vierge lance l'app sans toucher au Python système |
+| E2 ◐ (provenance déjà publiée : chaque `JobHunterSetup.exe` porte une attestation Sigstore, `gh attestation verify JobHunterSetup.exe --repo Grisbix/JobHunter`) | Mises à jour **signées** : WinSparkle ou tufup (Codex P2), à choisir sur prototype. Attention : la purge de destination de tufup est incompatible avec un dossier qui contient le profil. Ce qui reste demande une **clé de signature gardée hors de GitHub** (sans elle, une signature posée par la CI ne protège pas d'un compte compromis) : décision et clé à Gabriel, avant tout code | un paquet altéré est refusé ; le profil survit à une mise à jour interrompue |
 | E3 | Accessibilité (axe-windows, Accessibility Insights) | les contrôles principaux ont un nom ; la tabulation suit l'ordre visuel |
 
 ## Écarté ou différé, avec la raison

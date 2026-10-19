@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Ouvre JobHunter (macOS, Linux). La premiere fois, cree le profil depuis le CV de Mon_CV.
 cd "$(dirname "$0")"
-PY=$(command -v python3 || command -v python)
+# L'environnement de installer.sh s'il existe, sinon le Python de l'ordinateur.
+if [ -x .venv/bin/python ]; then PY=.venv/bin/python; else PY=$(command -v python3 || command -v python); fi
 if [ ! -f profil/profil.json ]; then
   CV=$(ls Mon_CV/*.docx Mon_CV/*.pdf 2>/dev/null | head -n 1)
   if [ -z "$CV" ]; then

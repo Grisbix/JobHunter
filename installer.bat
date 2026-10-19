@@ -31,10 +31,17 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-python -m pip install -r requirements.txt || goto erreur
-python -m playwright install chromium || goto erreur
+rem Un environnement Python propre a JobHunter, dans .venv : les paquets installes
+rem ne touchent pas au Python de l'ordinateur. Les autres .bat l'utilisent s'il existe.
+if not exist ".venv\Scripts\python.exe" (
+  echo Creation de l'environnement Python de JobHunter dans .venv ...
+  python -m venv .venv || goto erreur
+)
+set "PY=.venv\Scripts\python.exe"
+"%PY%" -m pip install -r requirements.txt || goto erreur
+"%PY%" -m playwright install chromium || goto erreur
 rem Empreinte des fichiers tels qu'installes : la mise a jour reconnaitra tes modifications.
-python JobHunter.pyw maj --initialiser
+"%PY%" JobHunter.pyw maj --initialiser
 echo.
 echo Installation terminee. Depose ton CV dans Mon_CV puis lance lancer.bat.
 echo Ensuite : planifier.bat lance la collecte chaque matin, mettre_a_jour.bat recupere les nouveautes.

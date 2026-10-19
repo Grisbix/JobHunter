@@ -19,7 +19,7 @@ if [ ! -f profil/profil.json ]; then
 fi
 HEURE=${1:-08:00}
 H=${HEURE%%:*}; M=${HEURE##*:}
-PY=$(command -v python3 || command -v python)
+if [ -x .venv/bin/python ]; then PY="$DOSSIER/.venv/bin/python"; else PY=$(command -v python3 || command -v python); fi
 LIGNE="$((10#$M)) $((10#$H)) * * * cd \"$DOSSIER\" && \"$PY\" JobHunter.pyw pipeline >/dev/null 2>&1 $MARQUE"
 printf '%s\n%s\n' "$ACTUEL" "$LIGNE" | sed '/^$/d' | crontab -
 echo "Collecte planifiee chaque jour a $HEURE (si l'ordinateur est allume)."

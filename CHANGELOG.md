@@ -18,6 +18,12 @@ récente en haut.
     (« Madame Martin, Madame Dupont, »), pas seulement le premier.
   - **Deux saisies simultanées d'une clé d'API ne s'effacent plus** : l'écriture se fait
     sous verrou. Chaque écriture JSON utilise un fichier temporaire qui lui est propre.
+- **Installation depuis les sources : un environnement Python à part.** `installer.bat`
+  (et `installer.sh`) crée `.venv` dans le dossier de JobHunter et y installe les
+  bibliothèques, sans toucher au Python de l'ordinateur. `lancer`, `mettre_a_jour` et
+  `planifier` l'utilisent quand il existe ; une installation plus ancienne continue sur
+  le Python système. La mise à jour ne touche jamais `.venv`, ni
+  `Scripts/francetravail.json`.
 - Une file occupée pendant la fusion conseille `jobhunter collecte --fusion-seule` (le
   message citait encore l'ancien `job_sources.py`).
 

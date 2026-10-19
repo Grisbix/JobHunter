@@ -1,6 +1,13 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
+rem L'environnement de installer.bat s'il existe, sinon le Python de l'ordinateur.
+set "PY=python"
+set "PYW=pythonw"
+if exist ".venv\Scripts\python.exe" (
+  set "PY=.venv\Scripts\python.exe"
+  set "PYW=.venv\Scripts\pythonw.exe"
+)
 if exist "profil\profil.json" goto app
 set "CV="
 for %%f in ("Mon_CV\*.docx" "Mon_CV\*.pdf") do if not defined CV set "CV=%%f"
@@ -10,9 +17,9 @@ if not defined CV (
   exit /b 1
 )
 echo Premier lancement : creation du profil a partir de %CV%
-python JobHunter.pyw profil "%CV%" || (pause & exit /b 1)
+"%PY%" JobHunter.pyw profil "%CV%" || (pause & exit /b 1)
 echo.
 echo Profil cree dans profil\profil.json. Relis-le, ou demande a Claude Code : /configurer-profil
 pause
 :app
-start "" pythonw JobHunter.pyw
+start "" "%PYW%" JobHunter.pyw

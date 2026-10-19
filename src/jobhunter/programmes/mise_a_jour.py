@@ -72,12 +72,23 @@ JOURNAL = "_journal.json"
 EXEMPLE = "profil/exemple_finance_esg.json"
 
 # Donnees de l'utilisateur : jamais ecrites, meme si un ZIP les contenait.
-PROTEGES_PREFIXES = ("profil/profil", "Mon_CV/", "CV/", "Lettres/", "_sauvegarde_maj/", ".git/")
+# .venv : l'environnement Python cree par installer.bat (2.17) ; hors manifeste, sans
+# quoi une mise a jour en retirerait les fichiers absents de la nouvelle version.
+PROTEGES_PREFIXES = (
+    "profil/profil",
+    "Mon_CV/",
+    "CV/",
+    "Lettres/",
+    "_sauvegarde_maj/",
+    ".git/",
+    ".venv/",
+)
 PROTEGES_NOMS = {
     "Scripts/apply_queue.json",
     "Scripts/descriptions.json",
     "Scripts/suivi.json",
     "Scripts/adzuna.json",
+    "Scripts/francetravail.json",
     "Scripts/jooble.json",
     "Scripts/apply_runner_done.json",
     "Scripts/chemins.json",

@@ -175,6 +175,10 @@ def test_profil_complet_rien():
         ("Lettres/a.docx", True),
         ("Scripts/apply_queue.json", True),
         ("Scripts/adzuna.json", True),
+        ("Scripts/francetravail.json", True),
+        # l'environnement d'installer.bat : jamais dans le manifeste, jamais retiré
+        (".venv/Lib/site-packages/httpx/__init__.py", True),
+        (".venv/Scripts/python.exe", True),
         ("profil/exemple_finance_esg.json", False),
         ("Scripts/ats_match.py", False),
         ("VERSION", False),
@@ -391,7 +395,15 @@ def test_la_mise_a_jour_se_refait_apres_annulation(annulee, capsys):
 def main_entre_deux(installer):
     d = installer({**V12, "Scripts/a.py": "A = 1.5\n"})  # main a bouge apres la 1.2.0
     ecrire(d, "Scripts/_logs/x.log", "log\n")
+    ecrire(d, ".venv/Lib/site-packages/paquet.py", "X = 1\n")  # créé par installer.bat
     return d, maj.initialiser()
+
+
+def test_l_environnement_hors_empreinte_et_garde(main_entre_deux, capsys):
+    """2.17 : installer.bat crée .venv AVANT l'empreinte ; une mise à jour le retirait."""
+    assert not any(k.startswith(".venv/") for k in _manifeste(main_entre_deux[0]))
+    lancer(capsys)
+    assert lire(main_entre_deux[0], ".venv/Lib/site-packages/paquet.py") == "X = 1\n"
 
 
 def test_initialiser_ecrit_l_empreinte(main_entre_deux):

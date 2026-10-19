@@ -4,6 +4,8 @@ cd /d "%~dp0"
 echo === Mise a jour de JobHunter ===
 echo Ton profil, ton CV, tes lettres et ton suivi ne sont jamais touches.
 echo.
-python JobHunter.pyw maj %*
+set "PY=python"
+if exist ".venv\Scripts\python.exe" set "PY=.venv\Scripts\python.exe"
+"%PY%" JobHunter.pyw maj %*
 echo.
 pause
