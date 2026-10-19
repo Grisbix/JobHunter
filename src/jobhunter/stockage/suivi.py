@@ -37,6 +37,7 @@ donc conservé. Une exception dans la fonction annule l'écriture.
 Decision : docs/adr/0002-trois-fichiers-trois-contrats.md
 """
 
+import datetime
 import json
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -44,7 +45,7 @@ from pathlib import Path
 
 from jobhunter import racine
 from jobhunter.stockage import atomique, verrou
-from jobhunter.types import Candidature, Chemin, Suivi
+from jobhunter.types import Candidature, Chemin, Preuve, Suivi
 
 CHEMIN = racine.scripts() / "suivi.json"
 
@@ -160,3 +161,54 @@ if __name__ == "__main__":
     print(f"{len(s)} candidature(s) dans {CHEMIN.name}")
     for k, v in sorted(s.items())[:10]:
         print(f"  {k[:52]:52s} {v}")
+
+
+# Statuts qui viennent APRES l'envoi : declarer l'envoi ne les fait pas reculer.
+_APRES_ENVOI = ("relancé", "entretien", "refus")
+
+
+def declarer_envoi(
+    oid: str,
+    envoi: str,
+    preuve: Preuve | None = None,
+    chemin: Chemin | None = None,
+    attente: float = 30,
+) -> Candidature:
+    """Enregistre une candidature envoyée par l'utilisateur, avec l'état de sa preuve.
+
+    Une seule écriture : statut « postulé » (sauf s'il est déjà plus loin : relancé,
+    entretien, refus), date du jour si le statut change, `envoi` et `preuve`. La note
+    et les autres champs de l'entrée relue sont gardés ; une déclaration sans preuve ne
+    remplace jamais une preuve déjà observée.
+
+    Args:
+        oid: l'identité de l'offre (`queue_io.oid`).
+        envoi: « confirmé », « incertain » ou « déclaré » (ADR 0009).
+        preuve: ce que la page affichait ; None pour une simple déclaration.
+        chemin: le fichier ; None = celui du dossier des données.
+        attente: secondes d'attente du verrou.
+
+    Returns:
+        L'entrée telle qu'écrite.
+
+    Raises:
+        VerrouIndisponible: un autre programme garde le suivi trop longtemps.
+
+    Decision : docs/adr/0009-preuve-distincte-de-la-declaration.md
+    """
+
+    def _f(s: Suivi) -> Candidature:
+        rec: Candidature = dict(s.get(oid) or {})  # type: ignore[assignment]  # copie d'une Candidature
+        if rec.get("s") not in ("postulé", *_APRES_ENVOI):
+            rec["s"] = "postulé"
+            rec["d"] = datetime.date.today().isoformat()
+        rec.setdefault("d", datetime.date.today().isoformat())
+        if preuve:
+            rec["envoi"] = envoi
+            rec["preuve"] = preuve
+        else:  # simple declaration : n'efface jamais une preuve deja observee
+            rec.setdefault("envoi", envoi)
+        s[oid] = rec
+        return rec
+
+    return modifier(_f, chemin, attente)

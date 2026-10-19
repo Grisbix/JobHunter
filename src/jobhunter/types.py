@@ -71,6 +71,15 @@ class Offre(TypedDict, total=False):
     rh_email: str
 
 
+class Preuve(TypedDict, total=False):
+    """Ce que la page affichait apres la declaration d'envoi (ADR 0009)."""
+
+    texte: str  # l'extrait qui justifie l'etat, ou la raison de l'incertitude
+    url: str
+    capture: str  # chemin de la capture de la page, "" si impossible
+    le: str  # date et heure de l'observation, ISO
+
+
 class Candidature(TypedDict, total=False):
     """Une entree de suivi.json."""
 
@@ -78,6 +87,8 @@ class Candidature(TypedDict, total=False):
     d: str  # date, AAAA-MM-JJ
     n: str  # note libre
     retiree: str  # date a laquelle l'offre a quitte la file
+    envoi: str  # « confirmé », « incertain » ou « déclaré » (ADR 0009)
+    preuve: Preuve
 
 
 Suivi = dict[str, Candidature]
