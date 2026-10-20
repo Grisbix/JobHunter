@@ -21,7 +21,7 @@ import shutil
 from pathlib import Path
 
 RACINE = Path(os.environ["JOBHUNTER_RACINE"])
-SCRIPTS = RACINE / "Scripts"
+SCRIPTS = RACINE / "data"
 
 
 def etape(nom: str) -> None:
@@ -29,7 +29,7 @@ def etape(nom: str) -> None:
 
 
 # 1. A configured profile: the example one, as after "first launch".
-profil = RACINE / "profil" / "profil.json"
+profil = RACINE / "profile" / "profile.json"
 if not profil.exists():
     shutil.copy2(RACINE / "profile" / "example_finance_esg.json", profil)
 etape("profil d'exemple en place")
@@ -64,7 +64,7 @@ scan = [
         "scraped_at": "2026-10-19",
     }
 ]
-(SCRIPTS / "offres_scan.json").write_text(json.dumps(scan, ensure_ascii=False), encoding="utf-8")
+(SCRIPTS / "scanned_offers.json").write_text(json.dumps(scan, ensure_ascii=False), encoding="utf-8")
 code = jobhunter(["collecte", "--fusion-seule"])
 assert code == 0, f"fusion : code {code}"
 from jobhunter.storage import queue as queue_io  # noqa: E402
