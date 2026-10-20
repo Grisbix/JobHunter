@@ -8,6 +8,7 @@ import tkinter as tk
 from typing import Any
 
 from jobhunter.app import common as _commun
+from jobhunter.app import language as _langue
 from jobhunter.app._app_type import AppTypee
 from jobhunter.app.common import PY, QUEUE, SCRIPTS
 from jobhunter.app.language import t as _t
@@ -129,8 +130,11 @@ class FicheMixin:
             raisons = expliquer(texte, o.get("poste", ""))
         except Exception:  # the card is displayed even if the profile is incomplete
             return []
+        raisons = [_langue.explication(r) for r in raisons]
         if raisons and str(o.get("fit")) not in ("", "None") and raisons[-1] != f"fit {o['fit']}":
-            raisons[-1] += f" (file : {o['fit']}, recalcul au prochain re-score)"
+            raisons[-1] += " " + _t("(file : {fit}, recalcul au prochain re-score)").format(
+                fit=o["fit"]
+            )
         return raisons
 
     def _etat_dossier(self: "AppTypee", o: Any) -> list[str]:

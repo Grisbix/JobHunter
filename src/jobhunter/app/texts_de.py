@@ -105,6 +105,15 @@ TEXTES: dict[str, str] = {
     "contrat": "Vertrag",
     "localisation": "Ort",
     "Appels d'API aujourd'hui (tous profils) : ": "API-Aufrufe heute (alle Profile): ",
+    "(file : {fit}, recalcul au prochain re-score)": "(Liste: {fit}, Neuberechnung beim nächsten Re-Score)",
+    "Tester la connexion": "Verbindung testen",
+    "Test de {nom} : une requête, aucune offre importée…": "Test von {nom}: eine Anfrage, kein Angebot importiert…",
+    "{nom} : connexion vérifiée, la clé fonctionne.": "{nom}: Verbindung geprüft, der Schlüssel funktioniert.",
+    "{nom} : aucune clé enregistrée (Saisir la clé).": "{nom}: kein Schlüssel gespeichert (Schlüssel eingeben).",
+    "{nom} : clé refusée par le service — vérifie-la ou crée-en une nouvelle.": "{nom}: Schlüssel vom Dienst abgelehnt — prüfe ihn oder erstelle einen neuen.",
+    "{nom} : quota atteint — la clé est bonne, réessaie demain.": "{nom}: Kontingent erreicht — der Schlüssel ist gültig, versuche es morgen erneut.",
+    "{nom} : le service répond mais en erreur — réessaie plus tard.": "{nom}: der Dienst antwortet mit einem Fehler — versuche es später erneut.",
+    "{nom} : pas de réponse (hors ligne ?).": "{nom}: keine Antwort (offline?).",
     # profiles
     "Renommer « {nom} »…": "„{nom}“ umbenennen…",
     "Archiver « {nom} »…": "„{nom}“ archivieren…",
@@ -616,4 +625,21 @@ SORTIE = {
     "Heure invalide : « {a} » (format 08:00).": "Ungültige Uhrzeit: „{a}“ (Format 08:00).",
     "Hors Windows : lance ./launchers/schedule.sh depuis le dossier de JobHunter.": "Außerhalb von "
     "Windows: starte ./launchers/schedule.sh im JobHunter-Ordner.",
+}
+
+# The lines of the fit explanation (scoring.fit.expliquer): language.explication.
+FIT = {
+    "{axe} {pct} (x{poids}) : {mots}": "{axe} {pct} (x{poids}): {mots}",
+    "vocabulaire : {v}/10": "Vokabular: {v}/10",
+    "intitulé du métier visé en second (finance)": "Titel des zweiten Zielberufs (Finanzen)",
+    "intitulé du cœur de cible : plafond 10": "Titel im Kern des Ziels: Obergrenze 10",
+    "plafond {cap} (cœur {c}, complément {k})": "Obergrenze {cap} (Kern {c}, Ergänzung {k})",
+    "intitulé HSE : plafond {cap}": "HSE-Titel: Obergrenze {cap}",
+    "métier hors cible dans l'intitulé : plafond {cap}": "Beruf außerhalb des Ziels im Titel: Obergrenze {cap}",
+    "intitulé junior « {mot} » : +{b}": "Junior-Titel „{mot}“: +{b}",
+    "intitulé senior : -{m}": "Senior-Titel: -{m}",
+    "intitulé écarté « {mot} » : -2": "ausgeschlossener Titel „{mot}“: -2",
+    "annonce redigee en {lg} : plafond {p}": "Anzeige verfasst auf {lg}: Obergrenze {p}",
+    "annonce exige {x} : plafond {p}": "Anzeige verlangt {x}: Obergrenze {p}",
+    "{n} an(s) d'expérience demandés : -{m}": "{n} Jahr(e) Erfahrung verlangt: -{m}",
 }

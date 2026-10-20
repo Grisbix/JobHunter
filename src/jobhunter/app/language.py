@@ -92,7 +92,7 @@ def _catalogues(nom: str) -> list[dict[str, str]]:
     for code in dict.fromkeys((LANGUE, "en")):
         m = module(code)
         if m is not None:
-            vus.append(getattr(m, nom))
+            vus.append(getattr(m, nom, {}))
     return vus
 
 
@@ -130,22 +130,40 @@ def _modele(cle: str) -> "re.Pattern[str]":
     return re.compile(motif)
 
 
-def _lignes() -> tuple[dict[str, str], list[tuple["re.Pattern[str]", str]]]:
-    """The log lines (the app's messages, then the programs' output) and their templates."""
+_JOURNAL = ("JOURNAL", "SORTIE")
+
+
+def _lignes(
+    noms: tuple[str, ...] = _JOURNAL,
+) -> tuple[dict[str, str], list[tuple["re.Pattern[str]", str]]]:
+    """The lines of the `noms` catalogues (by default the app's messages, then the
+    programs' output) and their templates."""
     _textes()  # resets the cache if the language changed
-    if "lignes" not in _CACHE:
+    cle = "lignes:" + ",".join(noms)
+    if cle not in _CACHE:
         lignes: dict[str, str] = {}
         # English first, then the language: the language's own lines win.
-        for nom in ("JOURNAL", "SORTIE"):
+        for nom in noms:
             for cat in reversed(_catalogues(nom)):
                 lignes.update(cat)
-        _CACHE["lignes"] = (lignes, [(_modele(k), v) for k, v in lignes.items() if "{" in k])
-    return _CACHE["lignes"]  # type: ignore[return-value]  # filled just above
+        _CACHE[cle] = (lignes, [(_modele(k), v) for k, v in lignes.items() if "{" in k])
+    return _CACHE[cle]  # type: ignore[return-value]  # filled just above
 
 
-def _ligne(texte: str) -> str:
+def explication(texte: str) -> str:
+    """A line of the fit explanation (scoring.fit.expliquer) in the interface language.
+
+    Its own catalogue (`FIT`): its templates are too general for the log's lines.
+    The skills and words found stay as the profile names them.
+    """
+    if LANGUE == "fr":
+        return texte
+    return _ligne(texte, ("FIT",))
+
+
+def _ligne(texte: str, noms: tuple[str, ...] = _JOURNAL) -> str:
     """A log line (without edge spaces) in the interface language, or as is."""
-    lignes, modeles = _lignes()
+    lignes, modeles = _lignes(noms)
     if texte in lignes:
         return lignes[texte]
     for motif, cible in modeles:

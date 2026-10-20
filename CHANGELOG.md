@@ -4,6 +4,16 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.6.0 — 2026-10-20
+
+- **"Why this fit" in your language.** The explanation of an offer's score (vocabulary,
+  caps, junior or senior title, language of the posting, experience asked for) now
+  follows the interface language. The skills it names stay as your profile writes them.
+- **Test an API access** (Access panel → "Tester la connexion"): one minimal request with
+  the saved key for Adzuna, Jooble or France Travail, no offer imported, then a plain
+  answer — the key works, no key saved, key refused, quota reached (the key is fine), the
+  service is in error, or no answer. The key is never shown, not even in an error.
+
 ## 3.5.0 — 2026-10-20
 
 - **Profiles from a terminal**: `jobhunter profiles` lists them (the active one marked),

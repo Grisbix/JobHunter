@@ -65,6 +65,17 @@ def _date_fr(iso: Any) -> str:
     return f"{t[8:10]}/{t[5:7]}/{t[:4]}" if len(t) == 10 and t[4] == "-" else ""
 
 
+# What the connection test found (sources.connexion.Resultat.etat), said plainly.
+MESSAGES_TEST = {
+    "ok": "{nom} : connexion vérifiée, la clé fonctionne.",
+    "absente": "{nom} : aucune clé enregistrée (Saisir la clé).",
+    "refusee": "{nom} : clé refusée par le service — vérifie-la ou crée-en une nouvelle.",
+    "quota": "{nom} : quota atteint — la clé est bonne, réessaie demain.",
+    "panne": "{nom} : le service répond mais en erreur — réessaie plus tard.",
+    "reseau": "{nom} : pas de réponse (hors ligne ?).",
+}
+
+
 class PanneauxMixin:
     def _hide_all(self: "AppTypee") -> None:
         """Hides all the panels (dash, viewer, detail, lists)."""
@@ -432,6 +443,36 @@ class PanneauxMixin:
                 f"Collecte {_t(e.libelle)}",
             )
 
+        def tester() -> None:
+            """One minimal request with the saved key, in the background (sources.connexion)."""
+            nom = choisie()
+            if nom is None:
+                return
+            if nom not in cles_api.CLES:
+                self._log(
+                    f"{_t(etats[nom].libelle)} : " + _t("accès libre, aucune clé à saisir.") + "\n"
+                )
+                return
+            libelle = _t(etats[nom].libelle)
+            self._log(
+                _t("Test de {nom} : une requête, aucune offre importée…").format(nom=libelle) + "\n"
+            )
+
+            def tache() -> None:
+                from jobhunter.sources import connexion as _cx
+
+                try:
+                    r = _cx.tester(nom)
+                except Exception as e:  # never the message: it may hold a URL with the key
+                    r = _cx.Resultat("reseau", type(e).__name__)
+                texte = _t(MESSAGES_TEST.get(r.etat, r.etat)).format(nom=libelle)
+                ligne = ("✓ " if r.etat == "ok" else "✗ ") + texte
+                if r.detail:
+                    ligne += f" ({r.detail})"
+                self.root.after(0, lambda: self._log(ligne + "\n"))
+
+            threading.Thread(target=tache, daemon=True).start()
+
         tvs.bind("<Double-1>", lambda e: saisir(tvs.identify_row(e.y) or None))
         bar_s = CF(col, bg=BG)
         bar_s.pack(fill="x", padx=28, pady=(0, 10))
@@ -445,6 +486,16 @@ class PanneauxMixin:
             relief="flat",
             cursor="hand2",
         ).pack(side="left")
+        CB(
+            bar_s,
+            text="Tester la connexion",
+            command=tester,
+            bg=BTN,
+            fg=TX,
+            activebackground=BTN_H,
+            relief="flat",
+            cursor="hand2",
+        ).pack(side="left", padx=(18, 0))
         CB(
             bar_s,
             text="Collecter cette source",

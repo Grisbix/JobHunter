@@ -107,6 +107,15 @@ TEXTES: dict[str, str] = {
     "contrat": "contract",
     "localisation": "location",
     "Appels d'API aujourd'hui (tous profils) : ": "API calls today (all profiles): ",
+    "(file : {fit}, recalcul au prochain re-score)": "(queue: {fit}, recomputed at the next re-score)",
+    "Tester la connexion": "Test the connection",
+    "Test de {nom} : une requête, aucune offre importée…": "Testing {nom}: one request, no offer imported…",
+    "{nom} : connexion vérifiée, la clé fonctionne.": "{nom}: connection checked, the key works.",
+    "{nom} : aucune clé enregistrée (Saisir la clé).": "{nom}: no key saved (Enter the key).",
+    "{nom} : clé refusée par le service — vérifie-la ou crée-en une nouvelle.": "{nom}: key refused by the service — check it or create a new one.",
+    "{nom} : quota atteint — la clé est bonne, réessaie demain.": "{nom}: quota reached — the key is fine, try again tomorrow.",
+    "{nom} : le service répond mais en erreur — réessaie plus tard.": "{nom}: the service answers with an error — try again later.",
+    "{nom} : pas de réponse (hors ligne ?).": "{nom}: no answer (offline?).",
     # profiles
     "Renommer « {nom} »…": "Rename “{nom}”…",
     "Archiver « {nom} »…": "Archive “{nom}”…",
@@ -610,4 +619,21 @@ SORTIE = {
     "Heure invalide : « {a} » (format 08:00).": "Invalid time: “{a}” (format 08:00).",
     "Hors Windows : lance ./launchers/schedule.sh depuis le dossier de JobHunter.": "Outside Windows: "
     "run ./launchers/schedule.sh from the JobHunter folder.",
+}
+
+# The lines of the fit explanation (scoring.fit.expliquer): language.explication.
+FIT = {
+    "{axe} {pct} (x{poids}) : {mots}": "{axe} {pct} (x{poids}): {mots}",
+    "vocabulaire : {v}/10": "vocabulary: {v}/10",
+    "intitulé du métier visé en second (finance)": "title of the second target job (finance)",
+    "intitulé du cœur de cible : plafond 10": "title at the core of the target: cap 10",
+    "plafond {cap} (cœur {c}, complément {k})": "cap {cap} (core {c}, complement {k})",
+    "intitulé HSE : plafond {cap}": "HSE title: cap {cap}",
+    "métier hors cible dans l'intitulé : plafond {cap}": "off-target job in the title: cap {cap}",
+    "intitulé junior « {mot} » : +{b}": "junior title “{mot}”: +{b}",
+    "intitulé senior : -{m}": "senior title: -{m}",
+    "intitulé écarté « {mot} » : -2": "excluded title “{mot}”: -2",
+    "annonce redigee en {lg} : plafond {p}": "posting written in {lg}: cap {p}",
+    "annonce exige {x} : plafond {p}": "posting requires {x}: cap {p}",
+    "{n} an(s) d'expérience demandés : -{m}": "{n} year(s) of experience required: -{m}",
 }

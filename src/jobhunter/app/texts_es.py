@@ -105,6 +105,15 @@ TEXTES: dict[str, str] = {
     "contrat": "contrato",
     "localisation": "ubicación",
     "Appels d'API aujourd'hui (tous profils) : ": "Llamadas a la API hoy (todos los perfiles): ",
+    "(file : {fit}, recalcul au prochain re-score)": "(lista: {fit}, se recalcula en el próximo re-score)",
+    "Tester la connexion": "Probar la conexión",
+    "Test de {nom} : une requête, aucune offre importée…": "Prueba de {nom}: una petición, ninguna oferta importada…",
+    "{nom} : connexion vérifiée, la clé fonctionne.": "{nom}: conexión verificada, la clave funciona.",
+    "{nom} : aucune clé enregistrée (Saisir la clé).": "{nom}: ninguna clave guardada (Introducir la clave).",
+    "{nom} : clé refusée par le service — vérifie-la ou crée-en une nouvelle.": "{nom}: clave rechazada por el servicio — revísala o crea una nueva.",
+    "{nom} : quota atteint — la clé est bonne, réessaie demain.": "{nom}: cuota alcanzada — la clave es correcta, inténtalo mañana.",
+    "{nom} : le service répond mais en erreur — réessaie plus tard.": "{nom}: el servicio responde con un error — inténtalo más tarde.",
+    "{nom} : pas de réponse (hors ligne ?).": "{nom}: sin respuesta (¿sin conexión?).",
     # profiles
     "Renommer « {nom} »…": "Renombrar «{nom}»…",
     "Archiver « {nom} »…": "Archivar «{nom}»…",
@@ -614,4 +623,21 @@ SORTIE = {
     "Heure invalide : « {a} » (format 08:00).": "Hora no válida: «{a}» (formato 08:00).",
     "Hors Windows : lance ./launchers/schedule.sh depuis le dossier de JobHunter.": "Fuera de "
     "Windows: ejecuta ./launchers/schedule.sh desde la carpeta de JobHunter.",
+}
+
+# The lines of the fit explanation (scoring.fit.expliquer): language.explication.
+FIT = {
+    "{axe} {pct} (x{poids}) : {mots}": "{axe} {pct} (x{poids}): {mots}",
+    "vocabulaire : {v}/10": "vocabulario: {v}/10",
+    "intitulé du métier visé en second (finance)": "título del segundo puesto buscado (finanzas)",
+    "intitulé du cœur de cible : plafond 10": "título en el núcleo del objetivo: tope 10",
+    "plafond {cap} (cœur {c}, complément {k})": "tope {cap} (núcleo {c}, complemento {k})",
+    "intitulé HSE : plafond {cap}": "título HSE: tope {cap}",
+    "métier hors cible dans l'intitulé : plafond {cap}": "puesto fuera del objetivo en el título: tope {cap}",
+    "intitulé junior « {mot} » : +{b}": "título junior «{mot}»: +{b}",
+    "intitulé senior : -{m}": "título sénior: -{m}",
+    "intitulé écarté « {mot} » : -2": "título descartado «{mot}»: -2",
+    "annonce redigee en {lg} : plafond {p}": "oferta redactada en {lg}: tope {p}",
+    "annonce exige {x} : plafond {p}": "la oferta exige {x}: tope {p}",
+    "{n} an(s) d'expérience demandés : -{m}": "{n} año(s) de experiencia requeridos: -{m}",
 }
