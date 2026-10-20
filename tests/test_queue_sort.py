@@ -1,5 +1,5 @@
 """tri_file's removal reasons: quant, data engineering, heavy tooling, duplicates,
-non-offers, student; and the tracker's protection. Converted from Scripts/test_tri_file.py.
+non-offers, student; and the tracker's protection. Converted from Scripts/test_queue_sort.py.
 """
 
 import pytest

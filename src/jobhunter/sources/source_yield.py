@@ -169,7 +169,7 @@ def lire_journal(chemin: Path) -> list[dict[str, Any]]:
         # errors="replace": a line cut mid-character by a crash only spoils
         # ITSELF (it no longer parses and is skipped). Strict decoding raised
         # UnicodeDecodeError for the whole file, and the Access panel never
-        # opened (tests/test_app_parcours.py).
+        # opened (tests/test_app_panels_open.py).
         texte = chemin.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return sortie

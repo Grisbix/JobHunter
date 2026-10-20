@@ -5,7 +5,7 @@ import importlib.util
 
 import pytest
 from conftest import RACINE
-from test_mise_a_jour import V13, zip_de
+from test_update import V13, zip_de
 
 from jobhunter import signature as sig
 from jobhunter.programs import update as maj

@@ -131,9 +131,15 @@ def suivi_temporaire(tmp_path, monkeypatch):
     return chemin
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def navigateur():
-    """A single Chromium (headless) for the whole test session."""
+    """One Chromium (headless) per test module.
+
+    Not per session: a running sync Playwright keeps its event loop, and a later test
+    that starts its own Playwright (test_login_access) then fails with "using
+    Playwright Sync API inside the asyncio loop" — hidden while that file came first
+    in alphabetical order.
+    """
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as p:

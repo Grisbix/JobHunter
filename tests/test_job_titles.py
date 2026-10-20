@@ -1,7 +1,7 @@
 """Cleaning of the job title (tailor_application.titre_poste).
 
 Cases taken from REAL titles found in the queue, not invented. Converted from
-Scripts/test_titres.py; sections H and I passed the RESULT as the
+Scripts/test_job_titles.py; sections H and I passed the RESULT as the
 condition there (`check(nom, valeur, attendu)`) and succeeded as soon as the title
 was not empty: idempotence was not checked. It is here.
 """
@@ -139,7 +139,7 @@ def test_genre_trois_lettres(src, attendu):
 @pytest.mark.parametrize(
     ("src", "attendu"),
     [
-        # Found by tests/test_proprietes.py: the M of H&M taken for a gender letter.
+        # Found by tests/test_properties.py: the M of H&M taken for a gender letter.
         ("Analyste ESG - H&M - H/F", "Analyste ESG - H&M"),
         ("Head - HR - H&M", "Head - HR - H&M"),
         # En dash between the letters: removed by the second cleaning only.

@@ -2,7 +2,7 @@
 
 Without a key the source stays silent and says so; a refusal of entry stops at the 3rd; a 429 pauses
 then resumes; the key NEVER leaks into the output, even in an
-exception. Converted from Scripts/test_agregateurs.py.
+exception. Converted from Scripts/test_aggregators.py.
 """
 
 import json

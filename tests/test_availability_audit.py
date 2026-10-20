@@ -4,7 +4,7 @@ A rate limit is waited for and resumed, a refusal of entry stops; APEC and WTJ
 find the offer again through their own source; a tracked offer is never removed;
 choice and order of the targets; self-stop on duration;
 weekly check in the pipeline; the day's backup is never overwritten.
-Converted from Scripts/test_audit_dispo.py, which replaced httpx.Client and
+Converted from Scripts/test_availability_audit.py, which replaced httpx.Client and
 time.sleep for the whole process.
 """
 

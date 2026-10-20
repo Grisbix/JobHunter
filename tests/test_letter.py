@@ -7,7 +7,7 @@
 4. The hand-written body is found by its name (the failure was SILENT).
 5. verifie_redites cuts the header whatever the greeting.
 6. The document's language follows the PLACE when the text is silent.
-Converted from Scripts/test_lettre.py.
+Converted from Scripts/test_letter.py.
 """
 
 import pytest

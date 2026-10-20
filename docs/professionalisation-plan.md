@@ -159,7 +159,7 @@ Done when: `python -c "import jobhunter.sources.linkedin"` reads no file.
 
 **Progress (2026-10-18, v1.13.0)**: import no longer writes anything (three folders were
 created at load time) and opens no connection — checked by
-`tests/test_effets_import.py`, a ratchet.
+`tests/test_import_side_effects.py`, a ratchet.
 
 **Done (2026-10-18, v1.14.0)**: import no longer reads any file. The ~110 values
 drawn from the profile and from `chemins.json` are computed on first read

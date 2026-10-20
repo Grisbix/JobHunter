@@ -39,7 +39,7 @@ and Linux.
 the programs and the window (`jobhunter.app`) has a Google-format docstring: ruff (`D`)
 requires it.
 
-**A source changes its response?** `tests/test_rejeu_sources.py` replays real recorded
+**A source changes its response?** `tests/test_source_replay.py` replays real recorded
 responses (`tests/reponses/`). If a site has changed and the parser has been adapted,
 record the source again (network, to be run on purpose):
 `uv run python tools/replay.py enregistrer lever`. APEC, WTJ and the sources that need a
@@ -98,7 +98,7 @@ Verified on 19/10/2026 on Python 3.14: a `time.sleep` triggered in a function
 - **One subject per commit**, clear message that explains the why.
 - **The engine knows nobody**: everything specific to a person lives in
   `profile/profile.json` (see `AGENTS.md`).
-- **Nothing at import**: no reading, no writing, no network (`tests/test_effets_import.py`).
+- **Nothing at import**: no reading, no writing, no network (`tests/test_import_side_effects.py`).
   A value taken from the profile is written `_PARESSEUX["NOM"] = lambda: ...` and read as
   `_ici.NOM` in its module ([ADR 0007](../docs/adr/0007-lazy-profile-values.md)).
 - **`print` for a command's output (`main()`), `logging` for the rest**:

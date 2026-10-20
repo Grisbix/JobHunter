@@ -202,7 +202,7 @@ def _de(mot: str, apostrophe: str = "'") -> str:
 # letter too: "H&M - H/F" lost its M ("H&"), the M taken for a gender letter.
 # The en and em dashes separate like "-": "Analyste – F – H" kept its mention, which
 # the dash normalisation below then turned into "F - H", removed only by a SECOND
-# cleaning (found by tests/test_proprietes.py).
+# cleaning (found by tests/test_properties.py).
 RX_GENRE = re.compile(
     r"[(\[]?\s*(?<![\w&])[HFMWX](?![\w&])"
     r"(?:\s*[/|.\-–—]\s*(?<![\w&])[HFMWXD](?![\w&])){1,2}\s*[)\]]?",

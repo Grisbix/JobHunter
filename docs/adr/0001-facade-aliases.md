@@ -27,7 +27,7 @@ and a test that believes it is redirecting the queue would write into the real o
 
 ## Consequences
 
-- Nothing changes for callers; `test_coherence_imports.py` checks that every
+- Nothing changes for callers; `test_import_consistency.py` checks that every
   `module.nom` used between modules still exists.
 - Cost: one level of indirection to understand. The facades disappear once the package
   is installed by `pip` and callers import `jobhunter.*` (phase 6).

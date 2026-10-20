@@ -2,7 +2,7 @@
 
 Memorisation, 30-day expiry, original date kept, and the merge that
 ignores a NEW rejected offer without touching an offer already in the queue. Without
-network, on throwaway files. Converted from Scripts/test_rejets_tri.py.
+network, on throwaway files. Converted from Scripts/test_sort_rejections.py.
 """
 
 import datetime

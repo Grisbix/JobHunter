@@ -98,13 +98,13 @@ found again by the scan tomorrow; a lost application never comes back.
 | Program | Coverage |
 |---|---|
 | `test_patterns.py` | 68 cases — form recognition, offer search, filling in. |
-| `test_titres.py` | 38 cases — title cleaning, elision, idempotence. |
-| `test_contrats.py` | 26 cases — deduction of the contract type, and its false positives. |
+| `test_job_titles.py` | 38 cases — title cleaning, elision, idempotence. |
+| `test_contracts.py` | 26 cases — deduction of the contract type, and its false positives. |
 | `test_sources.py` | 24 cases — arbitration of duplicates between sources. |
 | `test_queue_io.py` | 25 cases — exclusion between processes, no write on exception, separation of the descriptions. |
-| `test_suivi.py` | 9 cases — a recorded application never disappears, even if its posting closes. |
-| `test_relances.py` | 11 cases — D+7 then D+10 template, edited draft never overwritten, nothing is sent. |
-| `test_metriques_hebdo.py` | 26 cases — dates `AAAA-MM-JJ` and `jj/mm`, entries without a date, follow-up threshold, pipeline logs. |
+| `test_applications.py` | 9 cases — a recorded application never disappears, even if its posting closes. |
+| `test_follow_ups.py` | 11 cases — D+7 then D+10 template, edited draft never overwritten, nothing is sent. |
+| `test_weekly_metrics.py` | 26 cases — dates `AAAA-MM-JJ` and `jj/mm`, entries without a date, follow-up threshold, pipeline logs. |
 | `test_web_nav_mock.py` | 20 cases — network and Ollama mocked. |
 | `test_web_nav.py` | Synthetic tests of `web_nav`, without network. |
 | `test_live_nav.py` | Real read-only test on real career sites. |
@@ -177,7 +177,7 @@ program (`util.garder`), removes it from the caller — and the rest of the work
 in memory and rewrote it IN FULL on every click. A "applied" on one offer therefore erased
 the follow-ups that `follow_ups.py` had just noted on others — without a word. One writes
 one entry, under lock, on the state re-read inside the lock: this is what
-`suivi_io.poser` does. Tested by `test_suivi.py`.
+`suivi_io.poser` does. Tested by `test_applications.py`.
 
 **An `after` loop that only catches one specific exception dies at the first other one.**
 `_drain` (the app) only saw `queue.Empty`; any other failure came out BEFORE the line that

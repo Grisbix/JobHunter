@@ -2,7 +2,7 @@
 
 Real cases. The costliest: a Deloitte RESULTS page (`results.htm`)
 accepted as a posting, which had replaced a LinkedIn link leading to the offer.
-Converted from Scripts/test_liens.py.
+Converted from Scripts/test_offer_links.py.
 """
 
 import pytest

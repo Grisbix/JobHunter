@@ -2,7 +2,7 @@
 
 Strict title, employer identity in whole words, when to probe a feed again,
 Workday reading, demo ATS accounts ("shells").
-Converted from Scripts/test_site_final.py.
+Converted from Scripts/test_final_site.py.
 """
 
 import datetime

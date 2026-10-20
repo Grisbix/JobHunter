@@ -2,7 +2,7 @@
 
 The `rh` field carries a URL in 413 offers out of 416: code that took it
 for a name would write "Bonjour https://www.linkedin.com/search...".
-Converted from Scripts/test_appel.py.
+Converted from Scripts/test_message_greeting.py.
 """
 
 import pytest

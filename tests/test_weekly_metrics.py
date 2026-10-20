@@ -1,6 +1,6 @@
 """Weekly report (metriques_hebdo): tracker dates, follow-ups, pipeline logs.
 
-Converted from Scripts/test_metriques_hebdo.py.
+Converted from Scripts/test_weekly_metrics.py.
 """
 
 from datetime import date

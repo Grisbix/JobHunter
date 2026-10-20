@@ -4,6 +4,14 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.9.1 — 2026-10-20
+
+- For contributors: the test files have English names too (`tests/test_update.py`,
+  `test_profiles.py`, `test_my_search.py`…), the last French names of the code base. No
+  change for users.
+- The shared test browser lives per test module: a test that starts its own browser no
+  longer depends on running first.
+
 ## 3.9.0 — 2026-10-20
 
 - **"Ma recherche", in the app.** A new panel (second in the sidebar) edits what you

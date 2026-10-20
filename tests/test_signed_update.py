@@ -1,12 +1,12 @@
 """Signed update (2.18): a version the author did not sign is never installed.
 
-Offline, like test_mise_a_jour: ZIP, signature and installer served from memory.
+Offline, like test_update: ZIP, signature and installer served from memory.
 """
 
 import argparse
 
 import pytest
-from test_mise_a_jour import V12, V13, installer, lire, zip_de  # noqa: F401 (installer : fixture)
+from test_update import V12, V13, installer, lire, zip_de  # noqa: F401 (installer : fixture)
 
 from jobhunter import signature as sig
 from jobhunter.programs import update as maj

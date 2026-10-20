@@ -2,7 +2,7 @@
 
 Origin: linkedin_closed removed an offer the user had applied to,
 because LinkedIn no longer accepted applications. Yet a posting closes almost
-always AFTER one has applied to it. Converted from Scripts/test_suivi.py.
+always AFTER one has applied to it. Converted from Scripts/test_applications.py.
 """
 
 import pytest

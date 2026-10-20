@@ -3,7 +3,7 @@
 Part of jobhunter.app (step F5). The French text stays the source: a text missing
 from here is displayed in French. English is also the fallback of the other
 languages (see `langue`), so this catalogue is the reference list of the texts to
-translate: tests/test_langue.py checks that every language covers it.
+translate: tests/test_language.py checks that every language covers it.
 """
 
 NOM = "English"

@@ -3,7 +3,7 @@
 The app is launched by pythonw (JobHunter.pyw, the installed shortcut): no console,
 `sys.stdout` and `sys.stderr` are None. A panel that fails there shows nothing and
 says nothing. Importing the modules without a console is already tested
-(test_sources_sans_console.py); here each sidebar button is clicked, and the panel
+(test_sources_without_console.py); here each sidebar button is clicked, and the panel
 must be displayed with no internal failure — then again with its files damaged
 (unreadable JSON, unreadable log, queue that cannot be read): the panel still opens
 and the next button still works.

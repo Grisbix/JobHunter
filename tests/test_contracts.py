@@ -1,6 +1,6 @@
 """Deduction of the contract type (job_sources), and its false positives.
 
-Converted from Scripts/test_contrats.py. The "etudiant" sentences are real
+Converted from Scripts/test_contracts.py. The "etudiant" sentences are real
 sentences from the queue (2026-10-04).
 """
 

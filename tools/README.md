@@ -8,7 +8,7 @@ the user never runs them. Run them from the repository root with `uv run python 
 | `bench.py` | Non-regression bench: records what the engine decides for each offer, then compares after a change (`enregistrer`, `comparer`). ADR 0006. |
 | `bench_offers.py` | The fictitious, deterministic offers the bench runs on in CI. |
 | `bench_reference.json` | The bench's reference decisions on those offers (384 offers). |
-| `replay.py` | Records a source's real public response once, then replays it in `tests/test_rejeu_sources.py` without network. |
+| `replay.py` | Records a source's real public response once, then replays it in `tests/test_source_replay.py` without network. |
 | `directories.py` | Regenerates the Lever, Ashby and Greenhouse company directories shipped in the package. |
 | `personal_data.py` | Pre-commit check: refuses personal data (CV, queue, tracker, keys) in the public repository. |
 | `check_version.py` | Checks that `VERSION` and `pyproject.toml` carry the same version (CI and pre-commit). |

@@ -5,7 +5,7 @@ and Linux). Without it — a missing library, an unusual Tk — nothing changes:
 "Remplacer mon CV de base…" button of the CV panel does the same with a file dialog.
 
 The pure part (which file was dropped, which base CV it replaces, the copy and the
-profile update) has no window: tests/test_depot_cv.py calls it directly.
+profile update) has no window: tests/test_cv_drop.py calls it directly.
 """
 
 import json

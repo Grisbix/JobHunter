@@ -2,7 +2,7 @@
 
 Stop at the first 403, without rest or second request; refusal counted in
 INCIDENTS; offers already read kept; a 429 keeps its pause and its second
-chance. Converted from Scripts/test_glassdoor_refus.py, which replaced
+chance. Converted from Scripts/test_glassdoor_refusal.py, which replaced
 time.sleep and urlopen for the whole process without putting them back.
 """
 

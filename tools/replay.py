@@ -22,7 +22,7 @@ Adzuna, Jooble).
 Record (goes on the network, run on purpose):
     python tools/replay.py enregistrer            # all sources
     python tools/replay.py enregistrer lever fir  # some of them
-The replay is done by tests/test_rejeu_sources.py.
+The replay is done by tests/test_source_replay.py.
 
 Decision: docs/adr/0006-non-regression-bench.md
 """

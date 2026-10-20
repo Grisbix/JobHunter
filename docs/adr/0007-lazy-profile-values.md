@@ -34,7 +34,7 @@ midway and kept the values of the old one.
 ## Consequences
 
 Loading the whole engine reads no file, writes nothing and does not go out on the network;
-`tests/test_effets_import.py` checks it (ratchet). A new constant drawn from the
+`tests/test_import_side_effects.py` checks it (ratchet). A new constant drawn from the
 profile is written `_PARESSEUX["NOM"] = lambda: ...` and read `_ici.NOM`; a read of the
 profile at module level would make this test fail.
 

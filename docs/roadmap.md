@@ -135,7 +135,7 @@ what JobHunter already does; only what fills a real gap is kept.
 | # | Idea | Decision | Why |
 |---|---|---|---|
 | H1 ✅ (v2.22.0) | 2. Undo a batch clean-up | **kept** | the sort, the audit and the merge back up before removing, but nothing put a backup back: `jobhunter restore` (tracker never restored, tracked offers kept, state before copied) |
-| H2 ✅ (v2.22.0) | Network failure matrix (HTTPX, Scrapy models) | **kept** | 22 ATS and career-feed readers × 403, 429, 500, timeout, empty or unreadable JSON: each failure counted, never a calm day; 404 silent (`tests/test_pannes_reseau.py`) |
+| H2 ✅ (v2.22.0) | Network failure matrix (HTTPX, Scrapy models) | **kept** | 22 ATS and career-feed readers × 403, 429, 500, timeout, empty or unreadable JSON: each failure counted, never a calm day; 404 silent (`tests/test_network_failures.py`) |
 | H3 ✅ (v2.22.0) | 6. Keep unknown fields on read then write | **kept, test only** | already true (plain dicts, `transaction` rewrites what it read); now proven for the queue and the tracker |
 | — | 4. Explicit status transitions | already done | ADR 0009: an open browser never yields "postulé"; the guard is tested |
 | — | 8, 17. Provenance of a score, run identity | partly done | `jobhunter.scoring` explains each fit (G3); a run identifier waits for a measured need |
@@ -160,7 +160,7 @@ cheap actions instead of only listing them.
 
 | # | Idea (source) | Decision | Why |
 |---|---|---|---|
-| I1 ✅ (v2.22.1) | Generated-case invariants (Hypothesis) | **kept** | `tests/test_proprietes.py`: title cleaning stable, tracking parameters ignored by the URL key, score in 1..10 with a level its decimals never move, a merge repeated adds nothing, a tracked offer survives any merge. First run: two title bugs ("H&M - H/F" → "H&"; "– F – H" kept), fixed, 0 real title changed out of 10,455 |
+| I1 ✅ (v2.22.1) | Generated-case invariants (Hypothesis) | **kept** | `tests/test_properties.py`: title cleaning stable, tracking parameters ignored by the URL key, score in 1..10 with a level its decimals never move, a merge repeated adds nothing, a tracked offer survives any merge. First run: two title bugs ("H&M - H/F" → "H&"; "– F – H" kept), fixed, 0 real title changed out of 10,455 |
 | I2 ✅ (v2.22.1) | Test on the interpreter really used (Codex) | **kept** | the Windows tests run on 3.12 (the floor) and 3.14 (`C:\Python314`) |
 | — | Per-site errors and warnings (JobSpy) | already done | `INCIDENTS` and `_rendement.jsonl` verdicts |
 | — | ATS feeds (career-ops: Greenhouse, Ashby, Lever, Wellfound) | already wider | Greenhouse, Lever (and its EU region), Ashby, Recruitee, Teamtailor, SmartRecruiters, Workable, Workday |
@@ -168,7 +168,7 @@ cheap actions instead of only listing them.
 | — | Advisory score calibration (career-ops `calibrate`) | already done, stricter | `jobhunter evaluation`: AUC with a resampled interval, never auto-tunes |
 | — | Outcomes per channel, count-gated (career-ops `analyze-patterns`) | **deferred** | 16 applications sent, no answer yet: every group would read "too few". Revisit at ~30 sent with answers |
 | — | Repost / ghost-job detection (career-ops `detect-reposts`: same company, same title word set, ≥ 2 URLs over 1–90 days) | **deferred** | needs a history of removed offers; same prerequisite as H 1/12 |
-| I3 ✅ (v2.22.2) | Panels opened without a console, with damaged files (Codex, Thonny, Textual) | **kept** | `tests/test_app_parcours.py` clicks the six sidebar buttons under pythonw conditions, then again with truncated JSON, non-UTF-8 bytes and an unreadable queue. Found one defect: a log line cut mid-character kept the Access panel from opening |
+| I3 ✅ (v2.22.2) | Panels opened without a console, with damaged files (Codex, Thonny, Textual) | **kept** | `tests/test_app_panels_open.py` clicks the six sidebar buttons under pythonw conditions, then again with truncated JSON, non-UTF-8 bytes and an unreadable queue. Found one defect: a log line cut mid-character kept the Access panel from opening |
 | I4 ✅ (v2.22.2) | README that sells what is true (career-ops, JobSpy, httpx, Textual) | **kept** | one-line promise, comparison with scrapers and auto-apply bots, pipeline diagram, sources table, "built to be trusted" with the proofs; English and French |
 | — | HTTP cache (requests-cache) | set aside | it serves a stale answer when the request fails: it would lie about a closed offer |
 | — | Tenacity, structlog, loguru, APScheduler, Pydantic, nox | set aside | the existing bounded requests, logging, scheduled tasks and TypedDicts cover the need; no second layer |
@@ -189,7 +189,7 @@ What remains out of reach, whatever happens:
 - **B1** (v2.4.1): `tests/test_architecture.py`.
 - **B2** (v2.4.3): `tools/replay.py` records a real public response from seven sources
   (Greenhouse, Lever, Ashby, Workday, LinkedIn, EURES, FIR), scrubbed;
-  `tests/test_rejeu_sources.py` replays it without network and requires the same offers.
+  `tests/test_source_replay.py` replays it without network and requires the same offers.
   - No VCR.py: all the sources' requests already go through `_get_borne` and
     `_post_borne`, which is where we record and replay.
   - A missing exchange fails, even when the source swallows the exception (the case of

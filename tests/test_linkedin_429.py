@@ -3,7 +3,7 @@
 
 Measurement of 2026-10-17: at 1.2 s between pages, the guest API answered 429 from the
 first requests and the code threw away each limited page. Converted from the end of
-Scripts/test_lecteurs_ats.py.
+Scripts/test_ats_readers.py.
 """
 
 import pytest

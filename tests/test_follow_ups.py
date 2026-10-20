@@ -2,7 +2,7 @@
 
 One draft per follow-up due, the right template (D+7 the first time, D+10 after a
 follow-up), no draft retouched by hand is overwritten, and the report says
-clearly that nothing is sent. Converted from Scripts/test_relances.py.
+clearly that nothing is sent. Converted from Scripts/test_follow_ups.py.
 """
 
 import pytest

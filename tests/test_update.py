@@ -5,7 +5,7 @@ download, the installation lives in a temporary folder. A modified file
 is not overwritten, even on the first update (gap in 1.2.0, measured on a
 real installation); a removed file goes if it is intact; the data is
 never written; a failed check puts back the previous version, like --annuler.
-Converted from Scripts/test_mise_a_jour.py.
+Converted from Scripts/test_update.py.
 """
 
 import argparse

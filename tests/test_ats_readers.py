@@ -1,7 +1,7 @@
 """Readers of career pages and public ATS (job_sources.fetch_ats / fetch_autre).
 
 Without network: the responses are frozen, copied from the real structure of the sites on
-2026-10-08. Converted from Scripts/test_lecteurs_ats.py, which replaced
+2026-10-08. Converted from Scripts/test_ats_readers.py, which replaced
 _get_borne, _post_borne, WORKDAY_MOTS and WORKDAY_PAUSE for the whole process.
 The LinkedIn part is in test_linkedin_429.py.
 """

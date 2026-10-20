@@ -93,7 +93,7 @@ BEFORE any import of the engine and provides the fixtures: `faux_reseau` (double
 session, a fresh page per test). **Never assign an engine global directly
 in a test: use `monkeypatch`**, otherwise state leaks from one test to the next. A test that reads
 a user's real data carries the `donnees_reelles` mark and runs only on
-demand (`pytest -m donnees_reelles`). `tests/test_pas_de_suite_historique.py` refuses any
+demand (`pytest -m donnees_reelles`). `tests/test_no_historical_suite.py` refuses any
 program in `data/`. `programs/test_live_nav` and `programs/test_acces_sites`
 really go out on the web — outside pytest, do not run them mechanically.
 
@@ -123,7 +123,7 @@ One-way dependencies, checked in tests (cycles `util`↔`queue_io`, `ats_match`�
 (`_facade`): `jobhunter.sources.title_ok` works. Without installation, `python JobHunter.pyw
 <commande>` runs everything (it is the only file that adds `src/` to the path); installed
 (`pip install -e .`), `python -m jobhunter <commande>` or `jobhunter <commande>`.
-`test_coherence_imports.py` checks that every `module.nom` used between modules exists.
+`test_import_consistency.py` checks that every `module.nom` used between modules exists.
 
 ### Two data layouts (3.0)
 
