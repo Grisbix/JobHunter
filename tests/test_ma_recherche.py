@@ -67,7 +67,9 @@ def test_apercu_sur_la_file(tmp_path, profil):
     reg.ecarter.append("stage")
     candidat = tmp_path / "candidat.json"
     candidat.write_text(json.dumps(R.appliquer(profil, reg)), encoding="utf-8")
-    env = {**os.environ, "JOBHUNTER_RACINE": str(r)}
+    src = str(EXEMPLE.parent.parent / "src")  # the CI runs the tests without installing
+    chemins = os.pathsep.join(p for p in (src, os.environ.get("PYTHONPATH", "")) if p)
+    env = {**os.environ, "JOBHUNTER_RACINE": str(r), "PYTHONPATH": chemins}
     env.pop("PROFIL_JOBHUNTER", None)
     env.pop("JOBHUNTER_PRINCIPALE", None)
 
