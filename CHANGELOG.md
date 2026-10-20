@@ -4,6 +4,17 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 2.22.2 — 2026-10-20
+
+- **The Access panel opens even with a damaged log**: a line of the collection log cut
+  mid-character (power cut, crash) kept the panel from opening. Only that line is now
+  skipped.
+- **Every panel tested as you open it**: Offers, CVs, Companies, Job sites, Statistics
+  and Access are opened with no console, as the installed app runs, then again with
+  damaged data files; each one must display and the next button must still work.
+- **A new README**, in English and French: what JobHunter does differently, how it works,
+  the sources it reads, and what backs it.
+
 ## 2.22.1 — 2026-10-20
 
 - **Job titles in letters**: a title such as "Analyste ESG - H&M - H/F" became

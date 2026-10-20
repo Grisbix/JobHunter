@@ -1,25 +1,29 @@
+<div align="center">
+
 # JobHunter
+
+**Ta recherche d'emploi, préparée chaque matin — et le clic final reste le tien.**
+
+JobHunter collecte les offres de 11 sites d'emploi et de plus de 20 types de sites carrière
+d'entreprises, les note de 1 à 10 selon **ton** profil, et prépare pour chacune un CV adapté,
+une lettre de motivation et un court message. Il tourne sur ton ordinateur. Il n'envoie
+jamais de candidature.
 
 [![tests](https://github.com/Grisbix/JobHunter/actions/workflows/tests.yml/badge.svg)](https://github.com/Grisbix/JobHunter/actions/workflows/tests.yml)
 [![version](https://img.shields.io/github/v/release/Grisbix/JobHunter)](https://github.com/Grisbix/JobHunter/releases/latest)
+![python](https://img.shields.io/badge/python-3.12%20%7C%203.14-3776ab)
+![plateformes](https://img.shields.io/badge/Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-bureau-334155)
 [![licence](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
 
 [🇬🇧 English](README.md) · 🇫🇷 Français
 
-**Ta recherche d'emploi, préparée chaque matin.** JobHunter collecte les offres de dizaines
-de sources, les note de 1 à 10 selon **ton** profil, et prépare pour chacune un CV adapté,
-une lettre de motivation et un court message. **Il n'envoie jamais rien** : le clic
-« Envoyer » reste le tien.
+<a href="https://github.com/Grisbix/JobHunter/releases/latest/download/JobHunterSetup.exe"><img alt="Télécharger l'installateur pour Windows" src="https://img.shields.io/badge/T%C3%A9l%C3%A9charger-JobHunterSetup.exe-2563eb?style=for-the-badge&logo=windows&logoColor=white"></a>
+&nbsp;
+<a href="#depuis-le-code-source-windows"><img alt="Code source" src="https://img.shields.io/badge/Code%20source-personnaliser-334155?style=for-the-badge&logo=github&logoColor=white"></a>
 
-Tout tourne sur ton ordinateur. Ton CV et tes candidatures ne quittent pas ta machine.
+<sub>Windows 10/11 · sans Python ni droits d'administrateur · tes données restent dans <code>Documents\JobHunter</code></sub>
 
-<p align="center">
-  <a href="https://github.com/Grisbix/JobHunter/releases/latest/download/JobHunterSetup.exe"><img alt="Télécharger l'installateur pour Windows" src="https://img.shields.io/badge/T%C3%A9l%C3%A9charger-JobHunterSetup.exe-2563eb?style=for-the-badge&logo=windows&logoColor=white"></a>
-  &nbsp;
-  <a href="#depuis-le-code-source-windows"><img alt="Code source" src="https://img.shields.io/badge/Code%20source-personnaliser-334155?style=for-the-badge&logo=github&logoColor=white"></a>
-</p>
-
-<p align="center"><sub>Windows 10/11 · sans Python ni droits d'administrateur · tes données restent dans <code>Documents\JobHunter</code></sub></p>
+</div>
 
 | Les offres, triées pour ton profil | La lettre préparée pour une offre |
 |---|---|
@@ -27,13 +31,70 @@ Tout tourne sur ton ordinateur. Ton CV et tes candidatures ne quittent pas ta ma
 
 <sub>Captures faites avec un profil et des offres **fictifs** (Léa Martin, chargée de communication à Lyon) : le profil créé par le premier lancement, avant tout complément par Claude.</sub>
 
+- [Pourquoi](#pourquoi-jobhunter) · [Comment ça marche](#comment-ça-marche) · [Sources](#sources)
 - [Installer (Windows)](#installer-windows) · [Depuis le code source](#depuis-le-code-source-windows) · [macOS / Linux](#macos--linux)
 - [Paramétrer ton profil avec Claude](#paramétrer-ton-profil-avec-claude-code)
 - [Au quotidien](#au-quotidien)
 - [Le profil](#le-profil)
 - [Pour aller plus loin](#pour-aller-plus-loin)
-- [Règles du projet](#règles-du-projet)
+- [Règles du projet](#règles-du-projet) · [Fiabilité](#fait-pour-quon-puisse-sy-fier)
 - [Dépannage](#dépannage)
+
+## Pourquoi JobHunter
+
+La plupart des outils de recherche d'emploi sont soit des **aspirateurs** (une pile d'offres,
+sans tri, rien de préparé), soit des **robots de candidature** (des centaines de candidatures
+identiques envoyées en ton nom, des comptes bloqués, des recruteurs agacés). JobHunter est
+entre les deux :
+
+| | Aspirateurs | Robots de candidature | **JobHunter** |
+|---|:---:|:---:|:---:|
+| Collecte sur les sites d'emploi *et* les sites carrière | parfois | parfois | ✅ |
+| Classe les offres selon **ton** profil, et dit pourquoi | — | rarement | ✅ |
+| CV et lettre adaptés à chaque offre, à partir de tes faits | — | génériques | ✅ |
+| Remplit le formulaire, joint les documents | — | ✅ | ✅ |
+| Clique « Envoyer » à ta place | — | ✅ | **jamais, par principe** |
+| Contourne CAPTCHA et protections anti-robots | souvent | souvent | **jamais** |
+| Ton CV et tes candidatures restent sur ta machine | variable | dans le cloud | ✅ |
+
+## Comment ça marche
+
+```mermaid
+flowchart LR
+    A[11 sites d'emploi<br/>20+ types de sites carrière] --> B[Collecte<br/>5 passes fusionnées]
+    B --> C[Tri et note<br/>1–10 selon ton profil]
+    C --> D[Documents<br/>CV + lettre + message]
+    D --> E[Formulaire rempli<br/>tu relis]
+    E --> F{{Tu cliques Envoyer}}
+    F --> G[Suivi<br/>envoyée · confirmée · relances]
+```
+
+1. **Collecter.** Chaque matin (ou d'un clic), les offres arrivent des sites ci-dessous et des
+   pages carrière des entreprises que tu suis. Un site qui limite le débit est attendu puis
+   repris ; un site qui refuse est laissé tranquille 30 jours.
+2. **Noter.** Chaque offre reçoit une note de 1 à 10 calculée sur ton profil : métiers visés,
+   compétences et mots qu'emploient les offres, expérience, langues, lieux. Clique une offre
+   pour voir *pourquoi* elle a cette note.
+3. **Préparer.** Pour les meilleures offres : un CV tiré de ton propre `.docx` avec l'intitulé
+   exact du poste, une lettre construite uniquement à partir des faits que tu as donnés, et un
+   court message pour les formulaires. Un contrôle signale ce qui manque avant d'envoyer.
+4. **Postuler, toi-même.** JobHunter ouvre le formulaire, le remplit, joint les documents et
+   surligne le bouton Envoyer. Tu relis, tu cliques. Le suivi note ensuite si le site a
+   **confirmé** la candidature ou si elle est seulement **déclarée** — avec le texte vu et une
+   capture.
+5. **Relancer.** Brouillons de relance à 7 jours, statuts proposés à partir des courriels des
+   recruteurs (lecture seule, chacun validé par toi), chiffres de la semaine.
+
+## Sources
+
+| Sites d'emploi | Sites carrière des entreprises |
+|---|---|
+| LinkedIn (pages publiques, sans connexion) · Welcome to the Jungle · APEC · Glassdoor · eFinancialCareers (9 pays) · EURES (UE) · V.I.E (Business France) · FIR · **API officielles** : France Travail, Adzuna, Jooble | Greenhouse · Lever · Ashby · Workday · SmartRecruiters · Recruitee · Teamtailor · Workable · iCIMS · SuccessFactors · Oracle · Phenom · Eightfold · Avature · Cornerstone · Talentsoft · Pinpoint · et d'autres |
+
+Ajoute une entreprise depuis l'application (**Entreprises** → colle le lien de sa page carrière) :
+JobHunter reconnaît la plateforme et la suit. Chaque source affiche son dernier résultat dans
+**Accès** : offres trouvées, débit limité ou refus — une journée vide n'est jamais confondue
+avec une journée calme.
 
 ---
 
@@ -206,6 +267,30 @@ Le second dit, pour chaque intitulé, s'il est collecté ou écarté, son domain
 - **Jamais ton profil Chrome personnel** : JobHunter utilise un profil dédié.
 - **Tes données restent chez toi** : profil, CV, lettres, offres et suivi sont ignorés par git.
 
+## Fait pour qu'on puisse s'y fier
+
+Un outil qui écrit en ton nom doit être juste. Ce qui le garantit :
+
+- **~2 300 tests sans réseau** sur un profil fictif, sous Windows (Python 3.12 et 3.14) et
+  Linux, à chaque modification.
+- **Un banc de non-régression** : chaque modification rejoue la note de 384 offres fictives —
+  et, avant chaque version, des 12 000+ offres réelles de son auteur — et doit montrer
+  **0 écart**, sauf changement voulu ([ADR 0006](docs/adr/0006-non-regression-bench.md)).
+- **Des tests sur cas générés** (Hypothesis) : nettoyage des titres, détection des doublons,
+  bornes de la note et fusions vérifiés sur des milliers d'entrées générées — ils ont trouvé
+  deux vrais bugs dès leur premier passage.
+- **Chaque panne réseau testée** : chaque lecteur de site carrière face aux refus, limites de
+  débit, erreurs serveur, délais et réponses illisibles — toujours signalée, jamais un « rien
+  de nouveau » silencieux.
+- **Chaque panneau ouvert sans console**, puis avec des fichiers de données abîmés.
+- **Des données protégées** : un seul chemin d'écriture par fichier, sous verrou, atomique ;
+  sauvegarde quotidienne, et tout nettoyage s'annule. Tes candidatures ne sont jamais
+  supprimées par une purge automatique.
+- **Signature des mises à jour** vérifiée avant installation (intégrée,
+  [ADR 0012](docs/adr/0012-signed-updates.md) ; active dès que la clé publique de l'auteur est
+  livrée), analyse CodeQL, actions de CI figées par empreinte, et
+  [décisions d'architecture](docs/adr/) écrites avec leur raison.
+
 ## Dépannage
 
 | Symptôme | Cause probable |
@@ -224,6 +309,9 @@ Le second dit, pour chaque intitulé, s'il est collecté ou écarté, son domain
 
 **Licence** : [MIT](LICENSE).
 
-**Développeurs** : architecture, conventions et tests dans [`AGENTS.md`](AGENTS.md) et
-[`CONTRIBUTING.md`](CONTRIBUTING.md) ; `python -m pytest -q` lance environ 1 850 tests sans
-réseau, sur le profil d'exemple.
+**Contribuer** : idées et bugs bienvenus dans les [issues](https://github.com/Grisbix/JobHunter/issues). Pour le code :
+[`CONTRIBUTING.md`](CONTRIBUTING.md), puis [`AGENTS.md`](AGENTS.md) (architecture,
+conventions) et [`docs/`](docs/README.md) (programmes, pièges appris à la dure, feuille de
+route) ; `python -m pytest -q` lance toute la suite sans réseau. Commentaires et docs sont en
+anglais ; les noms de fonctions et les clés du profil restent en français, pour que les
+profils existants continuent de marcher.

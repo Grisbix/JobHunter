@@ -167,7 +167,8 @@ cheap actions instead of only listing them.
 | — | Advisory score calibration (career-ops `calibrate`) | already done, stricter | `jobhunter evaluation`: AUC with a resampled interval, never auto-tunes |
 | — | Outcomes per channel, count-gated (career-ops `analyze-patterns`) | **deferred** | 16 applications sent, no answer yet: every group would read "too few". Revisit at ~30 sent with answers |
 | — | Repost / ghost-job detection (career-ops `detect-reposts`: same company, same title word set, ≥ 2 URLs over 1–90 days) | **deferred** | needs a history of removed offers; same prerequisite as H 1/12 |
-| — | Panels opened without a console, with an injected read error (Codex, Thonny) | next | the import without console is tested, the visible panels are not yet |
+| I3 ✅ (v2.22.2) | Panels opened without a console, with damaged files (Codex, Thonny, Textual) | **kept** | `tests/test_app_parcours.py` clicks the six sidebar buttons under pythonw conditions, then again with truncated JSON, non-UTF-8 bytes and an unreadable queue. Found one defect: a log line cut mid-character kept the Access panel from opening |
+| I4 ✅ (v2.22.2) | README that sells what is true (career-ops, JobSpy, httpx, Textual) | **kept** | one-line promise, comparison with scrapers and auto-apply bots, pipeline diagram, sources table, "built to be trusted" with the proofs; English and French |
 | — | HTTP cache (requests-cache) | set aside | it serves a stale answer when the request fails: it would lie about a closed offer |
 | — | Tenacity, structlog, loguru, APScheduler, Pydantic, nox | set aside | the existing bounded requests, logging, scheduled tasks and TypedDicts cover the need; no second layer |
 
