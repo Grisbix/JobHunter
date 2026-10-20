@@ -20,7 +20,7 @@ short message for each one. It runs on your computer. It never sends an applicat
 &nbsp;
 <a href="#from-source"><img alt="Source code" src="https://img.shields.io/badge/Source%20code-customise-334155?style=for-the-badge&logo=github&logoColor=white"></a>
 
-<sub>Windows 10/11 · no Python, no administrator rights · your data stays in <code>Documents\JobHunter</code></sub>
+<sub>Windows 10/11 · no Python, no administrator rights · interface in English, French, German or Spanish · your data stays in <code>Documents\JobHunter</code></sub>
 
 </div>
 
@@ -28,7 +28,7 @@ short message for each one. It runs on your computer. It never sends an applicat
 |---|---|
 | ![Offer list](docs/screenshots/offers.png) | ![Generated letter](docs/screenshots/letter.png) |
 
-<sub>Screenshots use a **fictitious** profile and offers (Léa Martin, communications officer in Lyon). They show the French interface: switch to English in Maintenance → “Langue : English”.</sub>
+<sub>Screenshots use a **fictitious** profile and offers (Léa Martin, communications officer in Lyon). They show the French interface; the app also speaks **English, German and Spanish**: Maintenance → “Langue / Language…”.</sub>
 
 - [Why](#why-jobhunter) · [How it works](#how-it-works) · [Sources](#sources)
 - [Install (Windows)](#install-windows) · [From source](#from-source) · [macOS / Linux](#macos--linux)

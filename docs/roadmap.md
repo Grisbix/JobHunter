@@ -87,6 +87,7 @@ User's decisions:
 | F3 ⛔ set aside | **HelloWork source**: public search pages, without circumvention; robots.txt and terms checked first | HelloWork offers in the queue, response recorded and replayed (B2), verdict in `rendement` |
 | F4 ✅ (v2.9.0; v2.19.0 completion criterion checked at every build: without Python on the PATH, window, system browser, merge, folder, update over the top with data kept; morning collection from the app) | **Standalone installer** `JobHunterSetup.exe` (see the detail under the table) | on a Windows without Python: installation, opening, collection and folder |
 | F5 ✅ (v2.10.0 navigation, panels, menus; v2.13.0 log and dialog boxes; v2.17.0 summaries of launched programs, the offer-by-offer detail remaining as it is) | **French and English**: interface texts in catalogues, choice in the settings; repository showcase in English (README, user docs, release notes), French version alongside | the whole app in English from one setting; English README with the link to the French one |
+| F6 ✅ (v2.23.0) | **More languages**: German and Spanish, one module per language (`app/textes_<code>.py`: name, restart message, three catalogues), a language menu listing each one under its own name, English as the fallback of a missing text; tests check that every language covers the English list with the same `{x}` holes, and every panel opens in every language | adding a language = one module + its code in `langue.LANGUES` |
 
 **F1 — sort things out**
 - Remove from both repositories the dead or duplicate programs, the outdated documents,

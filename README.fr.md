@@ -21,7 +21,7 @@ jamais de candidature.
 &nbsp;
 <a href="#depuis-le-code-source-windows"><img alt="Code source" src="https://img.shields.io/badge/Code%20source-personnaliser-334155?style=for-the-badge&logo=github&logoColor=white"></a>
 
-<sub>Windows 10/11 · sans Python ni droits d'administrateur · tes données restent dans <code>Documents\JobHunter</code></sub>
+<sub>Windows 10/11 · sans Python ni droits d'administrateur · interface en français, anglais, allemand ou espagnol · tes données restent dans <code>Documents\JobHunter</code></sub>
 
 </div>
 
@@ -29,7 +29,7 @@ jamais de candidature.
 |---|---|
 | ![Liste des offres](docs/screenshots/offers.png) | ![Lettre générée](docs/screenshots/letter.png) |
 
-<sub>Captures faites avec un profil et des offres **fictifs** (Léa Martin, chargée de communication à Lyon) : le profil créé par le premier lancement, avant tout complément par Claude.</sub>
+<sub>Captures faites avec un profil et des offres **fictifs** (Léa Martin, chargée de communication à Lyon) : le profil créé par le premier lancement, avant tout complément par Claude. L'application parle aussi **anglais, allemand et espagnol** : Maintenance → « Langue / Language… ».</sub>
 
 - [Pourquoi](#pourquoi-jobhunter) · [Comment ça marche](#comment-ça-marche) · [Sources](#sources)
 - [Installer (Windows)](#installer-windows) · [Depuis le code source](#depuis-le-code-source-windows) · [macOS / Linux](#macos--linux)

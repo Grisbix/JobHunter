@@ -4,6 +4,15 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 2.23.0 — 2026-10-20
+
+- **The app in German and Spanish**, as well as French and English. Maintenance →
+  “Langue / Language…” lists the languages, each under its own name; the choice
+  applies at the next start. The interface, the log and the reports of the programs
+  it launches are translated; your letters, CVs and profile keep their language.
+- A few texts of the offer list were still in French in every language (search and
+  link fields, the offer count, the help of the details pane): translated.
+
 ## 2.22.2 — 2026-10-20
 
 - **The Access panel opens even with a damaged log**: a line of the collection log cut
