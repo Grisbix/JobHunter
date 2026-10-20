@@ -108,3 +108,32 @@ jobs:
         env:
           PYTHONIOENCODING: utf-8
         run: python -m pytest -q -k "scoring or sources or titres or contrats or mise_a_jour or proprietes"
+
+  macos:
+    # The macOS install path as a Mac user follows it (README, "macOS / Linux"):
+    # installer.sh builds .venv, then the whole suite runs in it, including the
+    # test that clicks every panel of the window in every language. The runner has
+    # a desktop session, so Tk opens real windows. Catches crashes, not layout.
+    runs-on: macos-latest
+    timeout-minutes: 30
+    name: tests (macOS)
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: installer.sh (comme sur un Mac)
+        shell: bash
+        run: ./installer.sh
+      - name: Outils de test dans .venv
+        run: .venv/bin/python -m pip install "pytest>=9,<10" "hypothesis>=6.100,<7"
+      - name: Banc de non-regression
+        env:
+          PYTHONIOENCODING: utf-8
+        run: .venv/bin/python outils/banc.py comparer outils/banc_reference.json
+      - name: Tests (pytest)
+        env:
+          PYTHONIOENCODING: utf-8
+        run: .venv/bin/python -m pytest -q
