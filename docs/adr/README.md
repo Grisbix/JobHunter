@@ -18,5 +18,6 @@ and points here. Overview: [`../architecture.md`](../architecture.md).
 | [0011](0011-standalone-application.md) | A standalone application for the user, the source code for whoever modifies it |
 | [0012](0012-signed-updates.md) | Updates signed by the author, outside GitHub |
 | [0013](0013-one-workspace-per-profile.md) | Several profiles: one complete workspace each, switching restarts the app |
+| [0014](0014-open-questions-of-the-technical-plan.md) | The eight open questions of the technical plan, settled as implemented |
 
 New decision: `NNNN-short-title.md`, next number, status and date at the top.
