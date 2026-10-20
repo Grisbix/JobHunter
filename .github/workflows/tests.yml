@@ -37,7 +37,7 @@ jobs:
       - name: VERSION = pyproject.toml
         run: python outils/verifie_version.py
 
-  tests:
+  tests-windows:
     runs-on: windows-latest
     timeout-minutes: 30
     # 3.12: the floor of pyproject.toml. 3.14: the interpreter the app really runs on
@@ -67,6 +67,16 @@ jobs:
         env:
           PYTHONIOENCODING: utf-8
         run: python -m pytest -q --cov --cov-report=term
+
+  tests:
+    # The required check of the main branch is named "tests": since the matrix
+    # (3.12, 3.14) the Windows runs carry the version in their name, so this job
+    # stands for all of them.
+    needs: tests-windows
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: echo "Windows tests passed on every Python version of the matrix"
 
   unix:
     # The macOS/Linux scripts and the pure logic, outside Windows.
