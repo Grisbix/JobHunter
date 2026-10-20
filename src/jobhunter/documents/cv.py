@@ -15,6 +15,7 @@ from docx import Document
 from jobhunter import lazy as _paresseux
 from jobhunter import log as _journal
 from jobhunter import paths as chemins
+from jobhunter.documents import generated as _generes
 from jobhunter.documents.common import CV_ATS, _de, _slug, titre_poste
 from jobhunter.documents.rendering import to_pdf
 from jobhunter.scoring.lexicon import cv_variant_key
@@ -246,7 +247,7 @@ def tailor_cv(
     )
 
     sortie: Path = _ici.CV_OUT / ((nom or new_name("CV", role, offer["company"])) + ".docx")
-    doc.save(str(sortie))
+    _generes.enregistrer(doc, sortie)  # never over a hand retouch
     return sortie
 
 

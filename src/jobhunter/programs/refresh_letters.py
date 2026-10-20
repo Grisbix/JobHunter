@@ -19,6 +19,7 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 from jobhunter import root as _racine
+from jobhunter.documents import generated as _generes
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -193,6 +194,7 @@ def fix_doc(path, ent="", dry=False):
     if changed and not dry:
         try:
             doc.save(str(path))
+            _generes.noter(path)  # our own edit, not a retouch
         except OSError:  # locked file (OneDrive) → we skip, can be rerun
             return False
     return changed

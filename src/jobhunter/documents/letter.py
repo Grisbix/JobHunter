@@ -16,6 +16,7 @@ from docx.shared import Pt
 from jobhunter import lazy as _paresseux
 from jobhunter import paths as chemins
 from jobhunter import profile as _P
+from jobhunter.documents import generated as _generes
 from jobhunter.documents.common import (
     _de,
     _slug,
@@ -611,7 +612,7 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
             from jobhunter.programs.rename_docs import new_name
 
             out_sm: Path = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
-            doc.save(str(out_sm))
+            _generes.enregistrer(doc, out_sm)  # never over a hand retouch
             return out_sm
         # "caught my full attention" is the calque of "a retenu toute mon
         # attention": nobody writes that in English. "I read your
@@ -692,7 +693,7 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
         from jobhunter.programs.rename_docs import new_name
 
         out_en: Path = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
-        doc.save(str(out_en))
+        _generes.enregistrer(doc, out_en)
         return out_en
     # the RAW title of the posting does not go into the letter: see titre_poste()
     # In French a job title is a common noun. Postings
@@ -720,7 +721,7 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
         from jobhunter.programs.rename_docs import new_name
 
         out_sm = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
-        doc.save(str(out_sm))
+        _generes.enregistrer(doc, out_sm)
         return out_sm
 
     # INTRO. Three wording fixes, all taken from the proofreading
@@ -844,5 +845,5 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
     )
 
     out: Path = _ici.LT_OUT / ((nom or new_name("Lettre", role, company)) + ".docx")
-    doc.save(str(out))
+    _generes.enregistrer(doc, out)
     return out

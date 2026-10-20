@@ -29,6 +29,7 @@ from pathlib import Path
 
 from jobhunter import root as racine
 from jobhunter.storage import atomic as atomique
+from jobhunter.storage import data_format as _format
 from jobhunter.storage import lock as verrou
 from jobhunter.types import Chemin, Offre
 
@@ -133,6 +134,7 @@ def sauver(
             read, 63 ms thrown away at each write.
     """
     p = Path(chemin or CHEMIN)
+    _format.verifier_ecriture(p.parent)  # never over a newer JobHunter's data
     if not _est_la_file(p):  # test file: no separation
         atomique.ecrire_json(p, offres)
         return

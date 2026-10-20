@@ -4,6 +4,18 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.7.0 — 2026-10-20
+
+- **Your retouches are never overwritten.** A CV or a letter you edited by hand (in Word,
+  or in the app with "Enregistrer") stays as you left it when JobHunter regenerates the
+  documents: the new version goes into `_a_comparer/` next to it, and the log says how
+  many paragraphs differ. Delete your version to take the new one. Documents generated
+  before this version are replaced as before the first time, then protected.
+- **An older JobHunter never writes over newer data.** Each data folder records the format
+  of its data (`_format.json`); a version that only knows an older format refuses to write
+  there and asks to be updated — reading stays allowed. Useful with two computers, or an
+  old installer run again.
+
 ## 3.6.0 — 2026-10-20
 
 - **"Why this fit" in your language.** The explanation of an offer's score (vocabulary,

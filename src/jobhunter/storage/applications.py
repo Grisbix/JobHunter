@@ -45,6 +45,7 @@ from pathlib import Path
 
 from jobhunter import root as racine
 from jobhunter.storage import atomic as atomique
+from jobhunter.storage import data_format as _format
 from jobhunter.storage import lock as verrou
 from jobhunter.types import Candidature, Chemin, Preuve, Suivi
 
@@ -131,6 +132,7 @@ def transaction(chemin: Chemin | None = None, attente: float = 30) -> Iterator[S
         )
     try:
         suivi = _lire(p)  # raises SuiviIllisible rather than starting from {}
+        _format.verifier_ecriture(p.parent)  # never over a newer JobHunter's data
         yield suivi
         atomique.ecrire_json(p, suivi)  # reached only if the block did not raise
     finally:
