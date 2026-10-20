@@ -1,4 +1,4 @@
-"""Application installée sans Python (jobhunter.gele) et repli du navigateur."""
+"""Application installed without Python (jobhunter.gele) and browser fallback."""
 
 import sys
 from pathlib import Path

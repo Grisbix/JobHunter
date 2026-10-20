@@ -90,7 +90,7 @@ class ExecutionMixin:
         return False
 
     def run_console(self: "AppTypee", cmd: Any, label: Any) -> None:
-        """Lance dans une console dédiée : Chrome visible + prompt clavier (Entrée par offre)."""
+        """Launches in a dedicated console: visible Chrome + keyboard prompt (Enter per offer)."""
         self._log(
             f"\n▶ {label} — fenêtre CONSOLE ouverte. Chrome s'ouvre ; "
             f"tape Entrée après chaque envoi. Ferme la console pour arrêter.\n"
@@ -213,8 +213,8 @@ class ExecutionMixin:
             self.root.destroy()
 
     def _exec_seq(self: "AppTypee", seq: Any) -> None:
-        """seq : liste de (libelle, commande). Le libelle sert au log — cmd[-1]
-        affichait le dernier ARGUMENT (« 8 », « linkedin »), pas l'etape."""
+        """seq: list of (label, command). The label is for the log — cmd[-1]
+        displayed the last ARGUMENT ("8", "linkedin"), not the step."""
         # The outcome travels with the event: None = everything succeeded, otherwise the step
         # that failed. "TOUT FAIRE terminé" was displayed even after a failure (audit 19/10).
         echec = None

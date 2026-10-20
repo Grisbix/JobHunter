@@ -121,7 +121,7 @@ SUIVI = HERE / "suivi.json"  # candidatures : statut, note, date
 
 
 def _oid_offre(offre):
-    """Meme cle que l'app et que suivi.json : « entreprise|poste »."""
+    """Same key as the app and suivi.json: "entreprise|poste"."""
     return f"{(offre.get('entreprise') or '').strip()}|{(offre.get('poste') or '').strip()}"
 
 

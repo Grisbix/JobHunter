@@ -492,7 +492,7 @@ def mots_techniques(offer_text: str | None, n: int = 6, langue: str = "fr") -> l
 
 
 def _enable_hyphenation(doc: Any) -> None:
-    """Active la césure automatique Word → un texte justifié sans « trous » (rivières)."""
+    """Turns on Word's automatic hyphenation → a justified text without "gaps" (rivers)."""
     try:
         from docx.oxml.ns import qn
 

@@ -94,9 +94,9 @@ def mark_dead(path=QUEUE, verbose=True, _checker=None, skip_hard=True):
 
 
 def prune(path=QUEUE, drop=("MORT",), verbose=True):
-    """Supprime de la queue les offres dont link_status ∈ drop (défaut: MORT seul).
-    N'enlève PAS EXPIREE/ANTI-BOT par défaut (récupérables / vivants). Retour nb supprimé.
-    Lancer mark_dead AVANT. Réversible : queue régénérable via build_queue + backup git."""
+    """Removes from the queue the offers whose link_status ∈ drop (default: MORT only).
+    Does NOT remove EXPIREE/ANTI-BOT by default (recoverable / alive). Returns the number removed.
+    Run mark_dead BEFORE. Reversible: queue regenerable through build_queue + git backup."""
     # Tracked offers NEVER leave: a posting closes after one applied,
     # and that is precisely the one we want to keep (invariant of AGENTS.md).
     suivies = set(suivi_io.charger())
@@ -112,8 +112,8 @@ def prune(path=QUEUE, drop=("MORT",), verbose=True):
 
 
 def writeback(old_url, new_url=None, link_status=None, path=QUEUE):
-    """Met à jour la/les offre(s) dont url == old_url : url→new_url (garde url_orig),
-    + link_status. Retour nb d'offres modifiées. Persiste apply_queue.json."""
+    """Updates the offer(s) whose url == old_url: url→new_url (keeps url_orig),
+    + link_status. Returns the number of offers modified. Persists apply_queue.json."""
     if not old_url:
         return 0
     n = 0

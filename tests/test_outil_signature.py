@@ -1,4 +1,4 @@
-"""outils/signature.py : la clé privée reste hors du dépôt, la signature produite est valide."""
+"""outils/signature.py: the private key stays out of the repository, the signature produced is valid."""
 
 import hashlib
 import importlib.util

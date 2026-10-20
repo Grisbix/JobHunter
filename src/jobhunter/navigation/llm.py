@@ -143,7 +143,7 @@ def _detect_vision_model(host: str = "http://localhost:11434") -> str | None:
 
 
 def _detect_text_model(host: str = "http://localhost:11434") -> str | None:
-    """Détecte un modèle texte Ollama pour le raisonnement (mistral/llama/qwen/phi)."""
+    """Detects an Ollama text model for reasoning (mistral/llama/qwen/phi)."""
     import json
     import urllib.request
 

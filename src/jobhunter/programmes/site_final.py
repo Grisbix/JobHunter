@@ -241,8 +241,8 @@ def tenant_workday(tenant, hote):
 
 
 def _wd_vitrine(tenant, hote, site):
-    """Texte que le site Workday montre de son employeur : le bandeau « About
-    us » et le nom servi par sa premiere offre. "" si illisible."""
+    """Text the Workday site shows about its employer: the "About
+    us" banner and the name served by its first offer. "" if unreadable."""
     import httpx
 
     base = f"https://{tenant}.{hote}.myworkdayjobs.com/wday/cxs/{tenant}/{site}"
@@ -264,8 +264,8 @@ def _wd_vitrine(tenant, hote, site):
 
 
 def mots_du_tenant(entreprise, tenant):
-    """Les mots du nom de l'entreprise dont le tenant est fait, ou [] :
-    « lombardodier » -> [lombard, odier] pour « Lombard Odier »."""
+    """The words of the company name the tenant is made of, or []:
+    "lombardodier" -> [lombard, odier] for "Lombard Odier"."""
     mots = [m for m in re.split(r"[^a-z0-9]+", _sans_accent(entreprise)) if m]
     cible = tenant.replace("-", "")
     for i in range(len(mots)):
@@ -276,10 +276,10 @@ def mots_du_tenant(entreprise, tenant):
 
 
 def meme_employeur(entreprise, tenant, vitrine):
-    """Le site Workday est-il celui de cette entreprise ? Le tenant vient deja
-    de son nom ; on demande en plus que la vitrine le nomme EN MOTS ENTIERS.
-    Pas `hiringOrganization` seul : il porte l'entite juridique, et Accenture
-    y repond « 8140 ASOL - Gurugram Non STPI Company » (2026-10-07)."""
+    """Is the Workday site this company's? The tenant already comes
+    from its name; we also require the shop window to name it IN WHOLE WORDS.
+    Not `hiringOrganization` alone: it carries the legal entity, and Accenture
+    answers there "8140 ASOL - Gurugram Non STPI Company" (2026-10-07)."""
     mots = mots_du_tenant(entreprise, tenant)
     return (
         bool(mots)
@@ -331,11 +331,11 @@ def lire_workday(slug, requete):
 
 
 def coquille(postes):
-    """Flux de demonstration : un compte ATS ouvert puis laisse vide garde ses
-    offres modeles. Mesure le 2026-10-07 : google.recruitee.com ne publie que
-    « Senior Marketer (Sample) » — ce n'est pas Google, le nom etait libre.
-    UNE offre modele suffit : accenture.recruitee.com en garde une a cote d'une
-    « sales executive » saisie a la main ; une vraie entreprise supprime le modele."""
+    """Demo feed: an ATS account opened then left empty keeps its
+    sample offers. Measured on 2026-10-07: google.recruitee.com only publishes
+    "Senior Marketer (Sample)" — it is not Google, the name was free.
+    ONE sample offer is enough: accenture.recruitee.com keeps one next to a
+    "sales executive" entered by hand; a real company deletes the sample."""
     return any("(sample)" in t.lower() for t, *_ in postes)
 
 

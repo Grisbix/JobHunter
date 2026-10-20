@@ -72,7 +72,7 @@ def _ascii(s):
 
 
 def slugs(name):
-    """Génère des variantes de slug depuis le nom d'entreprise."""
+    """Generates slug variants from the company name."""
     base = _ascii(name).lower()
     base = re.sub(r"[^a-z0-9 ]", " ", base)
     toks = [t for t in base.split() if t and t not in STOP]
@@ -172,7 +172,7 @@ def _ddg_results(query):
 
 
 def search_homepage(name):
-    """Recherche moteur : 1er résultat non-agrégateur dont le host recoupe le nom."""
+    """Search engine: 1st non-aggregator result whose host matches the name."""
     toks = [
         t
         for t in re.sub(r"[^a-z0-9 ]", " ", _ascii(name).lower()).split()

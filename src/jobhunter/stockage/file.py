@@ -42,7 +42,7 @@ CHEMIN = HERE / "apply_queue.json"
 #
 # The separation is INVISIBLE to callers: `charger` reinjects the
 # `description` field, writing takes it out. None of the 22 uses of `o["description"]`
-# n'a eu besoin de changer.
+# needed to change.
 DESCRIPTIONS = HERE / "descriptions.json"
 
 
@@ -179,7 +179,7 @@ def sauver(
 
 
 class VerrouIndisponible(RuntimeError):
-    """Un autre programme modifie la file et ne l'a pas relâchée à temps."""
+    """Another program is modifying the queue and did not release it in time."""
 
 
 @contextmanager

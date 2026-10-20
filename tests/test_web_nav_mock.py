@@ -190,9 +190,9 @@ def test_homepage_fallback_atteint_les_offres(page, monkeypatch):
 
 
 def test_homepage_fallback_sans_homepage(page, monkeypatch):
-    """Societe introuvable : rien a ouvrir. La resolution est SIMULEE : la vraie
-    interrogeait le web (80 s) et pouvait ecrire dans le cache Scripts/homepages.json
-    — « Entreprise Inconnue XYZ 999 » s'y etait deja retrouvee."""
+    """Company not found: nothing to open. The resolution is SIMULATED: the real one
+    queried the web (80 s) and could write into the Scripts/homepages.json cache
+    — "Entreprise Inconnue XYZ 999" had already ended up there."""
     from jobhunter.programmes import enrich_homepages
 
     monkeypatch.setattr(enrich_homepages, "resolve", lambda entreprise: None)

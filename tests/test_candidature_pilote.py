@@ -57,7 +57,7 @@ def test_commandes(monkeypatch, capsys, ligne, touche):
 
 
 def test_aucune_commande_n_envoie():
-    """Aucune commande du protocole ne correspond à un clic d'envoi : `envoye` DÉCLARE."""
+    """No command of the protocol corresponds to a send click: `envoye` DECLARES."""
     assert set(ar._COMMANDES) == {"envoye", "saute", "reremplir", "rouvrir", "quitter"}
 
 

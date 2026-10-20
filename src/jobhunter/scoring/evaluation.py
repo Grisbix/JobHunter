@@ -51,7 +51,7 @@ def jugements(suivi: Mapping[str, Mapping[str, Any]]) -> dict[str, bool]:
 
 
 def note(offre: Mapping[str, Any]) -> float:
-    """La note de classement d'une offre : `fit_fin`, à défaut `fit`, à défaut 0."""
+    """An offer's ranking score: `fit_fin`, failing that `fit`, failing that 0."""
     for cle in ("fit_fin", "fit"):
         v = offre.get(cle)
         if isinstance(v, (int, float)):
@@ -72,7 +72,7 @@ def auc(positives: list[float], negatives: list[float]) -> float | None:
 
 
 def precision_n(notes: Iterable[tuple[float, bool]]) -> float | None:
-    """Part de pertinentes parmi les N mieux notées, N = nombre de pertinentes."""
+    """Share of relevant offers among the N best rated, N = number of relevant ones."""
     liste = sorted(notes, key=lambda x: -x[0])
     n = sum(1 for _, pertinent in liste if pertinent)
     if not n:

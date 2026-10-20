@@ -58,7 +58,7 @@ RESULTATS = {
 
 
 def lire_evenement(ligne: str) -> dict[str, Any] | None:
-    """L'événement d'une ligne `@JH {json}` du programme, ou None (ligne de journal)."""
+    """The event of a program line `@JH {json}`, or None (log line)."""
     if not ligne.startswith(PREFIXE):
         return None
     try:
@@ -120,7 +120,7 @@ def texte_evenement(ev: dict[str, Any]) -> tuple[str, str, str] | None:
 
 class CandidatureMixin:
     def _candidater(self: "AppTypee", selection: Any, n: Any) -> None:
-        """Ouvre le panneau et lance le programme de candidature en mode piloté."""
+        """Opens the panel and launches the application program in driven mode."""
         if self._cand_proc is not None and self._cand_proc.poll() is None:
             self._cand_win.lift()
             self._log("Le panneau Candidatures est déjà ouvert.\n")
@@ -197,7 +197,7 @@ class CandidatureMixin:
         self._log(f"📮 Candidatures : {n} offre(s), panneau ouvert. Chrome s'ouvre.\n")
 
     def _cand_lire(self: "AppTypee", proc: Any) -> None:
-        """Fil de lecture : événements vers le panneau, le reste vers le journal."""
+        """Reading thread: events to the panel, the rest to the log."""
         for ligne in proc.stdout:
             ev = lire_evenement(ligne)
             self.q.put(("candidature", ev) if ev else ("line", ligne))
@@ -225,7 +225,7 @@ class CandidatureMixin:
             pass
 
     def _cand_evenement(self: "AppTypee", ev: dict[str, Any]) -> None:
-        """Un événement du programme, dans le fil de l'interface."""
+        """An event of the program, in the interface thread."""
         if not self._cand_lbl:
             return
         t = ev.get("type")
@@ -248,7 +248,7 @@ class CandidatureMixin:
             self.refresh_table()
 
     def _cand_arreter(self: "AppTypee") -> None:
-        """Arrête proprement : « quitter », puis ferme le panneau ; Chrome se ferme."""
+        """Stops cleanly: "quitter", then closes the panel; Chrome closes."""
         proc = self._cand_proc
         if proc is not None and proc.poll() is None and proc.stdin is not None:
             try:

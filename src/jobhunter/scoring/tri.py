@@ -116,7 +116,7 @@ _RX_RESP_ADJ = re.compile(
 
 
 def _sans_resp_adjectif(titre: str | None) -> str:
-    """Le titre prive de ses « responsable » adjectifs, pour le test de seniorite."""
+    """The title stripped of its adjective "responsable", for the seniority test."""
     return _RX_RESP_ADJ.sub(" ", titre or "")
 
 

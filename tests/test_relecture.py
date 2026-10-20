@@ -1,4 +1,4 @@
-"""Relecture d'une lettre (documents.relecture) : chaque défaut signalé, rien réécrit."""
+"""Review of a letter (documents.relecture): each flaw reported, nothing rewritten."""
 
 import pytest
 
@@ -77,7 +77,7 @@ def test_adresse_inconnue():
     ],
 )
 def test_adresse_qui_imite_une_connue(adresse):
-    """Audit Codex du 19/10 : la comparaison par sous-chaîne laissait passer ces adresses."""
+    """Codex audit of 19/10: comparing by substring let these addresses through."""
     texte = lettre(PROPRE + f" Voir {adresse} pour la suite.")
     connus = ["acme.example", "https://www.linkedin.com/in/prenom-nom"]
     assert "injection" in regles(texte, entreprise="Acme Capital", connus=connus)
@@ -106,7 +106,7 @@ def test_autre_entreprise_copiee():
 
 
 def test_entreprise_absente_du_corps_n_est_pas_un_defaut():
-    """Le gabarit ne nomme l'entreprise que dans l'en-tête : 738 lettres sur 749."""
+    """The template only names the company in the header: 738 letters out of 749."""
     assert regles(lettre(PROPRE), entreprise="Gamma SA") == []
 
 
@@ -128,7 +128,7 @@ def test_destinataire_absent_de_l_annonce():
     "appel", ["Madame Martin, Madame Dupont,", "Madame Martin et Madame Dupont,"]
 )
 def test_second_destinataire_invente(appel):
-    """Audit Codex du 19/10 : seul le premier nom de la formule d'appel était vérifié."""
+    """Codex audit of 19/10: only the first name of the greeting was checked."""
     r = relire(
         lettre(PROPRE, appel=appel), entreprise="Acme Capital", annonce="Contact : Madame Martin."
     )

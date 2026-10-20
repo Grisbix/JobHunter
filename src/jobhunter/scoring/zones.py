@@ -441,7 +441,7 @@ _PAYS_ETRANGERS = {
 }
 
 # Foreign cities written WITHOUT a country: LinkedIn says "Lisbon Metropolitan
-# Area », « Greater Milan Metropolitan Area » ; WTJ colle meme « · France » a
+# Area", "Greater Milan Metropolitan Area"; WTJ even sticks "· France" onto
 # "Genève" or "Zurich". No country to read — the city is the only clue.
 _VILLES_ETRANGERES = {
     "lisbon",
@@ -1031,7 +1031,7 @@ _PARESSEUX["_WTJ_SUD_EST"] = lambda: set().union(*(s["wtj"] for s in _ici.SECTEU
 
 
 def _dans_secteur(t: str, s: Secteur) -> bool:
-    """Le lieu normalise `t` nomme-t-il le secteur `s` ? (communes d'IDF : pas si une autre region est nommee — « Asnières, Normandy »)."""
+    """Does the normalised place `t` name the sector `s`? (IDF communes: not if another region is named — "Asnières, Normandy")."""
     if s["lieux"] and _contient(t, s["lieux"]):
         return True
     return bool(s["communes"]) and _contient(t, s["communes"]) and not _contient(t, _REGIONS_AUTRES)
@@ -1192,7 +1192,7 @@ def sous_zone(lieu: str | None) -> str:
 
 
 def libelle_secteur(cle: str) -> str:
-    """« Paris », « Bordeaux »… pour une cle rendue par sous_zone."""
+    """The label ("Paris", "Bordeaux"…) of a key returned by sous_zone."""
     for s in _ici.SECTEURS_PRIORITAIRES + _ici.SECTEURS_SECONDAIRES:
         if s["cle"] == cle:
             return str(s["libelle"])

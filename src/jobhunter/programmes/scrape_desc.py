@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""scrape_desc.py — Récupère la DESCRIPTION d'une offre depuis sa page web et
-l'enregistre dans apply_queue.json (champ 'description'). Réutilise le moteur
-Playwright standard, sans session personnelle.
+"""scrape_desc.py — Fetches an offer's DESCRIPTION from its web page and
+records it in apply_queue.json ('description' field). Reuses the standard
+Playwright engine, without a personal session.
 
-Usage :
-  python JobHunter.pyw scrape_desc --key "Entreprise|Poste"            # 1 offre (URL lue dans la queue)
-  python JobHunter.pyw scrape_desc --all --canal auto --limit 50       # lot (offres sans description)
+Usage:
+  python JobHunter.pyw scrape_desc --key "Entreprise|Poste"            # 1 offer (URL read in the queue)
+  python JobHunter.pyw scrape_desc --all --canal auto --limit 50       # batch (offers without description)
 
-Aucun envoi, aucune connexion tapée. Lecture seule de la page → texte."""
+No sending, no login typed. Read-only of the page → text."""
 
 import argparse
 import importlib
@@ -235,7 +235,7 @@ def main():
     with sync_playwright() as p:
 
         def launch():
-            """(ctx, page) neufs. Rappelé si le navigateur meurt en cours de lot."""
+            """Fresh (ctx, page). Called again if the browser dies during a batch."""
             b = _lancer(p.chromium, headless=True)
             pg = b.new_page()
             c = pg.context  # kept: pg.context is unusable after pg.close()

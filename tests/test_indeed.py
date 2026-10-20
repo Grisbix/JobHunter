@@ -1,4 +1,4 @@
-"""Régressions Indeed, sans réseau ni écriture sur les données réelles."""
+"""Indeed regressions, without network or writing on the real data."""
 
 import io
 import json

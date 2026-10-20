@@ -24,7 +24,7 @@ def q(tmp_path):
 
 
 def autre_processus(chemin):
-    """Un AUTRE processus tente de prendre le verrou ; rend « True » ou « False »."""
+    """ANOTHER process tries to take the lock; returns "True" or "False"."""
     sonde = (
         f"import sys, pathlib; sys.path.insert(0, r'{SRC}'); from jobhunter.programmes import jutil;"
         f"print(jutil.prendre_verrou(pathlib.Path(r'{chemin}'), attente=2, bavard=False))"

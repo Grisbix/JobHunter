@@ -94,7 +94,7 @@ class Candidature(TypedDict, total=False):
 
 
 class CourrielStatut(TypedDict, total=False):
-    """Le courriel qu'un statut proposé, puis accepté, cite (jobhunter.courriels)."""
+    """The email that a proposed, then accepted, status cites (jobhunter.courriels)."""
 
     de: str  # sender
     sujet: str

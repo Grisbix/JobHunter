@@ -171,7 +171,7 @@ def main():
     with sync_playwright() as p:
 
         def launch():
-            """(ctx, page) neufs. Rappelé si le navigateur meurt en cours de lot."""
+            """Fresh (ctx, page). Called again if the browser dies during a batch."""
             b = _lancer(p.chromium, headless=True)
             pg = b.new_page()
             c = pg.context  # kept: pg.context is unusable after pg.close()

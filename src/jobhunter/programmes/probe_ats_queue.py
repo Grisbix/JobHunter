@@ -60,8 +60,8 @@ BRUIT = {
 
 
 def variantes(nom):
-    """Slugs plausibles pour une societe. Les ATS n'imposent aucune convention :
-    « Credit Agricole » peut etre creditagricole, credit-agricole, ou credit."""
+    """Plausible slugs for a company. The ATS impose no convention:
+    "Credit Agricole" can be creditagricole, credit-agricole, or credit."""
     n = unicodedata.normalize("NFD", (nom or "").lower())
     n = "".join(c for c in n if not unicodedata.combining(c))
     mots = [m for m in re.split(r"[^a-z0-9]+", n) if m]

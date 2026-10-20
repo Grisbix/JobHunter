@@ -33,7 +33,7 @@ _RX = [re.compile(m) for m in INTERDITS]
 
 
 def fautifs(chemins: list[str]) -> list[str]:
-    """Les chemins (style git, « / ») qui relèvent des données de l'utilisateur."""
+    """The paths (git style, "/") that belong to the user's data."""
     return [c for c in chemins if any(rx.search(c.replace("\\", "/")) for rx in _RX)]
 
 

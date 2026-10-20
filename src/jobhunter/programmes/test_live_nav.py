@@ -21,7 +21,7 @@ ENG = "playwright"
 
 
 def _sample_sites(per_cat=5):
-    """Échantillonne des URLs réelles depuis apply_queue.json, N par url_type auto."""
+    """Samples real URLs from apply_queue.json, N per automatic url_type."""
     import collections
     import json
 
@@ -41,8 +41,8 @@ def _sample_sites(per_cat=5):
 
 
 def _all_sites():
-    """TOUS les domaines uniques de la queue (hors HARD_BOARD = LinkedIn/Indeed, ban perso).
-    1 URL représentative par (domaine, url_type)."""
+    """ALL the unique domains of the queue (except HARD_BOARD = LinkedIn/Indeed, personal ban).
+    1 representative URL per (domain, url_type)."""
     import json
     from urllib.parse import urlparse
 

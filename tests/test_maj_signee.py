@@ -84,7 +84,7 @@ def test_vieille_signature_refusee(signee, capsys):
 
 
 def test_sans_cle_publique_comme_avant(installer, capsys):  # noqa: F811
-    """Tant que l'auteur n'a pas publié sa clé : ZIP de main, et c'est dit."""
+    """As long as the author has not published their key: main's ZIP, and it is said."""
     d = installer()
     rc, sortie = lancer(capsys)
     assert rc == 0

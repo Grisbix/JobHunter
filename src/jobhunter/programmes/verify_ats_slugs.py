@@ -54,7 +54,7 @@ def _sans_accent(s):
 
 
 def _cle(s):
-    """Nom reduit a ses lettres significatives, pour comparer « Sia » et « Sia Partners »."""
+    """Name reduced to its significant letters, to compare "Sia" and "Sia Partners"."""
     BRUIT = {
         "group",
         "groupe",

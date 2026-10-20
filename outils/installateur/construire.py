@@ -68,7 +68,7 @@ def pyinstaller() -> Path:
 
 
 def controler(dossier: Path) -> None:
-    """Chaque programme se charge dans l'exécutable compilé (un import oublié casse ici)."""
+    """Each program loads inside the compiled executable (a forgotten import breaks here)."""
     code = (
         "import importlib, pkgutil, jobhunter.programmes as P\n"
         "ko = []\n"

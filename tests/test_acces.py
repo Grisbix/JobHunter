@@ -1,4 +1,4 @@
-"""Régressions connexion : faux positifs et redirections, sans site distant."""
+"""Login regressions: false positives and redirects, without a remote site."""
 
 import importlib.util
 import io

@@ -1,4 +1,4 @@
-"""La collecte chaque matin depuis l'application (jobhunter.planification), sans schtasks réel."""
+"""The collection every morning from the application (jobhunter.planification), without real schtasks."""
 
 import subprocess
 

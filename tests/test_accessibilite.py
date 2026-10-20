@@ -90,8 +90,8 @@ def test_bouton_desactive_muet(racine):
 
 
 def test_tabulation_suit_l_ordre_de_pose(racine):
-    """Tk parcourt au Tab les widgets focusables dans leur ordre d'empilement, qui est
-    l'ordre de création : chaque bouton y est, dans l'ordre où il est posé."""
+    """On Tab, Tk goes through the focusable widgets in their stacking order, which is
+    the creation order: each button is there, in the order it is placed."""
     boutons = [t.CB(racine, text=f"B{i}") for i in range(3)]
     for b in boutons:
         b.pack()

@@ -25,7 +25,7 @@ from jobhunter.stockage import suivi as suivi_io
 
 class ActionsMixin:
     def _set_statut(self: "AppTypee", o: Any, statut: Any) -> None:
-        """Écrit un statut dans suivi.json (date auto = aujourd'hui si absente). Manuel > auto."""
+        """Writes a status into suivi.json (automatic date = today if missing). Manual > auto."""
         if not o:
             return
         oid = self._oid(o)
@@ -134,10 +134,10 @@ class ActionsMixin:
         self._log(f"↶ annulé ({len(geste)} offre(s)).\n")
 
     def _postuler(self: "AppTypee", o: Any) -> None:
-        """Enregistre uniquement un envoi explicitement confirmé par l'utilisateur.
+        """Records only a sending explicitly confirmed by the user.
 
-        Déclaration manuelle, sans observation de la page : `envoi` = « déclaré »
-        (ADR 0009). Une preuve déjà observée n'est jamais effacée."""
+        Manual declaration, without observing the page: `envoi` = "déclaré"
+        (ADR 0009). A proof already observed is never erased."""
         if not o:
             return
         if not messagebox.askyesno(
@@ -157,8 +157,8 @@ class ActionsMixin:
         self.refresh_table()
 
     def _apply_checked(self: "AppTypee") -> None:
-        """Postule TOUTES les offres cochées : runner semi-auto (remplit + upload, STOP sur
-        Envoyer = toi). Écrit la sélection dans apply_selection.json, lance la console."""
+        """Applies to ALL the ticked offers: semi-automatic runner (fills + uploads, STOPS on
+        Send = you). Writes the selection into apply_selection.json, launches the console."""
         oids = [o for o in [self._find_by_oid(k) for k in self.checked] if o]
         if not oids:
             self._log("Coche d'abord des offres (colonne ☐).\n")
@@ -181,7 +181,7 @@ class ActionsMixin:
         return None
 
     def _row_menu(self: "AppTypee", e: Any) -> None:
-        """Clic droit sur une ligne → actions par offre (Postuler + statuts rapides)."""
+        """Right click on a row → per-offer actions (Apply + quick statuses)."""
         iid = self.tree.identify_row(e.y)
         if not iid:
             return
@@ -298,7 +298,7 @@ class ActionsMixin:
         self._upd_apply_btn()
 
     def _check_all(self: "AppTypee", val: Any) -> None:
-        """val True=coche tout (lignes filtrées visibles), False=décoche tout, None=bascule."""
+        """val True=tick all (visible filtered rows), False=untick all, None=toggle."""
         vis = [self.rowmap[i] for i in self.tree.get_children()]
         oids = [self._oid(o) for o in vis]
         if val is None:
@@ -566,7 +566,7 @@ class ActionsMixin:
 
     @staticmethod
     def _jwrite(path: Any, obj: Any) -> None:
-        """Écriture JSON ATOMIQUE (tmp + replace) : un crash mi-écriture ne corrompt jamais le fichier."""
+        """ATOMIC JSON write (tmp + replace): a crash mid-write never corrupts the file."""
         tmp = path.with_suffix(path.suffix + ".tmp")
         tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
         os.replace(str(tmp), str(path))

@@ -51,7 +51,7 @@ CHEMIN = racine.scripts() / "suivi.json"
 
 
 class VerrouIndisponible(RuntimeError):
-    """Un autre programme modifie le suivi et ne l'a pas relâché à temps."""
+    """Another program is modifying the tracker and did not release it in time."""
 
 
 def charger(chemin: Chemin | None = None) -> Suivi:
@@ -71,7 +71,7 @@ def charger(chemin: Chemin | None = None) -> Suivi:
 
 
 class SuiviIllisible(RuntimeError):
-    """Le fichier du suivi existe mais ne se lit pas : on refuse d'écrire par-dessus."""
+    """The tracker file exists but cannot be read: we refuse to write over it."""
 
 
 def _lire(p: Path) -> Suivi:

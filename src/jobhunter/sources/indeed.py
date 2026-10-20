@@ -187,7 +187,7 @@ INDEED_REQUETES = 0
 
 
 def _indeed_cartes(mot: str, lieu: str) -> list[Any]:
-    """Lit la page publique ; distingue refus, quota et réponse vide valide."""
+    """Reads the public page; tells refusal, quota and valid empty response apart."""
     import urllib.error
     import urllib.request
     from email.utils import parsedate_to_datetime

@@ -36,7 +36,7 @@ class FicheMixin:
         self._show_detail(o)
 
     def _fill_detail(self: "AppTypee", d: Any, o: Any) -> None:
-        """Écrit TOUTES les colonnes Excel de l'offre dans le widget texte d."""
+        """Writes ALL the offer's Excel columns into the text widget d."""
         d.configure(state="normal")
         d.delete("1.0", "end")
         d.insert("end", f"{o.get('entreprise', '')} — {o.get('poste', '')}\n", "h")
@@ -115,7 +115,7 @@ class FicheMixin:
         return raisons
 
     def _etat_dossier(self: "AppTypee", o: Any) -> list[str]:
-        """Le dossier (CV, lettre) est-il prêt à partir ? Rien si l'offre n'en a pas."""
+        """Is the file (CV, letter) ready to go? Nothing if the offer has none."""
         if not (o.get("cv") or o.get("lettre")):
             return []
         from jobhunter.documents.controle import controler_dossier
@@ -126,7 +126,7 @@ class FicheMixin:
         return ["Dossier à revoir : " + " ; ".join(problemes)]
 
     def _etat_candidature(self: "AppTypee", o: Any) -> list[str]:
-        """Le statut de suivi et l'état de la preuve d'envoi (ADR 0009), pour la fiche."""
+        """The tracking status and the state of the proof of sending (ADR 0009), for the sheet."""
         sv = self.suivi.get(self._oid(o), {})
         if not sv.get("s"):
             return []
@@ -214,7 +214,7 @@ class FicheMixin:
         CB(btn, text="Fermer", command=w.destroy, bg=BTN, fg=TX, relief="flat").pack(side="right")
 
     def _fetch_desc(self: "AppTypee", o: Any, textwidget: Any, btn: Any) -> None:
-        """Récupère la description de l'offre en ligne (scrape_desc.py, headless) → queue → détail."""
+        """Fetches the offer's description online (scrape_desc.py, headless) → queue → detail."""
         key = self._oid(o)
         if not (o.get("url") or "").startswith("http"):
             self._log("✗ pas d'URL http pour récupérer la description\n")

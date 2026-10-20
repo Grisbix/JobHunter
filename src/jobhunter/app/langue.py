@@ -32,7 +32,7 @@ def _fichier() -> Path | None:
 
 
 def lire() -> str:
-    """La langue choisie : "fr" ou "en" (français à défaut)."""
+    """The chosen language: "fr" or "en" (French by default)."""
     env = os.environ.get("JOBHUNTER_LANGUE", "").lower()
     if env in LANGUES:
         return env
@@ -45,7 +45,7 @@ def lire() -> str:
 
 
 def choisir(langue: str) -> None:
-    """Enregistre la langue de l'interface ; elle vaut au prochain démarrage."""
+    """Saves the interface language; it applies at the next start."""
     if langue not in LANGUES:
         raise ValueError(langue)
     f = _fichier()

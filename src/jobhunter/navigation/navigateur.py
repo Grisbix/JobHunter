@@ -264,7 +264,7 @@ class BrowserSession:
         return self.start()
 
     def is_alive(self) -> bool:
-        """Vérifie si le navigateur est toujours connecté."""
+        """Checks whether the browser is still connected."""
         try:
             return (
                 self._browser is not None

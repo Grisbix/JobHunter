@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""rescore_ats.py — Recalcule ats_pct + skills_match DIRECTEMENT sur apply_queue.json
-(sans Excel). Exigences offre = missions + PROFIL requis (+ description si récupérée).
-Couverture = CV variant. Écrit le nouveau % dans la queue.
+"""rescore_ats.py — Recomputes ats_pct + skills_match DIRECTLY on apply_queue.json
+(without Excel). Offer requirements = missions + required PROFILE (+ description if fetched).
+Coverage = CV variant. Writes the new % into the queue.
 
-Run : python JobHunter.pyw rescore_ats            # tout
-      python JobHunter.pyw rescore_ats --dry      # montre les changements sans écrire"""
+Run : python JobHunter.pyw rescore_ats            # everything
+      python JobHunter.pyw rescore_ats --dry      # shows the changes without writing"""
 
 import argparse
 import sys

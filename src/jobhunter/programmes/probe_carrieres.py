@@ -338,7 +338,7 @@ def liens_carriere(html, base):
 
 
 def sitemaps_de(client, racine):
-    """Les sitemaps déclarés dans robots.txt."""
+    """The sitemaps declared in robots.txt."""
     r = _get(client, racine.rstrip("/") + "/robots.txt", timeout=10)
     if not r or r.status_code != 200:
         return []
@@ -346,9 +346,9 @@ def sitemaps_de(client, racine):
 
 
 def urls_carriere_sitemap(client, sitemaps):
-    """Les URL d'un sitemap qui portent un mot carrière. Un seul niveau
-    d'index : un sitemap d'index renvoie vers d'autres sitemaps, on suit le
-    premier qui a l'air carrière plutôt que de tout aspirer."""
+    """The URLs of a sitemap that carry a careers word. A single level
+    of index: an index sitemap points to other sitemaps, we follow the
+    first that looks like careers rather than sucking everything in."""
     trouve = []
     for sm in sitemaps:
         r = _get(client, sm, timeout=15)
@@ -368,7 +368,7 @@ def urls_carriere_sitemap(client, sitemaps):
 
 
 def sonde_site(entree, faire_sitemap=True):
-    """Les trois passes sur un site. Rend un dict de résultat."""
+    """The three passes on a site. Returns a result dict."""
     import httpx
 
     from jobhunter.programmes.scrape_jobs import extract_company_name, robots_autorise

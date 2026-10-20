@@ -76,7 +76,7 @@ def test_ecriture_atomique(tmp_path):
 
 
 def test_ecritures_simultanees_ne_partagent_pas_le_temporaire(tmp_path):
-    """Audit Codex du 19/10 : deux écrivains sur le même `x.json.tmp` s'écrasaient."""
+    """Codex audit of 19/10: two writers on the same `x.json.tmp` overwrote each other."""
     import threading
 
     f = tmp_path / "x.json"

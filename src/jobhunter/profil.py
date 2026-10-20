@@ -130,7 +130,7 @@ def identite() -> dict[str, str]:
 
 
 def prefixe_fichier() -> str:
-    """« Prenom_Nom » pour nommer les documents generes."""
+    """The "Prenom_Nom" prefix that names the generated documents."""
     nom = identite()["nom"]
     import unicodedata
 
@@ -139,7 +139,7 @@ def prefixe_fichier() -> str:
 
 
 def accord(masculin: str, feminin: str) -> str:
-    """Choisit la forme selon le genre du profil (« Diplômé » / « Diplômée »)."""
+    """Chooses the form according to the profile's gender ("Diplômé" / "Diplômée")."""
     return feminin if identite()["genre"] == "f" else masculin
 
 

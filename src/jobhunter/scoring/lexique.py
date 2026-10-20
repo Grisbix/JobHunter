@@ -73,7 +73,7 @@ _PARESSEUX["_SUB_SKILL"] = lambda: (
 
 
 def has_skill(label: str, t: str) -> bool:
-    """Le libellé est-il présent dans le texte (déjà en minuscules) ?"""
+    """Is the label present in the text (already lowercase)?"""
     return any(n in t for n in _ici._SUB_SKILL[label]) or any(
         r.search(t) for r in _ici._RX_SKILL[label]
     )

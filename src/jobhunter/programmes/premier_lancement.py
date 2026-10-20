@@ -126,7 +126,7 @@ def identite_du_cv(texte):
 
 
 def resume_du_cv(texte):
-    """Le paragraphe sous « Profil / Résumé / Summary », s'il existe."""
+    """The paragraph under "Profil / Résumé / Summary", if it exists."""
     lignes = texte.splitlines()
     for i, l in enumerate(lignes):
         if _RX_TITRE_SECTION.match(l):

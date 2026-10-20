@@ -146,7 +146,7 @@ def observer_confirmation(page: Any, attente: float = 8.0, pas: float = 0.5) -> 
 
 
 def capturer_preuve(page: Any, chemin: Path) -> str | None:
-    """Capture de la page entière, gardée comme justificatif. None si impossible."""
+    """Screenshot of the whole page, kept as evidence. None if impossible."""
     try:
         chemin.parent.mkdir(parents=True, exist_ok=True)
         page.screenshot(path=str(chemin), full_page=True, timeout=15000)

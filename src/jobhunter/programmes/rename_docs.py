@@ -63,8 +63,8 @@ from jobhunter.programmes.jutil import url_de as _url_of
 
 
 def rename_orphans(dry=False):
-    """Fichiers PAS liés à la queue (anciens noms) → même format par pattern :
-    « X_cover_letter » → Prenom_Nom_Lettre_X · « CV_X » → Prenom_Nom_CV_X."""
+    """Files NOT linked to the queue (old names) → same format by pattern:
+    "X_cover_letter" → Prenom_Nom_Lettre_X · "CV_X" → Prenom_Nom_CV_X."""
     ROOT = HERE.parent
     dirs = [(chemins.LT_PAR_OFFRE, "Lettre"), (chemins.CV_PAR_OFFRE, "CV")]
     n = 0
@@ -111,7 +111,7 @@ def main():
     ren = upd = miss = 0
 
     def free(parent, base, suffix, old):
-        """1er nom libre (docx ET pdf jumeau libres). old lui-même = déjà bon."""
+        """1st free name (docx AND twin pdf free). old itself = already right."""
         i, cand = 2, base
         while True:
             t = parent / f"{cand}{suffix}"

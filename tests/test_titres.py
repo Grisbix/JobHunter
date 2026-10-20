@@ -21,7 +21,7 @@ MOTIFS = [n for n in dir(T) if n.startswith("RX_") and hasattr(getattr(T, n), "p
 
 @pytest.mark.parametrize("nom", MOTIFS)
 def test_motif_sans_backspace(nom):
-    """Un « \\b » mange par un heredoc devient \\x08 : le motif ne matche plus jamais."""
+    """A "\\b" eaten by a heredoc becomes \\x08: the pattern never matches again."""
     assert "\x08" not in getattr(T, nom).pattern
 
 

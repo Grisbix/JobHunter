@@ -31,7 +31,7 @@ FICHIER = "signature.json"  # name of the release asset
 
 
 class SignatureInvalide(Exception):
-    """La version téléchargée n'est pas celle que l'auteur a signée."""
+    """The downloaded version is not the one the author signed."""
 
 
 # ── Ed25519 (RFC 8032, section 6) ───────────────────────────────────────────
@@ -119,7 +119,7 @@ def _etendre(secret: bytes) -> tuple[int, bytes]:
 
 
 def publique(secret: bytes) -> bytes:
-    """La clé publique (32 octets) d'une clé privée (32 octets)."""
+    """The public key (32 bytes) of a private key (32 bytes)."""
     a, _ = _etendre(secret)
     return _compresser(_multiplier(a, _G))
 
@@ -135,7 +135,7 @@ def signer(secret: bytes, message: bytes) -> bytes:
 
 
 def verifier(cle: bytes, message: bytes, signature: bytes) -> bool:
-    """True si `signature` est celle de `message` par le détenteur de `cle`."""
+    """True if `signature` is that of `message` by the holder of `cle`."""
     if len(cle) != 32 or len(signature) != 64:
         return False
     a = _decompresser(cle)
@@ -153,7 +153,7 @@ def verifier(cle: bytes, message: bytes, signature: bytes) -> bool:
 
 
 def octets(manifeste: dict[str, Any]) -> bytes:
-    """La forme canonique signée : JSON trié, sans espaces."""
+    """The signed canonical form: sorted JSON, without spaces."""
     return json.dumps(manifeste, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
 
 

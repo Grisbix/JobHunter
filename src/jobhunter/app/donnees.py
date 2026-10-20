@@ -61,7 +61,7 @@ class DonneesMixin:
         self.refresh_table()
 
     def _missing_desc(self: "AppTypee") -> Any:
-        """Offres avec URL http mais sans description (à enrichir auto)."""
+        """Offers with an http URL but no description (to enrich automatically)."""
         return [
             o
             for o in self.offers
@@ -70,9 +70,9 @@ class DonneesMixin:
         ]
 
     def _auto_enrich(self: "AppTypee") -> None:
-        """AUTO (pas de bouton) : récupère en fond les descriptions manquantes par lots,
-        puis re-score ATS, recharge, et enchaîne tant qu'il en reste. Headless, silencieux.
-        VERROU _bg_busy partagé avec _auto_sync : jamais 2 jobs qui écrivent la queue en même temps."""
+        """AUTO (no button): fetches the missing descriptions in the background, in batches,
+        then re-scores ATS, reloads, and chains while some remain. Headless, silent.
+        _bg_busy LOCK shared with _auto_sync: never 2 jobs writing the queue at the same time."""
         if getattr(self, "_desc_busy", False) or getattr(self, "_bg_busy", False):
             return
         # cap per session: avoids scraping 1300 offers at once (rate limit/ban)
@@ -125,8 +125,8 @@ class DonneesMixin:
         threading.Thread(target=work, daemon=True).start()
 
     def _auto_sync(self: "AppTypee") -> None:
-        """AUTO : sync_docs.py en fond — docx modifiés → pdf régénérés, liens queue réparés.
-        Relancé toutes les 10 min tant que l'app tourne."""
+        """AUTO: sync_docs.py in the background — modified docx → regenerated pdf, queue links repaired.
+        Rerun every 10 min while the app runs."""
         if getattr(self, "_sync_busy", False) or getattr(self, "_bg_busy", False):
             self.root.after(120000, self._auto_sync)
             return  # busy → try again in 2 min
@@ -244,7 +244,7 @@ class DonneesMixin:
         threading.Thread(target=work, daemon=True).start()
 
     def _check_relances(self: "AppTypee") -> None:
-        """Signale au démarrage les candidatures « postulé » depuis ≥ 10 j sans réponse."""
+        """Reports at startup the "postulé" applications without answer for ≥ 10 d."""
 
         def work() -> None:
             try:

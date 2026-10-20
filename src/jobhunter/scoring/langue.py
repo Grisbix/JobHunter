@@ -104,7 +104,7 @@ def langue_offre(
 
 
 def main() -> int:
-    """Ligne de commande : bilan des langues détectées dans la file."""
+    """Command line: report of the languages detected in the queue."""
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
     import collections
 

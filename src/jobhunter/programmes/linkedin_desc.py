@@ -35,7 +35,7 @@ HERE = _racine.scripts()
 
 QUEUE = HERE / "apply_queue.json"
 
-from jobhunter.programmes.linkedin_closed import API, RX_FERME, UA, job_id  # meme endpoint, meme UA
+from jobhunter.programmes.linkedin_closed import API, RX_FERME, UA, job_id  # same endpoint, same UA
 
 # The description lives in a `description__text` block; fallback on <section>.
 RX_DESC = [

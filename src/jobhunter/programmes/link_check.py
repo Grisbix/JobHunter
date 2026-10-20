@@ -1,5 +1,5 @@
-"""Vérification d'URLs d'offres (live/dead/soft-404). Module : quick_check/batch_check (queue_tools mark).
-Détecte les SOFT-404 : page renvoie HTTP 200 mais affiche 'offre expirée / poste pourvu / page introuvable'."""
+"""Checking offer URLs (live/dead/soft-404). Module: quick_check/batch_check (queue_tools mark).
+Detects SOFT-404s: the page returns HTTP 200 but displays 'offer expired / position filled / page not found'."""
 
 import concurrent.futures as cf
 import re
@@ -36,8 +36,8 @@ def is_live(st):
 
 
 def check(u):
-    """Retour (url, status, soft) : status HTTP ou nom d'exception ;
-    soft = phrase 'offre morte' détectée dans le corps malgré 200, sinon None."""
+    """Returns (url, status, soft): HTTP status or exception name;
+    soft = 'dead offer' phrase detected in the body despite 200, otherwise None."""
     try:
         r = requests.get(u, headers=UA, timeout=12, allow_redirects=True)
         soft = None
@@ -60,9 +60,9 @@ def check(u):
 
 
 def quick_check(url: str, timeout: float = 8.0) -> dict:
-    """Vérifie rapidement si une URL semble vivante (HEAD + fallback GET).
-    Retour {live: bool, status, soft_dead: str|None, note: str}.
-    Ne bloque pas le pipeline si réseau lent (timeout court)."""
+    """Quickly checks whether a URL looks alive (HEAD + GET fallback).
+    Returns {live: bool, status, soft_dead: str|None, note: str}.
+    Does not block the pipeline if the network is slow (short timeout)."""
     try:
         # HEAD first (light)
         r = requests.head(url, headers=UA, timeout=timeout, allow_redirects=True)

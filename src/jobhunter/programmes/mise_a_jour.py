@@ -155,11 +155,11 @@ def _get(url, timeout):
 
 
 def nouvelle_version(timeout=5, intervalle_h=24):
-    """Version disponible si elle est plus recente que l'installee, sinon None.
+    """Available version if it is more recent than the installed one, otherwise None.
 
-    Pour l'application, au demarrage : un seul petit fichier (VERSION), au plus
-    une fois par jour, et toute erreur (hors ligne, GitHub lent) vaut « rien de
-    neuf » — une verification ne doit jamais gener le lancement."""
+    For the application, at startup: a single small file (VERSION), at most
+    once a day, and any error (offline, slow GitHub) counts as "nothing
+    new" — a check must never hinder the launch."""
     # Without a VERSION file, it is not a published installation (development
     # copy, repository that syncs the engine): nothing to announce.
     if not _gele.est_gele() and not (RACINE / "VERSION").exists():
@@ -208,7 +208,7 @@ def afficher_nouveautes(changelog, depuis, jusqua=None):
 
 
 def _cles(d, prefixe=""):
-    """Cles d'un profil, sur deux niveaux (« scoring.plafond_second »)."""
+    """Keys of a profile, on two levels ("scoring.plafond_second")."""
     out = set()
     for k, v in (d or {}).items():
         if k.startswith("_"):
@@ -384,7 +384,7 @@ def installer_dependances(changes_requirements):
 
 
 def apres():
-    """Le message de fin, une fois la nouvelle version installée ET contrôlée."""
+    """The closing message, once the new version is installed AND checked."""
     signaler_reglages()
     print(f"\nJobHunter est à jour (version {version_locale()}). Relance l'application.")
     return 0

@@ -195,7 +195,7 @@ _PARESSEUX["_PLAFOND_VETO"] = lambda: float(_ici._SC.get("plafond_veto", 6.0))
 #   intitules_coeur        raises the cap to 10, except off-target profession
 #   intitules_coeur_forts  raises the cap to 10 in all cases
 #   intitules_second       profession targeted second: cap 8 (+2 x core axis)
-#   veto_sigles / veto_si + veto_et : metier voisin a ecarter (plafond 6)
+#   veto_sigles / veto_si + veto_et: neighbouring profession to set aside (cap 6)
 #   intitules_techniques (except ..._sauf) and intitules_hors_metier: the
 #     target's vocabulary does not bring these professions closer to the profile
 # The historical names (_ESG_TITLE_RX…) stay: the tests and the density read them.
@@ -239,7 +239,7 @@ _PARESSEUX["_ESG_DENSITE_LONG"] = lambda: int(
 
 
 def densite_esg(text: str | None) -> float:
-    """Marqueurs ESG pour 1000 caractères. 0.0 sur un texte vide."""
+    """ESG markers per 1000 characters. 0.0 on an empty text."""
     t = text or ""
     if not t or _ici._ESG_TITLE_RX is None:
         return 0.0
@@ -247,7 +247,7 @@ def densite_esg(text: str | None) -> float:
 
 
 def axis_scores(text: str | None) -> dict[str, float]:
-    """Densité 0.0-1.0 par axe. Utile pour comprendre POURQUOI une offre score."""
+    """Density 0.0-1.0 per axis. Useful to understand WHY an offer scores."""
     got = skills_in(text)
     out: dict[str, float] = {}
     for axe, labels in _ici.AXES.items():
@@ -575,7 +575,7 @@ def fit_detail(
     # the environmental vocabulary of the title AND of the description, never
     # over an ESG-finance marker. The technical profession only lost the
     # raise given by the title: a description dense in carbon still returned
-    # meme 10 a « Engineer Sustainability & Product Compliance ».
+    # even 10 for "Engineer Sustainability & Product Compliance".
     # The profession veto's cap follows the general rule: 8 if the job talks
     # about AI (secondary target), 6 otherwise. A cap fixed at 6 cost two
     # points to 137 "AI Engineer" jobs that nobody judged too high.

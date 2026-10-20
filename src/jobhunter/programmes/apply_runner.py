@@ -53,7 +53,7 @@ except Exception:
 
 
 def _unquote_path(u):
-    """file:///…/Soci%C3%A9tal.pdf -> chemin disque décodé (accents). '' si vide."""
+    """file:///…/Soci%C3%A9tal.pdf -> decoded disk path (accents). '' if empty."""
     from jobhunter.programmes.jutil import chemin_de
 
     p = chemin_de(u)
@@ -186,7 +186,7 @@ def autofill(page):
 
 
 def _select_match(loc, val):
-    """Sélectionne dans un <select> l'option qui matche `val` (par label puis value)."""
+    """Selects in a <select> the option matching `val` (by label then value)."""
     v = val.strip().lower()
     try:
         opts = loc.locator("option")
@@ -204,8 +204,8 @@ def _select_match(loc, val):
 
 
 def fill_selects_radios(page):
-    """Remplit civilité (M./Monsieur) via <select> ou radio, et pays=France si <select> vide.
-    Léger, best-effort. Retour nb rempli."""
+    """Fills the title of address (M./Monsieur) through <select> or radio, and country=France if the <select> is empty.
+    Light, best-effort. Returns the number filled."""
     n = 0
     # title: radio or select containing "monsieur/m." (profile = man)
     js = r"""

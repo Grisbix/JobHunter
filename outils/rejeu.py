@@ -87,7 +87,7 @@ class Reponse:
     """Réponse rejouée : code, en-têtes réduits, adresse finale, corps."""
 
     def __init__(self, statut: int, type_contenu: str, url: str, corps: str) -> None:
-        """Construit la réponse depuis un échange enregistré."""
+        """Builds the response from a recorded exchange."""
         self.status_code = statut
         self.headers = {"content-type": type_contenu}
         self.url = url
@@ -100,20 +100,20 @@ class Reponse:
         return json.loads(self.text)
 
     def raise_for_status(self) -> None:
-        """Lève comme httpx sur un code d'erreur."""
+        """Raises like httpx on an error code."""
         if self.status_code >= 400:
             raise RuntimeError(f"HTTP {self.status_code}")
 
 
 def cle(methode: str, url: str, kw: dict[str, Any]) -> str:
-    """Identité d'un échange : méthode, adresse, paramètres et corps JSON de la requête."""
+    """Identity of an exchange: method, address, parameters and JSON body of the request."""
     params = json.dumps(kw.get("params") or {}, sort_keys=True, ensure_ascii=False)
     corps = json.dumps(kw.get("json") or kw.get("data") or {}, sort_keys=True, ensure_ascii=False)
     return f"{methode} {url} {params} {corps}"
 
 
 class EchangeManquant(AssertionError):
-    """Le code a demandé une adresse que l'enregistrement ne contient pas."""
+    """The code asked for an address the recording does not contain."""
 
 
 def rejoueur(
@@ -145,7 +145,7 @@ def rejoueur(
 
 @contextmanager
 def reglages(valeurs: dict[str, Any]) -> Iterator[None]:
-    """Applique les réglages réduits d'un scénario, puis remet les valeurs d'origine."""
+    """Applies a scenario's reduced settings, then puts the original values back."""
     avant = []
     for chemin, valeur in valeurs.items():
         module, nom = chemin.split(":")
@@ -160,7 +160,7 @@ def reglages(valeurs: dict[str, Any]) -> Iterator[None]:
 
 
 def appeler(nom: str) -> list[dict[str, Any]]:
-    """Lance la source d'un scénario (réseau ou rejeu selon ce qui est branché)."""
+    """Runs a scenario's source (network or replay, depending on what is plugged in)."""
     module, fonction, args, _ = SCENARIOS[nom]
     return list(getattr(importlib.import_module(module), fonction)(*args) or [])
 
@@ -187,7 +187,7 @@ def empreinte(offres: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def rejouer(cassette: dict[str, Any]) -> list[dict[str, Any]]:
-    """Rejoue un enregistrement : rend les offres que la source en tire, sans réseau."""
+    """Replays a recording: returns the offers the source draws from it, without network."""
     from jobhunter.reseau import INCIDENTS
     from jobhunter.sources import commun
 
@@ -209,8 +209,8 @@ def rejouer(cassette: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _reduire(corps: str, type_contenu: str, titres: set[str]) -> str:
-    """Garde, dans les listes JSON, les éléments qui donnent une offre retenue (leur
-    titre y figure) et deux autres, que le filtre doit continuer d'écarter."""
+    """Keeps, in the JSON lists, the items that give a kept offer (their
+    title appears there) and two others, which the filter must keep setting aside."""
     if "json" not in type_contenu:
         return corps
     try:
@@ -236,7 +236,7 @@ def _reduire(corps: str, type_contenu: str, titres: set[str]) -> str:
 
 
 def enregistrer(nom: str) -> dict[str, Any]:
-    """Va sur le réseau UNE fois pour ce scénario, nettoie, vérifie le rejeu, écrit."""
+    """Goes on the network ONCE for this scenario, cleans, checks the replay, writes."""
     from jobhunter.sources import commun
 
     echanges: list[dict[str, Any]] = []

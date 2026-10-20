@@ -75,7 +75,7 @@ def test_chercher_ordre(petit):
 
 
 def test_pas_a_cheval_sur_deux_mots(petit):
-    """« Central and » contient « alan » une fois les espaces ôtés : pas un résultat."""
+    """ "Central and" contains "alan" once the spaces are removed: not a result."""
     assert "Central and Co" not in [e.nom for e in annuaire.chercher("alan")]
 
 

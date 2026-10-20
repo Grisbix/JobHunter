@@ -1,4 +1,4 @@
-"""Les clés des API de collecte vont dans le fichier que chaque source lit (cles_api)."""
+"""The keys of the collection APIs go into the file each source reads (cles_api)."""
 
 import json
 
@@ -57,7 +57,7 @@ def test_champs_requis(tmp_path, valeurs):
 
 
 def test_cle_en_cours_d_ecriture_ailleurs(tmp_path, monkeypatch):
-    """Audit Codex du 19/10 : sans verrou, deux saisies simultanées perdaient un champ."""
+    """Codex audit of 19/10: without a lock, two simultaneous inputs lost a field."""
     import os
     import time
 

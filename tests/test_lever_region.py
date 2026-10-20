@@ -1,8 +1,8 @@
-"""Lever : flux hébergés dans la région européenne (api.eu.lever.co)."""
+"""Lever: feeds hosted in the European region (api.eu.lever.co)."""
 
 
 def test_lever_repli_sur_la_region_europeenne(monkeypatch):
-    """Un flux Lever absent de api.lever.co (404) est cherché sur api.eu.lever.co."""
+    """A Lever feed missing from api.lever.co (404) is looked for on api.eu.lever.co."""
     from jobhunter.sources import ats
     from jobhunter.sources import commun as _commun
 

@@ -33,7 +33,7 @@ from jobhunter.documents.controle import _RX_GABARIT  # the same pattern as the 
 
 @dataclass(frozen=True)
 class Remarque:
-    """Un point à relire dans la lettre."""
+    """A point to review in the letter."""
 
     regle: str  # "dévalorisation", "superlatif", "langue", …
     extrait: str  # the passage concerned, short
@@ -141,7 +141,7 @@ _BANALS_BASE = {
 
 
 def _banals() -> set[str]:
-    """Les mots banals, plus le nom du candidat (lu à l'appel)."""
+    """The commonplace words, plus the candidate's name (read in the greeting)."""
     try:
         from jobhunter.profil import identite
 

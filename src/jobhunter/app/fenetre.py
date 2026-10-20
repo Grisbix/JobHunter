@@ -399,7 +399,7 @@ class App(
                 b.configure(fg_color=SIDE, text_color=SIDE_MUT, hover_color=SIDE_H)
 
     def _basculer_langue(self) -> None:
-        """Interface en anglais <-> en français ; elle change au prochain démarrage."""
+        """Interface in English <-> in French; it changes at the next start."""
         from jobhunter.app import langue as _langue
 
         autre = "fr" if _langue.LANGUE == "en" else "en"
@@ -413,7 +413,7 @@ class App(
         )
 
     def _planifier(self) -> None:
-        """La collecte chaque matin : crée la tâche Windows à l'heure choisie, ou la retire."""
+        """Collection every morning: creates the Windows task at the chosen time, or removes it."""
         from tkinter import simpledialog
 
         from jobhunter import planification as _plan

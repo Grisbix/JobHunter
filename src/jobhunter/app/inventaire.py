@@ -92,7 +92,7 @@ def _hote(url: str) -> str:
 
 
 def nom_de_site(url: str) -> str:
-    """Le nom d'une entreprise d'après son site carrière : « careers.axa.com » → « Axa »."""
+    """A company's name from its career site: "careers.axa.com" → "Axa"."""
     h = _hote(url)
     for p in ("careers.", "jobs.", "recrutement.", "talents.", "career.", "group.", "rejoindre-"):
         if h.startswith(p):
@@ -248,7 +248,7 @@ ATTENTE_REFUS_JOURS = 30
 
 @dataclass(frozen=True)
 class EtatSource:
-    """Une ligne du panneau Accès."""
+    """A row of the Access panel."""
 
     source: str
     libelle: str

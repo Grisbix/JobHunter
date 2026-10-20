@@ -82,7 +82,7 @@ def pass_pairs_freshness(dry=False):
 
 
 def pass_links(dry=False):
-    """Liens cv/lettre cassés dans la queue → re-match par stem dans le bon dossier."""
+    """Broken cv/letter links in the queue → re-match by stem in the right folder."""
     try:
         q = importlib.import_module("jobhunter.stockage.file").charger(QUEUE, descriptions=False)
     except Exception:

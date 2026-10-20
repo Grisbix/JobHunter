@@ -115,7 +115,7 @@ def test_journal(monkeypatch):
 
 
 def test_sortie_des_programmes(monkeypatch):
-    """Les bilans des programmes lancés par l'app, tels qu'ils les impriment."""
+    """The reports of the programs launched by the app, as they print them."""
     monkeypatch.setattr(langue, "LANGUE", "en")
     sortie = (
         "\nScan : 412 offres uniques (→ offres_scan.json)\n"
@@ -141,7 +141,7 @@ def test_sortie_des_programmes(monkeypatch):
 
 
 def test_sortie_modeles_vivent_dans_le_paquet():
-    """Chaque ligne de SORTIE_EN est encore imprimée quelque part dans le paquet."""
+    """Each line of SORTIE_EN is still printed somewhere in the package."""
     from jobhunter.app.textes_en import SORTIE_EN
 
     source = "\n".join(
@@ -161,7 +161,7 @@ def test_sortie_modeles_vivent_dans_le_paquet():
 
 
 def test_journal_modeles_coherents():
-    """Même jeu de `{x}` des deux côtés, et chaque modèle vit encore dans l'app."""
+    """Same set of `{x}` on both sides, and each template still lives in the app."""
     from jobhunter.app.textes_en import JOURNAL_EN
 
     source = "\n".join(

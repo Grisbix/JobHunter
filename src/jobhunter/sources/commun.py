@@ -133,7 +133,7 @@ SOURCES_CFG = HERE / "sources_config.json"
 
 
 def _load_cfg() -> None:
-    """sources_config.json — écrase les défauts : keywords      [mots-clés] ats_slugs     {ats: [slugs]} workday_flux  [[tenant, hote, site, nom], ...]   [] = aucun flux Workday autres_flux   [[type, cle, nom], ...]            [] = aucun autre ATS Les listes d'entreprises livrees visent la finance et l'ESG : un profil d'un autre metier les vide (premier_lancement.py) et ajoute les siennes."""
+    """sources_config.json — overrides the defaults: keywords      [keywords] ats_slugs     {ats: [slugs]} workday_flux  [[tenant, host, site, name], ...]   [] = no Workday feed autres_flux   [[type, key, name], ...]            [] = no other ATS. The shipped company lists target finance and ESG: a profile in another profession empties them (premier_lancement.py) and adds its own."""
     global KEYWORDS, ATS_SLUGS, WORKDAY_FLUX, AUTRES_FLUX
     try:
         cfg = json.loads(SOURCES_CFG.read_text(encoding="utf-8"))

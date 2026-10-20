@@ -22,7 +22,7 @@ ATTENTE = 10  # seconds of waiting for the lock of a key file
 
 @dataclass(frozen=True)
 class Cle:
-    """La clé d'une source : son fichier, ses champs, et où l'obtenir."""
+    """A source's key: its file, its fields, and where to get it."""
 
     nom: str
     libelle: str

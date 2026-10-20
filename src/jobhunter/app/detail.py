@@ -420,7 +420,7 @@ class DetailMixin:
         MAX_LIGNES = 300
 
         def fill(flt: Any = "") -> None:
-            """CV de base, puis un dossier par offre (CV et lettre ensemble), mieux classées d'abord."""
+            """Base CV, then one folder per offer (CV and letter together), best ranked first."""
             lb.delete(0, "end")
             files.clear()
             base = sorted(CV_ATS_DIR.glob("*.pdf")) if CV_ATS_DIR.exists() else []
@@ -492,7 +492,7 @@ class DetailMixin:
                 txtv.pack(fill="both", expand=True)
 
         def render() -> None:
-            """Rend TOUTES les pages empilées → molette déroule le document en entier."""
+            """Renders ALL the pages stacked → the wheel scrolls through the whole document."""
             doc = state["doc"]
             if not doc:
                 return
@@ -588,7 +588,7 @@ class DetailMixin:
                 show(choix)
 
         def basculer() -> None:
-            """Passe du CV à la lettre du même dossier, et retour."""
+            """Switches from the CV to the letter of the same folder, and back."""
             d = state.get("dossier")
             if d is None:
                 self._log("Sélectionne d'abord un dossier d'offre dans la liste.\n")
@@ -817,7 +817,7 @@ class DetailMixin:
                 show(p)
 
     def _doc_of(self: "AppTypee", o: Any, key: Any) -> Any:
-        """Chemin disque du doc lié à l'offre (cv/lettre, décode file:///…). None si absent."""
+        """Disk path of the document linked to the offer (cv/letter, decodes file:///…). None if missing."""
         u = o.get(key) or ""
         if not u:
             return None

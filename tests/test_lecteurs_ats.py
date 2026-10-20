@@ -16,7 +16,7 @@ from jobhunter import sources as J
 
 
 class JS(dict):
-    """Corps JSON d'une reponse — a distinguer d'une table de routes."""
+    """JSON body of a response — to be told apart from a routing table."""
 
 
 @pytest.fixture

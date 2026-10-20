@@ -38,7 +38,7 @@ class DesignTests(unittest.TestCase):
         )
 
     def test_envoi_explicite(self):
-        """Rien n'est écrit sans un « oui » explicite ; le oui déclare l'envoi (ADR 0009)."""
+        """Nothing is written without an explicit "yes"; the yes declares the sending (ADR 0009)."""
         app = object.__new__(ui.App)
         offer = {"entreprise": "Test", "poste": "Analyste"}
         app.root = None

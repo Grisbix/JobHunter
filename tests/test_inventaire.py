@@ -1,4 +1,4 @@
-"""Données des panneaux Entreprises, Accès et Mes CV (jobhunter.app.inventaire)."""
+"""Data of the Companies, Access and My CVs panels (jobhunter.app.inventaire)."""
 
 import datetime
 import os
@@ -120,7 +120,7 @@ def test_etat_sources_refus_ancien_ne_dit_plus_d_attendre():
 
 
 def test_cle_refusee_ne_bloque_pas():
-    """Un 401 d'une API officielle vise notre clé : on la corrige et on réessaie."""
+    """A 401 from an official API targets our key: we fix it and try again."""
     journal = [{"le": "2026-10-19T19:00:00", "sources": {"adzuna": {"verdict": "refusé"}}}]
     etats = {
         e.source: e for e in inv.etat_sources(journal, lambda f: True, datetime.date(2026, 10, 19))
@@ -131,7 +131,7 @@ def test_cle_refusee_ne_bloque_pas():
 
 
 def test_chaque_source_se_collecte_seule():
-    """« Collecter cette source » (panneau Accès) a un drapeau pour chaque ligne."""
+    """ "Collect this source" (Access panel) has a flag for each row."""
     import inspect
 
     from jobhunter.sources import cli

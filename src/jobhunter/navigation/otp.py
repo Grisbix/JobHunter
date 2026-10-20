@@ -69,7 +69,7 @@ _OTP_VERIFY_JS = r"""
 
 
 def otp_present(page: Any) -> bool:
-    """True si la page attend un code OTP (champ code / boîtes 1-chiffre / texte)."""
+    """True if the page waits for an OTP code (code field / 1-digit boxes / text)."""
     try:
         return bool(page.evaluate(_OTP_DETECT_JS).get("otp"))
     except Exception:

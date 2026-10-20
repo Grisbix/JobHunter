@@ -491,7 +491,7 @@ def _message(offre: dict[str, Any], langue: str | None = None, ton: str = "sobre
 
 
 def _un(nom: str) -> str:
-    """« a junior analyst », « an ESG analyst » : l'article suit le SON initial ; un sigle se lit lettre par lettre (« an ESG », « an MBA »)."""
+    """Article: "a junior analyst", "an ESG analyst": the article follows the initial SOUND; an acronym is read letter by letter ("an ESG", "an MBA")."""
     if not nom:
         return ""
     mot = nom.split()[0]
@@ -506,7 +506,7 @@ def _de_titre(t: str) -> str:
 
 
 def main() -> int:
-    """Ligne de commande : écrit le message court d'une offre dans Lettres/Messages."""
+    """Command line: writes an offer's short message into Lettres/Messages."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--url", default="", help="fragment de l'URL de l'offre")
     ap.add_argument("--contient", default="", help="fragment du nom de l'entreprise")

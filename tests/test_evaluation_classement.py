@@ -1,4 +1,4 @@
-"""Évaluation du classement sur les jugements du suivi (scoring.evaluation)."""
+"""Evaluation of the ranking on the tracker's judgements (scoring.evaluation)."""
 
 import pytest
 

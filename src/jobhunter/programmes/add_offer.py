@@ -123,7 +123,7 @@ def add_to_queue(url, meta):
 
 
 def make_docs(url):
-    """Génère CV + lettre pour la ligne queue de cette URL, met à jour les liens."""
+    """Generates CV + letter for the queue row of this URL, updates the links."""
     from jobhunter.stockage import file as queue_io
 
     # Explicit QUEUE: the tests replace this constant with a throwaway

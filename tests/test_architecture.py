@@ -30,7 +30,7 @@ def modules():
 
 
 def imports(arbre):
-    """Tous les modules importés, y compris dans les fonctions (imports différés)."""
+    """All the imported modules, including inside functions (deferred imports)."""
     for n in ast.walk(arbre):
         if isinstance(n, ast.Import):
             for a in n.names:
@@ -84,5 +84,5 @@ def test_aucun_module_ne_touche_a_sys_path():
     ],
 )
 def test_la_regle_voit_ce_qu_elle_doit_voir(code, attendu):
-    """La règle elle-même : un faux négatif rendrait le test inutile."""
+    """The rule itself: a false negative would make the test useless."""
     assert any(touche_l_interface(nom) for _, nom in imports(ast.parse(code))) is attendu

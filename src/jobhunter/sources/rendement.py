@@ -37,7 +37,7 @@ MESURES: dict[str, dict[str, Any]] = {}
 
 
 def instantane() -> dict[str, dict[str, int]]:
-    """Copie des incidents de la collecte, pour en calculer l'écart après un appel."""
+    """Copy of the collection's incidents, to compute their difference after a call."""
     return {s: {str(c): int(n) for c, n in par.items()} for s, par in INCIDENTS.items()}
 
 
@@ -99,7 +99,7 @@ def mesurer(
 
 
 def completer(uniques: Iterable[dict[str, Any]], par_source: dict[str, dict[str, int]]) -> None:
-    """Ajoute aux mesures les offres uniques (après dédoublonnage du scan) et, depuis la fusion, les nouvelles et les pertinentes ; pose le verdict de chaque source."""
+    """Adds to the measurements the unique offers (after the scan's dedup) and, from the merge, the new and the relevant ones; sets each source's verdict."""
     n_uniques = collections.Counter(str(o.get("_passe") or "") for o in uniques)
     for nom, m in MESURES.items():
         m["uniques"] = n_uniques.get(nom, 0)
@@ -121,7 +121,7 @@ def enregistrer(chemin: Path, quand: datetime.datetime | None = None) -> None:
 
 
 def resume() -> list[str]:
-    """Une ligne par source mesurée, pour la fin de la collecte."""
+    """One line per measured source, for the end of the collection."""
     lignes = []
     for nom, m in sorted(MESURES.items()):
         lignes.append(
@@ -163,7 +163,7 @@ def bilan(lignes: Iterable[dict[str, Any]], depuis: str = "") -> dict[str, dict[
 
 
 def lire_journal(chemin: Path) -> list[dict[str, Any]]:
-    """Les collectes du journal ; les lignes illisibles sont sautées."""
+    """The collections of the log; unreadable lines are skipped."""
     sortie: list[dict[str, Any]] = []
     try:
         texte = chemin.read_text(encoding="utf-8")

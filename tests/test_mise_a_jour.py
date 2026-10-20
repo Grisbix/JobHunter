@@ -400,7 +400,7 @@ def main_entre_deux(installer):
 
 
 def test_l_environnement_hors_empreinte_et_garde(main_entre_deux, capsys):
-    """2.17 : installer.bat crée .venv AVANT l'empreinte ; une mise à jour le retirait."""
+    """2.17: installer.bat creates .venv BEFORE the fingerprint; an update removed it."""
     assert not any(k.startswith(".venv/") for k in _manifeste(main_entre_deux[0]))
     lancer(capsys)
     assert lire(main_entre_deux[0], ".venv/Lib/site-packages/paquet.py") == "X = 1\n"
@@ -521,7 +521,7 @@ def test_echec_de_pip_n_annonce_pas_le_succes(monkeypatch, capsys):
 
 
 def test_les_dependances_passent_avant_le_controle(installer, monkeypatch, capsys):
-    """pip avant le contrôle ; s'il échoue, retour à la 1.2.0 et code 1, sans contrôle."""
+    """pip before the check; if it fails, back to 1.2.0 and code 1, without check."""
     v13 = {**V13, "requirements.txt": "httpx\n"}
     zips = {maj.ZIP_URL: zip_de(v13), maj.TAG_URL.format("1.2.0"): zip_de(V12, "JobHunter-1.2.0")}
     installer(V12, zips=zips)

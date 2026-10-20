@@ -24,7 +24,7 @@ from jobhunter.types import Candidature, CourrielStatut, Suivi
 
 
 def appliquer(p: statuts.Proposition, chemin: Path | None = None, attente: float = 30) -> bool:
-    """Écrit la proposition si elle fait toujours avancer la candidature (état relu)."""
+    """Writes the proposal if it still moves the application forward (state reread)."""
 
     def _f(s: Suivi) -> bool:
         rec: Candidature = dict(s.get(p.oid) or {})  # type: ignore[assignment]  # copie
@@ -53,7 +53,7 @@ def valider(
     demander: Callable[[str], str] = input,
     chemin: Path | None = None,
 ) -> int:
-    """Demande o/n/q pour chaque proposition ; rend le nombre de statuts écrits."""
+    """Asks y/n/q for each proposal; returns the number of statuses written."""
     ecrits = 0
     for i, p in enumerate(props, 1):
         print(f"\n[{i}/{len(props)}] {p.oid}")

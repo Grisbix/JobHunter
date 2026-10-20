@@ -180,7 +180,7 @@ def _fgcol(bg: Any) -> Any:
 
 
 def _session_presentation(session: Any, verification: Any, aujourd_hui: Any = None) -> Any:
-    """Un contrôle historique n'est pas une preuve de connexion actuelle."""
+    """A historical check is not a proof of current login."""
     aujourd_hui = aujourd_hui or datetime.date.today()
     try:
         age = (aujourd_hui - datetime.date.fromisoformat(str(verification)[:10])).days

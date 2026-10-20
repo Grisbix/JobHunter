@@ -32,7 +32,7 @@ _LIMITE_CORPS = 20000
 
 @dataclass(frozen=True)
 class Courriel:
-    """Un courriel reçu, réduit à ce qui sert à proposer un statut."""
+    """A received email, reduced to what serves to propose a status."""
 
     de: str  # « Nom <adresse> » tel quel
     sujet: str
@@ -47,7 +47,7 @@ def _texte_html(h: str) -> str:
 
 
 def _corps(m: Message) -> str:
-    """Le texte du message : la partie text/plain, sinon le HTML réduit au texte."""
+    """The message text: the text/plain part, otherwise the HTML reduced to text."""
     simple: list[str] = []
     riche: list[str] = []
     for partie in m.walk() if m.is_multipart() else [m]:
@@ -92,7 +92,7 @@ def depuis_octets(brut: bytes) -> Courriel:
 
 
 def depuis_mbox(chemin: Path) -> Iterator[Courriel]:
-    """Les courriels d'un fichier .mbox (export Google Takeout, Thunderbird…)."""
+    """The emails of an .mbox file (Google Takeout export, Thunderbird…)."""
     boite = mailbox.mbox(str(chemin), create=False)
     try:
         for m in boite:
@@ -102,7 +102,7 @@ def depuis_mbox(chemin: Path) -> Iterator[Courriel]:
 
 
 def depuis_eml(dossier: Path) -> Iterator[Courriel]:
-    """Les fichiers .eml d'un dossier (un courriel glissé hors du client de messagerie)."""
+    """The .eml files of a folder (an email dragged out of the mail client)."""
     for p in sorted(dossier.rglob("*.eml")):
         yield depuis_octets(p.read_bytes())
 

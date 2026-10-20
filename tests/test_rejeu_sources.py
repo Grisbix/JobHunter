@@ -52,7 +52,7 @@ def test_echange_manquant_fait_echouer():
 
 
 def test_parseur_casse_se_voit(monkeypatch):
-    """Si le parseur perd un champ, le rejeu le dit : le test n'est pas décoratif."""
+    """If the parser loses a field, the replay says so: the test is not decorative."""
     from jobhunter.sources import fir
 
     cassette = charger(rejeu.CASSETTES / "fir.json")

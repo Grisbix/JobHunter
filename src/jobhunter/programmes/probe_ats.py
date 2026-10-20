@@ -131,7 +131,7 @@ APIS = {
 
 
 def count_jobs(kind, data):
-    """Nb d'offres selon la forme de réponse propre à chaque ATS."""
+    """Number of offers according to each ATS's own response shape."""
     try:
         if kind == "greenhouse":
             return len(data.get("jobs", []))

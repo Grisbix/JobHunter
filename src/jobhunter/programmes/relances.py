@@ -87,8 +87,8 @@ def _oid(o):
 
 
 def a_relancer(days=10):
-    """Candidatures « postulé/relancé » depuis ≥ days jours (suivi.json).
-    Retour [(offre, statut, date, âge_jours)] du plus vieux au plus récent."""
+    """ "postulé/relancé" applications for ≥ days days (suivi.json).
+    Returns [(offer, status, date, age_days)] from oldest to most recent."""
     from datetime import date, datetime
 
     q = json.load(open(Q, encoding="utf-8"))
@@ -121,7 +121,7 @@ def chemin_brouillon(o, j, dossier=None):
 
 
 def ecrire_brouillon(o, j=7, dossier=None):
-    """Écrit le .txt de relance d'une offre et rend son chemin. N'ouvre rien."""
+    """Writes an offer's follow-up .txt and returns its path. Opens nothing."""
     comp, role = o["entreprise"], o["poste"] or "le poste proposé"
     tpl = TPL_J7 if j == 7 else TPL_J10
     txt = tpl.format(company=comp, role=role, de_role=de(role), sign=SIGNATURE, **_ACCORDS)

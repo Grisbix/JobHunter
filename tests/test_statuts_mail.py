@@ -216,7 +216,7 @@ def test_gmail_jeton_trop_large_refuse(tmp_path, faux_google):
 
 
 def test_fenetre_de_l_app_s_ouvre(racine_tk):
-    """La fenêtre « Statuts depuis mes courriels » se construit, sans rien lire ni écrire."""
+    """The "Statuts depuis mes courriels" window builds, without reading or writing anything."""
     import queue
     import types
 

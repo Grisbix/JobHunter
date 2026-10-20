@@ -294,7 +294,7 @@ APEC_PAR_PASSE = 150
 
 
 def par_la_source(q, etat, aujourd_hui, limite):
-    """Tranche les invérifiables APEC et WTJ par leur canal de collecte."""
+    """Settles APEC and WTJ unverifiables through their collection channel."""
     from jobhunter import sources as job_sources
 
     a_voir = []

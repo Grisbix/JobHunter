@@ -255,7 +255,7 @@ def load_domains(domains_path: str) -> list[dict]:
 
 
 def build_job_urls(entry: dict) -> list[str]:
-    """Génère des URLs candidates pour trouver les offres d'emploi."""
+    """Generates candidate URLs to find the job offers."""
     base = entry["url"]
     domain = entry["domain"]
     urls = [base]
@@ -796,7 +796,7 @@ def scrape_all_sites(
     skip: int = 0,
     max_sites: int = 0,
 ):
-    """Scrape tous les sites et sauvegarde les offres fraîches."""
+    """Scrapes all the sites and saves the fresh offers."""
     entries = load_domains(domains_file)
     print(f"📋 {len(entries)} sites chargés depuis {domains_file}")
 

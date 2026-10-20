@@ -1,4 +1,4 @@
-"""Aucune donnée personnelle dans le dépôt public (outils/donnees_perso.py)."""
+"""No personal data in the public repository (outils/donnees_perso.py)."""
 
 import importlib.util
 import pathlib

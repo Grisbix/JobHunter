@@ -441,7 +441,7 @@ class TableauMixin:
         self._cur = None
 
     def _toggle_columns(self: "AppTypee") -> None:
-        """Vue compacte par défaut, toutes les colonnes restent accessibles."""
+        """Compact view by default, all the columns remain accessible."""
         all_cols = tuple(c[0] for c in COLS)
         current = tuple(self.tree.cget("displaycolumns"))
         visible = all_cols if current == self._visible_cols else self._visible_cols
@@ -513,11 +513,11 @@ class TableauMixin:
         self.refresh_table()
 
     def _cell(self: "AppTypee", o: Any, key: Any) -> Any:
-        """Valeur affichée d'une colonne (pour liste de valeurs + filtre)."""
+        """Displayed value of a column (for the value list + filter)."""
         return str(self._row_vals(o)[self._colidx[key]])
 
     def _col_menu(self: "AppTypee", key: Any) -> None:
-        """Menu type Excel sur l'entête : tri croissant/décroissant + choisir les valeurs."""
+        """Excel-like menu on the header: ascending/descending sort + choose the values."""
         win = tk.Toplevel(self.root)
         win.overrideredirect(True)
         win.configure(bg=LINE)
@@ -658,8 +658,8 @@ class TableauMixin:
         win.after(50, win.focus_force)
 
     def _statut_of(self: "AppTypee", o: Any) -> Any:
-        """Statut effectif = suivi MANUEL uniquement (toi). apply_runner_done.json = essais
-        machine (form rempli/test), PAS une vraie candidature → jamais affiché comme 'postulé'."""
+        """Effective status = MANUAL tracking only (you). apply_runner_done.json = machine
+        trials (form filled/test), NOT a real application → never displayed as 'postulé'."""
         sv = self.suivi.get(self._oid(o), {})
         return (sv["s"], "manuel") if sv.get("s") else ("", "")
 
@@ -884,8 +884,8 @@ class TableauMixin:
             return set()
 
     def _exclu(self: "AppTypee", o: Any) -> Any:
-        """Le contrat vient du champ, sinon de l'intitule : les offres deja en
-        file portent encore « CDI » la ou LinkedIn s'est trompe."""
+        """The contract comes from the field, otherwise from the title: the offers already in
+        the queue still carry "CDI" where LinkedIn got it wrong."""
         ex = self._exclus
         if not ex:
             return False

@@ -48,7 +48,7 @@ def nettoyer(brut: object) -> list[list[str]]:
 
 
 def texte(entrees: list[list[str]]) -> str:
-    """Une entrée par ligne : lisible dans un diff, compact."""
+    """One entry per line: readable in a diff, compact."""
     lignes = ",\n".join(json.dumps(e, ensure_ascii=False) for e in entrees)
     return "[\n" + lignes + "\n]\n"
 

@@ -59,14 +59,14 @@ def _t_etat(etat: str) -> str:
 
 
 def _date_fr(iso: Any) -> str:
-    """« 2026-10-19… » → « 19/10/2026 » ; "" si vide ou illisible."""
+    """ "2026-10-19…" → "19/10/2026"; "" if empty or unreadable."""
     t = str(iso or "")[:10]
     return f"{t[8:10]}/{t[5:7]}/{t[:4]}" if len(t) == 10 and t[4] == "-" else ""
 
 
 class PanneauxMixin:
     def _hide_all(self: "AppTypee") -> None:
-        """Cache tous les panneaux (dash, visionneuse, détail, listes)."""
+        """Hides all the panels (dash, viewer, detail, lists)."""
         self.dash.pack_forget()
         if self.viewer is not None:
             self.viewer.pack_forget()
@@ -83,8 +83,8 @@ class PanneauxMixin:
         self._nav_actif("offres")
 
     def _stats_panel(self: "AppTypee") -> None:
-        """📊 STATS : vue synthétique de la queue (les données existent dans
-        apply_queue.json + suivi.json mais n'étaient visibles nulle part)."""
+        """📊 STATS: summary view of the queue (the data exists in
+        apply_queue.json + suivi.json but was visible nowhere)."""
         self._hide_all()
         if "stats" in self._panels:
             w = self._panels["stats"]
@@ -578,7 +578,7 @@ class PanneauxMixin:
         w.pack(fill="both", expand=True)
 
     def _acces_open(self: "AppTypee", w: Any) -> None:
-        """Ouvre la page de connexion du site sélectionné dans le navigateur."""
+        """Opens the login page of the selected site in the browser."""
         sel = w._tv.selection()
         if not sel:
             self._log("Selectionne d'abord un site dans la liste.\n")
@@ -876,7 +876,7 @@ class PanneauxMixin:
         w.pack(fill="both", expand=True)
 
     def _sources_panel(self: "AppTypee") -> None:
-        """Sources du Scan offres (job_sources) : mots-clés + slugs ATS. sources_config.json."""
+        """Sources of the offer scan (job_sources): keywords + ATS slugs. sources_config.json."""
         CFG = SCRIPTS / "sources_config.json"
 
         def _cfg() -> Any:

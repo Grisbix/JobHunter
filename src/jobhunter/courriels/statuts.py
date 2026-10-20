@@ -77,7 +77,7 @@ _VIDES = {
 
 @dataclass(frozen=True)
 class Proposition:
-    """Un statut suggéré par un courriel, à valider."""
+    """A status suggested by an email, to be validated."""
 
     oid: str  # « entreprise|poste »
     actuel: str
@@ -94,7 +94,7 @@ def _plat(t: str) -> str:
 
 
 def mots_entreprise(entreprise: str) -> list[str]:
-    """Les mots qui reconnaissent l'entreprise : « BNP Paribas SA » → [bnp, paribas]."""
+    """The words that recognise the company: "BNP Paribas SA" → [bnp, paribas]."""
     return [m for m in _plat(entreprise).split() if m not in _VIDES and len(m) >= 3]
 
 
@@ -109,7 +109,7 @@ def _nomme(mots: list[str], texte_plat: str, colle: str = "") -> bool:
 
 
 def statut_suggere(c: Courriel) -> tuple[str, str] | None:
-    """(statut, formule trouvée) d'après le sujet et le corps ; None si rien de clair."""
+    """(status, phrase found) from the subject and the body; None if nothing clear."""
     texte = f"{c.sujet}\n{c.corps}"
     for statut, rx in _RX:
         m = rx.search(texte)
@@ -119,7 +119,7 @@ def statut_suggere(c: Courriel) -> tuple[str, str] | None:
 
 
 def candidature(c: Courriel, suivi: Mapping[str, Mapping[str, Any]]) -> str | None:
-    """L'identité (« entreprise|poste ») de la candidature que le courriel concerne."""
+    """The identity ("entreprise|poste") of the application the email is about."""
     de_plat = _plat(c.de)
     domaine = re.sub(r"[^a-z0-9]", "", c.de.rpartition("@")[2].casefold())
     sujet_plat, corps_plat = _plat(c.sujet), _plat(c.corps)
@@ -144,7 +144,7 @@ def candidature(c: Courriel, suivi: Mapping[str, Mapping[str, Any]]) -> str | No
 def propositions(
     courriels: Iterable[Courriel], suivi: Mapping[str, Mapping[str, Any]]
 ) -> list[Proposition]:
-    """Les statuts que les courriels suggèrent, un par candidature (le plus avancé)."""
+    """The statuses the emails suggest, one per application (the most advanced)."""
     meilleures: dict[str, Proposition] = {}
     for c in courriels:
         trouve = statut_suggere(c)

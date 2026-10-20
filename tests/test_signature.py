@@ -92,7 +92,7 @@ def test_manifeste_retouche_refuse():
 
 
 def test_vieille_signature_rejouee_refusee():
-    """Une signature valide de la 2.17 ne vaut pas pour la 2.18 (retour en arrière)."""
+    """A valid signature of 2.17 does not hold for 2.18 (rollback)."""
     with pytest.raises(sig.SignatureInvalide, match="2.17.0"):
         sig.ouvrir(signe("2.17.0"), "2.18.0", CLE)
 

@@ -51,7 +51,7 @@ def _schtasks(*args: str) -> subprocess.CompletedProcess[str]:
 
 
 def planifiee() -> bool:
-    """Vrai si la tâche existe déjà (créée ici ou par planifier.bat)."""
+    """True if the task already exists (created here or by planifier.bat)."""
     if not disponible():
         return False
     try:
@@ -61,7 +61,7 @@ def planifiee() -> bool:
 
 
 def creer(heure: str = "08:00") -> tuple[bool, str]:
-    """Crée (ou remplace) la tâche quotidienne. Rend (réussi, message pour l'utilisateur)."""
+    """Creates (or replaces) the daily task. Returns (success, message for the user)."""
     if not disponible():
         return False, "Hors Windows : lance ./planifier.sh depuis le dossier de JobHunter."
     if not _RX_HEURE.match(heure):
@@ -80,7 +80,7 @@ def creer(heure: str = "08:00") -> tuple[bool, str]:
 
 
 def supprimer() -> tuple[bool, str]:
-    """Retire la tâche. Rend (réussi, message pour l'utilisateur)."""
+    """Removes the task. Returns (success, message for the user)."""
     if not disponible():
         return False, "Hors Windows : ./planifier.sh supprimer."
     r = _schtasks("/Delete", "/TN", TACHE, "/F")

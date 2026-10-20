@@ -32,7 +32,7 @@ def url_de(p: str | PathLike[str]) -> str:
 
 
 def existe(u: str | PathLike[str] | None) -> bool:
-    """Le document désigné par cette URL/ce chemin est-il sur le disque ?"""
+    """Is the document designated by this URL/path on the disk?"""
     p = chemin_de(u)
     try:
         return bool(p and p.exists())

@@ -106,7 +106,7 @@ def mots_titre(t):
 
 
 def ville(o):
-    """Premier segment du lieu : « Nimes, Occitanie » et « Nimes - 30 » font « nimes »."""
+    """First segment of the place: "Nimes, Occitanie" and "Nimes - 30" give "nimes"."""
     l = _sans_accent(o.get("localisation") or "")
     return re.split(r"\s*(?:,|\s-\s|\(|/)\s*", l.strip())[0].strip()
 

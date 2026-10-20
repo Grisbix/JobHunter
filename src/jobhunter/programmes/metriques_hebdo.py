@@ -96,8 +96,8 @@ def bilan_suivi(suivi, aujourdhui, jours=7):
 
 
 def bilan_pipeline(dossier, aujourdhui, jours=7):
-    """Offres nouvelles fusionnées par jour, d'après les journaux du pipeline.
-    Un jour sans journal est un jour où le pipeline n'a pas tourné."""
+    """New offers merged per day, from the pipeline logs.
+    A day without a log is a day the pipeline did not run."""
     debut = aujourdhui - timedelta(days=jours)
     par_jour = {}
     for f in sorted(Path(dossier).glob("pipeline_*_*.log")):

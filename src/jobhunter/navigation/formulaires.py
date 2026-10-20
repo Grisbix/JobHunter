@@ -924,7 +924,7 @@ def fill_application(
 
 
 def _fold(s: str) -> str:
-    """Minuscule + sans accents (Française→francaise) pour matcher les <option>."""
+    """Lowercase + no accents (Française→francaise) to match the <option>s."""
     import unicodedata as _ud
 
     return "".join(

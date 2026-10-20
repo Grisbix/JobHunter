@@ -493,7 +493,7 @@ ALL_SITE_STRATEGIES.update(CAT4_DEAD)
 
 
 def get_strategy(domain: str) -> dict[str, Any] | None:
-    """Retourne la stratégie pour un domaine donné. None si pas trouvé."""
+    """Returns the strategy for a given domain. None if not found."""
     # Clean the domain
     clean = domain.lower().strip().replace("https://", "").replace("http://", "").rstrip("/")
     # Chercher correspondance exacte
@@ -515,7 +515,7 @@ def get_category(domain: str) -> str:
 
 
 def get_sites_by_category(category: str) -> dict[str, dict[str, Any]]:
-    """Retourne tous les sites d'une catégorie donnée."""
+    """Returns all the sites of a given category."""
     return {k: v for k, v in ALL_SITE_STRATEGIES.items() if v.get("category") == category}
 
 
