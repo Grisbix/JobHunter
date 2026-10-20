@@ -55,12 +55,10 @@ banned, recruiters annoyed). JobHunter sits in between:
 
 ```mermaid
 flowchart LR
-    A[11 job boards<br/>20+ career-site types] --> B[Collect<br/>5 passes, merged]
-    B --> C[Sort and score<br/>1–10 for your profile]
-    C --> D[Documents<br/>CV + letter + message]
-    D --> E[Fill the form<br/>you review]
-    E --> F{{You click Send}}
-    F --> G[Tracker<br/>sent · confirmed · follow-ups]
+    A[Collect<br/>11 boards + career sites] --> B[Score<br/>1–10 for you]
+    B --> C[Prepare<br/>CV + letter]
+    C --> D{{You review<br/>and click Send}}
+    D --> E[Track<br/>confirmed · follow-ups]
 ```
 
 1. **Collect.** Every morning (or on a click), offers come from the boards below and from the

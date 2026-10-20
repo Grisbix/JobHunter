@@ -61,12 +61,10 @@ entre les deux :
 
 ```mermaid
 flowchart LR
-    A[11 sites d'emploi<br/>20+ types de sites carrière] --> B[Collecte<br/>5 passes fusionnées]
-    B --> C[Tri et note<br/>1–10 selon ton profil]
-    C --> D[Documents<br/>CV + lettre + message]
-    D --> E[Formulaire rempli<br/>tu relis]
-    E --> F{{Tu cliques Envoyer}}
-    F --> G[Suivi<br/>envoyée · confirmée · relances]
+    A[Collecter<br/>11 sites + sites carrière] --> B[Noter<br/>1–10 pour toi]
+    B --> C[Préparer<br/>CV + lettre]
+    C --> D{{Tu relis<br/>et cliques Envoyer}}
+    D --> E[Suivre<br/>confirmée · relances]
 ```
 
 1. **Collecter.** Chaque matin (ou d'un clic), les offres arrivent des sites ci-dessous et des
