@@ -693,6 +693,9 @@ class DetailMixin:
 
         bt = CF(right, bg=BG)
         bt.pack(fill="x")
+        # Second row: the bulk tools. On one row, at 1320 px, they went off the window.
+        bt2 = CF(right, bg=BG)
+        bt2.pack(fill="x", pady=(4, 0))
         for txt_, cmd in [
             ("↑ Haut", lambda: cv_canvas.yview_moveto(0)),
             ("↓ Bas", lambda: cv_canvas.yview_moveto(1)),
@@ -741,7 +744,7 @@ class DetailMixin:
             cursor="hand2",
         ).pack(side="right", padx=6, before=pginfo)
         CB(
-            bar,
+            bt2,
             text="Faits du CV",
             command=lambda: self.run_step(
                 [PY, "-m", "jobhunter.documents.cv_auto", "--liste"], "Banque de faits"
@@ -750,7 +753,7 @@ class DetailMixin:
             fg=TX,
             relief="flat",
             cursor="hand2",
-        ).pack(side="right", padx=6, before=pginfo)
+        ).pack(side="left", padx=(10, 2))
 
         # bulk tools: UPDATE date/order/recipient of the letters · rename to my name
         def _tool(script: Any, label: Any, btn: Any) -> None:
@@ -784,7 +787,7 @@ class DetailMixin:
             threading.Thread(target=work, daemon=True).start()
 
         b_maj = CB(
-            bt,
+            bt2,
             text="MAJ lettres",
             bg=BTN,
             fg=TX,
@@ -795,13 +798,13 @@ class DetailMixin:
         b_maj.configure(
             command=lambda: _tool("jobhunter.programs.refresh_letters", "🗓 MAJ lettres", b_maj)
         )
-        b_maj.pack(side="left", padx=(10, 2))
-        b_ren = CB(bt, text="Renommer (mon nom)", bg=BTN, fg=TX, relief="flat", cursor="hand2")
+        b_maj.pack(side="left", padx=6)
+        b_ren = CB(bt2, text="Renommer (mon nom)", bg=BTN, fg=TX, relief="flat", cursor="hand2")
         b_ren.configure(
             command=lambda: _tool("jobhunter.programs.rename_docs", "📛 Renommer (mon nom)", b_ren)
         )
         b_ren.pack(side="left", padx=6)
-        CB(bt, text="Retour", command=self._show_dash, bg=BTN, fg=TX, relief="flat").pack(
+        CB(bt2, text="Retour", command=self._show_dash, bg=BTN, fg=TX, relief="flat").pack(
             side="right", padx=6
         )
         cv_canvas.bind("<Prior>", lambda e: cv_canvas.yview_scroll(-1, "pages"))

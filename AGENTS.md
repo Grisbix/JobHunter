@@ -153,7 +153,11 @@ points `JOBHUNTER_RACINE` to it and keeps the main root in `JOBHUNTER_PRINCIPALE
 (inherited by child processes). Keys are read from `root.dossier_cles()`, never
 `scripts()`. `daily_pipeline` with more than one profile re-runs itself once per profile
 (`--un-profil`). Anything that must find the installation (`JobHunter.pyw`, the scheduled
-task) uses `profiles.principale()`, not `root.racine()`.
+task, the updater) uses `profiles.principale()`, not `root.racine()`. Displayed names live
+in `<main data>/_profile_names.json` (profile.json is never rewritten), archives in
+`profiles/_archives/`; CLI: `jobhunter profiles` (`programs/profiles_cli.py`). The keyed
+APIs count their calls for the day, all profiles together (`sources/quota.py`,
+`<main data>/_api_quota.json`).
 
 ### Three data files, three access contracts
 

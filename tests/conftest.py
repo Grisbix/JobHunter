@@ -174,3 +174,16 @@ def racine_tk(fenetre_tk):
     yield fenetre_tk
     for w in fenetre_tk.winfo_children():
         w.destroy()
+
+
+@pytest.fixture(autouse=True)
+def _compteur_api_jetable(tmp_path_factory, monkeypatch):
+    """The shared API call counter (sources.quota) in a throwaway folder, for every test.
+
+    Otherwise each collection test counts its fake calls in the repository's data folder,
+    and after a few runs the daily ceiling stops the sources the next tests expect.
+    """
+    from jobhunter.sources import quota
+
+    d = tmp_path_factory.mktemp("cles")
+    monkeypatch.setattr(quota, "_fichier", lambda: d / quota.FICHIER)

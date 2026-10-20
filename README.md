@@ -205,7 +205,9 @@ Check it, offline: `jobhunter check-profile "Communications officer" "Java devel
 **Several searches?** Maintenance → "Profils…" → "Nouveau profil…": a CV, a name, the
 same questions as the first time. Each profile has its own folder (`profiles/<name>/`:
 queue, applications, CVs, letters); the API keys stay shared. Switching restarts the app;
-the morning collection runs every profile.
+the morning collection runs every profile. From a terminal: `jobhunter profiles` (list),
+`use`, `new <cv> --name "…"`, `rename`, `archive` (moved to `profiles/_archives/`, never
+deleted).
 
 ## Project rules
 

@@ -75,6 +75,10 @@ COMMANDES = {
         "intitules gardes ou ecartes, domaine, note",
     ),
     "show-profile": ("jobhunter.profile", "affiche le profil tel que le moteur le lit"),
+    "profiles": (
+        "jobhunter.programs.profiles_cli",
+        "plusieurs profils : liste, changer, nouveau depuis un CV, renommer, archiver",
+    ),
     "update": ("jobhunter.programs.update", "met JobHunter a jour depuis GitHub"),
     "migrate": (
         "jobhunter.programs.migrate",
@@ -100,6 +104,7 @@ ALIAS = {
     "verifier-profil": "check-profile",
     "voir-profil": "show-profile",
     "maj": "update",
+    "profils": "profiles",
 }
 
 

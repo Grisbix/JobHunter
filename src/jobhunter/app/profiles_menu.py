@@ -86,11 +86,56 @@ class ProfilsMixin:
             )
         menu.add_separator()
         menu.add_command(label=_t("Nouveau profil…"), command=self._nouveau_profil)
+        actif = next((p for p in _profils.liste() if p.slug == _profils.actif()), None)
+        if actif is not None:
+            nom = nom_affiche(actif)
+            menu.add_command(
+                label=_t("Renommer « {nom} »…").format(nom=nom), command=self._renommer_profil
+            )
+            if actif.slug:  # the main profile is the installation's folder
+                menu.add_command(
+                    label=_t("Archiver « {nom} »…").format(nom=nom),
+                    command=self._archiver_profil,
+                )
         x, y = self.root.winfo_pointerxy()
         try:
             menu.tk_popup(x, y)
         finally:
             menu.grab_release()
+
+    def _renommer_profil(self: "AppTypee") -> None:
+        """A new displayed name for the active profile (its folder does not move)."""
+        s = _profils.actif()
+        nom = ctk.CTkInputDialog(text=_t("Nouveau nom du profil"), title="JobHunter").get_input()
+        if not nom or not nom.strip():
+            return
+        _profils.renommer(s, nom)
+        self._log(_t("Profil renommé : {nom}").format(nom=" ".join(nom.split())) + "\n")
+        if self._nom_profil_lbl is not None:
+            self._nom_profil_lbl.configure(text="\u25cf " + " ".join(nom.split()))
+
+    def _archiver_profil(self: "AppTypee") -> None:
+        """Moves the active profile to profiles/_archives/ (nothing deleted), back to main."""
+        s = _profils.actif()
+        if not s or not messagebox.askyesno(
+            "JobHunter",
+            _t(
+                "Archiver ce profil ? Son dossier est rangé dans profiles/_archives (rien "
+                "n'est supprimé) et JobHunter redémarre sur le profil principal."
+            ),
+            parent=self.root,
+        ):
+            return
+        try:
+            _profils.archiver(s)
+        except RuntimeError:
+            messagebox.showwarning(
+                "JobHunter",
+                _t("Une collecte tourne pour ce profil : réessaie quand elle aura fini."),
+                parent=self.root,
+            )
+            return
+        self._relancer()
 
     def _changer_profil(self: "AppTypee", slug: str) -> None:
         if slug == _profils.actif():

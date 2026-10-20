@@ -198,3 +198,84 @@ def test_changer_pour_le_profil_actif_ne_fait_rien(principale):
     with patch.object(M.messagebox, "askyesno") as question:
         app._changer_profil("")
     assert not question.called
+
+
+# ── 3.5: names in a registry, rename, archive, the `profiles` command ──────────
+
+
+def test_nommer_ne_reecrit_pas_le_profil(principale):
+    r = P.creer("Chargée RSE")
+    termine(r)
+    avant = (r / "profile" / "profile.json").read_bytes()
+    P.nommer(r)
+    assert (r / "profile" / "profile.json").read_bytes() == avant
+    assert P.trouver("chargée rse").slug == "chargee-rse"
+
+
+def test_renommer_garde_le_dossier(principale):
+    r = P.creer("B")
+    termine(r)
+    P.renommer("b", "  Analyste   Lyon ")
+    P.renommer("", "Moi")
+    assert [(p.slug, p.nom) for p in P.liste()] == [("", "Moi"), ("b", "Analyste Lyon")]
+    assert r.is_dir()
+    with pytest.raises(ValueError):
+        P.renommer("inconnu", "x")
+    with pytest.raises(ValueError):
+        P.renommer("b", "   ")
+
+
+def test_archiver_deplace_sans_supprimer(principale):
+    r = P.creer("B")
+    termine(r)
+    (r / "data" / "apply_queue.json").write_text("[1]", encoding="utf-8")
+    P.renommer("b", "Second")
+    P.activer("b")
+    dest = P.archiver("b")
+    assert not r.exists() and (dest / "data" / "apply_queue.json").read_text() == "[1]"
+    assert dest.parent.name == P.ARCHIVES
+    assert [p.slug for p in P.liste()] == [""]  # archives are not profiles
+    assert P.actif() == ""
+    with pytest.raises(ValueError):
+        P.archiver("")  # the main profile
+
+
+def test_archiver_refuse_pendant_une_collecte(principale, monkeypatch):
+    r = P.creer("B")
+    termine(r)
+    from jobhunter.storage import lock
+
+    monkeypatch.setattr(lock, "prendre_verrou", lambda *a, **k: False)
+    with pytest.raises(RuntimeError):
+        P.archiver("b")
+    assert r.is_dir()
+
+
+def test_commande_profiles(principale, monkeypatch, capsys):
+    from jobhunter.programs import profiles_cli as C
+
+    r = P.creer("B")
+    termine(r)
+
+    def lancer(*args):
+        monkeypatch.setattr("sys.argv", ["jobhunter profiles", *args])
+        return C.main()
+
+    assert lancer() == 0 and "(principal)" in capsys.readouterr().out
+    assert lancer("use", "b") == 0 and P.actif() == "b"
+    assert lancer("rename", "b", "Second") == 0 and P.trouver("Second").slug == "b"
+    assert lancer("archive", "Principal") == 1
+    assert lancer("archive", "second") == 0 and P.actif() == ""
+    with pytest.raises(SystemExit):
+        lancer("use", "inconnu")
+
+
+def test_commande_new_sans_reponses_ne_laisse_rien(principale, monkeypatch, tmp_path, capsys):
+    from jobhunter.programs import profiles_cli as C
+
+    cv = tmp_path / "cv.docx"
+    cv.write_bytes(b"PK")
+    monkeypatch.setattr(C.subprocess, "run", lambda *a, **k: None)  # questions abandoned
+    monkeypatch.setattr("sys.argv", ["jobhunter profiles", "new", str(cv), "--name", "C"])
+    assert C.main() == 1
+    assert not (principale / "profiles" / "c").exists()

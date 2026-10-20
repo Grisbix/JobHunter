@@ -9,6 +9,7 @@ from typing import Any
 from jobhunter import log as _journal
 from jobhunter import root as _racine
 from jobhunter.sources import common as _commun
+from jobhunter.sources import quota as _quota
 from jobhunter.sources.common import UA, _mk, title_ok
 
 _log = _journal.journal(__name__)
@@ -81,6 +82,9 @@ def fetch_france_travail(par_mot: int = 50) -> list[dict[str, Any]]:
     H = {**UA, "Authorization": f"Bearer {tok}", "Accept": "application/json"}
     out, seen = [], set()
     for kw in _commun.KEYWORDS:
+        if not _quota.reserver("francetravail"):
+            _log.warning("  ⏸ France Travail : quota du jour atteint (tous profils) — arret")
+            break
         try:
             r = _commun._get_borne(
                 httpx,

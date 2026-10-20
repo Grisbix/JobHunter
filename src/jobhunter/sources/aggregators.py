@@ -10,6 +10,7 @@ from typing import Any
 from jobhunter import log as _journal
 from jobhunter import root as _racine
 from jobhunter.sources import common as _commun
+from jobhunter.sources import quota as _quota
 from jobhunter.sources.common import (
     INCIDENTS,
     UA,
@@ -100,6 +101,18 @@ def _cle(chemin: Path, *champs: str) -> tuple[str, ...] | None:
             f"  ✗ {chemin.name} illisible ({type(e).__name__}) — attendu : {', '.join(champs)}"
         )
         return None
+
+
+def _quota_atteint(nom: str) -> bool:
+    """True (and said once) when today's shared ceiling of `nom`'s key is reached."""
+    if _quota.reserver(nom):
+        return False
+    INCIDENTS[nom]["quota du jour"] += 1
+    _log.warning(
+        f"  ⏸ {nom} : quota du jour atteint ({_quota.plafond(nom)} appels, tous profils) — "
+        f"arret de la source jusqu'a demain"
+    )
+    return True
 
 
 class _Garde:
@@ -194,6 +207,8 @@ def scan_adzuna() -> list[dict[str, Any]]:
     for pays, mot in requetes:
         if garde.fini:
             break
+        if _quota_atteint("adzuna"):
+            break
         if faites:
             time.sleep(AGREG_PAUSE)
         faites += 1
@@ -260,6 +275,8 @@ def scan_jooble() -> list[dict[str, Any]]:
     faites = 0
     for mot in AGREG_MOTS_FR:
         if garde.fini:
+            break
+        if _quota_atteint("jooble"):
             break
         if faites:
             time.sleep(AGREG_PAUSE)

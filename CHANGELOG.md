@@ -4,6 +4,25 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.5.0 — 2026-10-20
+
+- **Profiles from a terminal**: `jobhunter profiles` lists them (the active one marked),
+  `use <name>` switches, `new <cv> --name "…"` creates one with the usual questions,
+  `rename` and `archive`.
+- **Rename or archive a profile**, also in the app (Maintenance → "Profils…"). A name
+  changes without touching the folder or the profile file. Archiving moves the profile to
+  `profiles/_archives/` — nothing is deleted — and never while a collection runs for it.
+- **API quotas shared between profiles.** The Adzuna, Jooble and France Travail keys serve
+  every profile, so the calls are now counted for the day all profiles together. Adzuna
+  stops at 250 calls a day (its free access) instead of being refused by Adzuna for the
+  rest of the day; the others are counted. Ceilings can be changed in
+  `sources_config.json` (`"quotas_api": {"adzuna": 250}`). The Access panel shows today's
+  calls.
+- **Countries and regions in your language** in the offers table (the data and the
+  filters of your profile keep the French names).
+- My CVs panel: the bulk tools ("MAJ lettres", "Renommer (mon nom)", "Faits du CV") have
+  their own row; at 1320 px they went off the window.
+
 ## 3.4.0 — 2026-10-20
 
 - **The update installs exactly the announced version.** Without the author's signature,

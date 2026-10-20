@@ -467,6 +467,24 @@ class PanneauxMixin:
             relief="flat",
             cursor="hand2",
         ).pack(side="left")
+        # Calls made today with the shared keys, every profile together (sources.quota).
+        from jobhunter.sources import quota as _quota
+
+        usages = []
+        for cle_q, libelle in (
+            ("adzuna", "Adzuna"),
+            ("jooble", "Jooble"),
+            ("francetravail", "France Travail"),
+        ):
+            n, cap = _quota.usage(cle_q), _quota.plafond(cle_q)
+            usages.append(f"{libelle} {n}" + (f"/{cap}" if cap else ""))
+        CL(
+            col,
+            text=_t("Appels d'API aujourd'hui (tous profils) : ") + " · ".join(usages),
+            bg=BG,
+            fg=MUT,
+            anchor="w",
+        ).pack(fill="x", padx=28, pady=(0, 8))
 
         # ── Tab 2: the logins for applying ────────────────────────────────────
         cnx = CF(w, bg=WORK)

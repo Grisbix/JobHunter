@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 
 import customtkinter as ctk
 
+from jobhunter.app import countries as _pays
 from jobhunter.app import theme as _theme
 from jobhunter.app._app_type import AppTypee
 from jobhunter.app.common import (
@@ -694,9 +695,9 @@ class TableauMixin:
         if key == "fit":
             return self._fitfin(o)
         if key == "pays":
-            return _pays_lieu(o.get("localisation") or "")
+            return _pays.nom(_pays_lieu(o.get("localisation") or ""))
         if key == "region":
-            return _region_lieu(o.get("localisation") or "")
+            return _pays.nom(_region_lieu(o.get("localisation") or ""))
         if key == "localisation":
             return _ville_affichee(o.get("localisation") or "")
         v = o.get(key)
@@ -868,8 +869,8 @@ class TableauMixin:
             CONTRAT_COURT.get(contrat, contrat),
             zone_txt,
             _ville_affichee(lieu),
-            _pays_lieu(lieu),
-            _region_lieu(lieu),
+            _pays.nom(_pays_lieu(lieu)),  # names in the interface language
+            _pays.nom(_region_lieu(lieu)),
             o.get("process", ""),
             host,
             sv.get("d", ""),

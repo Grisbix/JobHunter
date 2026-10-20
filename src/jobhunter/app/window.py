@@ -137,8 +137,9 @@ class App(
             bg=SIDE,
             font=(_theme.FONT_UI, 10, "bold"),
         ).pack(anchor="w", padx=18, pady=(0, 18))
+        self._nom_profil_lbl = None
         if nom_profil := profil_affiche():  # only once a second profile exists
-            CB(
+            self._nom_profil_lbl = CB(
                 self.sidebar,
                 text="\u25cf " + nom_profil,
                 command=self._menu_profils,
@@ -149,7 +150,8 @@ class App(
                 relief="flat",
                 font=(_theme.FONT_UI, 11),
                 anchor="w",
-            ).pack(fill="x", padx=12, pady=(0, 14))
+            )
+            self._nom_profil_lbl.pack(fill="x", padx=12, pady=(0, 14))
         self._nav = {}
         for cle, texte, fn in (
             ("offres", "Offres", self._show_dash),
