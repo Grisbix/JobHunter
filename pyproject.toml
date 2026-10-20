@@ -1,7 +1,7 @@
 [project]
 name = "jobhunter"
 # Must stay equal to the VERSION file (read by the update): CI checks it.
-version = "2.22.0"
+version = "2.22.1"
 description = "Recherche d'emploi locale : collecte, notation, CV et lettre par offre, candidature semi-automatique."
 readme = "README.md"
 license = "MIT"
@@ -33,6 +33,7 @@ dev = [
     "pre-commit>=4,<5",
     "pytest-cov>=6,<8",
     "mypy>=1.15,<3",
+    "hypothesis>=6.100,<7",
 ]
 
 [build-system]

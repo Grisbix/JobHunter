@@ -4,6 +4,17 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 2.22.1 — 2026-10-20
+
+- **Job titles in letters**: a title such as "Analyste ESG - H&M - H/F" became
+  "Analyste ESG - H&" (the M of H&M was taken for a gender mention), and a mention
+  written with long dashes ("Analyste – F – H") was only removed by a second cleaning.
+  Both fixed; none of your 10,455 current titles changes.
+- **Tests on generated cases**: the cleaning of titles, the URL duplicate key, the score
+  and the merge are now checked on thousands of generated inputs, not only on the
+  examples written by hand. This is how the two title bugs were found.
+- The automatic tests also run on Python 3.14, the version the application uses.
+
 ## 2.22.0 — 2026-10-20
 
 - **Undo a clean-up**: `jobhunter restaurer` puts the offer queue back as it was in a

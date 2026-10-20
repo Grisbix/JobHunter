@@ -147,6 +147,30 @@ what JobHunter already does; only what fills a real gap is kept.
 | — | 5, 13. CRDT / Automerge / Yjs | set aside | a single machine; the lock + fresh reread already prevents silent loss |
 | — | 10. Rule language (expr) | set aside | no `eval`; the profile's declarative lists are enough |
 
+## Step I — GitHub sweep, carried further (20/10)
+
+The Codex sweep of 20/10 (Obsidian, "Grand Sweep GitHub", 34 repositories) read mostly
+general Python libraries, half of them from the README only, and none of the projects
+that do the same job. Completed by reading the code of three of them —
+[JobSpy](https://github.com/speedyapply/JobSpy),
+[JobFunnel](https://github.com/PaulMcInnis/JobFunnel) (archived),
+[career-ops](https://github.com/career-ops-hq/career-ops) — and by doing the sweep's
+cheap actions instead of only listing them.
+
+| # | Idea (source) | Decision | Why |
+|---|---|---|---|
+| I1 ✅ (v2.22.1) | Generated-case invariants (Hypothesis) | **kept** | `tests/test_proprietes.py`: title cleaning stable, tracking parameters ignored by the URL key, score in 1..10 with a level its decimals never move, a merge repeated adds nothing, a tracked offer survives any merge. First run: two title bugs ("H&M - H/F" → "H&"; "– F – H" kept), fixed, 0 real title changed out of 10,455 |
+| I2 ✅ (v2.22.1) | Test on the interpreter really used (Codex) | **kept** | the Windows tests run on 3.12 (the floor) and 3.14 (`C:\Python314`) |
+| — | Per-site errors and warnings (JobSpy) | already done | `INCIDENTS` and `_rendement.jsonl` verdicts |
+| — | ATS feeds (career-ops: Greenhouse, Ashby, Lever, Wellfound) | already wider | Greenhouse, Lever (and its EU region), Ashby, Recruitee, Teamtailor, SmartRecruiters, Workable, Workday |
+| — | Fact-check before export (career-ops) | already done | `Faits.json`, `controle`, `relecture` |
+| — | Advisory score calibration (career-ops `calibrate`) | already done, stricter | `jobhunter evaluation`: AUC with a resampled interval, never auto-tunes |
+| — | Outcomes per channel, count-gated (career-ops `analyze-patterns`) | **deferred** | 16 applications sent, no answer yet: every group would read "too few". Revisit at ~30 sent with answers |
+| — | Repost / ghost-job detection (career-ops `detect-reposts`: same company, same title word set, ≥ 2 URLs over 1–90 days) | **deferred** | needs a history of removed offers; same prerequisite as H 1/12 |
+| — | Panels opened without a console, with an injected read error (Codex, Thonny) | next | the import without console is tested, the visible panels are not yet |
+| — | HTTP cache (requests-cache) | set aside | it serves a stale answer when the request fails: it would lie about a closed offer |
+| — | Tenacity, structlog, loguru, APScheduler, Pydantic, nox | set aside | the existing bounded requests, logging, scheduled tasks and TypedDicts cover the need; no second layer |
+
 ## Proposed order
 
 **A** (ongoing, mostly observation) → **B1** (one hour) → **B2** → **C1** →

@@ -40,17 +40,24 @@ jobs:
   tests:
     runs-on: windows-latest
     timeout-minutes: 30
+    # 3.12: the floor of pyproject.toml. 3.14: the interpreter the app really runs on
+    # (C:\Python314); a behaviour change between the two shows up here, not at the user's.
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.12", "3.14"]
+    name: tests (Windows, Python ${{ matrix.python }})
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python }}
           cache: pip
       - name: Dependances
         run: |
-          python -m pip install -r requirements.txt "pytest>=9,<10" "pytest-cov>=6,<8"
+          python -m pip install -r requirements.txt "pytest>=9,<10" "pytest-cov>=6,<8" "hypothesis>=6.100,<7"
           python -m playwright install chromium
       - name: Banc de non-regression
         env:
@@ -82,12 +89,12 @@ jobs:
         shell: bash
         run: python -m py_compile JobHunter.pyw $(find src -name '*.py')
       - name: Dependances
-        run: python -m pip install -r requirements.txt "pytest>=9,<10"
+        run: python -m pip install -r requirements.txt "pytest>=9,<10" "hypothesis>=6.100,<7"
       - name: Banc de non-regression (meme reference que sous Windows)
         env:
           PYTHONIOENCODING: utf-8
         run: python outils/banc.py comparer outils/banc_reference.json
-      - name: Logique pure (scoring, sources, titres, contrats, mise a jour)
+      - name: Logique pure (scoring, sources, titres, contrats, mise a jour, proprietes)
         env:
           PYTHONIOENCODING: utf-8
-        run: python -m pytest -q -k "scoring or sources or titres or contrats or mise_a_jour"
+        run: python -m pytest -q -k "scoring or sources or titres or contrats or mise_a_jour or proprietes"
