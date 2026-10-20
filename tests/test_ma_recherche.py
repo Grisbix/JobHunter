@@ -78,8 +78,8 @@ def test_apercu_sur_la_file(tmp_path, profil):
             text=True,
             encoding="utf-8",
             env=env,
-            check=True,
         )
+        assert p.returncode == 0, p.stderr[-2000:]
         return json.loads(p.stdout.strip().splitlines()[-1])
 
     assert set(gardees()["gardees"]) == {"A|Analyste ESG", "B|Chargé ESG stage"}
