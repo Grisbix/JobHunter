@@ -5,7 +5,7 @@ fresh process that imports ALL the modules of `jobhunter`. Before: three output
 folders created at import (CV/Par_offre, Lettres/Par_offre, Lettres/Messages); they
 now are at write time. The profile and `Scripts/chemins.json` were read
 at load time; what is drawn from them is computed on first read
-(`jobhunter.paresseux`).
+(`jobhunter.lazy`).
 """
 
 import json
@@ -38,8 +38,8 @@ SONDE = textwrap.dedent(
     sys.addaudithook(crochet)
     import jobhunter
     for m in pkgutil.walk_packages(jobhunter.__path__, "jobhunter."):
-        # les programmes (jobhunter.programmes) sont des commandes, pas le moteur
-        if not m.name.endswith("__main__") and ".programmes" not in m.name:
+        # les programmes (jobhunter.programs) sont des commandes, pas le moteur
+        if not m.name.endswith("__main__") and ".programs" not in m.name:
             importlib.import_module(m.name)
     ev["lectures"] = sorted(ev["lectures"])
     print(json.dumps(ev))

@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+"""relecture.py — Re-reads the generated letters and reports what is wrong, without changing anything.
+
+A second pass, without the context of the writing (jobhunter.documents.proofreading):
+underselling, superlative, "excellent" for a language, punctuation, repetitions, other
+company named, recipient missing from the posting, text coming from a booby-trapped
+posting. Corrections are made by hand, in `Lettres/Sur_mesure/<entreprise>__<poste>.txt`.
+
+Applications already in the tracking are ignored: their letter has gone.
+
+Run:
+  python JobHunter.pyw proofread                 # the letters of the offers with fit >= 8
+  python JobHunter.pyw proofread --fit 0         # all of them
+  python JobHunter.pyw proofread --url acme      # the offers whose URL or name contains "acme"
+"""
+
+import argparse
+import collections
+import sys
+from urllib.parse import urlparse
+
+from jobhunter.documents.checks import lire_pdf, piece_finale
+from jobhunter.documents.proofreading import relire, texte
+from jobhunter.links import chemin_de
+from jobhunter.profile import identite
+from jobhunter.storage import applications as suivi_io
+from jobhunter.storage import queue as queue_io
+
+
+def _hote(url: str) -> str:
+    h = urlparse(url or "").netloc.lower()
+    return h[4:] if h.startswith("www.") else h
+
+
+def main(argv: list[str] | None = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    ap = argparse.ArgumentParser(description="relit les lettres (lecture seule)")
+    ap.add_argument("--fit", type=int, default=8, help="seulement les offres de fit >= N")
+    ap.add_argument("--url", help="seulement les offres dont l'URL ou le nom contient ce texte")
+    a = ap.parse_args(argv)
+
+    suivi = suivi_io.charger()
+    ident = identite()
+    connus = [ident.get("email", ""), ident.get("linkedin", "")]
+    offres = queue_io.charger()
+    entreprises = {str(o.get("entreprise") or "") for o in offres if o.get("lettre")}
+    cibles = []
+    for o in offres:
+        if not o.get("lettre") or queue_io.oid(o) in suivi:
+            continue
+        if a.url:
+            cle = f"{o.get('url', '')} {o.get('entreprise', '')} {o.get('poste', '')}".lower()
+            if a.url.lower() not in cle:
+                continue
+        elif int(o.get("fit") or 0) < a.fit:
+            continue
+        cibles.append(o)
+
+    compte: collections.Counter[str] = collections.Counter()
+    a_revoir = lues = 0
+    for o in sorted(cibles, key=lambda x: -int(x.get("fit") or 0)):
+        # The .docx is the letter's source; failing that, the text of the final PDF.
+        chemin = chemin_de(o.get("lettre"))
+        if chemin is None:
+            continue
+        docx = chemin.with_suffix(".docx")
+        if docx.exists():
+            contenu = texte(docx)
+        else:
+            pdf = piece_finale(chemin)
+            lu = lire_pdf(pdf) if pdf is not None and pdf.suffix == ".pdf" else None
+            if lu is None:
+                continue
+            contenu = lu[0]
+        lues += 1
+        remarques = relire(
+            contenu,
+            entreprise=str(o.get("entreprise") or ""),
+            annonce=str(o.get("description") or ""),
+            autres_entreprises=entreprises,
+            connus=connus + [_hote(str(o.get("url") or ""))],
+        )
+        if not remarques:
+            continue
+        a_revoir += 1
+        print(f"\n■ {o.get('entreprise')} — {o.get('poste')}  (fit {o.get('fit')})")
+        for r in remarques:
+            compte[r.regle] += 1
+            print(f"  · {r.regle} : {r.extrait}")
+            print(f"      → {r.conseil}")
+    print(f"\n{lues} lettre(s) relue(s) sur {len(cibles)}, {a_revoir} à revoir.")
+    for regle, n in compte.most_common():
+        print(f"  {regle:<15} {n}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

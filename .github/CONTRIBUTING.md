@@ -4,10 +4,10 @@ Documentation, comments and docstrings are in English. Identifiers (function and
 names), profile keys and JSON keys stay in French, as do the CLI command names. The French
 README is `README.fr.md`. Issues and pull requests in English are welcome. Set up with
 `uv sync`, then before each commit run `uv run pytest -q` (about 1,850 offline tests),
-`uv run mypy` and `uv run python outils/banc.py comparer outils/banc_reference.json` (0
+`uv run mypy` and `uv run python tools/bench.py comparer tools/bench_reference.json` (0
 difference expected). Architecture and conventions: [`AGENTS.md`](../AGENTS.md) and
 [`docs/adr/`](../docs/adr/). The Windows installer is built by
-`outils/installateur/construire.py` (see ADR 0011). Rules that are not up for debate:
+`tools/installer/build.py` (see ADR 0011). Rules that are not up for debate:
 nothing is ever sent automatically, no anti-bot circumvention, no password handled by the
 programs.
 
@@ -26,7 +26,7 @@ Python 3.12 or newer. Without uv: `python -m venv .venv`, then
 
 ```bash
 uv run pytest -q                                                   # ~1,850 tests, no network
-uv run python outils/banc.py comparer outils/banc_reference.json   # 0 difference expected
+uv run python tools/bench.py comparer tools/bench_reference.json   # 0 difference expected
 uv run mypy                                                        # types; strict except for programs
 ```
 
@@ -35,14 +35,14 @@ consistency of `VERSION` / `pyproject.toml`. GitHub CI redoes everything, under 
 and Linux.
 
 **Types and docstrings.** mypy is strict on the whole package except the programs
-(`jobhunter.programmes`), which are checked in normal mode. Every public function outside
+(`jobhunter.programs`), which are checked in normal mode. Every public function outside
 the programs and the window (`jobhunter.app`) has a Google-format docstring: ruff (`D`)
 requires it.
 
 **A source changes its response?** `tests/test_rejeu_sources.py` replays real recorded
 responses (`tests/reponses/`). If a site has changed and the parser has been adapted,
 record the source again (network, to be run on purpose):
-`uv run python outils/rejeu.py enregistrer lever`. APEC, WTJ and the sources that need a
+`uv run python tools/replay.py enregistrer lever`. APEC, WTJ and the sources that need a
 key are not there: entry refusal, anti-bot challenge or credentials.
 
 ## Installing the package
@@ -114,9 +114,9 @@ Verified on 19/10/2026 on Python 3.14: a `time.sleep` triggered in a function
 2. Add the section `## X.Y.Z — date` at the top of `CHANGELOG.md`.
 3. CI green on `main`, then `gh release create vX.Y.Z` with the CHANGELOG section: the tag
    serves as the reference for updating ZIP installations.
-4. **Sign** (ADR 0012), once the "installateur" workflow has finished, on the computer
+4. **Sign** (ADR 0012), once the "installer" workflow has finished, on the computer
    that holds the private key:
-   `uv run python outils/signature.py signer X.Y.Z --publier`. Without `signature.json`,
+   `uv run python tools/signature.py signer X.Y.Z --publier`. Without `signature.json`,
    installations that have the public key refuse the release. The very first time:
-   `uv run python outils/signature.py cle`, then commit `src/jobhunter/signature.py`
+   `uv run python tools/signature.py cle`, then commit `src/jobhunter/signature.py`
    and back up `~/.jobhunter/cle_signature` off the computer.

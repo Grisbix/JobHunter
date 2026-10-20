@@ -6,9 +6,9 @@ Part of jobhunter.navigation (formerly Scripts/web_nav.py, phase 3.6).
 import random as _rnd
 from typing import Any
 
-from jobhunter.navigation.navigateur import human_click, human_scroll, human_type
+from jobhunter.navigation.browser import human_click, human_scroll, human_type
 from jobhunter.navigation.page import analyze
-from jobhunter.reseau import exiger_http
+from jobhunter.network import exiger_http
 
 # ── FALLBACK VISION (Ollama llava) : screenshot -> label bouton -> clic ────────
 # Couvre canvas / DOM exotique / label hors-regex. Local, gratuit, offline.

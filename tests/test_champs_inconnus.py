@@ -5,8 +5,8 @@ carry it unchanged, never drop it. Offers and applications are plain JSON dicts,
 every write goes through `transaction`, which rewrites what it read.
 """
 
-from jobhunter.stockage import file as queue_io
-from jobhunter.stockage import suivi as suivi_io
+from jobhunter.storage import applications as suivi_io
+from jobhunter.storage import queue as queue_io
 
 INCONNU = {"version": 3, "liste": [1, "deux"], "imbrique": {"cle": None}}
 

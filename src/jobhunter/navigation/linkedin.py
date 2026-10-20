@@ -5,7 +5,7 @@ Partie de jobhunter.navigation (ancien Scripts/web_nav.py, phase 3.6).
 
 from typing import Any
 
-from jobhunter.navigation.formulaires import fill_application
+from jobhunter.navigation.forms import fill_application
 from jobhunter.navigation.segment import highlight_submit
 
 

@@ -8,9 +8,9 @@ import re
 import time
 from typing import Any
 
-from jobhunter import journal as _journal
-from jobhunter.sources import commun as _commun
-from jobhunter.sources.commun import UA, _mk, title_ok
+from jobhunter import log as _journal
+from jobhunter.sources import common as _commun
+from jobhunter.sources.common import UA, _mk, title_ok
 
 _log = _journal.journal(__name__)
 
@@ -82,7 +82,7 @@ def fetch_talent(max_days: int = 60, per_kw: int = 20) -> list[dict[str, Any]]:
     # Talent alone on 30/09, in a pass capped at 60. Their description is
     # already there; only a new offer deserves its posting.
     try:
-        from jobhunter.stockage import file as queue_io
+        from jobhunter.storage import queue as queue_io
 
         seen = {
             str(o.get("url") or "")

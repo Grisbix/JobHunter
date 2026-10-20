@@ -1,11 +1,11 @@
-"""Data of the Companies, Access and My CVs panels (jobhunter.app.inventaire)."""
+"""Data of the Companies, Access and My CVs panels (jobhunter.app.inventory)."""
 
 import datetime
 import os
 import time
 
-from jobhunter import liens
-from jobhunter.app import inventaire as inv
+from jobhunter import links as liens
+from jobhunter.app import inventory as inv
 
 
 def _flux():

@@ -11,7 +11,7 @@ import json
 import pytest
 
 from jobhunter import sources as J
-from jobhunter.programmes import rejets_tri as R
+from jobhunter.programs import sort_rejections as R
 
 J0 = datetime.date(2026, 10, 5)
 CLE = "Acme|Senior ESG Manager"

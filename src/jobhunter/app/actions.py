@@ -13,14 +13,14 @@ from urllib.parse import quote
 
 import customtkinter as ctk
 
-from jobhunter.app import commun as _commun
+from jobhunter.app import common as _commun
 from jobhunter.app import theme as _theme
-from jobhunter.app._type_app import AppTypee
-from jobhunter.app.commun import EXPIRE, PAS_INTERESSE, QUEUE, SCRIPTS, ST_EMOJI
-from jobhunter.app.langue import t as _t
+from jobhunter.app._app_type import AppTypee
+from jobhunter.app.common import EXPIRE, PAS_INTERESSE, QUEUE, SCRIPTS, ST_EMOJI
+from jobhunter.app.language import t as _t
 from jobhunter.app.theme import BG, BTN, BTN_H, CARD, CB, CE, CF, CL, DEL, MUT, TX, WORK
-from jobhunter.stockage import file as queue_io
-from jobhunter.stockage import suivi as suivi_io
+from jobhunter.storage import applications as suivi_io
+from jobhunter.storage import queue as queue_io
 
 
 class ActionsMixin:
@@ -345,7 +345,7 @@ class ActionsMixin:
         if not motif:
             return
         try:
-            from jobhunter.programmes import exclusions
+            from jobhunter.programs import exclusions
         except Exception as ex:
             self._log(f"! exclusions.py introuvable: {ex}\n")
             return
@@ -388,7 +388,7 @@ class ActionsMixin:
         opened — the exception went to the crash log.
         """
         try:
-            from jobhunter.programmes import exclusions
+            from jobhunter.programs import exclusions
 
             motifs = list(exclusions.MOTIFS)
         except Exception:
@@ -547,7 +547,7 @@ class ActionsMixin:
         "try again" than to freeze the window for 3 minutes.
         """
         try:
-            from jobhunter.programmes import jutil
+            from jobhunter.programs import util as jutil
         except Exception:
             return True  # jutil not found: we do not prevent acting
         try:

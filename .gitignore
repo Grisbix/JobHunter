@@ -131,6 +131,8 @@ Scripts/_rendement.jsonl
 # ranking evaluation reference (personal judgements)
 Scripts/_evaluation.json
 
-# Standalone application (outils/installateur/construire.py)
+# Standalone application (tools/installer/build.py)
 /dist/
-/outils/installateur/build/
+/tools/installer/build/
+# The build output of tools/installer before 2.25 (outils/installateur/build).
+/outils/

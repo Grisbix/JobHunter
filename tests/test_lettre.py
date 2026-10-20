@@ -12,7 +12,7 @@ Converted from Scripts/test_lettre.py.
 
 import pytest
 
-from jobhunter import profil
+from jobhunter import profile as profil
 from jobhunter.documents import (
     _sans_societe,
     _slug,
@@ -20,8 +20,8 @@ from jobhunter.documents import (
     corps_sur_mesure,
     salutation,
 )
-from jobhunter.documents.relecture import corps
-from jobhunter.scoring.langue import langue_offre
+from jobhunter.documents.proofreading import corps
+from jobhunter.scoring.language import langue_offre
 
 _AGRI = next(c for c in profil.get("lettre.contextes") if c["nom"] == "agricole")
 AGRI_FR, AGRI_EN = _AGRI["fr"], _AGRI["en"]

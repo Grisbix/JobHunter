@@ -6,9 +6,9 @@ Part of jobhunter.sources (formerly Scripts/job_sources.py, phase 3.4).
 import re
 from typing import Any
 
-from jobhunter import journal as _journal
-from jobhunter.sources import commun as _commun
-from jobhunter.sources.commun import UA, _mk, title_ok
+from jobhunter import log as _journal
+from jobhunter.sources import common as _commun
+from jobhunter.sources.common import UA, _mk, title_ok
 
 _log = _journal.journal(__name__)
 

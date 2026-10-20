@@ -7,10 +7,10 @@ always AFTER one has applied to it. Converted from Scripts/test_suivi.py.
 
 import pytest
 
-from jobhunter.programmes import jutil
-from jobhunter.programmes import linkedin_closed as L
-from jobhunter.stockage import file as queue_io
-from jobhunter.stockage import suivi as suivi_io
+from jobhunter.programs import linkedin_closed as L
+from jobhunter.programs import util as jutil
+from jobhunter.storage import applications as suivi_io
+from jobhunter.storage import queue as queue_io
 
 # ── A. the tracker's key is the same everywhere ─────────────────────────────────────
 OFFRE = {"entreprise": " Amundi ", "poste": " Analyste ESG "}

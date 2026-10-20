@@ -10,7 +10,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from jobhunter import navigation
-from jobhunter.programmes import acces
+from jobhunter.programs import access as acces
 
 
 class AccesTest(unittest.TestCase):
@@ -18,7 +18,7 @@ class AccesTest(unittest.TestCase):
         import os
         import shutil
 
-        from jobhunter.programmes import apply_runner
+        from jobhunter.programs import apply_runner
 
         class FinDuTest(Exception):
             pass
@@ -42,7 +42,7 @@ class AccesTest(unittest.TestCase):
                 patch.object(shutil, "copytree") as copier,
                 patch.object(shutil, "copy2") as copier_fichier,
                 # the queue is read through queue_io (ADR 0002): we stop there, before any browser
-                patch("jobhunter.stockage.file.charger", side_effect=FinDuTest),
+                patch("jobhunter.storage.queue.charger", side_effect=FinDuTest),
                 redirect_stdout(io.StringIO()),
             ):
                 # Stop before reading the queue and before any real browser.

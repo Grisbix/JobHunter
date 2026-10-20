@@ -1,9 +1,9 @@
-"""The double-click launchers, in lanceurs/ since 2.24, work from the folder above.
+"""The double-click launchers, in launchers/ since 2.24, work from the folder above.
 
 Each one `cd`s to the JobHunter folder first: Mon_CV/, profil/, .venv and JobHunter.pyw
-are found there, not in lanceurs/. A real run of lancer.bat (Windows) or lancer.sh
+are found there, not in launchers/. A real run of lancer.bat (Windows) or lancer.sh
 (macOS/Linux) in a copy: with a CV in Mon_CV and no profile, it must call
-`JobHunter.pyw profil <the CV>` from the root — a stand-in JobHunter.pyw writes down
+`JobHunter.pyw profile <the CV>` from the root — a stand-in JobHunter.pyw writes down
 what it received. Nothing is installed, nothing opens.
 """
 
@@ -16,8 +16,8 @@ from pathlib import Path
 import pytest
 
 RACINE = Path(__file__).resolve().parent.parent
-LANCEURS = RACINE / "lanceurs"
-NOMS = ("installer", "lancer", "mettre_a_jour", "planifier")
+LANCEURS = RACINE / "launchers"
+NOMS = ("install", "start", "update", "schedule")
 
 
 def test_plus_de_lanceur_a_la_racine():
@@ -34,7 +34,7 @@ def test_chaque_lanceur_part_du_dossier_parent(nom):
 
 
 def test_lancer_cree_le_profil_depuis_la_racine(tmp_path):
-    shutil.copytree(LANCEURS, tmp_path / "lanceurs")
+    shutil.copytree(LANCEURS, tmp_path / "launchers")
     (tmp_path / "Mon_CV").mkdir()
     (tmp_path / "Mon_CV" / "cv.docx").write_bytes(b"x")
     # Stand-in for the program: notes its arguments and its folder, then fails, so
@@ -46,11 +46,11 @@ def test_lancer_cree_le_profil_depuis_la_racine(tmp_path):
         encoding="utf-8",
     )
     if sys.platform == "win32":
-        cmd = ["cmd", "/c", str(tmp_path / "lanceurs" / "lancer.bat")]
+        cmd = ["cmd", "/c", str(tmp_path / "launchers" / "start.bat")]
     else:
         if not shutil.which("bash"):
             pytest.skip("bash absent")
-        cmd = ["bash", str(tmp_path / "lanceurs" / "lancer.sh")]
+        cmd = ["bash", str(tmp_path / "launchers" / "start.sh")]
     # The launcher calls `python`/`python3`: the folder of this interpreter goes first.
     if sys.platform == "win32":
         systeme = os.environ.get("SYSTEMROOT", r"C:\Windows")
@@ -59,7 +59,7 @@ def test_lancer_cree_le_profil_depuis_la_racine(tmp_path):
         env = {"PATH": f"{Path(sys.executable).parent}:/usr/bin:/bin"}
     subprocess.run(
         cmd,
-        cwd=tmp_path / "lanceurs",
+        cwd=tmp_path / "launchers",
         env=env,
         stdin=subprocess.DEVNULL,
         capture_output=True,
@@ -67,5 +67,5 @@ def test_lancer_cree_le_profil_depuis_la_racine(tmp_path):
     )
     appel = (tmp_path / "appel.txt").read_text(encoding="utf-8").split("|")
     assert Path(appel[0]).resolve() == tmp_path.resolve()
-    assert appel[1] == "profil"
+    assert appel[1] == "profile"
     assert Path(appel[2]).name == "cv.docx"

@@ -1,12 +1,12 @@
 ---
 paths:
   - src/jobhunter/documents/**
-  - src/jobhunter/programmes/generate_docs.py
-  - src/jobhunter/programmes/regenere_docs.py
-  - src/jobhunter/programmes/sync_docs.py
-  - src/jobhunter/chemins.py
-  - src/jobhunter/chemins.py
-  - src/jobhunter/scoring/lexique.py
+  - src/jobhunter/programs/generate_docs.py
+  - src/jobhunter/programs/regenerate_docs.py
+  - src/jobhunter/programs/sync_docs.py
+  - src/jobhunter/paths.py
+  - src/jobhunter/paths.py
+  - src/jobhunter/scoring/lexicon.py
   - src/jobhunter/documents/*.py
 ---
 # Generated documents
@@ -15,7 +15,7 @@ paths:
 batches of them from the queue. **The `.docx` is the source, the PDF derives from it** —
 `sync_docs.py` is the enforcer of this rule.
 
-`chemins.py` is **the only place that decides where generated documents live**. Eleven
+`paths.py` is **the only place that decides where generated documents live**. Eleven
 programs each built `ROOT / "CV" / "Par_offre"` on their own; taking them out
 of the repository required eleven coordinated changes. Resolution cannot fail:
 `Scripts/chemins.json` if it exists, otherwise the project root.
@@ -24,7 +24,7 @@ The distinction that matters:
 
 | Folder | Nature |
 |---|---|
-| `Par_offre/` | **output**, entirely rebuilt by `regenere_docs.py` |
+| `Par_offre/` | **output**, entirely rebuilt by `regenerate_docs.py` |
 | `CV/Modèles/`, `CV/Sur_mesure/`, `Lettres/Relances/`, `Lettres/Messages/`, `Lettres/Sur_mesure/` | **inputs** written by hand, which nothing regenerates |
 
 `Lettres/Sur_mesure/<entreprise>__<poste>.txt` **replaces the body** of the letter for
@@ -74,7 +74,7 @@ superlative, no "rare specialisation", no judgement on the hiring market
 ("these two skills are rarely found together in one posting" explains the recruiter's own
 job to them).
 
-`verifie_redites.py` **catches none of this**. It counts repetitions, conjunctions
+`check_repetitions.py` **catches none of this**. It counts repetitions, conjunctions
 and semicolons; tone escapes it entirely, and it was green on all seven versions.
 That is the reason `Lettres/Sur_mesure/` exists.
 

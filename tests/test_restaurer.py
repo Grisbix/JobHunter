@@ -6,9 +6,9 @@ description is lost; the state before is copied, so a restoration can be undone.
 
 import json
 
-from jobhunter.programmes import restaurer as r
-from jobhunter.stockage import file as queue_io
-from jobhunter.stockage import suivi as suivi_io
+from jobhunter.programs import restore as r
+from jobhunter.storage import applications as suivi_io
+from jobhunter.storage import queue as queue_io
 
 
 def _offre(e, p, desc=""):

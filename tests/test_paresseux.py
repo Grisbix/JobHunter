@@ -9,9 +9,10 @@ import sys
 import pytest
 from conftest import EXEMPLE, SRC
 
-from jobhunter import paresseux, profil
+from jobhunter import lazy as paresseux
+from jobhunter import profile as profil
 from jobhunter.scoring import fit
-from jobhunter.sources import commun
+from jobhunter.sources import common as commun
 
 
 @pytest.fixture
@@ -67,7 +68,7 @@ def test_un_module_lance_comme_programme_lit_ses_valeurs_paresseuses():
     # a facade run by runpy without alter_sys made it fail).
     env = {**os.environ, "PROFIL_JOBHUNTER": str(EXEMPLE), "PYTHONPATH": str(SRC)}
     r = subprocess.run(
-        [sys.executable, "-m", "jobhunter.chemins"],
+        [sys.executable, "-m", "jobhunter.paths"],
         env=env,
         capture_output=True,
         text=True,

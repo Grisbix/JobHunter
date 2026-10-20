@@ -8,7 +8,7 @@ from typing import Any
 
 import customtkinter as ctk
 
-from jobhunter.app.langue import t as _t
+from jobhunter.app.language import t as _t
 
 ctk.set_appearance_mode("light")
 

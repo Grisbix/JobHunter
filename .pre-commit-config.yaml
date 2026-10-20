@@ -20,10 +20,10 @@ repos:
       - id: pas-de-donnees-perso
         name: aucune donnée personnelle (profil, file, suivi, lettres, clés)
         language: system
-        entry: python outils/donnees_perso.py
+        entry: python tools/personal_data.py
       - id: version-coherente
         name: VERSION = version de pyproject.toml
         language: system
-        entry: python outils/verifie_version.py
+        entry: python tools/check_version.py
         files: ^(VERSION|pyproject\.toml)$
         pass_filenames: false

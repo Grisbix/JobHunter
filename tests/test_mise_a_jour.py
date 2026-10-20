@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from jobhunter.programmes import mise_a_jour as maj
+from jobhunter.programs import update as maj
 
 
 def zip_de(fichiers, racine="JobHunter-main"):
@@ -444,7 +444,7 @@ def test_initialiser_ne_fait_rien_dans_un_depot_git(installer):
 @pytest.fixture
 def sans_version(installer, capsys, monkeypatch):
     d = installer({k: v for k, v in V12.items() if k != "VERSION"}, zips={})
-    monkeypatch.setattr(sys, "argv", ["mise_a_jour.py"])
+    monkeypatch.setattr(sys, "argv", ["update.py"])
     rc = maj.main()
     return d, rc, capsys.readouterr().out
 
@@ -486,7 +486,7 @@ def test_tous_les_scripts_se_chargent(capsys):
 
 
 def test_le_controle_du_nouvel_arbre_passe_par_son_propre_code(capsys):
-    # `python -m jobhunter maj --controler`: the stable entry point the old version
+    # `python -m jobhunter update --controler`: the stable entry point the old version
     # calls after replacing the files.
     assert maj.controler_nouveau()
     assert "tous les scripts se chargent" in capsys.readouterr().out

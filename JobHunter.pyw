@@ -30,9 +30,9 @@ if __name__ == "__main__":
         from jobhunter.cli import main as _commande
 
         sys.exit(_commande(sys.argv[1:]))
-    from jobhunter.accueil import assurer_profil
+    from jobhunter.welcome import assurer_profil
 
     assurer_profil()
-    from jobhunter.app.fenetre import main
+    from jobhunter.app.window import main
 
     main()

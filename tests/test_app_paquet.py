@@ -14,7 +14,8 @@ from conftest import EXEMPLE, RACINE, SRC
 
 os.environ["JOBHUNTER_SANS_FOND"] = "1"
 import jobhunter.app as app  # noqa: E402
-from jobhunter.app import fenetre, theme  # noqa: E402
+from jobhunter.app import theme
+from jobhunter.app import window as fenetre  # noqa: E402
 
 MIXINS = [
     "TableauMixin",
@@ -64,7 +65,7 @@ def test_lanceur_importable_sans_ouvrir_de_fenetre():
         "import importlib.machinery as m, importlib.util as u, sys;"
         f"l = m.SourceFileLoader('lanceur', r'{RACINE / 'JobHunter.pyw'}');"
         "mod = u.module_from_spec(u.spec_from_loader('lanceur', l)); l.exec_module(mod);"
-        "print('jobhunter.app.fenetre' in sys.modules)"
+        "print('jobhunter.app.window' in sys.modules)"
     )
     r = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr

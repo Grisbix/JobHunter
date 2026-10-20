@@ -9,9 +9,9 @@ import json
 
 import pytest
 
-from jobhunter.programmes import rendement_sources as prog
-from jobhunter.reseau import INCIDENTS
-from jobhunter.sources import rendement as R
+from jobhunter.network import INCIDENTS
+from jobhunter.programs import source_yield as prog
+from jobhunter.sources import source_yield as R
 
 
 @pytest.fixture(autouse=True)

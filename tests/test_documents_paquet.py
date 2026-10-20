@@ -15,9 +15,23 @@ from conftest import EXEMPLE, SRC
 
 import jobhunter.documents as paquet
 from jobhunter import documents as tailor_application
-from jobhunter.documents import commun, cv, cv_auto, lettre, llm, message, rendu
+from jobhunter.documents import (
+    common as commun,
+)
+from jobhunter.documents import (
+    cv,
+    cv_auto,
+    llm,
+    message,
+)
 from jobhunter.documents import cv_auto as cv_auto_paquet
+from jobhunter.documents import (
+    letter as lettre,
+)
 from jobhunter.documents import message as message_offre
+from jobhunter.documents import (
+    rendering as rendu,
+)
 
 
 @pytest.mark.parametrize(

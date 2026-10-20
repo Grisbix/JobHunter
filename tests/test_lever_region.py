@@ -4,7 +4,7 @@
 def test_lever_repli_sur_la_region_europeenne(monkeypatch):
     """A Lever feed missing from api.lever.co (404) is looked for on api.eu.lever.co."""
     from jobhunter.sources import ats
-    from jobhunter.sources import commun as _commun
+    from jobhunter.sources import common as _commun
 
     class R:
         def __init__(self, code, donnees=None):

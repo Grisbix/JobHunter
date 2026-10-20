@@ -4,8 +4,8 @@ non-offers, student; and the tracker's protection. Converted from Scripts/test_t
 
 import pytest
 
-from jobhunter.programmes import doublons as D
-from jobhunter.scoring import tri as T
+from jobhunter.programs import duplicates as D
+from jobhunter.scoring import sorting as T
 
 
 def m(titre, desc="", **kw):

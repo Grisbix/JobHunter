@@ -11,7 +11,7 @@ import re
 import pytest
 
 from jobhunter import sources as J
-from jobhunter.programmes.scrape_jobs import matches_esg_finance, offre_retenue
+from jobhunter.programs.scrape_jobs import matches_esg_finance, offre_retenue
 from jobhunter.sources import en_france, rang_source
 
 LI = "https://fr.linkedin.com/jobs/view/x-4"

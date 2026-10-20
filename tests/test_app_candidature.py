@@ -1,4 +1,4 @@
-"""The "Candidatures" panel of the application (app/candidature.py), without a window.
+"""The "Candidatures" panel of the application (app/apply_panel.py), without a window.
 
 Reading the program's events, displayed texts, commands passed on only
 when the program is waiting, and manual "déclaré" declaration (ADR 0009).
@@ -10,8 +10,8 @@ from unittest.mock import patch
 import pytest
 
 from jobhunter.app import actions as _actions
-from jobhunter.app import candidature as cand
-from jobhunter.app import fenetre as ui
+from jobhunter.app import apply_panel as cand
+from jobhunter.app import window as ui
 
 
 class Etiquette:

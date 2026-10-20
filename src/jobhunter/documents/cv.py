@@ -12,19 +12,19 @@ from typing import Any
 
 from docx import Document
 
-from jobhunter import chemins
-from jobhunter import journal as _journal
-from jobhunter import paresseux as _paresseux
-from jobhunter.documents.commun import CV_ATS, _de, _slug, titre_poste
-from jobhunter.documents.rendu import to_pdf
-from jobhunter.scoring.lexique import cv_variant_key
+from jobhunter import lazy as _paresseux
+from jobhunter import log as _journal
+from jobhunter import paths as chemins
+from jobhunter.documents.common import CV_ATS, _de, _slug, titre_poste
+from jobhunter.documents.rendering import to_pdf
+from jobhunter.scoring.lexicon import cv_variant_key
 
 _log = _journal.journal(__name__)
 
 
 _ici = sys.modules[__name__]
 # Values taken from the profile: computed on first read, not at import
-# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
+# (jobhunter.lazy). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -32,14 +32,14 @@ def __getattr__(nom: str) -> Any:
     return _paresseux.lire(_ici, _PARESSEUX, nom)
 
 
-_PARESSEUX["CV_OUT"] = lambda: importlib.import_module("jobhunter.documents.commun").CV_OUT
+_PARESSEUX["CV_OUT"] = lambda: importlib.import_module("jobhunter.documents.common").CV_OUT
 
 
-_PARESSEUX["CV_VARIANT"] = lambda: importlib.import_module("jobhunter.scoring.lexique").CV_VARIANT
+_PARESSEUX["CV_VARIANT"] = lambda: importlib.import_module("jobhunter.scoring.lexicon").CV_VARIANT
 
 
 _PARESSEUX["CV_VARIANT_EN"] = lambda: (
-    importlib.import_module("jobhunter.scoring.lexique").CV_VARIANT_EN
+    importlib.import_module("jobhunter.scoring.lexicon").CV_VARIANT_EN
 )
 
 
@@ -58,7 +58,7 @@ def cv_sur_mesure(offer: dict[str, Any]) -> dict[str, Any] | None:
     The template stays the source: only what the offer asks for is touched up, and
     regeneration takes the touch-ups back instead of overwriting them.
     """
-    from jobhunter.chemins import CV_SUR_MESURE
+    from jobhunter.paths import CV_SUR_MESURE
 
     if not CV_SUR_MESURE.exists():
         return None
@@ -154,7 +154,7 @@ def tailor_cv(
     if not src.is_file():
         _log.info(f"  ! CV variante absente: {src.name or key} (profil.json, domaines[].cv)")
         return None
-    from jobhunter.programmes.rename_docs import new_name
+    from jobhunter.programs.rename_docs import new_name
 
     if src.suffix.lower() == ".pdf":
         # CV provided as PDF only: it goes as is, without adaptation.
@@ -241,7 +241,7 @@ def tailor_cv(
     #    gave away an auto-generated CV to recruiters. The skills still serve
     #    the scoring (fit/ATS) and the LETTER, but are no longer injected into the CV.
 
-    from jobhunter.programmes.rename_docs import (
+    from jobhunter.programs.rename_docs import (
         new_name,  # Prenom_Nom_CV_<Poste court>_<Entreprise>
     )
 

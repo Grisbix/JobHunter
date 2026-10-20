@@ -1,15 +1,15 @@
 name: installation
 
 # Installs JobHunter from source on a fresh machine, with the REAL scripts
-# (lanceurs/installer.bat, lanceurs/installer.sh), and checks step E1: the libraries go into
+# (launchers/install.bat, launchers/install.sh), and checks step E1: the libraries go into
 # .venv, not into the machine's Python; the installation loads; the update's
 # fingerprint ignores .venv. No personal data: example profile only.
 on:
   pull_request:
     paths:
-      - "lanceurs/**"
+      - "launchers/**"
       - "requirements.txt"
-      - "src/jobhunter/programmes/mise_a_jour.py"
+      - "src/jobhunter/programs/update.py"
       - ".github/workflows/installation.yml"
   release:
     types: [published]
@@ -35,9 +35,9 @@ jobs:
       - name: Comme un ZIP téléchargé (sans dépôt git)
         shell: bash
         run: rm -rf .git
-      - name: lanceurs\installer.bat (sans clavier)
+      - name: launchers\install.bat (sans clavier)
         shell: cmd
-        run: lanceurs\installer.bat < NUL
+        run: launchers\install.bat < NUL
       - name: Vérifications
         shell: bash
         env:
@@ -46,7 +46,7 @@ jobs:
           test -x .venv/Scripts/python.exe
           .venv/Scripts/python.exe -c "import customtkinter, playwright, docx, fitz, httpx"
           ! python -c 'import customtkinter'
-          .venv/Scripts/python.exe JobHunter.pyw maj --controler
+          .venv/Scripts/python.exe JobHunter.pyw update --controler
           python -c "import json,sys; m=json.load(open('.maj_manifeste.json',encoding='utf-8')); bad=[k for k in m if k.startswith('.venv')]; print(len(m),'fichiers'); sys.exit(1 if bad or not m else 0)"
 
   linux:
@@ -61,8 +61,8 @@ jobs:
           python-version: "3.12"
       - name: Comme un ZIP téléchargé (sans dépôt git)
         run: rm -rf .git
-      - name: lanceurs/installer.sh
-        run: ./lanceurs/installer.sh
+      - name: launchers/install.sh
+        run: ./launchers/install.sh
       - name: Vérifications
         env:
           PYTHONIOENCODING: utf-8
@@ -70,5 +70,5 @@ jobs:
           test -x .venv/bin/python
           .venv/bin/python -c "import customtkinter, playwright, docx, fitz, httpx"
           ! python -c 'import customtkinter'
-          .venv/bin/python JobHunter.pyw maj --controler
+          .venv/bin/python JobHunter.pyw update --controler
           python -c "import json,sys; m=json.load(open('.maj_manifeste.json',encoding='utf-8')); bad=[k for k in m if k.startswith('.venv')]; print(len(m),'fichiers'); sys.exit(1 if bad or not m else 0)"

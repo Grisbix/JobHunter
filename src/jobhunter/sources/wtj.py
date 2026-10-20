@@ -8,9 +8,9 @@ import re
 import time
 from typing import Any
 
-from jobhunter import journal as _journal
-from jobhunter.sources import commun as _commun
-from jobhunter.sources.commun import (
+from jobhunter import log as _journal
+from jobhunter.sources import common as _commun
+from jobhunter.sources.common import (
     _mk,
     _norm_url,
     _strip_html,
@@ -71,8 +71,8 @@ def _wtj_fiche(url: str, client: Any) -> dict[str, Any] | None:
     code — mistaking it for an empty page would pass the wall off as a
     posting without description.
     """
-    from jobhunter.programmes.wtj_desc import UA as _WUA
-    from jobhunter.programmes.wtj_desc import Bloque
+    from jobhunter.programs.wtj_desc import UA as _WUA
+    from jobhunter.programs.wtj_desc import Bloque
 
     try:
         r = _commun._get_borne(client, url, headers=_WUA, timeout=30)
@@ -126,8 +126,8 @@ def scan_wtj(pages: int = 2) -> list[dict[str, Any]]:
 
     import httpx
 
-    from jobhunter.programmes.wtj_desc import UA as _WUA
-    from jobhunter.programmes.wtj_desc import Bloque
+    from jobhunter.programs.wtj_desc import UA as _WUA
+    from jobhunter.programs.wtj_desc import Bloque
 
     _EX = _commun.contrats_exclus()
     offers: list[dict[str, Any]] = []
@@ -171,7 +171,7 @@ def scan_wtj(pages: int = 2) -> list[dict[str, Any]]:
 
         # We do not read again what is already in the queue: each posting costs a
         # request on a very limited rate.
-        from jobhunter.stockage import file as queue_io
+        from jobhunter.storage import queue as queue_io
 
         connues = {
             _norm_url(x.get("url"))

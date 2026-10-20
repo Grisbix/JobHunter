@@ -4,9 +4,9 @@ import json
 
 import pytest
 
-from jobhunter import cles_api
-from jobhunter.app import inventaire
-from jobhunter.sources.agregateurs import _cle
+from jobhunter import api_keys as cles_api
+from jobhunter.app import inventory as inventaire
+from jobhunter.sources.aggregators import _cle
 
 
 def test_adzuna_lu_par_la_source_et_options_gardees(tmp_path):
@@ -88,7 +88,7 @@ def test_le_panneau_connait_chaque_fichier_de_cle():
 
 
 def test_set_key_en_ligne_de_commande(tmp_path, monkeypatch):
-    from jobhunter.programmes import acces
+    from jobhunter.programs import access as acces
 
     monkeypatch.setattr(acces, "HERE", tmp_path)
     monkeypatch.setattr("builtins.input", lambda invite="": "mon-id")

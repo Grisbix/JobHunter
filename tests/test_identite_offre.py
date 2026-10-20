@@ -2,13 +2,13 @@
 
 1. Same job in several cities: the scan's dedup keeps the city of the
    profile's best zone and records the others (`autres_lieux`).
-2. Same posting URL under two keys (retouched title, renamed feed): `doublons`
+2. Same posting URL under two keys (retouched title, renamed feed): `duplicates`
    merges them, keeping the tracked offer then the most recently served version.
 """
 
 import pytest
 
-from jobhunter.programmes import doublons as D
+from jobhunter.programs import duplicates as D
 from jobhunter.scoring import zones
 from jobhunter.sources import cli
 

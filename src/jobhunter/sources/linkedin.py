@@ -10,9 +10,9 @@ import time
 from typing import Any
 from urllib.parse import quote
 
-from jobhunter import journal as _journal
-from jobhunter.sources import commun as _commun
-from jobhunter.sources.commun import INCIDENTS, UA, _mk, title_ok
+from jobhunter import log as _journal
+from jobhunter.sources import common as _commun
+from jobhunter.sources.common import INCIDENTS, UA, _mk, title_ok
 
 _log = _journal.journal(__name__)
 

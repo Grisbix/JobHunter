@@ -1,4 +1,4 @@
-"""The jobhunter.stockage package (phase 3): facades, independence, root.
+"""The jobhunter.storage package (phase 3): facades, independence, root.
 
 - `queue_io` / `suivi_io` ARE the package's modules (aliases), not copies:
   otherwise a monkeypatch of their CHEMIN would not touch the real code.
@@ -14,11 +14,22 @@ import sys
 import pytest
 from conftest import RACINE, SRC
 
-from jobhunter import racine
-from jobhunter.programmes import jutil
-from jobhunter.stockage import atomique, file, suivi, verrou
-from jobhunter.stockage import file as queue_io
-from jobhunter.stockage import suivi as suivi_io
+from jobhunter import root as racine
+from jobhunter.programs import util as jutil
+from jobhunter.storage import (
+    applications as suivi,
+)
+from jobhunter.storage import applications as suivi_io
+from jobhunter.storage import (
+    atomic as atomique,
+)
+from jobhunter.storage import (
+    lock as verrou,
+)
+from jobhunter.storage import (
+    queue as file,
+)
+from jobhunter.storage import queue as queue_io
 
 
 def test_queue_io_est_le_module_du_paquet():
@@ -40,7 +51,7 @@ def test_jutil_reexporte_le_meme_verrou():
 
 def test_le_stockage_se_charge_sans_scripts():
     code = (
-        "import sys; from jobhunter.stockage import file, suivi; "
+        "import sys; from jobhunter.storage import file, suivi; "
         "print('jutil' in sys.modules or 'queue_io' in sys.modules)"
     )
     env = {**os.environ, "PYTHONPATH": str(SRC)}
@@ -107,7 +118,7 @@ def test_jwrite_redirige_toujours_la_file_vers_la_separation(file_temporaire):
     assert file.charger()[0]["description"] == "texte"
 
 
-@pytest.mark.parametrize("module", ["jobhunter.stockage.verrou", "jobhunter.stockage.atomique"])
+@pytest.mark.parametrize("module", ["jobhunter.storage.lock", "jobhunter.storage.atomic"])
 def test_couches_basses_sans_dependance_au_moteur(module):
     """atomique and verrou import nothing else from the project, except the log (itself
     without dependency)."""
@@ -118,7 +129,14 @@ def test_couches_basses_sans_dependance_au_moteur(module):
     env = {**os.environ, "PYTHONPATH": str(SRC)}
     r = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
     charges = set(json.loads(r.stdout))
-    assert charges <= {"jobhunter", "jobhunter.stockage", "jobhunter.journal", module}
+    # jobhunter._old_names: the table of the package itself (old names), no code.
+    assert charges <= {
+        "jobhunter",
+        "jobhunter._old_names",
+        "jobhunter.storage",
+        "jobhunter.log",
+        module,
+    }
 
 
 @pytest.mark.parametrize(
@@ -129,7 +147,7 @@ def test_couches_basses_sans_dependance_au_moteur(module):
     ],
 )
 def test_module_lance_directement_affiche_son_bilan(tmp_path, script, donnee, attendu):
-    """`python -m jobhunter.stockage.file` displays the number of offers (formerly
+    """`python -m jobhunter.storage.queue` displays the number of offers (formerly
     `python Scripts/queue_io.py`)."""
     (tmp_path / "Scripts").mkdir()
     (tmp_path / "profil").mkdir()
@@ -141,7 +159,7 @@ def test_module_lance_directement_affiche_son_bilan(tmp_path, script, donnee, at
         "PYTHONPATH": str(SRC),
     }
     r = subprocess.run(
-        [sys.executable, "-m", f"jobhunter.stockage.{script}"],
+        [sys.executable, "-m", f"jobhunter.storage.{script}"],
         env=env,
         capture_output=True,
         text=True,
@@ -153,7 +171,7 @@ def test_module_lance_directement_affiche_son_bilan(tmp_path, script, donnee, at
 def test_racine_trouvee_depuis_le_dossier_courant(tmp_path, monkeypatch):
     # Package installed by pip (site-packages): the marker is also searched
     # going up from the current folder.
-    from jobhunter import racine
+    from jobhunter import root as racine
 
     (tmp_path / "Scripts").mkdir()
     (tmp_path / "profil").mkdir()

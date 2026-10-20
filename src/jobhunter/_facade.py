@@ -32,7 +32,7 @@ def installer(paquet: str, sous_modules: Sequence[str]) -> list[types.ModuleType
     noms_sous_modules = set(sous_modules)
 
     def paresseux(m: types.ModuleType) -> dict[str, Any]:
-        """Factories of values computed on first read (jobhunter.paresseux)."""
+        """Factories of values computed on first read (jobhunter.lazy)."""
         fabriques: dict[str, Any] = vars(m).get("_PARESSEUX", {})
         return fabriques
 

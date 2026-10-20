@@ -1,7 +1,7 @@
 ---
 paths:
   - src/jobhunter/scoring/fit.py
-  - src/jobhunter/scoring/tri.py
+  - src/jobhunter/scoring/sorting.py
   - src/jobhunter/scoring/*.py
 ---
 # Scoring — `ats_match.fit_score`

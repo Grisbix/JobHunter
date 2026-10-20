@@ -3,8 +3,8 @@ paths:
   - src/jobhunter/navigation/**
   - src/jobhunter/navigation/strategies.py
   - src/jobhunter/navigation/*.py
-  - src/jobhunter/programmes/apply_runner.py
-  - src/jobhunter/programmes/acces.py
+  - src/jobhunter/programs/apply_runner.py
+  - src/jobhunter/programs/access.py
 ---
 # Web navigation and application
 
@@ -26,7 +26,7 @@ They have held since the start of the project and are not to be reopened in pass
   `AutomationControlled`), no "human" mouse or typing. The browser presents
   itself as automated.
 - **Never the personal Chrome profile** (`User Data`): it holds the user's sessions and
-  passwords. Only the dedicated profile of `acces.py` is used. A detected CAPTCHA pauses for a human. Thirteen sites are
+  passwords. Only the dedicated profile of `access.py` is used. A detected CAPTCHA pauses for a human. Thirteen sites are
   inaccessible and stay so.
 - **No password handled by the programs.** Sessions live in a
   dedicated Chrome profile; login is done once by hand through

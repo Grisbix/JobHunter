@@ -2,7 +2,7 @@
 paths:
   - JobHunter.pyw
   - src/jobhunter/app/*.py
-  - src/jobhunter/accueil.py
+  - src/jobhunter/welcome.py
 ---
 # Desktop application
 
@@ -14,7 +14,7 @@ Since phase 3.7, `JobHunter.pyw` is only the launcher: the app lives in
 **The table is indexed by position.** Removing a column requires removing *also*
 the matching value in `_row_vals`, otherwise everything shifts by one.
 
-The root comes from `jobhunter.racine` (marker `Scripts/` + `profil/`, or
+The root comes from `jobhunter.root` (marker `Scripts/` + `profil/`, or
 `JOBHUNTER_RACINE`): the app works wherever it is placed. Never hard-code a root in it — the project's paths moved
 four times in two days.
 

@@ -1,4 +1,4 @@
-"""jobhunter.reseau: requests bounded in TOTAL duration and in size (phase 3.2).
+"""jobhunter.network: requests bounded in TOTAL duration and in size (phase 3.2).
 
 Until now these functions had no direct test: the suites always replaced them
 with doubles. We check their guarantees with a fake httpx stream, without
@@ -11,8 +11,9 @@ import io
 import httpx
 import pytest
 
-from jobhunter import profil, reseau
-from jobhunter import profil as profil_paquet
+from jobhunter import network as reseau
+from jobhunter import profile as profil
+from jobhunter import profile as profil_paquet
 from jobhunter import sources as job_sources
 
 
@@ -157,7 +158,7 @@ def test_profil_lit_le_profil_d_exemple():
 
 
 def test_incidents_un_seul_compteur_porte_par_le_reseau():
-    from jobhunter.sources import commun
+    from jobhunter.sources import common as commun
 
     assert commun.INCIDENTS is reseau.INCIDENTS
     reseau.INCIDENTS.clear()

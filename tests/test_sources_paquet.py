@@ -17,9 +17,10 @@ from conftest import EXEMPLE, SRC
 
 import jobhunter.sources as paquet
 from jobhunter import sources as job_sources
-from jobhunter.programmes import scrape_jobs
-from jobhunter.scoring import domaines
-from jobhunter.sources import cli, commun, indeed, linkedin
+from jobhunter.programs import scrape_jobs
+from jobhunter.scoring import domains as domaines
+from jobhunter.sources import cli, indeed, linkedin
+from jobhunter.sources import common as commun
 
 
 def test_facade_est_le_paquet():

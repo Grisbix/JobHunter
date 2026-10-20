@@ -7,7 +7,7 @@ from datetime import date
 
 import pytest
 
-from jobhunter.programmes import metriques_hebdo as M
+from jobhunter.programs import weekly_metrics as M
 
 AUJ = date(2026, 10, 12)
 

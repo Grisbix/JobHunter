@@ -19,9 +19,9 @@ from hypothesis import strategies as st
 from jobhunter import documents as T
 from jobhunter import sources as J
 from jobhunter.scoring.fit import fit_detail
-from jobhunter.sources.commun import _norm_url
-from jobhunter.stockage import file as queue_io
-from jobhunter.stockage import suivi as suivi_io
+from jobhunter.sources.common import _norm_url
+from jobhunter.storage import applications as suivi_io
+from jobhunter.storage import queue as queue_io
 
 # Pieces of real titles: words, gender and contract mentions, separators. A title
 # drawn from them looks like what the collection brings back, which finds more than

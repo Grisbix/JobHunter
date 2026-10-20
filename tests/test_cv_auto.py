@@ -8,8 +8,8 @@ automatic. SYNTHETIC banks. Converted from Scripts/test_cv_auto.py.
 import pytest
 from docx import Document
 
-from jobhunter import chemins
 from jobhunter import documents as ta
+from jobhunter import paths as chemins
 from jobhunter.documents import cv_auto
 
 # ── the minimal bank: one validated fact, one NON-validated fact ────────────────────

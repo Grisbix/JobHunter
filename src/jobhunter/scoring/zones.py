@@ -32,12 +32,12 @@ import sys
 from collections.abc import Iterable
 from typing import Any
 
-from jobhunter import paresseux as _paresseux
-from jobhunter.texte import sans_accent
+from jobhunter import lazy as _paresseux
+from jobhunter.text import sans_accent
 
 _ici = sys.modules[__name__]
 # Values taken from the profile: computed on first read, not at import
-# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
+# (jobhunter.lazy). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -1008,7 +1008,7 @@ def _secteur(x: object) -> Secteur | None:
 
 def _secteurs(cle_profil: str, defaut: list[Any]) -> list[Secteur]:
     try:
-        from jobhunter import profil as _P
+        from jobhunter import profile as _P
 
         brut = _P.get(f"zones.{cle_profil}", defaut)
     except Exception:
@@ -1139,7 +1139,7 @@ def zone_lieu(lieu: str | None) -> str:
         return INTERNATIONAL
     if _RX_METRO.search(t) and not _contient(t, _METROS_FR):
         try:
-            from jobhunter.sources import commun as job_sources
+            from jobhunter.sources import common as job_sources
 
             if not job_sources._RX_FR.search(lieu or ""):
                 return INTERNATIONAL
@@ -1149,7 +1149,7 @@ def zone_lieu(lieu: str | None) -> str:
     # place where the lists of countries and American state codes live.
     # Late import: job_sources imports zones to label on addition.
     try:
-        from jobhunter.sources import commun as job_sources
+        from jobhunter.sources import common as job_sources
 
         # FRANCE IS TESTED FIRST. _RX_ETRANGER contains the country code
         # "de", which matches the "de" of "Hauts-de-France": Lille and Nantes
@@ -1609,7 +1609,7 @@ def pays_lieu(lieu: str | None) -> str:
         if _contient(t, villes):
             return canon
     try:
-        from jobhunter.sources import commun as job_sources
+        from jobhunter.sources import common as job_sources
 
         if job_sources._RX_ETAT_US.search(lieu or ""):
             return "États-Unis"
@@ -1768,7 +1768,7 @@ def main() -> int:
     a = ap.parse_args()
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
-    from jobhunter.stockage import file as queue_io
+    from jobhunter.storage import queue as queue_io
 
     if not a.ecrire:
         q = queue_io.charger(descriptions=False)

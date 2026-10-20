@@ -1,10 +1,10 @@
-"""The collection every morning from the application (jobhunter.planification), without real schtasks."""
+"""The collection every morning from the application (jobhunter.scheduling), without real schtasks."""
 
 import subprocess
 
 import pytest
 
-from jobhunter import planification as plan
+from jobhunter import scheduling as plan
 
 
 @pytest.fixture
@@ -43,7 +43,7 @@ def test_creer_tache_du_meme_nom_que_planifier_bat(schtasks, monkeypatch):
     assert a[a.index("/TN") + 1] == "JobHunter - collecte quotidienne"
     assert a[a.index("/ST") + 1] == "07:30"
     assert a[a.index("/TR") + 1] == '"jh.exe" pipeline'
-    bat = (plan.Path(__file__).parent.parent / "lanceurs" / "planifier.bat").read_text(
+    bat = (plan.Path(__file__).parent.parent / "launchers" / "schedule.bat").read_text(
         encoding="utf-8"
     )
     assert f'set "TACHE={plan.TACHE}"' in bat

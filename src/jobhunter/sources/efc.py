@@ -9,9 +9,9 @@ import time
 from typing import Any
 from urllib.parse import unquote, urlparse
 
-from jobhunter import journal as _journal
-from jobhunter.sources import commun as _commun
-from jobhunter.sources.commun import (
+from jobhunter import log as _journal
+from jobhunter.sources import common as _commun
+from jobhunter.sources.common import (
     INCIDENTS,
     _mk,
     _norm_url,
@@ -244,7 +244,7 @@ def scan_efc(
         # Postings ALREADY in the queue: do not read them again. At 10 s each, a second
         # pass paid again the whole time of the first only to bring what
         # merge_into_queue aurait de toute facon deduplique.
-        from jobhunter.stockage import file as queue_io
+        from jobhunter.storage import queue as queue_io
 
         connues = {_norm_url(x.get("url")) for x in queue_io.charger(_commun.QUEUE) if x.get("url")}
         neuves = [u for u in cibles if _norm_url(u) not in connues]

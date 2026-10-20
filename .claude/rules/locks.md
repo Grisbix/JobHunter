@@ -1,23 +1,23 @@
 ---
 paths:
-  - src/jobhunter/programmes/jutil.py
-  - src/jobhunter/stockage/*.py
-  - src/jobhunter/reseau.py
+  - src/jobhunter/programs/util.py
+  - src/jobhunter/storage/*.py
+  - src/jobhunter/network.py
   - src/jobhunter/sources/**
   - src/jobhunter/sources/*.py
-  - src/jobhunter/programmes/linkedin_desc.py
-  - src/jobhunter/programmes/pipeline_quotidien.py
-  - src/jobhunter/programmes/audit_dispo.py
+  - src/jobhunter/programs/linkedin_desc.py
+  - src/jobhunter/programs/daily_pipeline.py
+  - src/jobhunter/programs/availability_audit.py
 ---
 # Locks, exit code 3, bounded requests
 
-`jutil.prendre_verrou` / `rendre_verrou` / `garder` implement a file-based
+`util.prendre_verrou` / `rendre_verrou` / `garder` implement a file-based
 inter-process exclusion, which breaks the lock of a dead process. Project convention:
 **a program that finds the queue busy exits with code 3 without modifying anything.**
 
 `prendre_verrou` is reentrant, `rendre_verrou` is not. A function that takes then
 releases, while its caller held the lock for the whole program, takes it away from the caller.
-`jutil.tenu(chemin)` answers before taking.
+`util.tenu(chemin)` answers before taking.
 
 **A live lock is not broken.** `perime` (30 min) now applies only to a lock
 whose owner cannot be read. As long as the recorded PID is running, we wait, then
@@ -45,7 +45,7 @@ byte every 19 s holds the connection indefinitely. On 2026-09-22, fr.talent.com
 blocked the scheduled scan this way for 12 h 25. In `job_sources`, **every** request goes
 through `_get_borne` / `_post_borne` (total duration, a real `httpx.Response`) and every `urlopen`
 through `_lire_borne` — which reads with `read1`, because `read(n)` waits for the buffer to be
-full before handing control back. `pipeline_quotidien.etape()` additionally kills any step that
+full before handing control back. `daily_pipeline.etape()` additionally kills any step that
 exceeds its maximum duration — **the process tree** (`taskkill /T`), without which a child
 that keeps the output open prolongs the step — without killing the pipeline. The 20 h watchdog
 reads the pipeline's log.

@@ -193,7 +193,7 @@ def test_homepage_fallback_sans_homepage(page, monkeypatch):
     """Company not found: nothing to open. The resolution is SIMULATED: the real one
     queried the web (80 s) and could write into the Scripts/homepages.json cache
     — "Entreprise Inconnue XYZ 999" had already ended up there."""
-    from jobhunter.programmes import enrich_homepages
+    from jobhunter.programs import enrich_homepages
 
     monkeypatch.setattr(enrich_homepages, "resolve", lambda entreprise: None)
     assert (

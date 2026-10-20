@@ -1,10 +1,10 @@
-"""The sources reread REAL recorded responses, without network (outils/rejeu.py).
+"""The sources reread REAL recorded responses, without network (tools/replay.py).
 
 Each recording in tests/reponses/ contains the public response of a source
 (cleaned) and the offers it gave on the day it was taken. The replay must
 find exactly the same ones: a parser change that loses an offer, adds
 one or changes a description is seen here. A site that changes ITS response, on the other hand, shows
-at the next collection (`jobhunter rendement` verdicts); we then re-record.
+at the next collection (`jobhunter yield` verdicts); we then re-record.
 """
 
 import importlib.util
@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 RACINE = Path(__file__).resolve().parent.parent
-_spec = importlib.util.spec_from_file_location("rejeu", RACINE / "outils" / "rejeu.py")
+_spec = importlib.util.spec_from_file_location("rejeu", RACINE / "tools" / "replay.py")
 rejeu = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(rejeu)
 

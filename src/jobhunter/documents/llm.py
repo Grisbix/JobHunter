@@ -12,18 +12,18 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt
 
-from jobhunter import journal as _journal
-from jobhunter import paresseux as _paresseux
-from jobhunter import profil as _P
-from jobhunter.documents.commun import _de, titre_poste
-from jobhunter.reseau import exiger_http
+from jobhunter import lazy as _paresseux
+from jobhunter import log as _journal
+from jobhunter import profile as _P
+from jobhunter.documents.common import _de, titre_poste
+from jobhunter.network import exiger_http
 
 _log = _journal.journal(__name__)
 
 
 _ici = sys.modules[__name__]
 # Values taken from the profile: computed on first read, not at import
-# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
+# (jobhunter.lazy). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -31,7 +31,7 @@ def __getattr__(nom: str) -> Any:
     return _paresseux.lire(_ici, _PARESSEUX, nom)
 
 
-_PARESSEUX["PROFILE"] = lambda: importlib.import_module("jobhunter.documents.commun").PROFILE
+_PARESSEUX["PROFILE"] = lambda: importlib.import_module("jobhunter.documents.common").PROFILE
 
 
 # ---- LLM mode: Claude API (if key) OR local Ollama (free) ----

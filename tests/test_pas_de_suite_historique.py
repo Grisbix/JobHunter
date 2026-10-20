@@ -5,14 +5,14 @@ with a non-zero code) have all been converted to pytest tests in tests/ (phase 2
 plan, 2026-10-18). A new Scripts/test_*.py would be run by nobody: the
 tests are written in tests/. Only the two suites that really go out
 on the web and must not run mechanically remain. Since 2.0, the programs
-live in jobhunter.programmes; Scripts/ only keeps the data.
+live in jobhunter.programs; Scripts/ only keeps the data.
 """
 
 from pathlib import Path
 
 RACINE = Path(__file__).resolve().parent.parent
-PROGRAMMES = RACINE / "src" / "jobhunter" / "programmes"
-EN_LIGNE = {"test_live_nav", "test_acces_sites"}
+PROGRAMMES = RACINE / "src" / "jobhunter" / "programs"
+EN_LIGNE = {"test_live_nav", "test_site_access"}
 
 
 def test_aucune_suite_historique():

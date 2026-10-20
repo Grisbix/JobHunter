@@ -6,7 +6,7 @@ until 19/10/2026.
 
 import importlib.util
 
-from jobhunter.app.commun import MAINT
+from jobhunter.app.common import MAINT
 
 
 def test_chaque_commande_existe():

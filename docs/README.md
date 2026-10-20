@@ -15,4 +15,4 @@ is for whoever reads or modifies the code.
 Elsewhere in the repository: [CONTRIBUTING.md](../.github/CONTRIBUTING.md) (how to contribute and
 release), [CHANGELOG.md](../CHANGELOG.md) (what changed in each version, shown by the
 updater), [SECURITY.md](../.github/SECURITY.md), [AGENTS.md](../AGENTS.md) (instructions for coding
-agents), [outils/](../outils/README.md) (developer tools).
+agents), [tools/](../tools/README.md) (developer tools).

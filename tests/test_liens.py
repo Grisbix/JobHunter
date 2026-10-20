@@ -7,7 +7,7 @@ Converted from Scripts/test_liens.py.
 
 import pytest
 
-from jobhunter.programmes.resolve_offer_links import RX_OFFRE, RX_RECHERCHE, accepte, specificite
+from jobhunter.programs.resolve_offer_links import RX_OFFRE, RX_RECHERCHE, accepte, specificite
 
 
 def verdict(url):

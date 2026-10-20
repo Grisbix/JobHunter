@@ -14,9 +14,9 @@ import httpx
 import pytest
 
 from jobhunter import sources as job_sources
-from jobhunter.programmes import audit_dispo as a
-from jobhunter.programmes import linkedin_desc as ld
-from jobhunter.programmes import pipeline_quotidien as pq
+from jobhunter.programs import availability_audit as a
+from jobhunter.programs import daily_pipeline as pq
+from jobhunter.programs import linkedin_desc as ld
 
 JOUR = "2026-10-02"
 

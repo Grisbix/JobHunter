@@ -6,10 +6,10 @@
 
 - [ ] `uv run pytest -q` passes (offline)
 - [ ] `uv run mypy` passes
-- [ ] `uv run python outils/banc.py comparer outils/banc_reference.json` — 0 difference,
+- [ ] `uv run python tools/bench.py comparer tools/bench_reference.json` — 0 difference,
       or the reference is regenerated in this PR with the reason
 - [ ] `CHANGELOG.md` updated if users will notice
-- [ ] No personal data (profile, offers, letters, CVs, keys) — `python outils/donnees_perso.py`
+- [ ] No personal data (profile, offers, letters, CVs, keys) — `python tools/personal_data.py`
 
 ## Project rules
 

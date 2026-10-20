@@ -14,14 +14,18 @@ import sys
 import pytest
 from conftest import EXEMPLE, SRC
 
-from jobhunter import chemins, texte
-from jobhunter import chemins as chemins_paquet
 from jobhunter import documents as tailor_application
-from jobhunter.programmes import jutil
-from jobhunter.scoring import fit, langue, lexique, tri, zones
+from jobhunter import paths as chemins
+from jobhunter import paths as chemins_paquet
+from jobhunter import text as texte
+from jobhunter.programs import util as jutil
+from jobhunter.scoring import fit, zones
 from jobhunter.scoring import fit as ats_match
-from jobhunter.scoring import langue as langue_paquet
-from jobhunter.scoring import tri as tri_file
+from jobhunter.scoring import language as langue
+from jobhunter.scoring import language as langue_paquet
+from jobhunter.scoring import lexicon as lexique
+from jobhunter.scoring import sorting as tri
+from jobhunter.scoring import sorting as tri_file
 from jobhunter.scoring import zones as zones_paquet
 
 
@@ -53,21 +57,22 @@ def _modules_charges(code):
 
 
 def test_le_scoring_se_charge_sans_tailor_application():
-    charges = _modules_charges("import jobhunter.scoring.fit, jobhunter.scoring.langue")
+    charges = _modules_charges("import jobhunter.scoring.fit, jobhunter.scoring.language")
     assert not charges & {"tailor_application", "ats_match", "jutil", "queue_io"}
 
 
 def test_le_lexique_ne_depend_que_du_profil():
     charges = {
-        m for m in _modules_charges("import jobhunter.scoring.lexique") if m.startswith("jobhunter")
+        m for m in _modules_charges("import jobhunter.scoring.lexicon") if m.startswith("jobhunter")
     }
     assert charges <= {
         "jobhunter",
-        "jobhunter.racine",
-        "jobhunter.profil",
-        "jobhunter.paresseux",
+        "jobhunter._old_names",
+        "jobhunter.root",
+        "jobhunter.profile",
+        "jobhunter.lazy",
         "jobhunter.scoring",
-        "jobhunter.scoring.lexique",
+        "jobhunter.scoring.lexicon",
     }
 
 

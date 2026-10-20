@@ -19,7 +19,7 @@ unless you prefer otherwise.
 - **No passwords** are read, stored or typed by the programs; no account is created
   automatically; nothing is ever sent on your behalf — the final click is yours.
 - **No anti-bot circumvention**: a site that refuses access is left alone.
-- **Network**: only `http(s)` URLs are opened (`jobhunter.reseau.exiger_http`); update
+- **Network**: only `http(s)` URLs are opened (`jobhunter.network.exiger_http`); update
   archives cannot write outside the program folder; sitemaps with a DOCTYPE are refused.
 - **Supply chain**: GitHub Actions are pinned to commit SHAs with read-only tokens by
   default; dependencies are locked (`uv.lock`) and watched by Dependabot; CodeQL and

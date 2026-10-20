@@ -1,4 +1,4 @@
-"""Interface languages (jobhunter.app.langue) and their catalogues."""
+"""Interface languages (jobhunter.app.language) and their catalogues."""
 
 import importlib
 import json
@@ -7,9 +7,10 @@ import re
 
 import pytest
 
-from jobhunter.app import langue, textes_en
+from jobhunter.app import language as langue
+from jobhunter.app import texts_en as texts_en
 
-EN = textes_en.TEXTES
+EN = texts_en.TEXTES
 AUTRES = [c for c in langue.LANGUES if c != "fr"]
 
 APP = pathlib.Path(langue.__file__).parent
@@ -79,7 +80,7 @@ def test_chaque_cle_courte_existe_dans_l_app():
     Long texts, written in several pieces in the code, are not checked here.
     """
     source = "\n".join(
-        p.read_text(encoding="utf-8") for p in APP.glob("*.py") if not p.name.startswith("textes_")
+        p.read_text(encoding="utf-8") for p in APP.glob("*.py") if not p.name.startswith("texts_")
     )
     mortes = [k for k in EN if len(k) < 60 and f'"{k}' not in source and f"'{k}" not in source]
     assert mortes == []
@@ -87,7 +88,7 @@ def test_chaque_cle_courte_existe_dans_l_app():
 
 @pytest.mark.parametrize("code", AUTRES)
 def test_catalogue_sans_doublon_de_cle(code):
-    texte = (APP / f"textes_{code}.py").read_text(encoding="utf-8")
+    texte = (APP / f"texts_{code}.py").read_text(encoding="utf-8")
     cles = re.findall(r'^    "((?:[^"\\]|\\.)*)": ', texte, re.M)
     assert len(cles) == len(set(cles))
 
@@ -99,7 +100,7 @@ def test_chaque_langue_couvre_l_anglais(code, nom):
 
     Same `{x}` holes on both sides: a missing hole raises KeyError at display.
     """
-    ref, cat = getattr(textes_en, nom), getattr(langue.module(code), nom)
+    ref, cat = getattr(texts_en, nom), getattr(langue.module(code), nom)
     assert [k for k in ref if k not in cat] == []
     assert [k for k in cat if k not in ref] == []
     trous = re.compile(r"\{(\w+)\}")
@@ -115,7 +116,7 @@ def test_noms_et_message_de_relance():
 def test_repli_sur_l_anglais(monkeypatch):
     """A text the language lacks is shown in English, then in French."""
     monkeypatch.setattr(langue, "LANGUE", "de")
-    monkeypatch.setitem(textes_en.TEXTES, "Texte de test absent", "Test text")
+    monkeypatch.setitem(texts_en.TEXTES, "Texte de test absent", "Test text")
     langue._CACHE.clear()
     assert langue.t("Mes CV") == "Meine Lebensläufe"
     assert langue.t("Texte de test absent") == "Test text"
@@ -185,12 +186,12 @@ def test_sortie_des_programmes(monkeypatch):
 
 def test_sortie_modeles_vivent_dans_le_paquet():
     """Each line of SORTIE is still printed somewhere in the package."""
-    SORTIE_EN = textes_en.SORTIE
+    SORTIE_EN = texts_en.SORTIE
 
     source = "\n".join(
         p.read_text(encoding="utf-8")
         for p in APP.parent.rglob("*.py")
-        if not p.name.startswith("textes_")
+        if not p.name.startswith("texts_")
     )
     trous = re.compile(r"\{(\w+)\}")
     morts = []
@@ -207,10 +208,10 @@ def test_sortie_modeles_vivent_dans_le_paquet():
 
 def test_journal_modeles_coherents():
     """Same set of `{x}` on both sides, and each template still lives in the app."""
-    JOURNAL_EN = textes_en.JOURNAL
+    JOURNAL_EN = texts_en.JOURNAL
 
     source = "\n".join(
-        p.read_text(encoding="utf-8") for p in APP.glob("*.py") if not p.name.startswith("textes_")
+        p.read_text(encoding="utf-8") for p in APP.glob("*.py") if not p.name.startswith("texts_")
     )
     trous = re.compile(r"\{(\w+)\}")
     morts = []
@@ -229,7 +230,7 @@ def test_choisir_depuis_le_menu(racine, monkeypatch):
     import os
 
     os.environ["JOBHUNTER_SANS_FOND"] = "1"
-    from jobhunter.app import fenetre
+    from jobhunter.app import window as fenetre
 
     app = object.__new__(fenetre.App)
     app.root = None

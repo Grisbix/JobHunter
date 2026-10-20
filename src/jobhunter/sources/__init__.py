@@ -27,7 +27,7 @@ from typing import Any
 from jobhunter import _facade
 
 _SOUS_MODULES = (
-    "commun",
+    "common",
     "ats",
     "workday",
     "linkedin",
@@ -37,12 +37,12 @@ _SOUS_MODULES = (
     "indeed",
     "apec",
     "glassdoor",
-    "fusion",
+    "merge",
     "vie",
     "fir",
     "talent",
     "francetravail",
-    "agregateurs",
+    "aggregators",
     "cli",
 )
 _MODULES = _facade.installer(__name__, _SOUS_MODULES)

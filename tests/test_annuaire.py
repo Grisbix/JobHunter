@@ -1,4 +1,4 @@
-"""Annuaires d'entreprises Lever, Ashby, Greenhouse (sources.annuaire, outils/annuaires.py)."""
+"""Annuaires d'entreprises Lever, Ashby, Greenhouse (sources.annuaire, tools/directories.py)."""
 
 import importlib.util
 import json
@@ -7,12 +7,12 @@ import re
 import pytest
 from conftest import SRC
 
-from jobhunter.app import inventaire
-from jobhunter.sources import annuaire
+from jobhunter.app import inventory as inventaire
+from jobhunter.sources import directory as annuaire
 
-DOSSIER = SRC / "jobhunter" / "sources" / "annuaires"
+DOSSIER = SRC / "jobhunter" / "sources" / "directories"
 _spec = importlib.util.spec_from_file_location(
-    "annuaires_outil", SRC.parent / "outils" / "annuaires.py"
+    "annuaires_outil", SRC.parent / "tools" / "directories.py"
 )
 assert _spec and _spec.loader
 outil = importlib.util.module_from_spec(_spec)

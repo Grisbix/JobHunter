@@ -1,0 +1,26 @@
+@echo off
+chcp 65001 >nul
+cd /d "%~dp0.."
+rem In launchers\: everything runs from the JobHunter folder, one level up.
+rem installer.bat's environment if it exists, otherwise the computer's Python.
+set "PY=python"
+set "PYW=pythonw"
+if exist ".venv\Scripts\python.exe" (
+  set "PY=.venv\Scripts\python.exe"
+  set "PYW=.venv\Scripts\pythonw.exe"
+)
+if exist "profil\profil.json" goto app
+set "CV="
+for %%f in ("Mon_CV\*.docx" "Mon_CV\*.pdf") do if not defined CV set "CV=%%f"
+if not defined CV (
+  echo Aucun CV dans Mon_CV. Depose ton CV .docx ou .pdf dans ce dossier, puis relance.
+  pause
+  exit /b 1
+)
+echo Premier lancement : creation du profil a partir de %CV%
+"%PY%" JobHunter.pyw profile "%CV%" || (pause & exit /b 1)
+echo.
+echo Profil cree dans profil\profil.json. Relis-le, ou demande a Claude Code : /configure-profile
+pause
+:app
+start "" "%PYW%" JobHunter.pyw

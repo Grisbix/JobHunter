@@ -35,7 +35,7 @@ jobs:
       - name: uv.lock a jour avec pyproject.toml
         run: uv lock --check
       - name: VERSION = pyproject.toml
-        run: python outils/verifie_version.py
+        run: python tools/check_version.py
 
   tests-windows:
     runs-on: windows-latest
@@ -62,7 +62,7 @@ jobs:
       - name: Banc de non-regression
         env:
           PYTHONIOENCODING: utf-8
-        run: python outils/banc.py comparer outils/banc_reference.json
+        run: python tools/bench.py comparer tools/bench_reference.json
       - name: Tests et couverture (pytest)
         env:
           PYTHONIOENCODING: utf-8
@@ -94,7 +94,7 @@ jobs:
       # tail's exit code and a failing suite went green.
       - name: Syntaxe des scripts .sh
         shell: bash
-        run: for f in lanceurs/*.sh; do bash -n "$f"; echo "$f ok"; done
+        run: for f in launchers/*.sh; do bash -n "$f"; echo "$f ok"; done
       - name: Compilation de tous les programmes
         shell: bash
         run: python -m py_compile JobHunter.pyw $(find src -name '*.py')
@@ -103,7 +103,7 @@ jobs:
       - name: Banc de non-regression (meme reference que sous Windows)
         env:
           PYTHONIOENCODING: utf-8
-        run: python outils/banc.py comparer outils/banc_reference.json
+        run: python tools/bench.py comparer tools/bench_reference.json
       - name: Logique pure (scoring, sources, titres, contrats, mise a jour, proprietes)
         env:
           PYTHONIOENCODING: utf-8
@@ -124,15 +124,15 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.12"
-      - name: lanceurs/installer.sh (comme sur un Mac)
+      - name: launchers/install.sh (comme sur un Mac)
         shell: bash
-        run: ./lanceurs/installer.sh
+        run: ./launchers/install.sh
       - name: Outils de test dans .venv
         run: .venv/bin/python -m pip install "pytest>=9,<10" "hypothesis>=6.100,<7"
       - name: Banc de non-regression
         env:
           PYTHONIOENCODING: utf-8
-        run: .venv/bin/python outils/banc.py comparer outils/banc_reference.json
+        run: .venv/bin/python tools/bench.py comparer tools/bench_reference.json
       - name: Tests (pytest)
         env:
           PYTHONIOENCODING: utf-8

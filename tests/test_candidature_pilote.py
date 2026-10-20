@@ -13,7 +13,7 @@ import json
 import pytest
 
 from jobhunter.navigation import confirmation
-from jobhunter.programmes import apply_runner as ar
+from jobhunter.programs import apply_runner as ar
 
 OFFRE = {"comp": "Acme", "role": "Analyste ESG", "url": "https://ats.example/job/1"}
 

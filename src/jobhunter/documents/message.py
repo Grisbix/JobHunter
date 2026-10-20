@@ -28,7 +28,7 @@ import re
 import sys
 from typing import Any, cast
 
-from jobhunter import racine as _racine
+from jobhunter import root as _racine
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -37,12 +37,12 @@ MSG_OUT = _racine.racine() / "Lettres" / "Messages"
 # All the texts come from the profile: domaines[] (hook, proof per
 # domain) and the "message" section (degree, languages, facts, sources).
 
-from jobhunter import paresseux as _paresseux
-from jobhunter import profil as _P
+from jobhunter import lazy as _paresseux
+from jobhunter import profile as _P
 
 _ici = sys.modules[__name__]
 # Values taken from the profile: computed on first read, not at import
-# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
+# (jobhunter.lazy). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -92,8 +92,8 @@ def preuve(offre: dict[str, Any], langue: str, ton: str = "sobre") -> str:
     Falls back on the per-domain sentence when the posting asks for nothing we can
     illustrate: a generic but true sentence is better than silence.
     """
-    from jobhunter.documents.commun import match_skills
-    from jobhunter.scoring.lexique import cv_variant_key
+    from jobhunter.documents.common import match_skills
+    from jobhunter.scoring.lexicon import cv_variant_key
 
     table = _ici.FAITS_EN if langue == "en" else _ici.FAITS_FR
     tete = _ici._TETE_EN if langue == "en" else _ici._TETE_FR
@@ -157,7 +157,7 @@ _PARESSEUX["_CONTEXTE_EN"] = lambda: dict(_ici._MSG.get("phrase_contexte_en") or
 
 def _phrase_durable(offre: dict[str, Any], langue: str, preuve_texte: str) -> str:
     """The context sentence, or "" if the posting does not call for it."""
-    from jobhunter.documents.lettre import contexte_durable
+    from jobhunter.documents.letter import contexte_durable
 
     if not contexte_durable(
         dict(
@@ -222,7 +222,7 @@ def _intro_role(offre: dict[str, Any], langue: str, ton: str = "sobre") -> str:
 #
 # The three real names all come from the V.I.E detail API, the only source
 # that returns `contactName`. Their number will grow as the V.I.E go
-# through `ajoute_vie.py`.
+# through `add_vie.py`.
 _RX_CIVILITE = re.compile(r"^\s*(monsieur|madame|mr|mrs|ms|mme|m)\.?\s+(.{2,})$", re.I)
 
 # NOBILIARY particles: lower case even at the head of a surname. "Monsieur de
@@ -421,9 +421,9 @@ def message(offre: dict[str, Any], langue: str | None = None, ton: str = "sobre"
 
 def _message(offre: dict[str, Any], langue: str | None = None, ton: str = "sobre") -> str:
     """The text to paste into the form. `ton`: sobre | detente."""
-    from jobhunter.documents.commun import minuscule_titre, titre_poste
-    from jobhunter.scoring.langue import langue_offre
-    from jobhunter.scoring.lexique import cv_variant_key
+    from jobhunter.documents.common import minuscule_titre, titre_poste
+    from jobhunter.scoring.language import langue_offre
+    from jobhunter.scoring.lexicon import cv_variant_key
 
     lg = langue or langue_offre(
         offre.get("poste"), offre.get("description"), offre.get("localisation")
@@ -500,7 +500,7 @@ def _un(nom: str) -> str:
 
 
 def _de_titre(t: str) -> str:
-    from jobhunter.documents.commun import _de
+    from jobhunter.documents.common import _de
 
     return _de(t) if t else "proposé"
 
@@ -530,8 +530,8 @@ def main() -> int:
     if not (a.url or a.contient):
         ap.error("donner --url ou --contient")
 
-    from jobhunter.programmes.rename_docs import new_name
-    from jobhunter.stockage import file as queue_io
+    from jobhunter.programs.rename_docs import new_name
+    from jobhunter.storage import queue as queue_io
 
     q = queue_io.charger()
     cibles = [

@@ -4,7 +4,7 @@ Why. The update downloads code from GitHub. HTTPS guarantees that it comes from
 GitHub, not that it comes from the author: a compromised account or workflow would
 publish a booby-trapped version that every installation would take. The signature is
 made **outside GitHub**, with a private key that never leaves the author's computer
-(`outils/signature.py`); the application only knows the public key, written here.
+(`tools/signature.py`); the application only knows the public key, written here.
 
 What is signed: the **manifest** of a version — its number, the SHA-256 fingerprint of
 each file of the program (the ZIP of the `v<version>` tag) and that of
@@ -24,7 +24,7 @@ import json
 from typing import Any
 
 # The author's public key (64 hexadecimal characters), set by
-# `python outils/signature.py cle`. Empty = unsigned versions.
+# `python tools/signature.py cle`. Empty = unsigned versions.
 CLE_PUBLIQUE = ""
 
 FICHIER = "signature.json"  # name of the release asset

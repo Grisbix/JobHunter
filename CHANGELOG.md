@@ -4,6 +4,28 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 2.25.0 — 2026-10-20
+
+- **Programs and files in English.** The packages and modules took English names
+  (`jobhunter.programmes` → `jobhunter.programs`, `stockage` → `storage`, `courriels` →
+  `mail`, `racine` → `root`, `chemins` → `paths`, `profil` → `profile`, `gele` →
+  `frozen`; programs such as `pipeline_quotidien` → `daily_pipeline`, `audit_dispo` →
+  `availability_audit`, `premier_lancement` → `first_launch`, `mise_a_jour` → `update`,
+  `relances` → `follow_ups`; the app's `fenetre` → `window`, `panneaux` → `panels`…).
+  The full table is `src/jobhunter/_old_names.py`.
+- **Commands in English**: `jobhunter collect`, `sort`, `regenerate`, `availability`,
+  `restore`, `yield`, `check`, `proofread`, `mail-statuses`, `apply`, `add`, `profile`,
+  `check-profile`, `show-profile`, `update`.
+- **Launchers and tools**: `lanceurs/` → `launchers/` (`install`, `start`, `schedule`,
+  `update`, in `.bat` and `.sh`), `outils/` → `tools/` (`bench.py`, `replay.py`,
+  `installer/`…).
+- **Nothing breaks.** The French names keep working: `jobhunter collecte`, `maj`,
+  `postuler`…, a program by its old file name (`jobhunter relances`), and in code
+  `import jobhunter.programmes.jutil` or `python -m jobhunter.programmes.x` reach the
+  same module as the new name. A collection already scheduled keeps working.
+- Your data (`Scripts/`, `profil/`, `Mon_CV/`, `CV/`, `Lettres/`) and the profile's keys
+  do not change in this version.
+
 ## 2.24.0 — 2026-10-20
 
 - **A tidier folder.** The eight double-click tools (`installer`, `lancer`, `planifier`,

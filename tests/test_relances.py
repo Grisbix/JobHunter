@@ -7,7 +7,7 @@ clearly that nothing is sent. Converted from Scripts/test_relances.py.
 
 import pytest
 
-from jobhunter.programmes import relances as R
+from jobhunter.programs import follow_ups as R
 
 A = {"entreprise": "Amundi", "poste": "Analyste ESG"}
 B = {"entreprise": "Covéa Finance", "poste": "Analyste PAI"}

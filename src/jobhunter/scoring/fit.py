@@ -27,15 +27,15 @@ except Exception:
 
 import importlib
 
-from jobhunter import paresseux as _paresseux
-from jobhunter import profil as _P
-from jobhunter import racine as _racine
-from jobhunter.chemins import CV_MODELES as CV_ATS
-from jobhunter.scoring.lexique import cv_variant_key, has_skill
+from jobhunter import lazy as _paresseux
+from jobhunter import profile as _P
+from jobhunter import root as _racine
+from jobhunter.paths import CV_MODELES as CV_ATS
+from jobhunter.scoring.lexicon import cv_variant_key, has_skill
 
 _ici = sys.modules[__name__]
 # Values taken from the profile: computed on first read, not at import
-# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
+# (jobhunter.lazy). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -43,10 +43,10 @@ def __getattr__(nom: str) -> Any:
     return _paresseux.lire(_ici, _PARESSEUX, nom)
 
 
-_PARESSEUX["CV_VARIANT"] = lambda: importlib.import_module("jobhunter.scoring.lexique").CV_VARIANT
+_PARESSEUX["CV_VARIANT"] = lambda: importlib.import_module("jobhunter.scoring.lexicon").CV_VARIANT
 
 
-_PARESSEUX["SKILL_LEX"] = lambda: importlib.import_module("jobhunter.scoring.lexique").SKILL_LEX
+_PARESSEUX["SKILL_LEX"] = lambda: importlib.import_module("jobhunter.scoring.lexicon").SKILL_LEX
 
 
 ROOT = _racine.racine()
@@ -676,7 +676,7 @@ def score_offer(offer: dict[str, Any]) -> dict[str, Any]:
 # `_ESG_TITLE_RX` started with a backspace, so "an explicitly ESG title
 # raises the cap to 10" NEVER applied. The core of the scoring
 # ran with its main rule dead, without anything reporting it.
-__import__("jobhunter.texte", fromlist=["x"]).verifier_motifs(globals(), minimum=4)
+__import__("jobhunter.text", fromlist=["x"]).verifier_motifs(globals(), minimum=4)
 
 if __name__ == "__main__":
     print("Module de scoring (score_offer/fit_score). CLI : rescore_ats.py")

@@ -5,8 +5,8 @@ import zipfile
 
 import pytest
 
-from jobhunter.programmes import mise_a_jour
-from jobhunter.reseau import exiger_http
+from jobhunter.network import exiger_http
+from jobhunter.programs import update as mise_a_jour
 
 
 @pytest.mark.parametrize(

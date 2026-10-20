@@ -7,7 +7,7 @@ tableau, donnees, fiche, actions, panneaux, detail, execution: one mixin per dom
 
 FACADE (jobhunter._facade): the package sees the names of its submodules (`app.App`,
 `app.COLS`); replacing `app.SUIVI` reaches the module that defines it. Loading the
-package reads the profile: the launcher calls `jobhunter.accueil.assurer_profil()` first.
+package reads the profile: the launcher calls `jobhunter.welcome.assurer_profil()` first.
 """
 
 from jobhunter import _facade
@@ -15,15 +15,15 @@ from jobhunter import _facade
 _MODULES = _facade.installer(
     __name__,
     (
-        "commun",
+        "common",
         "theme",
-        "tableau",
-        "donnees",
-        "fiche",
+        "table",
+        "data",
+        "card",
         "actions",
-        "panneaux",
+        "panels",
         "detail",
         "execution",
-        "fenetre",
+        "window",
     ),
 )

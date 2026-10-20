@@ -6,9 +6,9 @@ Partie de jobhunter.sources (ancien Scripts/job_sources.py, phase 3.4).
 import time
 from typing import Any
 
-from jobhunter import journal as _journal
-from jobhunter.sources import commun as _commun
-from jobhunter.sources.commun import HERE, UA, _mk, title_ok
+from jobhunter import log as _journal
+from jobhunter.sources import common as _commun
+from jobhunter.sources.common import HERE, UA, _mk, title_ok
 
 _log = _journal.journal(__name__)
 

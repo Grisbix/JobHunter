@@ -14,7 +14,20 @@ from conftest import EXEMPLE, SRC
 
 import jobhunter.navigation as paquet
 from jobhunter import navigation as web_nav
-from jobhunter.navigation import carrieres, formulaires, navigateur, page, segment, strategies
+from jobhunter.navigation import (
+    browser as navigateur,
+)
+from jobhunter.navigation import (
+    careers as carrieres,
+)
+from jobhunter.navigation import (
+    forms as formulaires,
+)
+from jobhunter.navigation import (
+    page,
+    segment,
+    strategies,
+)
 from jobhunter.navigation import strategies as site_strategies
 
 SOUS_MODULES = [

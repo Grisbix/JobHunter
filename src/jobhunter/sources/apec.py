@@ -7,10 +7,10 @@ import json
 import time
 from typing import Any
 
-from jobhunter import journal as _journal
-from jobhunter.reseau import exiger_http
-from jobhunter.sources import commun as _commun
-from jobhunter.sources.commun import (
+from jobhunter import log as _journal
+from jobhunter.network import exiger_http
+from jobhunter.sources import common as _commun
+from jobhunter.sources.common import (
     INCIDENTS,
     UA,
     _lire_borne,

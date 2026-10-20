@@ -10,12 +10,12 @@ import time
 from typing import Any, NoReturn
 from urllib.parse import quote
 
-from jobhunter import journal as _journal
-from jobhunter import paresseux as _paresseux
-from jobhunter.reseau import exiger_http
+from jobhunter import lazy as _paresseux
+from jobhunter import log as _journal
+from jobhunter.network import exiger_http
 from jobhunter.scoring import zones as _zones
-from jobhunter.sources import commun as _commun
-from jobhunter.sources.commun import (
+from jobhunter.sources import common as _commun
+from jobhunter.sources.common import (
     HERE,
     INCIDENTS,
     _lire_borne,
@@ -30,7 +30,7 @@ _log = _journal.journal(__name__)
 
 _ici = sys.modules[__name__]
 # Values taken from the profile: computed on first read, not at import
-# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
+# (jobhunter.lazy). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 

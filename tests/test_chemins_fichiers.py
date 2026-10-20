@@ -1,4 +1,4 @@
-"""Document paths <-> file:/// URLs (jobhunter.liens), on Windows AND on macOS/Linux.
+"""Document paths <-> file:/// URLs (jobhunter.links), on Windows AND on macOS/Linux.
 
 The macOS CI job (20/10) found it: `chemin_de("file:///Users/x/cv.pdf")` returned the
 relative path `Users/x/cv.pdf`, so a CV linked by a standard URL was "not found" on a
@@ -10,7 +10,7 @@ from pathlib import Path, PurePosixPath
 
 import pytest
 
-from jobhunter.liens import chemin_de, url_de
+from jobhunter.links import chemin_de, url_de
 
 
 @pytest.mark.parametrize(

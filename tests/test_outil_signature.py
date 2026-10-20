@@ -1,4 +1,4 @@
-"""outils/signature.py: the private key stays out of the repository, the signature produced is valid."""
+"""tools/signature.py: the private key stays out of the repository, the signature produced is valid."""
 
 import hashlib
 import importlib.util
@@ -8,13 +8,13 @@ from conftest import RACINE
 from test_mise_a_jour import V13, zip_de
 
 from jobhunter import signature as sig
-from jobhunter.programmes import mise_a_jour as maj
+from jobhunter.programs import update as maj
 
 
 @pytest.fixture
 def outil(tmp_path, monkeypatch):
     spec = importlib.util.spec_from_file_location(
-        "outil_signature", RACINE / "outils" / "signature.py"
+        "outil_signature", RACINE / "tools" / "signature.py"
     )
     assert spec and spec.loader
     m = importlib.util.module_from_spec(spec)

@@ -9,7 +9,7 @@ import pytest
 from test_mise_a_jour import V12, V13, installer, lire, zip_de  # noqa: F401 (installer : fixture)
 
 from jobhunter import signature as sig
-from jobhunter.programmes import mise_a_jour as maj
+from jobhunter.programs import update as maj
 
 SECRET = bytes(range(1, 33))
 CLE = sig.publique(SECRET).hex()

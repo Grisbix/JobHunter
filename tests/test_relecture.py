@@ -2,7 +2,7 @@
 
 import pytest
 
-from jobhunter.documents.relecture import relire
+from jobhunter.documents.proofreading import relire
 
 EN_TETE = "Prénom Nom\nprenom@exemple.fr\n06 00 00 00 00\n\nObjet : candidature\n\n"
 

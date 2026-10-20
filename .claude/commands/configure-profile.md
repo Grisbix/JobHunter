@@ -27,7 +27,7 @@ CV given: $ARGUMENTS
 
 1. **The CV.** If it is not given above, ask for its path. Prefer a `.docx`:
    it is the template for all the CVs sent (a PDF is sent as is). Read its text:
-   `python -c "import sys;sys.path.insert(0,'Scripts');import premier_lancement as p;print(p.lire_cv(__import__('pathlib').Path(r'CHEMIN')))"`.
+   `python -c "import sys;sys.path.insert(0,'Scripts');import first_launch as p;print(p.lire_cv(__import__('pathlib').Path(r'CHEMIN')))"`.
 
 2. **The questions**, in a single message, with your proposals drawn from the CV:
    - target professions (2 to 5 job titles, as they appear in postings);
@@ -40,7 +40,7 @@ CV given: $ARGUMENTS
 
 3. **The skeleton.** Run (add `--force` if a profile exists, after agreement):
    ```bash
-   python -m jobhunter profil "<cv>" --metiers "<m1, m2>" --annees <n> --genre <m|f> --prioritaires "<secteurs>" --secondaires "<secteurs>" --entreprises <o|n>
+   python -m jobhunter profile "<cv>" --metiers "<m1, m2>" --annees <n> --genre <m|f> --prioritaires "<secteurs>" --secondaires "<secteurs>" --entreprises <o|n>
    ```
    Known sectors: `python -c "import sys;sys.path.insert(0,'Scripts');import zones;print(list(zones.CATALOGUE))"`.
    A city missing from the catalogue is declared in the profile's `zones`, as an object
@@ -70,15 +70,15 @@ CV given: $ARGUMENTS
 
 5. **Verify.**
    ```bash
-   python -m jobhunter voir-profil
-   python -m jobhunter verifier-profil "<intitulé visé 1>" "<intitulé visé 2>" "<intitulé voisin hors cible>" "<intitulé senior du métier>"
+   python -m jobhunter show-profile
+   python -m jobhunter check-profile "<intitulé visé 1>" "<intitulé visé 2>" "<intitulé voisin hors cible>" "<intitulé senior du métier>"
    ```
    Expected: the target titles are `garde` (kept), in the right domain, with the highest
    score; the out-of-target ones are `ECARTE` (discarded) or scored low; the senior one is penalised if the
    person is junior. The score is computed on the title alone: a real offer,
    scored with its description, goes higher. Fix the profile and start again
    until it is right.
-   Then a real trial, writing nothing: `python -m jobhunter collecte --linkedin --dry`.
+   Then a real trial, writing nothing: `python -m jobhunter collect --linkedin --dry`.
    Look at the titles kept: if they overflow or are missing, adjust `filtre_titre` and
    `collecte.mots_cles`.
 

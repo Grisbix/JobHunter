@@ -30,13 +30,13 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from jobhunter import journal as _journal
+from jobhunter import log as _journal
 
 _log = _journal.journal(__name__)
 
 
 def _chemin() -> Path:
-    from jobhunter import chemins
+    from jobhunter import paths as chemins
 
     return chemins.ROOT / "CV" / "Faits.json"
 

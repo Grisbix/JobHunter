@@ -10,15 +10,16 @@ import queue
 import pytest
 
 from jobhunter import sources as J
-from jobhunter.stockage import atomique, verrou
-from jobhunter.stockage import file as queue_io
-from jobhunter.stockage import suivi as suivi_io
+from jobhunter.storage import applications as suivi_io
+from jobhunter.storage import atomic as atomique
+from jobhunter.storage import lock as verrou
+from jobhunter.storage import queue as queue_io
 
 # ── P1 — the link check no longer overwrites a concurrent collection ─────────
 
 
 def test_controle_des_liens_garde_un_ajout_concurrent(tmp_path):
-    from jobhunter.programmes import queue_tools
+    from jobhunter.programs import queue_tools
 
     f = tmp_path / "q.json"
     atomique.ecrire_json(f, [{"entreprise": "A", "poste": "x", "url": "https://a.test/1"}])
@@ -35,7 +36,7 @@ def test_controle_des_liens_garde_un_ajout_concurrent(tmp_path):
 
 
 def test_purge_des_liens_morts_epargne_le_suivi(tmp_path, suivi_temporaire):
-    from jobhunter.programmes import queue_tools
+    from jobhunter.programs import queue_tools
 
     f = tmp_path / "q.json"
     atomique.ecrire_json(

@@ -1,4 +1,4 @@
-"""Application installed without Python (jobhunter.gele) and browser fallback."""
+"""Application installed without Python (jobhunter.frozen) and browser fallback."""
 
 import sys
 from pathlib import Path
@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from jobhunter import gele
-from jobhunter.navigation.navigateur import lancer
+from jobhunter import frozen as gele
+from jobhunter.navigation.browser import lancer
 
 
 # Forward slashes: a backslash is not a separator on macOS/Linux, where `Path(r"C:\x")`
@@ -60,10 +60,10 @@ def test_aiguiller_module(monkeypatch):
         raise SystemExit(3)
 
     monkeypatch.setattr(gele.runpy, "run_module", faux)
-    assert gele.aiguiller(["-m", "jobhunter.programmes.x", "--a", "1"]) == 3
+    assert gele.aiguiller(["-m", "jobhunter.programs.x", "--a", "1"]) == 3
     assert vu == {
-        "module": "jobhunter.programmes.x",
-        "argv": ["jobhunter.programmes.x", "--a", "1"],
+        "module": "jobhunter.programs.x",
+        "argv": ["jobhunter.programs.x", "--a", "1"],
     }
 
 

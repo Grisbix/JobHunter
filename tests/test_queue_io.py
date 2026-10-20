@@ -12,8 +12,8 @@ import sys
 import pytest
 from conftest import SRC
 
-from jobhunter.programmes import jutil
-from jobhunter.stockage import file as queue_io
+from jobhunter.programs import util as jutil
+from jobhunter.storage import queue as queue_io
 
 
 @pytest.fixture
@@ -26,7 +26,7 @@ def q(tmp_path):
 def autre_processus(chemin):
     """ANOTHER process tries to take the lock; returns "True" or "False"."""
     sonde = (
-        f"import sys, pathlib; sys.path.insert(0, r'{SRC}'); from jobhunter.programmes import jutil;"
+        f"import sys, pathlib; sys.path.insert(0, r'{SRC}'); from jobhunter.programs import jutil;"
         f"print(jutil.prendre_verrou(pathlib.Path(r'{chemin}'), attente=2, bavard=False))"
     )
     r = subprocess.run([sys.executable, "-c", sonde], capture_output=True, text=True)

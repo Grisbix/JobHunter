@@ -22,10 +22,10 @@ import pytest
 os.environ["JOBHUNTER_SANS_FOND"] = "1"
 os.environ.pop("JOBHUNTER_ACTION", None)
 import jobhunter.app as ui  # noqa: E402
-from jobhunter.app import commun as _commun  # noqa: E402
-from jobhunter.app import langue as _langue  # noqa: E402
-from jobhunter.app import panneaux as _panneaux  # noqa: E402
-from jobhunter.sources import commun as _sources_commun  # noqa: E402
+from jobhunter.app import common as _commun  # noqa: E402
+from jobhunter.app import language as _langue  # noqa: E402
+from jobhunter.app import panels as _panneaux  # noqa: E402
+from jobhunter.sources import common as _sources_commun  # noqa: E402
 
 BOUTONS = ["offres", "cv", "entreprises", "sites", "stats", "acces"]
 # The frame each button shows (None: the CV viewer, held in app.viewer).

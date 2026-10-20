@@ -13,7 +13,7 @@ RACINE = Path(__file__).resolve().parent.parent
 ADR = sorted(p.name for p in (RACINE / "docs" / "adr").glob("[0-9][0-9][0-9][0-9]-*.md"))
 CODE = [
     *RACINE.joinpath("src", "jobhunter").rglob("*.py"),
-    *RACINE.joinpath("outils").glob("*.py"),
+    *RACINE.joinpath("tools").glob("*.py"),
     RACINE / "JobHunter.pyw",
 ]
 CITATIONS = {

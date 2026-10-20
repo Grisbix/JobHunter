@@ -1,4 +1,4 @@
-"""No personal data in the public repository (outils/donnees_perso.py)."""
+"""No personal data in the public repository (tools/personal_data.py)."""
 
 import importlib.util
 import pathlib
@@ -8,7 +8,7 @@ import pytest
 
 RACINE = pathlib.Path(__file__).resolve().parent.parent
 _spec = importlib.util.spec_from_file_location(
-    "donnees_perso", RACINE / "outils" / "donnees_perso.py"
+    "donnees_perso", RACINE / "tools" / "personal_data.py"
 )
 assert _spec and _spec.loader
 dp = importlib.util.module_from_spec(_spec)
@@ -42,7 +42,7 @@ def test_aucun_fichier_suivi_n_est_une_donnee_perso():
         "CV/Sur_mesure/x.docx",
         "Mon_CV/mon_CV.docx",
         "docs/mon_cv.pdf",
-        "outils/apply_profile.json",
+        "tools/apply_profile.json",
     ],
 )
 def test_refuse(chemin):
@@ -57,7 +57,7 @@ def test_refuse(chemin):
         "Scripts/sources_config.json",
         "Mon_CV/LISEZ-MOI.txt",
         "docs/screenshots/offers.png",
-        "src/jobhunter/stockage/suivi.py",
+        "src/jobhunter/storage/applications.py",
         "tests/reponses/lever.json",
     ],
 )

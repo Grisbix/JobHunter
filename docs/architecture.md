@@ -8,7 +8,7 @@ choice has its own ADR in [`docs/adr/`](adr/); the plan that led here is
 
 ```
                  profil/profil.json  (identity, jobs, keywords, scoring, texts)
-                          │  read by jobhunter.profil
+                          │  read by jobhunter.profile
                           ▼
   ┌────────────── collection ────────────┐     ┌──── triage and scoring ─────┐
   │ jobhunter.sources                    │     │ jobhunter.scoring           │
@@ -19,10 +19,10 @@ choice has its own ADR in [`docs/adr/`](adr/); the plan that led here is
   │  fusion ── dedupes, scores, writes ──┼──┐  └─────────────────────────────┘
   └──────────────────────────────────────┘  │
                                             ▼
-                         Scripts/apply_queue.json  ◀── jobhunter.stockage.file
+                         Scripts/apply_queue.json  ◀── jobhunter.storage.queue
                          Scripts/descriptions.json      (lock, atomic write,
                          Scripts/suivi.json        ◀──   descriptions apart)
-                                            │          jobhunter.stockage.suivi
+                                            │          jobhunter.storage.applications
              ┌──────────────────────────────┼───────────────────────────┐
              ▼                              ▼                           ▼
   ┌── documents ──────────┐   ┌── application ─────────┐   ┌── navigation ──────────┐
@@ -39,25 +39,25 @@ choice has its own ADR in [`docs/adr/`](adr/); the plan that led here is
 
 | Package | Role | Depends on |
 |---|---|---|
-| `jobhunter.racine` | installation root (marker `Scripts/` + `profil/`, or `JOBHUNTER_RACINE`) | — |
-| `jobhunter.profil` | reading the profile, patterns compiled from its lists; `utiliser()` injects a profile | racine, paresseux |
-| `jobhunter.paresseux` | module values computed on first read ([ADR 0007](adr/0007-lazy-profile-values.md)) | — |
-| `jobhunter.journal` | the engine's `logging`: console unchanged, one timestamped file per run | — |
-| `jobhunter.reseau` | HTTP requests bounded in total duration, shared client, `INCIDENTS` counter of refusals | — |
-| `jobhunter.texte`, `liens` | text normalisation, paths ↔ `file:///` | — |
-| `jobhunter.stockage` | queue, descriptions, tracking: lock, atomicity | racine |
+| `jobhunter.root` | installation root (marker `Scripts/` + `profil/`, or `JOBHUNTER_RACINE`) | — |
+| `jobhunter.profile` | reading the profile, patterns compiled from its lists; `utiliser()` injects a profile | racine, paresseux |
+| `jobhunter.lazy` | module values computed on first read ([ADR 0007](adr/0007-lazy-profile-values.md)) | — |
+| `jobhunter.log` | the engine's `logging`: console unchanged, one timestamped file per run | — |
+| `jobhunter.network` | HTTP requests bounded in total duration, shared client, `INCIDENTS` counter of refusals | — |
+| `jobhunter.text`, `liens` | text normalisation, paths ↔ `file:///` | — |
+| `jobhunter.storage` | queue, descriptions, tracking: lock, atomicity | racine |
 | `jobhunter.scoring` | score, language, zones, domain, triage | profil, texte, chemins |
 | `jobhunter.sources` | collection per source, merge into the queue | reseau, scoring, stockage |
 | `jobhunter.documents` | CV, letter, short message, PDF | profil, scoring.lexique, chemins |
 | `jobhunter.navigation` | Playwright: from the company's site to the filled-in form | racine |
 | `jobhunter.app` | the desktop application (customtkinter) | everything above |
-| `jobhunter.programmes` | the programs (pipeline, documents, application, audits, probes) | everything above |
+| `jobhunter.programs` | the programs (pipeline, documents, application, audits, probes) | everything above |
 | `jobhunter.cli` | `python -m jobhunter <commande>`, and any program by its name | racine |
 
 Dependencies go in one direction only (from top to bottom of the table). A few deferred
-imports towards `jobhunter.programmes` remain, marked `TRANSITION` in the code:
-`doublons`, `rejets_tri`, `exclusions`, `wtj_desc`, `enrich_homepages`, `relances`,
-`mise_a_jour`.
+imports towards `jobhunter.programs` remain, marked `TRANSITION` in the code:
+`duplicates`, `sort_rejections`, `exclusions`, `wtj_desc`, `enrich_homepages`, `follow_ups`,
+`update`.
 
 **Running without installing**: `python JobHunter.pyw` (the application) or
 `python JobHunter.pyw <commande>`; it is the only file that adds `src/` to the import
@@ -82,8 +82,8 @@ A program that finds the queue locked exits with **code 3** without modifying an
 
 ## The daily pipeline
 
-`jobhunter.programmes.pipeline_quotidien` (`python JobHunter.pyw pipeline`), launched every
-morning by the task that `lanceurs/planifier.bat` sets up:
+`jobhunter.programs.daily_pipeline` (`python JobHunter.pyw pipeline`), launched every
+morning by the task that `launchers/schedule.bat` sets up:
 
 1. **collection**, in five passes each merged (ATS/Workday/V.I.E; LinkedIn;
    eFC/EURES; APEC/France Travail/Adzuna/Jooble; Glassdoor/WTJ) — a pass that exceeds
@@ -98,7 +98,7 @@ A backup of the queue, the descriptions and the scans is made before any step
 
 Logs: `Scripts/_logs/pipeline_<date>_<heure>.log` keeps the console of each step;
 `…_moteur.log` beside it keeps the engine's messages with time, level and module
-(`jobhunter.journal`, variable `JOBHUNTER_JOURNAL`). In the engine, `print` is reserved for
+(`jobhunter.log`, variable `JOBHUNTER_JOURNAL`). In the engine, `print` is reserved for
 command output (`main()`); everything else goes through `logging`.
 
 ## Network: what is allowed
@@ -119,7 +119,7 @@ files (aliases of these modules) were removed in 2.0.
 
 ## Checking that a change changes nothing
 
-- `outils/banc.py comparer outils/banc_reference.json`: 384 fictitious offers, every
+- `tools/bench.py comparer tools/bench_reference.json`: 384 fictitious offers, every
   decision (title kept, score, domain, triage, zone, country, contract, language, message, letter
   and CV) compared to the reference. 0 differences expected ([ADR 0006](adr/0006-non-regression-bench.md)).
 - `pytest`: ~1,450 tests without network; `mypy`: strict on the core.

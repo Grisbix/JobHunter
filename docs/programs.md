@@ -1,10 +1,10 @@
 # The programs — what does what
 
 Formerly `Scripts/README.md`. Since 2.0, the programs live in
-`src/jobhunter/programmes/` (and the engine in the other packages of `src/jobhunter`);
+`src/jobhunter/programs/` (and the engine in the other packages of `src/jobhunter`);
 `Scripts/` keeps only the data. The names below are the historical file names:
 `job_sources.py` is `jobhunter.sources`, `queue_io.py` is
-`jobhunter.stockage.file`, `web_nav.py` is `jobhunter.navigation`, etc.
+`jobhunter.storage.queue`, `web_nav.py` is `jobhunter.navigation`, etc.
 (`docs/architecture.md`).
 
 **Daily entry point: the app (`JobHunter.pyw`).** Almost everything here is called by
@@ -32,7 +32,7 @@ found again by the scan tomorrow; a lost application never comes back.
 |---|---|
 | `web_nav.py` | Web navigation (Playwright): cookies, ATS detection, offer search, fallback to the career page. 3400 lines, the biggest piece. |
 | `site_strategies.py` | Per-site strategies for the 62 sites without an account. |
-| `jutil.py` | **Atomic** JSON writing (tmp + `os.replace`), inter-process lock (breaks that of a dead process), and the shared helpers: `chemin_de`, `url_de`, `existe`, `sans_accent`, `cle`. |
+| `util.py` | **Atomic** JSON writing (tmp + `os.replace`), inter-process lock (breaks that of a dead process), and the shared helpers: `chemin_de`, `url_de`, `existe`, `sans_accent`, `cle`. |
 | `queue_io.py` | **The only access path to `apply_queue.json`.** `charger()` to read, `transaction()` to write (lock + fresh re-read + atomic write). Separates the descriptions into `descriptions.json`. |
 | `suivi_io.py` | **The only access path to `suivi.json`** — the applications, the project's least reconstructible data. Same contract as `queue_io`: `charger()`, `transaction()`, `modifier()`, `poser()`. |
 | `ats_match.py` | **The scoring.** Six weighted axes (ESG ×3, finance ×2, AI ×1.5), cap by ESG density, seniority and experience penalty. |
@@ -45,7 +45,7 @@ found again by the scan tomorrow; a lost application never comes back.
 | `job_sources.py` | Broad scan — ATS APIs, public LinkedIn, V.I.E, FIR, Talent, France Travail, WTJ — **and merge** into the queue. Writes `offres_scan.json`. |
 | `add_offer.py` | Paste an offer link → analyses the page → queue + CV/letter. |
 | `probe_ats.py` | Tests candidate slugs on the 5 public ATS APIs. |
-| `probe_carrieres.py` | **Finds the real career page** of each site and **the ATS behind it**. Reads the home page (the site itself says where it recruits), then the sitemap, then guesses — in that order. Writes `carrieres_detectees.json`. |
+| `probe_careers.py` | **Finds the real career page** of each site and **the ATS behind it**. Reads the home page (the site itself says where it recruits), then the sitemap, then guesses — in that order. Writes `carrieres_detectees.json`. |
 | `probe_workday.py` | Finds the public Workday feeds of large groups. |
 | `probe_keywords.py` | Measures the **real yield** of a search keyword. |
 | `setup_francetravail.py` | Installs and checks the France Travail API credentials. |
@@ -61,8 +61,8 @@ found again by the scan tomorrow; a lost application never comes back.
 | `enrich_homepages.py` | Finds the home page of companies without an offer URL. |
 | `link_check.py` | Checks the URLs (live / dead / soft-404). Module. |
 | `recheck_dead.py` | Soft-404s rendered in JavaScript (HTTP 200 but empty body). |
-| `audit_dispo.py` | Checks the whole queue without a browser and removes closed offers; waits and resumes on 429; `--duree` stops it by itself before removing. Step 4b of the pipeline, on Sunday. |
-| `restaurer.py` | Puts the queue back as it was in a backup (daily, before the audit, before the sort): `--liste`, then a name; inspection by default, `--appliquer` writes. Never restores the tracker, keeps the tracked offers, loses no description, and copies the state before so the restoration can be undone. `jobhunter restaurer`. |
+| `availability_audit.py` | Checks the whole queue without a browser and removes closed offers; waits and resumes on 429; `--duree` stops it by itself before removing. Step 4b of the pipeline, on Sunday. |
+| `restore.py` | Puts the queue back as it was in a backup (daily, before the audit, before the sort): `--liste`, then a name; inspection by default, `--appliquer` writes. Never restores the tracker, keeps the tracked offers, loses no description, and copies the state before so the restoration can be undone. `jobhunter restore`. |
 | `queue_tools.py` | Queue maintenance. |
 | `rescore_ats.py` | Recomputes `ats_pct` and `skills_match` over the whole queue. |
 | `export_queue_csv.py` | Readable backup as CSV. |
@@ -82,16 +82,16 @@ found again by the scan tomorrow; a lost application never comes back.
 
 | Program | Role |
 |---|---|
-| `evaluation_classement.py` | The ranking against the judgements in the tracking: AUC and interval, precision of the top ones, worst errors; `--enregistrer` keeps a reference (`Scripts/_evaluation.json`). `python JobHunter.pyw evaluation`. Read-only. |
-| `rendement_sources.py` | Per-source report of the collections (log `Scripts/_rendement.jsonl`): returned, new, relevant, time, verdict (ok, nothing to take, limited, partial, refused). `python JobHunter.pyw rendement`. Read-only. |
-| `controle_dossiers.py` | Check of the application files before sending (read-only): readable PDF, one page, contact details, template filled in; prefers the up-to-date PDF over its .docx. Step 5b of the pipeline. `python JobHunter.pyw controle`. |
+| `ranking_evaluation.py` | The ranking against the judgements in the tracking: AUC and interval, precision of the top ones, worst errors; `--enregistrer` keeps a reference (`Scripts/_evaluation.json`). `python JobHunter.pyw evaluation`. Read-only. |
+| `source_yield.py` | Per-source report of the collections (log `Scripts/_rendement.jsonl`): returned, new, relevant, time, verdict (ok, nothing to take, limited, partial, refused). `python JobHunter.pyw yield`. Read-only. |
+| `check_folders.py` | Check of the application files before sending (read-only): readable PDF, one page, contact details, template filled in; prefers the up-to-date PDF over its .docx. Step 5b of the pipeline. `python JobHunter.pyw check`. |
 | `apply_runner.py` | Fills in the forms, **semi-automatic**: the final click to send remains yours. Driven by the Candidatures panel of the app (`--pilote`) or by keyboard; after "envoyé" (sent), observes the page and writes the tracking with the proof (`envoi` confirmed / uncertain, screenshot in `Scripts/_preuves/`). |
-| `statuts_mail.py` | Statuses proposed from the emails received (rejection, interview, acknowledgement of receipt), **validated one by one**: `jobhunter statuts-mail --mbox …` (Google Takeout export), `--eml <dossier>` or `--gmail` (read-only API, OAuth client created by the user in `Scripts/gmail_client.json`, token in `Scripts/gmail_token.json`, `pip install "jobhunter[gmail]"`). The status only moves downstream; the entry keeps the quoted email (`courriel`). Window in the app: Maintenance → "Statuts depuis mes courriels…" (Statuses from my emails…). Engine: `jobhunter.courriels`. |
-| `relances.py` | D+7 / D+10 follow-up emails per offer. `--brouillons` prepares those of all the follow-ups due, opening nothing and sending nothing: Windows task `Relances`, on Monday at 9:30, report in the vault (`Routines/Relances/`). |
-| `metriques_hebdo.py` | Report of the week, read-only: applications sent, to follow up, replies, pipeline merges and days without a run. Launched on Sunday at 21:00 by the Windows task `Metriques_Emploi`; output in the vault, `Routines/Metriques_Emploi/`. |
+| `mail_statuses.py` | Statuses proposed from the emails received (rejection, interview, acknowledgement of receipt), **validated one by one**: `jobhunter mail-statuses --mbox …` (Google Takeout export), `--eml <dossier>` or `--gmail` (read-only API, OAuth client created by the user in `Scripts/gmail_client.json`, token in `Scripts/gmail_token.json`, `pip install "jobhunter[gmail]"`). The status only moves downstream; the entry keeps the quoted email (`courriel`). Window in the app: Maintenance → "Statuts depuis mes courriels…" (Statuses from my emails…). Engine: `jobhunter.mail`. |
+| `follow_ups.py` | D+7 / D+10 follow-up emails per offer. `--brouillons` prepares those of all the follow-ups due, opening nothing and sending nothing: Windows task `Relances`, on Monday at 9:30, report in the vault (`Routines/Relances/`). |
+| `weekly_metrics.py` | Report of the week, read-only: applications sent, to follow up, replies, pipeline merges and days without a run. Launched on Sunday at 21:00 by the Windows task `Metriques_Emploi`; output in the vault, `Routines/Metriques_Emploi/`. |
 | `notify_matches.py` | Windows alert when a high-fit offer arrives. |
-| `acces.py` | Manages access to the sites **without ever storing a password**. |
-| `test_acces_sites.py` | Measures which sites of the queue can be opened. |
+| `access.py` | Manages access to the sites **without ever storing a password**. |
+| `test_site_access.py` | Measures which sites of the queue can be opened. |
 
 ## Tests
 
@@ -170,12 +170,12 @@ stays silent, though, because a dead slug is the normal case.
 
 **Return only the lock you took.** `prendre_verrou` is reentrant, `rendre_verrou`
 is not. A function that takes then returns it, when its caller held it for the whole
-program (`jutil.garder`), removes it from the caller — and the rest of the work is done unprotected.
-`jutil.tenu(chemin)` answers before taking.
+program (`util.garder`), removes it from the caller — and the rest of the work is done unprotected.
+`util.tenu(chemin)` answers before taking.
 
 **Writing a memory snapshot overwrites the work of others.** The app kept `suivi.json`
 in memory and rewrote it IN FULL on every click. A "applied" on one offer therefore erased
-the follow-ups that `relances.py` had just noted on others — without a word. One writes
+the follow-ups that `follow_ups.py` had just noted on others — without a word. One writes
 one entry, under lock, on the state re-read inside the lock: this is what
 `suivi_io.poser` does. Tested by `test_suivi.py`.
 

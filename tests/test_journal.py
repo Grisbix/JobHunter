@@ -1,8 +1,8 @@
-"""Engine logs (jobhunter.journal)."""
+"""Engine logs (jobhunter.log)."""
 
 import logging
 
-from jobhunter import journal
+from jobhunter import log as journal
 
 
 def test_la_console_affiche_le_message_seul_sur_la_sortie_du_moment(capsys):

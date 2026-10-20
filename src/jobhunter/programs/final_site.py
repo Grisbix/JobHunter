@@ -1,0 +1,545 @@
+#!/usr/bin/env python3
+"""site_final.py — Find a LinkedIn offer again on the employer's site.
+
+WHY. 7265 offers of the queue out of 8805 only have a LinkedIn link (2026-10-05), 616
+of them with fit >= 9. LinkedIn only shows the link to the employer's site to a
+LOGGED-IN account: the public page says "Inscrivez-vous pour postuler", and its HTML
+contains no outgoing address (checked on two Deloitte offers). We do not log in: an
+account driven by a program gets restricted, and no program handles a password here.
+
+So we take the other end: the public ATS APIs (Greenhouse, Lever, Ashby, Recruitee,
+SmartRecruiters), which return as JSON the list of a company's offers with their direct
+URL. For each company:
+  1. its known feeds (job_sources.ATS_SLUGS, previous state), otherwise we probe
+     plausible slugs (probe_ats_queue.variantes x 5 APIs);
+  2. we CHECK that the feed is really that company's (verify_ats_slugs: "alan" on
+     Ashby is not necessarily the employer "Alan") — only a CONFIRME verdict counts;
+  3. we look for the title in the feed; found -> the offer takes the final site's
+     URL, the LinkedIn URL is kept in `url_linkedin`.
+
+AN ABSENCE DOES NOT PROVE A CLOSURE. A SmartRecruiters feed is capped at 100 offers per
+page, a subsidiary publishes elsewhere, a title is reworded. An offer missing from a
+confirmed feed is only NOTED (`final_site` = "absente du flux"), never removed.
+
+State: `_site_final.json`, one entry per company (feeds found, date). A company without
+a feed is only probed again after 30 days.
+
+Run:
+  python JobHunter.pyw site_final --dry               # measures, writes nothing in the queue
+  python JobHunter.pyw site_final                     # fit >= 9
+  python JobHunter.pyw site_final --fit 8 --limite 100
+"""
+
+import argparse
+import concurrent.futures as cf
+import datetime
+import json
+import re
+import sys
+import time
+import unicodedata
+
+from jobhunter import root as _racine
+
+HERE = _racine.scripts()
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
+
+from jobhunter.programs import probe_ats  # noqa: E402
+from jobhunter.programs.probe_ats_queue import variantes  # noqa: E402
+from jobhunter.programs.verify_ats_slugs import _cle, nom_du_flux, verdict  # noqa: E402
+from jobhunter.storage import queue as queue_io  # noqa: E402
+
+ETAT = HERE / "_site_final.json"
+RESONDE_JOURS = 30
+
+UA = probe_ats.UA
+
+# Mentions that do not belong to the title: gender, contract, place.
+_RX_GENRE = re.compile(
+    r"[(\[]?\s*\b(?:h\s*/\s*f|f\s*/\s*h|m\s*/\s*f(?:\s*/\s*[dx])?|"
+    r"f\s*/\s*m(?:\s*/\s*[dx])?|w\s*/\s*m(?:\s*/\s*[dx])?|"
+    r"m\s*/\s*w(?:\s*/\s*d)?|all\s+genders?|d\s*/\s*f\s*/\s*m)\b\s*[)\]]?",
+    re.I,
+)
+_RX_BRUIT = re.compile(
+    r"\b(?:cdi|cdd|stage|internship|alternance|vie|v\.i\.e|"
+    r"paris|la\s+d[ée]fense|lyon|france|remote|hybrid|hybride)\b",
+    re.I,
+)
+
+
+_VIDES = {
+    "de",
+    "du",
+    "des",
+    "d",
+    "la",
+    "le",
+    "les",
+    "l",
+    "en",
+    "et",
+    "a",
+    "au",
+    "aux",
+    "and",
+    "of",
+    "the",
+    "for",
+    "in",
+    "h",
+    "f",
+    "m",
+    "x",
+    "w",
+    "e",
+}
+
+
+def _sans_accent(s):
+    s = unicodedata.normalize("NFD", str(s or "").lower())
+    return "".join(c for c in s if not unicodedata.combining(c))
+
+
+def titre_cle(t):
+    """Title reduced to its words, to compare two publications of the same offer."""
+    t = _RX_GENRE.sub(" ", str(t or ""))
+    t = _RX_BRUIT.sub(" ", t)
+    return " ".join(re.split(r"[^a-z0-9]+", _sans_accent(t))).strip()
+
+
+def meme_titre(a, b):
+    """Do two titles designate the same posting? Strict: a false match would send the
+    user to apply to another job."""
+    # SAME WORDS, not "similar enough". A similarity ratio linked
+    # « Junior Energy Consultant » a l'annonce « Energy Consultant » (Baringa,
+    # 2026-10-05): a single word of difference, but two different jobs. Only the
+    # stop words and the order may vary.
+    ma, mb = set(titre_cle(a).split()) - _VIDES, set(titre_cle(b).split()) - _VIDES
+    return bool(ma) and ma == mb
+
+
+def lire_flux(kind, slug, requete=""):
+    """[(title, url, place)] of a feed, or None if unreadable."""
+    import httpx
+
+    if kind == "workday":
+        return lire_workday(slug, requete)
+    url = probe_ats.APIS[kind](slug)
+    if kind == "smartrecruiters" and requete:
+        from urllib.parse import quote
+
+        url += "&q=" + quote(requete)
+    try:
+        r = httpx.get(url, timeout=20, headers=UA, follow_redirects=True)
+        if r.status_code != 200:
+            return None
+        d = r.json()
+    except Exception:
+        return None
+    out = []
+    try:
+        if kind == "greenhouse":
+            for j in d.get("jobs", []):
+                out.append(
+                    (
+                        j.get("title", ""),
+                        j.get("absolute_url", ""),
+                        (j.get("location") or {}).get("name", ""),
+                    )
+                )
+        elif kind == "lever":
+            for j in d:
+                out.append(
+                    (
+                        j.get("text", ""),
+                        j.get("hostedUrl", ""),
+                        (j.get("categories") or {}).get("location", ""),
+                    )
+                )
+        elif kind == "ashby":
+            for j in d.get("jobs", []):
+                out.append((j.get("title", ""), j.get("jobUrl", ""), j.get("location", "")))
+        elif kind == "recruitee":
+            for j in d.get("offers", []):
+                out.append((j.get("title", ""), j.get("careers_url", ""), j.get("location", "")))
+        elif kind == "smartrecruiters":
+            for j in d.get("content", []):
+                jid = j.get("id") or ""
+                out.append(
+                    (
+                        j.get("name", ""),
+                        f"https://jobs.smartrecruiters.com/{slug}/{jid}" if jid else "",
+                        (j.get("location") or {}).get("city", ""),
+                    )
+                )
+    except Exception:
+        return None
+    return [x for x in out if x[0] and x[1]]
+
+
+# ═══════════════ Workday ═══════════════
+# Large groups publish on *.myworkdayjobs.com, whose JSON API is
+# public (the one their own page calls). Measured on 2026-10-07:
+#   - POST /wday/cxs/{tenant}/{site}/jobs on a non-existent site returns 404
+#     "not found: Job_Posting_Site_ID" if the tenant exists on that host,
+#     422 otherwise: one request per (tenant, host) is enough to find the tenant;
+#   - the site's name has no convention (ArdianCareers, erm_Careers,
+#     Eiffage_Careers) but it ignores case: we try the forms seen;
+#   - an offer's posting gives `hiringOrganization.name`, the employer's
+#     name: it is the proof of identity, in addition to the tenant.
+WD_HOTES = ["wd1", "wd3", "wd5", "wd10", "wd12", "wd103", "wd105", "wd108", "wd501"]
+_WD_SUFFIXES = [
+    "Careers",
+    "_Careers",
+    "_External",
+    "External",
+    "_External_Careers",
+    "ExternalCareers",
+    "_Careers_External",
+    "",
+    "Jobs",
+    "_Jobs",
+]
+_WD_GENERIQUES = [
+    "External",
+    "Careers",
+    "External_Careers",
+    "ExternalCareers",
+    "ExternalCareerSite",
+    "External_Career_Site",
+    "Global",
+    "Jobs",
+    "Search",
+    "Experienced",
+    "Professional",
+    "GlobalCareers",
+    "CareerSite",
+]
+_WD_JSON = {**UA, "Accept": "application/json", "Content-Type": "application/json"}
+
+
+def _wd_jobs(tenant, hote, site, texte="", limite=20):
+    """Raw response of the Workday search, or None if the network fails."""
+    import httpx
+
+    try:
+        return httpx.post(
+            f"https://{tenant}.{hote}.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs",
+            json={"appliedFacets": {}, "limit": limite, "offset": 0, "searchText": texte},
+            timeout=15,
+            headers=_WD_JSON,
+        )
+    except Exception:
+        return None
+
+
+def tenant_workday(tenant, hote):
+    r = _wd_jobs(tenant, hote, "zz_site_inexistant", limite=1)
+    return r is not None and r.status_code == 404 and "Job_Posting_Site_ID" in r.text
+
+
+def _wd_vitrine(tenant, hote, site):
+    """Text the Workday site shows about its employer: the "About
+    us" banner and the name served by its first offer. "" if unreadable."""
+    import httpx
+
+    base = f"https://{tenant}.{hote}.myworkdayjobs.com/wday/cxs/{tenant}/{site}"
+    morceaux = []
+    try:
+        # The TEXTS only: the image addresses ("/wday/cxs/erm/...")
+        # contain the tenant and would confirm any site.
+        for bloc in httpx.get(base + "/sidebar", timeout=15, headers=_WD_JSON).json() or []:
+            morceaux += [str(bloc.get(k) or "") for k in ("title", "text", "altText")]
+    except Exception:
+        pass
+    try:
+        chemin = _wd_jobs(tenant, hote, site, limite=1).json()["jobPostings"][0]["externalPath"]
+        d = httpx.get(base + chemin, timeout=15, headers=_WD_JSON).json()
+        morceaux.append((d.get("hiringOrganization") or {}).get("name") or "")
+    except Exception:
+        pass
+    return _sans_accent(re.sub(r"<[^>]+>", " ", " ".join(morceaux)))
+
+
+def mots_du_tenant(entreprise, tenant):
+    """The words of the company name the tenant is made of, or []:
+    "lombardodier" -> [lombard, odier] for "Lombard Odier"."""
+    mots = [m for m in re.split(r"[^a-z0-9]+", _sans_accent(entreprise)) if m]
+    cible = tenant.replace("-", "")
+    for i in range(len(mots)):
+        for j in range(i + 1, len(mots) + 1):
+            if "".join(mots[i:j]) == cible:
+                return mots[i:j]
+    return []
+
+
+def meme_employeur(entreprise, tenant, vitrine):
+    """Is the Workday site this company's? The tenant already comes
+    from its name; we also require the shop window to name it IN WHOLE WORDS.
+    Not `hiringOrganization` alone: it carries the legal entity, and Accenture
+    answers there "8140 ASOL - Gurugram Non STPI Company" (2026-10-07)."""
+    mots = mots_du_tenant(entreprise, tenant)
+    return (
+        bool(mots)
+        and re.search(r"\b" + r"\W+".join(map(re.escape, mots)) + r"\b", vitrine) is not None
+    )
+
+
+def flux_workday(entreprise):
+    """[["workday", "tenant.host/site"]] if the company publishes on Workday."""
+    compact = re.sub(r"[^a-z0-9]", "", _sans_accent(entreprise))
+    tenants = list(dict.fromkeys(([compact] if len(compact) >= 3 else []) + variantes(entreprise)))
+    for t in tenants:
+        for h in WD_HOTES:
+            if not tenant_workday(t, h):
+                continue
+            # "Lombard_Odier_Careers": the words of the name, joined by "_".
+            bases = list(
+                dict.fromkeys([t, "_".join(m.capitalize() for m in mots_du_tenant(entreprise, t))])
+            )
+            for site in [b + s for b in bases if b for s in _WD_SUFFIXES] + _WD_GENERIQUES:
+                r = _wd_jobs(t, h, site, limite=1)
+                try:
+                    ok = r is not None and r.status_code == 200 and (r.json() or {}).get("total")
+                except Exception:
+                    ok = False
+                if not ok:
+                    continue
+                if ("workday", f"{t}.{h}/{site}") in FAUX_FLUX:
+                    break
+                if meme_employeur(entreprise, t, _wd_vitrine(t, h, site)):
+                    return [["workday", f"{t}.{h}/{site}"]]
+                break  # the site exists but does not name the company
+    return []
+
+
+def lire_workday(slug, requete):
+    """[(title, url, place)] of the feed's offers that answer the query."""
+    tenant, reste = slug.split(".", 1)
+    hote, site = reste.split("/", 1)
+    r = _wd_jobs(tenant, hote, site, requete)
+    if r is None or r.status_code != 200:
+        return None
+    base = f"https://{tenant}.{hote}.myworkdayjobs.com/{site}"
+    return [
+        (j.get("title", ""), base + j["externalPath"], j.get("locationsText", ""))
+        for j in (r.json() or {}).get("jobPostings") or []
+        if j.get("title") and j.get("externalPath")
+    ]
+
+
+def coquille(postes):
+    """Demo feed: an ATS account opened then left empty keeps its
+    sample offers. Measured on 2026-10-07: google.recruitee.com only publishes
+    "Senior Marketer (Sample)" — it is not Google, the name was free.
+    ONE sample offer is enough: accenture.recruitee.com keeps one next to a
+    "sales executive" entered by hand; a real company deletes the sample."""
+    return any("(sample)" in t.lower() for t, *_ in postes)
+
+
+# Namesakes checked by hand: the name matches, the employer does not.
+# ashby:hatch is an American start-up, not Hatch the engineering firm (2026-10-07).
+# Probe of the consulting firms of 2026-10-08: lever:oliverwyman and ashby:andera are
+# start-up de San Francisco ; workday simon = Simon Property Group (centres
+# sales), not Simon-Kucher — the tenant only took the first word.
+FAUX_FLUX = {
+    ("ashby", "hatch"),
+    ("lever", "oliverwyman"),
+    ("ashby", "andera"),
+    ("workday", "simon.wd1/simon"),
+}
+
+
+def flux_de(entreprise, connus):
+    """CONFIRMED ATS feeds for this company: [[kind, slug], ...]."""
+    trouves = []
+    connus = [(k, s) for k, s in connus if k != "workday"]  # handled by sonder()
+    candidats = list(connus) or [(k, s) for s in variantes(entreprise) for k in probe_ats.APIS]
+    for kind, slug in candidats:
+        if (kind, slug) in FAUX_FLUX:
+            continue
+        if not connus and not probe_ats.probe(kind, slug):
+            continue
+        v, _ = verdict(entreprise, nom_du_flux(kind, slug))
+        if v == "CONFIRME" and not coquille(lire_flux(kind, slug) or []):
+            trouves.append([kind, slug])
+    return trouves
+
+
+def flux_connus():
+    """Feeds already declared in job_sources, indexed by reduced company name."""
+    from jobhunter.sources import ATS_SLUGS, WORKDAY_FLUX
+
+    idx = {}
+    for kind, slugs in ATS_SLUGS.items():
+        for s in slugs:
+            idx.setdefault(_cle(s), []).append((kind, s))
+    for tenant, hote, site, nom in WORKDAY_FLUX:
+        idx.setdefault(_cle(nom), []).append(("workday", f"{tenant}.{hote}/{site}"))
+    return idx
+
+
+def charger_etat():
+    try:
+        return json.loads(ETAT.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _age(date, jour):
+    try:
+        return (jour - datetime.date.fromisoformat(date)).days
+    except Exception:
+        return RESONDE_JOURS
+
+
+def a_resonder(x, jour):
+    """(public ATS, Workday): which ones to probe for this company?
+    A found feed is not probed again; an absence, after 30 days."""
+    if not x:
+        return True, True
+    fl = x.get("flux") or []
+    ats = not any(k != "workday" for k, _ in fl) and _age(x.get("date"), jour) >= RESONDE_JOURS
+    # `wd_date` missing: entry from before Workday (2026-10-07), never probed.
+    wd = not any(k == "workday" for k, _ in fl) and (
+        "wd_date" not in x or _age(x["wd_date"], jour) >= RESONDE_JOURS
+    )
+    return ats, wd
+
+
+def sonder(e, x, connus, jour):
+    """New state entry for the company `e`."""
+    ats, wd = a_resonder(x, jour)
+    x = dict(x or {})
+    ancien = x.get("flux") or []
+    fl_ats = (
+        [f for f in flux_de(e, connus) if f[0] != "workday"]
+        if ats
+        else [f for f in ancien if f[0] != "workday"]
+    )
+    fl_wd = [f for f in ancien if f[0] == "workday"] or [
+        ["workday", s] for k, s in connus if k == "workday"
+    ]
+    if wd and not fl_wd:
+        fl_wd = flux_workday(e)
+    if ats:
+        x["date"] = jour.isoformat()
+    if wd:
+        x["wd_date"] = jour.isoformat()
+    x.setdefault("date", jour.isoformat())
+    x["flux"] = fl_ats + fl_wd
+    return x
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--fit", type=int, default=9)
+    ap.add_argument("--limite", type=int, default=0, help="nombre max d'entreprises")
+    ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--dry", action="store_true", help="n'ecrit rien dans la file")
+    a = ap.parse_args()
+
+    q = queue_io.charger(descriptions=False)
+    cibles = [
+        o
+        for o in q
+        if "linkedin.com" in str(o.get("url") or "").lower()
+        and (o.get("fit") or 0) >= a.fit
+        and (o.get("entreprise") or "").strip()
+    ]
+    par_ent = {}
+    for o in cibles:
+        par_ent.setdefault(o["entreprise"].strip(), []).append(o)
+    ents = sorted(par_ent, key=lambda e: -len(par_ent[e]))
+    if a.limite:
+        ents = ents[: a.limite]
+
+    etat = charger_etat()
+    jour = datetime.date.today()
+    connus = flux_connus()
+
+    # A Workday feed added by hand (job_sources.WORKDAY_FLUX) also gets
+    # into a company already probed, without waiting for its 30 days.
+    def _cure_manquant(e):
+        fl = (etat.get(e) or {}).get("flux") or []
+        return any(k == "workday" and [k, s] not in fl for k, s in connus.get(_cle(e), []))
+
+    a_sonder = [e for e in ents if any(a_resonder(etat.get(e), jour)) or _cure_manquant(e)]
+    print(
+        f"{len(cibles)} offre(s) LinkedIn a fit >= {a.fit} · {len(ents)} entreprise(s) · "
+        f"{len(a_sonder)} a sonder"
+    )
+
+    t0 = time.time()
+    with cf.ThreadPoolExecutor(max_workers=a.workers) as ex:
+        futs = {
+            ex.submit(sonder, e, etat.get(e), connus.get(_cle(e), []), jour): e for e in a_sonder
+        }
+        for n, f in enumerate(cf.as_completed(futs), 1):
+            e = futs[f]
+            try:
+                etat[e] = f.result()
+            except Exception:
+                pass  # probed again at the next pass
+            if n % 25 == 0:
+                # Written along the way: the pipeline may cut the step.
+                ETAT.write_text(json.dumps(etat, ensure_ascii=False, indent=1), encoding="utf-8")
+                print(f"  … {n}/{len(a_sonder)} sondees ({time.time() - t0:.0f} s)")
+    ETAT.write_text(json.dumps(etat, ensure_ascii=False, indent=1), encoding="utf-8")
+
+    # Search for the titles in the confirmed feeds.
+    trouvees, absentes = {}, {}
+    avec_flux = [e for e in ents if (etat.get(e) or {}).get("flux")]
+    for e in avec_flux:
+        cache = {}
+        for o in par_ent[e]:
+            for kind, slug in etat[e]["flux"]:
+                # These two APIs search server side: the full list is
+                # truncated (SmartRecruiters 100, Workday 20 per page).
+                cherche = kind in ("smartrecruiters", "workday")
+                cle = (kind, slug, o["poste"] if cherche else "")
+                if cle not in cache:
+                    cache[cle] = (
+                        lire_flux(kind, slug, titre_cle(o["poste"]) if cherche else "") or []
+                    )
+                hit = next((x for x in cache[cle] if meme_titre(o["poste"], x[0])), None)
+                if hit:
+                    trouvees[queue_io.oid(o)] = (hit[1], f"{kind}:{slug}")
+                    break
+            else:
+                absentes[queue_io.oid(o)] = "absente du flux"
+
+    print(f"\n{len(avec_flux)} entreprise(s) avec un flux ATS confirme sur {len(ents)}")
+    print(f"  {len(trouvees)} offre(s) retrouvee(s) sur le site final")
+    print(f"  {len(absentes)} absente(s) du flux (notees, pas retirees)")
+    for e in avec_flux[:30]:
+        print(f"    {e[:34]:34} {etat[e]['flux']}")
+    for oid, (u, src) in list(trouvees.items())[:20]:
+        print(f"  ✓ {oid[:70]}\n      -> {u}")
+
+    if a.dry:
+        print("\n[DRY] file non modifiee.")
+        return 0
+    try:
+        with queue_io.transaction(descriptions=False) as file_:
+            for o in file_:
+                k = queue_io.oid(o)
+                if k in trouvees and "linkedin.com" in str(o.get("url") or "").lower():
+                    u, src = trouvees[k]
+                    o["url_linkedin"] = o["url"]
+                    o["url"], o["source"] = u, src
+                    o["canal"], o["site_kind"], o["link_status"] = "auto", "entreprise", "OK"
+                    o["site_final"] = f"retrouvee {jour.isoformat()}"
+                elif k in absentes:
+                    o["site_final"] = f"{absentes[k]} {jour.isoformat()}"
+    except queue_io.VerrouIndisponible as e:
+        print(f"! {e}")
+        return 3
+    print(f"\nFile mise a jour : {len(trouvees)} lien(s) remplace(s) par le site final.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

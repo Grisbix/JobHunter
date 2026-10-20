@@ -14,4 +14,4 @@ the names of commun, cv, lettre, llm and rendu like the old single file.
 
 from jobhunter import _facade
 
-_MODULES = _facade.installer(__name__, ("commun", "cv", "lettre", "llm", "rendu"))
+_MODULES = _facade.installer(__name__, ("common", "cv", "letter", "llm", "rendering"))

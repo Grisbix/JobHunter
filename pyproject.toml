@@ -1,7 +1,7 @@
 [project]
 name = "jobhunter"
 # Must stay equal to the VERSION file (read by the update): CI checks it.
-version = "2.24.0"
+version = "2.25.0"
 description = "Recherche d'emploi locale : collecte, notation, CV et lettre par offre, candidature semi-automatique."
 readme = "README.md"
 license = "MIT"
@@ -77,14 +77,14 @@ ignore = [
 ]
 
 # Google-style docstrings (phase 8): required on the package's whole public API.
-# Exempt: the programs (jobhunter.programmes, command lines) and the
+# Exempt: the programs (jobhunter.programs, command lines) and the
 # window (jobhunter.app, interface mixins), which are not libraries.
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "!src/jobhunter/**/*.py" = ["D"]
-"src/jobhunter/programmes/*" = ["D"]
+"src/jobhunter/programs/*" = ["D"]
 "src/jobhunter/app/*" = ["D"]
 
 [tool.ruff.lint.isort]
@@ -115,24 +115,24 @@ warn_unused_ignores = true
 # The programs (formerly Scripts/*.py, moved into the package in 2.0) are checked in
 # normal mode since 2026-10-19 (82 errors cleared); most of their functions remain
 # unannotated, hence the exclusion below of untyped calls.
-untyped_calls_exclude = ["jobhunter.programmes"]
+untyped_calls_exclude = ["jobhunter.programs"]
 
 [[tool.mypy.overrides]]
 module = [
-    "jobhunter.stockage.*",
-    "jobhunter.profil",
-    "jobhunter.reseau",
-    "jobhunter.racine",
-    "jobhunter.texte",
-    "jobhunter.liens",
+    "jobhunter.storage.*",
+    "jobhunter.profile",
+    "jobhunter.network",
+    "jobhunter.root",
+    "jobhunter.text",
+    "jobhunter.links",
     "jobhunter.types",
     "jobhunter.scoring.*",
-    "jobhunter.chemins",
+    "jobhunter.paths",
     "jobhunter._facade",
-    "jobhunter.paresseux",
-    "jobhunter.journal",
+    "jobhunter.lazy",
+    "jobhunter.log",
     "jobhunter.cli",
-    "jobhunter.accueil",
+    "jobhunter.welcome",
     "jobhunter.mise_a_jour",
     "jobhunter.documents.*",
     "jobhunter.navigation.*",

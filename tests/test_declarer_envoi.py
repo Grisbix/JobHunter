@@ -9,7 +9,7 @@ import json
 
 import pytest
 
-from jobhunter.stockage import suivi as suivi_io
+from jobhunter.storage import applications as suivi_io
 
 OID = "Amundi|Analyste ESG"
 PREUVE = {

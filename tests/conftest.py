@@ -1,7 +1,7 @@
 """Common base of the pytest tests.
 
 The example profile is set here, before the first import of the engine (pytest loads
-conftest.py before the test files): `jobhunter.profil` reads the
+conftest.py before the test files): `jobhunter.profile` reads the
 PROFIL_JOBHUNTER variable when it loads. The tests never read profil/profil.json.
 """
 
@@ -113,7 +113,7 @@ def horloge(monkeypatch):
 @pytest.fixture
 def file_temporaire(tmp_path, monkeypatch):
     """Throwaway apply_queue.json (and descriptions.json): queue_io writes there."""
-    from jobhunter.stockage import file as queue_io
+    from jobhunter.storage import queue as queue_io
 
     chemin = tmp_path / "apply_queue.json"
     monkeypatch.setattr(queue_io, "CHEMIN", chemin)
@@ -124,7 +124,7 @@ def file_temporaire(tmp_path, monkeypatch):
 @pytest.fixture
 def suivi_temporaire(tmp_path, monkeypatch):
     """suivi.json jetable."""
-    from jobhunter.stockage import suivi as suivi_io
+    from jobhunter.storage import applications as suivi_io
 
     chemin = tmp_path / "suivi.json"
     monkeypatch.setattr(suivi_io, "CHEMIN", chemin)

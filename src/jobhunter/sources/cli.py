@@ -9,30 +9,30 @@ import json
 import sys
 from typing import Any
 
-from jobhunter import paresseux as _paresseux
-from jobhunter.sources import commun as _commun
-from jobhunter.sources import rendement as _rendement
-from jobhunter.sources.agregateurs import scan_adzuna, scan_jooble
+from jobhunter import lazy as _paresseux
+from jobhunter.sources import common as _commun
+from jobhunter.sources import source_yield as _rendement
+from jobhunter.sources.aggregators import scan_adzuna, scan_jooble
 from jobhunter.sources.apec import scan_apec
 from jobhunter.sources.ats import scan_ats
-from jobhunter.sources.commun import FRESH, INCIDENTS, _load_cfg, incidents_resume
+from jobhunter.sources.common import FRESH, INCIDENTS, _load_cfg, incidents_resume
 from jobhunter.sources.efc import EFC_SITES, scan_efc
 from jobhunter.sources.eures import scan_eures
 from jobhunter.sources.fir import scan_fir
 from jobhunter.sources.francetravail import scan_france_travail
-from jobhunter.sources.fusion import merge_into_queue
 from jobhunter.sources.glassdoor import scan_glassdoor
 from jobhunter.sources.indeed import scan_indeed
 from jobhunter.sources.linkedin import scan_linkedin
+from jobhunter.sources.merge import merge_into_queue
 from jobhunter.sources.talent import scan_talent
 from jobhunter.sources.vie import scan_vie
 from jobhunter.sources.workday import scan_workday
 from jobhunter.sources.wtj import scan_wtj
-from jobhunter.texte import cle as _norm
+from jobhunter.text import cle as _norm
 
 _ici = sys.modules[__name__]
 # Values taken from the profile: computed on first read, not at import
-# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
+# (jobhunter.lazy). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -164,7 +164,7 @@ def main() -> int:
     #
     # AFTER argparse, and not before: `--help` and `--dry`, which write nothing,
     # must block nothing.
-    from jobhunter.stockage import verrou
+    from jobhunter.storage import lock as verrou
 
     if not a.dry and not verrou.garder(FRESH):
         return 3
@@ -359,7 +359,7 @@ def _fusionner(uniq: Any, dry: bool) -> int:
     the scan is already in offres_scan.json, and `--fusion-seule` merges it again
     without collecting anything.
     """
-    from jobhunter.stockage import file as queue_io
+    from jobhunter.storage import queue as queue_io
 
     try:
         r = merge_into_queue(uniq, dry=dry, attente=1800)
@@ -367,7 +367,7 @@ def _fusionner(uniq: Any, dry: bool) -> int:
         print(f"! {e}")
         print(
             f"  Le scan est conserve dans {FRESH.name} : "
-            f"`jobhunter collecte --fusion-seule` le fusionnera."
+            f"`jobhunter collect --fusion-seule` le fusionnera."
         )
         return 3
     # YIELD PER SOURCE: what each one brought back, and why not more.

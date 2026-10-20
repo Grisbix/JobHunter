@@ -109,7 +109,7 @@ To customise or develop JobHunter: the full code, with Python 3.12+.
 
 | Tool | | What for |
 |---|---|---|
-| [Python 3.12+](https://www.python.org/downloads/) | **required** | runs JobHunter — `lanceurs\installer.bat` offers to install it |
+| [Python 3.12+](https://www.python.org/downloads/) | **required** | runs JobHunter — `launchers\install.bat` offers to install it |
 | [LibreOffice](https://www.libreoffice.org/download/) | recommended | CVs and letters as PDF (otherwise `.docx`) |
 | [Claude Code](https://claude.com/claude-code) | recommended | sets up your whole profile from your CV |
 | [Git](https://git-scm.com/downloads) | optional | fetch updates (`git pull`) |
@@ -117,39 +117,39 @@ To customise or develop JobHunter: the full code, with Python 3.12+.
 
 1. **Download** the [source code](https://github.com/Grisbix/JobHunter/releases/latest)
    (`Source code (zip)`) or clone the repository, and unzip it.
-2. **Double-click `lanceurs\installer.bat`**: Python libraries and the Chromium browser (a few
+2. **Double-click `launchers\install.bat`**: Python libraries and the Chromium browser (a few
    minutes, once). Without Python, it offers to install it (winget). The libraries go
    into a `.venv` folder next to JobHunter, not into your computer's Python.
 3. **Put your CV in `Mon_CV`**, a `.docx` preferably. This folder is never published.
-4. **Double-click `lanceurs\lancer.bat`**: the first time, it builds your profile from your CV and five
+4. **Double-click `launchers\start.bat`**: the first time, it builds your profile from your CV and five
    questions; then it opens the app.
 
-Then: **`lanceurs\planifier.bat`** runs the collection every morning at 8:00 (`lanceurs\planifier.bat 07:30`
-for another time, `lanceurs\planifier.bat supprimer` to stop), and **`lanceurs\mettre_a_jour.bat`** fetches
+Then: **`launchers\schedule.bat`** runs the collection every morning at 8:00 (`launchers\schedule.bat 07:30`
+for another time, `launchers\schedule.bat supprimer` to stop), and **`launchers\update.bat`** fetches
 the latest version, checks that everything loads and rolls back on its own otherwise. Your
 profile, CV, letters and log are **never** touched.
 
-**What is in the folder**: `lanceurs/` the double-click tools (Windows `.bat`, macOS/Linux
+**What is in the folder**: `launchers/` the double-click tools (Windows `.bat`, macOS/Linux
 `.sh`) · `Mon_CV/` your CV · `profil/` your settings · `Scripts/` the offers, the log of
 your applications and the daily logs · `CV/`, `Lettres/` the documents made for each offer ·
-`src/` the program · `docs/`, `tests/`, `outils/` for developers.
+`src/` the program · `docs/`, `tests/`, `tools/` for developers.
 
 > **Why a `.docx`?** Every CV sent starts from this template. Write `[nom du poste]` in your
 > summary: the exact job title of the offer goes there. A PDF is sent as is, untailored.
 
 ### macOS / Linux
 
-Same steps with the `.sh` scripts of `lanceurs/`, in a terminal opened in the JobHunter folder (Python 3.12+ and, on
+Same steps with the `.sh` scripts of `launchers/`, in a terminal opened in the JobHunter folder (Python 3.12+ and, on
 Linux, `python3-tk` first):
 
 ```bash
-./lanceurs/installer.sh
-./lanceurs/lancer.sh          # builds the profile from Mon_CV, then opens the app
-./lanceurs/planifier.sh       # collection every morning (cron)
-./lanceurs/mettre_a_jour.sh
+./launchers/install.sh
+./launchers/start.sh          # builds the profile from Mon_CV, then opens the app
+./launchers/schedule.sh       # collection every morning (cron)
+./launchers/update.sh
 ```
 
-> On every change, CI runs `lanceurs/installer.sh` on a Mac, then the whole test suite there, including opening every panel of the app in every language. Nobody has used it on their own Mac yet: please report issues.
+> On every change, CI runs `launchers/install.sh` on a Mac, then the whole test suite there, including opening every panel of the app in every language. Nobody has used it on their own Mac yet: please report issues.
 
 ## Set up your profile with Claude Code
 
@@ -169,13 +169,13 @@ no facts**: whatever is not in your CV, it asks you.
 
 | What | How |
 |---|---|
-| Open the app | Start menu, or `lanceurs\lancer.bat` from source |
+| Open the app | Start menu, or `launchers\start.bat` from source |
 | Collect + sort + CV/letters for the best offers | button “Actualiser les offres”, or `jobhunter pipeline` |
 | CV + letter for the 20 best offers | `jobhunter documents --top 20` |
 | Apply to the selected offers | in the app: tick offers, “Postuler la sélection” — you click Send |
 | Does the ranking match my own judgements? | `jobhunter evaluation` |
-| What did each source bring back? | `jobhunter rendement` |
-| Undo a clean-up of the offer list | `jobhunter restaurer --liste` |
+| What did each source bring back? | `jobhunter yield` |
+| Undo a clean-up of the offer list | `jobhunter restore --liste` |
 
 `jobhunter` alone lists every command (from source: `python JobHunter.pyw <command>`).
 Release notes: [`CHANGELOG.md`](CHANGELOG.md).
@@ -197,7 +197,7 @@ sustainable finance).
 | `zones` | priority and secondary areas |
 | `collecte.mots_cles` | searches run on LinkedIn, WTJ… |
 
-Check it, offline: `jobhunter verifier-profil "Communications officer" "Java developer"`.
+Check it, offline: `jobhunter check-profile "Communications officer" "Java developer"`.
 
 ## Project rules
 
@@ -236,7 +236,7 @@ A tool that writes in your name has to be right. What backs JobHunter:
 
 | Symptom | Likely cause |
 |---|---|
-| “Profil introuvable” | run `lanceurs\lancer.bat`, or `/configure-profile` in Claude Code |
+| “Profil introuvable” | run `launchers\start.bat`, or `/configure-profile` in Claude Code |
 | No offer passes | `filtre_titre.metier` too narrow, or `collecte.mots_cles` too rare |
 | Too many off-target offers | extend `filtre_titre.exclus` |
 | CV not tailored to the offer | CV given as PDF: provide a `.docx` |

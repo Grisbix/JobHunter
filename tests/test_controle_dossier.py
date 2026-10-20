@@ -6,7 +6,7 @@ PDFs made on the fly (PyMuPDF): a good file, then each defect alone.
 import fitz
 import pytest
 
-from jobhunter.documents import controle
+from jobhunter.documents import checks as controle
 
 IDENT = {"nom": "Camille Exemple", "email": "camille@example.com", "tel": "+33 6 12 34 56 78"}
 CORPS = (

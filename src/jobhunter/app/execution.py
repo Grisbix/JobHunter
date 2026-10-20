@@ -9,15 +9,15 @@ import threading
 from tkinter import messagebox, scrolledtext, simpledialog
 from typing import Any
 
-from jobhunter import gele as _gele
-from jobhunter.app import langue as _langue
+from jobhunter import frozen as _gele
+from jobhunter.app import language as _langue
 from jobhunter.app import theme as _theme
-from jobhunter.app._type_app import AppTypee
-from jobhunter.app.commun import INTERACTIVE, PY, QUEUE, ROOT, SCRIPTS, ouvrir
-from jobhunter.app.langue import t as _t
+from jobhunter.app._app_type import AppTypee
+from jobhunter.app.common import INTERACTIVE, PY, QUEUE, ROOT, SCRIPTS, ouvrir
+from jobhunter.app.language import t as _t
 from jobhunter.app.theme import ACC, CB, CF, DEL, DEL_TX, LOGBG, LOGFG, SIDE, SIDE_H, SIDE_TX
-from jobhunter.liens import existe as _doc_existe
-from jobhunter.stockage import file as queue_io
+from jobhunter.links import existe as _doc_existe
+from jobhunter.storage import queue as queue_io
 
 
 class ExecutionMixin:
@@ -106,7 +106,7 @@ class ExecutionMixin:
         if self._occupe():
             return
         # SHORT version of the pipeline: six steps, by hand. The scheduled task
-        # runs pipeline_quotidien.py, which does more (collection in five
+        # runs daily_pipeline, which does more (collection in five
         # passes fusionnees chacune, sauvegarde, sites carriere, dossiers).
         # The old sequence stopped at the re-score: no descriptions, no
         # export CSV, ni alerte.
@@ -117,7 +117,7 @@ class ExecutionMixin:
                 [
                     PY,
                     "-m",
-                    "jobhunter.programmes.scrape_desc",
+                    "jobhunter.programs.scrape_desc",
                     "--all",
                     "--canal",
                     "linkedin",
@@ -125,22 +125,22 @@ class ExecutionMixin:
                     "150",
                 ],
             ),
-            ("3/6 Re-score fit + ATS", [PY, "-m", "jobhunter.programmes.rescore_ats"]),
+            ("3/6 Re-score fit + ATS", [PY, "-m", "jobhunter.programs.rescore_ats"]),
             (
                 "4/6 Verif liens morts",
-                [PY, "-m", "jobhunter.programmes.recheck_dead", "--status", "OK", "--limit", "120"],
+                [PY, "-m", "jobhunter.programs.recheck_dead", "--status", "OK", "--limit", "120"],
             ),
-            ("5/6 Export CSV", [PY, "-m", "jobhunter.programmes.export_queue_csv", "--keep", "8"]),
+            ("5/6 Export CSV", [PY, "-m", "jobhunter.programs.export_queue_csv", "--keep", "8"]),
             (
                 "6/6 Alerte nouveaux matchs",
-                [PY, "-m", "jobhunter.programmes.notify_matches", "--min-fit", "8"],
+                [PY, "-m", "jobhunter.programs.notify_matches", "--min-fit", "8"],
             ),
         ]
         self._log(f"\n{'=' * 56}\n▶ TOUT FAIRE — pipeline complet (6 etapes)\n{'=' * 56}\n")
         threading.Thread(target=self._exec_seq, args=(seq,), daemon=True).start()
 
     def mettre_a_jour(self: "AppTypee", en_attente: Any = False) -> None:
-        """mise_a_jour.py in the app's log, then offers to restart JobHunter on the
+        """update.py in the app's log, then offers to restart JobHunter on the
         new version (the code already loaded stays the old one).
 
         At start-up, the announcement often arrives during background work (auto
@@ -154,7 +154,7 @@ class ExecutionMixin:
             import contextlib
             import io
 
-            from jobhunter.programmes import mise_a_jour as _maj
+            from jobhunter.programs import update as _maj
 
             q = self.q
 
@@ -177,7 +177,7 @@ class ExecutionMixin:
             self.root.after(3000, lambda: self.mettre_a_jour(en_attente=True))
             return
         try:
-            from jobhunter.programmes import mise_a_jour
+            from jobhunter.programs import update as mise_a_jour
 
             avant = mise_a_jour.version_locale()
         except Exception:
@@ -185,7 +185,7 @@ class ExecutionMixin:
         self._log(f"\n{'=' * 56}\n▶ Mise à jour de JobHunter\n{'=' * 56}\n")
 
         def tache() -> None:
-            ok = self._exec([PY, "-m", "jobhunter.programmes.mise_a_jour"], "mise à jour")
+            ok = self._exec([PY, "-m", "jobhunter.programs.update"], "mise à jour")
             apres = mise_a_jour.version_locale() if mise_a_jour else "?"
             self.q.put(("maj_fin", (ok, avant, apres)))
 
@@ -392,6 +392,6 @@ class ExecutionMixin:
         if not n:
             return
         self.run_step(
-            [PY, "-m", "jobhunter.programmes.generate_docs", "--top", str(n)],
+            [PY, "-m", "jobhunter.programs.generate_docs", "--top", str(n)],
             f"CV/lettres — {n} offre(s)",
         )

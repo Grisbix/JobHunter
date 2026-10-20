@@ -17,7 +17,7 @@ from conftest import RACINE
 SRC = RACINE / "src"
 FICHIERS = sorted([*SRC.rglob("*.py"), RACINE / "JobHunter.pyw"])
 # they go out on the web: we do not import them
-HORS_LIGNE = {"jobhunter.programmes.test_live_nav", "jobhunter.programmes.test_acces_sites"}
+HORS_LIGNE = {"jobhunter.programs.test_live_nav", "jobhunter.programs.test_site_access"}
 
 
 def est_module(nom):

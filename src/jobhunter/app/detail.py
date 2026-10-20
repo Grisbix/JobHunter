@@ -11,12 +11,12 @@ from pathlib import Path
 from tkinter import scrolledtext, ttk
 from typing import Any
 
-from jobhunter import paresseux as _paresseux
-from jobhunter.app import inventaire as _inventaire
+from jobhunter import lazy as _paresseux
+from jobhunter.app import inventory as _inventaire
 from jobhunter.app import theme as _theme
-from jobhunter.app._type_app import AppTypee
-from jobhunter.app.commun import CV_ATS_DIR, PY, SCRIPTS, ouvrir
-from jobhunter.app.langue import t as _t
+from jobhunter.app._app_type import AppTypee
+from jobhunter.app.common import CV_ATS_DIR, PY, SCRIPTS, ouvrir
+from jobhunter.app.language import t as _t
 from jobhunter.app.theme import (
     ACC,
     ACC_H,
@@ -35,11 +35,11 @@ from jobhunter.app.theme import (
     TX,
     WORK,
 )
-from jobhunter.liens import chemin_de
+from jobhunter.links import chemin_de
 
 _ici = sys.modules[__name__]
 # Values taken from the profile: computed on first read, not at import
-# (jobhunter.paresseux). In this module, they are read through `_ici.NAME`.
+# (jobhunter.lazy). In this module, they are read through `_ici.NAME`.
 _PARESSEUX: _paresseux.Fabriques = {}
 
 
@@ -47,13 +47,13 @@ def __getattr__(nom: str) -> Any:
     return _paresseux.lire(_ici, _PARESSEUX, nom)
 
 
-_PARESSEUX["_PREFIXE"] = lambda: importlib.import_module("jobhunter.app.commun")._PREFIXE
+_PARESSEUX["_PREFIXE"] = lambda: importlib.import_module("jobhunter.app.common")._PREFIXE
 
 
-_PARESSEUX["CV_OFFRE_DIR"] = lambda: importlib.import_module("jobhunter.app.commun").CV_OFFRE_DIR
+_PARESSEUX["CV_OFFRE_DIR"] = lambda: importlib.import_module("jobhunter.app.common").CV_OFFRE_DIR
 
 
-_PARESSEUX["LETTRES_DIR"] = lambda: importlib.import_module("jobhunter.app.commun").LETTRES_DIR
+_PARESSEUX["LETTRES_DIR"] = lambda: importlib.import_module("jobhunter.app.common").LETTRES_DIR
 
 
 class DetailMixin:
@@ -784,14 +784,12 @@ class DetailMixin:
             cursor="hand2",
         )
         b_maj.configure(
-            command=lambda: _tool("jobhunter.programmes.refresh_letters", "🗓 MAJ lettres", b_maj)
+            command=lambda: _tool("jobhunter.programs.refresh_letters", "🗓 MAJ lettres", b_maj)
         )
         b_maj.pack(side="left", padx=(10, 2))
         b_ren = CB(bt, text="Renommer (mon nom)", bg=BTN, fg=TX, relief="flat", cursor="hand2")
         b_ren.configure(
-            command=lambda: _tool(
-                "jobhunter.programmes.rename_docs", "📛 Renommer (mon nom)", b_ren
-            )
+            command=lambda: _tool("jobhunter.programs.rename_docs", "📛 Renommer (mon nom)", b_ren)
         )
         b_ren.pack(side="left", padx=6)
         CB(bt, text="Retour", command=self._show_dash, bg=BTN, fg=TX, relief="flat").pack(

@@ -6,9 +6,10 @@ from email.message import EmailMessage
 
 import pytest
 
-from jobhunter.courriels import lecture, statuts
-from jobhunter.courriels.lecture import Courriel
-from jobhunter.programmes import statuts_mail
+from jobhunter.mail import reading as lecture
+from jobhunter.mail import statuses as statuts
+from jobhunter.mail.reading import Courriel
+from jobhunter.programs import mail_statuses as statuts_mail
 
 SUIVI = {
     "Amundi|Analyste ESG": {"s": "postulé", "d": "2026-10-01", "n": "relancer lundi"},
@@ -220,7 +221,7 @@ def test_fenetre_de_l_app_s_ouvre(racine_tk):
     import queue
     import types
 
-    from jobhunter.app import courriels as fenetre
+    from jobhunter.app import mail as fenetre
 
     fenetre.ouvrir(types.SimpleNamespace(root=racine_tk, q=queue.Queue()))
     racine_tk.update()

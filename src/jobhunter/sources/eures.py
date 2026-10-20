@@ -7,9 +7,9 @@ import re
 import time
 from typing import Any
 
-from jobhunter import journal as _journal
-from jobhunter.sources import commun as _commun
-from jobhunter.sources.commun import INCIDENTS, UA, _mk, _strip_html, contrat_du_titre, title_ok
+from jobhunter import log as _journal
+from jobhunter.sources import common as _commun
+from jobhunter.sources.common import INCIDENTS, UA, _mk, _strip_html, contrat_du_titre, title_ok
 from jobhunter.sources.efc import _RX_EFC_ESG, _RX_EFC_SENIOR, _est_graduate
 
 _log = _journal.journal(__name__)

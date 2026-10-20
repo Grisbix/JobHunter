@@ -21,13 +21,13 @@ a reproduced failure or a measured gain. No dependency installed "in bulk".
 |---|---|---|---|
 | A1 | Real trial of the Candidatures panel on one offer; add to the confirmation detector the real phrasings it would have missed | Gabriel, then code | a real application recorded as `confirmé`, or an unrecognised page added to the patterns and tested |
 | A2 | Sunday 25/10: first weekly availability check | reading the summary | the ~143 closed offers found are removed, step under 110 min |
-| A3 | After one to two weeks of log: `jobhunter rendement` | reading + decision | each source has a stable verdict; decide (by hand) the fate of a source refused every time |
+| A3 | After one to two weeks of log: `jobhunter yield` | reading + decision | each source has a stable verdict; decide (by hand) the fate of a source refused every time |
 
 ## Step B — Missing non-regression proofs (Codex 19/10, P1, low effort)
 
 | # | What | Why here | Done when |
 |---|---|---|---|
-| B1 ✅ (v2.4.1) | **Architecture test**: the engine (`jobhunter.*` except `app`, `accueil`) imports neither `tkinter` nor `customtkinter` nor `jobhunter.app` | The plan says "checked in CI by import-linter", but nothing is wired in: a pytest test of a few lines is enough, without ArchUnitPython or import-linter | a deliberate Tkinter import in `scoring` fails the test; removing it makes it pass |
+| B1 ✅ (v2.4.1) | **Architecture test**: the engine (`jobhunter.*` except `app`, `welcome`) imports neither `tkinter` nor `customtkinter` nor `jobhunter.app` | The plan says "checked in CI by import-linter", but nothing is wired in: a pytest test of a few lines is enough, without ArchUnitPython or import-linter | a deliberate Tkinter import in `scoring` fails the test; removing it makes it pass |
 | B2 ✅ (v2.4.3) | **Recorded connector responses** (pytest-recording / VCR.py, test-only dependency): APEC (API), LinkedIn guest, WTJ sitemap, Workday, Greenhouse/Lever | The current doubles (`faux_reseau`) are written by hand: they do not say whether the parser still reads today's real response. A recorded real response, scrubbed (cookies, headers), makes the parser reproducible | ten responses replayed without network give the same offers; a missing exchange fails; no cookie or identifier in the versioned files |
 | B3 ✅ (CONTRIBUTING, 19/10) | **Slowness diagnosis**: py-spy procedure (external tool, not a dependency) in `CONTRIBUTING.md` | Useful the next time a step exceeds its duration (collection, availability): locate instead of guessing | the procedure finds the function of a deliberately provoked stall, report without personal data (`--locals` disabled) |
 
@@ -58,7 +58,7 @@ leaving CustomTkinter, or adding an accessibility layer to it.
 | # | What | Done when |
 |---|---|---|
 | E1 ✅ (v2.17.0 `.venv`; v2.18.0 "installation" workflow: `installer.bat` and `installer.sh` on fresh GitHub machines, Windows and Linux) | Dedicated Python environment created by `installer.bat` (postponed from phase 1) | a fresh installation on a blank Windows launches the app without touching the system Python |
-| E2 ✅ (v2.18.0, ADR 0012: Ed25519 in pure Python, private key outside GitHub, `outils/signature.py`; the app downloads, checks and opens the installer. Active as soon as Gabriel creates his key) | **Signed** updates: WinSparkle or tufup (Codex P2), to be chosen on a prototype. Caution: tufup's destination purge is incompatible with a folder that contains the profile. | a tampered package is refused; the profile survives an interrupted update |
+| E2 ✅ (v2.18.0, ADR 0012: Ed25519 in pure Python, private key outside GitHub, `tools/signature.py`; the app downloads, checks and opens the installer. Active as soon as Gabriel creates his key) | **Signed** updates: WinSparkle or tufup (Codex P2), to be chosen on a prototype. Caution: tufup's destination purge is incompatible with a folder that contains the profile. | a tampered package is refused; the profile survives an interrupted update |
 | E3 ◐ (v2.20.0: every button can be operated by keyboard — Tab, Enter, Space — with a visible focus ring on every background; field outline at 3:1; text contrasts checked in tests, WCAG AA. Still impossible without leaving CustomTkinter: giving the controls a name for a screen reader, and keyboard focus on the segmented tabs) | Accessibility (axe-windows, Accessibility Insights) | the main controls have a name; tabbing follows the visual order |
 
 ## Set aside or deferred, with the reason
@@ -87,7 +87,7 @@ User's decisions:
 | F3 ⛔ set aside | **HelloWork source**: public search pages, without circumvention; robots.txt and terms checked first | HelloWork offers in the queue, response recorded and replayed (B2), verdict in `rendement` |
 | F4 ✅ (v2.9.0; v2.19.0 completion criterion checked at every build: without Python on the PATH, window, system browser, merge, folder, update over the top with data kept; morning collection from the app) | **Standalone installer** `JobHunterSetup.exe` (see the detail under the table) | on a Windows without Python: installation, opening, collection and folder |
 | F5 ✅ (v2.10.0 navigation, panels, menus; v2.13.0 log and dialog boxes; v2.17.0 summaries of launched programs, the offer-by-offer detail remaining as it is) | **French and English**: interface texts in catalogues, choice in the settings; repository showcase in English (README, user docs, release notes), French version alongside | the whole app in English from one setting; English README with the link to the French one |
-| F6 ✅ (v2.23.0) | **More languages**: German and Spanish, one module per language (`app/textes_<code>.py`: name, restart message, three catalogues), a language menu listing each one under its own name, English as the fallback of a missing text; tests check that every language covers the English list with the same `{x}` holes, and every panel opens in every language | adding a language = one module + its code in `langue.LANGUES` |
+| F6 ✅ (v2.23.0) | **More languages**: German and Spanish, one module per language (`app/texts_<code>.py`: name, restart message, three catalogues), a language menu listing each one under its own name, English as the fallback of a missing text; tests check that every language covers the English list with the same `{x}` holes, and every panel opens in every language | adding a language = one module + its code in `langue.LANGUES` |
 
 **F1 — sort things out**
 - Remove from both repositories the dead or duplicate programs, the outdated documents,
@@ -121,10 +121,10 @@ have stabilised.
 
 | # | What | Done when |
 |---|---|---|
-| G1 ✅ (v2.13.0) | **Company directories** Lever, Ashby, Greenhouse (jobsync, MIT) in the Entreprises panel | type a name, choose, follow; `outils/annuaires.py --verifier` reproduces the files |
+| G1 ✅ (v2.13.0) | **Company directories** Lever, Ashby, Greenhouse (jobsync, MIT) in the Entreprises panel | type a name, choose, follow; `tools/directories.py --verifier` reproduces the files |
 | G2 ✅ (v2.14.0) | **Letter reviewer**: a second pass, without the context of the drafting, that checks the letter against the style guide and the facts; the job posting is an untrusted input (injection) | each flaw reported is reproduced by a test; no letter rewritten without agreement |
 | G3 ◐ (v2.15.0: each fit explained in the sheet; remaining: rank better, once there are enough judgements) | **Justified fit score** (C1 bis): each point of the fit cites the passage of the posting that gives it | `jobhunter evaluation` does better than the 0.46 AUC of 2.5.0, on the same judgements |
-| G4 ✅ (v2.20.0: `jobhunter statuts-mail`, .mbox/.eml export or read-only Gmail API; window in the app) | **Statuses from Gmail**, read-only, proposals validated one by one — only if Gabriel asks | — |
+| G4 ✅ (v2.20.0: `jobhunter mail-statuses`, .mbox/.eml export or read-only Gmail API; window in the app) | **Statuses from Gmail**, read-only, proposals validated one by one — only if Gabriel asks | — |
 
 ## Step H — Ideas from the architecture watch (20/10), sorted
 
@@ -134,13 +134,13 @@ what JobHunter already does; only what fills a real gap is kept.
 
 | # | Idea | Decision | Why |
 |---|---|---|---|
-| H1 ✅ (v2.22.0) | 2. Undo a batch clean-up | **kept** | the sort, the audit and the merge back up before removing, but nothing put a backup back: `jobhunter restaurer` (tracker never restored, tracked offers kept, state before copied) |
+| H1 ✅ (v2.22.0) | 2. Undo a batch clean-up | **kept** | the sort, the audit and the merge back up before removing, but nothing put a backup back: `jobhunter restore` (tracker never restored, tracked offers kept, state before copied) |
 | H2 ✅ (v2.22.0) | Network failure matrix (HTTPX, Scrapy models) | **kept** | 22 ATS and career-feed readers × 403, 429, 500, timeout, empty or unreadable JSON: each failure counted, never a calm day; 404 silent (`tests/test_pannes_reseau.py`) |
 | H3 ✅ (v2.22.0) | 6. Keep unknown fields on read then write | **kept, test only** | already true (plain dicts, `transaction` rewrites what it read); now proven for the queue and the tracker |
 | — | 4. Explicit status transitions | already done | ADR 0009: an open browser never yields "postulé"; the guard is tested |
 | — | 8, 17. Provenance of a score, run identity | partly done | `jobhunter.scoring` explains each fit (G3); a run identifier waits for a measured need |
 | — | 9. Context of an offer | partly done | `_passe`, `autres_lieux`, URL promotion keep the sources; deferred |
-| — | 15. Common retry budget | already done | bounded requests (`jobhunter.reseau`), Retry-After honoured, refusals stop (ADR 0004) |
+| — | 15. Common retry budget | already done | bounded requests (`jobhunter.network`), Retry-After honoured, refusals stop (ADR 0004) |
 | — | 11. Secret-free settings | already done | the profile holds no secret; keys live in separate ignored files |
 | — | 1, 12. Detect and show changes of an offer, diff before replacement | **deferred** | useful, but needs a stored previous version of each offer: decide with the availability results (A2) |
 | — | 3. Reusable cleaning recipes | deferred | the profile already carries the rules; no repeated manual clean-up to capture |
@@ -164,7 +164,7 @@ cheap actions instead of only listing them.
 | I2 ✅ (v2.22.1) | Test on the interpreter really used (Codex) | **kept** | the Windows tests run on 3.12 (the floor) and 3.14 (`C:\Python314`) |
 | — | Per-site errors and warnings (JobSpy) | already done | `INCIDENTS` and `_rendement.jsonl` verdicts |
 | — | ATS feeds (career-ops: Greenhouse, Ashby, Lever, Wellfound) | already wider | Greenhouse, Lever (and its EU region), Ashby, Recruitee, Teamtailor, SmartRecruiters, Workable, Workday |
-| — | Fact-check before export (career-ops) | already done | `Faits.json`, `controle`, `relecture` |
+| — | Fact-check before export (career-ops) | already done | `Faits.json`, `controle`, `proofread_letters` |
 | — | Advisory score calibration (career-ops `calibrate`) | already done, stricter | `jobhunter evaluation`: AUC with a resampled interval, never auto-tunes |
 | — | Outcomes per channel, count-gated (career-ops `analyze-patterns`) | **deferred** | 16 applications sent, no answer yet: every group would read "too few". Revisit at ~30 sent with answers |
 | — | Repost / ghost-job detection (career-ops `detect-reposts`: same company, same title word set, ≥ 2 URLs over 1–90 days) | **deferred** | needs a history of removed offers; same prerequisite as H 1/12 |
@@ -187,7 +187,7 @@ What remains out of reach, whatever happens:
 ## Done
 
 - **B1** (v2.4.1): `tests/test_architecture.py`.
-- **B2** (v2.4.3): `outils/rejeu.py` records a real public response from seven sources
+- **B2** (v2.4.3): `tools/replay.py` records a real public response from seven sources
   (Greenhouse, Lever, Ashby, Workday, LinkedIn, EURES, FIR), scrubbed;
   `tests/test_rejeu_sources.py` replays it without network and requires the same offers.
   - No VCR.py: all the sources' requests already go through `_get_borne` and
@@ -215,7 +215,7 @@ What remains out of reach, whatever happens:
   - Decision: the `entreprise|poste` key stays, there is no migration of the tracking.
   - The scan's deduplication keeps the city of the best zone and notes the others
     (`autres_lieux`).
-  - `doublons` brings together the offers with the same posting URL, keeping the tracked offer, then
+  - `duplicates` brings together the offers with the same posting URL, keeping the tracked offer, then
     the current title.
 - **F3** set aside on 2026-10-19: HelloWork's terms of use (art. 8.2)
   forbid any automated extraction, even non-commercial, without a written licence;
