@@ -390,6 +390,10 @@ def _fusionner(uniq: Any, dry: bool) -> int:
         f"{r['pays_ecartes']} pays écartés, "
         f"{r['purged']} bruits purgés — {r['total']} total"
     )
+    if r.get("modifiees"):
+        print(
+            f"  {r['modifiees']} offre(s) modifiée(s) par leur site (titre, salaire, contrat, lieu)"
+        )
     if r["added"] and not dry:
         print("→ re-score + descriptions manquantes : automatiques au prochain lancement de l'app.")
     return 0

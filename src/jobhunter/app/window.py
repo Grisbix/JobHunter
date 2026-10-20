@@ -358,6 +358,8 @@ class App(
         self.root.after(2500, self._auto_enrich)
         # AUTO: docx→pdf sync + links (a docx modified somewhere = pdf/links realigned)
         self.root.after(6000, self._auto_sync)
+        # AUTO: the table follows the queue when another program writes it
+        self.root.after(15000, self._surveiller_file)
         self.root.after(4000, self._check_relances)  # relances dues → log
         # AUTO: scan of company sites, 2 min after launch then every 3 h
         self.root.after(120000, self._auto_scrape)

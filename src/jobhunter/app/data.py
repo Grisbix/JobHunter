@@ -7,12 +7,14 @@ import importlib
 import json
 import subprocess
 import threading
+import tkinter as tk
 from typing import Any
 from urllib.parse import urlparse
 
 from jobhunter.app import common as _commun
 from jobhunter.app._app_type import AppTypee
 from jobhunter.app.common import LF, PY, QUEUE, SCRAPE_TAG, SCRIPTS
+from jobhunter.app.language import t as _t
 from jobhunter.storage import queue as queue_io
 
 
@@ -60,7 +62,43 @@ class DonneesMixin:
             self.comptes = json.loads(_commun.COMPTES.read_text(encoding="utf-8"))
         except Exception:
             self.comptes = {}
+        self._empreinte_file = self._empreinte_donnees()
         self.refresh_table()
+
+    def _empreinte_donnees(self: "AppTypee") -> tuple[Any, ...]:
+        """Modification times of the queue and the tracking file (None if absent)."""
+        dates: list[Any] = []
+        for f in (QUEUE, _commun.SUIVI):
+            try:
+                dates.append(f.stat().st_mtime_ns)
+            except OSError:
+                dates.append(None)
+        return tuple(dates)
+
+    def _surveiller_file(self: "AppTypee") -> None:
+        """AUTO: the views follow the queue when another program changes it.
+
+        The morning collection, `jobhunter documents` in a terminal or a second window
+        write the queue while the app is open: without this, the table showed the old
+        offers until Ctrl+R. Checked every 15 s; postponed while a step of the app
+        runs (it reloads at its end) or while the user is typing in a field.
+        """
+        try:
+            occupe = (self.proc is not None and self.proc.poll() is None) or getattr(
+                self, "_bg_busy", False
+            )
+            focus = self.root.focus_get()
+            saisie = focus is not None and focus.winfo_class() in ("Entry", "Text", "TEntry")
+            if (
+                not occupe
+                and not saisie
+                and self._empreinte_donnees() != getattr(self, "_empreinte_file", None)
+            ):
+                self._log(_t("La file a changé sur le disque : vue mise à jour.") + "\n")
+                self.load_offers()
+        except (tk.TclError, KeyError):
+            pass  # a popup menu has the focus, or the window is closing
+        self.root.after(15000, self._surveiller_file)
 
     def _missing_desc(self: "AppTypee") -> Any:
         """Offers with an http URL but no description (to enrich automatically)."""

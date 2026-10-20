@@ -58,12 +58,13 @@ class FicheMixin:
         ]:
             v = o.get(k)
             if v not in (None, "", "Non précisé"):
-                meta.append(f"{lbl} : {str(v).replace('_', ' ')}")
+                meta.append(f"{_t(lbl)} : {str(v).replace('_', ' ')}")
         if o.get("autres_lieux"):  # same job published in other cities
-            meta.append("Aussi à : " + ", ".join(str(x) for x in o["autres_lieux"]))
+            meta.append(_t("Aussi à") + " : " + ", ".join(str(x) for x in o["autres_lieux"]))
         yrs = o.get("exp_requise")
         if yrs:  # years of experience required (junior user → fit penalised if ≥3)
-            meta.append(f"⚠️ Exp requise: {yrs} ans" if yrs >= 3 else f"Exp requise: {yrs} ans")
+            exp = _t("Expérience requise : {n} ans").format(n=yrs)
+            meta.append("⚠️ " + exp if yrs >= 3 else exp)
         meta.extend(self._etat_candidature(o))
         meta.extend(self._etat_dossier(o))
         if meta:
@@ -72,6 +73,24 @@ class FicheMixin:
         if raisons:
             d.insert("end", "\n" + _t("Pourquoi ce fit") + "\n", "k")
             d.insert("end", "\n".join("· " + r for r in raisons) + "\n", "m")
+        # Where the offer was seen (sources.merge.noter_source): which searches find it.
+        vus = o.get("vus_sur") or []
+        if len(vus) > 1:
+            d.insert("end", "\n" + _t("Trouvée par") + "\n", "k")
+            d.insert("end", "\n".join("· " + str(v) for v in vus) + "\n", "m")
+        # What its site changed since (sources.merge.changements); values not replaced.
+        if chg := o.get("changements"):
+            d.insert("end", "\n" + _t("Modifiée par son site") + "\n", "k")
+            d.insert(
+                "end",
+                "\n".join(
+                    f"· {c.get('date', '')} — {_t(c.get('champ', ''))} : "
+                    f"{c.get('avant', '')} → {c.get('apres', '')}"
+                    for c in chg
+                )
+                + "\n",
+                "m",
+            )
         desc = (o.get("description") or "").strip()
         if desc:
             d.insert("end", "\nDescription\n", "k")
@@ -90,7 +109,7 @@ class FicheMixin:
         ]:
             v = (o.get(k) or "").strip()
             if v and v != "Non précisé":
-                d.insert("end", f"\n{lbl} : ", "k")
+                d.insert("end", f"\n{_t(lbl)} : ", "k")
                 d.insert("end", v)
         d.configure(state="disabled")
         d.see("1.0")
@@ -122,15 +141,15 @@ class FicheMixin:
 
         problemes = controler_dossier(o)
         if not problemes:
-            return ["Dossier : prêt (CV et lettre lisibles, une page, coordonnées)"]
-        return ["Dossier à revoir : " + " ; ".join(problemes)]
+            return [_t("Dossier : prêt (CV et lettre lisibles, une page, coordonnées)")]
+        return [_t("Dossier à revoir") + " : " + " ; ".join(problemes)]
 
     def _etat_candidature(self: "AppTypee", o: Any) -> list[str]:
         """The tracking status and the state of the proof of sending (ADR 0009), for the sheet."""
         sv = self.suivi.get(self._oid(o), {})
         if not sv.get("s"):
             return []
-        ligne = f"Candidature : {sv['s']}" + (f" le {sv['d']}" if sv.get("d") else "")
+        ligne = _t("Candidature") + f" : {sv['s']}" + (f" le {sv['d']}" if sv.get("d") else "")
         envoi = sv.get("envoi")
         if envoi:
             ligne += {

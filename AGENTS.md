@@ -71,11 +71,12 @@ python -m jobhunter apply --canal linkedin
 
 ```bash
 uv sync                                  # .venv, pinned versions (uv.lock)
-uv run pytest -q                         # 1,142 tests without network (~2 min)
+uv run pytest -q                         # ~2,570 tests without network (~2 min)
 uv run pytest -q tests/test_scoring.py   # one file; -k word to filter cases
 uv run pytest -q --cov --cov-report=term # with coverage (threshold in CI)
 uv run python tools/bench.py comparer tools/bench_reference.json   # non-regression
 uv run ruff check . && uv run ruff format --check .
+python tools/screenshots.py --lang en  # README screenshots, fictitious data (Windows, Pillow, LibreOffice)
 ```
 
 **The non-regression bench** (`tools/bench.py`) records what the engine decides on

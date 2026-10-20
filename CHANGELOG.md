@@ -4,6 +4,24 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.3.0 — 2026-10-20
+
+- **Where an offer was found.** The same posting often arrives from several places
+  (a LinkedIn search, the company's Workday, Welcome to the Jungle…). The queue kept only
+  the best link; the offer's card now lists every source and search that found it,
+  under "Trouvée par": you see which searches are worth keeping.
+- **What its site changed.** When the site that published an offer serves it again with a
+  different title, salary, contract or place, the card says so under "Modifiée par son
+  site" (date, before → after). Only a site compared with itself, so two sites wording a
+  place differently is not a change; your queue's values are never replaced.
+- **The table follows the queue.** When the morning collection, a terminal or a second
+  window writes the queue while the app is open, the table reloads by itself (every 15 s,
+  never while you type or while a step of the app runs). No more Ctrl+R.
+- The offer card's labels (contract, place, application file…) follow the interface
+  language.
+- README screenshots of the English interface, rebuilt by `tools/screenshots.py` on a
+  fictitious profile.
+
 ## 3.2.0 — 2026-10-20
 
 - **Several profiles, several searches.** Maintenance → "Profils…" lists your profiles

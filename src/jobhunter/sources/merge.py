@@ -22,6 +22,75 @@ from jobhunter.text import cle as _norm
 
 # accents KEPT (dedup key of the queue)
 
+# ── Where an offer was seen, and what changed in it ─────────────────────
+# The queue keeps ONE source per offer (the best link wins, rang_source). The others
+# that served the same posting were lost: "found on LinkedIn by the search
+# 'analyste esg', and on the company's Workday" said which searches are worth
+# keeping. `vus_sur` keeps them all, `changements` keeps what a source changed in a
+# posting it serves again. Both are informative only: no set value is replaced.
+MAX_VUS_SUR = 12
+MAX_CHANGEMENTS = 10
+
+
+def noter_source(x: dict[str, Any], source: str) -> None:
+    """Adds `source` to the offer's provenances (`vus_sur`), without duplicates."""
+    source = str(source or "").strip()
+    vus = list(x.get("vus_sur") or ([x["source"]] if x.get("source") else []))
+    if source and source not in vus and len(vus) < MAX_VUS_SUR:
+        vus.append(source)
+    if vus:
+        x["vus_sur"] = vus
+
+
+def _famille(source: object) -> str:
+    """'linkedin-search:analyste esg' -> 'linkedin-search' (the site, not the search)."""
+    return str(source or "").split(":", 1)[0].strip().lower()
+
+
+def _valeur(v: object) -> str:
+    return " ".join(str(v or "").split())
+
+
+def changements(
+    x: dict[str, Any], o: dict[str, Any], jour: str, source_x: object = None
+) -> list[dict[str, str]]:
+    """What the SAME site now says differently about an offer already in the queue.
+
+    Only a site compared with itself: two sites always word the place or the
+    salary differently, which is not a change. A field absent on either side, or
+    "non precise", says nothing. The change is recorded once (the same new value
+    is not recorded again the next day); the offer's values are not touched.
+    `source_x`: the offer's source before this batch promoted another link.
+    """
+    site = _famille(o.get("source"))
+    if not site or site != _famille(x.get("source") if source_x is None else source_x):
+        return []
+    neufs = []
+    for champ, avant, apres in (
+        ("poste", x.get("poste"), o.get("titre")),
+        ("salaire", x.get("salaire"), o.get("salaire")),
+        ("contrat", x.get("contrat"), o.get("contrat")),
+        # The place as the queue writes it (lieu_effectif), not as the site does.
+        (
+            "localisation",
+            x.get("localisation"),
+            _zones.lieu_effectif(o.get("location") or "", o.get("titre") or ""),
+        ),
+    ):
+        a, b = _valeur(avant), _valeur(apres)
+        if not a or not b or "non precise" in (a.lower(), b.lower()):
+            continue
+        if _norm(a) == _norm(b) or (champ == "localisation" and _norm(a) in _norm(b)):
+            continue  # "Paris" -> "Paris, Ile-de-France" is the same place
+        deja = x.get("changements") or []
+        if any(c.get("champ") == champ and c.get("apres") == b for c in deja):
+            continue
+        neufs.append({"date": jour, "champ": champ, "avant": a, "apres": b})
+    if neufs:
+        x["changements"] = ((x.get("changements") or []) + neufs)[-MAX_CHANGEMENTS:]
+    return neufs
+
+
 # ── Quality of a URL's source ──────────────────────────────────────────
 # The same posting often appears on LinkedIn AND on a real job site
 # (« Consultant(e) Junior ESG » chez Oderis : LinkedIn + Welcome to the Jungle).
@@ -146,7 +215,7 @@ def _merge_into_queue(
     have_url = {_norm_url(x.get("url")) for x in q if x.get("url")}
     par_url = {_norm_url(x.get("url")): x for x in q if x.get("url")}
     today = time.strftime("%Y-%m-%d")
-    added = updated = promus = hors_zone = pays_ecartes = 0
+    added = updated = promus = hors_zone = pays_ecartes = modifiees = 0
     # per source of the collection (_passe label, set by rendement.mesurer)
     par_source: dict[str, dict[str, int]] = {}
     _EXCLUS = _commun.contrats_exclus()
@@ -199,6 +268,7 @@ def _merge_into_queue(
             x = idx.get(key)
             if x is None:
                 x = par_url.get(_norm_url(o["url"]))
+            source_avant = x.get("source", "") if x is not None else ""
             # URL PROMOTION. The same posting arrives from several sources; the
             # first one seen won, at the whim of the scan order. If this one
             # comes from a better source, it replaces the old one: we keep
@@ -273,6 +343,12 @@ def _merge_into_queue(
             # (same posting, retouched title) must count as seen again.
             if x is not None:
                 x["vu_le"] = today
+                # Compared with the source the offer had BEFORE the promotion
+                # above: a site with what that same site said.
+                if changements(x, o, today, source_avant):
+                    modifiees += 1
+                noter_source(x, source_avant)
+                noter_source(x, o.get("source", ""))
             if x is not None:
                 if o.get("contrat") and (x.get("contrat") or "") in ("", "non precise"):
                     x["contrat"] = o["contrat"]
@@ -388,6 +464,7 @@ def _merge_into_queue(
         ecartees=ecartees,
         rejetees_tri=rejetees_tri,
         pays_ecartes=pays_ecartes,
+        modifiees=modifiees,
         total=len(q),
         par_source=par_source,
     )

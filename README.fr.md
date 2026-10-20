@@ -27,9 +27,9 @@ jamais de candidature.
 
 | Les offres, triées pour ton profil | La lettre préparée pour une offre |
 |---|---|
-| ![Liste des offres](docs/screenshots/offers.png) | ![Lettre générée](docs/screenshots/letter.png) |
+| ![Liste des offres](docs/screenshots/offers.png) | ![Une offre en entier et sa lettre](docs/screenshots/letter.png) |
 
-<sub>Captures faites avec un profil et des offres **fictifs** (Léa Martin, chargée de communication à Lyon) : le profil créé par le premier lancement, avant tout complément par Claude. L'application parle aussi **anglais, allemand et espagnol** : Maintenance → « Langue / Language… ».</sub>
+<sub>Captures de l'interface en anglais, avec un profil et des entreprises **fictifs** (Camille Exemple, junior en finance durable — `profile/example_finance_esg.json`), refaites par `python tools/screenshots.py`. L'application parle **français**, anglais, allemand et espagnol : Maintenance → « Langue / Language… ».</sub>
 
 - [Pourquoi](#pourquoi-jobhunter) · [Comment ça marche](#comment-ça-marche) · [Sources](#sources)
 - [Installer (Windows)](#installer-windows) · [Depuis le code source](#depuis-le-code-source-windows) · [macOS / Linux](#macos--linux)
