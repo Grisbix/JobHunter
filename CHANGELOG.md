@@ -4,6 +4,19 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 2.22.0 — 2026-10-20
+
+- **Undo a clean-up**: `jobhunter restaurer` puts the offer queue back as it was in a
+  backup — the daily one, the one taken before the availability check, or before a sort.
+  `jobhunter restaurer --liste` shows them; with a name, it first says which offers would
+  come back and which would leave, and writes only with `--appliquer`. Your applications
+  (suivi.json) are never restored and their offers stay; no description is lost; the
+  state before is kept, so a restoration can itself be undone.
+- **Network failures, proven**: every company career feed reader is tested against a
+  refusal, a rate limit, a server error, a timeout and an unreadable answer; each one is
+  reported as an incident, never as "nothing new today".
+- The last French comments and docstrings of the code are in English.
+
 ## 2.21.1 — 2026-10-20
 
 - **English file names for the documentation**: `docs/programs.md`, `docs/roadmap.md`,

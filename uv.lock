@@ -697,7 +697,7 @@ wheels = [
 
 [[package]]
 name = "jobhunter"
-version = "2.21.1"
+version = "2.22.0"
 source = { editable = "." }
 dependencies = [
     { name = "customtkinter" },

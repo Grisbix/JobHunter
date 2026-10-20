@@ -62,6 +62,7 @@ found again by the scan tomorrow; a lost application never comes back.
 | `link_check.py` | Checks the URLs (live / dead / soft-404). Module. |
 | `recheck_dead.py` | Soft-404s rendered in JavaScript (HTTP 200 but empty body). |
 | `audit_dispo.py` | Checks the whole queue without a browser and removes closed offers; waits and resumes on 429; `--duree` stops it by itself before removing. Step 4b of the pipeline, on Sunday. |
+| `restaurer.py` | Puts the queue back as it was in a backup (daily, before the audit, before the sort): `--liste`, then a name; inspection by default, `--appliquer` writes. Never restores the tracker, keeps the tracked offers, loses no description, and copies the state before so the restoration can be undone. `jobhunter restaurer`. |
 | `queue_tools.py` | Queue maintenance. |
 | `rescore_ats.py` | Recomputes `ats_pct` and `skills_match` over the whole queue. |
 | `export_queue_csv.py` | Readable backup as CSV. |

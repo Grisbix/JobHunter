@@ -125,6 +125,28 @@ have stabilised.
 | G3 ◐ (v2.15.0: each fit explained in the sheet; remaining: rank better, once there are enough judgements) | **Justified fit score** (C1 bis): each point of the fit cites the passage of the posting that gives it | `jobhunter evaluation` does better than the 0.46 AUC of 2.5.0, on the same judgements |
 | G4 ✅ (v2.20.0: `jobhunter statuts-mail`, .mbox/.eml export or read-only Gmail API; window in the app) | **Statuses from Gmail**, read-only, proposals validated one by one — only if Gabriel asks | — |
 
+## Step H — Ideas from the architecture watch (20/10), sorted
+
+The watch of 20/10 (Obsidian, "Nouvelles idées architecturales", 17 ideas, and "Modèles
+de repos professionnels") was collected without ranking. Each idea is compared with
+what JobHunter already does; only what fills a real gap is kept.
+
+| # | Idea | Decision | Why |
+|---|---|---|---|
+| H1 ✅ (v2.22.0) | 2. Undo a batch clean-up | **kept** | the sort, the audit and the merge back up before removing, but nothing put a backup back: `jobhunter restaurer` (tracker never restored, tracked offers kept, state before copied) |
+| H2 ✅ (v2.22.0) | Network failure matrix (HTTPX, Scrapy models) | **kept** | 22 ATS and career-feed readers × 403, 429, 500, timeout, empty or unreadable JSON: each failure counted, never a calm day; 404 silent (`tests/test_pannes_reseau.py`) |
+| H3 ✅ (v2.22.0) | 6. Keep unknown fields on read then write | **kept, test only** | already true (plain dicts, `transaction` rewrites what it read); now proven for the queue and the tracker |
+| — | 4. Explicit status transitions | already done | ADR 0009: an open browser never yields "postulé"; the guard is tested |
+| — | 8, 17. Provenance of a score, run identity | partly done | `jobhunter.scoring` explains each fit (G3); a run identifier waits for a measured need |
+| — | 9. Context of an offer | partly done | `_passe`, `autres_lieux`, URL promotion keep the sources; deferred |
+| — | 15. Common retry budget | already done | bounded requests (`jobhunter.reseau`), Retry-After honoured, refusals stop (ADR 0004) |
+| — | 11. Secret-free settings | already done | the profile holds no secret; keys live in separate ignored files |
+| — | 1, 12. Detect and show changes of an offer, diff before replacement | **deferred** | useful, but needs a stored previous version of each offer: decide with the availability results (A2) |
+| — | 3. Reusable cleaning recipes | deferred | the profile already carries the rules; no repeated manual clean-up to capture |
+| — | 7, 14, 16. Event-driven views, task queue | set aside | one process, one user: the lock and the background threads are enough |
+| — | 5, 13. CRDT / Automerge / Yjs | set aside | a single machine; the lock + fresh reread already prevents silent loss |
+| — | 10. Rule language (expr) | set aside | no `eval`; the profile's declarative lists are enough |
+
 ## Proposed order
 
 **A** (ongoing, mostly observation) → **B1** (one hour) → **B2** → **C1** →

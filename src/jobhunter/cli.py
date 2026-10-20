@@ -36,6 +36,10 @@ COMMANDES = {
     "message": ("jobhunter.documents.message", "message court des formulaires"),
     "cv-auto": ("jobhunter.documents.cv_auto", "banque de faits du CV automatique"),
     "dispo": ("jobhunter.programmes.audit_dispo", "controle les offres fermees"),
+    "restaurer": (
+        "jobhunter.programmes.restaurer",
+        "remet la file d'une sauvegarde (le suivi n'est jamais touche)",
+    ),
     "evaluation": (
         "jobhunter.programmes.evaluation_classement",
         "le classement face a mes jugements (postule, mauvaise...)",
@@ -73,7 +77,7 @@ COMMANDES = {
 
 
 def aide() -> str:
-    """Le texte d'aide : les commandes nommées et leur rôle."""
+    """The help text: the named commands and their role."""
     largeur = max(map(len, COMMANDES))
     lignes = ["usage : jobhunter <commande> [options]   (jobhunter <commande> --help)", ""]
     lignes += [f"  {c:<{largeur}}  {d}" for c, (_m, d) in COMMANDES.items()]
