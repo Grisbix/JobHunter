@@ -166,7 +166,11 @@ def lire_journal(chemin: Path) -> list[dict[str, Any]]:
     """The collections of the log; unreadable lines are skipped."""
     sortie: list[dict[str, Any]] = []
     try:
-        texte = chemin.read_text(encoding="utf-8")
+        # errors="replace": a line cut mid-character by a crash only spoils
+        # ITSELF (it no longer parses and is skipped). Strict decoding raised
+        # UnicodeDecodeError for the whole file, and the Access panel never
+        # opened (tests/test_app_parcours.py).
+        texte = chemin.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return sortie
     for l in texte.splitlines():

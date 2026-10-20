@@ -95,6 +95,13 @@ def test_journal_ligne_abimee_sautee(tmp_path):
     assert R.lire_journal(tmp_path / "absent.jsonl") == []
 
 
+def test_journal_ligne_coupee_au_milieu_d_un_caractere(tmp_path):
+    """A crash mid-write leaves bytes that are not UTF-8: only that line is lost."""
+    journal = tmp_path / "j.jsonl"
+    journal.write_bytes(b'{"le": "2026-10-19", "sources": {}}\n{"le": "2026-10-20\xc3\n')
+    assert [d["le"] for d in R.lire_journal(journal)] == ["2026-10-19"]
+
+
 def test_bilan_signale_une_source_toujours_refusee(tmp_path, monkeypatch, capsys):
     aujourd_hui = datetime.date.today().isoformat()
     lignes = [
