@@ -144,7 +144,7 @@ Linux, `python3-tk` first):
 ./mettre_a_jour.sh
 ```
 
-> The `.sh` scripts are checked by CI but **not yet tested on a real Mac**: please report issues.
+> On every change, CI runs `installer.sh` on a Mac, then the whole test suite there, including opening every panel of the app in every language. Nobody has used it on their own Mac yet: please report issues.
 
 ## Set up your profile with Claude Code
 

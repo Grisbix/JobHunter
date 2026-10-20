@@ -71,12 +71,12 @@ jobs:
   tests:
     # The required check of the main branch is named "tests": since the matrix
     # (3.12, 3.14) the Windows runs carry the version in their name, so this job
-    # stands for all of them.
-    needs: tests-windows
+    # stands for all of them, and for the macOS run.
+    needs: [tests-windows, macos]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - run: echo "Windows tests passed on every Python version of the matrix"
+      - run: echo "Windows tests passed on every Python version of the matrix, and macOS tests too"
 
   unix:
     # The macOS/Linux scripts and the pure logic, outside Windows.

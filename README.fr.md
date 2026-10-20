@@ -165,7 +165,7 @@ Mêmes étapes, avec les scripts `.sh` dans un terminal ouvert dans le dossier (
 ./mettre_a_jour.sh
 ```
 
-> Les scripts `.sh` sont vérifiés mais **pas encore éprouvés sur un vrai Mac** : signale tout souci.
+> À chaque changement, la CI lance `installer.sh` sur un Mac, puis tous les tests, dont l'ouverture de chaque panneau de l'application dans chaque langue. Personne ne l'a encore utilisée sur son propre Mac : signale tout souci.
 
 <details>
 <summary>Installation manuelle (sans les scripts)</summary>

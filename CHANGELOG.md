@@ -4,6 +4,16 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 2.23.1 — 2026-10-20
+
+- **Tested on macOS.** CI now runs `installer.sh` on a Mac runner, then the bench and
+  the whole test suite in the environment it built, including every panel of the app in
+  every language. It is part of the required check.
+- Fixed on macOS/Linux: a document linked by a standard `file:///Users/…` URL was read
+  as a relative path, hence "not found"; links are now written with three slashes
+  (they had four on a Mac), and the old four-slash links still read. Windows links are
+  unchanged.
+
 ## 2.23.0 — 2026-10-20
 
 - **The app in German and Spanish**, as well as French and English. Maintenance →
