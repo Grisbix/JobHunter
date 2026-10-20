@@ -140,6 +140,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(aide())
         return 0
     cmd, reste = argv[0], argv[1:]
+    from jobhunter.profiles import appliquer
+
+    appliquer()  # the active profile, before the command builds its paths
     module = module_de(cmd)
     if module is None:
         print(f"jobhunter : commande inconnue « {cmd} »\n\n{aide()}", file=sys.stderr)

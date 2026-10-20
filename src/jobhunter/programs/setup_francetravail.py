@@ -26,7 +26,7 @@ from jobhunter import root as _racine
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
 HERE = _racine.scripts()
-CFG = HERE / "francetravail.json"
+CFG = _racine.dossier_cles() / "francetravail.json"
 
 
 def test():

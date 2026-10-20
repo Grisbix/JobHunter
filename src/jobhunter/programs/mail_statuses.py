@@ -46,7 +46,7 @@ def courriels(a: argparse.Namespace) -> Iterable[lecture.Courriel]:
         return lecture.depuis_mbox(Path(a.mbox))
     if a.eml:
         return lecture.depuis_eml(Path(a.eml))
-    return lecture.depuis_gmail(_racine.scripts(), jours=a.jours)
+    return lecture.depuis_gmail(_racine.dossier_cles(), jours=a.jours)
 
 
 def valider(

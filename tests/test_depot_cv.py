@@ -124,6 +124,7 @@ def test_depot_dans_l_application(fenetre_tk, tmp_path, profil, monkeypatch):
         cv_drop._profil, "charger", lambda: json.loads(profil.read_text(encoding="utf-8"))
     )
     monkeypatch.setattr(cv_drop._profil, "recharger", lambda *a: None)
+    monkeypatch.setattr(cv_drop, "choisir", lambda *a: 0)  # "Remplacer mon CV de base"
     app = _App(fenetre_tk)
     nouveau = fichier(tmp_path / "nouveau.docx", b"nouveau")
     with (
@@ -145,8 +146,23 @@ def test_refus_ne_touche_a_rien(fenetre_tk, tmp_path, profil, monkeypatch):
     monkeypatch.setattr(
         cv_drop._profil, "charger", lambda: json.loads(profil.read_text(encoding="utf-8"))
     )
+    monkeypatch.setattr(cv_drop, "choisir", lambda *a: 0)
     app = _App(fenetre_tk)
     with patch.object(cv_drop.messagebox, "askyesno", return_value=False):
         app._deposer_cv([fichier(tmp_path / "n.docx")])
     assert (modeles / "CV_camille.docx").read_bytes() == b"ancien"
     assert not (modeles / "CV_camille.docx.bak").exists() and not app.etapes
+
+
+def test_depot_nouveau_profil_ou_annule(fenetre_tk, tmp_path, monkeypatch):
+    """The second choice starts a new profile from the dropped CV; closing does nothing."""
+    app = _App(fenetre_tk)
+    crees = []
+    app._nouveau_profil = crees.append
+    app._remplacer_cv = lambda cv: pytest.fail("remplacement non demande")
+    cv = fichier(tmp_path / "autre.pdf")
+    monkeypatch.setattr(cv_drop, "choisir", lambda *a: 1)
+    app._deposer_cv([cv])
+    monkeypatch.setattr(cv_drop, "choisir", lambda *a: None)
+    app._deposer_cv([cv])
+    assert crees == [cv]

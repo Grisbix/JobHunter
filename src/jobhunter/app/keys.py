@@ -12,8 +12,8 @@ from typing import Any
 import customtkinter as ctk
 
 from jobhunter import api_keys as cles_api
+from jobhunter import root as _racine
 from jobhunter.app import theme as _theme
-from jobhunter.app.common import SCRIPTS
 from jobhunter.app.language import t as _t
 from jobhunter.app.theme import ACC, ACC_H, ACC_TX, BG, BTN, BTN_H, CB, CE, CF, CL, MUT, TX, TX_BAD
 
@@ -27,7 +27,7 @@ def saisir_cle(app: Any, nom: str, apres: Callable[[], None]) -> None:
         apres: called back after a successful save (refreshes the panel).
     """
     cle = cles_api.CLES[nom]
-    deja = cles_api.presente(SCRIPTS, nom)
+    deja = cles_api.presente(_racine.dossier_cles(), nom)
     win = ctk.CTkToplevel(app.root)
     win.title(f"{_t('Clé')} {cle.libelle}")
     win.configure(fg_color=BG)
@@ -79,7 +79,7 @@ def saisir_cle(app: Any, nom: str, apres: Callable[[], None]) -> None:
     def enregistrer() -> None:
         valeurs = {k: e.get() for k, e in champs.items()}
         try:
-            chemin = cles_api.enregistrer(SCRIPTS, nom, valeurs)
+            chemin = cles_api.enregistrer(_racine.dossier_cles(), nom, valeurs)
         except (OSError, ValueError) as ex:
             retour.configure(text=f"✗ {ex}")
             return

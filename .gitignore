@@ -111,6 +111,7 @@ Scripts/jooble.json
 # CV dropped by the user
 Mon_CV/*
 !Mon_CV/LISEZ-MOI.txt
+/profiles/
 My_CV/*
 !My_CV/README.txt
 

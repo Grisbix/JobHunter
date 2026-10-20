@@ -18,6 +18,7 @@ from jobhunter import paths as chemins
 from jobhunter import profile as _profil
 from jobhunter.app.common import PY
 from jobhunter.app.language import t as _t
+from jobhunter.app.profiles_menu import choisir
 from jobhunter.storage import atomic as _atomique
 from jobhunter.welcome import choisir_cv
 
@@ -71,7 +72,16 @@ class DepotCvMixin:
                 "JobHunter", _t("Dépose un CV au format .docx ou .pdf."), parent=self.root
             )
             return
-        self._remplacer_cv(cv)
+        i = choisir(
+            self.root,
+            "JobHunter",
+            _t("Que faire de {cv} ?").format(cv=cv.name),
+            [_t("Remplacer mon CV de base"), _t("Nouveau profil depuis ce CV")],
+        )
+        if i == 0:
+            self._remplacer_cv(cv)
+        elif i == 1:
+            self._nouveau_profil(cv)
 
     def _choisir_cv_de_base(self: "AppTypee") -> None:
         p = filedialog.askopenfilename(
@@ -80,7 +90,7 @@ class DepotCvMixin:
             filetypes=[("CV", "*.docx *.pdf"), ("Word", "*.docx"), ("PDF", "*.pdf")],
         )
         if p:
-            self._deposer_cv([Path(p)])
+            self._remplacer_cv(Path(p))
 
     def _remplacer_cv(self: "AppTypee", cv: Path) -> None:
         try:

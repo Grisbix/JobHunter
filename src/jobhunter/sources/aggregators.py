@@ -8,9 +8,9 @@ from pathlib import Path
 from typing import Any
 
 from jobhunter import log as _journal
+from jobhunter import root as _racine
 from jobhunter.sources import common as _commun
 from jobhunter.sources.common import (
-    HERE,
     INCIDENTS,
     UA,
     _mk,
@@ -43,9 +43,9 @@ _log = _journal.journal(__name__)
 # LIMITS. Descriptions = excerpts (desc_partielle: a better source replaces
 # them at merge). Links = the aggregator's redirect pages, which the
 # URL promotion replaces when the real site arrives through another source.
-ADZUNA_CFG = HERE / "adzuna.json"
+ADZUNA_CFG = _racine.dossier_cles() / "adzuna.json"
 
-JOOBLE_CFG = HERE / "jooble.json"
+JOOBLE_CFG = _racine.dossier_cles() / "jooble.json"
 
 ADZUNA_API = "https://api.adzuna.com/v1/api/jobs/{pays}/search/1"
 

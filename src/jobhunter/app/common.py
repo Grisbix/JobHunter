@@ -279,6 +279,10 @@ MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
             ("Collecte chaque matin…", "planifier"),  # Windows task (App._planifier)
             ("Statuts depuis mes courriels…", "courriels"),  # read-only (app.mail)
             ("Langue / Language…", "langue"),  # chooses the interface language (app.langue)
+            (
+                "Profils…",
+                "profils",
+            ),  # several searches, one workspace each (app.profiles_menu)  # chooses the interface language (app.langue)
         ],
     ),
 ]

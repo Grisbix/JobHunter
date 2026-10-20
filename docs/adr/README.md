@@ -17,5 +17,6 @@ and points here. Overview: [`../architecture.md`](../architecture.md).
 | [0010](0010-offer-identity-company-job.md) | An offer's identity stays "entreprise\|poste"; we repair what it loses |
 | [0011](0011-standalone-application.md) | A standalone application for the user, the source code for whoever modifies it |
 | [0012](0012-signed-updates.md) | Updates signed by the author, outside GitHub |
+| [0013](0013-one-workspace-per-profile.md) | Several profiles: one complete workspace each, switching restarts the app |
 
 New decision: `NNNN-short-title.md`, next number, status and date at the top.

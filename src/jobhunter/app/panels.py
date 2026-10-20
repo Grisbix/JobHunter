@@ -424,7 +424,7 @@ class PanneauxMixin:
                 # A refused entry stops: no new attempt before 30 days (ADR 0004).
                 self._log(f"⛔ {_t(e.libelle)} : {_t_etat(e.etat)}\n")
                 return
-            if nom in cles_api.CLES and not cles_api.presente(SCRIPTS, nom):
+            if nom in cles_api.CLES and not cles_api.presente(_racine.dossier_cles(), nom):
                 self._log(f"{_t(e.libelle)} : " + _t("saisis d'abord sa clé.") + "\n")
                 return
             self.run_step(
@@ -531,7 +531,7 @@ class PanneauxMixin:
             journal = _rendement.lire_journal(_racine.dans(SCRIPTS, "_rendement.jsonl"))
             fichiers = {c.fichier: c.nom for c in cles_api.CLES.values()}
             for etat in _inventaire.etat_sources(
-                journal, lambda f: cles_api.presente(SCRIPTS, fichiers[f])
+                journal, lambda f: cles_api.presente(_racine.dossier_cles(), fichiers[f])
             ):
                 etats[etat.source] = etat
                 tvs.insert(

@@ -132,6 +132,9 @@ def main() -> int:
     dest = dossier_donnees()
     preparer_donnees(dest, Path(getattr(sys, "_MEIPASS", ".")) / SQUELETTE)
     os.environ["JOBHUNTER_RACINE"] = str(dest)
+    from jobhunter.profiles import appliquer
+
+    appliquer()  # the active profile (a workspace inside the data folder)
     if len(sys.argv) == 1:
         # The application starts from the data folder, as from a cloned folder.
         # A subprocess keeps the folder its caller chose (cwd=Scripts/…).

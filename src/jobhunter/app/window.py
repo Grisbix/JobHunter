@@ -27,6 +27,7 @@ from jobhunter.app.detail import DetailMixin
 from jobhunter.app.execution import ExecutionMixin
 from jobhunter.app.language import t as _t
 from jobhunter.app.panels import PanneauxMixin
+from jobhunter.app.profiles_menu import ProfilsMixin, profil_affiche
 from jobhunter.app.table import TableauMixin
 from jobhunter.app.theme import (
     ACC,
@@ -61,6 +62,7 @@ class App(
     ExecutionMixin,
     CandidatureMixin,
     DepotCvMixin,
+    ProfilsMixin,
 ):
     """The JobHunter window. Each mixin carries a domain; they share nothing but `self`."""
 
@@ -135,6 +137,19 @@ class App(
             bg=SIDE,
             font=(_theme.FONT_UI, 10, "bold"),
         ).pack(anchor="w", padx=18, pady=(0, 18))
+        if nom_profil := profil_affiche():  # only once a second profile exists
+            CB(
+                self.sidebar,
+                text="\u25cf " + nom_profil,
+                command=self._menu_profils,
+                cursor="hand2",
+                bg=SIDE,
+                fg=SIDE_TX,
+                activebackground=SIDE_H,
+                relief="flat",
+                font=(_theme.FONT_UI, 11),
+                anchor="w",
+            ).pack(fill="x", padx=12, pady=(0, 14))
         self._nav = {}
         for cle, texte, fn in (
             ("offres", "Offres", self._show_dash),
@@ -234,6 +249,8 @@ class App(
                         if c == "planifier"
                         else _courriels.ouvrir(self)
                         if c == "courriels"
+                        else self._menu_profils()
+                        if c == "profils"
                         else self.run_step(c, l)
                     ),
                     font=(_theme.FONT_UI, 12),

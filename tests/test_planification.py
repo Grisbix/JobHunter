@@ -29,7 +29,7 @@ def test_application_installee_lance_l_executable(monkeypatch):
 def test_code_source_lance_jobhunter_pyw(monkeypatch, tmp_path):
     (tmp_path / "JobHunter.pyw").write_text("", encoding="utf-8")
     monkeypatch.setattr(plan._gele, "est_gele", lambda: False)
-    monkeypatch.setattr(plan._racine, "racine", lambda: tmp_path)
+    monkeypatch.setattr(plan._profils, "principale", lambda: tmp_path)
     monkeypatch.setattr(plan._gele, "interpreteur", lambda: r"C:\Python\python.exe")
     assert plan.commande() == f'"C:\\Python\\python.exe" "{tmp_path / "JobHunter.pyw"}" pipeline'
 

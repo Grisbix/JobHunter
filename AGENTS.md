@@ -142,6 +142,18 @@ application's start only in a published installation (`VERSION` file, or the ins
 app); a folder without `VERSION` — a development copy, or one that receives the engine
 by pip — is migrated only by hand.
 
+### Several profiles (3.2)
+
+A profile is a complete data root (`jobhunter.profiles`, ADR 0013): the main one is the
+installation's folder, the others are `profiles/<slug>/` in the 3.0 layout. The active
+one is in `<main data>/_active_profile.json`; `profiles.appliquer()` — called by
+`JobHunter.pyw`, `app/__main__`, `cli.main` and `frozen.main` BEFORE any path is built —
+points `JOBHUNTER_RACINE` to it and keeps the main root in `JOBHUNTER_PRINCIPALE`
+(inherited by child processes). Keys are read from `root.dossier_cles()`, never
+`scripts()`. `daily_pipeline` with more than one profile re-runs itself once per profile
+(`--un-profil`). Anything that must find the installation (`JobHunter.pyw`, the scheduled
+task) uses `profiles.principale()`, not `root.racine()`.
+
 ### Three data files, three access contracts
 
 ```

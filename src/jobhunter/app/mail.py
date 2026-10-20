@@ -108,7 +108,7 @@ def ouvrir(app: Any) -> None:
             lire(lambda: lecture.depuis_eml(Path(d)))
 
     def gmail() -> None:
-        lire(lambda: lecture.depuis_gmail(_racine.scripts()))
+        lire(lambda: lecture.depuis_gmail(_racine.dossier_cles()))
 
     for texte, cmd in (
         ("Fichier .mbox…", mbox),

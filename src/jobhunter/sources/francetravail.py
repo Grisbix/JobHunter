@@ -7,8 +7,9 @@ import time
 from typing import Any
 
 from jobhunter import log as _journal
+from jobhunter import root as _racine
 from jobhunter.sources import common as _commun
-from jobhunter.sources.common import HERE, UA, _mk, title_ok
+from jobhunter.sources.common import UA, _mk, title_ok
 
 _log = _journal.journal(__name__)
 
@@ -24,7 +25,7 @@ _log = _journal.journal(__name__)
 #        {"client_id": "...", "client_secret": "..."}
 #      (file ignored by git: it contains a secret)
 # Without this file, the source disables itself silently.
-FT_CFG = HERE / "francetravail.json"
+FT_CFG = _racine.dossier_cles() / "francetravail.json"
 
 FT_TOKEN_URL = (
     "https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=%2Fpartenaire"

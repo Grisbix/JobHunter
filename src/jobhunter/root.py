@@ -132,6 +132,19 @@ def dans(dossier: Path, ancien: str) -> Path:
     return dossier / nom(ancien)
 
 
+def dossier_cles() -> Path:
+    """Where the API keys live (Adzuna, Jooble, France Travail, Gmail).
+
+    The data folder of the MAIN profile, shared by every profile (jobhunter.profiles),
+    never copied.
+    """
+    env = os.environ.get("JOBHUNTER_PRINCIPALE")
+    if not env:
+        return scripts()
+    p = Path(env).resolve()
+    return p / nom("Scripts", p)
+
+
 def exporter_paquet() -> None:
     """Adds the folder that contains the `jobhunter` package to PYTHONPATH.
 

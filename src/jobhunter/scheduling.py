@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 from jobhunter import frozen as _gele
-from jobhunter import root as _racine
+from jobhunter import profiles as _profils
 
 TACHE = "JobHunter - collecte quotidienne"  # the name in schedule.bat
 _RX_HEURE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
@@ -38,7 +38,7 @@ def commande() -> str:
     """
     if _gele.est_gele():
         return f'"{_gele.interpreteur()}" pipeline'
-    lanceur = _racine.racine() / "JobHunter.pyw"
+    lanceur = _profils.principale() / "JobHunter.pyw"  # the task runs every profile
     if not lanceur.exists():
         raise FileNotFoundError(
             f"{lanceur} introuvable : lance launchers\\schedule.bat depuis le code."

@@ -66,6 +66,7 @@ import threading
 import time
 
 from jobhunter import frozen as _gele
+from jobhunter import profiles as _profils
 from jobhunter import root as _racine
 
 # The root by MARKER (jobhunter.root), never a hard-coded path: the folders
@@ -234,6 +235,38 @@ def dispo_aujourd_hui(a, jour):
     return a.dispo or a.rapide or jour == a.dispo_jour
 
 
+def tous_les_profils(profils):
+    """The pipeline of each profile, one after the other, each in its own process.
+
+    Each profile has its own root (queue, lock, logs): the process of a profile runs
+    with `JOBHUNTER_RACINE` pointing to it, exactly as when that profile is active.
+    Returns the highest exit code (0 if every profile went through).
+    """
+    principale = _profils.principale()
+    codes = []
+    for p in profils:
+        print(f"\n=== Profil « {p.nom} » ({p.racine}) ===", flush=True)
+        env = {
+            **os.environ,
+            "JOBHUNTER_RACINE": str(p.racine),
+            _profils.ENV_PRINCIPALE: str(principale),
+        }
+        r = subprocess.run(
+            [
+                _gele.interpreteur(),
+                "-m",
+                "jobhunter.programs.daily_pipeline",
+                *sys.argv[1:],
+                "--un-profil",
+            ],
+            env=env,
+            stdin=subprocess.DEVNULL,
+        )
+        codes.append(r.returncode)
+        print(f"=== « {p.nom} » : code {r.returncode} ===", flush=True)
+    return max(codes, default=0)
+
+
 def main():
     _racine.exporter_paquet()  # the steps run `python -m jobhunter...`
     ap = argparse.ArgumentParser()
@@ -259,7 +292,15 @@ def main():
     ap.add_argument(
         "--rapide", action="store_true", help="essai de bout en bout sur un echantillon (~5 min)"
     )
+    ap.add_argument(
+        "--un-profil",
+        action="store_true",
+        help="seulement le profil actif (par defaut : chaque profil, l'un apres l'autre)",
+    )
     a = ap.parse_args()
+
+    if not a.un_profil and len(profils := _profils.liste()) > 1:
+        return tous_les_profils(profils)
 
     journaux = SCRIPTS / "_logs"
     journaux.mkdir(exist_ok=True)

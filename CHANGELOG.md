@@ -4,6 +4,21 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.2.0 — 2026-10-20
+
+- **Several profiles, several searches.** Maintenance → "Profils…" lists your profiles
+  and creates a new one from a CV (or drop a CV on the window and choose "Nouveau profil
+  depuis ce CV"). Each profile is a complete workspace of its own — queue, applications,
+  CVs, letters — in `profiles/<name>/` inside the JobHunter folder, so two searches never
+  mix. Your current profile stays where it is.
+- Switching profile restarts JobHunter on the chosen one. The sidebar shows the active
+  profile as soon as there are two.
+- The morning collection runs every profile, one after the other, each with its own log.
+  The scheduled task does not change.
+- The API keys (Adzuna, Jooble, France Travail) and Gmail access are shared: they stay in
+  the main profile and are never copied.
+- `jobhunter pipeline --un-profil` runs only the active profile.
+
 ## 3.1.0 — 2026-10-20
 
 - **Drag your CV onto JobHunter.** On the welcome window (no profile yet), drop your CV

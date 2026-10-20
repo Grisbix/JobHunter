@@ -24,6 +24,9 @@ if any(
     os.environ.setdefault("JOBHUNTER_RACINE", str(_ICI))
 
 if __name__ == "__main__":
+    from jobhunter.profiles import appliquer  # the active profile, before any path is built
+
+    appliquer()
     if len(sys.argv) > 1:
         from jobhunter.cli import main as _commande
 

@@ -96,6 +96,7 @@ PROTEGES_PREFIXES = (
     "CV/",
     "Lettres/",
     "Letters/",
+    "profiles/",  # the other profiles' workspaces (jobhunter.profiles)
     "_sauvegarde_maj/",
     ".git/",
     ".venv/",

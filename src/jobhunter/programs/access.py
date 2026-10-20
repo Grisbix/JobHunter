@@ -91,7 +91,7 @@ def cmd_list():
 
     print("\nCLES DES API DE COLLECTE — valeurs jamais affichees :")
     for nom, cle in cles_api.CLES.items():
-        etat = "✓ posee" if cles_api.presente(HERE, nom) else "✗ absente"
+        etat = "✓ posee" if cles_api.presente(_racine.dossier_cles(), nom) else "✗ absente"
         print(f"  {cle.libelle:<16}{cle.fichier:<22}{etat}")
     if k:
         print(f"  ({KEYS.name} : {', '.join(sorted(k))} — lu par aucune source de collecte)")

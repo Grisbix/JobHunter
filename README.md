@@ -202,6 +202,11 @@ sustainable finance).
 
 Check it, offline: `jobhunter check-profile "Communications officer" "Java developer"`.
 
+**Several searches?** Maintenance → "Profils…" → "Nouveau profil…": a CV, a name, the
+same questions as the first time. Each profile has its own folder (`profiles/<name>/`:
+queue, applications, CVs, letters); the API keys stay shared. Switching restarts the app;
+the morning collection runs every profile.
+
 ## Project rules
 
 These hold since the first version and are not up for discussion:
