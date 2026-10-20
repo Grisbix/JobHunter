@@ -104,14 +104,33 @@ class _Journal:
     def __init__(self, attente: Path) -> None:
         self.ops: list[tuple[str, Path, Path]] = []
         self.attente = attente
+        # Old folders left in place, empty, because another program held them open.
+        self.restes: list[Path] = []
 
     def deplacer(self, src: Path, dst: Path) -> None:
         if not src.exists():
             return
         if not dst.exists():
             dst.parent.mkdir(parents=True, exist_ok=True)
-            os.rename(src, dst)
-            self.ops.append(("mv", src, dst))
+            try:
+                os.rename(src, dst)
+                self.ops.append(("mv", src, dst))
+            except PermissionError:
+                if not src.is_dir():
+                    raise
+                # A FOLDER HELD OPEN by another program (a file watcher, an indexer, an
+                # Explorer window) cannot be renamed on Windows, while everything inside
+                # it can be moved: seen on 21/10/2026 on a real `Lettres/`. Its content
+                # moves one by one; the folder itself, empty, stays until it is freed.
+                dst.mkdir()
+                self.ops.append(("mkdir", dst, dst))
+                for enfant in sorted(src.iterdir()):
+                    self.deplacer(enfant, dst / enfant.name)
+                try:
+                    src.rmdir()
+                    self.ops.append(("rmdir", src, src))
+                except OSError:
+                    self.restes.append(src)
         elif src.is_dir() and dst.is_dir():
             for enfant in sorted(src.iterdir()):
                 self.deplacer(enfant, dst / enfant.name)
@@ -137,6 +156,8 @@ class _Journal:
                 if op == "mv":
                     a.parent.mkdir(parents=True, exist_ok=True)
                     os.rename(b, a)
+                elif op == "mkdir":
+                    b.rmdir()  # emptied by the undo of the moves made after it
                 else:
                     a.mkdir(parents=True, exist_ok=True)
             except OSError as e:
@@ -286,6 +307,11 @@ def migrer(r: Path, bavard: bool = True) -> int:
         f"Migration faite : {len(file_avant)} offres, {len(suivi_avant)} candidatures, "
         f"{valides_avant} liens de documents. Dossiers : data/, profile/, My_CV/, Letters/."
     )
+    for reste in j.restes:
+        dire(
+            f"  {reste.name}/ est resté, vide : un autre programme le tient ouvert. "
+            "Supprime-le quand il sera libéré (rien dedans)."
+        )
     return 0
 
 

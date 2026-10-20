@@ -197,3 +197,49 @@ def test_traduire_garde_le_reste_du_chemin(tmp_path):
     )
     assert M.traduire(r / "Scripts", paires) == r / "data"
     assert M.traduire(tmp_path.parent / "ailleurs.pdf", paires) == tmp_path.parent / "ailleurs.pdf"
+
+
+@pytest.fixture
+def lettres_tenu(monkeypatch):
+    """`Lettres/` held open by another program: neither renamed nor removed (21/10/2026)."""
+    vrai_rename, vrai_rmdir = M.os.rename, Path.rmdir
+
+    def rename(a, b):
+        if Path(a).name == "Lettres":
+            raise PermissionError(5, "Accès refusé")
+        vrai_rename(a, b)
+
+    def rmdir(self):
+        if self.name == "Lettres":
+            raise PermissionError(5, "Accès refusé")
+        vrai_rmdir(self)
+
+    monkeypatch.setattr(M.os, "rename", rename)
+    monkeypatch.setattr(Path, "rmdir", rmdir)
+
+
+def test_dossier_tenu_ouvert_son_contenu_part(ancienne, lettres_tenu, capsys):
+    r = ancienne
+    assert M.migrer(r) == 0
+    assert root.anglais(r)
+    assert (r / "Letters" / "Follow_ups" / "Relance_J7_Acme.txt").exists()
+    assert (r / "Letters" / "Messages" / "Message_Acme.txt").exists()
+    assert list((r / "Lettres").iterdir()) == []  # left in place, empty
+    assert "Lettres/ est resté, vide" in capsys.readouterr().out
+    file_ = json.loads((r / "data" / "apply_queue.json").read_text(encoding="utf-8"))
+    assert links.existe(file_[0]["lettre"])
+
+
+def test_dossier_tenu_ouvert_puis_echec_tout_revient(ancienne, lettres_tenu, monkeypatch):
+    avant = empreinte(ancienne)
+    vrai = M._atomique.ecrire_json
+
+    def panne(chemin, obj):
+        if Path(chemin).name == "applications.json":
+            raise OSError("disque plein")
+        vrai(chemin, obj)
+
+    monkeypatch.setattr(M._atomique, "ecrire_json", panne)
+    assert M.migrer(ancienne, bavard=False) == 1
+    assert empreinte(ancienne) == avant
+    assert not (ancienne / "Letters").exists()

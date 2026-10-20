@@ -4,6 +4,15 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.10.1 — 2026-10-21
+
+- `jobhunter migrate` no longer gives up on a folder held open by another program. On
+  Windows, a folder watched by an indexer, a sync tool or a file watcher cannot be
+  renamed although everything inside it can be moved (seen on a real `Lettres/`): the
+  migration now moves its content one item at a time into the new folder and leaves the
+  old one, empty, telling you to delete it once it is freed. If anything else fails,
+  everything is still put back as it was.
+
 ## 3.10.0 — 2026-10-21
 
 - **Documents à comparer.** Since 3.7 a CV or letter you edited by hand is never
