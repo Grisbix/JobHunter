@@ -590,8 +590,8 @@ SORTIE = {
     "{a} Dateien von {b}.",
     "(Version non signée : empreinte publiée vérifiée.)": "(Unsignierte Version: "
     "veröffentlichte Prüfsumme geprüft.)",
-    "(Versions non signées : la clé de l'auteur n'est pas encore publiée.)": "(Unsignierte "
-    "Versionen: der Schlüssel des Autors ist noch nicht veröffentlicht.)",
+    "(Version {a} non signée : la clé de l'auteur n'est pas encore publiée.)": "(Version {a} "
+    "unsigniert: der Schlüssel des Autors ist noch nicht veröffentlicht.)",
     "! Mise à jour refusée : {a}. Rien n'a été installé.": "! Aktualisierung abgelehnt: {a}. "
     "Nichts wurde installiert.",
     "! Mise à jour refusée : {a}. Rien n'a été modifié.": "! Aktualisierung abgelehnt: {a}. "

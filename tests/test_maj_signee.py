@@ -84,11 +84,11 @@ def test_vieille_signature_refusee(signee, capsys):
 
 
 def test_sans_cle_publique_comme_avant(installer, capsys):  # noqa: F811
-    """As long as the author has not published their key: main's ZIP, and it is said."""
+    """As long as the author has not published their key: the tag's ZIP, said unsigned."""
     d = installer()
     rc, sortie = lancer(capsys)
     assert rc == 0
-    assert "non signées" in sortie
+    assert "1.3.0 non signée" in sortie
     assert lire(d, "Scripts/a.py") == "A = 2\n"
 
 

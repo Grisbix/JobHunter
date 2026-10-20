@@ -588,7 +588,7 @@ SORTIE = {
     "{a} archivos de la {b}.",
     "(Version non signée : empreinte publiée vérifiée.)": "(Versión sin firmar: huella "
     "publicada verificada.)",
-    "(Versions non signées : la clé de l'auteur n'est pas encore publiée.)": "(Versiones sin "
+    "(Version {a} non signée : la clé de l'auteur n'est pas encore publiée.)": "(Versión {a} sin "
     "firmar: la clave del autor aún no se ha publicado.)",
     "! Mise à jour refusée : {a}. Rien n'a été installé.": "! Actualización rechazada: {a}. "
     "No se ha instalado nada.",

@@ -584,8 +584,8 @@ SORTIE = {
     "verified: {a} files of {b}.",
     "(Version non signée : empreinte publiée vérifiée.)": "(Unsigned version: published "
     "checksum verified.)",
-    "(Versions non signées : la clé de l'auteur n'est pas encore publiée.)": "(Unsigned "
-    "versions: the author's key is not published yet.)",
+    "(Version {a} non signée : la clé de l'auteur n'est pas encore publiée.)": "(Version {a} "
+    "unsigned: the author's key is not published yet.)",
     "! Mise à jour refusée : {a}. Rien n'a été installé.": "! Update refused: {a}. Nothing "
     "was installed.",
     "! Mise à jour refusée : {a}. Rien n'a été modifié.": "! Update refused: {a}. Nothing "

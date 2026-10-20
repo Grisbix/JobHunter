@@ -4,6 +4,25 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.4.0 — 2026-10-20
+
+- **The update installs exactly the announced version.** Without the author's signature,
+  an installation from the ZIP took the current state of the repository (`main`), which
+  could already hold changes not yet published; it now takes the published version's
+  archive, like the signed update does.
+- **Never during a collection.** The update waits for the queue of every profile to be
+  free (30 s at most); if a collection or a document generation is running, nothing is
+  touched and it says so (code 3). The installed application no longer opens its
+  installer — which closes JobHunter — in the middle of a morning collection.
+- **The new version is confirmed at start-up.** After an update, the next start of the
+  app says "Mise à jour confirmée : JobHunter X a démarré", or that the update did not go
+  through (installer cancelled, old copy still launched) and what to do.
+- With a secondary profile active, the update looked for the program in that profile's
+  folder and refused; it now always works on the installation's folder.
+- A real update is tested after each release: the two previous versions, installed from
+  their ZIP on Windows and Linux with invented data, update themselves; the new version
+  must be running and every piece of data byte for byte the same.
+
 ## 3.3.0 — 2026-10-20
 
 - **Where an offer was found.** The same posting often arrives from several places

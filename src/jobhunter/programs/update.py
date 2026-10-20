@@ -53,15 +53,19 @@ import zipfile
 from pathlib import Path
 
 from jobhunter import frozen as _gele
+from jobhunter import profiles as _profils
 from jobhunter import root as _racine
 from jobhunter import signature as _sig
 from jobhunter.network import exiger_http
+from jobhunter.storage import lock as _verrou
 
 # line_buffering: our lines interleave in the right order with the output of git and
 # pip, and are displayed as they come in the application's log.
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
-RACINE = _racine.racine()
+# The installation's folder, whichever profile is active (jobhunter.profiles): the
+# program lives there, a secondary profile's workspace has no VERSION.
+RACINE = _profils.principale()
 DEPOT = "Grisbix/JobHunter"
 ZIP_URL = f"https://github.com/{DEPOT}/archive/refs/heads/main.zip"
 PAGE_VERSIONS = f"https://github.com/{DEPOT}/releases/latest"
@@ -75,6 +79,11 @@ SAUVEGARDES = RACINE / "_sauvegarde_maj"
 DERNIERE_VERIF = RACINE / ".maj_derniere_verif"
 GIT_AVANT = RACINE / ".maj_git_avant"
 JOURNAL = "_journal.json"
+# The version the next start must run (confirmer_demarrage). In the data folder:
+# the installed application's installer replaces the program, not the data.
+ATTENDUE = RACINE / ".maj_attendue.json"
+# Exit code of a program that finds the queue busy (project convention).
+OCCUPE = 3
 # The example profile, in the English layout (3.0) or the French one (2.x): right after
 # the first update to 3.0 a French installation may have lost its 2.x copy.
 EXEMPLES = ("profile/example_finance_esg.json", "profil/exemple_finance_esg.json")
@@ -422,6 +431,78 @@ def installer_dependances(changes_requirements):
     return True
 
 
+def file_libre(garder=True):
+    """Takes the queue's lock for the update (released at exit); False if it is busy.
+
+    A collection or a document generation running in the background writes the queue;
+    replacing the program under it would mix two versions in one run. `garder=False`
+    only checks (the installed application hands over to its installer and exits).
+    """
+    try:
+        racines = [p.racine for p in _profils.liste(RACINE)]
+    except OSError:
+        racines = [RACINE]
+    files = [_racine.dans(r / _racine.nom("Scripts", r), "apply_queue.json") for r in racines]
+    files = [q for q in files if q.parent.is_dir()]  # no data folder: nothing writes there
+    pris = []
+    for q in files:  # every profile: the morning collection runs them one after the other
+        if not _verrou.prendre_verrou(q, attente=30, bavard=False):
+            for f in pris:
+                _verrou.rendre_verrou(f)
+            print(
+                "! Une collecte ou une génération de documents est en cours (file occupée). "
+                "Rien n'a été modifié : relance la mise à jour quand elle aura fini."
+            )
+            return False
+        pris.append(q)
+    for q in pris:
+        if garder:
+            import atexit
+
+            atexit.register(_verrou.rendre_verrou, q)
+        else:
+            _verrou.rendre_verrou(q)
+    return True
+
+
+def attendre_version(version, depuis):
+    """Notes the version the next start must run (see confirmer_demarrage)."""
+    try:
+        ATTENDUE.write_text(
+            json.dumps(
+                {"version": version, "depuis": depuis, "date": time.strftime("%Y-%m-%d %H:%M")}
+            ),
+            encoding="utf-8",
+        )
+    except OSError:
+        pass  # a read-only folder: the update itself went through
+
+
+def confirmer_demarrage():
+    """At the application's start: did the last update really install its version?
+
+    "Installer opened" or "files written" is not "new version running": an installer
+    cancelled half-way, or a launcher that still starts the old copy, would otherwise
+    go unnoticed. Said once, then forgotten.
+
+    Returns:
+        A line for the application's log, or None when no update was pending.
+    """
+    try:
+        att = json.loads(ATTENDUE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    ATTENDUE.unlink(missing_ok=True)
+    attendue, ici = str(att.get("version", "")), version_locale()
+    if _cle_version(ici) >= _cle_version(attendue):
+        return f"Mise à jour confirmée : JobHunter {ici} a démarré."
+    return (
+        f"! La mise à jour vers {attendue} n'a pas abouti : la version {ici} est toujours "
+        f"en place. Relance « Mettre à jour JobHunter », ou prends l'installateur sur "
+        f"{PAGE_VERSIONS}"
+    )
+
+
 def apres():
     """The closing message, once the new version is installed AND checked."""
     signaler_reglages()
@@ -440,19 +521,21 @@ def telecharger(url=ZIP_URL, timeout=120):
 def fichiers_a_installer():
     """The files of the proposed version, checked by the author's signature.
 
-    Without a public key in this version (`signature.CLE_PUBLIQUE` empty), nothing is
-    signed: we take the ZIP of main, as before 2.18, and say so. With a key, we take the
-    ZIP of the announced version's tag, and each of its files must have the fingerprint
-    that the signed manifest gives it.
+    Always the ZIP of the announced version's TAG. Before 3.4, without a public key, it
+    was the ZIP of main: a commit pushed between two releases reached the installations
+    under the number of the previous one. With a key (`signature.CLE_PUBLIQUE`), each
+    file must also have the fingerprint that the signed manifest gives it.
 
     Raises:
         signature.SignatureInvalide: version refused (nothing was written).
     """
-    if not _sig.CLE_PUBLIQUE:
-        print("(Versions non signées : la clé de l'auteur n'est pas encore publiée.)")
-        return fichiers_du_zip(telecharger())
     distante = _get(VERSION_URL, 30)[:64].decode("utf-8").strip()
+    if not re.fullmatch(r"\d+(\.\d+){1,3}", distante):
+        raise ValueError(f"numéro de version illisible : {distante[:20]!r}")
     nouveaux = fichiers_du_zip(telecharger(TAG_URL.format(distante)))
+    if not _sig.CLE_PUBLIQUE:
+        print(f"(Version {distante} non signée : la clé de l'auteur n'est pas encore publiée.)")
+        return nouveaux
     m = _sig.ouvrir(_get(ASSET_URL.format(distante, _sig.FICHIER), 60), distante)
     _sig.controler_fichiers(m, nouveaux)
     print(f"Signature de l'auteur vérifiée : {len(nouveaux)} fichiers de la {distante}.")
@@ -476,6 +559,10 @@ def maj_application(verifier_seulement):
     )
     if not v or verifier_seulement:
         return 0
+    # The installer closes JobHunter, including a morning collection running in the
+    # background: not while it writes the queue.
+    if not file_libre(garder=False):
+        return OCCUPE
     try:
         print(f"Téléchargement de {SETUP} {v} …")
         exe = _get(ASSET_URL.format(v, SETUP), 900)
@@ -502,6 +589,7 @@ def maj_application(verifier_seulement):
     chemin = Path(tempfile.gettempdir()) / f"JobHunterSetup-{v}.exe"
     chemin.write_bytes(exe)
     print("L'installateur s'ouvre : suis ses étapes. Tes données sont gardées.")
+    attendre_version(v, version_locale())
     subprocess.Popen([str(chemin)], close_fds=True)  # nosec B603 : file checked above
     return 0
 
@@ -658,6 +746,8 @@ def par_zip(args):
     if not plus_recente and not args.forcer:
         print("Déjà à jour.")
         return 0
+    if not file_libre():
+        return OCCUPE
 
     reference, source = reference_installee(locale)
     if source and source != "manifeste":
@@ -742,6 +832,7 @@ def par_zip(args):
             f"https://github.com/{DEPOT}/issues"
         )
         return 1
+    attendre_version(distante, locale)
     afficher_nouveautes(changelog, locale, distante)
     return apres()
 
@@ -814,6 +905,8 @@ def par_git(args):
                 "  données (ignorées par git) et tes fichiers modifiés restent en place."
             )
             return 1
+        if not file_libre():
+            return OCCUPE
         avant = _git("rev-parse", "HEAD").stdout.strip()
         GIT_AVANT.write_text(avant, encoding="utf-8")
         r = _git("reset", "--keep", "@{u}")
@@ -821,6 +914,8 @@ def par_git(args):
         if n == "0" and not args.forcer:
             print("Déjà à jour.")
             return 0
+        if not file_libre():
+            return OCCUPE
         avant = _git("rev-parse", "HEAD").stdout.strip()
         GIT_AVANT.write_text(avant, encoding="utf-8")
         r = subprocess.run(["git", "pull", "--rebase", "--autostash"], cwd=RACINE)
@@ -841,6 +936,7 @@ def par_git(args):
             f"https://github.com/{DEPOT}/issues"
         )
         return 1
+    attendre_version(distante, locale)
     afficher_nouveautes(changelog, locale, distante)
     return apres()
 

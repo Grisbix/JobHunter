@@ -99,6 +99,13 @@ def signer(version: str, publier: bool) -> int:
             ["gh", "release", "upload", f"v{version}", str(sortie), "--clobber"], check=True
         )
         print(f"Attaché à la release v{version}.")
+        # The real-update test waited for this signature (installations that carry the
+        # key refuse an unsigned version): run it now.
+        r = subprocess.run(  # nosec B603 B607 : gh, arguments fixes
+            ["gh", "workflow", "run", "update-transition.yml"], check=False
+        )
+        if r.returncode == 0:
+            print("Test de mise à jour réelle relancé (workflow update-transition).")
     else:
         print(f"Pour l'attacher : gh release upload v{version} {sortie} --clobber")
     return 0

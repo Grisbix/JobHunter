@@ -342,6 +342,14 @@ class App(
         self._depot_cv = _activer_depot(self.root, self._deposer_cv)
         self.root.after(100, self._drain)
         self._raccourcis()
+        # Did the last update really start its version? (programs.update.confirmer_demarrage)
+        try:
+            from jobhunter.programs import update as _maj
+
+            if msg := _maj.confirmer_demarrage():
+                self._log(msg + "\n")
+        except Exception:  # never a reason not to open
+            pass
         # JOBHUNTER_SANS_FOND=1 : aucun travail de fond (scan, descriptions,
         # sync). To open the app for a visual check without
         # triggering a scan at the first return of focus.

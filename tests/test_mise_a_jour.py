@@ -62,7 +62,11 @@ V13 = {
     "profil/profil.json": '{"pirate": 1}\n',
     "Scripts/stable.py": "S = 1\n",
 }
-ZIPS = {maj.ZIP_URL: zip_de(V13), maj.TAG_URL.format("1.2.0"): zip_de(V12, "JobHunter-1.2.0")}
+ZIPS = {
+    maj.VERSION_URL: b"1.3.0\n",
+    maj.TAG_URL.format("1.3.0"): zip_de(V13, "JobHunter-1.3.0"),
+    maj.TAG_URL.format("1.2.0"): zip_de(V12, "JobHunter-1.2.0"),
+}
 
 
 def ecrire(d, rel, txt):
@@ -86,6 +90,7 @@ def installer(tmp_path, monkeypatch):
         monkeypatch.setattr(maj, "MANIFESTE", tmp_path / ".maj_manifeste.json")
         monkeypatch.setattr(maj, "SAUVEGARDES", tmp_path / "_sauvegarde_maj")
         monkeypatch.setattr(maj, "GIT_AVANT", tmp_path / ".maj_git_avant")
+        monkeypatch.setattr(maj, "ATTENDUE", tmp_path / ".maj_attendue.json")
         monkeypatch.setattr(maj, "apres", lambda: 0)  # ni profil
         monkeypatch.setattr(maj, "installer_dependances", lambda changes: True)  # ni pip
 
@@ -284,7 +289,12 @@ def test_pas_de_version_nouveau(version_retouchee):
 # ── without reference (tag missing): old rule ────────────────────────
 @pytest.fixture
 def sans_reference(installer, capsys):
-    d = installer(zips={maj.ZIP_URL: zip_de(V13)})
+    d = installer(
+        zips={
+            maj.VERSION_URL: b"1.3.0",
+            maj.TAG_URL.format("1.3.0"): zip_de(V13, "JobHunter-1.3.0"),
+        }
+    )
     ecrire(d, "Scripts/sources_config.json", '{"perso": 1}\n')
     return d, lancer(capsys)[0]
 
@@ -523,7 +533,10 @@ def test_echec_de_pip_n_annonce_pas_le_succes(monkeypatch, capsys):
 def test_les_dependances_passent_avant_le_controle(installer, monkeypatch, capsys):
     """pip before the check; if it fails, back to 1.2.0 and code 1, without check."""
     v13 = {**V13, "requirements.txt": "httpx\n"}
-    zips = {maj.ZIP_URL: zip_de(v13), maj.TAG_URL.format("1.2.0"): zip_de(V12, "JobHunter-1.2.0")}
+    zips = {
+        **ZIPS,
+        maj.TAG_URL.format("1.3.0"): zip_de(v13, "JobHunter-1.3.0"),
+    }
     installer(V12, zips=zips)
     ordre: list[str] = []
     monkeypatch.setattr(maj, "installer_dependances", lambda c: ordre.append(f"pip:{c}") or False)
@@ -533,3 +546,63 @@ def test_les_dependances_passent_avant_le_controle(installer, monkeypatch, capsy
     assert ordre == ["pip:True"]
     assert maj.version_locale() == "1.2.0"
     assert "à jour" not in sortie.split("Retour automatique")[-1]
+
+
+# ── 3.4: the tag even unsigned, the queue's lock, the version confirmed at start ──
+
+
+def test_sans_signature_le_zip_de_l_etiquette_pas_main(installer, capsys):
+    """main may hold commits newer than the release: never installed under its number."""
+    zips = {**ZIPS, maj.ZIP_URL: zip_de({**V13, "Scripts/a.py": "PAS PUBLIE\n"})}
+    d = installer(zips=zips)
+    rc, out = lancer(capsys)
+    assert rc == 0 and "1.3.0 non signée" in out
+    assert lire(d, "Scripts/a.py") != "PAS PUBLIE\n"
+
+
+def test_numero_de_version_illisible_refuse(installer, capsys):
+    installer(zips={**ZIPS, maj.VERSION_URL: b"<html>404</html>"})
+    rc, out = lancer(capsys)
+    assert rc == 1 and "Téléchargement impossible" in out
+    assert maj.version_locale() == "1.2.0"
+
+
+def test_file_occupee_rien_n_est_touche(installer, capsys, monkeypatch):
+    d = installer()
+    ecrire(d, "Scripts/apply_queue.json", "[]")  # a queue: something may be writing it
+    monkeypatch.setattr(maj._verrou, "prendre_verrou", lambda *a, **k: False)
+    rc, out = lancer(capsys)
+    assert rc == maj.OCCUPE and "file occupée" in out
+    assert maj.version_locale() == "1.2.0" and not (d / "_sauvegarde_maj").exists()
+
+
+def test_version_attendue_confirmee_au_demarrage(installer, capsys):
+    d = installer()
+    assert lancer(capsys)[0] == 0
+    assert json.loads((d / ".maj_attendue.json").read_text(encoding="utf-8"))["version"] == "1.3.0"
+    assert "confirmée" in maj.confirmer_demarrage()
+    assert maj.confirmer_demarrage() is None  # said once
+
+
+def test_version_attendue_pas_demarree(installer):
+    d = installer()
+    maj.attendre_version("9.0.0", "1.2.0")
+    msg = maj.confirmer_demarrage()
+    assert msg.startswith("! La mise à jour vers 9.0.0 n'a pas abouti") and "1.2.0" in msg
+    assert not (d / ".maj_attendue.json").exists()
+
+
+def test_racine_de_l_installation_meme_sur_un_profil_secondaire(tmp_path, monkeypatch):
+    """3.2: with a secondary profile active, the update looked for VERSION in its workspace."""
+    import importlib
+
+    principale = tmp_path / "JobHunter"
+    profil = principale / "profiles" / "b"
+    profil.mkdir(parents=True)
+    monkeypatch.setenv("JOBHUNTER_RACINE", str(profil))
+    monkeypatch.setenv("JOBHUNTER_PRINCIPALE", str(principale))
+    try:
+        assert importlib.reload(maj).RACINE == principale.resolve()
+    finally:
+        monkeypatch.undo()
+        importlib.reload(maj)

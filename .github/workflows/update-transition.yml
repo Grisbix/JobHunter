@@ -1,0 +1,90 @@
+name: update-transition
+
+# A REAL update, as a user lives it: the ZIP of an older published release (the previous
+# one and the one before), installed by its own launcher, fictitious user data added,
+# then `JobHunter.pyw update` — the OLD version's updater fetching the release that was
+# just published. Passes only if the new version is installed, checks itself, and every
+# piece of user data is byte for byte the same (tools/update_transition.py).
+# No personal data: everything is invented.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  transition:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        ecart: [1, 2]  # from the previous release, and from the one before
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    env:
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          path: outils
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Versions (publiée, et celle d'où l'on part)
+        id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tags=$(gh release list -R "$GITHUB_REPOSITORY" --limit 6 --exclude-drafts \
+                 --exclude-pre-releases --json tagName -q '.[].tagName')
+          cible=$(echo "$tags" | sed -n 1p)
+          depuis=$(echo "$tags" | sed -n "$(( ${{ matrix.ecart }} + 1 ))p")
+          echo "cible=${cible#v}" >> "$GITHUB_OUTPUT"
+          echo "depuis=${depuis#v}" >> "$GITHUB_OUTPUT"
+          echo "De ${depuis} vers ${cible}"
+      - name: L'ancienne version, comme un ZIP téléchargé
+        run: |
+          curl -sSfL "https://github.com/$GITHUB_REPOSITORY/archive/refs/tags/v${{ steps.v.outputs.depuis }}.zip" -o ancienne.zip
+          python -m zipfile -e ancienne.zip .
+          mv "JobHunter-${{ steps.v.outputs.depuis }}" jh
+      - name: Signature attendue ?
+        id: sig
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # An old version that carries the author's key refuses an unsigned update: until
+          # the author has attached signature.json (tools/signature.py signer --publier,
+          # which re-runs this workflow), there is nothing to test yet.
+          if grep -q '^CLE_PUBLIQUE = ""' jh/src/jobhunter/signature.py; then exit 0; fi
+          noms=$(gh release view "v${{ steps.v.outputs.cible }}" -R "$GITHUB_REPOSITORY" --json assets -q '.assets[].name')
+          if echo "$noms" | grep -qx signature.json; then exit 0; fi
+          echo "attente=1" >> "$GITHUB_OUTPUT"
+          echo "::notice::v${{ steps.v.outputs.cible }} pas encore signée : test relancé par tools/signature.py signer --publier"
+      - name: Son installateur (Windows)
+        if: runner.os == 'Windows' && !steps.sig.outputs.attente
+        shell: cmd
+        run: jh\launchers\install.bat < NUL
+      - name: Son installateur (Linux)
+        if: runner.os != 'Windows' && !steps.sig.outputs.attente
+        run: chmod +x jh/launchers/*.sh && ./jh/launchers/install.sh
+      - name: Données fictives d'un utilisateur
+        if: ${{ !steps.sig.outputs.attente }}
+        run: python outils/tools/update_transition.py preparer jh
+      - name: La mise à jour, par l'ancienne version
+        if: ${{ !steps.sig.outputs.attente }}
+        run: |
+          cd jh
+          py=.venv/bin/python; [ -x "$py" ] || py=.venv/Scripts/python.exe
+          "$py" JobHunter.pyw update
+          "$py" JobHunter.pyw update --controler
+          "$py" JobHunter.pyw update | tee second.txt
+          grep -q "Déjà à jour" second.txt
+      - name: Version installée et données intactes
+        if: ${{ !steps.sig.outputs.attente }}
+        run: python outils/tools/update_transition.py verifier jh "${{ steps.v.outputs.cible }}"
