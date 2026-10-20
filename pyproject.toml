@@ -28,7 +28,7 @@ gmail = ["google-auth-oauthlib>=1.2,<2"]
 
 [dependency-groups]
 dev = [
-    "ruff>=0.15,<0.16",
+    "ruff>=0.15,<0.18",
     "pytest>=9,<10",
     "pre-commit>=4,<5",
     "pytest-cov>=6,<8",
