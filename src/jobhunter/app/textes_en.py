@@ -1,10 +1,15 @@
 """English interface texts, indexed by the displayed French text.
 
 Part of jobhunter.app (step F5). The French text stays the source: a text missing
-from here is displayed in French. `python outils/textes_interface.py` lists the missing ones.
+from here is displayed in French. English is also the fallback of the other
+languages (see `langue`), so this catalogue is the reference list of the texts to
+translate: tests/test_langue.py checks that every language covers it.
 """
 
-EN: dict[str, str] = {
+NOM = "English"
+RELANCER = "Restart JobHunter to use the English interface."
+
+TEXTES: dict[str, str] = {
     # navigation and header
     "JOBHUNTER": "JOBHUNTER",
     "RECHERCHE D'EMPLOI": "JOB SEARCH",
@@ -24,7 +29,7 @@ EN: dict[str, str] = {
     "Retour": "Back",
     "Dossier": "Folder",
     "Arrêter": "Stop",
-    "Langue : English": "Language: français",
+    "Langue / Language…": "Language / Langue…",
     # offers table
     "OFFRES EN FILE": "OFFERS IN QUEUE",
     "FIT ≥ 8": "FIT ≥ 8",
@@ -297,13 +302,24 @@ EN: dict[str, str] = {
     "pas avant le": "not before",
     "offres": "offers",
     "offre": "offer",
+    # offer list (counts and placeholders)
+    "Sélectionne une offre dans le tableau.": "Select an offer in the table.",
+    "Double-clic ou Entrée : fiche complète  ·  clic droit : actions  ·  Suppr : pas intéressé": "Double-click or Enter: full details  ·  right-click: actions  ·  Del: not interested",
+    "aucune offre ne contient « {t} » — Echap ou ✕ pour effacer": "no offer contains “{t}” — Esc or ✕ to clear",
+    "aucune offre ne passe les filtres — clique sur ▾ dans une entete pour les lever": "no offer passes the filters — click ▾ in a header to clear them",
+    "aucune offre dans la file": "no offer in the queue",
+    "sur {base}": "of {base}",
+    "{m} masquée(s) :": "{m} hidden:",
+    "{n} offre(s)": "{n} offer(s)",
+    "rechercher…": "search…",
+    "coller un lien d'offre…": "paste an offer link…",
 }
 
 
 # App log (langue.journal): a displayed line → its translation. A key with
 # `{a}`, `{b}` is a template: each `{x}` takes the variable part of the line as
-# is. The launched programs' summaries are in SORTIE_EN, below.
-JOURNAL_EN = {
+# is. The launched programs' summaries are in SORTIE, below.
+JOURNAL = {
     # ── lignes fixes ──
     "Sélectionne d'abord une offre.": "Select an offer first.",
     "Coche d'abord des offres (colonne ☐).": "Tick some offers first (☐ column).",
@@ -421,10 +437,10 @@ JOURNAL_EN = {
 }
 
 # The output of the programs the app launches (collection, "TOUT FAIRE"), translated line
-# by line like JOURNAL_EN: summaries and headers, not the offer-by-offer detail
+# by line like JOURNAL: summaries and headers, not the offer-by-offer detail
 # (company and job names, which are not translated). Each template must live in
 # the package's code (test_langue).
-SORTIE_EN = {
+SORTIE = {
     # Collecte (jobhunter.sources)
     "── recherche restreinte à la FRANCE ──": "── search restricted to FRANCE ──",
     "── ATS APIs (greenhouse/lever/ashby/recruitee/smartrecruiters) ──": "── ATS APIs "

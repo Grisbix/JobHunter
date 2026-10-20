@@ -23,6 +23,7 @@ os.environ["JOBHUNTER_SANS_FOND"] = "1"
 os.environ.pop("JOBHUNTER_ACTION", None)
 import jobhunter.app as ui  # noqa: E402
 from jobhunter.app import commun as _commun  # noqa: E402
+from jobhunter.app import langue as _langue  # noqa: E402
 from jobhunter.app import panneaux as _panneaux  # noqa: E402
 from jobhunter.sources import commun as _sources_commun  # noqa: E402
 
@@ -107,7 +108,12 @@ def _fermer(racine, patches):
         p.stop()
 
 
-def test_chaque_panneau_s_affiche_sans_console(racine_tk, tmp_path, sans_console):
+@pytest.mark.parametrize("code", _langue.LANGUES)
+def test_chaque_panneau_s_affiche_sans_console(
+    racine_tk, tmp_path, sans_console, code, monkeypatch
+):
+    """In each interface language: a translation that breaks a panel shows up here."""
+    monkeypatch.setattr(_langue, "LANGUE", code)
     app, pannes, patches = _ouvrir(racine_tk, tmp_path, lambda *a, **k: [dict(OFFRE)])
     try:
         _parcourir(app, racine_tk, pannes)

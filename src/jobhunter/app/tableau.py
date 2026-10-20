@@ -27,6 +27,7 @@ from jobhunter.app.commun import (
     SEARCH_HINT,
     ST_COULEUR,
     ST_EMOJI,
+    URL_HINT,
     ZONE_ETIQ,
     _ChoixStatut,
     _pays_lieu,
@@ -169,10 +170,10 @@ class TableauMixin:
         self.b_addurl.pack(side="right", padx=(6, 0))
         self.e_url = CE(importbar, width=40, bg=CARD, fg=TX, font=(_theme.FONT_UI, 12))
         self.e_url.pack(side="left", fill="x", expand=True, ipady=3)
-        self.e_url.insert(0, "coller un lien d'offre…")
+        self.e_url.insert(0, URL_HINT)
         self.e_url.bind(
             "<FocusIn>",
-            lambda e: self.e_url.get().startswith("coller") and self.e_url.delete(0, "end"),
+            lambda e: self.e_url.get() == URL_HINT and self.e_url.delete(0, "end"),
         )
         self.e_url.bind("<Return>", lambda e: self._add_offer_url())
 
@@ -495,11 +496,13 @@ class TableauMixin:
         d = self.detail
         d.configure(state="normal")
         d.delete("1.0", "end")
-        d.insert("end", "Sélectionne une offre dans le tableau.\n", "m")
+        d.insert("end", _t("Sélectionne une offre dans le tableau.") + "\n", "m")
         d.insert(
             "end",
-            "Double-clic ou Entrée : fiche complète  ·  clic droit : actions  ·  "
-            "Suppr : pas intéressé",
+            _t(
+                "Double-clic ou Entrée : fiche complète  ·  clic droit : actions  ·  "
+                "Suppr : pas intéressé"
+            ),
             "m",
         )
         d.configure(state="disabled")
@@ -963,24 +966,30 @@ class TableauMixin:
             filtres = sum(1 for v in self.colsel.values() if v is not None)
             if n == 0:
                 if termes:
-                    msg = "aucune offre ne contient « %s » — Echap ou ✕ pour effacer" % " ".join(
-                        termes
+                    msg = _t("aucune offre ne contient « {t} » — Echap ou ✕ pour effacer").format(
+                        t=" ".join(termes)
                     )
                 elif filtres:
-                    msg = "aucune offre ne passe les filtres — clique sur ▾ dans une entete pour les lever"
+                    msg = _t(
+                        "aucune offre ne passe les filtres — clique sur ▾ dans une entete pour les lever"
+                    )
                 else:
-                    msg = "aucune offre dans la file"
+                    msg = _t("aucune offre dans la file")
                 self.lbl_count.configure(text=msg, text_color=TX_AMBRE)
             else:
                 base = len(self.offers) - masques - (0 if self._voir_masquees else pas_int)
-                detail = f" sur {base}" if n != base else ""
+                detail = " " + _t("sur {base}").format(base=base) if n != base else ""
                 cache = (
-                    f"   ·   {masques} masquee(s) : {', '.join(sorted(self._exclus))}"
+                    "   ·   "
+                    + _t("{m} masquée(s) :").format(m=masques)
+                    + f" {', '.join(sorted(self._exclus))}"
                     if masques
                     else ""
                 )
                 rech = f"   ·   🔍 « {' '.join(termes)} »" if termes else ""
-                self.lbl_count.configure(text=f"{n} offre(s){detail}{rech}{cache}", text_color=MUT)
+                self.lbl_count.configure(
+                    text=_t("{n} offre(s)").format(n=n) + f"{detail}{rech}{cache}", text_color=MUT
+                )
         if getattr(self, "_offer_kpis", None):
             stats = {
                 "total": len(self.offers),
@@ -994,5 +1003,5 @@ class TableauMixin:
             for key, label in self._offer_kpis.items():
                 label.configure(text=str(stats[key]))
         if getattr(self, "sw_masq", None) is not None:
-            self.sw_masq.configure(text=f"Voir les masquées ({pas_int})")
+            self.sw_masq.configure(text=f"{_t('Voir les masquées')} ({pas_int})")
         self._upd_apply_btn()

@@ -399,18 +399,35 @@ class App(
                 b.configure(fg_color=SIDE, text_color=SIDE_MUT, hover_color=SIDE_H)
 
     def _basculer_langue(self) -> None:
-        """Interface in English <-> in French; it changes at the next start."""
+        """Menu of the interface languages, each under its own name; applies at the next start."""
+        import functools
+        import tkinter as tk
+
         from jobhunter.app import langue as _langue
 
-        autre = "fr" if _langue.LANGUE == "en" else "en"
-        _langue.choisir(autre)
-        messagebox.showinfo(
-            "JobHunter",
-            "Restart JobHunter to use the English interface."
-            if autre == "en"
-            else "Relance JobHunter pour retrouver l'interface en français.",
-            parent=self.root,
-        )
+        menu = tk.Menu(self.root, tearoff=0)
+        self._langue_var = tk.StringVar(self.root, _langue.LANGUE)  # the current one is ticked
+        for code, nom in _langue.noms().items():
+            menu.add_radiobutton(
+                label=nom,
+                value=code,
+                variable=self._langue_var,
+                command=functools.partial(self._choisir_langue, code),
+            )
+        x, y = self.root.winfo_pointerxy()
+        try:
+            menu.tk_popup(x, y)
+        finally:
+            menu.grab_release()
+
+    def _choisir_langue(self, code: str) -> None:
+        """Saves the chosen language and says, in it, that a restart applies it."""
+        from jobhunter.app import langue as _langue
+
+        if code == _langue.LANGUE:
+            return
+        _langue.choisir(code)
+        messagebox.showinfo("JobHunter", _langue.message_relance(code), parent=self.root)
 
     def _planifier(self) -> None:
         """Collection every morning: creates the Windows task at the chosen time, or removes it."""

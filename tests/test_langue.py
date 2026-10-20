@@ -1,4 +1,4 @@
-"""Interface language (jobhunter.app.langue) and English catalogue."""
+"""Interface languages (jobhunter.app.langue) and their catalogues."""
 
 import importlib
 import json
@@ -7,8 +7,10 @@ import re
 
 import pytest
 
-from jobhunter.app import langue
-from jobhunter.app.textes_en import EN
+from jobhunter.app import langue, textes_en
+
+EN = textes_en.TEXTES
+AUTRES = [c for c in langue.LANGUES if c != "fr"]
 
 APP = pathlib.Path(langue.__file__).parent
 
@@ -30,8 +32,10 @@ def test_choisir_puis_lire(racine):
     langue.choisir("en")
     assert json.loads((racine / "Scripts" / "_interface.json").read_text()) == {"langue": "en"}
     assert langue.lire() == "en"
+    langue.choisir("de")
+    assert langue.lire() == "de"
     with pytest.raises(ValueError):
-        langue.choisir("de")
+        langue.choisir("xx")
 
 
 def test_variable_d_environnement(racine, monkeypatch):
@@ -64,7 +68,7 @@ def test_navigation_et_panneaux_traduits():
         "Actualiser les offres",
         "Entreprises suivies",
         "Accès aux sources",
-        "Langue : English",
+        "Langue / Language…",
     ):
         assert fr in EN, fr
 
@@ -75,16 +79,55 @@ def test_chaque_cle_courte_existe_dans_l_app():
     Long texts, written in several pieces in the code, are not checked here.
     """
     source = "\n".join(
-        p.read_text(encoding="utf-8") for p in APP.glob("*.py") if p.name != "textes_en.py"
+        p.read_text(encoding="utf-8") for p in APP.glob("*.py") if not p.name.startswith("textes_")
     )
     mortes = [k for k in EN if len(k) < 60 and f'"{k}' not in source and f"'{k}" not in source]
     assert mortes == []
 
 
-def test_catalogue_sans_doublon_de_cle():
-    texte = (APP / "textes_en.py").read_text(encoding="utf-8")
+@pytest.mark.parametrize("code", AUTRES)
+def test_catalogue_sans_doublon_de_cle(code):
+    texte = (APP / f"textes_{code}.py").read_text(encoding="utf-8")
     cles = re.findall(r'^    "((?:[^"\\]|\\.)*)": ', texte, re.M)
     assert len(cles) == len(set(cles))
+
+
+@pytest.mark.parametrize("code", [c for c in AUTRES if c != "en"])
+@pytest.mark.parametrize("nom", ["TEXTES", "JOURNAL", "SORTIE"])
+def test_chaque_langue_couvre_l_anglais(code, nom):
+    """English is the reference list: every language translates all of it, nothing more.
+
+    Same `{x}` holes on both sides: a missing hole raises KeyError at display.
+    """
+    ref, cat = getattr(textes_en, nom), getattr(langue.module(code), nom)
+    assert [k for k in ref if k not in cat] == []
+    assert [k for k in cat if k not in ref] == []
+    trous = re.compile(r"\{(\w+)\}")
+    assert [k for k, v in cat.items() if sorted(trous.findall(k)) != sorted(trous.findall(v))] == []
+
+
+def test_noms_et_message_de_relance():
+    assert langue.noms() == {"fr": "Français", "en": "English", "de": "Deutsch", "es": "Español"}
+    assert "JobHunter" in langue.message_relance("de")
+    assert langue.message_relance("fr").startswith("Relance")
+
+
+def test_repli_sur_l_anglais(monkeypatch):
+    """A text the language lacks is shown in English, then in French."""
+    monkeypatch.setattr(langue, "LANGUE", "de")
+    monkeypatch.setitem(textes_en.TEXTES, "Texte de test absent", "Test text")
+    langue._CACHE.clear()
+    assert langue.t("Mes CV") == "Meine Lebensläufe"
+    assert langue.t("Texte de test absent") == "Test text"
+    assert langue.t("vraiment absent") == "vraiment absent"
+    langue._CACHE.clear()
+
+
+def test_journal_en_allemand_et_espagnol(monkeypatch):
+    monkeypatch.setattr(langue, "LANGUE", "de")
+    assert langue.journal("↶ annulé (3 offre(s)).\n") == "↶ rückgängig gemacht (3 Angebot(e)).\n"
+    monkeypatch.setattr(langue, "LANGUE", "es")
+    assert langue.journal("Rien à annuler.\n") == "Nada que deshacer.\n"
 
 
 def test_theme_traduit(monkeypatch):
@@ -141,11 +184,13 @@ def test_sortie_des_programmes(monkeypatch):
 
 
 def test_sortie_modeles_vivent_dans_le_paquet():
-    """Each line of SORTIE_EN is still printed somewhere in the package."""
-    from jobhunter.app.textes_en import SORTIE_EN
+    """Each line of SORTIE is still printed somewhere in the package."""
+    SORTIE_EN = textes_en.SORTIE
 
     source = "\n".join(
-        p.read_text(encoding="utf-8") for p in APP.parent.rglob("*.py") if p.name != "textes_en.py"
+        p.read_text(encoding="utf-8")
+        for p in APP.parent.rglob("*.py")
+        if not p.name.startswith("textes_")
     )
     trous = re.compile(r"\{(\w+)\}")
     morts = []
@@ -162,10 +207,10 @@ def test_sortie_modeles_vivent_dans_le_paquet():
 
 def test_journal_modeles_coherents():
     """Same set of `{x}` on both sides, and each template still lives in the app."""
-    from jobhunter.app.textes_en import JOURNAL_EN
+    JOURNAL_EN = textes_en.JOURNAL
 
     source = "\n".join(
-        p.read_text(encoding="utf-8") for p in APP.glob("*.py") if p.name != "textes_en.py"
+        p.read_text(encoding="utf-8") for p in APP.glob("*.py") if not p.name.startswith("textes_")
     )
     trous = re.compile(r"\{(\w+)\}")
     morts = []
@@ -177,3 +222,22 @@ def test_journal_modeles_coherents():
         if fixe not in source:
             morts.append(fr)
     assert morts == []
+
+
+def test_choisir_depuis_le_menu(racine, monkeypatch):
+    """The menu saves the language and says, in that language, that a restart applies it."""
+    import os
+
+    os.environ["JOBHUNTER_SANS_FOND"] = "1"
+    from jobhunter.app import fenetre
+
+    app = object.__new__(fenetre.App)
+    app.root = None
+    vus = []
+    monkeypatch.setattr(fenetre.messagebox, "showinfo", lambda titre, msg, **k: vus.append(msg))
+    monkeypatch.setattr(langue, "LANGUE", "fr")
+    app._choisir_langue("es")
+    assert langue.lire() == "es"
+    assert vus == [langue.message_relance("es")]
+    app._choisir_langue("fr")  # the current language: nothing to do
+    assert len(vus) == 1

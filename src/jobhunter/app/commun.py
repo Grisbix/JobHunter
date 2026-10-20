@@ -17,6 +17,7 @@ from jobhunter import paresseux as _paresseux
 from jobhunter import profil as _profil
 from jobhunter import racine as _racine
 from jobhunter.app import theme as _theme
+from jobhunter.app.langue import t as _t
 
 
 def ouvrir(chemin: object) -> bool:
@@ -277,7 +278,7 @@ MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
             ("Mettre à jour JobHunter", "maj"),  # "maj" = mise a jour + relance (App.mettre_a_jour)
             ("Collecte chaque matin…", "planifier"),  # Windows task (App._planifier)
             ("Statuts depuis mes courriels…", "courriels"),  # read-only (app.courriels)
-            ("Langue : English", "langue"),  # switches the interface FR <-> EN (app.langue)
+            ("Langue / Language…", "langue"),  # chooses the interface language (app.langue)
         ],
     ),
 ]
@@ -370,7 +371,10 @@ DEFAULT_ST = ""  # nothing displayed as long as there is no manual status (no "�
 # Placeholder of the search field. A constant, not a repeated literal: the text
 # ALSO serves as a sentinel ("is the field empty?"), and two copies that
 # differ by one space would search for the placeholder itself.
-SEARCH_HINT = "rechercher…"
+# Placeholders of the two entry fields, in the interface language: the code compares
+# the field's content with them, so they are translated once, here.
+SEARCH_HINT = _t("rechercher…")
+URL_HINT = _t("coller un lien d'offre…")
 
 
 DOM_SHORT = {

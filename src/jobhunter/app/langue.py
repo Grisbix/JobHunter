@@ -1,27 +1,56 @@
-"""Interface language: French (source) or English.
+"""Interface language: French (source), English, German, Spanish.
 
 Part of jobhunter.app (step F5). The French text written in the code stays the
-reference; in English, `t()` replaces it with its translation from the catalogue
-(`textes_en.EN`), and leaves it as is if there is none. The buttons and labels of
-`theme` all go through `t()`: translating a text means adding it to the catalogue,
-without touching the place where it is displayed.
+reference; in another language, `t()` replaces it with its translation from that
+language's catalogue (`textes_<code>.py`), then from the English one, and leaves it
+in French if neither has it. The buttons and labels of `theme` all go through `t()`:
+translating a text means adding it to the catalogues, without touching the place
+where it is displayed.
 
-The choice lives in `Scripts/_interface.json` (`{"langue": "en"}`), or in the
+A language is a module `jobhunter.app.textes_<code>` with `NOM` (its own name, as
+shown in the language menu), `RELANCER` (the restart message, in that language) and
+three catalogues: `TEXTES` (buttons, labels), `JOURNAL` (the app's log lines) and
+`SORTIE` (the reports of the programs it launches). Adding a language = adding its
+module and its code to `LANGUES`; the list is explicit because the installed
+application (PyInstaller) cannot list a package's modules.
+
+The choice lives in `Scripts/_interface.json` (`{"langue": "de"}`), or in the
 `JOBHUNTER_LANGUE` variable. It applies to the interface only: the tracking statuses,
 the letters and the profile keep their language.
 """
 
+import importlib
 import json
 import os
 import re
 from pathlib import Path
+from types import ModuleType
 from typing import overload
 
 from jobhunter import racine as _racine
-from jobhunter.app.textes_en import EN, JOURNAL_EN, SORTIE_EN
 
-LANGUES = ("fr", "en")
+LANGUES = ("fr", "en", "de", "es")
+NOM_FR = "Français"
+RELANCER_FR = "Relance JobHunter pour retrouver l'interface en français."
 FICHIER = "_interface.json"
+
+
+def module(code: str) -> ModuleType | None:
+    """The catalogue module of a language; None for French, the source."""
+    if code == "fr":
+        return None
+    return importlib.import_module(f"jobhunter.app.textes_{code}")
+
+
+def noms() -> dict[str, str]:
+    """{code: the language's own name}, in menu order."""
+    return {c: NOM_FR if c == "fr" else str(module(c).NOM) for c in LANGUES}  # type: ignore[union-attr]  # module() is None only for "fr"
+
+
+def message_relance(code: str) -> str:
+    """The restart message, in the language just chosen."""
+    m = module(code)
+    return RELANCER_FR if m is None else str(m.RELANCER)
 
 
 def _fichier() -> Path | None:
@@ -32,7 +61,7 @@ def _fichier() -> Path | None:
 
 
 def lire() -> str:
-    """The chosen language: "fr" or "en" (French by default)."""
+    """The chosen language, one of LANGUES (French by default)."""
     env = os.environ.get("JOBHUNTER_LANGUE", "").lower()
     if env in LANGUES:
         return env
@@ -57,6 +86,29 @@ def choisir(langue: str) -> None:
 LANGUE = lire()
 
 
+def _catalogues(nom: str) -> list[dict[str, str]]:
+    """The `nom` catalogues to look into, in order: the language's, then English."""
+    vus = []
+    for code in dict.fromkeys((LANGUE, "en")):
+        m = module(code)
+        if m is not None:
+            vus.append(getattr(m, nom))
+    return vus
+
+
+def _textes() -> list[dict[str, str]]:
+    if _CACHE.get("langue") != LANGUE:
+        _CACHE.clear()
+        _CACHE["langue"] = LANGUE
+    if "textes" not in _CACHE:
+        _CACHE["textes"] = _catalogues("TEXTES")
+    return _CACHE["textes"]  # type: ignore[return-value]  # filled just above
+
+
+# Built on first use and rebuilt if LANGUE changes (the tests switch it).
+_CACHE: dict[str, object] = {}
+
+
 @overload
 def t(texte: str) -> str: ...
 @overload
@@ -65,7 +117,10 @@ def t(texte: object) -> object:
     """The text in the interface language; any other object, as is."""
     if LANGUE == "fr" or not isinstance(texte, str):
         return texte
-    return EN.get(texte, texte)
+    for cat in _textes():
+        if texte in cat:
+            return cat[texte]
+    return texte
 
 
 def _modele(cle: str) -> "re.Pattern[str]":
@@ -75,16 +130,25 @@ def _modele(cle: str) -> "re.Pattern[str]":
     return re.compile(motif)
 
 
-# The app's messages, then the output of the programs it launches.
-_LIGNES = {**JOURNAL_EN, **SORTIE_EN}
-_MODELES = [(_modele(k), v) for k, v in _LIGNES.items() if "{" in k]
+def _lignes() -> tuple[dict[str, str], list[tuple["re.Pattern[str]", str]]]:
+    """The log lines (the app's messages, then the programs' output) and their templates."""
+    _textes()  # resets the cache if the language changed
+    if "lignes" not in _CACHE:
+        lignes: dict[str, str] = {}
+        # English first, then the language: the language's own lines win.
+        for nom in ("JOURNAL", "SORTIE"):
+            for cat in reversed(_catalogues(nom)):
+                lignes.update(cat)
+        _CACHE["lignes"] = (lignes, [(_modele(k), v) for k, v in lignes.items() if "{" in k])
+    return _CACHE["lignes"]  # type: ignore[return-value]  # filled just above
 
 
 def _ligne(texte: str) -> str:
-    """A log line (without edge spaces) in English, or as is."""
-    if texte in _LIGNES:
-        return _LIGNES[texte]
-    for motif, cible in _MODELES:
+    """A log line (without edge spaces) in the interface language, or as is."""
+    lignes, modeles = _lignes()
+    if texte in lignes:
+        return lignes[texte]
+    for motif, cible in modeles:
         m = motif.fullmatch(texte)
         if m:
             return cible.format(**m.groupdict())
@@ -94,9 +158,9 @@ def _ligne(texte: str) -> str:
 def journal(texte: str) -> str:
     """The app's log text, line by line, in the interface language.
 
-    Each line known to `JOURNAL_EN` (without its edge spaces) is translated,
+    Each line known to a `JOURNAL` catalogue (without its edge spaces) is translated,
     including those carrying a number or a name (`{a}` templates), and the summaries
-    of the launched programs (`SORTIE_EN`); the other lines stay as they are.
+    of the launched programs (`SORTIE`); the other lines stay as they are.
     """
     if LANGUE == "fr":
         return texte
