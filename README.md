@@ -200,6 +200,10 @@ sustainable finance).
 | `zones` | priority and secondary areas |
 | `collecte.mots_cles` | searches run on LinkedIn, WTJ… |
 
+Most of it can be changed in the app: **My search** edits the keywords and the title
+filter (with a preview on your queue) and suggests skills from your CV, each with the
+sentence that proves it.
+
 Check it, offline: `jobhunter check-profile "Communications officer" "Java developer"`.
 
 **Several searches?** Maintenance → "Profils…" → "Nouveau profil…": a CV, a name, the

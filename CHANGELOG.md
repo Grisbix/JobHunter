@@ -4,6 +4,21 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.9.0 — 2026-10-20
+
+- **"Ma recherche", in the app.** A new panel (second in the sidebar) edits what you
+  search without opening `profile.json`: the search keywords, the words a title must
+  contain, the words that set a title aside. Nothing is written before "Enregistrer";
+  the previous profile is kept as `profile.json.bak`; a pattern that does not compile is
+  refused with a clear message.
+- **"Aperçu sur ma file"**: before saving, the engine's real title filter runs on the
+  offers already in your queue, with your current settings and with the new ones, and
+  tells you how many would be set aside, with examples. Nothing is collected or changed.
+- **"Suggestions depuis mon CV…"**: JobHunter reads a CV on your computer and proposes
+  the skills it attests that your profile does not list yet — each with the sentence of
+  the CV that proves it — and matching search keywords. Nothing is added until you tick
+  it. A search keyword never enters your CVs or letters.
+
 ## 3.8.0 — 2026-10-20
 
 - **Why a score changed.** When an offer's fit changes — its full description arrived, or

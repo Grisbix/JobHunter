@@ -78,7 +78,7 @@ class DesignTests(unittest.TestCase):
                         len(app.tree.cget("displaycolumns")), 9
                     )  # Country then Region added since the redesign
                     self.assertTrue(app._sidebar_on)
-                    self.assertEqual(len(app._nav), 6)
+                    self.assertEqual(len(app._nav), 7)  # + "Ma recherche" (3.9)
                     self.assertEqual(set(app._offer_kpis), {"total", "fit", "post"})
                     self.assertEqual(app._offer_kpis["total"].cget("text"), "1")
                     self.assertEqual(app._offer_kpis["fit"].cget("text"), "1")

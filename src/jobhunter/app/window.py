@@ -26,6 +26,7 @@ from jobhunter.app.data import DonneesMixin
 from jobhunter.app.detail import DetailMixin
 from jobhunter.app.execution import ExecutionMixin
 from jobhunter.app.language import t as _t
+from jobhunter.app.my_search import MaRechercheMixin
 from jobhunter.app.panels import PanneauxMixin
 from jobhunter.app.profiles_menu import ProfilsMixin, profil_affiche
 from jobhunter.app.table import TableauMixin
@@ -63,6 +64,7 @@ class App(
     CandidatureMixin,
     DepotCvMixin,
     ProfilsMixin,
+    MaRechercheMixin,
 ):
     """The JobHunter window. Each mixin carries a domain; they share nothing but `self`."""
 
@@ -155,6 +157,7 @@ class App(
         self._nav = {}
         for cle, texte, fn in (
             ("offres", "Offres", self._show_dash),
+            ("recherche", "Ma recherche", self._ma_recherche_panel),
             ("cv", "Mes CV", self._cv_viewer),
             ("entreprises", "Entreprises", self._companies_panel),
             ("sites", "Sites d'offres", self._sources_panel),
@@ -418,6 +421,7 @@ class App(
                 text=_t(
                     {
                         "offres": "Offres",
+                        "recherche": "Ma recherche",
                         "cv": "Mes CV",
                         "entreprises": "Entreprises",
                         "sites": "Sites d'offres",
