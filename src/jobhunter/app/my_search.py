@@ -310,6 +310,7 @@ class MaRechercheMixin:
             text=_t("Annuler"),
             fg_color="transparent",
             border_width=1,
+            text_color=TX,
             command=lambda: fin(False),
         ).pack(side="left", padx=6)
         f.protocol("WM_DELETE_WINDOW", lambda: fin(False))

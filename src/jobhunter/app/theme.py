@@ -162,7 +162,8 @@ def _resoudre_polices() -> None:
         dispo = set(_tkf.families())
     except Exception:
         return
-    for n in ("Segoe UI", "Segoe UI Variable Display", "IBM Plex Sans"):
+    # IBM Plex Sans first when installed (the design note of 21/10), Segoe UI otherwise.
+    for n in ("IBM Plex Sans", "Segoe UI", "Segoe UI Variable Display"):
         if n in dispo:
             FONT_UI = n
             break

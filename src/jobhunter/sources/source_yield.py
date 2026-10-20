@@ -26,6 +26,7 @@ from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import Any
 
+from jobhunter import run_id as _execution
 from jobhunter.network import INCIDENTS
 
 REFUSE, LIMITE, PARTIEL, VIDE, OK = "refusé", "limité", "partiel", "rien à prendre", "ok"
@@ -34,6 +35,19 @@ _RX_LIMITE = re.compile(r"\b429\b")
 
 # Measurements of the current collection: {source: {"ramenees", "duree", "incidents"}}.
 MESURES: dict[str, dict[str, Any]] = {}
+
+# PROGRESS LINES, read by the application (app.progress) to show each source's state
+# while the collection runs, without a console:
+#   »» source linkedin début
+#   »» source linkedin fin ok 693 412.0
+#   »» bilan 136 nouvelles
+# Plain text: in a terminal or a log, they read as what they are.
+PROGRES = "»» "
+
+
+def progres(texte: str) -> None:
+    """Prints one progress line, at once (the application reads it as it comes)."""
+    print(PROGRES + texte, flush=True)
 
 
 def instantane() -> dict[str, dict[str, int]]:
@@ -85,6 +99,7 @@ def mesurer(
     avant = instantane()
     debut = time.monotonic()
     offres: list[dict[str, Any]] = []
+    progres(f"source {nom} début")
     try:
         offres = fn(*args, **kw) or []
         return offres
@@ -96,6 +111,11 @@ def mesurer(
             "duree": round(time.monotonic() - debut, 1),
             "incidents": ecart(avant),
         }
+        m = MESURES[nom]
+        progres(
+            f"source {nom} fin {verdict(m['ramenees'], m['incidents'])} "
+            f"{m['ramenees']} {m['duree']}"
+        )
 
 
 def completer(uniques: Iterable[dict[str, Any]], par_source: dict[str, dict[str, int]]) -> None:
@@ -114,6 +134,7 @@ def enregistrer(chemin: Path, quand: datetime.datetime | None = None) -> None:
         return
     ligne = {
         "le": (quand or datetime.datetime.now()).isoformat(timespec="seconds"),
+        "execution": _execution.courant(),
         "sources": MESURES,
     }
     with open(chemin, "a", encoding="utf-8") as f:

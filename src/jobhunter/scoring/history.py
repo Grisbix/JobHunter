@@ -4,7 +4,8 @@ An offer scored 6 yesterday and 9 today: did its posting gain a description, did
 profile change, or did a new engine score it differently? `poser()` sets the fit and,
 only when it CHANGES, appends to the offer's `historique_fit`:
 
-    {"date": "2026-10-20", "fit": 9, "cause": "description", "regles": "3.8.0·a1b2c3d4"}
+    {"date": "2026-10-20", "fit": 9, "cause": "description", "regles": "3.8.0·a1b2c3d4",
+     "execution": "20261020-080012-a3f9"}
 
 `regles` identifies the scoring rules in force: the engine's version and a fingerprint of
 the profile's sections that score (domains, skills, scoring, title filter, zones…). Two
@@ -18,6 +19,8 @@ import json
 import time
 from functools import cache
 from typing import Any
+
+from jobhunter import run_id as _execution
 
 MAX = 10
 # The profile's sections that change a score (profile.py). Identity, letters and form
@@ -74,7 +77,13 @@ def poser(o: dict[str, Any], fit: int, exp: int, fit_fin: float, cause: str) -> 
         if not h:  # the value it had before any history
             h.append({"date": str(o.get("process") or "?")[:10], "fit": avant, "cause": "?"})
         h.append(
-            {"date": time.strftime("%Y-%m-%d"), "fit": fit, "cause": cause, "regles": regles()}
+            {
+                "date": time.strftime("%Y-%m-%d"),
+                "fit": fit,
+                "cause": cause,
+                "regles": regles(),
+                "execution": _execution.courant(),
+            }
         )
         o["historique_fit"] = h[-MAX:]
     o["fit"], o["exp_requise"], o["fit_fin"] = fit, exp, fit_fin

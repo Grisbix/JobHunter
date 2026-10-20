@@ -27,8 +27,8 @@ THIS PIPELINE calls the project's code, the tested one:
 
     1. job_sources.py, in five      a) ATS, Workday, V.I.E, FIR    b) LinkedIn
        passes, each merged          c) eFC x9 sites, EURES
-                                    d) APEC, France Travail, Adzuna, Jooble
-                                    e) Glassdoor, WTJ (last: they refuse often)
+                                    d) France Travail, Adzuna, Jooble
+                                    e) WTJ (last: it often makes us wait)
     2. ajoute_vie.py --completer   the V.I.E DETAIL route: allowance, contact,
                                    description — which the LIST does not have
     3. linkedin_desc.py            the text of today's LinkedIn offers, which arrive
@@ -269,6 +269,11 @@ def tous_les_profils(profils):
 
 def main():
     _racine.exporter_paquet()  # the steps run `python -m jobhunter...`
+    # One run identifier for every step: the offers, scores and yield lines of this
+    # morning say they come from it (run_id).
+    from jobhunter import run_id as _execution
+
+    print(f"Exécution {_execution.courant()}")
     ap = argparse.ArgumentParser()
     ap.add_argument("--docs", type=int, default=30, help="nombre de dossiers a generer (0 = aucun)")
     ap.add_argument("--sans-docs", action="store_true")
@@ -361,13 +366,14 @@ def main():
                 1800,
             ),
             # Talent and Indeed removed on 2026-10-03 (0 offers, 403 since
-            # 24/09); Adzuna and Jooble, official APIs, cover their pool.
+            # 24/09); APEC and Glassdoor on 2026-10-21 (DataDome, Cloudflare: refused at
+            # every collection). Adzuna and Jooble, official APIs, cover their pool.
             (
-                "1d/5 Collecte — APEC, France Travail, Adzuna, Jooble",
-                ["--apec", "--ft", "--adzuna", "--jooble"],
+                "1d/5 Collecte — France Travail, Adzuna, Jooble",
+                ["--ft", "--adzuna", "--jooble"],
                 2700,
             ),
-            ("1e/5 Collecte — Glassdoor, WTJ", ["--glassdoor", "--wtj"], 2400),
+            ("1e/5 Collecte — WTJ", ["--wtj"], 2400),
         ]
     ajoutees = 0
     for nom, drapeaux, duree in collectes:

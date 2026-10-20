@@ -31,11 +31,18 @@ def test_noter_source_borne():
     assert len(x["vus_sur"]) == M.MAX_VUS_SUR
 
 
-def test_changement_du_meme_site_note_une_seule_fois():
+def test_changement_du_meme_site_note_une_seule_fois(monkeypatch):
+    monkeypatch.setenv("JOBHUNTER_EXECUTION", "20261021-080000-abcd")
     x = {"source": "adzuna:fr", "poste": "Analyste ESG", "salaire": "40 k€", "contrat": "CDI"}
     o = {"source": "adzuna:fr", "titre": "Analyste ESG", "salaire": "45 k€", "contrat": "CDI"}
     assert M.changements(x, o, "2026-10-21") == [
-        {"date": "2026-10-21", "champ": "salaire", "avant": "40 k€", "apres": "45 k€"}
+        {
+            "date": "2026-10-21",
+            "champ": "salaire",
+            "avant": "40 k€",
+            "apres": "45 k€",
+            "execution": "20261021-080000-abcd",
+        }
     ]
     assert M.changements(x, o, "2026-10-22") == []  # the same new value, the next day
     assert x["salaire"] == "40 k€"  # recorded, not replaced

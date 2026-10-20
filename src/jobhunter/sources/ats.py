@@ -285,10 +285,18 @@ def scan_ats() -> list[dict[str, Any]]:
     Returns:
         The offers of all the accounts.
     """
+    from jobhunter.sources import feeds as _flux
+
     offers = []
+    suspendus = _flux.suspendus()
     for kind, slugs in _commun.ATS_SLUGS.items():
         for slug in slugs:
+            ident = _flux.cle(kind, slug)
+            if ident in suspendus:
+                continue  # suspended in the Companies panel: kept, not collected
+            avant = _flux.instantane(f"ats:{kind}")
             got = fetch_ats(kind, slug)
+            _flux.noter(ident, len(got), _flux.nouveaux(f"ats:{kind}", avant))
             if got:
                 _log.info(f"  ✓ {kind}:{slug} → {len(got)} offres")
             offers.extend(got)
@@ -1049,9 +1057,17 @@ def scan_autres() -> list[dict[str, Any]]:
     Returns:
         The offers of all the feeds.
     """
+    from jobhunter.sources import feeds as _flux
+
     offres = []
+    suspendus = _flux.suspendus()
     for kind, cle, nom in _commun.AUTRES_FLUX:
+        ident = _flux.cle(kind, cle)
+        if ident in suspendus:
+            continue
+        avant = _flux.instantane(f"ats:{kind}")
         got = fetch_autre(kind, cle, nom)
+        _flux.noter(ident, len(got), _flux.nouveaux(f"ats:{kind}", avant))
         _log.info(f"  ✓ {kind}:{cle.split('|')[0]} → {len(got)} offres")
         offres.extend(got)
         time.sleep(ATS_PAUSE)

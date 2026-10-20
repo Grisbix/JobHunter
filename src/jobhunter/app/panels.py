@@ -741,11 +741,12 @@ class PanneauxMixin:
         filtre.configure(placeholder_text=_t("Filtrer : entreprise, outil ou adresse"))
         filtre.pack(side="left", ipady=2)
         filtre.bind("<KeyRelease>", lambda e: w._reload())
-        cols = ("ent", "outil", "offres", "fit", "derniere", "url")
+        cols = ("ent", "outil", "collecte", "offres", "fit", "derniere", "url")
         tv = ttk.Treeview(w, columns=cols, show="headings", selectmode="browse")
         for k, lbl, wd, anc in (
             ("ent", "Entreprise", 230, "w"),
-            ("outil", "Lue par", 170, "w"),
+            ("outil", "Lue par", 150, "w"),
+            ("collecte", "Dernière collecte", 210, "w"),
             ("offres", "Offres", 80, "center"),
             ("fit", "Fit max", 95, "center"),
             ("derniere", "Dernière", 130, "center"),
@@ -757,7 +758,24 @@ class PanneauxMixin:
         tv.tag_configure("odd", background=ROW1)
         tv.tag_configure("even", background=ROW0)
         tv.tag_configure("vide", foreground=MUT)
+        tv.tag_configure("suspendue", foreground=MUT)
         lignes: dict[str, _inventaire.Flux] = {}
+
+        def _collecte(f: _inventaire.Flux, etat: dict[str, Any], suspendus: set[str]) -> str:
+            """The feed's last collection (sources.feeds): suspended, incident, or success."""
+            from jobhunter.sources import feeds as _flux
+
+            if f.outil == "site":
+                return "—"  # read by the browser, not by a collection pass
+            ident = _flux.cle(f.outil, f.cle)
+            if ident in suspendus:
+                return "⏸ " + _t("suspendue")
+            e = etat.get(ident) or {}
+            if e.get("incident"):
+                return f"⚠ {e['incident']} ({_date_fr(str(e.get('incident_le', ''))[:10])})"
+            if e.get("succes"):
+                return f"✓ {_date_fr(str(e['succes'])[:10])} · {e.get('offres', 0)}"
+            return "—"
 
         def _defauts() -> dict[str, Any]:
             from jobhunter.sources import common as _src
@@ -770,10 +788,13 @@ class PanneauxMixin:
 
         def reload() -> None:
             from jobhunter.sources import common as _src
+            from jobhunter.sources import feeds as _flux
 
             _src._load_cfg()
             tv.delete(*tv.get_children())
             lignes.clear()
+            etat = _flux.lire(SCRIPTS / _flux.FICHIER)
+            suspendus = _flux.suspendus()
             _, urls = self._domains_file()
             sites = [u for u in urls if not self._is_board(u)]
             flux = _inventaire.flux_suivis(
@@ -797,12 +818,15 @@ class PanneauxMixin:
                     values=(
                         f.nom,
                         _t(_inventaire.NOMS_OUTILS.get(f.outil, f.outil)),
+                        _collecte(f, etat, suspendus),
                         c.offres,
                         c.meilleur_fit if c.offres else "—",
                         _date_fr(c.derniere) or "—",
                         f.lien,
                     ),
-                    tags=("odd" if i % 2 else "even",) + (("vide",) if not c.offres else ()),
+                    tags=("odd" if i % 2 else "even",)
+                    + (("vide",) if not c.offres else ())
+                    + (("suspendue",) if _flux.cle(f.outil, f.cle) in suspendus else ()),
                 )
                 lignes[iid] = f
             total = sum(c.offres for c in comptes.values())
@@ -900,6 +924,27 @@ class PanneauxMixin:
             self._log(f"－ {f.nom} ne sera plus collectée\n")
             reload()
 
+        def suspendre() -> None:
+            """Stops (or resumes) a company's collections; its offers and history stay."""
+            from jobhunter.sources import feeds as _flux
+
+            f = lignes.get(tv.focus())
+            if f is None:
+                self._log(_t("Sélectionne d'abord une entreprise dans la liste.") + "\n")
+                return
+            if f.outil == "site":
+                self._log(_t("Un site lu par le navigateur ne se suspend pas : retire-le.") + "\n")
+                return
+            c = _lire_cfg()
+            ident = _flux.cle(f.outil, f.cle)
+            oui = ident not in _flux.suspendus(c)
+            _flux.suspendre(c, ident, oui)
+            self._jwrite(CFG, c)
+            self._log(
+                (_t("⏸ {a} suspendue") if oui else _t("▶ {a} reprise")).format(a=f.nom) + "\n"
+            )
+            reload()
+
         ent.bind("<Return>", lambda e: add())
         CB(
             bar,
@@ -921,6 +966,16 @@ class PanneauxMixin:
             relief="flat",
             cursor="hand2",
         ).pack(side="left", padx=(0, 12))
+        CB(
+            bar,
+            text="Suspendre / Reprendre",
+            command=suspendre,
+            bg=BTN,
+            fg=TX,
+            activebackground=BTN_H,
+            relief="flat",
+            cursor="hand2",
+        ).pack(side="left", padx=6)
         CB(
             bar,
             text="Ne plus suivre",

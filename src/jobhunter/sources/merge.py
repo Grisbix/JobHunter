@@ -7,6 +7,7 @@ import importlib
 import time
 from typing import Any
 
+from jobhunter import run_id as _execution
 from jobhunter.scoring import history as _historique
 from jobhunter.scoring import zones as _zones
 from jobhunter.sources import common as _commun
@@ -86,7 +87,15 @@ def changements(
         deja = x.get("changements") or []
         if any(c.get("champ") == champ and c.get("apres") == b for c in deja):
             continue
-        neufs.append({"date": jour, "champ": champ, "avant": a, "apres": b})
+        neufs.append(
+            {
+                "date": jour,
+                "champ": champ,
+                "avant": a,
+                "apres": b,
+                "execution": _execution.courant(),
+            }
+        )
     if neufs:
         x["changements"] = ((x.get("changements") or []) + neufs)[-MAX_CHANGEMENTS:]
     return neufs
@@ -434,6 +443,7 @@ def _merge_into_queue(
             "link_status": "OK",
             "description": desc,
             "vu_le": today,
+            "execution": _execution.courant(),  # the run that found it (run_id)
         }
         if o.get("autres_lieux"):  # same job published in other cities (scan)
             ligne["autres_lieux"] = list(o["autres_lieux"])

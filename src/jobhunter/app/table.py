@@ -242,6 +242,10 @@ class TableauMixin:
             activebackground=BTN,
             font=(_theme.FONT_UI, 12),
         ).pack(side="left", padx=(8, 0))
+        # ── row 3: the active filters, each with its ✕ (shown only when there is one) ──
+        puces = CF(parent, bg=WORK, plat=True)
+        puces._apres = bar2  # packed back right below the counter
+        self.lbl_count._puces = puces  # the counter carries its filters' labels
         self.lbl_aide = CL(
             bar2,
             text="En-tête : filtrer  ·  Double-clic : fiche",
@@ -514,6 +518,68 @@ class TableauMixin:
 
     def _clear_filters(self: "AppTypee") -> None:
         self.colsel.clear()
+        self.refresh_table()
+
+    def _maj_puces(self: "AppTypee") -> None:
+        """One label per active filter — column values, search words — each removable.
+
+        A filter set in a column header was only shown by a « ▾ » in that header: with
+        the column hidden, nothing said why offers were missing.
+        """
+        p = getattr(getattr(self, "lbl_count", None), "_puces", None)
+        if p is None:
+            return
+        for w in p.winfo_children():
+            w.destroy()
+        noms = {k: _t(lbl) for k, lbl, _ in COLS}
+        puces: list[tuple[str, Any]] = []
+        for key, v in self.colsel.items():
+            if v is None:
+                continue
+            mode, sel = v
+            vals = sorted(str(x) or "(vide)" for x in sel)
+            texte = ", ".join(vals[:3]) + (f" +{len(vals) - 3}" if len(vals) > 3 else "")
+            signe = " ≠ " if mode == "excl" else " : "
+            puces.append(
+                (f"{noms.get(key, key)}{signe}{texte}", lambda k=key: self._lever_filtre(k))
+            )
+        if self._search_termes_actifs:
+            puces.append(
+                (
+                    _t("Recherche : {a}").format(a=" ".join(self._search_termes_actifs)),
+                    self._search_clear,
+                )
+            )
+        if not puces:
+            p.pack_forget()
+            return
+        for texte, action in puces:
+            CB(
+                p,
+                text=texte + "  ✕",
+                command=action,
+                bg=BTN,
+                fg=TX,
+                activebackground=BTN_H,
+                relief="flat",
+                cursor="hand2",
+                font=(_theme.FONT_UI, 11),
+            ).pack(side="left", padx=(0, 6))
+        if len(puces) > 1:
+            CB(
+                p,
+                text="Tout effacer",
+                command=lambda: (self._search_clear(), self._clear_filters()),
+                bg=WORK,
+                fg=MUT,
+                relief="flat",
+                cursor="hand2",
+                font=(_theme.FONT_UI, 11),
+            ).pack(side="left", padx=(4, 0))
+        p.pack(fill="x", padx=18, pady=(6, 0), after=p._apres)
+
+    def _lever_filtre(self: "AppTypee", key: str) -> None:
+        self.colsel.pop(key, None)
         self.refresh_table()
 
     def _cell(self: "AppTypee", o: Any, key: Any) -> Any:
@@ -963,6 +1029,7 @@ class TableauMixin:
             arrow = (" ▲" if asc else " ▼") if sk == key else ""
             filt = " ▾" if self.colsel.get(key) is not None else ""
             self.tree.heading(key, text=str(_t(lbl)) + arrow + filt)
+        self._maj_puces()
         if getattr(self, "lbl_count", None) is not None:
             filtres = sum(1 for v in self.colsel.values() if v is not None)
             if n == 0:

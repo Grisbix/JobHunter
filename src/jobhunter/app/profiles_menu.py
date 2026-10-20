@@ -23,6 +23,7 @@ from jobhunter import frozen as _gele
 from jobhunter import profiles as _profils
 from jobhunter.app.common import PY
 from jobhunter.app.language import t as _t
+from jobhunter.app.theme import TX
 
 if TYPE_CHECKING:
     from jobhunter.app._app_type import AppTypee
@@ -62,7 +63,12 @@ def choisir(parent: tk.Misc, titre: str, texte: str, boutons: list[str]) -> int 
     for i, b in enumerate(boutons):
         ctk.CTkButton(ligne, text=b, command=functools.partial(fin, i)).pack(side="left", padx=4)
     ctk.CTkButton(
-        ligne, text=_t("Annuler"), fg_color="transparent", border_width=1, command=lambda: fin(None)
+        ligne,
+        text=_t("Annuler"),
+        fg_color="transparent",
+        border_width=1,
+        text_color=TX,
+        command=lambda: fin(None),
     ).pack(side="left", padx=4)
     f.protocol("WM_DELETE_WINDOW", lambda: fin(None))
     f.after(50, f.grab_set)

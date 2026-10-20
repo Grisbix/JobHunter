@@ -75,10 +75,14 @@ class FicheMixin:
             d.insert("end", "\n" + _t("Pourquoi ce fit") + "\n", "k")
             d.insert("end", "\n".join("· " + r for r in raisons) + "\n", "m")
         # Where the offer was seen (sources.merge.noter_source): which searches find it.
-        vus = o.get("vus_sur") or []
-        if len(vus) > 1:
+        vus = ["· " + str(v) for v in o.get("vus_sur") or []]
+        if len(vus) <= 1:
+            vus = []
+        if o.get("execution"):  # the run that found it (run_id)
+            vus.append("· " + _t("collecte {a}").format(a=o["execution"]))
+        if vus:
             d.insert("end", "\n" + _t("Trouvée par") + "\n", "k")
-            d.insert("end", "\n".join("· " + str(v) for v in vus) + "\n", "m")
+            d.insert("end", "\n".join(vus) + "\n", "m")
         # What its site changed since (sources.merge.changements); values not replaced.
         if chg := o.get("changements"):
             d.insert("end", "\n" + _t("Modifiée par son site") + "\n", "k")

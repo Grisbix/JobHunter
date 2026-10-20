@@ -12,6 +12,7 @@ decided by hand (Talent and Indeed were on 03/10 on this kind of finding).
 Run:
   python JobHunter.pyw yield              # last 14 days
   python JobHunter.pyw yield --jours 30
+  python JobHunter.pyw yield --execution 20261021-080012-a3f9   # one run (run_id)
 """
 
 import argparse
@@ -26,9 +27,12 @@ def main(argv=None):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description="rendement de chaque source (lecture seule)")
     ap.add_argument("--jours", type=int, default=14, help="période, en jours (défaut 14)")
+    ap.add_argument("--execution", help="ce qu'a ramené une exécution (son identifiant)")
     a = ap.parse_args(argv)
 
     chemin = _racine.dans(_racine.scripts(), "_rendement.jsonl")
+    if a.execution:
+        return execution(chemin, a.execution)
     depuis = (datetime.date.today() - datetime.timedelta(days=a.jours)).isoformat()
     total = R.bilan(R.lire_journal(chemin), depuis)
     if not total:
@@ -56,6 +60,28 @@ def main(argv=None):
             + ", ".join(sorted(toujours_refusees))
             + " — inutile d'insister (pas de contournement) ; les retirer de --all se décide à la main."
         )
+    return 0
+
+
+def execution(chemin, ident: str) -> int:
+    """What one run brought back: its yield lines and the offers of the queue it found."""
+    lignes = [x for x in R.lire_journal(chemin) if x.get("execution") == ident]
+    from jobhunter.storage import queue as queue_io
+
+    trouvees = [o for o in queue_io.charger(descriptions=False) if o.get("execution") == ident]
+    if not lignes and not trouvees:
+        print(f"Exécution {ident} : inconnue (identifiants écrits à partir de JobHunter 3.10).")
+        return 1
+    print(f"Exécution {ident}\n")
+    for x in lignes:
+        for nom, m in sorted((x.get("sources") or {}).items()):
+            print(
+                f"  {x.get('le', '')[11:16]}  {nom:<14}{m.get('ramenees', 0):>6} ramenées"
+                f"{m.get('nouvelles', 0):>6} nouvelles  {m.get('verdict', '')}"
+            )
+    print(f"\n{len(trouvees)} offre(s) de la file trouvée(s) par cette exécution.")
+    for o in sorted(trouvees, key=lambda o: -(o.get("fit") or 0))[:15]:
+        print(f"  fit {o.get('fit', '?'):>2}  {o.get('entreprise', '')} — {o.get('poste', '')}")
     return 0
 
 

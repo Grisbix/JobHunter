@@ -236,6 +236,7 @@ MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
         "Documents",
         [
             ("CV/lettres…", None),  # None = command built on the fly
+            ("Documents à comparer…", "comparer"),  # retouched vs regenerated (app.compare)
             ("Sync docs+format", [PY, "-m", "jobhunter.programs.sync_docs", "--format"]),
             ("Export CSV", [PY, "-m", "jobhunter.programs.export_queue_csv", "--keep", "8"]),
             ("Relire les lettres", [PY, "-m", "jobhunter.programs.proofread_letters"]),
@@ -251,6 +252,7 @@ MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
                 [PY, "-m", "jobhunter.programs.recheck_dead", "--status", "OK", "--limit", "120"],
             ),
             ("Re-score", [PY, "-m", "jobhunter.programs.rescore_ats"]),
+            ("Recettes de nettoyage…", "recettes"),  # normalisation rules (app.recipes)
         ],
     ),
     (
@@ -279,10 +281,7 @@ MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
             ("Collecte chaque matin…", "planifier"),  # Windows task (App._planifier)
             ("Statuts depuis mes courriels…", "courriels"),  # read-only (app.mail)
             ("Langue / Language…", "langue"),  # chooses the interface language (app.langue)
-            (
-                "Profils…",
-                "profils",
-            ),  # several searches, one workspace each (app.profiles_menu)  # chooses the interface language (app.langue)
+            ("Profils…", "profils"),  # several searches, one workspace each (app.profiles_menu)
         ],
     ),
 ]

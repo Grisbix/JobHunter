@@ -79,10 +79,12 @@ def main() -> int:
     ap.add_argument(
         "--glassdoor",
         action="store_true",
-        help="Glassdoor : page 1 de la recherche (30 offres par mot-cle)",
+        help="Glassdoor : page 1 de la recherche (30 offres par mot-cle) ; hors --all",
     )
     ap.add_argument(
-        "--apec", action="store_true", help="APEC : API publique, description entiere dans la liste"
+        "--apec",
+        action="store_true",
+        help="APEC : API publique, description entiere dans la liste ; hors --all",
     )
     ap.add_argument("--ft", action="store_true", help="France Travail (API officielle)")
     ap.add_argument(
@@ -232,10 +234,13 @@ def main() -> int:
             lieux=[v.strip() for v in a.indeed_lieux.split(",") if v.strip()],
             persist=not a.dry,
         )
-    if a.all or a.apec:
+    # APEC (DataDome) and Glassdoor (Cloudflare challenge) out of --all since 3.10.0:
+    # every collection measured since 07/10 was refused (403 behind a CAPTCHA page,
+    # checked again on 21/10). We do not get around it; their flag still runs them.
+    if a.apec:
         print("── APEC (API publique, annonce entière dans la liste) ──")
         fresh += _rendement.mesurer("apec", scan_apec)
-    if a.all or a.glassdoor:
+    if a.glassdoor:
         print("── Glassdoor (page 1 de la recherche, France entière) ──")
         fresh += _rendement.mesurer("glassdoor", scan_glassdoor)
     # eFC in --all, but BOUNDED: ESG filter, the nine sites, 30 postings at
@@ -382,6 +387,14 @@ def _fusionner(uniq: Any, dry: bool) -> int:
                 _rendement.enregistrer(_racine.dans(_commun.HERE, "_rendement.jsonl"))
             except OSError as e:
                 print(f"  ! journal de rendement non écrit : {e}")
+    if not dry:
+        # Per company: last attempt, last success, incident (sources.feeds).
+        from jobhunter.sources import feeds as _flux
+
+        try:
+            _flux.enregistrer(_racine.dans(_commun.HERE, _flux.FICHIER))
+        except OSError as e:
+            print(f"  ! état des entreprises non écrit : {e}")
     print(
         f"Merge {'[DRY] ' if dry else ''}: +{r['added']} nouvelles, {r['updated']} enrichies (desc), "
         f"{r['promus']} liens promus (LinkedIn -> vrai site), "
@@ -390,6 +403,7 @@ def _fusionner(uniq: Any, dry: bool) -> int:
         f"{r['pays_ecartes']} pays écartés, "
         f"{r['purged']} bruits purgés — {r['total']} total"
     )
+    _rendement.progres(f"bilan {r['added']} nouvelles")
     if r.get("modifiees"):
         print(
             f"  {r['modifiees']} offre(s) modifiée(s) par leur site (titre, salaire, contrat, lieu)"

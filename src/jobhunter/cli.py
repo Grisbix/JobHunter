@@ -39,6 +39,10 @@ COMMANDES = {
     "message": ("jobhunter.documents.message", "message court des formulaires"),
     "cv-auto": ("jobhunter.documents.cv_auto", "banque de faits du CV automatique"),
     "availability": ("jobhunter.programs.availability_audit", "controle les offres fermees"),
+    "recipes": (
+        "jobhunter.programs.recipes",
+        "recettes de nettoyage (noms d'entreprises, lieux, contrats) : apercu, puis --appliquer",
+    ),
     "restore": (
         "jobhunter.programs.restore",
         "remet la file d'une sauvegarde (le suivi n'est jamais touche)",
@@ -94,6 +98,7 @@ ALIAS = {
     "regenerer": "regenerate",
     "dispo": "availability",
     "restaurer": "restore",
+    "recettes": "recipes",
     "rendement": "yield",
     "controle": "check",
     "relecture": "proofread",

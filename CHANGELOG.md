@@ -4,6 +4,49 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.10.0 — 2026-10-21
+
+- **Documents à comparer.** Since 3.7 a CV or letter you edited by hand is never
+  overwritten: the new version waits beside it, in `_a_comparer/`. Maintenance →
+  « Documents à comparer… » now lists them, shows the paragraphs that differ (red: only
+  in yours, green: only in the new one) and lets you choose. The version you do not keep
+  is set aside in `_a_comparer/_anciennes/`, never deleted.
+- **Companies: suspend, and see each one's last collection.** The Companies panel gains a
+  « Dernière collecte » column — ✓ date and offers, or ⚠ the incident (HTTP 404, timeout…)
+  with its date — and a « Suspendre / Reprendre » button. A suspended company is no longer
+  collected; it stays in the list, and its offers and applications are untouched. A
+  refused collection keeps the date of the last success: a page that refuses us is not a
+  closed page.
+- **Which collection found this offer.** Every run has an identifier
+  (`20261021-080012-a3f9`) shared by all the steps of the morning pipeline. It is written
+  on new offers, on score changes, on site changes and on the yield log; the offer's card
+  shows it under « Trouvée par », and `jobhunter yield --execution <id>` says what that run
+  brought back.
+- **Cleanup recipes.** Maintenance → « Recettes de nettoyage… »: one rule per line,
+  `champ | value | new value` (company, place or contract; `re:` for a pattern), e.g.
+  `entreprise | PricewaterhouseCoopers | PwC`. « Aperçu » lists every change on your queue
+  before anything is written; replaying the same recipes changes nothing the second time.
+  An offer you applied to is never renamed (its name identifies your application), and a
+  rename that would create a duplicate is skipped — both are shown. Same from a terminal:
+  `jobhunter recipes`, then `--appliquer`.
+- **Collection progress, without a console.** While a collection runs, a line under the
+  log shows each source: running (…), done with its offers (✓ 693), refused (⛔), limited
+  (⏸), nothing to take (∅). At the end, one concrete sentence replaces « terminé »: new
+  offers, how many sources answered, which ones refused or were cut.
+- **Active filters you can see.** Each filter set in a column header, and the search
+  words, now show as a label under the counter, each with its ✕, plus « Tout effacer »
+  when there are several. A hidden column could filter the table without anything saying
+  so.
+- Design: outline buttons (« Annuler », « Fermer »…) had white text on a light background
+  and could barely be read; IBM Plex Sans is used when it is installed.
+- **APEC and Glassdoor leave `--all`.** Every collection measured since 7 October was
+  refused: APEC answers 403 behind DataDome and a CAPTCHA page, Glassdoor behind a
+  Cloudflare challenge (checked again on 21 October). JobHunter does not get around such
+  protections, so the morning pipeline no longer asks; `--apec` and `--glassdoor` still
+  run them on request. EURES stays: its refusals of 20 October were temporary and it
+  answers normally again.
+- For contributors: ruff 0.17.
+
 ## 3.9.1 — 2026-10-20
 
 - For contributors: the test files have English names too (`tests/test_update.py`,

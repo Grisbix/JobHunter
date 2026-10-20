@@ -141,11 +141,22 @@ def scan_workday() -> list[dict[str, Any]]:
     """
     import concurrent.futures as cf
 
+    from jobhunter.sources import feeds as _flux
+
     offres = []
+    suspendus = _flux.suspendus()
+    flux = [f for f in _commun.WORKDAY_FLUX if _flux.cle("workday", f[0]) not in suspendus]
     with cf.ThreadPoolExecutor(max_workers=WORKDAY_PARALLELE) as ex:
-        futs = [(f[0], ex.submit(fetch_workday, *f)) for f in _commun.WORKDAY_FLUX]
+        # Each tenant counts its incidents under its own key: no mixing in parallel.
+        avant = {f[0]: _flux.instantane(f"workday:{f[0]}") for f in flux}
+        futs = [(f[0], ex.submit(fetch_workday, *f)) for f in flux]
         for tenant, fut in futs:
             got = fut.result()
+            _flux.noter(
+                _flux.cle("workday", tenant),
+                len(got),
+                _flux.nouveaux(f"workday:{tenant}", avant[tenant]),
+            )
             _log.info(f"  ✓ workday:{tenant} → {len(got)} offres retenues")
             offres.extend(got)
     return offres

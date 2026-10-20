@@ -11,11 +11,25 @@ from typing import Any
 
 from jobhunter import frozen as _gele
 from jobhunter.app import language as _langue
+from jobhunter.app import progress as _progres
 from jobhunter.app import theme as _theme
 from jobhunter.app._app_type import AppTypee
 from jobhunter.app.common import INTERACTIVE, PY, QUEUE, ROOT, SCRIPTS, ouvrir
 from jobhunter.app.language import t as _t
-from jobhunter.app.theme import ACC, CB, CF, DEL, DEL_TX, LOGBG, LOGFG, SIDE, SIDE_H, SIDE_TX
+from jobhunter.app.theme import (
+    ACC,
+    CB,
+    CF,
+    CL,
+    DEL,
+    DEL_TX,
+    LOGBG,
+    LOGFG,
+    SIDE,
+    SIDE_H,
+    SIDE_MUT,
+    SIDE_TX,
+)
 from jobhunter.links import existe as _doc_existe
 from jobhunter.storage import queue as queue_io
 
@@ -36,6 +50,19 @@ class ExecutionMixin:
         CB(qf, text="Arrêter", command=self.stop, bg=DEL, fg=DEL_TX, relief="flat").pack(
             side="right"
         )
+        # Which source the collection is on, and how each one ended (app.progress).
+        self._progression = _progres.Progression()
+        self._bande = CL(
+            parent,
+            text="",
+            bg=SIDE,
+            fg=SIDE_MUT,
+            anchor="w",
+            justify="left",
+            wraplength=360,
+            font=(_theme.FONT_UI, 10),
+        )
+        self._bande.pack(fill="x", padx=12)
         self.log = scrolledtext.ScrolledText(
             parent,
             bg=LOGBG,
@@ -301,8 +328,15 @@ class ExecutionMixin:
             while True:
                 kind, val = self.q.get_nowait()
                 if kind == "line":
-                    self._log(val)
+                    if self._progression.lire(val):
+                        self._bande.configure(text=self._progression.bande())
+                    else:
+                        self._log(val)
                 elif kind == "reload":
+                    # The step ended: one concrete sentence instead of « terminé ».
+                    if bilan := self._progression.bilan():
+                        self._log(f"\n📋 {bilan}\n")
+                        self._progression = _progres.Progression()
                     self.load_offers()
                     self.root.after(1500, self._auto_enrich)
                 elif kind == "done_all":

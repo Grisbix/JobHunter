@@ -57,3 +57,47 @@ def test_le_dossier_a_comparer_hors_des_listes(tmp_path):
     doc("retouche").save(str(out))
     G.enregistrer(doc("v2"), out)
     assert sorted(p.name for p in tmp_path.glob("*.docx")) == ["Lettre.docx"]
+
+
+def _en_attente(tmp_path):
+    out = tmp_path / "Par_offre" / "A" / "Lettre.docx"
+    out.parent.mkdir(parents=True)
+    G.enregistrer(doc("Madame,", "v1", "fin"), out)
+    doc("Madame,", "ma phrase", "fin").save(str(out))
+    G.enregistrer(doc("Madame,", "v2", "fin"), out)
+    (e,) = G.en_attente([tmp_path / "Par_offre", tmp_path / "absent"])
+    return out, e
+
+
+def test_en_attente_et_comparer(tmp_path):
+    out, e = _en_attente(tmp_path)
+    assert e.actuel == out and e.nouveau == out.parent / G.A_COMPARER / out.name
+    assert G.comparer(e.actuel, e.nouveau) == [
+        ("=", "Madame,"),
+        ("-", "ma phrase"),
+        ("+", "v2"),
+        ("=", "fin"),
+    ]
+
+
+def test_prendre_la_nouvelle_garde_l_ancienne_de_cote(tmp_path):
+    out, e = _en_attente(tmp_path)
+    garde = G.prendre_nouvelle(e)
+    assert texte(out) == ["Madame,", "v2", "fin"]
+    assert texte(garde) == ["Madame,", "ma phrase", "fin"]  # never deleted
+    assert G.en_attente([tmp_path]) == []
+    assert not G.retouche(out)  # generated again: the next regeneration may replace it
+
+
+def test_garder_la_mienne_met_la_nouvelle_de_cote(tmp_path):
+    out, e = _en_attente(tmp_path)
+    garde = G.garder_mienne(e)
+    assert texte(out) == ["Madame,", "ma phrase", "fin"]
+    assert texte(garde) == ["Madame,", "v2", "fin"]
+    assert G.en_attente([tmp_path]) == []
+    assert G.retouche(out)  # still the user's: a later regeneration proposes again
+    # a second set-aside of the same name overwrites nothing
+    G.enregistrer(doc("Madame,", "v3", "fin"), out)
+    (e2,) = G.en_attente([tmp_path])
+    garde2 = G.garder_mienne(e2)
+    assert garde2 != garde and texte(garde) == ["Madame,", "v2", "fin"]

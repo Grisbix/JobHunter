@@ -15,7 +15,9 @@ import customtkinter as ctk
 from jobhunter import frozen as _gele
 from jobhunter import profile as _profil
 from jobhunter import root as _racine
+from jobhunter.app import compare as _comparer
 from jobhunter.app import mail as _courriels
+from jobhunter.app import recipes as _recettes
 from jobhunter.app import theme as _theme
 from jobhunter.app.actions import ActionsMixin
 from jobhunter.app.apply_panel import CandidatureMixin
@@ -256,6 +258,10 @@ class App(
                         if c == "courriels"
                         else self._menu_profils()
                         if c == "profils"
+                        else _comparer.ouvrir(self)
+                        if c == "comparer"
+                        else _recettes.ouvrir(self)
+                        if c == "recettes"
                         else self.run_step(c, l)
                     ),
                     font=(_theme.FONT_UI, 12),

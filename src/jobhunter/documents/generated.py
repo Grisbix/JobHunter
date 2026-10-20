@@ -19,6 +19,8 @@ recipient) call `noter()` afterwards: their change is not a retouch.
 import difflib
 import hashlib
 import json
+from collections.abc import Iterable
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -96,10 +98,86 @@ def enregistrer(doc: Any, out: Path) -> Path:
             n = -1
         _log.warning(
             f"  ✋ {out.name} retouché à la main : ta version est gardée. La nouvelle est dans "
-            f"{A_COMPARER}/ ({n if n >= 0 else '?'} paragraphe(s) différent(s)) — compare, "
-            f"puis supprime ta version pour prendre la nouvelle."
+            f"{A_COMPARER}/ ({n if n >= 0 else '?'} paragraphe(s) différent(s)) — compare-les "
+            f"dans l'application : Maintenance → « Documents à comparer… »."
         )
         return out
     doc.save(str(out))
     noter(out)
     return out
+
+
+# ── Comparing, then choosing (the application's "Documents à comparer") ───────────
+ANCIENNES = "_anciennes"  # inside _a_comparer/: the versions set aside, never deleted
+
+
+@dataclass(frozen=True)
+class EnAttente:
+    """A retouched document and the newer generated version waiting next to it."""
+
+    actuel: Path  # the user's version, the one the offer points to
+    nouveau: Path  # _a_comparer/<same name>
+
+
+def en_attente(dossiers: Iterable[Path]) -> list[EnAttente]:
+    """Every new version waiting in a `_a_comparer/` under `dossiers`, oldest first."""
+    out = []
+    for d in dossiers:
+        if not d.is_dir():
+            continue
+        for attente in d.rglob(A_COMPARER):
+            if not attente.is_dir():
+                continue
+            for f in attente.glob("*.docx"):
+                actuel = attente.parent / f.name
+                if actuel.is_file() and not f.name.startswith("~$"):
+                    out.append(EnAttente(actuel, f))
+    return sorted(out, key=lambda e: e.nouveau.stat().st_mtime)
+
+
+def comparer(a: Path, b: Path) -> list[tuple[str, str]]:
+    """The paragraphs from `a` to `b`: ("=", same), ("-", only in a), ("+", only in b)."""
+    ta, tb = _texte(a), _texte(b)
+    lignes: list[tuple[str, str]] = []
+    for op, i1, i2, j1, j2 in difflib.SequenceMatcher(a=ta, b=tb, autojunk=False).get_opcodes():
+        if op == "equal":
+            lignes += [("=", p) for p in ta[i1:i2]]
+        else:
+            lignes += [("-", p) for p in ta[i1:i2] if p.strip()]
+            lignes += [("+", p) for p in tb[j1:j2] if p.strip()]
+    return lignes
+
+
+def _mettre_de_cote(f: Path, dossier: Path) -> Path:
+    """Moves `f` into `dossier` under a name that overwrites nothing. Returns the new path."""
+    dossier.mkdir(parents=True, exist_ok=True)
+    dest = dossier / f.name
+    n = 1
+    while dest.exists():
+        dest = dossier / f"{f.stem} ({n}){f.suffix}"
+        n += 1
+    f.replace(dest)
+    return dest
+
+
+def prendre_nouvelle(e: EnAttente) -> Path:
+    """The new version takes the document's place; the user's is set aside (not deleted).
+
+    Returns:
+        Where the user's version went: `_a_comparer/_anciennes/<name>`.
+    """
+    garde = _mettre_de_cote(e.actuel, e.nouveau.parent / ANCIENNES)
+    e.nouveau.replace(e.actuel)
+    noter(e.actuel)  # generated again: the next regeneration may replace it
+    return garde
+
+
+def garder_mienne(e: EnAttente) -> Path:
+    """The user's version stays; the new one is set aside (not deleted).
+
+    The document stays marked as retouched: a later regeneration proposes again.
+
+    Returns:
+        Where the new version went: `_a_comparer/_anciennes/<name>`.
+    """
+    return _mettre_de_cote(e.nouveau, e.nouveau.parent / ANCIENNES)
