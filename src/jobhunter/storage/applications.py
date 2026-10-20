@@ -48,7 +48,7 @@ from jobhunter.storage import atomic as atomique
 from jobhunter.storage import lock as verrou
 from jobhunter.types import Candidature, Chemin, Preuve, Suivi
 
-CHEMIN = racine.scripts() / "suivi.json"
+CHEMIN = racine.dans(racine.scripts(), "suivi.json")
 
 
 class VerrouIndisponible(RuntimeError):

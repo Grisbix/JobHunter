@@ -119,7 +119,7 @@ def main():
     q = queue_io.charger()
     try:
         suivi = importlib.import_module("jobhunter.storage.applications").charger(
-            HERE / "suivi.json"
+            _racine.dans(HERE, "suivi.json")
         )
     except Exception:
         suivi = {}

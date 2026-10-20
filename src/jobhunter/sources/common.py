@@ -49,9 +49,9 @@ QUEUE = HERE / "apply_queue.json"
 # File SPECIFIC to this program. It used to have the same name as the output of
 # scrape_jobs.py: the scan overwrote the harvest of the career sites,
 # including when it brought back nothing (WTJ throttled -> 0 offers -> empty file).
-FRESH = HERE / "offres_scan.json"
+FRESH = _racine.dans(HERE, "offres_scan.json")
 
-REJETS_TRI = HERE / "_rejets_tri.json"  # the tests replace it
+REJETS_TRI = _racine.dans(HERE, "_rejets_tri.json")  # the tests replace it
 
 _PARESSEUX["KEYWORDS"] = lambda: list(_P.get("collecte.mots_cles", []) or [])
 

@@ -120,7 +120,7 @@ To customise or develop JobHunter: the full code, with Python 3.12+.
 2. **Double-click `launchers\install.bat`**: Python libraries and the Chromium browser (a few
    minutes, once). Without Python, it offers to install it (winget). The libraries go
    into a `.venv` folder next to JobHunter, not into your computer's Python.
-3. **Put your CV in `Mon_CV`**, a `.docx` preferably. This folder is never published.
+3. **Put your CV in `My_CV`**, a `.docx` preferably. This folder is never published.
 4. **Double-click `launchers\start.bat`**: the first time, it builds your profile from your CV and five
    questions; then it opens the app.
 
@@ -130,9 +130,12 @@ the latest version, checks that everything loads and rolls back on its own other
 profile, CV, letters and log are **never** touched.
 
 **What is in the folder**: `launchers/` the double-click tools (Windows `.bat`, macOS/Linux
-`.sh`) · `Mon_CV/` your CV · `profil/` your settings · `Scripts/` the offers, the log of
-your applications and the daily logs · `CV/`, `Lettres/` the documents made for each offer ·
+`.sh`) · `My_CV/` your CV · `profile/` your settings · `data/` the offers, the log of
+your applications and the daily logs · `CV/`, `Letters/` the documents made for each offer ·
 `src/` the program · `docs/`, `tests/`, `tools/` for developers.
+Before 3.0 these folders had French names (`Scripts/`, `profil/`, `Mon_CV/`, `Lettres/`):
+an installation from before takes the new names by itself the first time the app starts,
+after a backup (`_backup_migration_….zip`); `jobhunter migrate` does it by hand.
 
 > **Why a `.docx`?** Every CV sent starts from this template. Write `[nom du poste]` in your
 > summary: the exact job title of the offer goes there. A PDF is sent as is, untailored.
@@ -144,7 +147,7 @@ Linux, `python3-tk` first):
 
 ```bash
 ./launchers/install.sh
-./launchers/start.sh          # builds the profile from Mon_CV, then opens the app
+./launchers/start.sh          # builds the profile from My_CV, then opens the app
 ./launchers/schedule.sh       # collection every morning (cron)
 ./launchers/update.sh
 ```
@@ -157,7 +160,7 @@ The first launch creates a profile that **works**, but a basic one. For a comple
 open [Claude Code](https://claude.com/claude-code) in the JobHunter folder and type:
 
 ```
-/configure-profile Mon_CV\my_CV.docx
+/configure-profile My_CV\my_CV.docx
 ```
 
 Claude reads your CV, asks its questions in one message, then fills everything in: job-title
@@ -182,8 +185,8 @@ Release notes: [`CHANGELOG.md`](CHANGELOG.md).
 
 ## The profile
 
-Everything about you lives in **`profil/profil.json`**. The engine knows no trade: to change
-target, change the profile. Full example: `profil/exemple_finance_esg.json` (a junior in
+Everything about you lives in **`profile/profile.json`**. The engine knows no trade: to change
+target, change the profile. Full example: `profile/example_finance_esg.json` (a junior in
 sustainable finance).
 
 | Section | Content |

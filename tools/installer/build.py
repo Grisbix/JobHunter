@@ -28,10 +28,10 @@ RACINE = ICI.parent.parent
 BUILD = ICI / "build"
 DIST = RACINE / "dist"
 SQUELETTE = (
-    "profil/exemple_finance_esg.json",
-    "profil/exemple_Faits.json",
-    "Scripts/sources_config.json",
-    "Mon_CV/LISEZ-MOI.txt",
+    "profile/example_finance_esg.json",
+    "profile/example_Facts.json",
+    "data/sources_config.json",
+    "My_CV/README.txt",
 )
 
 

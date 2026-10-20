@@ -166,7 +166,7 @@ def main():
         p = _p(x.get("cv"))
         if not (p and p.exists()):
             return False
-        if p.parent.name != "Par_offre":
+        if p.parent.name not in ("Par_offre", "By_offer"):
             return True
         # We read the CONTENT, not the offer's title: comparing titre_poste(raw)
         # with raw stayed true after regeneration, so this selector never

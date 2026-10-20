@@ -4,6 +4,25 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.0.0 — 2026-10-20
+
+- **Your folders in English.** `Scripts/` → `data/`, `profil/profil.json` →
+  `profile/profile.json`, `Mon_CV/` → `My_CV/`, `Lettres/` → `Letters/`; inside:
+  `Par_offre` → `By_offer`, `Modèles` → `Templates`, `Sur_mesure` → `Tailored`,
+  `Relances` → `Follow_ups`, `suivi.json` → `applications.json`, `Faits.json` →
+  `Facts.json`, `_sauvegardes` → `_backups`, `_preuves` → `_proofs`…
+- **Nothing to do.** The first time the app starts after this update, your folders take
+  their new names by themselves, after a backup (`_backup_migration_<date>.zip` in the
+  JobHunter folder, with everything that cannot be rebuilt). The links of your CVs and
+  letters are rewritten, then checked: same offers, same applications, no document lost —
+  otherwise everything is put back as it was and JobHunter carries on as before. A file
+  that you changed and that the update also ships stays yours; the new one is set aside
+  as `.nouveau`.
+- `jobhunter migrate` does it by hand (`--verifier` only says whether it is needed). In a
+  folder without a `VERSION` file (a development copy, or a folder that installs the
+  engine with pip), it is never automatic: the French names keep working there.
+- The launchers recognise both layouts until the migration.
+
 ## 2.25.0 — 2026-10-20
 
 - **Programs and files in English.** The packages and modules took English names

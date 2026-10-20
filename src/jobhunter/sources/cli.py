@@ -10,6 +10,7 @@ import sys
 from typing import Any
 
 from jobhunter import lazy as _paresseux
+from jobhunter import root as _racine
 from jobhunter.sources import common as _commun
 from jobhunter.sources import source_yield as _rendement
 from jobhunter.sources.aggregators import scan_adzuna, scan_jooble
@@ -378,7 +379,7 @@ def _fusionner(uniq: Any, dry: bool) -> int:
             print(ligne)
         if not dry:
             try:
-                _rendement.enregistrer(_commun.HERE / "_rendement.jsonl")
+                _rendement.enregistrer(_racine.dans(_commun.HERE, "_rendement.jsonl"))
             except OSError as e:
                 print(f"  ! journal de rendement non écrit : {e}")
     print(

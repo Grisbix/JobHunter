@@ -54,7 +54,7 @@ jobs:
           $env:JOBHUNTER_RACINE = "$env:RUNNER_TEMP\JobHunterDonnees"
           & "$dest\jobhunter-cli.exe" --help
           if ($LASTEXITCODE -ne 0) { exit 1 }
-          if (-not (Test-Path "$env:JOBHUNTER_RACINE\profil\exemple_finance_esg.json")) { exit 1 }
+          if (-not (Test-Path "$env:JOBHUNTER_RACINE\profile\example_finance_esg.json")) { exit 1 }
       # F4 completion criterion: on a Windows without Python, the application opens, collects
       # (system browser, merge of a fictitious scan), writes an application file and updates
       # itself. Python is removed from PATH: only the embedded Python can answer.

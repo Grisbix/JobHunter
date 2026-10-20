@@ -14,13 +14,13 @@ rem winget displays its own terms: you are the one who accepts them.
 winget install -e --id Python.Python.3.12 --scope user
 if errorlevel 1 goto python_manuel
 echo.
-echo Python est installe. FERME cette fenetre et relance installer.bat
+echo Python est installe. FERME cette fenetre et relance install.bat
 echo (la nouvelle fenetre saura ou trouver Python).
 pause
 exit /b 0
 :python_manuel
 echo Installe Python depuis https://www.python.org/downloads/
-echo en cochant "Add Python to PATH", puis relance installer.bat.
+echo en cochant "Add Python to PATH", puis relance install.bat.
 pause
 exit /b 1
 :python_ok
@@ -44,8 +44,8 @@ set "PY=.venv\Scripts\python.exe"
 rem Fingerprint of the files as installed: the update will recognise your changes.
 "%PY%" JobHunter.pyw update --initialiser
 echo.
-echo Installation terminee. Depose ton CV dans Mon_CV puis lance lancer.bat.
-echo Ensuite : planifier.bat lance la collecte chaque matin, mettre_a_jour.bat recupere les nouveautes.
+echo Installation terminee. Depose ton CV dans My_CV (ou glisse-le sur la fenetre) puis lance start.bat.
+echo Ensuite : schedule.bat lance la collecte chaque matin, update.bat recupere les nouveautes.
 pause
 exit /b 0
 :erreur

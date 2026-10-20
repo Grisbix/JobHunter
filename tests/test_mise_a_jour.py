@@ -176,7 +176,7 @@ def test_profil_complet_rien():
         ("Scripts/apply_queue.json", True),
         ("Scripts/adzuna.json", True),
         ("Scripts/francetravail.json", True),
-        # installer.bat's environment: never in the manifest, never removed
+        # install.bat's environment: never in the manifest, never removed
         (".venv/Lib/site-packages/httpx/__init__.py", True),
         (".venv/Scripts/python.exe", True),
         ("profil/exemple_finance_esg.json", False),
@@ -395,12 +395,12 @@ def test_la_mise_a_jour_se_refait_apres_annulation(annulee, capsys):
 def main_entre_deux(installer):
     d = installer({**V12, "Scripts/a.py": "A = 1.5\n"})  # main moved after 1.2.0
     ecrire(d, "Scripts/_logs/x.log", "log\n")
-    ecrire(d, ".venv/Lib/site-packages/paquet.py", "X = 1\n")  # created by installer.bat
+    ecrire(d, ".venv/Lib/site-packages/paquet.py", "X = 1\n")  # created by install.bat
     return d, maj.initialiser()
 
 
 def test_l_environnement_hors_empreinte_et_garde(main_entre_deux, capsys):
-    """2.17: installer.bat creates .venv BEFORE the fingerprint; an update removed it."""
+    """2.17: install.bat creates .venv BEFORE the fingerprint; an update removed it."""
     assert not any(k.startswith(".venv/") for k in _manifeste(main_entre_deux[0]))
     lancer(capsys)
     assert lire(main_entre_deux[0], ".venv/Lib/site-packages/paquet.py") == "X = 1\n"

@@ -1,8 +1,8 @@
 # The programs — what does what
 
-Formerly `Scripts/README.md`. Since 2.0, the programs live in
+Formerly `data/README.md`. Since 2.0, the programs live in
 `src/jobhunter/programs/` (and the engine in the other packages of `src/jobhunter`);
-`Scripts/` keeps only the data. The names below are the historical file names:
+`data/` keeps only the data. The names below are the historical file names:
 `job_sources.py` is `jobhunter.sources`, `queue_io.py` is
 `jobhunter.storage.queue`, `web_nav.py` is `jobhunter.navigation`, etc.
 (`docs/architecture.md`).
@@ -21,7 +21,7 @@ invisible: `queue_io.charger()` reinjects them.
 **To read or write the queue, go through `queue_io`.** Not `json.loads`: a direct read
 no longer sees the descriptions, and a direct write loses the lock.
 
-**For `suivi.json`, go through `suivi_io`.** Same reason, higher stakes: a lost offer is
+**For `applications.json`, go through `suivi_io`.** Same reason, higher stakes: a lost offer is
 found again by the scan tomorrow; a lost application never comes back.
 
 ---
@@ -34,7 +34,7 @@ found again by the scan tomorrow; a lost application never comes back.
 | `site_strategies.py` | Per-site strategies for the 62 sites without an account. |
 | `util.py` | **Atomic** JSON writing (tmp + `os.replace`), inter-process lock (breaks that of a dead process), and the shared helpers: `chemin_de`, `url_de`, `existe`, `sans_accent`, `cle`. |
 | `queue_io.py` | **The only access path to `apply_queue.json`.** `charger()` to read, `transaction()` to write (lock + fresh re-read + atomic write). Separates the descriptions into `descriptions.json`. |
-| `suivi_io.py` | **The only access path to `suivi.json`** — the applications, the project's least reconstructible data. Same contract as `queue_io`: `charger()`, `transaction()`, `modifier()`, `poser()`. |
+| `suivi_io.py` | **The only access path to `applications.json`** — the applications, the project's least reconstructible data. Same contract as `queue_io`: `charger()`, `transaction()`, `modifier()`, `poser()`. |
 | `ats_match.py` | **The scoring.** Six weighted axes (ESG ×3, finance ×2, AI ×1.5), cap by ESG density, seniority and experience penalty. |
 
 ## Offer collection
@@ -82,11 +82,11 @@ found again by the scan tomorrow; a lost application never comes back.
 
 | Program | Role |
 |---|---|
-| `ranking_evaluation.py` | The ranking against the judgements in the tracking: AUC and interval, precision of the top ones, worst errors; `--enregistrer` keeps a reference (`Scripts/_evaluation.json`). `python JobHunter.pyw evaluation`. Read-only. |
-| `source_yield.py` | Per-source report of the collections (log `Scripts/_rendement.jsonl`): returned, new, relevant, time, verdict (ok, nothing to take, limited, partial, refused). `python JobHunter.pyw yield`. Read-only. |
+| `ranking_evaluation.py` | The ranking against the judgements in the tracking: AUC and interval, precision of the top ones, worst errors; `--enregistrer` keeps a reference (`data/_evaluation.json`). `python JobHunter.pyw evaluation`. Read-only. |
+| `source_yield.py` | Per-source report of the collections (log `data/_rendement.jsonl`): returned, new, relevant, time, verdict (ok, nothing to take, limited, partial, refused). `python JobHunter.pyw yield`. Read-only. |
 | `check_folders.py` | Check of the application files before sending (read-only): readable PDF, one page, contact details, template filled in; prefers the up-to-date PDF over its .docx. Step 5b of the pipeline. `python JobHunter.pyw check`. |
-| `apply_runner.py` | Fills in the forms, **semi-automatic**: the final click to send remains yours. Driven by the Candidatures panel of the app (`--pilote`) or by keyboard; after "envoyé" (sent), observes the page and writes the tracking with the proof (`envoi` confirmed / uncertain, screenshot in `Scripts/_preuves/`). |
-| `mail_statuses.py` | Statuses proposed from the emails received (rejection, interview, acknowledgement of receipt), **validated one by one**: `jobhunter mail-statuses --mbox …` (Google Takeout export), `--eml <dossier>` or `--gmail` (read-only API, OAuth client created by the user in `Scripts/gmail_client.json`, token in `Scripts/gmail_token.json`, `pip install "jobhunter[gmail]"`). The status only moves downstream; the entry keeps the quoted email (`courriel`). Window in the app: Maintenance → "Statuts depuis mes courriels…" (Statuses from my emails…). Engine: `jobhunter.mail`. |
+| `apply_runner.py` | Fills in the forms, **semi-automatic**: the final click to send remains yours. Driven by the Candidatures panel of the app (`--pilote`) or by keyboard; after "envoyé" (sent), observes the page and writes the tracking with the proof (`envoi` confirmed / uncertain, screenshot in `data/_proofs/`). |
+| `mail_statuses.py` | Statuses proposed from the emails received (rejection, interview, acknowledgement of receipt), **validated one by one**: `jobhunter mail-statuses --mbox …` (Google Takeout export), `--eml <dossier>` or `--gmail` (read-only API, OAuth client created by the user in `data/gmail_client.json`, token in `data/gmail_token.json`, `pip install "jobhunter[gmail]"`). The status only moves downstream; the entry keeps the quoted email (`courriel`). Window in the app: Maintenance → "Statuts depuis mes courriels…" (Statuses from my emails…). Engine: `jobhunter.mail`. |
 | `follow_ups.py` | D+7 / D+10 follow-up emails per offer. `--brouillons` prepares those of all the follow-ups due, opening nothing and sending nothing: Windows task `Relances`, on Monday at 9:30, report in the vault (`Routines/Relances/`). |
 | `weekly_metrics.py` | Report of the week, read-only: applications sent, to follow up, replies, pipeline merges and days without a run. Launched on Sunday at 21:00 by the Windows task `Metriques_Emploi`; output in the vault, `Routines/Metriques_Emploi/`. |
 | `notify_matches.py` | Windows alert when a high-fit offer arrives. |
@@ -137,7 +137,7 @@ prints an emoji. Without it, redirected output (pipe, log, scheduled task) falls
 cp1252 and raises `UnicodeEncodeError` on the first line.
 
 **A posting closes AFTER one has applied to it.** Any automatic deletion must therefore
-spare the offers present in `suivi.json` — otherwise it deletes first those
+spare the offers present in `applications.json` — otherwise it deletes first those
 the user applied to, and the trace becomes orphaned.
 
 **Check an import by loading the module, not by analysing the syntax.** `ast.parse`
@@ -173,7 +173,7 @@ is not. A function that takes then returns it, when its caller held it for the w
 program (`util.garder`), removes it from the caller — and the rest of the work is done unprotected.
 `util.tenu(chemin)` answers before taking.
 
-**Writing a memory snapshot overwrites the work of others.** The app kept `suivi.json`
+**Writing a memory snapshot overwrites the work of others.** The app kept `applications.json`
 in memory and rewrote it IN FULL on every click. A "applied" on one offer therefore erased
 the follow-ups that `follow_ups.py` had just noted on others — without a word. One writes
 one entry, under lock, on the state re-read inside the lock: this is what
@@ -193,7 +193,7 @@ were in no commit. The deletion now writes a timestamped copy in
 
 **Two paths to the same file are not equal.** `queue_io` only reinjected the
 descriptions if the path received equalled `CHEMIN` *as is*: `Path("apply_queue.json")`,
-launched from `Scripts/`, returned the 11,710 offers without a description (the real bench saw
+launched from `data/`, returned the 11,710 offers without a description (the real bench saw
 25,461 differences, all false), and `sauver` would have rewritten them into the queue. Paths
 are now compared resolved (`_est_la_file`).
 

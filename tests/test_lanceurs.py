@@ -1,7 +1,7 @@
 """The double-click launchers, in launchers/ since 2.24, work from the folder above.
 
 Each one `cd`s to the JobHunter folder first: Mon_CV/, profil/, .venv and JobHunter.pyw
-are found there, not in launchers/. A real run of lancer.bat (Windows) or lancer.sh
+are found there, not in launchers/. A real run of start.bat (Windows) or start.sh
 (macOS/Linux) in a copy: with a CV in Mon_CV and no profile, it must call
 `JobHunter.pyw profile <the CV>` from the root — a stand-in JobHunter.pyw writes down
 what it received. Nothing is installed, nothing opens.

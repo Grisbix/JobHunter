@@ -64,7 +64,7 @@ HERE = _racine.scripts()
 from jobhunter.storage import applications as suivi_io  # noqa: E402
 from jobhunter.storage import queue as queue_io  # noqa: E402
 
-ETAT = HERE / "_audit_dispo.json"
+ETAT = _racine.dans(HERE, "_audit_dispo.json")
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
 # Same patterns as recheck_dead: two formats of LinkedIn offer URL.
@@ -400,7 +400,7 @@ def supprimer(etat, age_max, aujourd_hui, copier=True, absente_jours=30):
     # step): a second copy would count in its seven rolling days.
     copie = None
     if copier:
-        copie = HERE / "_sauvegardes" / f"{aujourd_hui}_avant_audit"
+        copie = _racine.dans(HERE, "_sauvegardes") / f"{aujourd_hui}_avant_audit"
         copie.mkdir(parents=True, exist_ok=True)
         for f in ("apply_queue.json", "descriptions.json"):
             if (HERE / f).exists():

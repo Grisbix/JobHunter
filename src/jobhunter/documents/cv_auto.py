@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Any
 
 from jobhunter import log as _journal
+from jobhunter import root as _racine
 
 _log = _journal.journal(__name__)
 
@@ -38,7 +39,7 @@ _log = _journal.journal(__name__)
 def _chemin() -> Path:
     from jobhunter import paths as chemins
 
-    return chemins.ROOT / "CV" / "Faits.json"
+    return chemins.ROOT / "CV" / _racine.nom("Faits.json")
 
 
 @lru_cache(maxsize=1)

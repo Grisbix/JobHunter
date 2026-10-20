@@ -995,7 +995,7 @@ def main():
         # Look in Scripts/ or parent
         candidates = [
             scripts_dir / "unique_domains.txt",
-            scripts_dir.parent / "Scripts" / "unique_domains.txt",
+            _racine.scripts() / "unique_domains.txt",
         ]
         domains_file = None
         for c in candidates:

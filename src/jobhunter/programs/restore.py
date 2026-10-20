@@ -38,6 +38,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from jobhunter import root as _racine
 from jobhunter.storage import applications as suivi_io
 from jobhunter.storage import queue as queue_io
 
@@ -66,7 +67,7 @@ def sauvegardes() -> list[Sauvegarde]:
         One entry per backup holding a queue; the folders without one are ignored.
     """
     trouvees = []
-    base = _dossier() / "_sauvegardes"
+    base = _racine.dans(_dossier(), "_sauvegardes")
     if base.is_dir():
         for d in base.iterdir():
             f = d / "apply_queue.json"
@@ -117,10 +118,8 @@ def plan(courantes, anciennes, suivies):
 
 
 def _copier_etat_actuel() -> Path:
-    cible = (
-        _dossier()
-        / "_sauvegardes"
-        / (datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S") + "_avant_restauration")
+    cible = _racine.dans(_dossier(), "_sauvegardes") / (
+        datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S") + "_avant_restauration"
     )
     cible.mkdir(parents=True, exist_ok=True)
     for src in (Path(queue_io.CHEMIN), Path(queue_io.DESCRIPTIONS)):

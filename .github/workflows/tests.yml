@@ -111,7 +111,7 @@ jobs:
 
   macos:
     # The macOS install path as a Mac user follows it (README, "macOS / Linux"):
-    # installer.sh builds .venv, then the whole suite runs in it, including the
+    # install.sh builds .venv, then the whole suite runs in it, including the
     # test that clicks every panel of the window in every language. The runner has
     # a desktop session, so Tk opens real windows. Catches crashes, not layout.
     runs-on: macos-latest

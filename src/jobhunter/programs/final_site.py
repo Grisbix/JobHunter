@@ -50,7 +50,7 @@ from jobhunter.programs.probe_ats_queue import variantes  # noqa: E402
 from jobhunter.programs.verify_ats_slugs import _cle, nom_du_flux, verdict  # noqa: E402
 from jobhunter.storage import queue as queue_io  # noqa: E402
 
-ETAT = HERE / "_site_final.json"
+ETAT = _racine.dans(HERE, "_site_final.json")
 RESONDE_JOURS = 30
 
 UA = probe_ats.UA

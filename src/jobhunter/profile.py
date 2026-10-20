@@ -8,7 +8,7 @@ no name: it reads this module. To change target, one changes the profile, never 
 code.
 
 The file is created with `python JobHunter.pyw profile <your_cv.pdf>`, then edited by
-hand. A complete example (sustainable finance) is in profil/exemple_finance_esg.json.
+hand. A complete example (sustainable finance) is in profile/example_finance_esg.json.
 
 WORD lists accept two forms:
   "analyste financier"     a word or a phrase, searched at the start of a word
@@ -30,7 +30,17 @@ from jobhunter import root as _racine
 
 RACINE = _racine.racine()
 # PROFIL_JOBHUNTER allows trying another profile without touching the file.
-FICHIER = Path(os.environ.get("PROFIL_JOBHUNTER") or RACINE / "profil" / "profil.json")
+
+
+def chemin_par_defaut() -> Path:
+    """`PROFIL_JOBHUNTER`, otherwise `profile/profile.json` (`profil/profil.json` in 2.x)."""
+    return Path(
+        os.environ.get("PROFIL_JOBHUNTER")
+        or RACINE / _racine.nom("profil", RACINE) / _racine.nom("profil.json", RACINE)
+    )
+
+
+FICHIER = chemin_par_defaut()
 
 
 class ProfilAbsent(RuntimeError):

@@ -68,13 +68,22 @@ def test_racine_par_marqueur(monkeypatch):
 
 def test_racine_par_variable(monkeypatch, tmp_path):
     monkeypatch.setenv("JOBHUNTER_RACINE", str(tmp_path))
+    assert racine.scripts() == tmp_path.resolve() / "data"
+
+
+def test_racine_par_variable_disposition_2x(monkeypatch, tmp_path):
+    (tmp_path / "Scripts").mkdir()
+    (tmp_path / "profil").mkdir()
+    (tmp_path / "Scripts" / "apply_queue.json").write_text("[]", encoding="utf-8")
+    monkeypatch.setenv("JOBHUNTER_RACINE", str(tmp_path))
     assert racine.scripts() == tmp_path.resolve() / "Scripts"
+    assert racine.nom("suivi.json") == "suivi.json"
 
 
-def test_donnees_dans_scripts():
+def test_donnees_dans_data():
     assert (file.CHEMIN, suivi.CHEMIN) == (
-        RACINE / "Scripts" / "apply_queue.json",
-        RACINE / "Scripts" / "suivi.json",
+        RACINE / "data" / "apply_queue.json",
+        RACINE / "data" / "applications.json",
     )
 
 

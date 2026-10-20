@@ -20,10 +20,14 @@ import sys
 # What must never be published: user data and secrets.
 INTERDITS = [
     r"^profil/(?!exemple_)[^/]+$",  # profil.json and any copy; only the examples
+    r"^profile/(?!example_)[^/]+$",  # same, 3.0 layout
     r"^Scripts/(?!sources_config\.json$)[^/]+\.(json|jsonl|csv|txt|log)$",  # queue, tracking, keys…
     r"^Scripts/_",  # backups, logs, states (_logs/, _preuves/, _rendement.jsonl…)
-    r"^(CV|Lettres)/",  # generated documents
+    r"^data/(?!sources_config\.json$)[^/]+\.(json|jsonl|csv|txt|log)$",  # 3.0 layout
+    r"^data/_",
+    r"^(CV|Lettres|Letters)/",  # generated documents
     r"^Mon_CV/(?!LISEZ-MOI\.txt$)",  # the user's CV
+    r"^My_CV/(?!README\.txt$)",
     r"(^|/)\.env($|\.)",
     r"(^|/)(adzuna|jooble|francetravail|api_keys|mail_config|comptes|apply_profile)\.json$",
     r"(^|/)\.ats_password$",

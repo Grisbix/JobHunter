@@ -76,6 +76,10 @@ COMMANDES = {
     ),
     "show-profile": ("jobhunter.profile", "affiche le profil tel que le moteur le lit"),
     "update": ("jobhunter.programs.update", "met JobHunter a jour depuis GitHub"),
+    "migrate": (
+        "jobhunter.programs.migrate",
+        "passe les dossiers de donnees aux noms anglais de la 3.0 (avec sauvegarde)",
+    ),
 }
 
 

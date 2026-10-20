@@ -52,10 +52,10 @@ def test_refuse(chemin):
 @pytest.mark.parametrize(
     "chemin",
     [
-        "profil/exemple_finance_esg.json",
-        "profil/exemple_Faits.json",
-        "Scripts/sources_config.json",
-        "Mon_CV/LISEZ-MOI.txt",
+        "profile/example_finance_esg.json",
+        "profile/example_Facts.json",
+        "data/sources_config.json",
+        "My_CV/README.txt",
         "docs/screenshots/offers.png",
         "src/jobhunter/storage/applications.py",
         "tests/reponses/lever.json",

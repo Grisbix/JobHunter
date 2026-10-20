@@ -25,7 +25,7 @@ from pathlib import Path
 from jobhunter import root as _racine
 
 HERE = _racine.scripts()
-FICHIER = HERE / "_rejets_tri.json"
+FICHIER = _racine.dans(HERE, "_rejets_tri.json")
 DUREE_JOURS = 30
 
 

@@ -21,7 +21,7 @@ from pathlib import Path
 from jobhunter import frozen as _gele
 from jobhunter import root as _racine
 
-TACHE = "JobHunter - collecte quotidienne"  # the name in planifier.bat
+TACHE = "JobHunter - collecte quotidienne"  # the name in schedule.bat
 _RX_HEURE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
@@ -41,7 +41,7 @@ def commande() -> str:
     lanceur = _racine.racine() / "JobHunter.pyw"
     if not lanceur.exists():
         raise FileNotFoundError(
-            f"{lanceur} introuvable : lance launchers\\planifier.bat depuis le code."
+            f"{lanceur} introuvable : lance launchers\\schedule.bat depuis le code."
         )
     return f'"{_gele.interpreteur()}" "{lanceur}" pipeline'
 
@@ -53,7 +53,7 @@ def _schtasks(*args: str) -> subprocess.CompletedProcess[str]:
 
 
 def planifiee() -> bool:
-    """True if the task already exists (created here or by planifier.bat)."""
+    """True if the task already exists (created here or by schedule.bat)."""
     if not disponible():
         return False
     try:

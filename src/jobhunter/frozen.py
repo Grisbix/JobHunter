@@ -70,8 +70,12 @@ def preparer_donnees(dest: Path, squelette: Path) -> list[Path]:
         The files copied; a file already present is never replaced.
     """
     copies: list[Path] = []
+    # In the layout of the folder: a 2.x installation keeps its names until it is
+    # migrated (jobhunter.programs.migrate, at the application's start).
+    from jobhunter import root as _racine
+
     for d in ("Scripts", "profil", "Mon_CV", "CV", "Lettres"):
-        (dest / d).mkdir(parents=True, exist_ok=True)
+        (dest / _racine.nom(d, dest)).mkdir(parents=True, exist_ok=True)
     if not squelette.is_dir():
         return copies
     for src in sorted(squelette.rglob("*")):

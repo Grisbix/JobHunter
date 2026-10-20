@@ -443,7 +443,7 @@ def construire(cv_txt, cv_nom, rep):
         "_lisez_moi": (
             "Ton profil. Genere par first_launch.py a partir de ton CV : RELIS-LE. "
             "Les champs vides ou « A COMPLETER » rendent les lettres plus pauvres. "
-            "Modele complet et commente : profil/exemple_finance_esg.json."
+            "Modele complet et commente : profile/example_finance_esg.json."
         ),
         "identite": {**ident, "genre": rep["genre"]},
         "domaines": domaines,
@@ -551,7 +551,7 @@ def main():
     ap.add_argument("cv", help="ton CV, .pdf ou .docx")
     ap.add_argument("--auto", action="store_true", help="accepter toutes les reponses proposees")
     ap.add_argument("--force", action="store_true", help="remplacer un profil existant")
-    ap.add_argument("--profil", default=str(RACINE / "profil" / "profil.json"))
+    ap.add_argument("--profil", default=str(_racine.dossier("profil") / _racine.nom("profil.json")))
     ap.add_argument("--metiers", help="metiers vises, separes par des virgules")
     ap.add_argument("--annees", help="annees d'experience, stages compris")
     ap.add_argument("--genre", choices=["m", "f"], help="accords des lettres")
@@ -683,7 +683,7 @@ def main():
     }
 
     print("\n3. Ecriture")
-    cv_dir = RACINE / "CV" / "Modèles"
+    cv_dir = RACINE / "CV" / _racine.nom("Modèles")
     cv_dir.mkdir(parents=True, exist_ok=True)
     prefixe = slug(f"{ident['prenom']} {ident['nom']}")
     cv_nom = f"CV_{prefixe}{cv.suffix.lower()}"
@@ -708,17 +708,17 @@ def main():
 
     # Empty data files: the queue of offers and the application tracking.
     # The app finds its root through Scripts/apply_queue.json.
-    for nom, vide in (("apply_queue.json", "[]"), ("suivi.json", "{}")):
+    for nom, vide in (("apply_queue.json", "[]"), (_racine.nom("suivi.json"), "{}")):
         if not (HERE / nom).exists():
             (HERE / nom).write_text(vide, encoding="utf-8")
-    faits = RACINE / "CV" / "Faits.json"
+    faits = RACINE / "CV" / _racine.nom("Faits.json")
     if not faits.exists():
         faits.write_text(
             json.dumps(
                 {
                     "_lisez_moi": (
                         "Faits VALIDES ajoutes au CV quand une annonce les appelle. Voir "
-                        "profil/exemple_Faits.json pour le format."
+                        "profile/example_Facts.json pour le format."
                     ),
                     "faits": [],
                     "allegements": {"fr": [], "en": []},

@@ -34,7 +34,7 @@ from pathlib import Path
 
 RACINE = Path(__file__).resolve().parent.parent
 SCRIPTS = RACINE / "Scripts"
-EXEMPLE = RACINE / "profil" / "exemple_finance_esg.json"
+EXEMPLE = RACINE / "profile" / "example_finance_esg.json"
 VERSION_FORMAT = 1
 
 _MOIS = (

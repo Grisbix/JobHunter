@@ -111,6 +111,16 @@ Scripts/jooble.json
 # CV dropped by the user
 Mon_CV/*
 !Mon_CV/LISEZ-MOI.txt
+My_CV/*
+!My_CV/README.txt
+
+# 3.0 layout (English names): the user's data, never published
+data/*
+!data/sources_config.json
+profile/*
+!profile/example_*.json
+Letters/
+_backup_migration_*.zip
 
 # Update
 .maj_manifeste.json

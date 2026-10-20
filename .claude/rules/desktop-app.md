@@ -14,7 +14,7 @@ Since phase 3.7, `JobHunter.pyw` is only the launcher: the app lives in
 **The table is indexed by position.** Removing a column requires removing *also*
 the matching value in `_row_vals`, otherwise everything shifts by one.
 
-The root comes from `jobhunter.root` (marker `Scripts/` + `profil/`, or
+The root comes from `jobhunter.root` (marker `data/` + `profil/`, or
 `JOBHUNTER_RACINE`): the app works wherever it is placed. Never hard-code a root in it — the project's paths moved
 four times in two days.
 
@@ -61,7 +61,7 @@ The Lieu (Location) column displays `zones.ville_affichee` (IDF = "Paris"), the 
 
 `pas intéressé` (not interested) and `expiré` (expired) **hide** the row (`MASQUANTS`, "Voir les
 masquées" (Show hidden) switch to see it again), `mauvaise` (bad) **greys it out**. `expiré` = closed posting, a fact,
-not a judgement: do not confuse it with `mauvaise` or `refus` (rejection). Both live in `suivi.json`; neither removes the offer from
+not a judgement: do not confuse it with `mauvaise` or `refus` (rejection). Both live in `applications.json`; neither removes the offer from
 the queue — that is the role of "Écarter" (Discard), which goes through `exclusions.py`. Any new
 status goes into `STATUTS`, `ST_EMOJI` and, if it colours the row, `ST_COULEUR`.
 Tracking is written through `suivi_io` (status key: **`s`**, not `statut` — the Stats

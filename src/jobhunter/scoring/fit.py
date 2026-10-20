@@ -50,7 +50,7 @@ _PARESSEUX["SKILL_LEX"] = lambda: importlib.import_module("jobhunter.scoring.lex
 
 
 ROOT = _racine.racine()
-OUT_CSV = ROOT / "Scripts" / "ats_report.csv"
+OUT_CSV = _racine.scripts() / "ats_report.csv"
 
 
 def cv_text(variant_key: str) -> str:

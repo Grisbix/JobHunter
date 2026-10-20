@@ -85,7 +85,7 @@ def main():
     q = importlib.import_module("jobhunter.storage.queue").charger(QUEUE, descriptions=False)
 
     suivi = {}
-    sp = HERE / "suivi.json"
+    sp = _racine.dans(HERE, "suivi.json")
     if sp.exists():
         try:
             suivi = json.loads(sp.read_text(encoding="utf-8"))

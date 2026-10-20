@@ -7,7 +7,7 @@ choice has its own ADR in [`docs/adr/`](adr/); the plan that led here is
 ## Overview
 
 ```
-                 profil/profil.json  (identity, jobs, keywords, scoring, texts)
+                 profile/profile.json  (identity, jobs, keywords, scoring, texts)
                           │  read by jobhunter.profile
                           ▼
   ┌────────────── collection ────────────┐     ┌──── triage and scoring ─────┐
@@ -19,9 +19,9 @@ choice has its own ADR in [`docs/adr/`](adr/); the plan that led here is
   │  fusion ── dedupes, scores, writes ──┼──┐  └─────────────────────────────┘
   └──────────────────────────────────────┘  │
                                             ▼
-                         Scripts/apply_queue.json  ◀── jobhunter.storage.queue
-                         Scripts/descriptions.json      (lock, atomic write,
-                         Scripts/suivi.json        ◀──   descriptions apart)
+                         data/apply_queue.json  ◀── jobhunter.storage.queue
+                         data/descriptions.json      (lock, atomic write,
+                         data/applications.json        ◀──   descriptions apart)
                                             │          jobhunter.storage.applications
              ┌──────────────────────────────┼───────────────────────────┐
              ▼                              ▼                           ▼
@@ -39,7 +39,7 @@ choice has its own ADR in [`docs/adr/`](adr/); the plan that led here is
 
 | Package | Role | Depends on |
 |---|---|---|
-| `jobhunter.root` | installation root (marker `Scripts/` + `profil/`, or `JOBHUNTER_RACINE`) | — |
+| `jobhunter.root` | installation root (marker `data/` + `profil/`, or `JOBHUNTER_RACINE`) | — |
 | `jobhunter.profile` | reading the profile, patterns compiled from its lists; `utiliser()` injects a profile | racine, paresseux |
 | `jobhunter.lazy` | module values computed on first read ([ADR 0007](adr/0007-lazy-profile-values.md)) | — |
 | `jobhunter.log` | the engine's `logging`: console unchanged, one timestamped file per run | — |
@@ -67,14 +67,14 @@ from the current folder ([ADR 0008](adr/0008-programs-in-the-package.md)).
 
 ## The data
 
-Three JSON files in `Scripts/`, three access contracts
+Three JSON files in `data/`, three access contracts
 ([ADR 0002](adr/0002-three-files-three-contracts.md)):
 
 - **`apply_queue.json`** — the offers. Identity: `oid = "entreprise|poste"`, never
   the URL. Written only by `stockage.file.transaction()`.
 - **`descriptions.json`** — the text of the postings, apart: it weighed 64% of the queue.
   Reinjected on read, taken out again on write, transparently.
-- **`suivi.json`** — the applications. The least reconstructible data: the only versioned
+- **`applications.json`** — the applications. The least reconstructible data: the only versioned
   file, written entry by entry (`stockage.suivi.poser`) on the state re-read under lock.
 
 A program that finds the queue locked exits with **code 3** without modifying anything
@@ -94,9 +94,9 @@ morning by the task that `launchers/schedule.bat` sets up:
 5. **documents**: CV and letter for the top of the queue.
 
 A backup of the queue, the descriptions and the scans is made before any step
-(`Scripts/_sauvegardes/<date>/`, seven rolling days).
+(`data/_backups/<date>/`, seven rolling days).
 
-Logs: `Scripts/_logs/pipeline_<date>_<heure>.log` keeps the console of each step;
+Logs: `data/_logs/pipeline_<date>_<heure>.log` keeps the console of each step;
 `…_moteur.log` beside it keeps the engine's messages with time, level and module
 (`jobhunter.log`, variable `JOBHUNTER_JOURNAL`). In the engine, `print` is reserved for
 command output (`main()`); everything else goes through `logging`.

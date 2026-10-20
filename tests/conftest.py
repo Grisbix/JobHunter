@@ -14,7 +14,7 @@ import pytest
 RACINE = Path(__file__).resolve().parent.parent
 SCRIPTS = RACINE / "Scripts"
 SRC = RACINE / "src"
-EXEMPLE = RACINE / "profil" / "exemple_finance_esg.json"
+EXEMPLE = RACINE / "profile" / "example_finance_esg.json"
 
 os.environ["PROFIL_JOBHUNTER"] = str(EXEMPLE)
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")

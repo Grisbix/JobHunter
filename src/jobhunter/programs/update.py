@@ -75,34 +75,51 @@ SAUVEGARDES = RACINE / "_sauvegarde_maj"
 DERNIERE_VERIF = RACINE / ".maj_derniere_verif"
 GIT_AVANT = RACINE / ".maj_git_avant"
 JOURNAL = "_journal.json"
-EXEMPLE = "profil/exemple_finance_esg.json"
+# The example profile, in the English layout (3.0) or the French one (2.x): right after
+# the first update to 3.0 a French installation may have lost its 2.x copy.
+EXEMPLES = ("profile/example_finance_esg.json", "profil/exemple_finance_esg.json")
+
+
+def _exemple():
+    """The example profile present in this installation (relative path)."""
+    return next((e for e in EXEMPLES if (RACINE / e).exists()), EXEMPLES[0])
+
 
 # User data: never written, even if a ZIP contained it.
-# .venv: the Python environment created by installer.bat (2.17); out of the manifest,
+# .venv: the Python environment created by install.bat (2.17); out of the manifest,
 # otherwise an update would remove from it the files missing from the new version.
 PROTEGES_PREFIXES = (
     "profil/profil",
+    "profile/profile",
     "Mon_CV/",
+    "My_CV/",
     "CV/",
     "Lettres/",
+    "Letters/",
     "_sauvegarde_maj/",
     ".git/",
     ".venv/",
 )
+_DONNEES = (
+    "apply_queue.json",
+    "descriptions.json",
+    "adzuna.json",
+    "francetravail.json",
+    "gmail_client.json",
+    "gmail_token.json",
+    "jooble.json",
+    "apply_runner_done.json",
+)
+# Both layouts: 2.x (Scripts/, suivi.json) and 3.0 (data/, applications.json).
 PROTEGES_NOMS = {
-    "Scripts/apply_queue.json",
-    "Scripts/descriptions.json",
+    *(f"{d}/{n}" for d in ("Scripts", "data") for n in _DONNEES),
     "Scripts/suivi.json",
-    "Scripts/adzuna.json",
-    "Scripts/francetravail.json",
-    "Scripts/gmail_client.json",
-    "Scripts/gmail_token.json",
-    "Scripts/jooble.json",
-    "Scripts/apply_runner_done.json",
     "Scripts/chemins.json",
+    "data/applications.json",
+    "data/paths.json",
 }
 # Written by first_launch: presumed modified when no reference exists.
-REECRITS_AU_PREMIER_LANCEMENT = {"Scripts/sources_config.json"}
+REECRITS_AU_PREMIER_LANCEMENT = {"Scripts/sources_config.json", "data/sources_config.json"}
 # Never "modified by the user": a VERSION kept as is would freeze the installed
 # version and the update would come up again at every launch.
 TOUJOURS_REMPLACES = {"VERSION", "CHANGELOG.md"}
@@ -133,7 +150,9 @@ def _sha(b):
 def protege(rel):
     if rel in PROTEGES_NOMS or rel.startswith(PROTEGES_PREFIXES):
         return True
-    return rel.startswith("profil/") and not Path(rel).name.startswith("exemple_")
+    if rel.startswith("profil/"):
+        return not Path(rel).name.startswith("exemple_")
+    return rel.startswith("profile/") and not Path(rel).name.startswith("example_")
 
 
 def version_locale():
@@ -227,7 +246,8 @@ def reglages_manquants(exemple, profil):
 
 
 def signaler_reglages():
-    p_ex, p_moi = RACINE / EXEMPLE, RACINE / "profil" / "profil.json"
+    p_ex = RACINE / _exemple()
+    p_moi = RACINE / _racine.nom("profil", RACINE) / _racine.nom("profil.json", RACINE)
     if not (p_ex.exists() and p_moi.exists()):
         return
     try:
@@ -246,7 +266,8 @@ def signaler_reglages():
             print(f"  - {k}")
         print(
             f"Pour les régler : demande à Claude « /configure-profile », ou copie-les "
-            f"depuis {EXEMPLE} dans profil/profil.json."
+            f"depuis {p_ex.relative_to(RACINE).as_posix()} dans "
+            f"{p_moi.relative_to(RACINE).as_posix()}."
         )
 
 
@@ -259,7 +280,7 @@ def controler():
     depend on your profile and does not read it)."""
     erreurs = []
     fichiers = [
-        *(RACINE / "Scripts").glob("*.py"),
+        *(RACINE / _racine.nom("Scripts", RACINE)).glob("*.py"),
         *(RACINE / "src").rglob("*.py"),
         RACINE / "JobHunter.pyw",
     ]
@@ -276,14 +297,14 @@ def controler():
             "PYTHONPATH": os.pathsep.join(
                 x for x in (str(RACINE / "src"), os.environ.get("PYTHONPATH", "")) if x
             ),
-            "PROFIL_JOBHUNTER": str(RACINE / EXEMPLE),
+            "PROFIL_JOBHUNTER": str(RACINE / _exemple()),
             "PYTHONIOENCODING": "utf-8",
             "PYTHONDONTWRITEBYTECODE": "1",
         }
         code = "import importlib\nfor m in %r: importlib.import_module(m)" % (MODULES_CENTRAUX,)
         r = subprocess.run(
             [sys.executable, "-c", code],
-            cwd=RACINE / "Scripts",
+            cwd=RACINE,
             env=env,
             capture_output=True,
             text=True,
@@ -314,7 +335,7 @@ def signaler_tache_ancienne():
             text=True,
             errors="replace",
         )
-        lanceur = "launchers\\planifier.bat"
+        lanceur = "launchers\\schedule.bat"
     else:
         r = subprocess.run(["crontab", "-l"], capture_output=True, text=True, errors="replace")
         lanceur = "./launchers/schedule.sh"
@@ -510,7 +531,7 @@ def fichiers_du_zip(data):
 
 def initialiser():
     """Fingerprint of the installation as unzipped, BEFORE the user modifies anything
-    (called by installer.bat / installer.sh).
+    (called by install.bat / install.sh).
 
     Without it, the reference is the ZIP of the v<version> tag: exact for those who
     took a release, wrong for those who took the ZIP of main between two releases (its

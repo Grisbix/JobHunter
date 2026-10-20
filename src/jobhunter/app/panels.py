@@ -11,6 +11,7 @@ from tkinter import ttk
 from typing import Any
 from urllib.parse import quote, urlparse
 
+from jobhunter import root as _racine
 from jobhunter.app import common as _commun
 from jobhunter.app import inventory as _inventaire
 from jobhunter.app import theme as _theme
@@ -527,7 +528,7 @@ class PanneauxMixin:
             sel = tvs.selection()
             tvs.delete(*tvs.get_children())
             etats.clear()
-            journal = _rendement.lire_journal(SCRIPTS / "_rendement.jsonl")
+            journal = _rendement.lire_journal(_racine.dans(SCRIPTS, "_rendement.jsonl"))
             fichiers = {c.fichier: c.nom for c in cles_api.CLES.values()}
             for etat in _inventaire.etat_sources(
                 journal, lambda f: cles_api.presente(SCRIPTS, fichiers[f])
@@ -548,7 +549,9 @@ class PanneauxMixin:
             if sel and tvs.exists(sel[0]):
                 tvs.selection_set(sel[0])
             try:
-                comptes = json.loads((SCRIPTS / "comptes.json").read_text(encoding="utf-8"))
+                comptes = json.loads(
+                    (_racine.dans(SCRIPTS, "comptes.json")).read_text(encoding="utf-8")
+                )
             except Exception:
                 comptes = {}
             tv.delete(*tv.get_children())

@@ -7,22 +7,22 @@ Language: documentation, comments and docstrings are in English; identifiers, pr
 
 ## Shared version: the engine knows nobody
 
-Everything SPECIFIC TO THE PERSON lives in `profil/profil.json`, read by
+Everything SPECIFIC TO THE PERSON lives in `profile/profile.json`, read by
 `src/jobhunter/profile.py`: identity, target jobs (`domaines`), skills, scoring axes and
 caps, title filters, level, families removed by the triage, zones, collection keywords,
 texts of the letters and messages. **No module hard-codes a job, a city or a name.** To
 change target, change the profile.
 
 - Create the profile: `python -m jobhunter profile <cv.pdf|docx>`.
-- Full reference profile: `profil/exemple_finance_esg.json` (junior in sustainable
+- Full reference profile: `profile/example_finance_esg.json` (junior in sustainable
   finance). **All the tests** run on it — `_profil_test.py`, imported at the top of every
   `test_*.py`, forces `PROFIL_JOBHUNTER` to this file.
 - A word list in the profile accepts `"mot"` (bounded on the left) or `"re:motif"` (taken
   as is). `profil.motif()` compiles them.
 - User guide: `README.md` (English) and `README.fr.md`. Setup through Claude Code: `/configure-profile` (`.claude/commands/configure-profile.md`).
-- Double-click tools (`launchers/`, each one `cd`s to the folder above): `installer.bat`,
-  `lancer.bat` (CV taken from `Mon_CV/`), `planifier.bat` (daily scheduled task),
-  `mettre_a_jour.bat` (and their `.sh` twins for macOS/Linux). The update:
+- Double-click tools (`launchers/`, each one `cd`s to the folder above): `install.bat`,
+  `start.bat` (CV taken from `My_CV/`), `schedule.bat` (daily scheduled task),
+  `update.bat` (and their `.sh` twins for macOS/Linux). The update:
   `src/jobhunter/programs/update.py` (git pull, or GitHub
   ZIP file by file: data never touched, modified file kept + `.nouveau`,
   removed file deleted if intact, load check then automatic rollback,
@@ -56,7 +56,7 @@ python -m jobhunter collect --efc --efc-sites monde --eures   # abroad: eFC ×9 
 python -m jobhunter documents --top 30
 python -m jobhunter documents --all --dry
 python -m jobhunter regenerate --cv        # regenerates existing documents after a template change
-python -m jobhunter cv-auto --liste           # fact bank of the automatic CV (CV/Faits.json)
+python -m jobhunter cv-auto --liste           # fact bank of the automatic CV (CV/Facts.json)
 python -m jobhunter documents --url <extrait>   # redoes CV and letter of one offer
 
 # Closed offers: check (LinkedIn guest API, 404/410) then removal, automatic resume on 429
@@ -84,7 +84,7 @@ language, message, and the text of letters. It must stay at **0 differences** on
 commit. If a change of behaviour is intended, regenerate the reference (`bench.py enregistrer …`)
 **in the same commit**, and say why in the message.
 
-**The tests live in `tests/`**, in pytest (the 27 old suites of `Scripts/` were converted
+**The tests live in `tests/`**, in pytest (the 27 old suites of `data/` were converted
 there on 2026-10-18, case for case). `tests/conftest.py` sets the example profile
 BEFORE any import of the engine and provides the fixtures: `faux_reseau` (double for
 `_get_borne`/`_post_borne`), `horloge` (simulated time and pauses), `file_temporaire` and
@@ -93,7 +93,7 @@ session, a fresh page per test). **Never assign an engine global directly
 in a test: use `monkeypatch`**, otherwise state leaks from one test to the next. A test that reads
 a user's real data carries the `donnees_reelles` mark and runs only on
 demand (`pytest -m donnees_reelles`). `tests/test_pas_de_suite_historique.py` refuses any
-program in `Scripts/`. `programs/test_live_nav` and `programs/test_acces_sites`
+program in `data/`. `programs/test_live_nav` and `programs/test_acces_sites`
 really go out on the web — outside pytest, do not run them mechanically.
 
 `test_scoring` generates a "no backspace" case **per pattern of the module**: adding a
@@ -103,7 +103,7 @@ pattern to `ats_match` raises its count without any test having been written.
 
 ### The `src/jobhunter` package (2.0: all the code is there)
 
-`Scripts/` keeps only the data; the code lives in `src/jobhunter`
+`data/` keeps only the data; the code lives in `src/jobhunter`
 (`docs/professionalisation-plan.md`):
 
 | Package | Contents (former name) |
@@ -124,12 +124,30 @@ One-way dependencies, checked in tests (cycles `util`↔`queue_io`, `ats_match`�
 (`pip install -e .`), `python -m jobhunter <commande>` or `jobhunter <commande>`.
 `test_coherence_imports.py` checks that every `module.nom` used between modules exists.
 
+### Two data layouts (3.0)
+
+The data folder has English names since 3.0 — `data/` (queue, `applications.json`,
+logs, `_backups/`), `profile/profile.json`, `My_CV/`, `CV/By_offer|Templates|Tailored`,
+`Letters/By_offer|Follow_ups|Messages|Tailored` — and the French names of 2.x
+(`Scripts/`, `profil/`, `suivi.json`, `Mon_CV/`, `Lettres/`, `Par_offre`…) stay readable.
+**The code names every folder and file by its 2.x name** and asks `jobhunter.root` for
+the name on disk: `root.scripts()`, `root.dossier("Mon_CV")`, `root.nom("suivi.json")`,
+`root.dans(folder, "suivi.json")` (the layout of THAT folder: a test or a program that
+points a constant elsewhere gets the right names). The table is `root.NOMS`.
+
+`jobhunter migrate` (`programs/migrate.py`) moves a 2.x folder to 3.0: lock, ZIP of what
+cannot be rebuilt, renames (never copies), links of the queue and proof paths of the
+tracking rewritten, checks, complete rollback on failure. It runs by itself at the
+application's start only in a published installation (`VERSION` file, or the installed
+app); a folder without `VERSION` — a development copy, or one that receives the engine
+by pip — is migrated only by hand.
+
 ### Three data files, three access contracts
 
 ```
-Scripts/apply_queue.json    the offers          → go through queue_io
-Scripts/descriptions.json   their text, apart   → queue_io reinjects it, transparently
-Scripts/suivi.json          the applications    → go through suivi_io
+data/apply_queue.json    the offers          → go through queue_io
+data/descriptions.json   their text, apart   → queue_io reinjects it, transparently
+data/applications.json          the applications    → go through suivi_io
 ```
 
 **Never read or write these files with a direct `json.load`/`json.dump`.**
@@ -141,14 +159,14 @@ Scripts/suivi.json          the applications    → go through suivi_io
 - The descriptions live apart because they weighed 64% of the file that thirteen
   programs rewrote in full to change a single field. `transaction(descriptions=False)`
   skips reading them when only a `fit` or a status is touched.
-- `suivi.json` is the project's **least reconstructible** data: a lost offer is found
+- `applications.json` is the project's **least reconstructible** data: a lost offer is found
   again by the scan tomorrow; a lost application never comes back. `suivi_io.poser()`
   writes one entry under lock on the re-read state — never a memory snapshot.
-- **Only `suivi.json` is versioned.** The queue, the descriptions and the scans have been out of
+- **Only `applications.json` is versioned.** The queue, the descriptions and the scans have been out of
   git since 2026-09-23: `daily_pipeline.sauvegarder()` copies them every day into
-  `Scripts/_sauvegardes/<date>/`, before any step, seven rolling days. The generated
+  `data/_backups/<date>/`, before any step, seven rolling days. The generated
   documents have been out of git since 20/09; the complete history from before the purge, 978 MB,
-  is in `../_sauvegardes/Recherche_emploi_historique_complet_2026-09-23.bundle`.
+  is in `../_backups/Recherche_emploi_historique_complet_2026-09-23.bundle`.
 
 The identity of an offer is `queue_io.oid(offre)` = `"entreprise|poste"`. Never the
 URL: it changes when a better-ranked duplicate promotes it.
@@ -224,13 +242,13 @@ The detail is in `.claude/rules/web-navigation.md`; the short version, which hol
 days and everything that hard-coded a root broke silently — including a watch job that
 declared itself `success` for two months while tracking only 2 accounts out of 44. Detect by
 marker: the first candidate folder, going upward, that really contains a
-witness file. `jobhunter.root` looks for `Scripts/` + `profil/` (or `JOBHUNTER_RACINE`): the app
+witness file. `jobhunter.root` looks for `data/` + `profil/` (or `JOBHUNTER_RACINE`): the app
 and the engine work wherever they are placed.
 
 **Regexes are not written through a shell heredoc** — details and pattern pitfalls in
 `.claude/rules/patterns.md`.
 
-**Every automatic deletion must spare the offers present in `suivi.json`.**
+**Every automatic deletion must spare the offers present in `applications.json`.**
 A posting closes *after* one has applied to it: without this guard, the purge deletes first
 those the user applied to.
 

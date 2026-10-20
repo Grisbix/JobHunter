@@ -72,7 +72,7 @@ from jobhunter import root as _racine
 # moved four times on 20-21/09/2026 and everything that hard-coded a root died
 # silence. JOBHUNTER_RACINE surcharge.
 ROOT = _racine.racine()
-SCRIPTS = ROOT / "Scripts"
+SCRIPTS = _racine.scripts()
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
 # Career site readers that only bring back the title: their offer page
@@ -121,7 +121,7 @@ class _Journal:
         self.fichier.flush()
 
 
-_A_SAUVER = ("apply_queue.json", "descriptions.json", "suivi.json")
+_A_SAUVER = ("apply_queue.json", "descriptions.json", _racine.nom("suivi.json"))
 
 
 def sauvegarder(garder=7):
@@ -134,7 +134,7 @@ def sauvegarder(garder=7):
     folder, or None."""
     import shutil
 
-    base = SCRIPTS / "_sauvegardes"
+    base = _racine.dans(SCRIPTS, "_sauvegardes")
     cible = base / time.strftime("%Y-%m-%d")
     try:
         # THE FIRST OF THE DAY WINS. A second run the same day (a --rapide

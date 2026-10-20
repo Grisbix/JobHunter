@@ -32,7 +32,7 @@ from jobhunter import root as _racine
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
-MSG_OUT = _racine.racine() / "Lettres" / "Messages"
+MSG_OUT = _racine.dossier("Lettres") / "Messages"
 
 # All the texts come from the profile: domaines[] (hook, proof per
 # domain) and the "message" section (degree, languages, facts, sources).

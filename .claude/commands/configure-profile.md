@@ -3,7 +3,7 @@ description: Configure JobHunter for the user from their CV (complete, verified 
 argument-hint: "[path to the CV .docx or .pdf]"
 ---
 
-You are configuring JobHunter for the person who uses it. At the end, `profil/profil.json`
+You are configuring JobHunter for the person who uses it. At the end, `profile/profile.json`
 must be **complete**: the application must find, sort and prepare their applications
 as well as it does for the example profile, but for THEIR profession.
 
@@ -20,8 +20,8 @@ CV given: $ARGUMENTS
   For Adzuna and Jooble, the user creates their own keys (see README).
 - No modification of the engine (`Scripts/*.py`): everything is set in the profile. If a
   need cannot be expressed there, say so instead of coding.
-- Do not read `profil/exemple_finance_esg.json` in full in one go if it does not fit:
-  read it section by section (`python -c "import json;print(json.dumps(json.load(open('profil/exemple_finance_esg.json',encoding='utf-8'))['scoring'],ensure_ascii=False,indent=1))"`).
+- Do not read `profile/example_finance_esg.json` in full in one go if it does not fit:
+  read it section by section (`python -c "import json;print(json.dumps(json.load(open('profile/example_finance_esg.json',encoding='utf-8'))['scoring'],ensure_ascii=False,indent=1))"`).
 
 ## Steps
 
@@ -48,7 +48,7 @@ CV given: $ARGUMENTS
    "SECTEURS GEOGRAPHIQUES" section of `src/jobhunter/scoring/zones.py`).
    `--entreprises o` only if the person targets finance or ESG.
 
-4. **The complete profile.** Compare `profil/profil.json` with the example, section by
+4. **The complete profile.** Compare `profile/profile.json` with the example, section by
    section, and fill in each one for this profession:
    - `domaines`: one per target profession. `mots_titre` = title words and variants
      (FR + EN, masculine + feminine), `parcours_fr`/`parcours_en` = 3 to 4 factual

@@ -50,7 +50,7 @@ HERE = _racine.scripts()
 ROOT = HERE.parent
 
 # Reglage de machine. Absent = comportement historique.
-CONFIG = HERE / "chemins.json"
+CONFIG = _racine.dans(HERE, "chemins.json")
 
 
 def _base() -> Path:
@@ -68,15 +68,15 @@ def _base() -> Path:
 _PARESSEUX["BASE"] = lambda: _base()
 
 # ── Genere, volumineux, deplacable ──────────────────────────────────────────
-_PARESSEUX["CV_PAR_OFFRE"] = lambda: _ici.BASE / "CV" / "Par_offre"
-_PARESSEUX["LT_PAR_OFFRE"] = lambda: _ici.BASE / "Lettres" / "Par_offre"
+_PARESSEUX["CV_PAR_OFFRE"] = lambda: _ici.BASE / "CV" / _racine.nom("Par_offre")
+_PARESSEUX["LT_PAR_OFFRE"] = lambda: _ici.BASE / _racine.nom("Lettres") / _racine.nom("Par_offre")
 
 # ── Hand-written, tiny, STAYS in OneDrive ────────────────────────────────────
 # Anchored on ROOT and not on BASE: moving the templates would save nothing
 # and would take them out of the backup. The opposite of what we want.
-CV_MODELES = ROOT / "CV" / "Modèles"
-LT_RELANCES = ROOT / "Lettres" / "Relances"
-LT_MESSAGES = ROOT / "Lettres" / "Messages"
+CV_MODELES = ROOT / "CV" / _racine.nom("Modèles")
+LT_RELANCES = ROOT / _racine.nom("Lettres") / _racine.nom("Relances")
+LT_MESSAGES = ROOT / _racine.nom("Lettres") / "Messages"
 
 # Letter bodies written by hand for ONE offer. The generic template serves
 # 5374 postings and cannot say anything specific about any of them; when an offer
@@ -87,12 +87,12 @@ LT_MESSAGES = ROOT / "Lettres" / "Messages"
 # reprise.
 #
 # INPUT, hence anchored on ROOT and never touched by regenere_docs.py.
-LT_SUR_MESURE = ROOT / "Lettres" / "Sur_mesure"
+LT_SUR_MESURE = ROOT / _racine.nom("Lettres") / _racine.nom("Sur_mesure")
 
 # CV touch-ups for ONE offer: same principle as the letter. Without this folder,
 # a touch-up was made in CV/Par_offre — an OUTPUT, which regenere_docs.py
 # rebuilds entirely: it disappeared at the next regeneration.
-CV_SUR_MESURE = ROOT / "CV" / "Sur_mesure"
+CV_SUR_MESURE = ROOT / "CV" / _racine.nom("Sur_mesure")
 
 
 def preparer() -> tuple[Path, Path]:

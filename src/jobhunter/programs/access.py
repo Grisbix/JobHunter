@@ -44,7 +44,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 
 HERE = _racine.scripts()
-COMPTES = HERE / "comptes.json"
+COMPTES = _racine.dans(HERE, "comptes.json")
 KEYS = HERE / "api_keys.json"  # gitignore: contains secrets
 
 # SAME profile as apply_runner: the sessions opened here are the ones the

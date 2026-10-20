@@ -32,7 +32,7 @@ from jobhunter import root as _racine
 LANGUES = ("fr", "en", "de", "es")
 NOM_FR = "Français"
 RELANCER_FR = "Relance JobHunter pour retrouver l'interface en français."
-FICHIER = "_interface.json"
+FICHIER = "_interface.json"  # 2.x name: see root.nom()
 
 
 def module(code: str) -> ModuleType | None:

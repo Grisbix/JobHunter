@@ -49,7 +49,7 @@ key are not there: entry refusal, anti-bot challenge or credentials.
 
 `uv sync` installs `src/jobhunter` in editable mode; `pip install -e .` does too. The
 `jobhunter <commande>` command then exists (`jobhunter` alone lists the commands). Outside
-the repository, `JOBHUNTER_RACINE` designates the folder that contains `Scripts/` and
+the repository, `JOBHUNTER_RACINE` designates the folder that contains `data/` and
 `profil/` (otherwise the package looks for it going upward from the current folder).
 Without installation: `python JobHunter.pyw <commande>`.
 
@@ -97,7 +97,7 @@ Verified on 19/10/2026 on Python 3.14: a `time.sleep` triggered in a function
   change regenerates the reference in the same commit, and the message says why.
 - **One subject per commit**, clear message that explains the why.
 - **The engine knows nobody**: everything specific to a person lives in
-  `profil/profil.json` (see `AGENTS.md`).
+  `profile/profile.json` (see `AGENTS.md`).
 - **Nothing at import**: no reading, no writing, no network (`tests/test_effets_import.py`).
   A value taken from the profile is written `_PARESSEUX["NOM"] = lambda: ...` and read as
   `_ici.NOM` in its module ([ADR 0007](../docs/adr/0007-lazy-profile-values.md)).

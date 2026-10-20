@@ -26,8 +26,8 @@ except Exception:
     pass
 
 ROOT = _racine.racine()
-Q = ROOT / "Scripts" / "apply_queue.json"
-OUT = ROOT / "Lettres" / "Relances"
+Q = _racine.scripts() / "apply_queue.json"
+OUT = _racine.dossier("Lettres") / _racine.nom("Relances")
 OUT.mkdir(parents=True, exist_ok=True)
 
 from jobhunter import profile as _P
@@ -78,7 +78,7 @@ def de(mot):
     return ("d'" + mot) if mot[:1].lower() in "aàâäeéèêëiîïoôöuùûüyh" else ("de " + mot)
 
 
-SUIVI = ROOT / "Scripts" / "suivi.json"
+SUIVI = _racine.dans(_racine.scripts(), "suivi.json")
 RELANCE_STATUTS = ("postulé", "relancé")
 
 

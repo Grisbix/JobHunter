@@ -46,13 +46,13 @@ Done when: `banc --comparer` reports 0 differences for the current version again
 - `pyproject.toml`: metadata, bounded dependencies (taken from `requirements.txt`),
   tool configuration. `requirements.txt` stays, generated, for the `.bat` files.
 - **uv** + lock file; `.venv` venv for development. The end user
-  keeps `installer.bat` (which creates the venv instead of installing into the system Python).
+  keeps `install.bat` (which creates the venv instead of installing into the system Python).
 - **ruff** (lint + format). Rules `E,F,I,UP,B` first; formatting of all the code in **one
   dedicated commit**, declared in `.git-blame-ignore-revs`.
 - **pre-commit**: ruff, line endings, files > 1 MB, secret detection.
 - CI: `ruff check`, `ruff format --check`, bench, suites.
 
-Done when: ruff clean, CI green, bench 0 differences, `installer.bat` tested on a fresh folder.
+Done when: ruff clean, CI green, bench 0 differences, `install.bat` tested on a fresh folder.
 
 ## Phase 2 — Tests under pytest (1 to 2 days) → v1.4.x
 

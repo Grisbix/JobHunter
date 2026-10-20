@@ -64,7 +64,7 @@ HERE = _racine.scripts()
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
 QUEUE = HERE / "apply_queue.json"
-SUIVI = HERE / "suivi.json"
+SUIVI = _racine.dans(HERE, "suivi.json")
 
 # ── 1. SENIORITE ────────────────────────────────────────────────────────────
 # Two lists, because two levels of certainty.

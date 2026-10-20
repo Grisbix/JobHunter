@@ -37,19 +37,30 @@ def test_dossier_donnees(monkeypatch, tmp_path):
 
 def test_preparer_donnees_ne_remplace_jamais(tmp_path):
     sq = tmp_path / "squelette"
-    (sq / "profil").mkdir(parents=True)
-    (sq / "profil" / "exemple_finance_esg.json").write_text("{}", encoding="utf-8")
-    (sq / "Scripts").mkdir()
-    (sq / "Scripts" / "sources_config.json").write_text('{"livre": 1}', encoding="utf-8")
+    (sq / "profile").mkdir(parents=True)
+    (sq / "profile" / "example_finance_esg.json").write_text("{}", encoding="utf-8")
+    (sq / "data").mkdir()
+    (sq / "data" / "sources_config.json").write_text('{"livre": 1}', encoding="utf-8")
     dest = tmp_path / "donnees"
-    (dest / "Scripts").mkdir(parents=True)
-    (dest / "Scripts" / "sources_config.json").write_text('{"mien": 1}', encoding="utf-8")
+    (dest / "data").mkdir(parents=True)
+    (dest / "data" / "sources_config.json").write_text('{"mien": 1}', encoding="utf-8")
     copies = gele.preparer_donnees(dest, sq)
-    assert copies == [dest / "profil" / "exemple_finance_esg.json"]
-    assert (dest / "Scripts" / "sources_config.json").read_text(encoding="utf-8") == '{"mien": 1}'
-    for d in ("Scripts", "profil", "Mon_CV", "CV", "Lettres"):
+    assert copies == [dest / "profile" / "example_finance_esg.json"]
+    assert (dest / "data" / "sources_config.json").read_text(encoding="utf-8") == '{"mien": 1}'
+    for d in ("data", "profile", "My_CV", "CV", "Letters"):
         assert (dest / d).is_dir()
     assert gele.preparer_donnees(dest, sq) == []
+
+
+def test_preparer_donnees_garde_les_noms_2x_avant_migration(tmp_path):
+    """An installed app of 2.x: its folders keep their names until the migration."""
+    dest = tmp_path / "donnees"
+    (dest / "Scripts").mkdir(parents=True)
+    (dest / "Scripts" / "apply_queue.json").write_text("[]", encoding="utf-8")
+    gele.preparer_donnees(dest, tmp_path / "pas_de_squelette")
+    for d in ("Scripts", "profil", "Mon_CV", "CV", "Lettres"):
+        assert (dest / d).is_dir()
+    assert not (dest / "data").exists()
 
 
 def test_aiguiller_module(monkeypatch):

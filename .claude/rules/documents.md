@@ -18,16 +18,16 @@ batches of them from the queue. **The `.docx` is the source, the PDF derives fro
 `paths.py` is **the only place that decides where generated documents live**. Eleven
 programs each built `ROOT / "CV" / "Par_offre"` on their own; taking them out
 of the repository required eleven coordinated changes. Resolution cannot fail:
-`Scripts/chemins.json` if it exists, otherwise the project root.
+`data/chemins.json` if it exists, otherwise the project root.
 
 The distinction that matters:
 
 | Folder | Nature |
 |---|---|
 | `Par_offre/` | **output**, entirely rebuilt by `regenerate_docs.py` |
-| `CV/Modèles/`, `CV/Sur_mesure/`, `Lettres/Relances/`, `Lettres/Messages/`, `Lettres/Sur_mesure/` | **inputs** written by hand, which nothing regenerates |
+| `CV/Templates/`, `CV/Tailored/`, `Letters/Follow_ups/`, `Letters/Messages/`, `Letters/Tailored/` | **inputs** written by hand, which nothing regenerates |
 
-`Lettres/Sur_mesure/<entreprise>__<poste>.txt` **replaces the body** of the letter for
+`Letters/Tailored/<entreprise>__<poste>.txt` **replaces the body** of the letter for
 that offer, paragraphs separated by a blank line. The template serves 5374 postings and
 therefore cannot say anything precise about any of them; when an offer deserves an hour of work,
 the body is written here.
@@ -36,17 +36,17 @@ Everything around it stays **generated** — header, date, subject line, salutat
 name two recipients) and the matching closing line. What the code does better is not rewritten
 by hand.
 
-`CV/Sur_mesure/<entreprise>__<poste>.json` adjusts the CV for that offer: `remplace`
+`CV/Tailored/<entreprise>__<poste>.json` adjusts the CV for that offer: `remplace`
 (template text → text for the offer), `ajoute_apres`, `supprime` (to fit on one
 page). An anchor that cannot be found is reported, never ignored. `generate_docs.py --url <extrait>`
 redoes the CV and letter of an offer after an adjustment.
 
-**Without a tailored version, the CV goes through `cv_auto`**, without an LLM: `CV/Faits.json` lists facts
+**Without a tailored version, the CV goes through `cv_auto`**, without an LLM: `CV/Facts.json` lists facts
 validated by the user (`"valide": true`), with their triggers. A non-validated fact is
 never used: nothing is invented. `cv_une_page()` regenerates by removing the `allegements`
 (lightenings) one by one as long as the PDF exceeds one page, then starts again from the bare template as a last resort.
 Any caller that produces a CV goes through `cv_une_page`, not through `tailor_cv` alone.
-**A fact given for a single offer goes into its `CV/Sur_mesure`, never into the bank**
+**A fact given for a single offer goes into its `CV/Tailored`, never into the bank**
 without explicit agreement: Iberdrola and "advanced Spanish" (Helexia) had been put there by mistake.
 
 The file lookup is tolerant of case and punctuation, and the key goes through
@@ -57,7 +57,7 @@ was never found, **without a message**, and the generic one went out in its plac
 ## Writing style
 
 The register is set in the profile (`lettre`, `message`) and, for an offer that deserves
-an hour, in `Lettres/Sur_mesure/`. A single rule is strong enough to live here.
+an hour, in `Letters/Tailored/`. A single rule is strong enough to live here.
 
 ## What a letter never says
 
@@ -76,7 +76,7 @@ job to them).
 
 `check_repetitions.py` **catches none of this**. It counts repetitions, conjunctions
 and semicolons; tone escapes it entirely, and it was green on all seven versions.
-That is the reason `Lettres/Sur_mesure/` exists.
+That is the reason `Letters/Tailored/` exists.
 
 The `.docx` → PDF conversion goes through LibreOffice (`soffice.exe`), in **batches**: one
 conversion at a time costs 1.2 s, most of which is the program's startup.

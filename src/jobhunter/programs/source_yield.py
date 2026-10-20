@@ -28,7 +28,7 @@ def main(argv=None):
     ap.add_argument("--jours", type=int, default=14, help="période, en jours (défaut 14)")
     a = ap.parse_args(argv)
 
-    chemin = _racine.scripts() / "_rendement.jsonl"
+    chemin = _racine.dans(_racine.scripts(), "_rendement.jsonl")
     depuis = (datetime.date.today() - datetime.timedelta(days=a.jours)).isoformat()
     total = R.bilan(R.lire_journal(chemin), depuis)
     if not total:

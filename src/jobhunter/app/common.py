@@ -67,7 +67,7 @@ def __getattr__(nom: str) -> Any:
 ROOT = _racine.racine()  # marker or JOBHUNTER_RACINE (jobhunter.root)
 
 
-SCRIPTS = ROOT / "Scripts"
+SCRIPTS = _racine.scripts()
 
 
 # Runs the programs as subprocesses: python.exe under Python, jobhunter-cli.exe
@@ -78,10 +78,10 @@ PY = _gele.interpreteur()
 QUEUE = SCRIPTS / "apply_queue.json"
 
 
-SUIVI = SCRIPTS / "suivi.json"
+SUIVI = _racine.dans(SCRIPTS, "suivi.json")
 
 
-COMPTES = SCRIPTS / "comptes_sites.json"
+COMPTES = _racine.dans(SCRIPTS, "comptes_sites.json")
 
 
 PROFILE = SCRIPTS / "apply_profile.json"

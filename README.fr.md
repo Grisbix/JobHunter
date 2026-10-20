@@ -133,7 +133,7 @@ Pour personnaliser JobHunter ou le développer : le code complet, avec Python.
 1. **Télécharge** la [dernière version](https://github.com/Grisbix/JobHunter/releases/latest) (fichier `JobHunter-….zip`) et dézippe-le.
 2. **Double-clique sur `launchers\install.bat`** — bibliothèques Python et navigateur Chromium (quelques minutes, une seule fois). Les bibliothèques vont dans un dossier `.venv` à côté de JobHunter, pas dans le Python de l'ordinateur.
    Sans Python, il propose de l'installer pour toi (winget) : accepte, ferme la fenêtre, relance-le.
-3. **Dépose ton CV dans `Mon_CV`** — un `.docx` de préférence (voir ci-dessous). Ce dossier n'est jamais publié.
+3. **Dépose ton CV dans `My_CV`** — un `.docx` de préférence (voir ci-dessous). Ce dossier n'est jamais publié.
 4. **Double-clique sur `launchers\start.bat`** — la première fois, il crée ton profil en lisant ton CV et en
    posant cinq questions (métiers visés, expérience, villes, accords, secteur) ; ensuite il ouvre
    directement l'application. (Tu peux aussi ouvrir `JobHunter.pyw` : sans profil, il te propose
@@ -142,7 +142,7 @@ Pour personnaliser JobHunter ou le développer : le code complet, avec Python.
 **Ensuite, deux outils en un double-clic :**
 
 - **`launchers\schedule.bat`** — lance la collecte chaque matin à 8 h (`launchers\schedule.bat 07:30` pour une autre
-  heure, `launchers\schedule.bat supprimer` pour l'arrêter). Journaux dans `Scripts\_logs\`.
+  heure, `launchers\schedule.bat supprimer` pour l'arrêter). Journaux dans `data\_logs\`.
 - **`launchers\update.bat`** — récupère la dernière version (l'application te la propose aussi
   d'elle-même au démarrage, et se relance après). Elle affiche les nouveautés, installe, vérifie
   que tout se charge et **revient seule à la version d'avant** si ce n'est pas le cas. Ton
@@ -152,9 +152,13 @@ Pour personnaliser JobHunter ou le développer : le code complet, avec Python.
   L'application te prévient elle-même au démarrage quand une nouvelle version sort.
 
 **Ce qu'il y a dans le dossier** : `launchers/` les outils en double-clic (`.bat` Windows,
-`.sh` macOS/Linux) · `Mon_CV/` ton CV · `profil/` tes réglages · `Scripts/` les offres, le
-suivi de tes candidatures et les journaux · `CV/`, `Lettres/` les documents faits pour chaque
+`.sh` macOS/Linux) · `My_CV/` ton CV · `profile/` tes réglages · `data/` les offres, le
+suivi de tes candidatures et les journaux · `CV/`, `Letters/` les documents faits pour chaque
 offre · `src/` le programme · `docs/`, `tests/`, `tools/` pour les développeurs.
+Avant la 3.0, ces dossiers avaient des noms français (`Scripts/`, `profil/`, `Mon_CV/`,
+`Lettres/`) : une installation d'avant prend les nouveaux noms d'elle-même au premier
+démarrage de l'application, après une sauvegarde (`_backup_migration_….zip`) ;
+`jobhunter migrate` le fait à la main.
 
 > **Pourquoi un `.docx` ?** Chaque CV envoyé part de ce modèle. Écris `[nom du poste]` dans ton
 > accroche : l'intitulé exact de l'offre s'y insère. Un PDF est envoyé tel quel, sans adaptation.
@@ -165,7 +169,7 @@ Mêmes étapes, avec les scripts `.sh` de `launchers/` dans un terminal ouvert d
 
 ```bash
 ./launchers/install.sh
-./launchers/start.sh          # crée le profil depuis Mon_CV, puis ouvre l'application
+./launchers/start.sh          # crée le profil depuis My_CV, puis ouvre l'application
 ./launchers/schedule.sh        # collecte chaque matin (cron)
 ./launchers/update.sh
 ```
@@ -189,7 +193,7 @@ Le premier lancement crée un profil **qui marche**, mais sommaire. Pour un prof
 ouvre [Claude Code](https://claude.com/claude-code) dans le dossier JobHunter et tape :
 
 ```
-/configure-profile Mon_CV\mon_CV.docx
+/configure-profile My_CV\mon_CV.docx
 ```
 
 Claude lit ton CV, te pose ses questions en un seul message, puis remplit tout : variantes
@@ -220,8 +224,8 @@ Les mêmes programmes ont une entrée unique : `python -m jobhunter` liste les c
 
 ## Le profil
 
-Tout ce qui te concerne vit dans **`profil/profil.json`**. Le moteur ne connaît aucun métier :
-pour changer de cible, on change le profil. Modèle complet : `profil/exemple_finance_esg.json`
+Tout ce qui te concerne vit dans **`profile/profile.json`**. Le moteur ne connaît aucun métier :
+pour changer de cible, on change le profil. Modèle complet : `profile/example_finance_esg.json`
 (un junior en finance durable).
 
 | Rubrique | Contenu |
@@ -249,14 +253,14 @@ Le second dit, pour chaque intitulé, s'il est collecté ou écarté, son domain
 
 ## Pour aller plus loin
 
-- **Ligne de CV propre à une offre** : `CV/Faits.json` (format dans `profil/exemple_Faits.json`,
+- **Ligne de CV propre à une offre** : `CV/Facts.json` (format dans `profile/example_Facts.json`,
   utilisée seulement si `"valide": true`).
-- **Lettre écrite à la main** : `Lettres/Sur_mesure/<entreprise>__<poste>.txt` remplace le
+- **Lettre écrite à la main** : `Letters/Tailored/<entreprise>__<poste>.txt` remplace le
   corps de la lettre générée.
-- **Entreprises suivies directement** : `Scripts/sources_config.json` ;
+- **Entreprises suivies directement** : `data/sources_config.json` ;
   `python JobHunter.pyw probe_ats` trouve le flux carrière d'une entreprise.
 - **France Travail, Adzuna, Jooble** : crée toi-même une clé d'API gratuite, puis
-  panneau Accès → « Saisir la clé ». Elle va dans `Scripts/francetravail.json`,
+  panneau Accès → « Saisir la clé ». Elle va dans `data/francetravail.json`,
   `adzuna.json` ou `jooble.json`, sur ton PC seulement. Sans clé, source ignorée.
 - **Lettres par IA locale** : installe [Ollama](https://ollama.com/), puis `ollama pull llama3.1:8b`.
 

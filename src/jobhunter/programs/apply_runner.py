@@ -432,7 +432,7 @@ def _chemin_preuve(d):
     import datetime as _dt
 
     nom = re.sub(r"[^A-Za-z0-9]+", "_", f"{d['comp']}_{d['role']}").strip("_")[:80]
-    return _racine.scripts() / "_preuves" / f"{_dt.date.today().isoformat()}_{nom}.png"
+    return _racine.dans(_racine.scripts(), "_preuves") / f"{_dt.date.today().isoformat()}_{nom}.png"
 
 
 def declarer_envoi(page, d):

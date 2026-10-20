@@ -131,7 +131,11 @@ def main():
             old = _path_of(x.get(key))
             if old is None:
                 continue
-            if old.name.startswith(f"{PREFIXE}_CV_ESG") or "Modèles" in str(old):
+            if (
+                old.name.startswith(f"{PREFIXE}_CV_ESG")
+                or "Modèles" in str(old)
+                or "Templates" in old.parts
+            ):
                 continue  # generic ATS CVs: we do not touch them
             base = new_name(kind, x.get("poste", ""), x.get("entreprise", ""))
             if old.stem == base or old.stem.startswith(base + "_"):

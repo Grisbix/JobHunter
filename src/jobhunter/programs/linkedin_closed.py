@@ -116,8 +116,8 @@ def etat(jid, client, essais=2):
     return INCONNU
 
 
-ETAT = HERE / "_linkedin_etat.json"  # memory of the checks (not versioned)
-SUIVI = HERE / "suivi.json"  # candidatures : statut, note, date
+ETAT = _racine.dans(HERE, "_linkedin_etat.json")  # memory of the checks (not versioned)
+SUIVI = _racine.dans(HERE, "suivi.json")  # candidatures : statut, note, date
 
 
 def _oid_offre(offre):

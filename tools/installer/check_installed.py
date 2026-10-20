@@ -31,7 +31,7 @@ def etape(nom: str) -> None:
 # 1. A configured profile: the example one, as after "first launch".
 profil = RACINE / "profil" / "profil.json"
 if not profil.exists():
-    shutil.copy2(RACINE / "profil" / "exemple_finance_esg.json", profil)
+    shutil.copy2(RACINE / "profile" / "example_finance_esg.json", profil)
 etape("profil d'exemple en place")
 
 # 2. The browser: embedded Playwright, the system's browser if Chromium is missing.

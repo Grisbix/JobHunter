@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# JobHunter installation (macOS, Linux). Equivalent of installer.bat.
+# JobHunter installation (macOS, Linux). Equivalent of install.bat.
 set -e
 cd "$(dirname "$0")/.."
 # In launchers/: everything runs from the JobHunter folder, one level up.
@@ -30,5 +30,5 @@ PY=.venv/bin/python
 # Fingerprint of the files as installed: the update will recognise your changes.
 "$PY" JobHunter.pyw update --initialiser
 echo
-echo "Installation terminee. Depose ton CV dans Mon_CV puis lance ./launchers/start.sh"
+echo "Installation terminee. Depose ton CV dans My_CV (ou glisse-le sur la fenetre) puis lance ./launchers/start.sh"
 echo "Ensuite : ./launchers/schedule.sh lance la collecte chaque matin, ./launchers/update.sh recupere les nouveautes."

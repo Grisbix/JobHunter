@@ -57,7 +57,7 @@ leaving CustomTkinter, or adding an accessibility layer to it.
 
 | # | What | Done when |
 |---|---|---|
-| E1 ✅ (v2.17.0 `.venv`; v2.18.0 "installation" workflow: `installer.bat` and `installer.sh` on fresh GitHub machines, Windows and Linux) | Dedicated Python environment created by `installer.bat` (postponed from phase 1) | a fresh installation on a blank Windows launches the app without touching the system Python |
+| E1 ✅ (v2.17.0 `.venv`; v2.18.0 "installation" workflow: `install.bat` and `install.sh` on fresh GitHub machines, Windows and Linux) | Dedicated Python environment created by `install.bat` (postponed from phase 1) | a fresh installation on a blank Windows launches the app without touching the system Python |
 | E2 ✅ (v2.18.0, ADR 0012: Ed25519 in pure Python, private key outside GitHub, `tools/signature.py`; the app downloads, checks and opens the installer. Active as soon as Gabriel creates his key) | **Signed** updates: WinSparkle or tufup (Codex P2), to be chosen on a prototype. Caution: tufup's destination purge is incompatible with a folder that contains the profile. | a tampered package is refused; the profile survives an interrupted update |
 | E3 ◐ (v2.20.0: every button can be operated by keyboard — Tab, Enter, Space — with a visible focus ring on every background; field outline at 3:1; text contrasts checked in tests, WCAG AA. Still impossible without leaving CustomTkinter: giving the controls a name for a screen reader, and keyboard focus on the segmented tabs) | Accessibility (axe-windows, Accessibility Insights) | the main controls have a name; tabbing follows the visual order |
 

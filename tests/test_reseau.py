@@ -154,7 +154,7 @@ def test_profil_est_le_module_du_paquet():
 
 
 def test_profil_lit_le_profil_d_exemple():
-    assert profil.FICHIER.name == "exemple_finance_esg.json" and profil.get("langues_parlees")
+    assert profil.FICHIER.name == "example_finance_esg.json" and profil.get("langues_parlees")
 
 
 def test_incidents_un_seul_compteur_porte_par_le_reseau():

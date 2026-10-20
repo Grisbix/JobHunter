@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Daily collection through cron (macOS, Linux). Equivalent of planifier.bat.
-#   ./planifier.sh            -> every day at 08:00
-#   ./planifier.sh 07:30      -> every day at 07:30
-#   ./planifier.sh supprimer  -> removes the line
+# Daily collection through cron (macOS, Linux). Equivalent of schedule.bat.
+#   ./schedule.sh            -> every day at 08:00
+#   ./schedule.sh 07:30      -> every day at 07:30
+#   ./schedule.sh supprimer  -> removes the line
 cd "$(dirname "$0")/.."
 # In launchers/: everything runs from the JobHunter folder, one level up.
 DOSSIER=$(pwd)
@@ -14,7 +14,7 @@ if [ "$1" = "supprimer" ]; then
   echo "Collecte quotidienne retiree."
   exit 0
 fi
-if [ ! -f profil/profil.json ]; then
+if [ ! -f profile/profile.json ] && [ ! -f profil/profil.json ]; then
   echo "Pas encore de profil : lance d'abord ./launchers/start.sh"
   exit 1
 fi
@@ -24,4 +24,4 @@ if [ -x .venv/bin/python ]; then PY="$DOSSIER/.venv/bin/python"; else PY=$(comma
 LIGNE="$((10#$M)) $((10#$H)) * * * cd \"$DOSSIER\" && \"$PY\" JobHunter.pyw pipeline >/dev/null 2>&1 $MARQUE"
 printf '%s\n%s\n' "$ACTUEL" "$LIGNE" | sed '/^$/d' | crontab -
 echo "Collecte planifiee chaque jour a $HEURE (si l'ordinateur est allume)."
-echo "Journaux : Scripts/_logs/  -  Pour la retirer : ./launchers/schedule.sh supprimer"
+echo "Journaux : data/_logs/  -  Pour la retirer : ./launchers/schedule.sh supprimer"
