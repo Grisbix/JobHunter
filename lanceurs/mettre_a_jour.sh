@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # JobHunter update (macOS, Linux). Equivalent of mettre_a_jour.bat.
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
+# In lanceurs/: everything runs from the JobHunter folder, one level up.
 echo "=== Mise a jour de JobHunter ==="
 echo "Ton profil, ton CV, tes lettres et ton suivi ne sont jamais touches."
 echo

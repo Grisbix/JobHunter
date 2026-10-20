@@ -12,7 +12,7 @@ is for whoever reads or modifies the code.
 | [roadmap.md](roadmap.md) | The roadmap that followed the plan: steps, status and remaining limits. |
 | [screenshots/](screenshots/) | Screenshots used by the README. |
 
-Elsewhere in the repository: [CONTRIBUTING.md](../CONTRIBUTING.md) (how to contribute and
+Elsewhere in the repository: [CONTRIBUTING.md](../.github/CONTRIBUTING.md) (how to contribute and
 release), [CHANGELOG.md](../CHANGELOG.md) (what changed in each version, shown by the
-updater), [SECURITY.md](../SECURITY.md), [AGENTS.md](../AGENTS.md) (instructions for coding
+updater), [SECURITY.md](../.github/SECURITY.md), [AGENTS.md](../AGENTS.md) (instructions for coding
 agents), [outils/](../outils/README.md) (developer tools).

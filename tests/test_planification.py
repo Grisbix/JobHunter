@@ -43,7 +43,9 @@ def test_creer_tache_du_meme_nom_que_planifier_bat(schtasks, monkeypatch):
     assert a[a.index("/TN") + 1] == "JobHunter - collecte quotidienne"
     assert a[a.index("/ST") + 1] == "07:30"
     assert a[a.index("/TR") + 1] == '"jh.exe" pipeline'
-    bat = (plan.Path(__file__).parent.parent / "planifier.bat").read_text(encoding="utf-8")
+    bat = (plan.Path(__file__).parent.parent / "lanceurs" / "planifier.bat").read_text(
+        encoding="utf-8"
+    )
     assert f'set "TACHE={plan.TACHE}"' in bat
 
 

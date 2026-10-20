@@ -1,16 +1,13 @@
 name: installation
 
 # Installs JobHunter from source on a fresh machine, with the REAL scripts
-# (installer.bat, installer.sh), and checks step E1: the libraries go into
+# (lanceurs/installer.bat, lanceurs/installer.sh), and checks step E1: the libraries go into
 # .venv, not into the machine's Python; the installation loads; the update's
 # fingerprint ignores .venv. No personal data: example profile only.
 on:
   pull_request:
     paths:
-      - "installer.*"
-      - "lancer.*"
-      - "mettre_a_jour.*"
-      - "planifier.*"
+      - "lanceurs/**"
       - "requirements.txt"
       - "src/jobhunter/programmes/mise_a_jour.py"
       - ".github/workflows/installation.yml"
@@ -38,9 +35,9 @@ jobs:
       - name: Comme un ZIP téléchargé (sans dépôt git)
         shell: bash
         run: rm -rf .git
-      - name: installer.bat (sans clavier)
+      - name: lanceurs\installer.bat (sans clavier)
         shell: cmd
-        run: installer.bat < NUL
+        run: lanceurs\installer.bat < NUL
       - name: Vérifications
         shell: bash
         env:
@@ -64,8 +61,8 @@ jobs:
           python-version: "3.12"
       - name: Comme un ZIP téléchargé (sans dépôt git)
         run: rm -rf .git
-      - name: installer.sh
-        run: ./installer.sh
+      - name: lanceurs/installer.sh
+        run: ./lanceurs/installer.sh
       - name: Vérifications
         env:
           PYTHONIOENCODING: utf-8

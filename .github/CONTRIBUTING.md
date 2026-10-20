@@ -5,8 +5,8 @@ names), profile keys and JSON keys stay in French, as do the CLI command names. 
 README is `README.fr.md`. Issues and pull requests in English are welcome. Set up with
 `uv sync`, then before each commit run `uv run pytest -q` (about 1,850 offline tests),
 `uv run mypy` and `uv run python outils/banc.py comparer outils/banc_reference.json` (0
-difference expected). Architecture and conventions: [`AGENTS.md`](AGENTS.md) and
-[`docs/adr/`](docs/adr/). The Windows installer is built by
+difference expected). Architecture and conventions: [`AGENTS.md`](../AGENTS.md) and
+[`docs/adr/`](../docs/adr/). The Windows installer is built by
 `outils/installateur/construire.py` (see ADR 0011). Rules that are not up for debate:
 nothing is ever sent automatically, no anti-bot circumvention, no password handled by the
 programs.
@@ -55,8 +55,8 @@ Without installation: `python JobHunter.pyw <commande>`.
 
 ## Understanding the code
 
-[`docs/architecture.md`](docs/architecture.md): packages, data, pipeline.
-[`docs/adr/`](docs/adr/): the decisions that are not reopened in passing during a task.
+[`docs/architecture.md`](../docs/architecture.md): packages, data, pipeline.
+[`docs/adr/`](../docs/adr/): the decisions that are not reopened in passing during a task.
 
 ## Writing a test
 
@@ -100,7 +100,7 @@ Verified on 19/10/2026 on Python 3.14: a `time.sleep` triggered in a function
   `profil/profil.json` (see `AGENTS.md`).
 - **Nothing at import**: no reading, no writing, no network (`tests/test_effets_import.py`).
   A value taken from the profile is written `_PARESSEUX["NOM"] = lambda: ...` and read as
-  `_ici.NOM` in its module ([ADR 0007](docs/adr/0007-lazy-profile-values.md)).
+  `_ici.NOM` in its module ([ADR 0007](../docs/adr/0007-lazy-profile-values.md)).
 - **`print` for a command's output (`main()`), `logging` for the rest**:
   `_log = journal.journal(__name__)`.
 - **Non-negotiable limits**: no automatic submission of an application, no anti-bot

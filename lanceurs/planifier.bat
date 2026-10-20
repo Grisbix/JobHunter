@@ -1,6 +1,8 @@
 @echo off
 chcp 65001 >nul
-cd /d "%~dp0"
+cd /d "%~dp0.."
+rem In lanceurs\: everything runs from the JobHunter folder, one level up.
+set "RACINE=%CD%"
 rem Creates (or removes) the scheduled task that runs the collection every morning.
 rem   planifier.bat            -> every day at 08:00
 rem   planifier.bat 07:30      -> every day at 07:30
@@ -17,7 +19,7 @@ set "HEURE=%~1"
 if "%HEURE%"=="" set "HEURE=08:00"
 
 set "PY="
-if exist "%~dp0.venv\Scripts\python.exe" set "PY=%~dp0.venv\Scripts\python.exe"
+if exist "%RACINE%\.venv\Scripts\python.exe" set "PY=%RACINE%\.venv\Scripts\python.exe"
 if not defined PY for /f "delims=" %%p in ('where python 2^>nul') do if not defined PY set "PY=%%p"
 if not defined PY (
   echo Python est introuvable : lance d'abord installer.bat.
@@ -30,7 +32,7 @@ if not exist "profil\profil.json" (
   exit /b 1
 )
 
-schtasks /Create /F /SC DAILY /ST %HEURE% /TN "%TACHE%" /TR "\"%PY%\" \"%~dp0JobHunter.pyw\" pipeline"
+schtasks /Create /F /SC DAILY /ST %HEURE% /TN "%TACHE%" /TR "\"%PY%\" \"%RACINE%\JobHunter.pyw\" pipeline"
 if errorlevel 1 (
   echo La tache n'a pas pu etre creee.
   pause

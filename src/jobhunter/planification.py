@@ -1,16 +1,16 @@
 """The collection every morning: the Windows scheduled task, created from the application.
 
-`planifier.bat` only serves the installation from source code. The installed
+`lanceurs/planifier.bat` only serves the installation from source code. The installed
 application (without Python) had nothing: one had to click "Actualiser les offres"
 every day. This module creates the SAME task (same name, so one replaces the other),
 with the right command in both cases:
 
 - installed application: `jobhunter-cli.exe pipeline` (the data is in
   `Documents/JobHunter`, which the executable finds on its own);
-- source code: `python.exe JobHunter.pyw pipeline`, like `planifier.bat`.
+- source code: `python.exe JobHunter.pyw pipeline`, like `lanceurs/planifier.bat`.
 
 Nothing is created without a click from the user; `schtasks` acts for their account
-only, without administrator rights. Outside Windows: `planifier.sh` (cron).
+only, without administrator rights. Outside Windows: `lanceurs/planifier.sh` (cron).
 """
 
 import re
@@ -40,7 +40,9 @@ def commande() -> str:
         return f'"{_gele.interpreteur()}" pipeline'
     lanceur = _racine.racine() / "JobHunter.pyw"
     if not lanceur.exists():
-        raise FileNotFoundError(f"{lanceur} introuvable : lance planifier.bat depuis le code.")
+        raise FileNotFoundError(
+            f"{lanceur} introuvable : lance lanceurs\\planifier.bat depuis le code."
+        )
     return f'"{_gele.interpreteur()}" "{lanceur}" pipeline'
 
 
@@ -63,7 +65,7 @@ def planifiee() -> bool:
 def creer(heure: str = "08:00") -> tuple[bool, str]:
     """Creates (or replaces) the daily task. Returns (success, message for the user)."""
     if not disponible():
-        return False, "Hors Windows : lance ./planifier.sh depuis le dossier de JobHunter."
+        return False, "Hors Windows : lance ./lanceurs/planifier.sh depuis le dossier de JobHunter."
     if not _RX_HEURE.match(heure):
         return False, f"Heure invalide : « {heure} » (format 08:00)."
     try:
@@ -82,7 +84,7 @@ def creer(heure: str = "08:00") -> tuple[bool, str]:
 def supprimer() -> tuple[bool, str]:
     """Removes the task. Returns (success, message for the user)."""
     if not disponible():
-        return False, "Hors Windows : ./planifier.sh supprimer."
+        return False, "Hors Windows : ./lanceurs/planifier.sh supprimer."
     r = _schtasks("/Delete", "/TN", TACHE, "/F")
     if r.returncode != 0:
         return False, f"La tâche n'a pas pu être retirée : {(r.stderr or r.stdout).strip()}"

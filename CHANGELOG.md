@@ -4,6 +4,20 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 2.24.0 — 2026-10-20
+
+- **A tidier folder.** The eight double-click tools (`installer`, `lancer`, `planifier`,
+  `mettre_a_jour`, in `.bat` for Windows and `.sh` for macOS/Linux) moved from the root
+  into a `lanceurs/` folder: double-click them there, they still work on the JobHunter
+  folder above. `CONTRIBUTING.md` and `SECURITY.md` moved to `.github/`, where GitHub
+  shows them the same way. The README lists what each folder holds.
+- If you update with `mettre_a_jour.bat`, its window may close at the end, because the
+  update removes it from the root: that is expected, the update is done. Use
+  `lanceurs\mettre_a_jour.bat` from now on, or the app's "Mettre à jour JobHunter" button.
+  The daily collection already scheduled keeps working (it runs `JobHunter.pyw`, which
+  did not move).
+- macOS/Linux: after an update, the `.sh` launchers are made executable again.
+
 ## 2.23.1 — 2026-10-20
 
 - **Tested on macOS.** CI now runs `installer.sh` on a Mac runner, then the bench and

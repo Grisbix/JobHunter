@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 >nul
-cd /d "%~dp0"
+cd /d "%~dp0.."
+rem In lanceurs\: everything runs from the JobHunter folder, one level up.
 echo === Installation de JobHunter ===
 where python >nul 2>nul
 if not errorlevel 1 goto python_ok

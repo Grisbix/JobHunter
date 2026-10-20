@@ -122,7 +122,7 @@ Pour personnaliser JobHunter ou le développer : le code complet, avec Python.
 
 | Outil | | À quoi il sert |
 |---|---|---|
-| [Python 3.12+](https://www.python.org/downloads/) | **obligatoire** | fait tourner JobHunter — `installer.bat` propose de l'installer s'il manque |
+| [Python 3.12+](https://www.python.org/downloads/) | **obligatoire** | fait tourner JobHunter — `lanceurs\installer.bat` propose de l'installer s'il manque |
 | [LibreOffice](https://www.libreoffice.org/download/) | conseillé | CV et lettres en PDF (sinon `.docx`) |
 | [Claude Code](https://claude.com/claude-code) | conseillé | paramètre tout ton profil depuis ton CV |
 | [Git](https://git-scm.com/downloads) | facultatif | récupérer les mises à jour (`git pull`) |
@@ -131,41 +131,46 @@ Pour personnaliser JobHunter ou le développer : le code complet, avec Python.
 **Les 4 étapes**
 
 1. **Télécharge** la [dernière version](https://github.com/Grisbix/JobHunter/releases/latest) (fichier `JobHunter-….zip`) et dézippe-le.
-2. **Double-clique sur `installer.bat`** — bibliothèques Python et navigateur Chromium (quelques minutes, une seule fois). Les bibliothèques vont dans un dossier `.venv` à côté de JobHunter, pas dans le Python de l'ordinateur.
+2. **Double-clique sur `lanceurs\installer.bat`** — bibliothèques Python et navigateur Chromium (quelques minutes, une seule fois). Les bibliothèques vont dans un dossier `.venv` à côté de JobHunter, pas dans le Python de l'ordinateur.
    Sans Python, il propose de l'installer pour toi (winget) : accepte, ferme la fenêtre, relance-le.
 3. **Dépose ton CV dans `Mon_CV`** — un `.docx` de préférence (voir ci-dessous). Ce dossier n'est jamais publié.
-4. **Double-clique sur `lancer.bat`** — la première fois, il crée ton profil en lisant ton CV et en
+4. **Double-clique sur `lanceurs\lancer.bat`** — la première fois, il crée ton profil en lisant ton CV et en
    posant cinq questions (métiers visés, expérience, villes, accords, secteur) ; ensuite il ouvre
    directement l'application. (Tu peux aussi ouvrir `JobHunter.pyw` : sans profil, il te propose
    de choisir ton CV.)
 
 **Ensuite, deux outils en un double-clic :**
 
-- **`planifier.bat`** — lance la collecte chaque matin à 8 h (`planifier.bat 07:30` pour une autre
-  heure, `planifier.bat supprimer` pour l'arrêter). Journaux dans `Scripts\_logs\`.
-- **`mettre_a_jour.bat`** — récupère la dernière version (l'application te la propose aussi
+- **`lanceurs\planifier.bat`** — lance la collecte chaque matin à 8 h (`lanceurs\planifier.bat 07:30` pour une autre
+  heure, `lanceurs\planifier.bat supprimer` pour l'arrêter). Journaux dans `Scripts\_logs\`.
+- **`lanceurs\mettre_a_jour.bat`** — récupère la dernière version (l'application te la propose aussi
   d'elle-même au démarrage, et se relance après). Elle affiche les nouveautés, installe, vérifie
   que tout se charge et **revient seule à la version d'avant** si ce n'est pas le cas. Ton
   profil, ton CV, tes lettres et ton suivi ne sont **jamais** touchés ; un fichier du programme
   que tu as modifié est gardé, la nouvelle version posée à côté en `.nouveau`. Les anciennes
-  versions vont dans `_sauvegarde_maj\` ; `mettre_a_jour.bat --annuler` y revient.
+  versions vont dans `_sauvegarde_maj\` ; `lanceurs\mettre_a_jour.bat --annuler` y revient.
   L'application te prévient elle-même au démarrage quand une nouvelle version sort.
+
+**Ce qu'il y a dans le dossier** : `lanceurs/` les outils en double-clic (`.bat` Windows,
+`.sh` macOS/Linux) · `Mon_CV/` ton CV · `profil/` tes réglages · `Scripts/` les offres, le
+suivi de tes candidatures et les journaux · `CV/`, `Lettres/` les documents faits pour chaque
+offre · `src/` le programme · `docs/`, `tests/`, `outils/` pour les développeurs.
 
 > **Pourquoi un `.docx` ?** Chaque CV envoyé part de ce modèle. Écris `[nom du poste]` dans ton
 > accroche : l'intitulé exact de l'offre s'y insère. Un PDF est envoyé tel quel, sans adaptation.
 
 ### macOS / Linux
 
-Mêmes étapes, avec les scripts `.sh` dans un terminal ouvert dans le dossier (Python 3.12+ et, sous Linux, `python3-tk` à installer d'abord) :
+Mêmes étapes, avec les scripts `.sh` de `lanceurs/` dans un terminal ouvert dans le dossier de JobHunter (Python 3.12+ et, sous Linux, `python3-tk` à installer d'abord) :
 
 ```bash
-./installer.sh
-./lancer.sh          # crée le profil depuis Mon_CV, puis ouvre l'application
-./planifier.sh        # collecte chaque matin (cron)
-./mettre_a_jour.sh
+./lanceurs/installer.sh
+./lanceurs/lancer.sh          # crée le profil depuis Mon_CV, puis ouvre l'application
+./lanceurs/planifier.sh        # collecte chaque matin (cron)
+./lanceurs/mettre_a_jour.sh
 ```
 
-> À chaque changement, la CI lance `installer.sh` sur un Mac, puis tous les tests, dont l'ouverture de chaque panneau de l'application dans chaque langue. Personne ne l'a encore utilisée sur son propre Mac : signale tout souci.
+> À chaque changement, la CI lance `lanceurs/installer.sh` sur un Mac, puis tous les tests, dont l'ouverture de chaque panneau de l'application dans chaque langue. Personne ne l'a encore utilisée sur son propre Mac : signale tout souci.
 
 <details>
 <summary>Installation manuelle (sans les scripts)</summary>
@@ -197,7 +202,7 @@ compléter. **Il n'invente aucun fait** : ce qui n'est pas dans ton CV, il te le
 
 | Quoi | Comment |
 |---|---|
-| Ouvrir l'application | `lancer.bat` (ou `python JobHunter.pyw`) |
+| Ouvrir l'application | `lanceurs\lancer.bat` (ou `python JobHunter.pyw`) |
 | Collecte + tri + CV/lettres des meilleures offres (1 à 3 h) | `python JobHunter.pyw pipeline` |
 | Collecte LinkedIn seule / essai sans rien écrire | `python JobHunter.pyw collecte --linkedin [--dry]` |
 | CV + lettre des 20 meilleures offres | `python JobHunter.pyw documents --top 20` |
@@ -208,8 +213,8 @@ Les mêmes programmes ont une entrée unique : `python -m jobhunter` liste les c
 (`collecte`, `documents`, `postuler`, `pipeline`, `maj`…), avec `src` dans `PYTHONPATH` ;
 `python -m jobhunter documents --top 20` équivaut à la ligne du tableau.
 
-**Chaque matin automatiquement** : `planifier.bat` (voir plus haut).
-**Mettre à jour** : `mettre_a_jour.bat` (ou le bouton « Mettre à jour JobHunter » de l'app) ;
+**Chaque matin automatiquement** : `lanceurs\planifier.bat` (voir plus haut).
+**Mettre à jour** : `lanceurs\mettre_a_jour.bat` (ou le bouton « Mettre à jour JobHunter » de l'app) ;
 `python JobHunter.pyw maj --verifier` pour seulement voir ce qu'apporte la nouvelle version,
 `--annuler` pour revenir à la précédente. Nouveautés de chaque version : [`CHANGELOG.md`](CHANGELOG.md).
 
@@ -294,7 +299,7 @@ Un outil qui écrit en ton nom doit être juste. Ce qui le garantit :
 | Symptôme | Cause probable |
 |---|---|
 | « Python est introuvable » | Python non installé, ou « Add Python to PATH » non coché : réinstaller |
-| « Profil introuvable » | lancer `lancer.bat`, ou `/configure-profile` dans Claude Code |
+| « Profil introuvable » | lancer `lanceurs\lancer.bat`, ou `/configure-profile` dans Claude Code |
 | Aucune offre ne passe | `filtre_titre.metier` trop étroit, ou `collecte.mots_cles` trop rares |
 | Trop d'offres hors sujet | compléter `filtre_titre.exclus`, resserrer `filtre_titre.metier` |
 | Lettre sans paragraphe de parcours | `domaines[].parcours_fr` vide |
@@ -308,7 +313,7 @@ Un outil qui écrit en ton nom doit être juste. Ce qui le garantit :
 **Licence** : [MIT](LICENSE).
 
 **Contribuer** : idées et bugs bienvenus dans les [issues](https://github.com/Grisbix/JobHunter/issues). Pour le code :
-[`CONTRIBUTING.md`](CONTRIBUTING.md), puis [`AGENTS.md`](AGENTS.md) (architecture,
+[`CONTRIBUTING.md`](.github/CONTRIBUTING.md), puis [`AGENTS.md`](AGENTS.md) (architecture,
 conventions) et [`docs/`](docs/README.md) (programmes, pièges appris à la dure, feuille de
 route) ; `python -m pytest -q` lance toute la suite sans réseau. Commentaires et docs sont en
 anglais ; les noms de fonctions et les clés du profil restent en français, pour que les

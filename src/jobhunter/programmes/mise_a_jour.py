@@ -314,10 +314,10 @@ def signaler_tache_ancienne():
             text=True,
             errors="replace",
         )
-        lanceur = "planifier.bat"
+        lanceur = "lanceurs\\planifier.bat"
     else:
         r = subprocess.run(["crontab", "-l"], capture_output=True, text=True, errors="replace")
-        lanceur = "./planifier.sh"
+        lanceur = "./lanceurs/planifier.sh"
     if r.returncode == 0 and "pipeline_quotidien.py" in (r.stdout or ""):
         print(
             f"\n! La collecte planifiee lance encore l'ancien Scripts/pipeline_quotidien.py, "
@@ -325,6 +325,23 @@ def signaler_tache_ancienne():
         )
         return True
     return False
+
+
+def rendre_executables():
+    """macOS/Linux: the `.sh` launchers can be run again after an update.
+
+    The ZIP path writes files with `write_bytes`, which gives a new file no execute
+    bit: since 2.24 the launchers live in `lanceurs/`, new paths for every existing
+    installation, and `./lanceurs/lancer.sh` would answer "permission denied". Run by
+    the check of the NEW version (`maj --controler`), so it applies from this update on.
+    """
+    if sys.platform == "win32":
+        return
+    for f in (RACINE / "lanceurs").glob("*.sh"):
+        try:
+            f.chmod(f.stat().st_mode | 0o111)
+        except OSError:
+            pass
 
 
 def controler_nouveau():
@@ -851,6 +868,7 @@ def main():
     if args.controler:
         if not controler():
             return 1
+        rendre_executables()
         signaler_tache_ancienne()
         return 0
     if args.initialiser:

@@ -558,6 +558,6 @@ SORTIE = {
     "La tâche n'a pas pu être créée : {a}": "No se pudo crear la tarea: {a}",
     "La tâche n'a pas pu être retirée : {a}": "No se pudo quitar la tarea: {a}",
     "Heure invalide : « {a} » (format 08:00).": "Hora no válida: «{a}» (formato 08:00).",
-    "Hors Windows : lance ./planifier.sh depuis le dossier de JobHunter.": "Fuera de "
-    "Windows: ejecuta ./planifier.sh desde la carpeta de JobHunter.",
+    "Hors Windows : lance ./lanceurs/planifier.sh depuis le dossier de JobHunter.": "Fuera de "
+    "Windows: ejecuta ./lanceurs/planifier.sh desde la carpeta de JobHunter.",
 }

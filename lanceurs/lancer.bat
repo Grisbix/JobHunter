@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 >nul
-cd /d "%~dp0"
+cd /d "%~dp0.."
+rem In lanceurs\: everything runs from the JobHunter folder, one level up.
 rem installer.bat's environment if it exists, otherwise the computer's Python.
 set "PY=python"
 set "PYW=pythonw"

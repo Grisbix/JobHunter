@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Opens JobHunter (macOS, Linux). The first time, creates the profile from the CV in Mon_CV.
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
+# In lanceurs/: everything runs from the JobHunter folder, one level up.
 # installer.sh's environment if it exists, otherwise the computer's Python.
 if [ -x .venv/bin/python ]; then PY=.venv/bin/python; else PY=$(command -v python3 || command -v python); fi
 if [ ! -f profil/profil.json ]; then

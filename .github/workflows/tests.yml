@@ -94,7 +94,7 @@ jobs:
       # tail's exit code and a failing suite went green.
       - name: Syntaxe des scripts .sh
         shell: bash
-        run: for f in *.sh; do bash -n "$f"; echo "$f ok"; done
+        run: for f in lanceurs/*.sh; do bash -n "$f"; echo "$f ok"; done
       - name: Compilation de tous les programmes
         shell: bash
         run: python -m py_compile JobHunter.pyw $(find src -name '*.py')
@@ -124,9 +124,9 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.12"
-      - name: installer.sh (comme sur un Mac)
+      - name: lanceurs/installer.sh (comme sur un Mac)
         shell: bash
-        run: ./installer.sh
+        run: ./lanceurs/installer.sh
       - name: Outils de test dans .venv
         run: .venv/bin/python -m pip install "pytest>=9,<10" "hypothesis>=6.100,<7"
       - name: Banc de non-regression

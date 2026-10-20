@@ -83,7 +83,7 @@ A program that finds the queue locked exits with **code 3** without modifying an
 ## The daily pipeline
 
 `jobhunter.programmes.pipeline_quotidien` (`python JobHunter.pyw pipeline`), launched every
-morning by the task that `planifier.bat` sets up:
+morning by the task that `lanceurs/planifier.bat` sets up:
 
 1. **collection**, in five passes each merged (ATS/Workday/V.I.E; LinkedIn;
    eFC/EURES; APEC/France Travail/Adzuna/Jooble; Glassdoor/WTJ) — a pass that exceeds

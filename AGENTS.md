@@ -20,8 +20,10 @@ change target, change the profile.
 - A word list in the profile accepts `"mot"` (bounded on the left) or `"re:motif"` (taken
   as is). `profil.motif()` compiles them.
 - User guide: `README.md` (English) and `README.fr.md`. Setup through Claude Code: `/configure-profile` (`.claude/commands/configure-profile.md`).
-- Double-click tools (root): `installer.bat`, `lancer.bat` (CV taken from `Mon_CV/`), `planifier.bat`
-  (daily scheduled task), `mettre_a_jour.bat` → `src/jobhunter/programmes/mise_a_jour.py` (git pull, or GitHub
+- Double-click tools (`lanceurs/`, each one `cd`s to the folder above): `installer.bat`,
+  `lancer.bat` (CV taken from `Mon_CV/`), `planifier.bat` (daily scheduled task),
+  `mettre_a_jour.bat` (and their `.sh` twins for macOS/Linux). The update:
+  `src/jobhunter/programmes/mise_a_jour.py` (git pull, or GitHub
   ZIP file by file: data never touched, modified file kept + `.nouveau`,
   removed file deleted if intact, load check then automatic rollback,
   `--annuler`). **At every release: bump `VERSION`, add its section at the top of
@@ -251,9 +253,9 @@ exactly what must not be done facing a quota).
 
 Development: **uv** (`uv sync` creates `.venv` from `pyproject.toml` and `uv.lock`),
 **ruff** (lint and format, rules and exceptions in `pyproject.toml`), **pre-commit**
-(`uv run pre-commit install`, once). Details: `CONTRIBUTING.md`. Roadmap:
+(`uv run pre-commit install`, once). Details: `.github/CONTRIBUTING.md`. Roadmap:
 `docs/professionalisation-plan.md`.
 
-End user: `installer.bat` / `installer.sh` install `requirements.txt` (same
+End user: `lanceurs/installer.bat` / `lanceurs/installer.sh` install `requirements.txt` (same
 bounds as `pyproject.toml`) into the system Python. `VERSION` and the version of
 `pyproject.toml` must stay equal (`outils/verifie_version.py`, in CI).
