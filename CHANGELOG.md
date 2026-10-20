@@ -4,6 +4,15 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.8.0 — 2026-10-20
+
+- **Why a score changed.** When an offer's fit changes — its full description arrived, or
+  it was re-scored with a changed profile or a new engine — the offer keeps the change:
+  date, new fit, cause, and the rules in force (engine version and a fingerprint of the
+  profile's scoring sections). The offer's card shows it under "Historique du score",
+  and says when the rules changed between two scores. An unchanged score records
+  nothing; at most ten entries per offer.
+
 ## 3.7.0 — 2026-10-20
 
 - **Your retouches are never overwritten.** A CV or a letter you edited by hand (in Word,

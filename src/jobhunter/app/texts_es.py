@@ -114,6 +114,10 @@ TEXTES: dict[str, str] = {
     "{nom} : quota atteint — la clé est bonne, réessaie demain.": "{nom}: cuota alcanzada — la clave es correcta, inténtalo mañana.",
     "{nom} : le service répond mais en erreur — réessaie plus tard.": "{nom}: el servicio responde con un error — inténtalo más tarde.",
     "{nom} : pas de réponse (hors ligne ?).": "{nom}: sin respuesta (¿sin conexión?).",
+    "Historique du score": "Historial de la puntuación",
+    "description": "descripción",
+    "re-score": "nueva puntuación",
+    "règles changées": "reglas cambiadas",
     # profiles
     "Renommer « {nom} »…": "Renombrar «{nom}»…",
     "Archiver « {nom} »…": "Archivar «{nom}»…",

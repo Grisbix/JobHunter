@@ -10,6 +10,7 @@ import argparse
 import sys
 
 from jobhunter import root as _racine
+from jobhunter.scoring import history as _historique
 
 sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -69,9 +70,8 @@ def _travail(q, a):
         if yrs >= 3:
             senior += 1
         if not a.dry:
-            x["fit"] = newfit
-            x["fit_fin"] = fin
-            x["exp_requise"] = yrs  # years of experience required (0 = not specified)
+            # fit, fit_fin, exp_requise (years required, 0 = not specified) + history
+            _historique.poser(x, newfit, yrs, fin, "re-score")
         if match_skills and not a.dry:
             try:
                 x["skills_match"] = len(

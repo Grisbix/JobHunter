@@ -7,6 +7,7 @@ import importlib
 import time
 from typing import Any
 
+from jobhunter.scoring import history as _historique
 from jobhunter.scoring import zones as _zones
 from jobhunter.sources import common as _commun
 from jobhunter.sources.common import (
@@ -307,14 +308,12 @@ def _merge_into_queue(
                     desc = ""
                 if desc:
                     x["description"] = desc
-                    x["fit"], x["exp_requise"], x["fit_fin"] = fit_detail(
-                        f"{x.get('poste', '')} {desc}", x.get("poste", "")
-                    )
+                    f, e, ff = fit_detail(f"{x.get('poste', '')} {desc}", x.get("poste", ""))
+                    _historique.poser(x, f, e, ff, "description")
             if x is not None and desc and not (x.get("description") or "").strip():
                 x["description"] = desc
-                x["fit"], x["exp_requise"], x["fit_fin"] = fit_detail(
-                    f"{x.get('poste', '')} {desc}", x.get("poste", "")
-                )
+                f, e, ff = fit_detail(f"{x.get('poste', '')} {desc}", x.get("poste", ""))
+                _historique.poser(x, f, e, ff, "description")
                 try:
                     x["ats_pct"] = score_offer(
                         dict(

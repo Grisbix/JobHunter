@@ -30,6 +30,7 @@ import sys
 import time
 
 from jobhunter import root as _racine
+from jobhunter.scoring import history as _historique
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -171,8 +172,8 @@ def _travail(q, a, ecrire):
         o = q[i]
         avant = o.get("fit")
         o["description"] = t
-        o["fit"], o["exp_requise"], o["fit_fin"] = fit_detail(
-            f"{o.get('poste', '')} {t}", o.get("poste", "")
+        _historique.poser(
+            o, *fit_detail(f"{o.get('poste', '')} {t}", o.get("poste", "")), "description"
         )
         ecrites += 1
         if isinstance(avant, int) and o["fit"] > avant:

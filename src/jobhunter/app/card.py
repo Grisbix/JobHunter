@@ -92,6 +92,23 @@ class FicheMixin:
                 + "\n",
                 "m",
             )
+        # Its successive fits, and why (scoring.history).
+        if len(hist := o.get("historique_fit") or []) >= 2:
+            d.insert("end", "\n" + _t("Historique du score") + "\n", "k")
+            lignes, regles = [], None
+            for e in hist:
+                ligne = f"· {e.get('date', '?')} — fit {e.get('fit', '?')}"
+                if e.get("cause") not in (None, "?"):
+                    # the causes scoring.history writes, translated
+                    cause = {"description": "description", "re-score": "re-score"}.get(
+                        str(e["cause"]), str(e["cause"])
+                    )
+                    ligne += f" ({_t(cause)})"
+                if regles and e.get("regles") and e["regles"] != regles:
+                    ligne += " · " + _t("règles changées")
+                regles = e.get("regles") or regles
+                lignes.append(ligne)
+            d.insert("end", "\n".join(lignes) + "\n", "m")
         desc = (o.get("description") or "").strip()
         if desc:
             d.insert("end", "\nDescription\n", "k")
