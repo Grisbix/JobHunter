@@ -198,8 +198,16 @@ def _de(mot: str, apostrophe: str = "'") -> str:
 # "Objet : Candidature au poste de …", it gives unreadable letters.
 # The \b are ESSENTIAL: without them, "DAF - Finance" matches "F - F"
 # (the final F of DAF, the dash, the initial F of Finance) and the cleaning produces
-# "DA inance". The pattern must only accept ISOLATED letters.
-RX_GENRE = re.compile(r"[(\[]?\s*\b[HFMWX]\b(?:\s*[/|.-]\s*\b[HFMWXD]\b){1,2}\s*[)\]]?", re.I)
+# "DA inance". The pattern must only accept ISOLATED letters — and "&" binds a
+# letter too: "H&M - H/F" lost its M ("H&"), the M taken for a gender letter.
+# The en and em dashes separate like "-": "Analyste – F – H" kept its mention, which
+# the dash normalisation below then turned into "F - H", removed only by a SECOND
+# cleaning (found by tests/test_proprietes.py).
+RX_GENRE = re.compile(
+    r"[(\[]?\s*(?<![\w&])[HFMWX](?![\w&])"
+    r"(?:\s*[/|.\-–—]\s*(?<![\w&])[HFMWXD](?![\w&])){1,2}\s*[)\]]?",
+    re.I,
+)
 
 
 # The GLUED gender marker, without a separator: "CORPORATE FINANCE HF".
@@ -251,7 +259,21 @@ def titre_poste(t: str | None, maxlen: int = 80) -> str:
     Cuts at the last separator BEFORE maxlen, never in the middle of a word.
     Returns "" if it is not a job title (postal address, empty): the caller then
     writes a neutral phrase rather than an absurd sentence.
+
+    Repeated until nothing changes: one cut can make the next one possible — "F -
+    CDI - H" only becomes the gender mention "F - H" once the contract is gone.
+    Cleaning a clean title again must change nothing (refresh_letters reruns it).
     """
+    for _ in range(3):
+        propre = _titre_une_passe(t, maxlen)
+        if propre == t:
+            break
+        t = propre
+    return t or ""
+
+
+def _titre_une_passe(t: str | None, maxlen: int) -> str:
+    """One pass of titre_poste's cleaning."""
     t = re.sub(r"\s+", " ", (t or "").strip())
     if RX_ADRESSE.search(t):
         return ""

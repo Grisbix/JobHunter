@@ -136,6 +136,22 @@ def test_genre_trois_lettres(src, attendu):
     assert T.titre_poste(src) == attendu
 
 
+@pytest.mark.parametrize(
+    ("src", "attendu"),
+    [
+        # Found by tests/test_proprietes.py: the M of H&M taken for a gender letter.
+        ("Analyste ESG - H&M - H/F", "Analyste ESG - H&M"),
+        ("Head - HR - H&M", "Head - HR - H&M"),
+        # En dash between the letters: removed by the second cleaning only.
+        ("Analyste – F – H", "Analyste"),
+        ("Contrôleur de gestion — H — F", "Contrôleur de gestion"),
+    ],
+)
+def test_genre_esperluette_et_tirets_longs(src, attendu):
+    assert T.titre_poste(src) == attendu
+    assert T.titre_poste(attendu) == attendu
+
+
 REF = "Administrative Officer (P-2), TA, 364 days, #00137324, Education Cannot Wait"
 
 
