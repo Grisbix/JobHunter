@@ -99,7 +99,7 @@ jobs:
           $env:JOBHUNTER_RACINE = "$env:RUNNER_TEMP\JobHunterEssai"
           & "$dest\jobhunter-cli.exe" --help | Out-Null
           if ($LASTEXITCODE -ne 0) { exit 1 }
-          foreach ($f in "profil\profil.json", "Scripts\apply_queue.json") {
+          foreach ($f in "profile\profile.json", "data\apply_queue.json") {
             if (-not (Test-Path "$env:JOBHUNTER_RACINE\$f")) { Write-Error "$f perdu"; exit 1 }
           }
           Write-Output "mise à jour installée, données gardées"
