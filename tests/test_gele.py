@@ -10,20 +10,22 @@ from jobhunter import gele
 from jobhunter.navigation.navigateur import lancer
 
 
+# Forward slashes: a backslash is not a separator on macOS/Linux, where `Path(r"C:\x")`
+# is one single name and `with_name` would replace all of it.
 def test_interpreteur_sous_python():
-    with patch.object(sys, "executable", r"C:\Python314\pythonw.exe"):
-        assert gele.interpreteur() == str(Path(r"C:\Python314\python.exe"))
-    with patch.object(sys, "executable", r"C:\Python314\python.exe"):
-        assert gele.interpreteur() == str(Path(r"C:\Python314\python.exe"))
+    with patch.object(sys, "executable", "C:/Python314/pythonw.exe"):
+        assert gele.interpreteur() == str(Path("C:/Python314/python.exe"))
+    with patch.object(sys, "executable", "C:/Python314/python.exe"):
+        assert gele.interpreteur() == str(Path("C:/Python314/python.exe"))
 
 
 def test_interpreteur_compile():
     with (
-        patch.object(sys, "executable", r"C:\Prog\JobHunter\JobHunter.exe"),
+        patch.object(sys, "executable", "C:/Prog/JobHunter/JobHunter.exe"),
         patch.object(sys, "frozen", True, create=True),
     ):
         assert gele.est_gele()
-        assert gele.interpreteur() == str(Path(r"C:\Prog\JobHunter\jobhunter-cli.exe"))
+        assert gele.interpreteur() == str(Path("C:/Prog/JobHunter/jobhunter-cli.exe"))
 
 
 def test_dossier_donnees(monkeypatch, tmp_path):

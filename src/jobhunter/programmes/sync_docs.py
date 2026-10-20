@@ -18,7 +18,6 @@ import importlib
 import subprocess
 import sys
 from pathlib import Path
-from urllib.parse import quote
 
 from jobhunter import racine as _racine
 
@@ -28,7 +27,7 @@ HERE = _racine.scripts()
 ROOT = HERE.parent
 QUEUE = HERE / "apply_queue.json"
 
-from jobhunter import chemins
+from jobhunter import chemins, liens
 
 DIRS = [chemins.CV_PAR_OFFRE, chemins.LT_PAR_OFFRE]
 LT_DIR = chemins.LT_PAR_OFFRE
@@ -105,7 +104,7 @@ def pass_links(dry=False):
                     break
             if cand is not None:
                 if not dry:
-                    x[key] = "file:///" + quote(str(cand).replace("\\", "/"), safe="/:")
+                    x[key] = liens.url_de(cand)
                 fixed += 1
             else:
                 broken += 1

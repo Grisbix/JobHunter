@@ -143,10 +143,7 @@ def make_docs(url):
         domaine=x.get("domaine", ""),
         rh=x.get("rh"),
     )
-    from urllib.parse import quote as _q
-
-    def _url_of(p):
-        return "file:///" + _q(str(p).replace("\\", "/"), safe="/:")
+    from jobhunter.liens import url_de as _url_of
 
     try:
         cv, pdf = cv_une_page(offer)
