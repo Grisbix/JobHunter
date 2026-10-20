@@ -7,12 +7,105 @@ as soon as it loads) -- hence this module outside the app package.
 
 import sys
 import tkinter as tk
+from collections.abc import Callable
 from pathlib import Path
-from tkinter import messagebox
+from tkinter import filedialog, messagebox
+from typing import Any
 
 from jobhunter import frozen as _gele
 from jobhunter import profile as _profil
 from jobhunter import root as _rac
+
+EXTENSIONS_CV = (".docx", ".pdf")
+
+
+# ── Drag-and-drop (tkinterdnd2), shared with the application (app.cv_drop) ────
+def chemins_deposes(tk_: Any, data: str) -> list[Path]:
+    """The dropped files: Tk gives one string, braces around names with spaces."""
+    return [Path(p) for p in tk_.splitlist(data)]
+
+
+def choisir_cv(chemins: list[Path]) -> Path | None:
+    """The first dropped file that is a CV (.docx or .pdf, present on disk)."""
+    return next((p for p in chemins if p.suffix.lower() in EXTENSIONS_CV and p.is_file()), None)
+
+
+def activer_depot(fenetre: Any, rappel: Callable[[list[Path]], None]) -> bool:
+    """Makes a window accept dropped files. False without tkinterdnd2 (nothing changes).
+
+    tkinterdnd2 ships the tkdnd extension for Windows, macOS and Linux.
+    """
+    try:
+        from tkinterdnd2 import DND_FILES, TkinterDnD
+
+        TkinterDnD._require(fenetre)
+        # The window gains the methods of tkinterdnd2's mixin: a customtkinter CTk
+        # cannot inherit from it at creation, its class is extended here.
+        if not isinstance(fenetre, TkinterDnD.DnDWrapper):
+            fenetre.__class__ = type(
+                fenetre.__class__.__name__, (fenetre.__class__, TkinterDnD.DnDWrapper), {}
+            )
+        fenetre.drop_target_register(DND_FILES)
+
+        def deposer(ev: Any) -> Any:
+            rappel(chemins_deposes(fenetre.tk, ev.data))
+            return ev.action
+
+        fenetre.dnd_bind("<<Drop>>", deposer)
+        return True
+    except Exception:  # library missing, or this Tk cannot load tkdnd
+        return False
+
+
+def demander_cv(fenetre: tk.Tk) -> str:
+    """The welcome window: drop the CV on it, or choose it. "" = later."""
+    choix = {"cv": ""}
+    fenetre.title("JobHunter — bienvenue")
+    cadre = tk.Frame(fenetre, padx=28, pady=22)
+    cadre.pack()
+    tk.Label(
+        cadre,
+        text="Aucun profil pour l'instant.\n\nDonne ton CV (.docx de préférence, ou .pdf) : "
+        "JobHunter le lit\net te pose quelques questions dans une fenêtre de commande.",
+        justify="left",
+    ).pack(anchor="w")
+    zone = tk.Label(cadre, text="Dépose ton CV ici", relief="groove", padx=60, pady=34)
+    zone.pack(fill="x", pady=14)
+
+    def fin(p: str) -> None:
+        choix["cv"] = p
+        fenetre.quit()
+
+    def choisir() -> None:
+        dep = _rac.dossier("Mon_CV")
+        p = filedialog.askopenfilename(
+            parent=fenetre,
+            title="Ton CV",
+            initialdir=str(dep if dep.is_dir() else Path.home()),
+            filetypes=[("CV", "*.docx *.pdf"), ("Word", "*.docx"), ("PDF", "*.pdf")],
+        )
+        if p:
+            fin(p)
+
+    def depot(chemins: list[Path]) -> None:
+        cv = choisir_cv(chemins)
+        if cv is None:
+            zone.configure(text="Ce n'est pas un CV .docx ou .pdf : dépose-en un autre.")
+        else:
+            fin(str(cv))
+
+    if not activer_depot(fenetre, depot):
+        zone.configure(text="Choisis ton CV avec le bouton ci-dessous.")
+    boutons = tk.Frame(cadre)
+    boutons.pack(fill="x")
+    tk.Button(boutons, text="Choisir mon CV…", command=choisir).pack(side="left")
+    tk.Button(boutons, text="Plus tard", command=lambda: fin("")).pack(side="right")
+    fenetre.protocol("WM_DELETE_WINDOW", lambda: fin(""))
+    fenetre.deiconify()
+    fenetre.mainloop()
+    cadre.destroy()
+    fenetre.withdraw()
+    return choix["cv"]
 
 
 def _migrer_si_besoin() -> None:
@@ -62,23 +155,10 @@ def assurer_profil() -> None:
         # created in a console (first_launch asks its questions at the keyboard),
         # puis l'application demarre normalement.
         import subprocess
-        from tkinter import filedialog
 
         _r = tk.Tk()
         _r.withdraw()
-        _cv = ""
-        if messagebox.askyesno(
-            "JobHunter — bienvenue",
-            "Aucun profil pour l'instant.\n\nChoisis ton CV (.docx de préférence, "
-            "ou .pdf) : JobHunter le lit et te pose quelques questions dans une "
-            "fenêtre de commande.\n\nChoisir mon CV maintenant ?",
-        ):
-            _dep = _rac.dossier("Mon_CV")
-            _cv = filedialog.askopenfilename(
-                title="Ton CV",
-                initialdir=str(_dep if _dep.is_dir() else Path.home()),
-                filetypes=[("CV", "*.docx *.pdf"), ("Word", "*.docx"), ("PDF", "*.pdf")],
-            )
+        _cv = demander_cv(_r)
         if not _cv:
             messagebox.showinfo(
                 "JobHunter",
@@ -106,7 +186,8 @@ def assurer_profil() -> None:
             sys.exit(1)
         messagebox.showinfo(
             "JobHunter",
-            "Profil créé : profil/profil.json.\n\nPour le compléter "
+            f"Profil créé : {_profil.FICHIER.parent.name}/{_profil.FICHIER.name}.\n\n"
+            "Pour le compléter "
             "(compétences, recherches, lettres), ouvre Claude Code dans ce "
             "dossier et tape /configure-profile.",
         )

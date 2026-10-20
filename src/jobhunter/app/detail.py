@@ -724,6 +724,15 @@ class DetailMixin:
         # in the title bar: the bottom bar is already full
         CB(
             bar,
+            text="Remplacer mon CV de base…",
+            command=self._choisir_cv_de_base,
+            bg=BTN,
+            fg=TX,
+            relief="flat",
+            cursor="hand2",
+        ).pack(side="right", padx=6, before=pginfo)
+        CB(
+            bar,
             text="CV ⇄ lettre",
             command=basculer,
             bg=ACC,

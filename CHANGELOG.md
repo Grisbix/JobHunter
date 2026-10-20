@@ -4,6 +4,16 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.1.0 — 2026-10-20
+
+- **Drag your CV onto JobHunter.** On the welcome window (no profile yet), drop your CV
+  in the box instead of looking for it. In the app, drop a `.docx` or `.pdf` anywhere on
+  the window to replace your base CV: the old one is kept as `.bak`, and JobHunter offers
+  to redo the CVs already prepared for the offers. The CV panel has the same thing as a
+  button, "Remplacer mon CV de base…", for those who prefer a file dialog.
+- New dependency: `tkinterdnd2` (drag-and-drop for Windows, macOS and Linux). Without it,
+  everything works as before, with the buttons.
+
 ## 3.0.0 — 2026-10-20
 
 - **Your folders in English.** `Scripts/` → `data/`, `profil/profil.json` →

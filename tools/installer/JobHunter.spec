@@ -14,6 +14,7 @@ SQUELETTE = os.path.join(ICI, "build", "squelette")
 cachees = collect_submodules("jobhunter")  # dispatched by name (-m module, jobhunter <command>)
 donnees = (
     collect_data_files("customtkinter")
+    + collect_data_files("tkinterdnd2")  # the native tkdnd library (drag-and-drop)
     + collect_data_files("docx")
     + collect_data_files("jobhunter", includes=["sources/directories/*"])
     + [

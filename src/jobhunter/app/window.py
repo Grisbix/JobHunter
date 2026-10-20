@@ -21,6 +21,7 @@ from jobhunter.app.actions import ActionsMixin
 from jobhunter.app.apply_panel import CandidatureMixin
 from jobhunter.app.card import FicheMixin
 from jobhunter.app.common import MAINT, STEPS
+from jobhunter.app.cv_drop import DepotCvMixin
 from jobhunter.app.data import DonneesMixin
 from jobhunter.app.detail import DetailMixin
 from jobhunter.app.execution import ExecutionMixin
@@ -47,6 +48,7 @@ from jobhunter.app.theme import (
     _resoudre_espacements,
     _resoudre_polices,
 )
+from jobhunter.welcome import activer_depot as _activer_depot
 
 
 class App(
@@ -58,6 +60,7 @@ class App(
     DetailMixin,
     ExecutionMixin,
     CandidatureMixin,
+    DepotCvMixin,
 ):
     """The JobHunter window. Each mixin carries a domain; they share nothing but `self`."""
 
@@ -318,6 +321,8 @@ class App(
         # for narrower screens. The status line stays visible.
         self._desc_busy = False
         self.load_offers()
+        # A CV dragged onto the window (tkinterdnd2; without it, the CV panel's button).
+        self._depot_cv = _activer_depot(self.root, self._deposer_cv)
         self.root.after(100, self._drain)
         self._raccourcis()
         # JOBHUNTER_SANS_FOND=1 : aucun travail de fond (scan, descriptions,

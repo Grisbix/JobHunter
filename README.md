@@ -120,7 +120,7 @@ To customise or develop JobHunter: the full code, with Python 3.12+.
 2. **Double-click `launchers\install.bat`**: Python libraries and the Chromium browser (a few
    minutes, once). Without Python, it offers to install it (winget). The libraries go
    into a `.venv` folder next to JobHunter, not into your computer's Python.
-3. **Put your CV in `My_CV`**, a `.docx` preferably. This folder is never published.
+3. **Put your CV in `My_CV`**, or drag it onto the JobHunter window, a `.docx` preferably. This folder is never published.
 4. **Double-click `launchers\start.bat`**: the first time, it builds your profile from your CV and five
    questions; then it opens the app.
 

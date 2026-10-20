@@ -1,7 +1,7 @@
 [project]
 name = "jobhunter"
 # Must stay equal to the VERSION file (read by the update): CI checks it.
-version = "3.0.0"
+version = "3.1.0"
 description = "Recherche d'emploi locale : collecte, notation, CV et lettre par offre, candidature semi-automatique."
 readme = "README.md"
 license = "MIT"
@@ -9,6 +9,7 @@ requires-python = ">=3.12"
 # Same bounds as requirements.txt, which install.bat / install.sh keep.
 dependencies = [
     "customtkinter>=5.2.2,<7",
+    "tkinterdnd2>=0.4.3,<1",
     "playwright>=1.60,<2",
     "python-docx>=1.2,<2",
     "openpyxl>=3.1.5,<4",

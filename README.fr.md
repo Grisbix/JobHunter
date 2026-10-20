@@ -133,7 +133,7 @@ Pour personnaliser JobHunter ou le développer : le code complet, avec Python.
 1. **Télécharge** la [dernière version](https://github.com/Grisbix/JobHunter/releases/latest) (fichier `JobHunter-….zip`) et dézippe-le.
 2. **Double-clique sur `launchers\install.bat`** — bibliothèques Python et navigateur Chromium (quelques minutes, une seule fois). Les bibliothèques vont dans un dossier `.venv` à côté de JobHunter, pas dans le Python de l'ordinateur.
    Sans Python, il propose de l'installer pour toi (winget) : accepte, ferme la fenêtre, relance-le.
-3. **Dépose ton CV dans `My_CV`** — un `.docx` de préférence (voir ci-dessous). Ce dossier n'est jamais publié.
+3. **Dépose ton CV dans `My_CV`**, ou glisse-le sur la fenêtre de JobHunter — un `.docx` de préférence (voir ci-dessous). Ce dossier n'est jamais publié.
 4. **Double-clique sur `launchers\start.bat`** — la première fois, il crée ton profil en lisant ton CV et en
    posant cinq questions (métiers visés, expérience, villes, accords, secteur) ; ensuite il ouvre
    directement l'application. (Tu peux aussi ouvrir `JobHunter.pyw` : sans profil, il te propose
