@@ -7,7 +7,8 @@ a source before the provider does (an exhausted key is refused for the rest of t
 for every profile).
 
 Ceilings: `quotas_api` in the main profile's sources_config.json, {"adzuna": 250, …};
-otherwise PLAFONDS. None = counted, never stopped.
+otherwise PLAFONDS. None = counted, never stopped. Why the quota is shared rather than
+per profile: docs/adr/0014-open-questions-of-the-technical-plan.md (question 1).
 """
 
 import json

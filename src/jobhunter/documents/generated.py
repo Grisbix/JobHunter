@@ -108,7 +108,8 @@ def enregistrer(doc: Any, out: Path) -> Path:
 
 
 # ── Comparing, then choosing (the application's "Documents à comparer") ───────────
-ANCIENNES = "_anciennes"  # inside _a_comparer/: the versions set aside, never deleted
+# inside _a_comparer/: the versions set aside, never deleted (ADR 0014, question 5)
+ANCIENNES = "_anciennes"
 
 
 @dataclass(frozen=True)
