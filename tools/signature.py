@@ -36,6 +36,14 @@ from pathlib import Path
 RACINE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RACINE / "src"))
 
+if sys.stdout is None:
+    # pythonw (the hourly `approuver` task): no console. Redirected BEFORE importing
+    # the engine, whose update module reconfigures sys.stdout when imported.
+    _log = Path.home() / ".jobhunter" / "signature.log"
+    _log.parent.mkdir(parents=True, exist_ok=True)
+    sys.stdout = sys.stderr = _log.open("a", encoding="utf-8")
+    print(f"===== {__import__('time').strftime('%Y-%m-%d %H:%M')}", flush=True)
+
 from jobhunter import signature as sig  # noqa: E402
 from jobhunter.network import exiger_http  # noqa: E402
 from jobhunter.programs import update as maj  # noqa: E402
@@ -47,7 +55,6 @@ MODULE = RACINE / "src" / "jobhunter" / "signature.py"
 
 
 REFUSEES = CLE_PRIVEE.parent / "versions_refusees.txt"
-JOURNAL = CLE_PRIVEE.parent / "signature.log"
 # gh launched from pythonw (the hourly task) would flash a console window each time.
 _SANS_FENETRE = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
@@ -213,10 +220,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    if sys.stdout is None:  # pythonw (the hourly task): the output goes to a log
-        JOURNAL.parent.mkdir(parents=True, exist_ok=True)
-        sys.stdout = sys.stderr = JOURNAL.open("a", encoding="utf-8")
-        print(f"===== {__import__('time').strftime('%Y-%m-%d %H:%M')}")
-    else:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.exit(main())
