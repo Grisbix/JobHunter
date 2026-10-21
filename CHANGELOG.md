@@ -4,6 +4,14 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.10.2 — 2026-10-21
+
+- **Security: certifi 2026.10.19.** The bundle of root certificates that JobHunter's web
+  requests trust (certifi, through httpx and requests) carried emSign root authorities
+  whose intermediate keys were compromised; a server holding such a key could pass for
+  any site. JobHunter now requires certifi 2026.10.19 or later, which removes them. The
+  Windows installer ships it; from source, the update installs it.
+
 ## 3.10.1 — 2026-10-21
 
 - `jobhunter migrate` no longer gives up on a folder held open by another program. On
