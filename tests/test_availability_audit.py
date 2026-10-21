@@ -370,3 +370,39 @@ def test_pipeline_dispo_une_fois_par_semaine(jour, options, attendu):
     ap.add_argument("--dispo-jour", type=int, default=6)
     ap.add_argument("--rapide", action="store_true")
     assert pq.dispo_aujourd_hui(ap.parse_args(options), jour) is attendu
+
+
+# ── closure banners, in every language of the offers ─────────────────────────
+
+
+@pytest.mark.parametrize(
+    "page",
+    [
+        "Cette offre n’est plus disponible.",  # WTTJ, typographic apostrophe
+        "Désolé, cette annonce a expiré.",
+        "Le poste a été pourvu.",
+        "This position has been filled.",
+        "This role is closed.",
+        "Diese Stelle ist bereits besetzt.",
+        "Die Stellenanzeige ist leider nicht mehr verfügbar.",
+        "Deze vacature is niet meer beschikbaar.",
+        "Lo sentimos, esta oferta ya no está disponible.",
+        "Questa offerta non è più disponibile.",
+        "Esta vaga não está mais disponível.",
+    ],
+)
+def test_page_fermee_toutes_langues(page):
+    assert a.texte_ferme(f"<html><h1>Analyst</h1><p>{page}</p></html>")
+
+
+@pytest.mark.parametrize(
+    "page",
+    [
+        "This role is closed-loop control of the platform.",
+        "Apply now: applications are reviewed on a rolling basis.",
+        "Die Stelle ist ab sofort zu besetzen.",
+        "Once the application form has been filled out, submit it.",
+    ],
+)
+def test_page_ouverte_pas_fermee(page):
+    assert a.texte_ferme(page) is None

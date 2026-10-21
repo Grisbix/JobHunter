@@ -199,10 +199,38 @@ _ROBOTS_CACHE: dict[str, Any] = {}
 ROBOTS_UA = "JobHunter"
 
 
-def robots_autorise(url: str) -> bool:
-    """Does this domain's robots.txt allow `url`? One cache per host."""
+def robots_lu(statut: int, texte: str) -> Any:
+    """The parser of a robots.txt answer, with the rules of `RobotFileParser.read`.
+
+    401/403: everything forbidden. Any other error: everything allowed. 200: the
+    rules, once a leading UTF-8 byte-order mark is removed. Left in place, the mark
+    glues itself to the first "User-agent" line, which the parser no longer
+    recognises: the whole first group is dropped, its Disallow lines with it —
+    measured on Python 3.14, `Disallow: /jobs` behind a BOM let /jobs/1 through.
+    """
     from urllib import robotparser
+
+    rp: Any = robotparser.RobotFileParser()  # allow_all / disallow_all: not in the stubs
+    if statut in (401, 403):
+        rp.disallow_all = True
+    elif statut >= 400:
+        rp.allow_all = True
+    else:
+        rp.parse(texte.lstrip("﻿").splitlines())
+    return rp
+
+
+def robots_autorise(url: str) -> bool:
+    """Does this domain's robots.txt allow `url`? One cache per host.
+
+    Read through `get_borne`, not `RobotFileParser.read`: that one calls urlopen
+    without any timeout, so a host that answers slowly held the scan forever.
+    """
     from urllib.parse import urlsplit
+
+    import httpx
+
+    from jobhunter.network import get_borne
 
     try:
         s = urlsplit(url)
@@ -211,10 +239,16 @@ def robots_autorise(url: str) -> bool:
         return True
     rp: Any = _ROBOTS_CACHE.get(hote)
     if rp is None:
-        rp = robotparser.RobotFileParser()
-        rp.set_url(hote + "/robots.txt")
         try:
-            rp.read()
+            r = get_borne(
+                httpx,
+                hote + "/robots.txt",
+                total=30,
+                max_octets=1_000_000,
+                timeout=15,
+                follow_redirects=True,
+            )
+            rp = robots_lu(r.status_code, r.content.decode("utf-8", "replace"))
         except Exception:
             rp = False  # unreachable: we do not come back to it, and we move on
         _ROBOTS_CACHE[hote] = rp

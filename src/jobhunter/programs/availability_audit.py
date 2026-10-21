@@ -73,15 +73,64 @@ _RX_LI_FERME = re.compile(r"closed-job|no longer accepting applications", re.I)
 
 # Expiry message in an HTTP 200 page. Checked on Talent ("Cette
 # offre n'est plus disponible"), SmartRecruiters ("offre a expiré"), WTJ.
+#
+# Searched in the text as `texte_ferme` normalises it: typographic apostrophes and
+# quotes made ASCII, accents removed, blanks collapsed. Portals write "n’est plus"
+# with U+2019 and German pages "verfügbar": a pattern spelled one way silently
+# missed the other. So every pattern here is spelled in that alphabet — "a expire",
+# "verfugbar", "e piu" — and nowhere else.
+#
+# The offers abroad are wanted, so their closure banners are too: German, Dutch,
+# Spanish, Italian, Portuguese, besides French and English. Only sentences that
+# speak of THIS offer: a false "closed" makes the user lose a live offer, which is
+# worse than checking a dead one again. Hence `closed\b(?!-)`: "this role is
+# closed-loop control" is a live job (career-ops #4194).
 _RX_MORT = re.compile(
-    r"no longer (?:available|accepting|active)|job has expired"
-    r"|this job (?:is|has been) (?:closed|filled|removed|expired)"
-    r"|offre (?:n'est plus|n’est plus) (?:disponible|en ligne|active)"
-    r"|annonce (?:a expiré|n'est plus|n’est plus)"
-    r"|offre (?:a expiré|est expirée|a été pourvue)"
-    r"|position has been filled|job is no longer|cette offre n.est plus",
+    # English
+    r"no longer (?:available|accepting|active)|job (?:posting )?has expired"
+    r"|this (?:job|role|position|posting|vacancy)(?: listing)? (?:is|has been) "
+    r"(?:closed\b(?!-)|filled|removed|expired)"
+    r"|position has been filled|job is no longer"
+    # French
+    r"|(?:offre|annonce) (?:n'est plus|n'est desormais plus) (?:disponible|en ligne|active|accessible)"
+    r"|annonce (?:a expire|n'est plus|est expiree)"
+    r"|offre (?:a expire|est expiree|a ete pourvue|est pourvue|a ete cloturee|est cloturee)"
+    r"|poste (?:a ete|est deja) pourvu|cette offre n.est plus"
+    # German
+    r"|(?:diese )?stelle (?:ist )?(?:bereits |leider )?(?:besetzt|vergeben)"
+    r"|(?:stellenanzeige|stellenangebot|stelle|anzeige) (?:ist )?(?:leider )?nicht mehr "
+    r"(?:verfugbar|aktiv|online|vorhanden|ausgeschrieben)"
+    r"|(?:stellenanzeige|bewerbungsfrist) (?:ist )?abgelaufen"
+    # Dutch
+    r"|vacature is (?:niet (?:meer|langer) (?:beschikbaar|actief|online)|gesloten|vervuld|verlopen)"
+    r"|solliciteren is niet meer mogelijk"
+    # Spanish
+    r"|(?:oferta|vacante) (?:ya )?no (?:esta|se encuentra) disponible"
+    r"|(?:oferta|vacante) (?:ha )?(?:caducado|expirado|sido cerrada|sido cubierta)"
+    # Italian
+    r"|(?:offerta|annuncio|posizione) (?:di lavoro )?non e piu (?:disponibile|attiv[ao])"
+    r"|(?:offerta|annuncio) (?:e )?scadut[oa]|posizione e stata (?:chiusa|coperta)"
+    # Portuguese
+    r"|vaga (?:nao esta mais|ja nao esta) disponivel|vaga (?:encerrada|expirada|preenchida)",
     re.I,
 )
+
+
+def _normaliser(texte: str) -> str:
+    """The alphabet `_RX_MORT` is spelled in: ASCII quotes, no accents, single blanks."""
+    import unicodedata
+
+    texte = re.sub(r"[‘’ʼ′´`]", "'", texte)
+    texte = re.sub(r"[“”″«»]", '"', texte)
+    texte = "".join(c for c in unicodedata.normalize("NFD", texte) if not unicodedata.combining(c))
+    return re.sub(r"\s+", " ", texte)
+
+
+def texte_ferme(texte: str) -> str | None:
+    """The closure sentence of a page (normalised by `_normaliser`); None if none."""
+    m = _RX_MORT.search(_normaliser(texte))
+    return m.group(0) if m else None
+
 
 # A generic careers page often says "no longer available" somewhere:
 # the text only counts if the URL designates a specific offer.
@@ -140,9 +189,9 @@ def controle_autre(url):
         return None, f"HTTP {r.status_code}"
     if "captcha" in str(r.url).lower():
         return None, "captcha"
-    m = _RX_MORT.search(r.text[:300000])
+    m = texte_ferme(r.text[:300000])
     if m and not _RX_URL_GENERIQUE.match(url):
-        return "FERMEE_TEXTE", m.group(0)
+        return "FERMEE_TEXTE", m
     return "OK", "200"
 
 

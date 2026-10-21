@@ -268,3 +268,36 @@ def test_suivi_change_entre_temps_rien_ecrit(suivi_jetable):
     assert (
         json.loads(suivi_jetable.read_text(encoding="utf-8"))["Amundi|Analyste ESG"]["s"] == "refus"
     )
+
+
+# ── strong and weak phrases (career-ops invite-match tiers) ──────────────────
+
+
+@pytest.mark.parametrize(
+    ("corps", "attendu"),
+    [
+        ("Unfortunately we need to reschedule your interview to Friday.", "entretien"),
+        ("Unfortunately a candidate has not been selected yet, we will update you.", None),
+        ("Thank you for your application. We will contact you about next steps.", "postulé"),
+        ("Thank you for your application. We would like to invite you to an interview.",
+         "entretien"),
+        ("Unfortunately, your application was not successful.", "refus"),
+        ("We regret to inform you that we went with other candidates.", "refus"),
+    ],
+    ids=["report", "retard", "accuse next steps", "invitation", "deux faibles", "regret+autres"],
+)  # fmt: skip
+def test_phrases_fortes_et_faibles(corps, attendu):
+    trouve = statuts.statut_suggere(c("rh@acme.com", "Votre candidature", corps))
+    assert (trouve[0] if trouve else None) == attendu
+
+
+def test_noms_courts_reconnus_en_mot_entier():
+    suivi = {"EY|Consultant ESG": {"s": "postulé"}, "HP Inc|Analyst": {"s": "postulé"}}
+    refus = "We have decided not to move forward."
+    assert statuts.mots_entreprise("EY") == ["ey"]
+    assert statuts.candidature(c("Talent <talent@ey.com>", "Your application", refus), suivi) == (
+        "EY|Consultant ESG"
+    )
+    # "ey" inside keyrecruit, "hp" inside php: not those companies
+    assert statuts.candidature(c("Jobs <jobs@keyrecruit.com>", "Hello", refus), suivi) is None
+    assert statuts.candidature(c("HR <hr@php-jobs.io>", "PHP role", refus), suivi) is None

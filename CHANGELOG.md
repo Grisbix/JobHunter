@@ -4,6 +4,29 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.13.1 — 2026-10-21
+
+Three fixes found by reading the code of two large job-search projects (career-ops,
+ai-job-search) side by side with ours.
+
+- **Closed offers recognised in every language of the offers.** The availability
+  check only read French and English closure banners, while offers abroad are wanted:
+  « Diese Stelle ist bereits besetzt », « Deze vacature is niet meer beschikbaar »,
+  « esta oferta ya no está disponible », « non è più disponibile », « vaga não está
+  mais disponível » now close the offer too. The page is normalised first (typographic
+  apostrophes, accents): « n’est plus disponible » written with ’ was missed. A live job
+  about « closed-loop control » is not taken for a closed one.
+- **Emails: fewer wrong suggestions, short company names found.** « Unfortunately we
+  need to reschedule your interview » was suggested as a rejection, and an
+  acknowledgement promising « next steps » as an interview. Phrases now come in two
+  tiers: a strong one is enough, weak ones (« unfortunately », « regret to inform »)
+  need a second one. EY, HP, 3M were never recognised (names under three letters were
+  dropped); they now are, as whole words only — not « hp » inside « PHP ».
+- **robots.txt read safely.** A file starting with a byte-order mark made Python's
+  reader ignore its first rules — a `Disallow` was skipped (measured). The mark is
+  removed before reading. The file is also fetched with a total time limit: the old
+  reader had none, and a slow host could hold the scan.
+
 ## 3.13.0 — 2026-10-21
 
 - **The morning collection, visible in the app.** Under « Actualiser les offres », one

@@ -9,7 +9,12 @@ Part of jobhunter.mail. Two questions per email:
    otherwise none (we do not guess).
 2. **Which status?** Rejection, interview or acknowledgement, from phrases in
    French, English and German. Rejection comes first: a rejection letter often
-   thanks you for applying.
+   thanks you for applying. Each status has STRONG phrases, enough on their own,
+   and WEAK ones, too common elsewhere: "Unfortunately we need to reschedule your
+   interview" is no rejection, and an acknowledgement that promises "next steps"
+   is no interview. Two distinct weak rejection phrases make a rejection; a weak
+   interview phrase counts only in a message that is not an acknowledgement.
+   (Tiers taken from career-ops' invite-match, after its false rejections.)
 
 A status only moves forward: an acknowledgement only takes "à postuler" to
 "postulé"; an interview never goes back to "postulé"; nothing replaces a
@@ -37,35 +42,55 @@ _RANG = {
     REFUS: 3,
 }
 
-_MOTIFS = (
-    (
-        REFUS,
-        r"ne (?:pas |plus )?(?:pouvons|pourrons) (?:pas )?donner (?:une )?suite|pas (?:été )?retenue?"
-        r"|ne correspond(?:ait)? pas|regrett(?:ons|ons de vous informer)|avons (?:décidé|choisi) de "
-        r"(?:poursuivre|retenir) (?:avec )?d.autres|d.autres candidat|issue défavorable"
-        r"|unfortunately|not (?:to )?(?:move|moving) forward|move forward with other"
-        r"|not been successful|unsuccessful|will not be (?:progressing|proceeding)|regret to inform"
-        r"|not (?:been )?selected|decided to pursue other|other candidates"
-        r"|leider|absage|nicht (?:weiter )?berücksichtig|anderen? (?:Bewerber|Kandidat)",
-    ),
-    (
-        ENTRETIEN,
-        r"entretien|échange (?:téléphonique|visio)|vous rencontrer|vos disponibilités"
-        r"|prochaine étape du processus|vous convier"
-        r"|interview|schedule (?:a|an) (?:call|meeting|chat)|your availability|next step"
-        r"|invite you to|phone screen"
-        r"|vorstellungsgespräch|kennenlernen|terminvorschlag",
-    ),
-    (
-        POSTULE,
-        r"bien reçu votre candidature|accusé de réception|avons bien reçu|merci (?:pour|de) votre "
-        r"candidature|confirmons la réception"
-        r"|thank you for (?:applying|your application)|(?:we have |we've )?received your application"
-        r"|application (?:has been )?received|thanks for applying"
-        r"|eingang ihrer bewerbung|vielen dank für ihre bewerbung|bewerbung erhalten",
-    ),
+
+def _rx(*motifs: str) -> tuple[re.Pattern[str], ...]:
+    return tuple(re.compile(m, re.I) for m in motifs)
+
+
+# A rejection on its own: these sentences have no other use.
+_REFUS_FORT = _rx(
+    r"(?:pas|plus) (?:pouvoir )?donner (?:une )?suite"
+    r"|ne (?:pouvons|pourrons) (?:pas |plus )?donner (?:une )?suite",
+    r"pas (?:été )?retenue?",
+    r"avons (?:décidé|choisi) de (?:poursuivre|retenir) (?:avec )?d.autres",
+    r"issue défavorable",
+    r"decided not to move forward|not (?:to )?move forward with (?:your|you)"
+    r"|not moving forward with your|move forward with other",
+    r"decided to pursue other|pursu(?:e|ing) other candidates|candidates whose (?:profile|experience|qualifications)",
+    r"not (?:been )?selected (?:for this|to advance)|will not be progressing your application",
+    r"\babsage\b|nicht (?:weiter )?berücksichtig|für (?:einen )?anderen? (?:Bewerber|Kandidat)",
 )
-_RX = tuple((statut, re.compile(m, re.I)) for statut, m in _MOTIFS)
+# Rejection words that also open reschedules, delays and unrelated bad news.
+_REFUS_FAIBLE = _rx(
+    r"unfortunately|malheureusement|leider",
+    r"regrettons|regret to inform",
+    r"ne correspond(?:ait)? pas",
+    r"d.autres candidat|other candidates",
+    r"(?:was|has) not (?:been )?successful|unsuccessful",
+    r"not (?:been )?selected(?! yet)",  # "a candidate has not been selected yet" is a delay
+    r"will not be (?:progressing|proceeding)",
+)
+_ENTRETIEN_FORT = _rx(
+    r"échange (?:téléphonique|visio)|vous rencontrer|vos disponibilités|vous convier",
+    r"invite you to|schedule (?:a|an) (?:call|meeting|chat|interview)|your availability"
+    r"|phone screen",
+    r"vorstellungsgespräch|terminvorschlag",
+)
+# "interview" and "next steps" are also in every acknowledgement.
+_ENTRETIEN_FAIBLE = _rx(r"entretien|interview|next step|prochaine étape|kennenlernen")
+_ACCUSE = _rx(
+    r"bien reçu votre candidature|accusé de réception|avons bien reçu|merci (?:pour|de) votre "
+    r"candidature|confirmons la réception"
+    r"|thank you for (?:applying|your application)|(?:we have |we've )?received your application"
+    r"|application (?:has been )?received|thanks for applying"
+    r"|eingang ihrer bewerbung|vielen dank für ihre bewerbung|bewerbung erhalten",
+)
+
+
+def _trouves(motifs: tuple[re.Pattern[str], ...], texte: str) -> list[str]:
+    """The phrase each pattern finds, one per pattern that matches."""
+    return [m.group(0) for rx in motifs if (m := rx.search(texte))]
+
 
 # Words that do not designate a company: legal forms, "groupe", countries…
 _VIDES = {
@@ -94,34 +119,55 @@ def _plat(t: str) -> str:
 
 
 def mots_entreprise(entreprise: str) -> list[str]:
-    """The words that recognise the company: "BNP Paribas SA" → [bnp, paribas]."""
-    return [m for m in _plat(entreprise).split() if m not in _VIDES and len(m) >= 3]
+    """The words that recognise the company: "BNP Paribas SA" → [bnp, paribas].
+
+    Words of two letters are dropped ("de", "of"…), unless they are all the name
+    has: EY, HP, 3M were never recognised. They are then matched as whole words
+    only (`_nomme`), so "HP" is not found inside "PHP".
+    """
+    mots = [m for m in _plat(entreprise).split() if m not in _VIDES]
+    longs = [m for m in mots if len(m) >= 3]
+    return longs or [m for m in mots if len(m) == 2]
 
 
-def _nomme(mots: list[str], texte_plat: str, colle: str = "") -> bool:
-    """All the company's words in the text (or glued together in a domain)."""
+def _nomme(mots: list[str], texte_plat: str, domaine: str = "") -> bool:
+    """All the company's words in the text, or glued together in the sender's domain.
+
+    A short glued name must be a whole label of the domain ("ey" in ey.com), not a
+    piece of one: "ey" sits inside "keyrecruit.com", which is not EY.
+    """
     if not mots:
         return False
     tokens = f" {texte_plat} "
     if all(f" {m} " in tokens for m in mots):
         return True
-    return bool(colle) and "".join(mots) in colle
+    colle = "".join(mots)
+    if len(colle) < 3:
+        return colle in re.split(r"[^a-z0-9]+", domaine)
+    return colle in re.sub(r"[^a-z0-9]", "", domaine)
 
 
 def statut_suggere(c: Courriel) -> tuple[str, str] | None:
     """(status, phrase found) from the subject and the body; None if nothing clear."""
     texte = f"{c.sujet}\n{c.corps}"
-    for statut, rx in _RX:
-        m = rx.search(texte)
-        if m:
-            return statut, m.group(0)
+    if fort := _trouves(_REFUS_FORT, texte):
+        return REFUS, fort[0]
+    faibles = _trouves(_REFUS_FAIBLE, texte)
+    if len(faibles) >= 2:
+        return REFUS, " … ".join(faibles[:2])
+    if fort := _trouves(_ENTRETIEN_FORT, texte):
+        return ENTRETIEN, fort[0]
+    if accuse := _trouves(_ACCUSE, texte):
+        return POSTULE, accuse[0]
+    if faible := _trouves(_ENTRETIEN_FAIBLE, texte):
+        return ENTRETIEN, faible[0]
     return None
 
 
 def candidature(c: Courriel, suivi: Mapping[str, Mapping[str, Any]]) -> str | None:
     """The identity ("entreprise|poste") of the application the email is about."""
     de_plat = _plat(c.de)
-    domaine = re.sub(r"[^a-z0-9]", "", c.de.rpartition("@")[2].casefold())
+    domaine = c.de.rpartition("@")[2].casefold().strip("> ")
     sujet_plat, corps_plat = _plat(c.sujet), _plat(c.corps)
     par_entreprise: dict[str, list[str]] = {}
     for oid in suivi:
