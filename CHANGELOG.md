@@ -4,6 +4,27 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.14.0 — 2026-10-22
+
+- **Workday, Ashby and Greenhouse offers really checked.** Their pages are drawn by
+  JavaScript: the availability check received the same empty page, open or closed, and
+  kept every offer. Measured on 21 October: 304 Workday offers checked, not one found
+  closed — their API said half were withdrawn. The check now asks the ATS itself:
+  Workday per offer (a withdrawal answers « S22 »), Ashby through the company's board
+  (an offer no longer listed is closed), Greenhouse per offer. An unclear answer still
+  falls back to reading the page, so a live offer is never removed on a doubt.
+- **« Signal » column** (« Colonnes ▾ » to show it):
+  - « republiée ×2 » — the offer came back under a new address on the same site, on a
+    later day, within 90 days. An employer that keeps reposting a job is often not
+    hiring for it right now. A better link found on the employer's site does not count.
+  - « même texte : X » — another company publishes the same text: often an agency or a
+    job board reposting the employer's offer. « doublon : X » when the two names are
+    one group (« VINCI » / « VINCI Construction »).
+  - Observations only: the fit, the sorting and the queue are untouched. New pipeline
+    step 4a; `jobhunter reposts --sauvegardes` dates the addresses from the daily copies
+    of the queue, so reposts show from the first day.
+- Known limit: two identical titles opened in parallel at one company look like a repost.
+
 ## 3.13.1 — 2026-10-21
 
 Three fixes found by reading the code of two large job-search projects (career-ops,

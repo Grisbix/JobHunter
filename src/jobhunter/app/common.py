@@ -316,6 +316,7 @@ COLS = [
     ("pays", "Pays", 100),
     ("region", "Région", 120),
     ("process", "Date offre", 115),
+    ("signal", "Signal", 170),
     ("_url", "Lien", 175),
     ("_date", "Suivi", 100),
 ]

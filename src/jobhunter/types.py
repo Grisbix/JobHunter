@@ -41,6 +41,7 @@ class Offre(TypedDict, total=False):
     localisation: str
     localisation_orig: str
     autres_lieux: list[str]  # same job published elsewhere (scan dedup)
+    signal: str  # "republiée ×2 · même texte : X" (programs/reposts)
     teletravail: str
     salaire: str
     date_publication: str

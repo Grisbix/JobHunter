@@ -972,6 +972,7 @@ class TableauMixin:
             _pays.nom(_pays_lieu(lieu)),  # names in the interface language
             _pays.nom(_region_lieu(lieu)),
             o.get("process", ""),
+            o.get("signal", ""),  # programs/reposts
             host,
             sv.get("d", ""),
         ]

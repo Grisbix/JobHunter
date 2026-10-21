@@ -93,6 +93,7 @@ _COMPTEURS = {
     "desc_ats": re.compile(r"===\s*(\d+)/\d+\s+descriptions\s+enregistr"),
     "tri": re.compile(r"supprimees\s*:\s*(\d+)"),
     "dispo": re.compile(r"(\d+)\s+retirees"),
+    "reposts": re.compile(r"(\d+)\s+republi"),
     "site": re.compile(r"(\d+)\s+offre\(s\)\s+retrouvee"),
     "docs": re.compile(r"(\d+)\s*/\s*\d+\s+offres\s+[ée]quip"),
     "controle": re.compile(r"(\d+)\s+[àa]\s+revoir"),
@@ -454,6 +455,14 @@ def _executer(a, journal):
         tri = ["-m", "jobhunter.scoring.sorting"] + ([] if a.rapide else ["--supprime"])
         code, n, _ = etape("4/5  Tri — seniorite, experience, metier", tri, "tri")
         bilan.append(("tri", code, n))
+
+    # 4a: reposted offers, and the same text under another company (an agency, a
+    # job board). Observations for the « Signal » column; nothing is removed. Its
+    # history (_offres_vues.json) needs one run a day to date the addresses.
+    if not a.sans_tri:
+        rep = ["-m", "jobhunter.programs.reposts"] + (["--dry"] if a.rapide else [])
+        code, n, _ = etape("4a/5 Republications", rep, "reposts", timeout=15 * 60)
+        bilan.append(("republications", code, n))
 
     # 4b, BEFORE THE FOLDERS: we do not generate a CV for a closed offer.
     # On 2026-10-02, a full audit found one verified offer out of three

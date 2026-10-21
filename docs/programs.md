@@ -61,7 +61,8 @@ found again by the scan tomorrow; a lost application never comes back.
 | `enrich_homepages.py` | Finds the home page of companies without an offer URL. |
 | `link_check.py` | Checks the URLs (live / dead / soft-404). Module. |
 | `recheck_dead.py` | Soft-404s rendered in JavaScript (HTTP 200 but empty body). |
-| `availability_audit.py` | Checks the whole queue without a browser and removes closed offers; waits and resumes on 429; `--duree` stops it by itself before removing. Step 4b of the pipeline, on Sunday. |
+| `availability_audit.py` | Checks the whole queue without a browser and removes closed offers; Workday, Ashby and Greenhouse through their public API first (`ats_liveness.py`, their pages are the same JavaScript shell open or closed); waits and resumes on 429; `--duree` stops it by itself before removing. Step 4b of the pipeline, on Sunday. |
+| `reposts.py` | « Signal » column: an offer back under a new address on the same site (history `_offres_vues.json`, 90 days), and the same text under another company (64-bit SimHash, agencies and job boards). Observations only. Step 4a. Limit: two identical titles opened in parallel at one company look like a repost. |
 | `restore.py` | Puts the queue back as it was in a backup (daily, before the audit, before the sort): `--liste`, then a name; inspection by default, `--appliquer` writes. Never restores the tracker, keeps the tracked offers, loses no description, and copies the state before so the restoration can be undone. `jobhunter restore`. |
 | `queue_tools.py` | Queue maintenance. |
 | `rescore_ats.py` | Recomputes `ats_pct` and `skills_match` over the whole queue. |
@@ -242,3 +243,10 @@ byte-order mark glues the mark to the first `User-agent` line, the parser drops 
 group, and its `Disallow` lines are ignored (measured on Python 3.14). And
 `RobotFileParser.read()` calls `urlopen` without a timeout. `scrape_jobs` fetches the
 file through `get_borne` and strips the mark before `parse()` (21/10).
+
+**A page drawn by JavaScript says nothing.** Workday and Ashby send the same empty
+shell, HTTP 200, for an open offer and a withdrawn one: the availability check found
+304 Workday offers "OK" and not one closed, while their API said half were withdrawn
+(10 of 20 sampled, each confirmed missing from the employer's job list). Ask the ATS's
+API (`ats_liveness`); on Workday a withdrawn offer is a 403 whose JSON says
+`errorCode: "S22"`, any other 403 proves nothing (21/10).

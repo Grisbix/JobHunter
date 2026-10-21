@@ -56,6 +56,7 @@ TEXTES: dict[str, str] = {
     "Pays": "Land",
     "Région": "Region",
     "Date offre": "Veröffentlicht",
+    "Signal": "Hinweis",
     "Lien": "Link",
     "Suivi": "Status",
     "Date": "Datum",

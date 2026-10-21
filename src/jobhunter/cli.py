@@ -39,6 +39,10 @@ COMMANDES = {
     "message": ("jobhunter.documents.message", "message court des formulaires"),
     "cv-auto": ("jobhunter.documents.cv_auto", "banque de faits du CV automatique"),
     "availability": ("jobhunter.programs.availability_audit", "controle les offres fermees"),
+    "reposts": (
+        "jobhunter.programs.reposts",
+        "offres republiees, et meme texte sous une autre entreprise (colonne Signal)",
+    ),
     "recipes": (
         "jobhunter.programs.recipes",
         "recettes de nettoyage (noms d'entreprises, lieux, contrats) : apercu, puis --appliquer",

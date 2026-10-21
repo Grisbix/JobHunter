@@ -6,6 +6,9 @@ TWO ROUTES, without a browser:
   - LinkedIn: the guest API `jobPosting/<id>` carries `closed-job` / "No longer
     accepting applications" when the job is closed (same detector as
     recheck_dead.linkedin_fast). ~1 s per offer.
+  - Workday, Ashby, Greenhouse: their public API first (ats_liveness). Their page is
+    the same JavaScript shell whether the offer is open or not: 304 Workday offers
+    read "OK 200" on 21/10/2026, half of them withdrawn.
   - the other sites: HTTP 404/410, or an expiry message in the page.
 
 THE LOOP, AND ITS LIMIT. LinkedIn answers 429 ("too many requests") after about 1900
@@ -175,12 +178,19 @@ def _attente(r, n):
 def controle_autre(url):
     # job_sources' shared client: one TLS connection per host, not per
     # request (~3 s saved at each call, see _client_partage).
+    from jobhunter import ats_liveness
     from jobhunter import sources as job_sources
 
+    client = job_sources._client_partage()
+    # Workday, Ashby, Greenhouse: their page is the same shell, open or closed; their
+    # API answers for real (ats_liveness). Inconclusive → the page, as before.
+    v = ats_liveness.controle(
+        url, lambda u, **kw: job_sources._get_borne(client, u, timeout=20, **kw)
+    )
+    if v:
+        return v
     try:
-        r = job_sources._get_borne(
-            job_sources._client_partage(), url, timeout=20, headers=UA, follow_redirects=True
-        )
+        r = job_sources._get_borne(client, url, timeout=20, headers=UA, follow_redirects=True)
     except Exception as e:
         return None, type(e).__name__
     if r.status_code in (404, 410):
@@ -203,6 +213,9 @@ def verifier(cibles, etat, pauses_max, aujourd_hui, fin=None):
     def temps_ecoule(marge=0):
         return fin is not None and time.monotonic() + marge >= fin
 
+    from jobhunter import ats_liveness
+
+    ats_liveness.oublier_tableaux()
     li = [o for o in cibles if _RX_LI_ID.search(o["url"])]
     autres = [o for o in cibles if not _RX_LI_ID.search(o["url"])]
     print(f"{len(li)} LinkedIn, {len(autres)} autres sites a controler")
