@@ -17,7 +17,15 @@ from pathlib import Path
 
 import pytest
 
+from jobhunter import signature as sig
 from jobhunter.programs import update as maj
+
+
+@pytest.fixture(autouse=True)
+def sans_cle(monkeypatch):
+    """The update mechanics, without the author's key: signing has its own tests
+    (test_signed_update.py), and fake releases cannot carry a real signature."""
+    monkeypatch.setattr(sig, "CLE_PUBLIQUE", "")
 
 
 def zip_de(fichiers, racine="JobHunter-main"):

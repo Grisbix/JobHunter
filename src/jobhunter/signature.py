@@ -25,7 +25,7 @@ from typing import Any
 
 # The author's public key (64 hexadecimal characters), set by
 # `python tools/signature.py cle`. Empty = unsigned versions.
-CLE_PUBLIQUE = ""
+CLE_PUBLIQUE = "82c0f5a387a2be07d03abce43bcf466070f978f950b1de83001b3822a02ae204"
 
 FICHIER = "signature.json"  # name of the release asset
 

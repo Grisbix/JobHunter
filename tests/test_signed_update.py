@@ -83,8 +83,9 @@ def test_vieille_signature_refusee(signee, capsys):
     assert lire(d, "Scripts/a.py") == "A = 1\n"
 
 
-def test_sans_cle_publique_comme_avant(installer, capsys):  # noqa: F811
+def test_sans_cle_publique_comme_avant(installer, capsys, monkeypatch):  # noqa: F811
     """As long as the author has not published their key: the tag's ZIP, said unsigned."""
+    monkeypatch.setattr(sig, "CLE_PUBLIQUE", "")
     d = installer()
     rc, sortie = lancer(capsys)
     assert rc == 0

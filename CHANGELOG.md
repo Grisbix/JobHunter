@@ -4,6 +4,17 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.11.0 — 2026-10-21
+
+- **Signed updates are now active.** The author's public key is published in this
+  version (`82c0f5a387a2be07…`, full value in `src/jobhunter/signature.py`). From now on, an
+  update is installed only if the author signed it, outside GitHub, with the private key
+  that never leaves their computer: a hijacked GitHub account or workflow can no longer
+  push a booby-trapped version to your installation. This version itself is the last one
+  installed without a signature, as planned (ADR 0012).
+- If an update is ever refused with « Mise à jour refusée », nothing was installed and
+  your data is untouched: wait for the signed release, or take the installer by hand.
+
 ## 3.10.2 — 2026-10-21
 
 - **Security: certifi 2026.10.19.** The bundle of root certificates that JobHunter's web

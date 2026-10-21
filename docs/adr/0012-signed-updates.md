@@ -1,7 +1,8 @@
 # 0012 — Updates signed by the author, outside GitHub
 
 **Status**: accepted on 2026-10-19 (step E2 of the roadmap, JobHunter 2.18.0).
-Active as soon as the author has published their public key (`signature.CLE_PUBLIQUE`).
+Active as soon as the author has published their public key (`signature.CLE_PUBLIQUE`):
+published in JobHunter 3.11.0 (2026-10-21).
 
 ## Context
 
@@ -28,7 +29,7 @@ Options ruled out:
 - **Ed25519 in pure Python** (`jobhunter.signature`, RFC 8032 section 6, the RFC's vectors
   in tests): no new dependency, neither in the package nor in the installer.
 - **The private key never leaves the author's computer** (`~/.jobhunter/cle_signature`,
-  created by `outils/signature.py cle`). The public key is written in the code.
+  created by `tools/signature.py cle`). The public key is written in the code.
 - **A manifest is signed**, not an archive: the version, the SHA-256 fingerprint of each
   file in the tag's ZIP, and that of `JobHunterSetup.exe`. The ZIPs that GitHub
   produces are not guaranteed to be identical byte for byte; their content is. The signed
@@ -48,7 +49,7 @@ Options ruled out:
 ## Consequences
 
 - Publishing a version takes one more step, on the author's side:
-  `uv run python outils/signature.py signer X.Y.Z --publier`, once the CI has finished.
+  `uv run python tools/signature.py signer X.Y.Z --publier`, once the CI has finished.
   A release without `signature.json` is refused by installations that have the key.
 - **Losing the private key** prevents any automatic update: every installation
   would have to take the installer by hand. The author backs it up off the computer.
