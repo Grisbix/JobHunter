@@ -162,6 +162,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"jobhunter : commande inconnue « {cmd} »\n\n{aide()}", file=sys.stderr)
         return 2
     if module == "jobhunter.app":
+        # The window has no options: `app --help` opened it, and its background
+        # collection outlived a caller that closed it (22/10/2026).
+        if any(a in ("-h", "--help") for a in reste):
+            print(f"jobhunter app — {COMMANDES['app'][1]}. Aucune option.")
+            return 0
         from jobhunter.welcome import assurer_profil
 
         assurer_profil()

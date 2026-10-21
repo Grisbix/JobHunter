@@ -48,3 +48,11 @@ def test_l_aide_du_programme_passe(cmd):
     r = _lance(cmd, "--help")
     assert r.returncode == 0, r.stderr
     assert "usage" in r.stdout.lower()
+
+
+def test_app_help_n_ouvre_pas_la_fenetre(monkeypatch, capsys):
+    import runpy
+
+    monkeypatch.setattr(runpy, "run_module", lambda *a, **k: pytest.fail("fenêtre ouverte"))
+    assert cli.main(["app", "--help"]) == 0
+    assert "Aucune option" in capsys.readouterr().out

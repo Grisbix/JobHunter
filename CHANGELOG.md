@@ -4,6 +4,12 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.14.1 — 2026-10-22
+
+- `jobhunter app --help` prints a line instead of opening the window. It used to open
+  it, and the window's background collection of company sites then kept running after
+  the caller closed it.
+
 ## 3.14.0 — 2026-10-22
 
 - **Workday, Ashby and Greenhouse offers really checked.** Their pages are drawn by
