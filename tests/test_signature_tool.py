@@ -24,6 +24,7 @@ def outil(tmp_path, monkeypatch):
     monkeypatch.setattr(m, "CLE_PRIVEE", tmp_path / "prive" / "cle_signature")
     monkeypatch.setattr(m, "MODULE", module)
     monkeypatch.setattr(m, "RACINE", tmp_path)
+    monkeypatch.setattr(m, "REFUSEES", tmp_path / "prive" / "versions_refusees.txt")
     return m
 
 
@@ -72,3 +73,78 @@ def test_signer_refuse_une_cle_qui_n_est_pas_celle_du_depot(outil, monkeypatch):
     outil.creer_cle()
     monkeypatch.setattr(sig, "CLE_PUBLIQUE", sig.publique(bytes(32)).hex())
     assert outil.signer("1.3.0", publier=False) == 1
+
+
+# ── approuver: the hourly task asks, the author decides ──────────────────────
+
+
+def rel(version, *assets, draft=False):
+    noms = [{"name": n} for n in assets]
+    return {
+        "tag_name": f"v{version}",
+        "published_at": "2026-10-21T14:05:00Z",
+        "draft": draft,
+        "prerelease": False,
+        "assets": noms,
+    }
+
+
+@pytest.fixture
+def github(outil, monkeypatch):
+    import json
+    import subprocess
+
+    etat = {"rels": []}
+
+    def gh(*args, check=True):
+        if args[0] == "api" and "/releases" in args[1]:
+            sortie = json.dumps(etat["rels"])
+        elif args[0] == "api" and "/commits/" in args[1]:
+            version = args[1].rsplit("/v", 1)[1]
+            sortie = json.dumps({"commit": {"message": f"Release {version}\n\ncorps"}})
+        else:
+            raise AssertionError(args)
+        return subprocess.CompletedProcess(["gh", *args], 0, sortie, "")
+
+    monkeypatch.setattr(outil, "_gh", gh)
+    return etat
+
+
+SETUP_OK = ("JobHunterSetup.exe", "JobHunterSetup.exe.sha256")
+
+
+def test_en_attente_depuis_la_derniere_signee(outil, github):
+    github["rels"] = [
+        rel("3.15.0", "JobHunterSetup.exe"),  # installer CI still running: not yet
+        rel("3.14.1", *SETUP_OK),
+        rel("3.14.0", *SETUP_OK, draft=True),
+        rel("3.13.0", *SETUP_OK, "signature.json"),
+        rel("3.11.0", *SETUP_OK),  # before the key: never asked
+    ]
+    att = outil.en_attente()
+    assert [r["version"] for r in att] == ["3.14.1"]
+    assert att[0]["commit"] == "Release 3.14.1" and att[0]["date"] == "2026-10-21 14:05"
+
+
+def test_rien_en_attente_aucune_fenetre(outil, github):
+    github["rels"] = [rel("3.13.0", *SETUP_OK, "signature.json")]
+    assert outil.approuver(demander=lambda *a: pytest.fail("fenêtre ouverte")) == 0
+
+
+def test_oui_signe_non_ne_redemande_plus(outil, github, monkeypatch):
+    github["rels"] = [rel("3.14.1", *SETUP_OK), rel("3.14.0", *SETUP_OK)]
+    signees, questions = [], []
+    monkeypatch.setattr(outil, "signer", lambda v, publier: signees.append((v, publier)) or 0)
+
+    def demander(titre, question):
+        questions.append(question)
+        return "3.14.1" in question
+
+    assert outil.approuver(demander) == 0
+    assert signees == [("3.14.1", True)]
+    assert "3.14.0" in questions[0]  # oldest first
+    assert "piraté" in questions[0]  # says why a surprise must be refused
+    questions.clear()
+    github["rels"] = [rel("3.14.0", *SETUP_OK)]
+    outil.approuver(demander)
+    assert questions == []  # a no is remembered
