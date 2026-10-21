@@ -26,6 +26,7 @@ from jobhunter.app.theme import (
     LOGBG,
     LOGFG,
     SIDE,
+    SIDE_ALERTE,
     SIDE_H,
     SIDE_MUT,
     SIDE_TX,
@@ -96,6 +97,41 @@ class ExecutionMixin:
             return
         self._log(f"\n{'=' * 56}\n▶ {label}\n{'=' * 56}\n")
         threading.Thread(target=self._exec, args=(cmd, cmd[-1]), daemon=True).start()
+
+    def _maj_collecte(self: "AppTypee", repeter: bool = True) -> None:
+        """The sidebar line on the morning collection; the start button when it is due.
+
+        Read again every five minutes: the scheduled task runs outside the
+        application, and a collection that never started leaves nothing else to see.
+        """
+        lbl = getattr(self, "_collecte_lbl", None)
+        try:
+            if lbl is None or not lbl.winfo_exists():
+                return  # the window was closed before this callback
+        except Exception:
+            return
+        try:
+            from jobhunter import collect_state as _etat
+
+            d = _etat.diagnostic(tr=_langue.t)
+        except Exception:  # never break the window over a status line
+            d = None
+        if d is not None:
+            couleur = {"ok": SIDE_MUT, "en_cours": SIDE_TX}.get(d.niveau, SIDE_ALERTE)
+            lbl.configure(text=("⚠ " if d.a_relancer else "") + d.texte, text_color=couleur)
+            if d.a_relancer:
+                self._collecte_btn.pack(fill="x", padx=10, pady=(0, 6), after=lbl)
+            else:
+                self._collecte_btn.pack_forget()
+        if repeter:
+            self.root.after(5 * 60 * 1000, self._maj_collecte)
+
+    def _lancer_collecte(self: "AppTypee") -> None:
+        """The full morning pipeline, the very one the scheduled task runs."""
+        self.run_step(
+            [PY, "-m", "jobhunter.programs.daily_pipeline"], _langue.t("Collecte du matin")
+        )
+        self.root.after(4000, lambda: self._maj_collecte(repeter=False))
 
     def _occupe(self: "AppTypee") -> Any:
         """Is something already writing the queue? Says so, and returns True if yes.
@@ -339,6 +375,7 @@ class ExecutionMixin:
                         self._progression = _progres.Progression()
                     self.load_offers()
                     self.root.after(1500, self._auto_enrich)
+                    self._maj_collecte(repeter=False)
                 elif kind == "done_all":
                     if val is None:
                         self._log("\n✅ TOUT FAIRE terminé.\n")

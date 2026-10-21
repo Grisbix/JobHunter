@@ -79,8 +79,12 @@ def test_chaque_cle_courte_existe_dans_l_app():
 
     Long texts, written in several pieces in the code, are not checked here.
     """
+    # Modules outside app/ whose sentences the app translates (they take `tr`).
+    hors_app = [APP.parent / "collect_state.py"]
     source = "\n".join(
-        p.read_text(encoding="utf-8") for p in APP.glob("*.py") if not p.name.startswith("texts_")
+        p.read_text(encoding="utf-8")
+        for p in [*APP.glob("*.py"), *hors_app]
+        if not p.name.startswith("texts_")
     )
     mortes = [k for k in EN if len(k) < 60 and f'"{k}' not in source and f"'{k}" not in source]
     assert mortes == []

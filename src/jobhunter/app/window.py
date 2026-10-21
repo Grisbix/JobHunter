@@ -44,6 +44,7 @@ from jobhunter.app.theme import (
     CL,
     MUT,
     SIDE,
+    SIDE_CARD,
     SIDE_H,
     SIDE_MUT,
     SIDE_TX,
@@ -201,6 +202,32 @@ class App(
             cursor="hand2",
             pady=8,
         ).pack(fill="x", padx=10, pady=(8, 6))
+        # The morning collection in one line — fresh, running, stopped or missed — and
+        # the button to start it when it did not happen (jobhunter.collect_state).
+        self._collecte_lbl = CL(
+            outils,
+            text="",
+            bg=SIDE,
+            fg=SIDE_MUT,
+            font=(_theme.FONT_UI, 11),
+            anchor="w",
+            justify="left",
+            wraplength=230,
+        )
+        self._collecte_lbl.pack(fill="x", padx=12, pady=(0, 4))
+        self._collecte_btn = CB(
+            outils,
+            text="Lancer la collecte du matin",
+            command=self._lancer_collecte,
+            font=(_theme.FONT_UI, 12),
+            bg=SIDE_CARD,
+            fg=SIDE_TX,
+            relief="flat",
+            activebackground=SIDE_H,
+            cursor="hand2",
+            pady=5,
+        )
+        self.root.after(1500, self._maj_collecte)
         for label, color, cmd, tip in STEPS:
             CB(
                 outils,

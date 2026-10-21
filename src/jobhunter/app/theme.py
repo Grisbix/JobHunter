@@ -81,6 +81,10 @@ SIDE_MUT = "#C3D3EC"
 SIDE_H = "#304C80"
 
 
+# A warning on the dark sidebar: the amber of the light surfaces is unreadable there.
+SIDE_ALERTE = "#F6C467"
+
+
 LOGBG = SIDE_CARD
 
 

@@ -13,13 +13,18 @@ Nothing is created without a click from the user; `schtasks` acts for their acco
 only, without administrator rights. Outside Windows: `launchers/schedule.sh` (cron).
 """
 
+import os
 import re
 import subprocess  # nosec B404 : schtasks, arguments built here
 import sys
+import tempfile
+import time
 from pathlib import Path
+from xml.sax.saxutils import escape
 
 from jobhunter import frozen as _gele
 from jobhunter import profiles as _profils
+from jobhunter import root as _racine
 
 TACHE = "JobHunter - collecte quotidienne"  # the name in schedule.bat
 _RX_HEURE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
@@ -62,6 +67,58 @@ def planifiee() -> bool:
         return False
 
 
+def xml_tache(commande: str, heure: str) -> str:
+    """The task's definition, for `schtasks /Create /XML`.
+
+    - StartWhenAvailable: a morning missed is caught up as soon as the computer is on.
+    - Not stopped nor skipped on battery; at most 8 hours; one run at a time.
+    - NO working directory. On 21 October 2026 the author's task still started in a
+      data folder renamed by the migration: Windows refused to launch it (0x8007010B)
+      and the morning collection silently did not happen. The command finds its data
+      by itself (JobHunter.pyw, the installed executable).
+    - The user's own account, only while they are logged on, no elevation.
+    """
+    m = re.match(r'^"([^"]+)"\s*(.*)$', commande)
+    exe, args = (m.group(1), m.group(2)) if m else (commande, "")
+    debut = time.strftime("%Y-%m-%d")
+    return f"""<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Description>JobHunter : collecte quotidienne des offres.</Description>
+  </RegistrationInfo>
+  <Triggers>
+    <CalendarTrigger>
+      <StartBoundary>{debut}T{heure}:00</StartBoundary>
+      <Enabled>true</Enabled>
+      <ScheduleByDay><DaysInterval>1</DaysInterval></ScheduleByDay>
+    </CalendarTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <LogonType>InteractiveToken</LogonType>
+      <RunLevel>LeastPrivilege</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <ExecutionTimeLimit>PT8H</ExecutionTimeLimit>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>{escape(exe)}</Command>
+      <Arguments>{escape(args)}</Arguments>
+    </Exec>
+  </Actions>
+</Task>
+"""
+
+
 def creer(heure: str = "08:00") -> tuple[bool, str]:
     """Creates (or replaces) the daily task. Returns (success, message for the user)."""
     if not disponible():
@@ -72,12 +129,21 @@ def creer(heure: str = "08:00") -> tuple[bool, str]:
         cmd = commande()
     except FileNotFoundError as e:
         return False, str(e)
-    r = _schtasks("/Create", "/F", "/SC", "DAILY", "/ST", heure, "/TN", TACHE, "/TR", cmd)
+    # Through an XML definition: `/SC DAILY` alone leaves Windows' defaults, under which
+    # a morning missed (computer off or asleep at 08:00) is simply skipped, and a laptop
+    # on battery does not start the collection at all.
+    f = Path(tempfile.gettempdir()) / f"jobhunter_tache_{os.getpid()}.xml"
+    try:
+        f.write_text(xml_tache(cmd, heure), encoding="utf-16")
+        r = _schtasks("/Create", "/F", "/TN", TACHE, "/XML", str(f))
+    finally:
+        f.unlink(missing_ok=True)
     if r.returncode != 0:
         return False, f"La tâche n'a pas pu être créée : {(r.stderr or r.stdout).strip()}"
     return True, (
-        f"Collecte planifiée chaque jour à {heure}, si l'ordinateur est allumé. "
-        f"Journaux : {Path('Scripts') / '_logs'}."
+        f"Collecte planifiée chaque jour à {heure} ; si l'ordinateur était éteint, "
+        "elle se fait dès qu'il est rallumé. "
+        f"Journaux : {Path(_racine.nom('Scripts')) / '_logs'}."
     )
 
 

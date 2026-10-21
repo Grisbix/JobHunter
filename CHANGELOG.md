@@ -4,6 +4,24 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.13.0 — 2026-10-21
+
+- **The morning collection, visible in the app.** Under « Actualiser les offres », one
+  line says how the last collection went: « Collecte du matin : aujourd'hui 08:04 ✓ »
+  (with the steps in error, if any), « en cours depuis… », « interrompue » (the computer
+  was shut down halfway), « arrêtée » or « Pas de collecte depuis hier 08:04 ». When it
+  is due, « Lancer la collecte du matin » runs the very pipeline the scheduled task
+  runs — no terminal, no one to call. The line is read again every five minutes.
+- The pipeline records that state in `_derniere_collecte.json` (start, end, code, run
+  identifier, log, last success). A morning where one step failed (a source refusing,
+  a folder to review) counts as a collection done, not as a failure; a quick test run
+  (`--rapide`) does not count at all.
+- **A sturdier daily task.** « Collecte chaque matin » now creates the task from a full
+  definition: a morning missed because the computer was off or asleep is caught up as
+  soon as it is back, the collection also runs on battery, it is stopped after 8 hours
+  at most, and the task no longer has a start-in folder — a renamed folder made Windows
+  refuse to start the author's task, silently, on 21 October.
+
 ## 3.12.0 — 2026-10-21
 
 - **Saved views.** « Vues ▾ » above the table keeps the current filters, sort, search

@@ -315,6 +315,27 @@ def main():
     # per run, next to the console log; the steps inherit it.
     os.environ["JOBHUNTER_JOURNAL"] = str(journal.with_name(journal.stem + "_moteur.log"))
 
+    # The state of this run, for the application (collect_state): a collection that
+    # did not finish, or did not even start, must show where the user looks.
+    from jobhunter import collect_state as _etat
+
+    if a.rapide:  # a wiring test on a sample is not the morning collection
+        return _executer(a, journal)[0]
+    _etat.debut(_execution.courant(), str(journal))
+    try:
+        rc, erreurs = _executer(a, journal)
+    except BaseException as e:  # noqa: BLE001 — recorded, then raised again
+        _etat.plantage(type(e).__name__)
+        raise
+    if rc == 3:
+        _etat.plantage(erreurs[0])
+    else:
+        _etat.fin(rc, erreurs)
+    return rc
+
+
+def _executer(a, journal):
+    """The run itself. Returns (exit code, names of the steps in error)."""
     titre = f"Pipeline quotidien — {time.strftime('%Y-%m-%d %H:%M')}"
     print(f"╔{'═' * 60}╗")
     print(f"║ {titre:<58} ║")
@@ -382,7 +403,7 @@ def main():
         if code == 3:
             # Lock taken elsewhere: the following steps would fail the same way.
             print("\n! La file est occupee par un autre programme. Arret propre.")
-            return 3
+            return 3, ["file occupée par un autre programme"]
         ajoutees += n or 0
     if ajoutees == 0:
         alertes.append("la collecte n'a ajoute AUCUNE offre")
@@ -510,7 +531,8 @@ def main():
         print("\n⚠ A REGARDER")
         for x in alertes:
             print(f"  · {x}")
-    return 1 if any(c not in (0,) for _, c, _ in bilan) else 0
+    erreurs = [nom for nom, c, _ in bilan if c not in (0,)]
+    return (1 if erreurs else 0), erreurs
 
 
 if __name__ == "__main__":

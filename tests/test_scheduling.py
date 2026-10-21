@@ -41,8 +41,8 @@ def test_creer_tache_du_meme_nom_que_planifier_bat(schtasks, monkeypatch):
     a = schtasks[0]
     assert a[:2] == ["/Create", "/F"]
     assert a[a.index("/TN") + 1] == "JobHunter - collecte quotidienne"
-    assert a[a.index("/ST") + 1] == "07:30"
-    assert a[a.index("/TR") + 1] == '"jh.exe" pipeline'
+    assert "/XML" in a
+    assert not plan.Path(a[a.index("/XML") + 1]).exists()  # the temporary file is removed
     bat = (plan.Path(__file__).parent.parent / "launchers" / "schedule.bat").read_text(
         encoding="utf-8"
     )
@@ -65,3 +65,33 @@ def test_hors_windows_rien(monkeypatch):
     monkeypatch.setattr(plan, "disponible", lambda: False)
     assert plan.creer("08:00")[0] is False
     assert plan.planifiee() is False
+
+
+def test_definition_xml_rattrape_et_sans_dossier_de_depart():
+    """Caught up after a morning missed, never a start-in folder (21/10/2026)."""
+    x = plan.xml_tache(r'"C:\Program Files\JH\jh & co.exe" pipeline --docs 5', "07:30")
+    assert "<StartWhenAvailable>true</StartWhenAvailable>" in x
+    assert "<DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>" in x
+    assert "<StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>" in x
+    assert "<ExecutionTimeLimit>PT8H</ExecutionTimeLimit>" in x
+    assert "WorkingDirectory" not in x
+    assert "T07:30:00</StartBoundary>" in x
+    assert r"<Command>C:\Program Files\JH\jh &amp; co.exe</Command>" in x
+    assert "<Arguments>pipeline --docs 5</Arguments>" in x
+    import xml.dom.minidom
+
+    xml.dom.minidom.parseString(x.split("\n", 1)[1])  # well-formed
+
+
+def test_xml_ecrit_en_utf16_pour_schtasks(schtasks, monkeypatch):
+    lu = {}
+
+    def faux(*args):
+        f = plan.Path(args[list(args).index("/XML") + 1])
+        lu["texte"] = f.read_text(encoding="utf-16")
+        return plan.subprocess.CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(plan, "commande", lambda: '"jh.exe" pipeline')
+    monkeypatch.setattr(plan, "_schtasks", faux)
+    assert plan.creer("08:00")[0]
+    assert "<Command>jh.exe</Command>" in lu["texte"]
