@@ -27,7 +27,7 @@ from jobhunter.network import exiger_http  # noqa: E402
 from jobhunter.programs import update as maj  # noqa: E402
 
 ID = "Grisbix.JobHunter"
-SCHEMA = "1.9.0"
+SCHEMA = "1.12.0"
 APP_ID = "{6E3F2A41-7C1B-4F0E-9A3D-4B8C5D2E1F70}"  # tools/installer/JobHunter.iss
 DEPOT_URL = f"https://github.com/{maj.DEPOT}"
 
