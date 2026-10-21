@@ -148,3 +148,10 @@ Scripts/_evaluation.json
 /tools/installer/build/
 # The build output of tools/installer before 2.25 (outils/installateur/build).
 /outils/
+
+# Run-time state of 3.8+ in the legacy layout (data/ is ignored as a whole)
+Scripts/_api_quota.json
+Scripts/_flux_etat.json
+Scripts/_recettes.json
+Scripts/_derniere_collecte.json
+Scripts/_vues.json
