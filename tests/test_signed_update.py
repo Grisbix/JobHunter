@@ -76,6 +76,28 @@ def test_sans_signature_refuse(signee, capsys):
     assert lire(d, "Scripts/a.py") == "A = 1\n"
 
 
+def _http_404(urls):
+    """A fake GitHub: an absent asset answers 404, as the real one does."""
+    import urllib.error
+
+    def get(url, t):
+        if url not in urls:
+            raise urllib.error.HTTPError(url, 404, "Not Found", None, None)  # type: ignore[arg-type]
+        return urls[url]
+
+    return get
+
+
+def test_pas_encore_signee_raison_claire(signee, capsys, monkeypatch):
+    urls = servis(avec_signature=False)
+    d = signee(zips=urls)
+    monkeypatch.setattr(maj, "_get", _http_404(urls))
+    rc, sortie = lancer(capsys)
+    assert rc == 1
+    assert "1.3.0 n'est pas encore signée par l'auteur" in sortie
+    assert lire(d, "Scripts/a.py") == "A = 1\n"
+
+
 def test_vieille_signature_refusee(signee, capsys):
     d = signee(zips=servis(version_signee="1.2.0"))
     rc, sortie = lancer(capsys)
@@ -127,6 +149,15 @@ def test_appli_installateur_altere_jamais_ouvert(appli, capsys):
     assert maj.maj_application(False) == 1
     assert lances == []
     assert "refusée" in capsys.readouterr().out
+
+
+def test_appli_pas_encore_signee_rien_ouvert(appli, capsys, monkeypatch):
+    urls = servis(avec_signature=False)
+    lances = appli(urls)
+    monkeypatch.setattr(maj, "_get", _http_404(urls))
+    assert maj.maj_application(False) == 1
+    assert lances == []  # neither the installer nor the releases page
+    assert "pas encore signée" in capsys.readouterr().out
 
 
 def test_appli_verifier_ne_telecharge_rien(appli):

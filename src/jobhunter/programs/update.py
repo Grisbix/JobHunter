@@ -48,6 +48,7 @@ import shutil
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -181,6 +182,26 @@ def _get(url, timeout):
     req = urllib.request.Request(exiger_http(url), headers={"User-Agent": "JobHunter-mise-a-jour"})
     with urllib.request.urlopen(req, timeout=timeout) as r:  # nosec B310 : scheme checked by exiger_http
         return r.read()
+
+
+def _signature(version):
+    """The author's signed manifest of `version`, read and checked.
+
+    A release the author has not signed yet has no `signature.json` (404): that is a
+    refusal with a clear reason, not a download failure.
+
+    Raises:
+        signature.SignatureInvalide: not signed yet, or the signature is wrong.
+    """
+    try:
+        contenu = _get(ASSET_URL.format(version, _sig.FICHIER), 60)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            raise _sig.SignatureInvalide(
+                f"la version {version} n'est pas encore signée par l'auteur"
+            ) from e
+        raise
+    return _sig.ouvrir(contenu, version)
 
 
 def nouvelle_version(timeout=5, intervalle_h=24):
@@ -536,7 +557,7 @@ def fichiers_a_installer():
     if not _sig.CLE_PUBLIQUE:
         print(f"(Version {distante} non signée : la clé de l'auteur n'est pas encore publiée.)")
         return nouveaux
-    m = _sig.ouvrir(_get(ASSET_URL.format(distante, _sig.FICHIER), 60), distante)
+    m = _signature(distante)
     _sig.controler_fichiers(m, nouveaux)
     print(f"Signature de l'auteur vérifiée : {len(nouveaux)} fichiers de la {distante}.")
     return nouveaux
@@ -567,7 +588,7 @@ def maj_application(verifier_seulement):
         print(f"Téléchargement de {SETUP} {v} …")
         exe = _get(ASSET_URL.format(v, SETUP), 900)
         if _sig.CLE_PUBLIQUE:
-            m = _sig.ouvrir(_get(ASSET_URL.format(v, _sig.FICHIER), 60), v)
+            m = _signature(v)
             _sig.controler_setup(m, exe)
             print("Signature de l'auteur vérifiée.")
         else:

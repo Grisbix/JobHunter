@@ -58,10 +58,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # An old version that carries the author's key refuses an unsigned update: until
-          # the author has attached signature.json (tools/signature.py signer --publier,
-          # which re-runs this workflow), there is nothing to test yet.
-          if grep -q '^CLE_PUBLIQUE = ""' jh/src/jobhunter/signature.py; then exit 0; fi
+          # A version that carries the author's key refuses an unsigned update — the old
+          # one for the update, the new one for the second pass ("Déjà à jour"): until the
+          # author has attached signature.json (tools/signature.py signer --publier, which
+          # re-runs this workflow), there is nothing to test yet.
+          if grep -q '^CLE_PUBLIQUE = ""' jh/src/jobhunter/signature.py \
+             && grep -q '^CLE_PUBLIQUE = ""' outils/src/jobhunter/signature.py; then exit 0; fi
           noms=$(gh release view "v${{ steps.v.outputs.cible }}" -R "$GITHUB_REPOSITORY" --json assets -q '.assets[].name')
           if echo "$noms" | grep -qx signature.json; then exit 0; fi
           echo "attente=1" >> "$GITHUB_OUTPUT"

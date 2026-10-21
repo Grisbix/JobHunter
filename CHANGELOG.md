@@ -4,6 +4,16 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.11.1 — 2026-10-21
+
+- A release the author has not signed yet is now refused with a clear reason
+  (« la version X n'est pas encore signée par l'auteur ») instead of a bare download
+  error, and the installed application no longer opens the releases page for it.
+  Nothing is installed either way.
+- CI: the real-update test waits for the author's signature whenever the new version
+  carries the key, and the installer test checks the signed update path (refused
+  unsigned, installed once signed, with a throwaway test key).
+
 ## 3.11.0 — 2026-10-21
 
 - **Signed updates are now active.** The author's public key is published in this

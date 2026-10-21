@@ -81,7 +81,12 @@ assert docs, "aucun CV ni lettre écrit"
 etape(f"dossier : {', '.join(sorted(p.parent.name + '/' + p.name for p in docs))}")
 
 # 5. The update of the installed application, simulated network: the next version
-#    is the installer that was just built, with its published checksum.
+#    is the installer that was just built, with its published checksum. Signed with a
+#    throwaway test key standing for the author's (whose private key is not in the CI):
+#    first refused while unsigned, then installed once signed.
+import urllib.error  # noqa: E402
+
+from jobhunter import signature as sig  # noqa: E402
 from jobhunter.programs import update as maj  # noqa: E402
 
 setup = Path(os.environ["ESSAI_SETUP"]).read_bytes()
@@ -91,10 +96,25 @@ servis = {
     .hexdigest()
     .encode(),
 }
+
+
+def _get(url: str, t: float) -> bytes:
+    if url not in servis:
+        raise urllib.error.HTTPError(url, 404, "Not Found", None, None)  # type: ignore[arg-type]
+    return servis[url]
+
+
+essai = bytes(range(32))
+sig.CLE_PUBLIQUE = sig.publique(essai).hex()
 lances: list[list[str]] = []
 maj.nouvelle_version = lambda **kw: "99.0.0"  # type: ignore[assignment]
-maj._get = lambda url, t: servis[url]  # type: ignore[assignment]
+maj._get = _get  # type: ignore[assignment]
 maj.subprocess.Popen = lambda args, **kw: lances.append(args)  # type: ignore[assignment,misc,return-value]
+assert maj.maj_application(False) == 1 and not lances, "version non signée acceptée"
+etape("mise à jour non signée refusée")
+servis[maj.ASSET_URL.format("99.0.0", sig.FICHIER)] = sig.emballer(
+    essai, sig.manifeste("99.0.0", {}, setup)
+)
 assert maj.maj_application(False) == 0
 assert len(lances) == 1 and Path(lances[0][0]).read_bytes() == setup
 Path(os.environ["ESSAI_SORTIE"]).write_text(lances[0][0], encoding="utf-8")
