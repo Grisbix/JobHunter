@@ -217,3 +217,28 @@ network work is done outside the lock, and only its results are applied to the q
 rows whose title failed a modified filter, without looking at the tracking: an
 application lost its record. The invariant of AGENTS.md held for explicit
 deletions, not for this cleanup (audit of 19/10).
+
+**A pattern spelled one way misses the page written another way.** Portals write
+"n’est plus disponible" with a typographic apostrophe (U+2019) and German pages
+"verfügbar": a closure pattern with a plain `'` or without the umlaut never matched,
+and the offer stayed "open". `availability_audit.texte_ferme` normalises the page
+first (ASCII quotes, no accents, single blanks) and every pattern is spelled in that
+alphabet. Offers abroad are wanted, so closure banners exist in seven languages
+(career-ops audit, 21/10).
+
+**One weak word is not a status.** "Unfortunately we need to reschedule your interview"
+was suggested as a rejection, and an acknowledgement promising "next steps" as an
+interview. `mail/statuses` splits phrases in two tiers: a strong one is enough, weak
+ones need a second one, and a weak interview word does not count in an
+acknowledgement (21/10).
+
+**A length floor on words drops whole names.** Company words under three letters were
+discarded to skip "de", "of"…: EY, HP and 3M then had no word left and were never
+matched. Short names are kept when they are all the name has, and matched as whole
+words — never "hp" inside "php" (21/10).
+
+**`urllib.robotparser` trusts what it is given.** A robots.txt starting with a UTF-8
+byte-order mark glues the mark to the first `User-agent` line, the parser drops that
+group, and its `Disallow` lines are ignored (measured on Python 3.14). And
+`RobotFileParser.read()` calls `urlopen` without a timeout. `scrape_jobs` fetches the
+file through `get_borne` and strips the mark before `parse()` (21/10).
