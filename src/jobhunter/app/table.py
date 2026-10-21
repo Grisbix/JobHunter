@@ -12,6 +12,7 @@ import customtkinter as ctk
 
 from jobhunter.app import countries as _pays
 from jobhunter.app import theme as _theme
+from jobhunter.app import views as _vues
 from jobhunter.app._app_type import AppTypee
 from jobhunter.app.common import (
     _RUBRIQUES,
@@ -186,15 +187,13 @@ class TableauMixin:
         # silent in both cases.
         self.lbl_count = CL(bar2, text="", bg=WORK, fg=MUT, font=(_theme.FONT_UI, 12), anchor="w")
         self.lbl_count.pack(side="left")
-        CB(
-            bar2,
-            text="Colonnes",
-            command=self._toggle_columns,
-            bg=WORK,
-            fg=MUT,
-            width=80,
-            font=(_theme.FONT_UI, 12),
-        ).pack(side="right", padx=(8, 0))
+        b_cols = CB(bar2, text="Colonnes ▾", bg=WORK, fg=MUT, font=(_theme.FONT_UI, 12))
+        b_cols.configure(command=lambda: _vues.menu_colonnes(self, b_cols))
+        b_cols.pack(side="right", padx=(8, 0))
+        # Saved views: filters, sort, search and columns under a name (app/views.py).
+        b_vues = CB(bar2, text="Vues ▾", bg=WORK, fg=MUT, font=(_theme.FONT_UI, 12))
+        b_vues.configure(command=lambda: _vues.menu_vues(self, b_vues))
+        b_vues.pack(side="right", padx=(8, 0))
         # Batch actions appear ONLY if there is a selection: four permanent
         # "(0)" buttons were noise, and the most dangerous one
         # (Delete) caught the eye in red while having nothing to do.
@@ -291,7 +290,7 @@ class TableauMixin:
                 "_chk": 34,
                 "entreprise": 135,
                 "poste": 235,
-                "fit": 45,
+                "fit": 56,  # « 10.2 » was cut to « 10.: »
                 "contrat": 70,
                 "localisation": 115,
                 "pays": 85,
@@ -317,13 +316,16 @@ class TableauMixin:
             "_st",
         )
         self.tree.configure(displaycolumns=self._visible_cols)
+        self._urlcol = None  # link available in the card and the context menu
+        memo = _vues.colonnes_valides(_vues.lire()["colonnes"], cols)
+        if memo:  # the columns chosen last time
+            self._montrer_colonnes(memo)
         _hsb = ttk.Scrollbar(twrap, orient="horizontal", command=self.tree.xview)
         _vsb = ttk.Scrollbar(twrap, orient="vertical", command=self.tree.yview)
         self.tree.configure(xscrollcommand=_hsb.set, yscrollcommand=_vsb.set)
         _hsb.pack(side="bottom", fill="x")
         _vsb.pack(side="right", fill="y")
         self.tree.pack(side="top", fill="both", expand=True)
-        self._urlcol = None  # link available in the card and the context menu
         self._chkcol = "#%d" % (1 + [c[0] for c in COLS].index("_chk"))
         self.tree.bind("<Button-1>", self._click_cell, add="+")
         self._dispo_suivre(split)  # separateur tableau | fiche
@@ -451,8 +453,40 @@ class TableauMixin:
         all_cols = tuple(c[0] for c in COLS)
         current = tuple(self.tree.cget("displaycolumns"))
         visible = all_cols if current == self._visible_cols else self._visible_cols
+        self._montrer_colonnes(list(visible))
+
+    def _montrer_colonnes(self: "AppTypee", cols: list[str], memoriser: bool = False) -> None:
+        """Shows these columns, in the table's order; `memoriser` keeps them for next time."""
+        visible = tuple(_vues.colonnes_valides(cols, [c[0] for c in COLS]) or self._visible_cols)
         self.tree.configure(displaycolumns=visible)
         self._urlcol = "#%d" % (visible.index("_url") + 1) if "_url" in visible else None
+        if memoriser:
+            _vues.memoriser_colonnes(list(visible))
+        self.root.after_idle(self._etaler_colonnes)
+
+    def _etaler_colonnes(self: "AppTypee") -> None:
+        """The width freed by hidden columns goes to the main ones, not to blank space.
+
+        Treeview only stretches columns when the window is resized: after hiding three
+        columns, the company and job titles stayed cut while a third of the table was
+        empty. Job title first (two thirds), then company; the others keep their width.
+        """
+        try:
+            largeur = self.tree.winfo_width()
+            vis = list(self.tree.cget("displaycolumns"))
+        except tk.TclError:
+            return
+        principales = [c for c in ("poste", "entreprise") if c in vis]
+        if largeur < 50 or not principales:
+            return
+        fixe = sum(int(self.tree.column(c, "width")) for c in vis if c not in principales)
+        libre = largeur - fixe - 4
+        parts = {"poste": 2, "entreprise": 1}
+        total = sum(parts[c] for c in principales)
+        for c in principales:
+            w = libre * parts[c] // total
+            if w > int(self.tree.column(c, "minwidth")):
+                self.tree.column(c, width=w)
 
     def _toggle_suivi(self: "AppTypee") -> None:
         self._suivi_open = not self._suivi_open

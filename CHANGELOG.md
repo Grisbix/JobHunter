@@ -4,6 +4,24 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.12.0 — 2026-10-21
+
+- **Saved views.** « Vues ▾ » above the table keeps the current filters, sort, search
+  and columns under a name (« ESG Paris, fit first ») and brings them back in one click;
+  « Vue par défaut » clears everything. Views belong to the active profile
+  (`_vues.json` in its data folder). A view saved before a column was renamed still
+  opens, without that column.
+- **Columns you choose, remembered.** « Colonnes ▾ » is now a menu with one tick per
+  column, plus « Vue compacte » and « Toutes les colonnes »; the choice survives a
+  restart. The width freed by hidden columns goes to the job title and the company
+  instead of blank space, and « Fit » is wide enough for « 10.2 ».
+- **Document viewer.** An edited letter shows « ● » in its title and on the
+  « Enregistrer » button, which stands out until it is saved (Ctrl+S saves). Choosing
+  another document or leaving the panel asks whether to save the changes, instead of
+  dropping them. « ＋ / － » also zoom a Word document's text, and the viewer says when
+  Word holds the document open. The zoom and save buttons no longer fall out of a
+  900-pixel-high window, and a long file name no longer hides the buttons beside it.
+
 ## 3.11.1 — 2026-10-21
 
 - A release the author has not signed yet is now refused with a clear reason

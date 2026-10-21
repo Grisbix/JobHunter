@@ -56,6 +56,18 @@ _PARESSEUX["CV_OFFRE_DIR"] = lambda: importlib.import_module("jobhunter.app.comm
 _PARESSEUX["LETTRES_DIR"] = lambda: importlib.import_module("jobhunter.app.common").LETTRES_DIR
 
 
+def ouvert_dans_word(p: Path) -> bool:
+    """Word holds this document open: its owner file `~$…` sits beside it.
+
+    Word names it after the document, minus the first characters when the name is long
+    (`~$ttre.docx` for `Lettre.docx`). Saving here while Word has it open would be
+    overwritten by Word's next save: the viewer says so.
+    """
+    n = p.name
+    candidats = {"~$" + n, "~$" + n[1:], "~$" + n[2:]}
+    return any((p.parent / c).exists() for c in candidats if len(c) > 2 + len(p.suffix))
+
+
 class DetailMixin:
     def _detail_full(self: "AppTypee", o: Any = None) -> None:
         """Détails PLEIN ÉCRAN, fenêtre COUPÉE EN DEUX : infos offre à GAUCHE,
@@ -481,6 +493,62 @@ class DetailMixin:
             pady=10,
         )
 
+        def nom_court(p: Path, n: int = 46) -> str:
+            """A long file name pushed the buttons and the info line out of the bar."""
+            return p.name if len(p.name) <= n else p.name[: n - 1 - len(p.suffix)] + "…" + p.suffix
+
+        def maj_marque(e: Any = None) -> None:
+            """« ● » in the title and the info line while an edit is not saved.
+
+            Without it, nothing told an edited letter from a saved one: leaving the panel
+            or choosing another document dropped the changes in silence.
+            """
+            p = state.get("path")
+            sale = bool(state.get("editable")) and bool(txtv.edit_modified())
+            if sale == bool(state.get("sale")):
+                return
+            state["sale"] = sale
+            if p is not None:
+                title.configure(text=("● " if sale else "") + nom_court(p))
+            pginfo.configure(
+                text=_t("● changements non enregistrés — Enregistrer (Ctrl+S)")
+                if sale
+                else state.get("info", "")
+            )
+            b_enr.configure(
+                text=("● " if sale else "") + _t("Enregistrer"),
+                fg_color=ACC if sale else BTN,  # a CTkButton: not bg / fg
+                hover_color=ACC_H if sale else BTN_H,
+                text_color=ACC_TX if sale else TX,
+            )
+
+        def confirmer_abandon(annulable: bool = True) -> bool:
+            """Unsaved edit: save it, drop it, or (if `annulable`) stay. True = go on."""
+            if not state.get("sale"):
+                return True
+            from tkinter import messagebox
+
+            q = _t("Enregistrer les changements de « {a} » ?").format(a=state["path"].name)
+            titre = _t("Changements non enregistrés")
+            r = messagebox.askyesnocancel(titre, q) if annulable else messagebox.askyesno(titre, q)
+            if r is None:
+                return False
+            if r:
+                save_doc()
+                if state.get("sale") and annulable:  # save failed: stay on the text
+                    return False
+            txtv.edit_modified(False)
+            state["sale"] = False
+            return True
+
+        txtv.bind("<<Modified>>", maj_marque)
+
+        def _ctrl_s(e: Any) -> str:
+            save_doc()
+            return "break"
+
+        txtv.bind("<Control-s>", _ctrl_s)
+
         def show_surface(kind: Any) -> None:
             cv_canvas.pack_forget()
             vsb.pack_forget()
@@ -523,6 +591,10 @@ class DetailMixin:
                 )
 
         def show(path: Any) -> None:
+            if not confirmer_abandon():
+                return
+            state["editable"] = False
+            state["sale"] = False
             # closes the previous PDF doc (otherwise file locked → LibreOffice regeneration impossible)
             if state.get("doc") is not None:
                 try:
@@ -531,7 +603,7 @@ class DetailMixin:
                     pass
                 state["doc"] = None
             state["path"] = path
-            title.configure(text=path.name)
+            title.configure(text=nom_court(path))
             ext = path.suffix.lower()
             if ext == ".pdf":
                 try:
@@ -558,14 +630,18 @@ class DetailMixin:
                     txt = path.read_text(encoding="utf-8", errors="replace")
                 txtv.insert("end", txt or "(document vide)")
                 editable = (ext == ".txt") or (_ici.LETTRES_DIR in path.parents)
-                pginfo.configure(
-                    text=f"{len(txt)} car. · "
+                state["info"] = (
+                    f"{len(txt)} car. · "
                     + (
                         "✏ ÉDITABLE — modifie puis 💾 Enregistrer"
                         if editable
                         else "lecture seule (CV : 📂 Ouvrir → Word)"
                     )
+                    + (" · " + _t("ouvert dans Word") if ouvert_dans_word(path) else "")
                 )
+                pginfo.configure(text=state["info"])
+                state["editable"] = editable
+                txtv.edit_modified(False)
             except Exception as ex:
                 txtv.insert(
                     "end", f"lecture KO: {type(ex).__name__} — clique « Ouvrir » pour Word."
@@ -645,6 +721,8 @@ class DetailMixin:
                         s.append(s.makeelement(qn("w:autoHyphenation"), {qn("w:val"): "true"}))
                     doc.save(str(p))
                 self._log(f"💾 enregistré : {p.name}\n")
+                txtv.edit_modified(False)
+                maj_marque()
             except Exception as ex:
                 self._log(f"! sauvegarde KO: {type(ex).__name__}\n")
                 return
@@ -683,6 +761,9 @@ class DetailMixin:
 
         def zoom(d: Any) -> None:
             state["zoom"] = max(0.6, min(3.0, state["zoom"] + d))
+            if state.get("doc") is None:  # docx / txt: the text grows instead of the page
+                txtv.configure(font=(_theme.FONT_UI, round(13 * state["zoom"] / 1.4)))
+                return
             render()
 
         def _wheel(e: Any) -> None:
@@ -691,11 +772,13 @@ class DetailMixin:
         cv_canvas.bind("<MouseWheel>", _wheel)
         cv_canvas.bind("<Enter>", lambda e: cv_canvas.focus_set())
 
+        # Packed at the bottom BEFORE the preview: packed after it, the preview took the
+        # whole height and pushed zoom / Enregistrer / Ouvrir out of a 900 px window.
         bt = CF(right, bg=BG)
-        bt.pack(fill="x")
         # Second row: the bulk tools. On one row, at 1320 px, they went off the window.
         bt2 = CF(right, bg=BG)
-        bt2.pack(fill="x", pady=(4, 0))
+        bt2.pack(fill="x", pady=(4, 0), side="bottom", before=holder)
+        bt.pack(fill="x", side="bottom", before=holder)
         for txt_, cmd in [
             ("↑ Haut", lambda: cv_canvas.yview_moveto(0)),
             ("↓ Bas", lambda: cv_canvas.yview_moveto(1)),
@@ -705,7 +788,7 @@ class DetailMixin:
             CB(bt, text=txt_, command=cmd, bg=BTN, fg=TX, relief="flat", cursor="hand2").pack(
                 side="left", padx=6
             )
-        CB(
+        b_enr = CB(
             bt,
             text="Enregistrer",
             command=save_doc,
@@ -714,7 +797,8 @@ class DetailMixin:
             activebackground=BTN_H,
             relief="flat",
             cursor="hand2",
-        ).pack(side="left", padx=24)
+        )
+        b_enr.pack(side="left", padx=24)
         CB(
             bt,
             text="Ouvrir",
@@ -812,6 +896,7 @@ class DetailMixin:
         self._viewer_show = show  # reused when the panel is shown again with preselect
 
         def _close_doc() -> None:
+            confirmer_abandon(annulable=False)
             if state.get("doc") is not None:
                 try:
                     state["doc"].close()
