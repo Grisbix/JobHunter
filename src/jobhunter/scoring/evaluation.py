@@ -51,12 +51,10 @@ def jugements(suivi: Mapping[str, Mapping[str, Any]]) -> dict[str, bool]:
 
 
 def note(offre: Mapping[str, Any]) -> float:
-    """An offer's ranking score: `fit_fin`, failing that `fit`, failing that 0."""
-    for cle in ("fit_fin", "fit"):
-        v = offre.get(cle)
-        if isinstance(v, (int, float)):
-            return float(v)
-    return 0.0
+    """An offer's ranking score: its rank (scoring.ranking: fit_fin, reposts, contract)."""
+    from jobhunter.scoring.ranking import rang
+
+    return rang(offre)
 
 
 def auc(positives: list[float], negatives: list[float]) -> float | None:

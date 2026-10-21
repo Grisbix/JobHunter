@@ -305,6 +305,7 @@ LF = "\n"
 # widths enlarged for the bigger font (otherwise text truncated / "🆕 nouveau" status clipped)
 COLS = [
     ("_chk", "☐", 40),
+    ("_alerte", "⚑", 36),  # ⚠ knock-out · ↻ reposted · ≡ same text (programs/reposts)
     ("_st", "Statut", 140),
     ("entreprise", "Entreprise", 190),
     ("poste", "Poste", 330),

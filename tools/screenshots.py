@@ -7,7 +7,8 @@ invented companies), prepares the CV and letter of the best offer with the real
 engine (`jobhunter documents`, LibreOffice for the PDF), opens the application in the
 chosen language and captures the window:
 
-- `offers.png`: the ranked offers, the first one selected;
+- `offers.png`: the ranked offers, the first one selected (an application with its
+  status history and its kept posting; one offer with a knock-out ⚠);
 - `letter.png`: an offer opened in full, its letter on the right.
 
 Nothing of the user's own data is read: the folder is created in a temporary
@@ -54,7 +55,8 @@ DESCRIPTIONS = {
     ),
     "Impact Investment Analyst": (
         "Impact Investment Analyst. Due diligence of private equity deals, financial "
-        "modelling, impact measurement. 3+ years of experience in investment banking."
+        "modelling, impact measurement. 3+ years of experience in investment banking. "
+        "You must have the right to work in the UK."
     ),
     "Marketing Assistant": "Marketing assistant for a retail brand: social media and events.",
 }
@@ -116,6 +118,17 @@ def preparer(racine: Path) -> None:
     ]
     (racine / "data" / "apply_queue.json").write_text(
         json.dumps(lignes, ensure_ascii=False, indent=1), encoding="utf-8"
+    )
+    # 3.15: an application with its history, and its posting kept (jobhunter postings).
+    suivi = {
+        "Atelier Nova|ESG Analyst": {
+            "s": "entretien",
+            "d": JOUR,
+            "h": [["2026-10-01", "postulé"], [JOUR, "entretien"]],
+        }
+    }
+    (racine / "data" / "applications.json").write_text(
+        json.dumps(suivi, ensure_ascii=False, indent=1), encoding="utf-8"
     )
 
 
@@ -220,6 +233,8 @@ def main() -> int:
         gabarit_cv(racine)
         python(racine, "-c", _SCORER)
         jobhunter(racine, "documents", "--top", "1")
+        jobhunter(racine, "reposts")  # the Signal column: knock-outs
+        jobhunter(racine, "postings")  # the posting kept for the application
         capturer(racine, args.lang, sortie)
     finally:
         if args.garder:

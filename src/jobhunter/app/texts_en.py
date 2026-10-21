@@ -10,6 +10,22 @@ NOM = "English"
 RELANCER = "Restart JobHunter to use the English interface."
 
 TEXTES: dict[str, str] = {
+    # 3.15: indicators, history, kept posting, answers
+    "offres en file": "offers in queue",
+    "fit ≥ 8": "fit ≥ 8",
+    "candidatures envoyées": "applications sent",
+    "Annonce gardée": "Posting kept",
+    "Historique": "History",
+    "▶ Candidatures envoyées": "▶ Applications sent",
+    "réponses (entretien ou refus)": "answers (interview or refusal)",
+    "entretiens": "interviews",
+    "sans réponse depuis 30 jours": "no answer for 30 days",
+    "délai médian de réponse": "median time to answer",
+    "sur {n} réponse(s) datée(s)": "over {n} dated answer(s)",
+    "dates d'envoi enregistrées depuis la 3.15": "sending dates recorded since 3.15",
+    "Réponses par contrat": "Answers by contract",
+    "Réponses par domaine": "Answers by field",
+    "{r} réponse(s), {e} entretien(s) · {p}": "{r} answer(s), {e} interview(s) · {p}",
     # navigation and header
     "JOBHUNTER": "JOBHUNTER",
     "RECHERCHE D'EMPLOI": "JOB SEARCH",
@@ -31,9 +47,6 @@ TEXTES: dict[str, str] = {
     "Arrêter": "Stop",
     "Langue / Language…": "Language / Langue…",
     # offers table
-    "OFFRES EN FILE": "OFFERS IN QUEUE",
-    "FIT ≥ 8": "FIT ≥ 8",
-    "CANDIDATURES ENVOYÉES": "APPLICATIONS SENT",
     "Chercher": "Search",
     "Voir les masquées": "Show hidden",
     "Colonnes": "Columns",

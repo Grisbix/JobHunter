@@ -60,7 +60,24 @@ def main(argv=None):
             + ", ".join(sorted(toujours_refusees))
             + " — inutile d'insister (pas de contournement) ; les retirer de --all se décide à la main."
         )
+    muettes()
     return 0
+
+
+def muettes() -> None:
+    """The followed companies silent for a month (sources.feeds.muet)."""
+    from jobhunter.sources import feeds as F
+
+    m = F.muets(F.lire(_racine.scripts() / F.FICHIER), F.suspendus())
+    if not m:
+        return
+    print(f"\nEntreprises suivies muettes depuis {F.MUET_JOURS} jours ({len(m)}) :")
+    for ident, raison in sorted(m.items(), key=lambda kv: kv[1]):
+        print(f"  {ident:<36} {raison}")
+    print(
+        "  « page vide » : l'adresse de sa page carrière a sans doute changé — à corriger ou "
+        "suspendre dans Entreprises."
+    )
 
 
 def execution(chemin, ident: str) -> int:

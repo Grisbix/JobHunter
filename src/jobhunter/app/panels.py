@@ -163,7 +163,7 @@ class PanneauxMixin:
         cols = ("cat", "n", "bar")
         tv = ttk.Treeview(body, columns=cols, show="headings", selectmode="none")
         for k, lbl, wd, anc in (
-            ("cat", "Catégorie", 300, "w"),
+            ("cat", "Catégorie", 460, "w"),  # 300 cut "dossiers préparés (envoi à…"
             ("n", "Nb", 70, "center"),
             ("bar", "Répartition", 520, "w"),
         ):
@@ -265,6 +265,52 @@ class PanneauxMixin:
                     ("bloquees : lien jamais verifie", len(_lien_douteux)),
                 ],
             )
+            # From sending to answer (status history, 3.15): the figures that say
+            # whether the search works, not only how much it collects.
+            from jobhunter import funnel as _funnel
+
+            e = _funnel.entonnoir(sv, {queue_io.oid(o): o for o in q})
+            if e["envoyees"]:
+                tv.insert(
+                    "",
+                    "end",
+                    values=(_t("▶ Candidatures envoyées"), e["envoyees"], ""),
+                    tags=("h",),
+                )
+                taux = f"{e['taux']:.0%}" if e["taux"] is not None else ""
+                for lib, n, txt in (
+                    (_t("réponses (entretien ou refus)"), e["reponses"], taux),
+                    (_t("entretiens"), e["entretiens"], ""),
+                    (_t("sans réponse depuis 30 jours"), e["silence"], ""),
+                    (
+                        _t("délai médian de réponse"),
+                        "" if e["delai_median"] is None else f"{e['delai_median']:.0f} j",
+                        _t("sur {n} réponse(s) datée(s)").format(n=len(e["delais"]))
+                        if e["delais"]
+                        else _t("dates d'envoi enregistrées depuis la 3.15"),
+                    ),
+                ):
+                    tv.insert("", "end", values=(f"   {lib}", n, txt))
+                for champ, titre in (
+                    ("contrat", "Réponses par contrat"),
+                    ("domaine", "Réponses par domaine"),
+                ):
+                    lignes = [x for x in e["par"][champ] if x[1]][:6]
+                    if len(lignes) < 2:
+                        continue
+                    tv.insert("", "end", values=(_t(titre), "", ""), tags=("h",))
+                    for val, env, rep, ent in lignes:
+                        tv.insert(
+                            "",
+                            "end",
+                            values=(
+                                f"   {val}",
+                                env,
+                                _t("{r} réponse(s), {e} entretien(s) · {p}").format(
+                                    r=rep, e=ent, p=f"{rep / env:.0%}"
+                                ),
+                            ),
+                        )
             section("Domaine", count("domaine")[:8])
             section("Canal", count("canal"))
             section("État des liens", count("link_status"))
@@ -771,6 +817,9 @@ class PanneauxMixin:
             if ident in suspendus:
                 return "⏸ " + _t("suspendue")
             e = etat.get(ident) or {}
+            m = _flux.muet(e)
+            if m:  # silent for a month: its page may have moved (sources.feeds.muet)
+                return f"◌ {m}"
             if e.get("incident"):
                 return f"⚠ {e['incident']} ({_date_fr(str(e.get('incident_le', ''))[:10])})"
             if e.get("succes"):
@@ -832,6 +881,9 @@ class PanneauxMixin:
             total = sum(c.offres for c in comptes.values())
             vides = sum(1 for c in comptes.values() if not c.offres)
             texte = f"{len(flux)} entreprises · {total} offres en file · {vides} sans offre en file"
+            n_muets = len(_flux.muets(etat, suspendus))
+            if n_muets:
+                texte += f" · ◌ {n_muets} muette(s) depuis {_flux.MUET_JOURS} j"
             if cherche:
                 texte = f"{len(ordre)} / " + texte
             w._count.configure(text=texte)

@@ -32,7 +32,14 @@ def main(argv=None):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description="évalue le classement sur les jugements du suivi")
     ap.add_argument("--enregistrer", action="store_true", help="garde ce résultat comme référence")
+    ap.add_argument(
+        "--analyse",
+        action="store_true",
+        help="où le classement se trompe (contrat, domaine, zone) et quel réglage aiderait",
+    )
     a = ap.parse_args(argv)
+    if a.analyse:
+        return analyse()
 
     r = evaluer(queue_io.charger(descriptions=False), suivi_io.charger(), queue_io.oid)
     print(
@@ -83,6 +90,34 @@ def main(argv=None):
             encoding="utf-8",
         )
         print(f"Référence enregistrée : {chemin.name}")
+    return 0
+
+
+def analyse() -> int:
+    """By contract, domain and zone; then the contract bonuses worth writing."""
+    from jobhunter.scoring.calibration import analyser
+
+    r = analyser(queue_io.charger(descriptions=False), suivi_io.charger(), queue_io.oid)
+    print(f"{r['juges']} offres jugées encore en file (pertinentes / inutiles / rang moyen)")
+    for champ, lignes in r["par"].items():
+        print(f"\n{champ} :")
+        for v, p, u, m in lignes[:8]:
+            print(f"  {v[:28]:28} {p:3} / {u:3}   {m:5.1f}")
+    print()
+    if not r["suggestions"]:
+        print("Aucun bonus de contrat n'améliore le classement sur ces jugements.")
+    for s in r["suggestions"]:
+        verdict = (
+            "à écrire dans le profil"
+            if s["fiable"]
+            else "pas assez sûr (l'intervalle passe par zéro) : à revoir avec plus de jugements"
+        )
+        print(
+            f"bonus {s['contrat']} +{s['bonus']:g} : AUC {s['gain']:+.2f} "
+            f"(90 % : {s['bas']:+.2f} – {s['haut']:+.2f}) — {verdict}"
+        )
+    if any(s["fiable"] for s in r["suggestions"]):
+        print('  → profil, section "classement": {"bonus_contrat": {"<contrat>": <bonus>}}')
     return 0
 
 

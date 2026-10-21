@@ -4,6 +4,54 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.15.0 — 2026-10-22
+
+- **A copy of each posting you apply to.** Offers close and their page goes — 2,868
+  left the queue in one week of October — and the interview invitation arrives three
+  weeks later. When an offer is marked « postulé » (or any status after it), its posting
+  is written once to `Letters/Postings/` as a PDF to read and a .txt to search, with the
+  company, link, place, contract and salary. It is never rewritten: it is the version
+  you applied to. The offer's card links to it. Morning step 4a and `jobhunter postings`
+  catch the statuses set elsewhere (apply runner, emails).
+- **Every status change is kept.** An application kept only its last status: « postulé »
+  on 3/10 became « refus » on 21/10 and the day of sending was gone. Each entry now has
+  its history (`h`), written by every program that changes a status, without any of them
+  knowing it. The card shows it; the Statistics panel adds **Candidatures envoyées**:
+  answers and answer rate, interviews, silence after 30 days, median time to answer,
+  answers by contract and by field.
+- **Knock-out conditions flagged.** A posting that requires a driving licence, a
+  nationality, the right to work in a country, or a security clearance got a CV and a
+  letter like any other. These are now found in the text (FR, EN, DE; a softened « a
+  plus » / « souhaité » is not a requirement) and shown first in the Signal column and
+  the card, never removed. The profile can say what you meet: section
+  `eliminatoires` — `permis`, `habilitation`, `droit_de_travail` (FR, EU, UK, US…),
+  `ignorer`. « No visa sponsorship » is ignored in Europe for a profile with EU or FR.
+- **New ⚑ column**, before the company: ⚠ knock-out, ↻ reposted three times or more,
+  ≡ same text under another company. The full text is in the card.
+- **The order of the offers is the rank**: the decimal fit, minus 0.3 for an offer
+  reposted three times or more in 90 days (often a « ghost » posting), plus a bonus per
+  contract if your profile sets one (`classement` section: `malus_republiee`,
+  `republiee_des`, `bonus_contrat`). The fit shown does not change. The table, the
+  folders to prepare, the alerts and the daily selection follow it.
+- **`jobhunter evaluation --analyse`**: where the ranking disagrees with your own
+  choices (by contract, field and zone), and which contract bonus would help — kept only
+  if the gain survives resampling, so a few dozen judgements do not teach the ranking
+  their accidents.
+- **Silent companies.** A company whose career page moved does not fail loudly: its
+  feed answers, empty, every morning. The Companies panel and `jobhunter yield` now name
+  the feeds silent for 30 days: failing, empty page (the address has probably changed),
+  or offers but none for your profile.
+- **Offers screen redesigned.** Company and job title were cut to ten letters while
+  Country and Region (« Europe » on almost every row) took the room: both are now one
+  click away in « Colonnes ▾ », and the two main columns share the width at every size.
+  The three indicators sit on one line instead of three cards under a second title. The
+  card's actions fit on one row, so the card shows the signal, the facts, the
+  application and its history, the file and the kept posting at once.
+- Fix: saving the tracking from the card replaced the whole entry, erasing the proof of
+  sending and the email it cited. It now keeps them.
+- « Candidatures envoyées » counts every application sent, not only those still at
+  « postulé ».
+
 ## 3.14.1 — 2026-10-22
 
 - `jobhunter app --help` prints a line instead of opening the window. It used to open

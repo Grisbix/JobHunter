@@ -5,6 +5,7 @@ Part of jobhunter.app (former JobHunter.pyw, phase 3.7)."""
 import datetime
 import json
 import os
+import threading
 import tkinter as tk
 import webbrowser
 from tkinter import messagebox
@@ -42,7 +43,31 @@ class ActionsMixin:
             return
         self._annuler.append([(oid, avant)])
         self._log(f"📌 statut: {o.get('entreprise', '')} → {statut or '(vidé)'}\n")
+        self._garder_annonce(o, statut)
         self.refresh_table()
+
+    def _garder_annonce(self: "AppTypee", o: Any, statut: Any) -> None:
+        """Keeps the posting's copy (jobhunter.postings) when the offer is applied to.
+
+        In a thread: writing the PDF takes a moment, the click must not wait. A
+        failure only costs the copy, which the morning pipeline tries again.
+        """
+        from jobhunter import postings
+
+        if not o or statut not in postings.ENVOYEES:
+            return
+
+        def tache() -> None:
+            try:
+                p = postings.archiver(o)
+            except Exception as ex:  # disk full, rights: the pipeline will retry
+                nom = type(ex).__name__
+                self.root.after(0, lambda: self._log(f"! annonce non gardée ({nom})\n"))
+                return
+            if p is not None:
+                self.root.after(0, lambda: self._log(f"🗂 annonce gardée : {p.name}\n"))
+
+        threading.Thread(target=tache, daemon=True).start()
 
     def _pas_interesse(self: "AppTypee", o: Any) -> None:
         """Del / button / right click: the offer leaves the table, stays in the queue.
@@ -154,6 +179,7 @@ class ActionsMixin:
         self._annuler.append([(oid, avant)])
         self.suivi = suivi_io.charger(_commun.SUIVI)
         self._log(f"📌 statut: {o.get('entreprise', '')} → postulé (envoi déclaré)\n")
+        self._garder_annonce(o, "postulé")
         self.refresh_table()
 
     def _apply_checked(self: "AppTypee") -> None:

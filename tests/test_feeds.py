@@ -66,3 +66,54 @@ def test_scan_ats_saute_les_suspendus(tmp_path, monkeypatch):
     assert len(ats.scan_ats()) == 1
     assert vus == ["a"]
     assert F.MESURES == {"greenhouse:a": {"offres": 1, "incident": ""}}
+
+
+# ── silent feeds (3.15): a company whose page moved does not fail loudly ──────────
+def _muet(e, jour="2026-11-30T08:00"):
+    import datetime
+
+    return F.muet(e, datetime.datetime.fromisoformat(jour))
+
+
+def test_muet_jamais_avant_trente_jours_de_suivi():
+    assert _muet({"premier": "2026-11-10T08:00", "succes": "2026-11-30T08:00", "offres": 0}) == ""
+
+
+def test_muet_les_trois_cas():
+    base = {"premier": "2026-09-01T08:00"}
+    assert (
+        _muet({**base, "succes": "2026-10-01T08:00", "incident": "HTTP 404"})
+        == "en échec depuis 60 j"
+    )
+    assert _muet({**base, "incident": "HTTP 403"}) == "jamais réussie"
+    vide = {
+        **base,
+        "succes": "2026-11-30T08:00",
+        "offres": 0,
+        "brut": 0,
+        "brut_le": "2026-10-20T08:00",
+    }
+    assert _muet(vide) == "page vide depuis 41 j"
+    rien = {
+        **base,
+        "succes": "2026-11-30T08:00",
+        "offres": 0,
+        "brut": 12,
+        "brut_le": "2026-11-30T08:00",
+    }
+    assert _muet(rien) == "rien pour ton profil depuis 90 j"
+    actif = {**rien, "retenues_le": "2026-11-20T08:00"}
+    assert _muet(actif) == ""
+
+
+def test_enregistrer_date_les_resultats(tmp_path):
+    p = tmp_path / F.FICHIER
+    p.write_text('{"ashby:x": {"succes": "2026-10-01T08:00", "offres": 3}}', encoding="utf-8")
+    F.brut("ashby", "x", 0)
+    F.noter("ashby:x", 0)
+    F.enregistrer(p, "2026-10-02T08:00")
+    e = json.loads(p.read_text(encoding="utf-8"))["ashby:x"]
+    # the old success with offers dates the last offers kept; the feed is followed from now
+    assert e["retenues_le"] == "2026-10-01T08:00" and e["premier"] == "2026-10-02T08:00"
+    assert e["brut"] == 0 and "brut_le" not in e
+    assert F.muets({"ashby:x": e}, {"ashby:x"}) == {}

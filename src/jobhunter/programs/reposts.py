@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""reposts.py — Offers posted again, and the same text under another company.
+"""reposts.py — Offers posted again, the same text under another company, knock-outs.
 
-Two signals, shown in the « Signal » column of the app. Observations only: they
+Three signals, shown in the « Signal » column of the app (the third, the knock-out
+conditions a posting states — driving licence, nationality, right to work, clearance —
+is jobhunter.scoring.knockouts; see there). Observations only: they
 change neither the fit nor the sorting, and they remove nothing.
 
 1. REPOSTED. An employer that takes an offer down and puts it back under a new
@@ -178,8 +180,24 @@ def elaguer(hist: dict[str, Any], jour: str) -> None:
         h["u"] = {a: d for a, d in h["u"].items() if d >= limite}
 
 
-def signaux(hist: dict[str, Any], offres: Sequence[Offre], jour: str) -> dict[str, str]:
-    """oid → the text of the « Signal » column ('' when nothing to say)."""
+def alertes(o: Offre, profil: Any = None) -> list[str]:
+    """The posting's knock-out conditions (scoring.knockouts) for this profile."""
+    from jobhunter.scoring import knockouts
+    from jobhunter.scoring.zones import pays_lieu
+
+    return knockouts.trouver(
+        o.get("description") or "", profil, pays_lieu(o.get("localisation") or "")
+    )
+
+
+def signaux(
+    hist: dict[str, Any], offres: Sequence[Offre], jour: str, profil: Any = None
+) -> dict[str, str]:
+    """oid → the text of the « Signal » column ('' when nothing to say).
+
+    Knock-out conditions first, with ⚠: they decide whether to apply at all.
+    `profil`: the profile's `eliminatoires` section (None = read the profile).
+    """
     textes = memes_textes(
         [
             (queue_io.oid(o), o.get("entreprise", ""), empreinte(o.get("description") or ""))
@@ -190,6 +208,9 @@ def signaux(hist: dict[str, Any], offres: Sequence[Offre], jour: str) -> dict[st
     for o in offres:
         oid = queue_io.oid(o)
         morceaux = []
+        ko = alertes(o, profil)
+        if ko:
+            morceaux.append("⚠ " + ", ".join(ko))
         n = republications(hist.get(cle(o.get("entreprise", ""), o.get("poste", "")), {}), jour)
         if n:
             morceaux.append(f"republiée ×{n}")
@@ -236,8 +257,10 @@ def main(argv: list[str] | None = None) -> int:
     sig = signaux(hist, offres, jour)
     n_rep = sum("republiée" in s for s in sig.values())
     n_txt = sum("même texte" in s or "doublon" in s for s in sig.values())
+    n_ko = sum("⚠" in s for s in sig.values())
     print(
-        f"{len(offres)} offres : {n_rep} republiée(s), {n_txt} au même texte qu'une autre entreprise"
+        f"{len(offres)} offres : {n_rep} republiée(s), {n_txt} au même texte qu'une autre "
+        f"entreprise, {n_ko} avec une condition éliminatoire"
     )
     for oid, s in sorted(sig.items(), key=lambda x: x[1], reverse=True)[:15]:
         if s:
@@ -245,13 +268,20 @@ def main(argv: list[str] | None = None) -> int:
     if a.dry:
         return 0
 
+    nrep = {
+        queue_io.oid(o): republications(
+            hist.get(cle(o.get("entreprise", ""), o.get("poste", "")), {}), jour
+        )
+        for o in offres
+    }
     with queue_io.transaction(descriptions=False) as file:
         for o in file:
-            s = sig.get(queue_io.oid(o), "")
-            if s:
-                o["signal"] = s
-            else:
-                o.pop("signal", None)
+            k = queue_io.oid(o)
+            for champ, v in (("signal", sig.get(k, "")), ("republiee", nrep.get(k, 0))):
+                if v:
+                    o[champ] = v  # type: ignore[literal-required]  # "signal" or "republiee"
+                else:
+                    o.pop(champ, None)  # type: ignore[misc]
     ecrire_json(chemin, hist)
     return 0
 

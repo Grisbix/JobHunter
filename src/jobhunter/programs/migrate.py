@@ -80,7 +80,7 @@ def prefixes(r: Path, base: Path | None) -> list[tuple[Path, Path]]:
         paires += [(b / "Lettres", b / "Letters")]
         paires += [
             (b / "Lettres" / a, b / "Letters" / n[a])
-            for a in ("Par_offre", "Relances", "Sur_mesure")
+            for a in ("Par_offre", "Relances", "Sur_mesure", "Annonces")
         ]
     # longest first: CV/Par_offre before CV
     return sorted(paires, key=lambda p: -len(str(p[0])))

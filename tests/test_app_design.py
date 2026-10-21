@@ -74,9 +74,8 @@ class DesignTests(unittest.TestCase):
             try:
                 with patch.object(root, "state"):
                     app = ui.App(root)
-                    self.assertEqual(
-                        len(app.tree.cget("displaycolumns")), 9
-                    )  # Country then Region added since the redesign
+                    # ⚑ added, Country and Region one click away (3.15)
+                    self.assertEqual(len(app.tree.cget("displaycolumns")), 8)
                     self.assertTrue(app._sidebar_on)
                     self.assertEqual(len(app._nav), 7)  # + "Ma recherche" (3.9)
                     self.assertEqual(set(app._offer_kpis), {"total", "fit", "post"})

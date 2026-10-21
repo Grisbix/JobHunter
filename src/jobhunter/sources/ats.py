@@ -13,6 +13,7 @@ from urllib.parse import quote, unquote, urlparse
 
 from jobhunter import log as _journal
 from jobhunter.sources import common as _commun
+from jobhunter.sources import feeds as _feeds
 from jobhunter.sources import workday as _workday
 from jobhunter.sources.common import INCIDENTS, UA, _mk, _strip_html, title_ok
 
@@ -269,10 +270,12 @@ def fetch_ats(kind: str, slug: str) -> list[dict[str, Any]]:
                 time.sleep(0.4)  # detail call per offer: we do not machine-gun
             # Same guard as the normal output: an offer without a URL is not
             # usable, it must not get in through this branch either.
+            _feeds.brut(kind, slug, len(out))
             return [o for o in kept if o["titre"] and o["url"]]
     except Exception as e:
         INCIDENTS[f"ats:{kind}"][type(e).__name__] += 1
         return []
+    _feeds.brut(kind, slug, len(out))
     return [o for o in out if o["titre"] and o["url"] and title_ok(o["titre"])]
 
 
@@ -606,6 +609,8 @@ def fetch_autre(kind: str, cle: str, nom: str) -> list[dict[str, Any]]:
     except Exception as e:
         INCIDENTS[f"ats:{kind}"][type(e).__name__] += 1
         return []
+    # No raw count here: several of these feeds are searched by keyword, so an
+    # empty answer does not mean an empty page (feeds.muet then says "nothing for you").
     return [o for o in out if o["titre"] and o["url"] and title_ok(o["titre"])]
 
 

@@ -62,7 +62,8 @@ found again by the scan tomorrow; a lost application never comes back.
 | `link_check.py` | Checks the URLs (live / dead / soft-404). Module. |
 | `recheck_dead.py` | Soft-404s rendered in JavaScript (HTTP 200 but empty body). |
 | `availability_audit.py` | Checks the whole queue without a browser and removes closed offers; Workday, Ashby and Greenhouse through their public API first (`ats_liveness.py`, their pages are the same JavaScript shell open or closed); waits and resumes on 429; `--duree` stops it by itself before removing. Step 4b of the pipeline, on Sunday. |
-| `reposts.py` | « Signal » column: an offer back under a new address on the same site (history `_offres_vues.json`, 90 days), and the same text under another company (64-bit SimHash, agencies and job boards). Observations only. Step 4a. Limit: two identical titles opened in parallel at one company look like a repost. |
+| `reposts.py` | « Signal » column: knock-out conditions first (`scoring.knockouts`: licence, nationality, right to work, clearance; profile section `eliminatoires`), an offer back under a new address on the same site (history `_offres_vues.json`, 90 days; count in `republiee`, used by the rank), and the same text under another company (64-bit SimHash, agencies and job boards). Observations only. Step 4a. Limit: two identical titles opened in parallel at one company look like a repost. |
+| `archive_postings.py` | A copy of the posting of every application (PDF + .txt in `Letters/Postings/`, engine `jobhunter.postings`), written once from the queue's text, never rewritten. Also done by the app at the « postulé » click. Step 4a'. `jobhunter postings`. |
 | `restore.py` | Puts the queue back as it was in a backup (daily, before the audit, before the sort): `--liste`, then a name; inspection by default, `--appliquer` writes. Never restores the tracker, keeps the tracked offers, loses no description, and copies the state before so the restoration can be undone. `jobhunter restore`. |
 | `queue_tools.py` | Queue maintenance. |
 | `rescore_ats.py` | Recomputes `ats_pct` and `skills_match` over the whole queue. |
@@ -83,8 +84,8 @@ found again by the scan tomorrow; a lost application never comes back.
 
 | Program | Role |
 |---|---|
-| `ranking_evaluation.py` | The ranking against the judgements in the tracking: AUC and interval, precision of the top ones, worst errors; `--enregistrer` keeps a reference (`data/_evaluation.json`). `python JobHunter.pyw evaluation`. Read-only. |
-| `source_yield.py` | Per-source report of the collections (log `data/_rendement.jsonl`): returned, new, relevant, time, verdict (ok, nothing to take, limited, partial, refused). `python JobHunter.pyw yield`. Read-only. |
+| `ranking_evaluation.py` | The ranking against the judgements in the tracking: AUC and interval, precision of the top ones, worst errors; `--enregistrer` keeps a reference (`data/_evaluation.json`); `--analyse` splits by contract, field and zone and tries contract bonuses (`scoring.calibration`), suggesting one only if its gain's 90 % interval stays above zero. The ranking is `scoring.ranking.rang`. `python JobHunter.pyw evaluation`. Read-only. |
+| `source_yield.py` | Per-source report of the collections (log `data/_rendement.jsonl`): returned, new, relevant, time, verdict (ok, nothing to take, limited, partial, refused); then the followed companies silent for 30 days (`sources.feeds.muet`: failing, empty page, nothing for the profile). `python JobHunter.pyw yield`. Read-only. |
 | `check_folders.py` | Check of the application files before sending (read-only): readable PDF, one page, contact details, template filled in; prefers the up-to-date PDF over its .docx. Step 5b of the pipeline. `python JobHunter.pyw check`. |
 | `apply_runner.py` | Fills in the forms, **semi-automatic**: the final click to send remains yours. Driven by the Candidatures panel of the app (`--pilote`) or by keyboard; after "envoyé" (sent), observes the page and writes the tracking with the proof (`envoi` confirmed / uncertain, screenshot in `data/_proofs/`). |
 | `mail_statuses.py` | Statuses proposed from the emails received (rejection, interview, acknowledgement of receipt), **validated one by one**: `jobhunter mail-statuses --mbox …` (Google Takeout export), `--eml <dossier>` or `--gmail` (read-only API, OAuth client created by the user in `data/gmail_client.json`, token in `data/gmail_token.json`, `pip install "jobhunter[gmail]"`). The status only moves downstream; the entry keeps the quoted email (`courriel`). Window in the app: Maintenance → "Statuts depuis mes courriels…" (Statuses from my emails…). Engine: `jobhunter.mail`. |
@@ -250,3 +251,17 @@ shell, HTTP 200, for an open offer and a withdrawn one: the availability check f
 (10 of 20 sampled, each confirmed missing from the employer's job list). Ask the ATS's
 API (`ats_liveness`); on Workday a withdrawn offer is a 403 whose JSON says
 `errorCode: "S22"`, any other 403 proves nothing (21/10).
+
+**A save from a form must start from the entry on disk, not from the form.** The card's
+« Enregistrer » built a new entry from its three fields (status, date, note) and wrote it
+whole: the proof of sending and the email the status cited, not on the form, were
+erased at every save (found 22/10, fixed in 3.15). Same trap with a shallow copy: the
+status history is a list, and `dict(entry)` shares it with the copy Ctrl+Z keeps —
+appending to it rewrote the undo too. `historiser` builds a new list.
+
+**A Treeview stretches only its stretchable columns, and only on resize.** The job title
+had `stretch`, the company did not: at start-up the company stayed at its minimum width
+and was cut, whatever the share computed for it, because that share was only applied
+after a change of columns. The share is now applied on every `<Configure>` of the table,
+unless the user has dragged a column edge (22/10).
+

@@ -34,6 +34,7 @@ HERE = _racine.scripts()
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
+from jobhunter.scoring.ranking import rang
 from jobhunter.sources.common import contrat_du_titre, contrats_exclus
 from jobhunter.sources.merge import rang_source
 
@@ -194,7 +195,7 @@ def main():
 
     def note(o):
         t = o.get("poste") or ""
-        s = (o.get("fit_fin") or o.get("fit") or 0) * 10  # fit_fin : decimal, departage
+        s = rang(o) * 10  # fit_fin with reposts and contract (scoring.ranking)
         if RX_ESG.search(t):
             s += 30  # ESG in the TITLE, not only in the text
         if RX_JUNIOR.search(t):

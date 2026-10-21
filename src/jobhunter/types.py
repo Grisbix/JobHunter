@@ -41,7 +41,8 @@ class Offre(TypedDict, total=False):
     localisation: str
     localisation_orig: str
     autres_lieux: list[str]  # same job published elsewhere (scan dedup)
-    signal: str  # "republiée ×2 · même texte : X" (programs/reposts)
+    signal: str  # "⚠ permis exigé · republiée ×2 · même texte : X" (programs/reposts)
+    republiee: int  # times reposted over 90 days (programs/reposts, scoring.ranking)
     teletravail: str
     salaire: str
     date_publication: str
@@ -92,6 +93,7 @@ class Candidature(TypedDict, total=False):
     envoi: str  # "confirmé", "incertain" or "déclaré" (ADR 0009)
     preuve: Preuve
     courriel: "CourrielStatut"  # the email that justified the last status (2.20)
+    h: list[list[str]]  # every status change, [[date, status], ...] (3.15)
 
 
 class CourrielStatut(TypedDict, total=False):

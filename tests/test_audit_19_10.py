@@ -65,7 +65,10 @@ def test_suivi_illisible_refuse_l_ecriture(suivi_temporaire, contenu):
 
 def test_suivi_absent_se_cree(suivi_temporaire):
     suivi_io.poser("B|y", {"s": "postulé"})
-    assert suivi_io.charger() == {"B|y": {"s": "postulé"}}
+    import datetime
+
+    jour = datetime.date.today().isoformat()
+    assert suivi_io.charger() == {"B|y": {"s": "postulé", "h": [[jour, "postulé"]]}}
 
 
 # ── P1 — a failure between two writes loses no description ────────────

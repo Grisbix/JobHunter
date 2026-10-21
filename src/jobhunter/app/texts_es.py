@@ -8,6 +8,22 @@ NOM = "Español"
 RELANCER = "Reinicia JobHunter para usar la interfaz en español."
 
 TEXTES: dict[str, str] = {
+    # 3.15: indicators, history, kept posting, answers
+    "offres en file": "ofertas en la lista",
+    "fit ≥ 8": "fit ≥ 8",
+    "candidatures envoyées": "candidaturas enviadas",
+    "Annonce gardée": "Anuncio guardado",
+    "Historique": "Historial",
+    "▶ Candidatures envoyées": "▶ Candidaturas enviadas",
+    "réponses (entretien ou refus)": "respuestas (entrevista o rechazo)",
+    "entretiens": "entrevistas",
+    "sans réponse depuis 30 jours": "sin respuesta desde hace 30 días",
+    "délai médian de réponse": "plazo mediano de respuesta",
+    "sur {n} réponse(s) datée(s)": "sobre {n} respuesta(s) fechada(s)",
+    "dates d'envoi enregistrées depuis la 3.15": "fechas de envío registradas desde la 3.15",
+    "Réponses par contrat": "Respuestas por contrato",
+    "Réponses par domaine": "Respuestas por ámbito",
+    "{r} réponse(s), {e} entretien(s) · {p}": "{r} respuesta(s), {e} entrevista(s) · {p}",
     # navigation and header
     "JOBHUNTER": "JOBHUNTER",
     "RECHERCHE D'EMPLOI": "BÚSQUEDA DE EMPLEO",
@@ -29,9 +45,6 @@ TEXTES: dict[str, str] = {
     "Arrêter": "Detener",
     "Langue / Language…": "Idioma / Language…",
     # offers table
-    "OFFRES EN FILE": "OFERTAS EN LA LISTA",
-    "FIT ≥ 8": "FIT ≥ 8",
-    "CANDIDATURES ENVOYÉES": "CANDIDATURAS ENVIADAS",
     "Chercher": "Buscar",
     "Voir les masquées": "Ver ocultas",
     "Colonnes": "Columnas",

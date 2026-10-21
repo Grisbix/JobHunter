@@ -8,6 +8,22 @@ NOM = "Deutsch"
 RELANCER = "Starte JobHunter neu, um die deutsche Oberfläche zu nutzen."
 
 TEXTES: dict[str, str] = {
+    # 3.15: indicators, history, kept posting, answers
+    "offres en file": "Angebote in der Liste",
+    "fit ≥ 8": "Fit ≥ 8",
+    "candidatures envoyées": "gesendete Bewerbungen",
+    "Annonce gardée": "Gespeicherte Anzeige",
+    "Historique": "Verlauf",
+    "▶ Candidatures envoyées": "▶ Gesendete Bewerbungen",
+    "réponses (entretien ou refus)": "Antworten (Gespräch oder Absage)",
+    "entretiens": "Gespräche",
+    "sans réponse depuis 30 jours": "seit 30 Tagen ohne Antwort",
+    "délai médian de réponse": "mittlere Antwortzeit",
+    "sur {n} réponse(s) datée(s)": "aus {n} datierten Antwort(en)",
+    "dates d'envoi enregistrées depuis la 3.15": "Versanddaten seit 3.15 erfasst",
+    "Réponses par contrat": "Antworten nach Vertrag",
+    "Réponses par domaine": "Antworten nach Bereich",
+    "{r} réponse(s), {e} entretien(s) · {p}": "{r} Antwort(en), {e} Gespräch(e) · {p}",
     # navigation and header
     "JOBHUNTER": "JOBHUNTER",
     "RECHERCHE D'EMPLOI": "JOBSUCHE",
@@ -29,9 +45,6 @@ TEXTES: dict[str, str] = {
     "Arrêter": "Stoppen",
     "Langue / Language…": "Sprache / Language…",
     # offers table
-    "OFFRES EN FILE": "ANGEBOTE IN DER LISTE",
-    "FIT ≥ 8": "FIT ≥ 8",
-    "CANDIDATURES ENVOYÉES": "GESENDETE BEWERBUNGEN",
     "Chercher": "Suchen",
     "Voir les masquées": "Ausgeblendete zeigen",
     "Colonnes": "Spalten",

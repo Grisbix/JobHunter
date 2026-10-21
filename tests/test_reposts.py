@@ -117,7 +117,8 @@ def test_main_amorce_par_les_sauvegardes_et_ecrit_le_signal(racine, capsys):
     assert "1 republiée(s)" in capsys.readouterr().out
     file = {queue_io.oid(x): x for x in queue_io.charger()}
     assert file["Acme|Analyst"]["signal"] == "republiée ×1"
-    assert "signal" not in file["Beta|Analyst"]
+    assert file["Acme|Analyst"]["republiee"] == 1
+    assert "signal" not in file["Beta|Analyst"] and "republiee" not in file["Beta|Analyst"]
     assert (racine / rp.HISTORIQUE).exists()
 
 
@@ -125,3 +126,9 @@ def test_dry_n_ecrit_rien(racine):
     assert rp.main(["--dry", "--sauvegardes"]) == 0
     assert not (racine / rp.HISTORIQUE).exists()
     assert all("signal" not in x for x in queue_io.charger())
+
+
+def test_condition_eliminatoire_en_tete_du_signal():
+    offres = [o("Acme", "Analyst", "https://acme.com/1", TEXTE + " Permis B obligatoire.")]
+    assert rp.signaux({}, offres, "2026-10-21", {}) == {"Acme|Analyst": "⚠ permis exigé"}
+    assert rp.signaux({}, offres, "2026-10-21", {"permis": True}) == {"Acme|Analyst": ""}

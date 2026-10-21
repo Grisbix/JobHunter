@@ -24,6 +24,7 @@ import subprocess
 import sys
 
 from jobhunter import root as _racine
+from jobhunter.scoring.ranking import rang
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -116,9 +117,7 @@ def main():
         and str(o.get("link_status") or "").upper() not in ("MORT", "EXPIREE")
         and key_of(o) not in seen
     ]
-    hits.sort(
-        key=lambda o: (-(o.get("fit") or 0), -(o.get("fit_fin") or 0), -(o.get("ats_pct") or 0))
-    )
+    hits.sort(key=lambda o: (-(o.get("fit") or 0), -rang(o), -(o.get("ats_pct") or 0)))
 
     if not hits:
         print(f"aucune NOUVELLE offre fit >= {a.min_fit} (déjà notifiées : {len(seen)})")

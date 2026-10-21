@@ -39,7 +39,13 @@ def lire(chemin):
 def test_nouvelle_candidature_confirmee(suivi):
     c = suivi({})
     suivi_io.declarer_envoi(OID, "confirmé", PREUVE, chemin=c)
-    assert lire(c)[OID] == {"s": "postulé", "d": AUJOURD_HUI, "envoi": "confirmé", "preuve": PREUVE}
+    assert lire(c)[OID] == {
+        "s": "postulé",
+        "d": AUJOURD_HUI,
+        "envoi": "confirmé",
+        "preuve": PREUVE,
+        "h": [[AUJOURD_HUI, "postulé"]],  # the day of sending (status history, 3.15)
+    }
 
 
 def test_note_gardee_et_date_du_jour(suivi):
@@ -71,7 +77,12 @@ def test_declaration_manuelle_n_efface_pas_la_preuve(suivi):
 def test_declaration_manuelle_sans_preuve(suivi):
     c = suivi({})
     suivi_io.declarer_envoi(OID, "déclaré", chemin=c)
-    assert lire(c)[OID] == {"s": "postulé", "d": AUJOURD_HUI, "envoi": "déclaré"}
+    assert lire(c)[OID] == {
+        "s": "postulé",
+        "d": AUJOURD_HUI,
+        "envoi": "déclaré",
+        "h": [[AUJOURD_HUI, "postulé"]],
+    }
 
 
 def test_autres_candidatures_intactes(suivi):

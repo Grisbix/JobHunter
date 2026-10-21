@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 
 import customtkinter as ctk
 
+from jobhunter import funnel as _funnel
 from jobhunter.app import countries as _pays
 from jobhunter.app import theme as _theme
 from jobhunter.app import views as _vues
@@ -58,6 +59,7 @@ from jobhunter.app.theme import (
     TX_AMBRE,
     WORK,
 )
+from jobhunter.scoring import ranking as _rang
 from jobhunter.scoring.zones import libelle_secteur as _libelle_secteur
 from jobhunter.scoring.zones import sous_zone as _sous_zone
 from jobhunter.text import sans_accent
@@ -120,25 +122,24 @@ class TableauMixin:
         # Two rows instead of one: on a single one, the five selection
         # buttons pushed the search and the "coller un lien" field
         # OUT of the window — they existed without anyone being able to see them.
+        # Three work indicators on the title's line. As three cards under a second
+        # "Offres" title (the top bar already names the page), they took 120 px of
+        # height from the table for three numbers.
         heading = CF(parent, bg=WORK, plat=True)
-        heading.pack(fill="x", padx=18, pady=(4, 12))
-        CL(heading, text="Offres", fg=TX, font=(_theme.FONT_UI, 26, "bold")).pack(side="left")
-        # CRM: three work indicators, not ten decorative cards. They
-        # stay in sync with the loaded queue and the manual tracking.
-        kpis = CF(parent, bg=WORK, plat=True)
-        kpis.pack(fill="x", padx=18, pady=(0, 6))
+        heading.pack(fill="x", padx=18, pady=(2, 4))
         self._offer_kpis = {}
-        for index, (key, label) in enumerate(
-            (("total", "OFFRES EN FILE"), ("fit", "FIT ≥ 8"), ("post", "CANDIDATURES ENVOYÉES"))
+        for key, label in (
+            ("total", "offres en file"),
+            ("fit", "fit ≥ 8"),
+            ("post", "candidatures envoyées"),
         ):
-            kpis.grid_columnconfigure(index, weight=1, uniform="indicateur")
-            tile = CF(kpis, bg=CARD)
-            tile.grid(row=0, column=index, sticky="ew", padx=(0, 10 if index < 2 else 0))
-            CL(tile, text=label, fg=MUT, bg=CARD, font=(_theme.FONT_UI, 10, "bold")).pack(
-                anchor="w", padx=14, pady=(10, 0)
+            tile = CF(heading, bg=CARD)
+            tile.pack(side="left", padx=(0, 10))
+            value = CL(tile, text="—", fg=TX, bg=CARD, font=(_theme.FONT_UI, 18, "bold"))
+            value.pack(side="left", padx=(14, 6), pady=6)
+            CL(tile, text=label, fg=MUT, bg=CARD, font=(_theme.FONT_UI, 12)).pack(
+                side="left", padx=(0, 14), pady=6
             )
-            value = CL(tile, text="—", fg=TX, bg=CARD, font=(_theme.FONT_UI, 22, "bold"))
-            value.pack(anchor="w", padx=14, pady=(0, 8))
             self._offer_kpis[key] = value
         bar = CF(parent, bg=WORK, plat=True)
         bar.pack(fill="x", padx=18, pady=(8, 0))
@@ -288,6 +289,7 @@ class TableauMixin:
             self.tree.heading(key, text=_t(lbl), command=cmd, anchor=anc)
             compact = {
                 "_chk": 34,
+                "_alerte": 34,
                 "entreprise": 135,
                 "poste": 235,
                 "fit": 56,  # « 10.2 » was cut to « 10.: »
@@ -304,15 +306,18 @@ class TableauMixin:
                 anchor=anc,
                 stretch=(key == "poste"),
             )
+        # Company and job title get the room: with Country and Region shown by
+        # default, a table half the window wide cut both to ten letters ("Atelier Nov",
+        # "Responsible Investme"), while Region said "Europe" on almost every row.
+        # Both stay one click away (Colonnes ▾); the place is in Lieu.
         self._visible_cols = (
             "_chk",
+            "_alerte",
             "entreprise",
             "poste",
             "fit",
             "contrat",
             "localisation",
-            "pays",
-            "region",
             "_st",
         )
         self.tree.configure(displaycolumns=self._visible_cols)
@@ -330,6 +335,18 @@ class TableauMixin:
         self.tree.bind("<Button-1>", self._click_cell, add="+")
         self._dispo_suivre(split)  # separateur tableau | fiche
         self._dispo_suivre(self.tree)  # column widths
+        # Company and job title share the room at every size of the table, not only
+        # after a change of columns: at start-up the job title alone stretched and the
+        # company stayed cut. A column the user widens by hand is then left alone.
+        self.tree.bind(
+            "<Configure>", lambda e: self.root.after_idle(self._etaler_colonnes), add="+"
+        )
+
+        def _regle_a_la_main(e: Any) -> None:
+            if self.tree.identify_region(e.x, e.y) == "separator":
+                self._colonnes_reglees = True
+
+        self.tree.bind("<ButtonPress-1>", _regle_a_la_main, add="+")
         self.tree.bind("<Double-1>", self._fiche_popup)  # double-click = full card
         self.tree.bind("<Return>", self._fiche_popup)
         self.tree.bind("<Button-3>", self._row_menu)  # clic droit = actions (Postuler + statuts)
@@ -370,22 +387,53 @@ class TableauMixin:
         self.detail.bind("<Double-1>", lambda e: self._detail_full())  # double-click = full screen
         self._detail_vide()
 
-        # ── tracking editing panel (writes suivi.json) ──
+        # ── actions + tracking (writes suivi.json) ──
+        # Three actions on one row, the tracking folded below. Laid out 2 × 2 under
+        # an open fold, with the account link on its own row, they took two thirds
+        # of the pane's height and left the card three lines (22/10/2026).
         ed = CF(bas, bg=CARD)
-        ed.pack(side="bottom", fill="x", padx=14, pady=14, before=dcard)
-        ed.grid_columnconfigure(1, weight=1)
+        ed.pack(side="bottom", fill="x", padx=14, pady=(6, 12), before=dcard)
+        ed.grid_columnconfigure(0, weight=1)
+        acts = CF(ed, bg=CARD, plat=True)
+        acts.grid(row=0, column=0, sticky="ew")
+        acts.grid_columnconfigure((0, 1, 2), weight=1, uniform="action")
+        for i, (texte, cmd, fond, gras) in enumerate(
+            (
+                ("Ouvrir l'offre", lambda: self._open_offer(self._cur), ACC, True),
+                ("Envoi confirmé", lambda: self._postuler(self._cur), BTN, False),
+                ("Pas intéressé", lambda: self._pas_interesse(self._cur), BTN, False),
+            )
+        ):
+            CB(
+                acts,
+                text=texte,
+                command=cmd,
+                bg=fond,
+                font=(_theme.FONT_UI, 12, "bold") if gras else (_theme.FONT_UI, 12),
+            ).grid(row=0, column=i, sticky="ew", padx=(0 if i == 0 else 3, 0 if i == 2 else 3))
+        ligne = CF(ed, bg=CARD, plat=True)
+        ligne.grid(row=1, column=0, sticky="ew", pady=(6, 0))
         self.b_suivi = CB(
-            ed,
+            ligne,
             text="Suivi et note ▸",
             command=self._toggle_suivi,
             bg=CARD,
             fg=MUT,
             anchor="w",
-            font=(_theme.FONT_UI, 13),
+            font=(_theme.FONT_UI, 12),
         )
-        self.b_suivi.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+        self.b_suivi.pack(side="left")
+        self.b_acct = CB(
+            ligne,
+            text="Associer un compte",
+            command=self._toggle_account,
+            bg=CARD,
+            fg=MUT,
+            font=(_theme.FONT_UI, 11),
+        )
+        self.b_acct.pack(side="right")
         fields = CF(ed, bg=CARD, plat=True)
-        fields.grid(row=1, column=0, columnspan=2, sticky="ew")
+        fields.grid(row=2, column=0, sticky="ew", pady=(4, 0))
         fields.grid_columnconfigure(1, weight=1)
         self._suivi_fields = fields
         self._suivi_open = False
@@ -410,42 +458,9 @@ class TableauMixin:
         self.e_note = CE(fields, width=25, bg=WORK, fg=TX)
         self.e_note.grid(row=4, column=1, sticky="ew", pady=3)
         self.e_note.bind("<Return>", lambda e: self.save_edit())
-        acts = CF(ed, bg=CARD, plat=True)
-        acts.grid(row=5, column=0, columnspan=2, sticky="ew", pady=(12, 0))
-        acts.grid_columnconfigure((0, 1), weight=1)
         CB(
-            acts,
-            text="Ouvrir l'offre",
-            command=lambda: self._open_offer(self._cur),
-            bg=ACC,
-            font=(_theme.FONT_UI, 13, "bold"),
-        ).grid(row=0, column=0, sticky="ew", padx=(0, 4), pady=4)
-        CB(
-            acts,
-            text="Envoi confirmé",
-            command=lambda: self._postuler(self._cur),
-            bg=BTN,
-            font=(_theme.FONT_UI, 13),
-        ).grid(row=0, column=1, sticky="ew", padx=(4, 0), pady=4)
-        CB(
-            acts,
-            text="Pas intéressé",
-            command=lambda: self._pas_interesse(self._cur),
-            bg=BTN,
-            font=(_theme.FONT_UI, 12),
-        ).grid(row=1, column=0, sticky="ew", padx=(0, 4), pady=4)
-        CB(
-            acts, text="Enregistrer", command=self.save_edit, bg=BTN, font=(_theme.FONT_UI, 12)
-        ).grid(row=1, column=1, sticky="ew", padx=(4, 0), pady=4)
-        self.b_acct = CB(
-            acts,
-            text="Associer un compte",
-            command=self._toggle_account,
-            bg=CARD,
-            fg=MUT,
-            font=(_theme.FONT_UI, 12),
-        )
-        self.b_acct.grid(row=2, column=0, columnspan=2, sticky="w", pady=(4, 0))
+            fields, text="Enregistrer", command=self.save_edit, bg=BTN, font=(_theme.FONT_UI, 12)
+        ).grid(row=5, column=1, sticky="e", pady=(4, 0))
         self._cur = None
 
     def _toggle_columns(self: "AppTypee") -> None:
@@ -469,8 +484,10 @@ class TableauMixin:
 
         Treeview only stretches columns when the window is resized: after hiding three
         columns, the company and job titles stayed cut while a third of the table was
-        empty. Job title first (two thirds), then company; the others keep their width.
+        empty. Job title three fifths, company two; the others keep their width.
         """
+        if getattr(self, "_colonnes_reglees", False):
+            return  # widths set by hand: they win
         try:
             largeur = self.tree.winfo_width()
             vis = list(self.tree.cget("displaycolumns"))
@@ -481,7 +498,7 @@ class TableauMixin:
             return
         fixe = sum(int(self.tree.column(c, "width")) for c in vis if c not in principales)
         libre = largeur - fixe - 4
-        parts = {"poste": 2, "entreprise": 1}
+        parts = {"poste": 3, "entreprise": 2}  # 2:1 still cut "Atelier Nova" (3.15)
         total = sum(parts[c] for c in principales)
         for c in principales:
             w = libre * parts[c] // total
@@ -529,6 +546,11 @@ class TableauMixin:
         t.tag_configure("k", foreground=ACC, font=(_theme.FONT_UI, 12, "bold"))
         t.tag_configure("h", foreground=TX, font=(_theme.FONT_UI, 15, "bold"), spacing3=4)
         t.tag_configure("m", foreground=MUT)
+        # What decides whether to apply at all (knock-outs, reposts): seen first.
+        t.tag_configure("w", foreground=TX_AMBRE, font=(_theme.FONT_UI, 12, "bold"))
+        t.tag_configure("lien", foreground=ACC, underline=True)
+        t.tag_bind("lien", "<Enter>", lambda e: t.configure(cursor="hand2"))
+        t.tag_bind("lien", "<Leave>", lambda e: t.configure(cursor=""))
         return t
 
     def _detail_vide(self: "AppTypee") -> None:
@@ -793,7 +815,8 @@ class TableauMixin:
         if key == "_date":
             return self.suivi.get(self._oid(o), {}).get("d", "")
         if key == "fit":
-            return self._fitfin(o)
+            # The rank, not the bare fit: reposts and contract (scoring.ranking).
+            return _rang.rang(o) if o.get("fit") not in (None, "") else -1.0
         if key == "pays":
             return _pays.nom(_pays_lieu(o.get("localisation") or ""))
         if key == "region":
@@ -961,6 +984,7 @@ class TableauMixin:
         lieu = o.get("localisation") or ""
         return [
             chk,
+            self._alerte(o),
             st_txt,
             o.get("entreprise", ""),
             poste,
@@ -976,6 +1000,21 @@ class TableauMixin:
             host,
             sv.get("d", ""),
         ]
+
+    def _alerte(self: "AppTypee", o: Any) -> str:
+        """One sign for the Signal column's worst news; the text is in the card.
+
+        ⚠ a knock-out condition (licence, nationality, right to work, clearance),
+        ↻ reposted again and again, ≡ the same text under another company.
+        """
+        s = str(o.get("signal") or "")
+        if "⚠" in s:
+            return "⚠"
+        if (o.get("republiee") or 0) >= _rang.reglages()["republiee_des"]:
+            return "↻"
+        if "même texte" in s or "doublon" in s:
+            return "≡"
+        return ""
 
     def _contrats_exclus(self: "AppTypee") -> Any:
         """Hidden contract types, read from sources_config.json — the SAME file as the
@@ -1012,10 +1051,16 @@ class TableauMixin:
         if sk:
             rows = sorted(self.offers, key=lambda o: self._sortkey(o, sk), reverse=not asc)
         else:
-            # Tie-break by company: ats_pct served as second criterion, but
-            # the column was removed and the score no longer means anything here.
+            # By rank (scoring.ranking: the decimal fit, reposts, contract), then
+            # company. The integer fit alone left 1,200 offers tied at 10, in
+            # alphabetical order.
+            r = _rang.reglages()
             rows = sorted(
-                self.offers, key=lambda o: (-self._fitnum(o), str(o.get("entreprise") or ""))
+                self.offers,
+                key=lambda o: (
+                    -(_rang.rang(o, r) if self._fitnum(o) >= 0 else -1.0),
+                    str(o.get("entreprise") or ""),
+                ),
             )
         n = 0
         masques = 0
@@ -1097,11 +1142,9 @@ class TableauMixin:
             stats = {
                 "total": len(self.offers),
                 "fit": sum(1 for o in self.offers if self._fitnum(o) >= 8),
-                "post": sum(
-                    1
-                    for v in self.suivi.values()
-                    if str((v or {}).get("s") or "").lower() == "postulé"
-                ),
+                # Sent = any status after sending, from the history (jobhunter.funnel):
+                # counting only "postulé" made an interview or a refusal leave the count.
+                "post": _funnel.entonnoir(self.suivi, par=())["envoyees"],
             }
             for key, label in self._offer_kpis.items():
                 label.configure(text=str(stats[key]))

@@ -20,6 +20,7 @@ QUEUE = HERE / "apply_queue.json"
 
 from jobhunter.programs.util import chemin_de as _p  # helpers partages (voir util.py)
 from jobhunter.programs.util import url_de as _u
+from jobhunter.scoring import ranking as _ranking
 
 
 def main():
@@ -250,8 +251,8 @@ def main():
     else:
         selecteur = needs
     todo = [x for x in q if _visible(x) and selecteur(x)]
-    # fit_fin (2026-10-09) breaks ties between offers with the same integer fit.
-    todo.sort(key=lambda x: (-(int(x.get("fit") or 0)), -(x.get("fit_fin") or 0)))
+    # Within the same integer fit, the rank (fit_fin, reposts, contract) decides.
+    todo.sort(key=lambda x: (-(int(x.get("fit") or 0)), -_ranking.rang(x)))
     if not a.all:
         todo = todo[: a.top]
     print(f"{len(todo)} offre(s) sans CV/lettre valides{' (top fit)' if not a.all else ''}")

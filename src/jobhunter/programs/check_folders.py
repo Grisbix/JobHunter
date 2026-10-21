@@ -19,6 +19,7 @@ import sys
 
 from jobhunter.documents.checks import controler_dossier
 from jobhunter.profile import identite
+from jobhunter.scoring.ranking import rang
 from jobhunter.storage import applications as suivi_io
 from jobhunter.storage import queue as queue_io
 
@@ -38,7 +39,7 @@ def main(argv=None):
         and queue_io.oid(o) not in suivi
         and int(o.get("fit") or 0) >= a.fit
     ]
-    offres.sort(key=lambda o: -(o.get("fit_fin") or o.get("fit") or 0))
+    offres.sort(key=lambda o: -rang(o))
     types = collections.Counter()
     a_revoir = 0
     for o in offres:

@@ -43,6 +43,10 @@ COMMANDES = {
         "jobhunter.programs.reposts",
         "offres republiees, et meme texte sous une autre entreprise (colonne Signal)",
     ),
+    "postings": (
+        "jobhunter.programs.archive_postings",
+        "garde une copie de l'annonce de chaque candidature (Letters/Postings)",
+    ),
     "recipes": (
         "jobhunter.programs.recipes",
         "recettes de nettoyage (noms d'entreprises, lieux, contrats) : apercu, puis --appliquer",

@@ -39,9 +39,10 @@ Decision: docs/adr/0002-three-files-three-contracts.md
 
 import datetime
 import json
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
 
 from jobhunter import root as racine
 from jobhunter.storage import atomic as atomique
@@ -104,6 +105,37 @@ def _lire(p: Path) -> Suivi:
     return d
 
 
+def historiser(avant: Mapping[str, tuple[Any, Any]], suivi: Suivi) -> None:
+    """Appends each status change to the entry's history `h`: [[date, status], ...].
+
+    The entry itself keeps only the LAST status ("s", "d"): "postulé" on 3/10 became
+    "refus" on 21/10 and the date of sending was gone, so no response delay, no
+    response rate could be computed. Done here, in the transaction, every writer —
+    the app, follow_ups, mail_statuses, the apply runner — records its change without
+    knowing it. The first change of an entry older than the history also keeps the
+    status it had. Ctrl+Z, which puts an entry back as it was, takes its old `h` with it.
+    """
+    jour = datetime.date.today().isoformat()
+    for oid, rec in suivi.items():
+        if not isinstance(rec, dict):
+            continue
+        s = rec.get("s")
+        ancien_s, ancien_d = avant.get(oid, (None, None))
+        if not s or s == ancien_s:
+            continue
+        h = rec.get("h")
+        # A new list: the caller's entry may share its `h` with the copy Ctrl+Z keeps.
+        h = [list(x) for x in h] if isinstance(h, list) else []
+        if not h and ancien_s:
+            h = [[str(ancien_d or jour), str(ancien_s)]]
+        if h and h[-1][1] == s:
+            continue  # Ctrl+Z put back an entry whose history already ends there
+        d = rec.get("d")
+        # The writer's date when it set one (an email's date), today otherwise.
+        h.append([d if isinstance(d, str) and d and d != ancien_d else jour, str(s)])
+        rec["h"] = h
+
+
 @contextmanager
 def transaction(chemin: Chemin | None = None, attente: float = 30) -> Iterator[Suivi]:
     """Lock + fresh reread + atomic write on leaving the block.
@@ -133,7 +165,9 @@ def transaction(chemin: Chemin | None = None, attente: float = 30) -> Iterator[S
     try:
         suivi = _lire(p)  # raises SuiviIllisible rather than starting from {}
         _format.verifier_ecriture(p.parent)  # never over a newer JobHunter's data
+        avant = {oid: (c.get("s"), c.get("d")) for oid, c in suivi.items() if isinstance(c, dict)}
         yield suivi
+        historiser(avant, suivi)
         atomique.ecrire_json(p, suivi)  # reached only if the block did not raise
     finally:
         if a_nous:

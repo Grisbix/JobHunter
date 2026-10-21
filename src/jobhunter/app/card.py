@@ -2,6 +2,7 @@
 
 Part of jobhunter.app (former JobHunter.pyw, phase 3.7)."""
 
+import os
 import subprocess
 import threading
 import tkinter as tk
@@ -43,6 +44,8 @@ class FicheMixin:
         d.insert("end", f"{o.get('entreprise', '')} — {o.get('poste', '')}\n", "h")
         acc = self._acct_of(o)
         d.insert("end", ("● compte  ·  " if acc else "") + f"{self._host(o)}\n", "m")
+        if o.get("signal"):  # knock-outs, reposts, same text (programs/reposts)
+            d.insert("end", str(o["signal"]) + "\n", "w")
         meta = []
         for lbl, k in [
             ("Fit", "fit"),
@@ -66,10 +69,14 @@ class FicheMixin:
         if yrs:  # years of experience required (junior user → fit penalised if ≥3)
             exp = _t("Expérience requise : {n} ans").format(n=yrs)
             meta.append("⚠️ " + exp if yrs >= 3 else exp)
-        meta.extend(self._etat_candidature(o))
-        meta.extend(self._etat_dossier(o))
+        # The short facts side by side: one per line, they pushed everything else
+        # below the fold of a pane twelve lines high.
         if meta:
-            d.insert("end", "\n".join(meta) + "\n", "m")
+            d.insert("end", "  ·  ".join(meta) + "\n", "m")
+        etat = self._etat_candidature(o) + self._etat_dossier(o)
+        if etat:
+            d.insert("end", "\n".join(etat) + "\n", "m")
+        self._lien_annonce(d, o)
         raisons = self._raisons_fit(o)
         if raisons:
             d.insert("end", "\n" + _t("Pourquoi ce fit") + "\n", "k")
@@ -136,6 +143,33 @@ class FicheMixin:
         d.configure(state="disabled")
         d.see("1.0")
 
+    def _lien_annonce(self: "AppTypee", d: Any, o: Any) -> None:
+        """The posting's copy kept at the application (jobhunter.postings), clickable."""
+        try:
+            from jobhunter import postings
+
+            p = postings.existante(o)
+        except Exception:  # no root, unreadable folder: the card shows the rest
+            return
+        if p is None:
+            return
+        tag = f"lien_{id(p)}"
+        d.insert("end", _t("Annonce gardée") + " : ", "m")
+        d.insert("end", p.name + "\n", ("lien", tag))
+        d.tag_bind(tag, "<Button-1>", lambda e: self._ouvrir_fichier(p))
+
+    def _ouvrir_fichier(self: "AppTypee", p: Any) -> None:
+        import sys
+
+        try:
+            if sys.platform == "win32":
+                os.startfile(str(p))  # Windows only
+            else:
+                opener = "open" if sys.platform == "darwin" else "xdg-open"
+                subprocess.Popen([opener, str(p)])  # nosec B603 B607
+        except OSError as ex:
+            self._log(f"! ouverture impossible : {ex}\n")
+
     def _raisons_fit(self: "AppTypee", o: Any) -> list[str]:
         """The fit computation in plain words (scoring.fit.expliquer); [] without text or on error.
 
@@ -183,6 +217,13 @@ class FicheMixin:
                 "déclaré": " · envoi déclaré",
             }.get(envoi, f" · {envoi}")
         lignes = [ligne]
+        h = sv.get("h") or []
+        if len(h) >= 2:  # every status change (storage.applications.historiser)
+            lignes.append(
+                _t("Historique")
+                + " : "
+                + " → ".join(f"{_date_courte(str(x[0]))} {x[1]}" for x in h if len(x) >= 2)
+            )
         preuve = sv.get("preuve") or {}
         if preuve.get("texte"):
             lignes.append(f"  « {str(preuve['texte'])[:140]} »")
@@ -345,16 +386,25 @@ class FicheMixin:
             self._log("Sélectionne d'abord une offre.\n")
             return
         oid = self._oid(self._cur)
-        rec = {}
-        if self.e_st.get():
-            rec["s"] = self.e_st.get()
-        if self.e_note.get().strip():
-            rec["n"] = self.e_note.get().strip()
-        if self.e_date.get().strip():
-            rec["d"] = self.e_date.get().strip()
+        # The fields of the card (status, note, date) over the entry AS ON DISK: the
+        # rest — history, proof of sending, the email cited — is not on the card and
+        # was erased by each save (until 3.15).
+        rec = dict(suivi_io.charger(_commun.SUIVI).get(oid, {}))
+        for cle, val in (
+            ("s", self.e_st.get()),
+            ("n", self.e_note.get().strip()),
+            ("d", self.e_date.get().strip()),
+        ):
+            if val:
+                rec[cle] = val
+            else:
+                rec.pop(cle, None)
+        if not any(rec.get(k) for k in ("s", "n", "d")):
+            rec = {}  # everything emptied: the entry goes, as before
         if not self._ecrire_suivi(oid, rec):
             return
-        self._log(f"💾 suivi enregistré: {oid} → {rec or '(vidé)'}\n")
+        self._log(f"💾 suivi enregistré: {oid} → {rec.get('s') or '(vidé)'}\n")
+        self._garder_annonce(self._cur, rec.get("s"))
         self.refresh_table()
 
     def _ecrire_suivi(self: "AppTypee", oid: Any, rec: Any) -> Any:
@@ -380,3 +430,8 @@ class FicheMixin:
         # the only state that accounts for the other writers.
         self.suivi = suivi_io.charger(_commun.SUIVI)
         return True
+
+
+def _date_courte(iso: str) -> str:
+    """'2026-10-03' → '03/10'; anything else as is."""
+    return f"{iso[8:10]}/{iso[5:7]}" if len(iso) >= 10 and iso[4] == "-" else iso

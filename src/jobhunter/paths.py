@@ -77,6 +77,9 @@ _PARESSEUX["LT_PAR_OFFRE"] = lambda: _ici.BASE / _racine.nom("Lettres") / _racin
 CV_MODELES = ROOT / "CV" / _racine.nom("Modèles")
 LT_RELANCES = ROOT / _racine.nom("Lettres") / _racine.nom("Relances")
 LT_MESSAGES = ROOT / _racine.nom("Lettres") / "Messages"
+# The posting as it read the day the user applied (jobhunter.postings). Anchored on
+# ROOT: a record of the application, never regenerated, kept in the backup.
+LT_ANNONCES = ROOT / _racine.nom("Lettres") / _racine.nom("Annonces")
 
 # Letter bodies written by hand for ONE offer. The generic template serves
 # 5374 postings and cannot say anything specific about any of them; when an offer
@@ -114,6 +117,7 @@ if __name__ == "__main__":
         ("CV/Modeles", CV_MODELES),
         ("Lettres/Relances", LT_RELANCES),
         ("Lettres/Messages", LT_MESSAGES),
+        ("Lettres/Annonces", LT_ANNONCES),
         ("Lettres/Sur_mesure", LT_SUR_MESURE),
         ("CV/Sur_mesure", CV_SUR_MESURE),
     ):

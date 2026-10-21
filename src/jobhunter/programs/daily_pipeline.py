@@ -94,6 +94,7 @@ _COMPTEURS = {
     "tri": re.compile(r"supprimees\s*:\s*(\d+)"),
     "dispo": re.compile(r"(\d+)\s+retirees"),
     "reposts": re.compile(r"(\d+)\s+republi"),
+    "postings": re.compile(r"(\d+)\s+annonce\(s\)\s+gard"),
     "site": re.compile(r"(\d+)\s+offre\(s\)\s+retrouvee"),
     "docs": re.compile(r"(\d+)\s*/\s*\d+\s+offres\s+[ée]quip"),
     "controle": re.compile(r"(\d+)\s+[àa]\s+revoir"),
@@ -463,6 +464,13 @@ def _executer(a, journal):
         rep = ["-m", "jobhunter.programs.reposts"] + (["--dry"] if a.rapide else [])
         code, n, _ = etape("4a/5 Republications", rep, "reposts", timeout=15 * 60)
         bilan.append(("republications", code, n))
+
+    # 4a': the posting of each application, kept before the availability check can
+    # see it close (jobhunter.postings). The app keeps it at the "postulé" click;
+    # this catches the statuses set elsewhere (apply runner, emails).
+    pa = ["-m", "jobhunter.programs.archive_postings"] + (["--dry"] if a.rapide else [])
+    code, n, _ = etape("4a/5 Annonces des candidatures", pa, "postings", timeout=10 * 60)
+    bilan.append(("annonces", code, n))
 
     # 4b, BEFORE THE FOLDERS: we do not generate a CV for a closed offer.
     # On 2026-10-02, a full audit found one verified offer out of three

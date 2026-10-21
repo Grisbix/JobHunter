@@ -26,6 +26,7 @@ SOUS_DOSSIERS = {
     "Relances": "Follow_ups",
     "_sauvegardes": "_backups",
     "_preuves": "_proofs",
+    "Annonces": "Postings",
 }
 # Files, wherever they are:
 FICHIERS = {
