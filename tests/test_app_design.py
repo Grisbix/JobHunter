@@ -85,6 +85,7 @@ class DesignTests(unittest.TestCase):
                     app._toggle_sidebar(garder=False)
                     self.assertTrue(app._sidebar_on)
                     self.assertEqual(len(app._nav), 8)  # + "Ma recherche" (3.9), "Profil" (3.18)
+                    self.assertEqual(next(iter(app._nav)), "profil")  # at the top (3.18.1)
                     self.assertEqual(set(app._offer_kpis), {"total", "fit", "post"})
                     self.assertEqual(app._offer_kpis["total"].cget("text"), "1")
                     self.assertEqual(app._offer_kpis["fit"].cget("text"), "1")
@@ -131,7 +132,9 @@ class DesignTests(unittest.TestCase):
                     # the top-left list: the profiles, then the two actions
                     valeurs = app._nom_profil_lbl.cget("values")
                     self.assertEqual(valeurs[-2:], ["Nouveau profil…", "Gérer les profils…"])
-                    self.assertEqual(app._nom_profil_lbl.get(), valeurs[0])
+                    ouvert = app._nom_profil_lbl.get()
+                    self.assertIn(ouvert, valeurs)
+                    self.assertTrue(ouvert.startswith("● "))  # the open one, marked
                     self.assertFalse((Path(directory) / "suivi.json").exists())
             finally:
                 for w in root.winfo_children():

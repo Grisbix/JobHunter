@@ -248,7 +248,7 @@ TEXTES: dict[str, str] = {
     "Nom du nouveau profil (par exemple : Chargée RSE à Lyon)": "Name des neuen Profils (zum Beispiel: CSR-Referentin in Lyon)",
     "Un profil de ce nom existe déjà.": "Ein Profil mit diesem Namen existiert bereits.",
     "Nouveau profil « {nom} » : réponds aux questions dans la fenêtre de commande.": "Neues Profil „{nom}“: Beantworte die Fragen im Befehlsfenster.",
-    "Profil changé : JobHunter doit redémarrer pour l'ouvrir. Redémarrer maintenant ?": "Profil gewechselt: JobHunter muss neu starten, um es zu öffnen. Jetzt neu starten?",
+    "Une tâche tourne sur ce profil : attends qu'elle finisse (ou « Arrêter »), puis change de profil.": "Auf diesem Profil läuft eine Aufgabe: warte, bis sie fertig ist (oder „Stoppen“), dann wechsle das Profil.",
     "Le profil n'a pas été créé (les questions n'ont pas été terminées).": "Das Profil wurde nicht erstellt (die Fragen wurden nicht beendet).",
     "Profil créé. L'ouvrir maintenant ? (JobHunter redémarre)": "Profil erstellt. Jetzt öffnen? (JobHunter startet neu)",
     "Associer un compte": "Konto verknüpfen",

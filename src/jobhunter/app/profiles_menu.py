@@ -197,15 +197,26 @@ class ProfilsMixin:
         self._relancer()
 
     def _changer_profil(self: "AppTypee", slug: str) -> None:
-        if slug == _profils.actif():
+        """Opens another profile at once: the window restarts on its data.
+
+        The paths are fixed at start-up, so a new process is the only way every panel
+        reads the new profile's folder. Refused while a task runs: it writes the open
+        profile's queue, and its output would be cut.
+        """
+        if slug == getattr(self, "_profil_ouvert", _profils.actif()):
+            return
+        if getattr(self, "proc", None) and self.proc.poll() is None:
+            messagebox.showinfo(
+                "JobHunter",
+                _t(
+                    "Une tâche tourne sur ce profil : attends qu'elle finisse (ou « Arrêter »), "
+                    "puis change de profil."
+                ),
+                parent=self.root,
+            )
             return
         _profils.activer(slug)
-        if messagebox.askyesno(
-            "JobHunter",
-            _t("Profil changé : JobHunter doit redémarrer pour l'ouvrir. Redémarrer maintenant ?"),
-            parent=self.root,
-        ):
-            self._relancer()
+        self._relancer()
 
     def _relancer(self: "AppTypee") -> None:
         """Starts JobHunter again on the active profile, then closes this window."""

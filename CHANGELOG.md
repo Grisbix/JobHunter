@@ -11,6 +11,11 @@ recent at the top.
   print. It is a drop-down list: every profile (● the open one), « Nouveau profil… »
   and « Gérer les profils… »; choosing a profile opens it. It follows renames,
   creations and archives.
+- **Choosing a profile opens it at once**: the window restarts on its data, without a
+  question (refused while a task runs, so as not to cut it). The « Profil » panel is
+  now at the top of the menu.
+- **« Lancer la collecte du matin » collects the open profile only.** It ran every
+  profile one after the other; the scheduled task still does.
 - **A launcher that skipped the active profile no longer opens the wrong one.** An old
   copy of `JobHunter.pyw` started the app without applying the chosen profile: the
   main profile opened whatever was chosen. The app now notices it and restarts itself

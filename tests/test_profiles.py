@@ -314,3 +314,26 @@ def test_lanceur_sans_profil_actif_relance(principale):
         finally:
             del os.environ[P.ENV_PRINCIPALE]
         lancer.assert_not_called()
+
+
+def test_changer_de_profil_relance_tout_de_suite(principale):
+    """Choosing a profile opens it at once (no question), except while a task runs."""
+    r = P.creer("B")
+    termine(r)
+    app = object.__new__(M.ProfilsMixin)
+    app._profil_ouvert = ""
+    app.root = None
+    app.proc = None
+    with patch.object(M.ProfilsMixin, "_relancer") as relancer:
+        app._changer_profil("")  # the open one: nothing
+        relancer.assert_not_called()
+        app.proc = type("Proc", (), {"poll": lambda self: None})()  # a task running
+        with patch.object(M.messagebox, "showinfo") as dire:
+            app._changer_profil("b")
+        dire.assert_called_once()
+        relancer.assert_not_called()
+        assert P.actif() == ""
+        app.proc = None
+        app._changer_profil("b")
+        relancer.assert_called_once()
+        assert P.actif() == "b"

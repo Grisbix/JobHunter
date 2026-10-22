@@ -183,9 +183,9 @@ class App(
         self._maj_menu_profils()
         self._nav = {}
         for cle, texte, fn in (
+            ("profil", "Profil", self._profil_panel),
             ("offres", "Offres", self._show_dash),
             ("recherche", "Ma recherche", self._ma_recherche_panel),
-            ("profil", "Profil", self._profil_panel),
             ("cv", "Mes CV", self._cv_viewer),
             ("entreprises", "Entreprises", self._companies_panel),
             ("sites", "Sites d'offres", self._sources_panel),

@@ -129,7 +129,10 @@ class ExecutionMixin:
     def _lancer_collecte(self: "AppTypee") -> None:
         """The full morning pipeline, the very one the scheduled task runs."""
         self.run_step(
-            [PY, "-m", "jobhunter.programs.daily_pipeline"], _langue.t("Collecte du matin")
+            # The open profile only: the scheduled task runs every profile, this button
+            # the one on screen.
+            [PY, "-m", "jobhunter.programs.daily_pipeline", "--un-profil"],
+            _langue.t("Collecte du matin"),
         )
         self.root.after(4000, lambda: self._maj_collecte(repeter=False))
 
