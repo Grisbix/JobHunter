@@ -39,8 +39,6 @@ TEXTES: dict[str, str] = {
     "Maintenance ▸": "Mantenimiento ▸",
     "Maintenance ▾": "Mantenimiento ▾",
     "Recharger": "Recargar",
-    "« Réduire le menu": "« Ocultar menú",
-    "☰ Menu": "☰ Menú",
     "↶ Retour": "↶ Volver",
     "Retour": "Volver",
     "Dossier": "Carpeta",
@@ -611,8 +609,6 @@ JOURNAL = {
     "de una oferta en la lista.",
     "✗ édition intégrée réservée aux lettres/.txt — CV .docx : bouton 📂 Ouvrir (Word)": "✗ "
     "edición integrada solo para cartas/.txt — CV .docx: botón 📂 Abrir (Word)",
-    "(clic droit sur l'offre → 🔔 Relance)": "(clic derecho en la oferta → 🔔 Recordatorio)",
-    "Prêt. « ▶ TOUT FAIRE » régénère.": "Listo. «▶ HACERLO TODO» regenera.",
     "⏳ tâche en cours.": "⏳ hay una tarea en curso.",
     "⏳ un travail de fond écrit la file (descriptions ou sync docs).": "⏳ un trabajo en "
     "segundo plano escribe la lista (descripciones o sincronización de documentos).",
@@ -641,13 +637,6 @@ JOURNAL = {
     "Sélectionne d'abord une entreprise dans la liste.": "Selecciona primero una empresa en "
     "la lista.",
     "✗ colle une URL http d'offre.": "✗ pega una URL http de una oferta.",
-    "Raccourcis : Echap retour · Alt+Gauche annule agrandir/rétrécir · Ctrl+R recharger · "
-    "F5 tout faire · Ctrl+B barre · dans le tableau : Ctrl+Entree postuler, Ctrl+A/D "
-    "cocher/decocher, Ctrl+Z annuler · Ctrl+L coller un lien · Ctrl+W arreter · Suppr pas "
-    "intéressé": "Atajos: Esc volver · Alt+Izquierda deshace ampliar/reducir · Ctrl+R "
-    "recargar · F5 hacerlo todo · Ctrl+B barra · en la tabla: Ctrl+Intro postular, Ctrl+A/D "
-    "marcar/desmarcar, Ctrl+Z deshacer · Ctrl+L pegar un enlace · Ctrl+W detener · Supr no "
-    "me interesa",
     # ── templates ──
     "📌 statut: {a} → {b}": "📌 estado: {a} → {b}",
     "! écriture suivi.json KO: {a}": "! fallo al escribir suivi.json: {a}",
@@ -681,7 +670,6 @@ JOURNAL = {
     "🔁 sync docs : {a}": "🔁 sincronización de documentos: {a}",
     "🔎 scan auto : +{a} offre(s). {b}": "🔎 escaneo automático: +{a} oferta(s). {b}",
     "🔎 scan auto : {a}": "🔎 escaneo automático: {a}",
-    "🔔 {a} candidature(s) à relancer : {b}": "🔔 {a} candidatura(s) para recordar: {b}",
     "📧 brouillon relance ouvert ({a}) — envoie-le puis passe le statut à « relancé ».": "📧 "
     "borrador de recordatorio abierto ({a}) — envíalo y luego cambia el estado a «relancé».",
     "▶ {a} — fenêtre CONSOLE ouverte. Chrome s'ouvre ; tape Entrée après chaque envoi. "

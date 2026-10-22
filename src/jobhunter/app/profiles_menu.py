@@ -117,10 +117,6 @@ class ProfilsMixin:
         w.configure(values=valeurs)
         courant = next((n for n, s in self._profils_par_nom.items() if s == ouvert), "")
         w.set(courant or "● " + _t("Principal"))
-        try:
-            self.root.title("JobHunter — " + courant[2:])
-        except (AttributeError, tk.TclError):
-            pass
 
     def _choix_profil(self: "AppTypee", valeur: str) -> None:
         """A choice in the top-left list: open that profile, or one of the two actions."""

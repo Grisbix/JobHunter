@@ -39,8 +39,6 @@ TEXTES: dict[str, str] = {
     "Maintenance ▸": "Wartung ▸",
     "Maintenance ▾": "Wartung ▾",
     "Recharger": "Neu laden",
-    "« Réduire le menu": "« Menü ausblenden",
-    "☰ Menu": "☰ Menü",
     "↶ Retour": "↶ Zurück",
     "Retour": "Zurück",
     "Dossier": "Ordner",
@@ -610,8 +608,6 @@ JOURNAL = {
     "Angebots in der Liste.",
     "✗ édition intégrée réservée aux lettres/.txt — CV .docx : bouton 📂 Ouvrir (Word)": "✗ "
     "eingebautes Bearbeiten nur für Anschreiben/.txt — Lebenslauf .docx: Knopf 📂 Öffnen (Word)",
-    "(clic droit sur l'offre → 🔔 Relance)": "(Rechtsklick auf das Angebot → 🔔 Nachfassen)",
-    "Prêt. « ▶ TOUT FAIRE » régénère.": "Bereit. „▶ ALLES ERLEDIGEN“ erstellt neu.",
     "⏳ tâche en cours.": "⏳ eine Aufgabe läuft.",
     "⏳ un travail de fond écrit la file (descriptions ou sync docs).": "⏳ ein Hintergrundjob "
     "schreibt die Liste (Beschreibungen oder Dokumentabgleich).",
@@ -641,13 +637,6 @@ JOURNAL = {
     "Sélectionne d'abord une entreprise dans la liste.": "Wähle zuerst ein Unternehmen in "
     "der Liste.",
     "✗ colle une URL http d'offre.": "✗ füge eine http-URL eines Angebots ein.",
-    "Raccourcis : Echap retour · Alt+Gauche annule agrandir/rétrécir · Ctrl+R recharger · "
-    "F5 tout faire · Ctrl+B barre · dans le tableau : Ctrl+Entree postuler, Ctrl+A/D "
-    "cocher/decocher, Ctrl+Z annuler · Ctrl+L coller un lien · Ctrl+W arreter · Suppr pas "
-    "intéressé": "Tastenkürzel: Esc zurück · Alt+Links Vergrößern/Verkleinern rückgängig · "
-    "Strg+R neu laden · F5 alles erledigen · Strg+B Seitenleiste · in der Tabelle: "
-    "Strg+Eingabe bewerben, Strg+A/D markieren/abwählen, Strg+Z rückgängig · Strg+L Link "
-    "einfügen · Strg+W stoppen · Entf kein Interesse",
     # ── templates ──
     "📌 statut: {a} → {b}": "📌 Status: {a} → {b}",
     "! écriture suivi.json KO: {a}": "! suivi.json schreiben fehlgeschlagen: {a}",
@@ -681,7 +670,6 @@ JOURNAL = {
     "🔁 sync docs : {a}": "🔁 Dokumentabgleich: {a}",
     "🔎 scan auto : +{a} offre(s). {b}": "🔎 automatischer Scan: +{a} Angebot(e). {b}",
     "🔎 scan auto : {a}": "🔎 automatischer Scan: {a}",
-    "🔔 {a} candidature(s) à relancer : {b}": "🔔 {a} Bewerbung(en) zum Nachfassen: {b}",
     "📧 brouillon relance ouvert ({a}) — envoie-le puis passe le statut à « relancé ».": "📧 "
     "Nachfass-Entwurf geöffnet ({a}) — schick ihn ab und setze dann den Status auf „relancé“.",
     "▶ {a} — fenêtre CONSOLE ouverte. Chrome s'ouvre ; tape Entrée après chaque envoi. "

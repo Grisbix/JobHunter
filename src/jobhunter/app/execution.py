@@ -6,7 +6,7 @@ import datetime
 import queue
 import subprocess
 import threading
-from tkinter import messagebox, scrolledtext, simpledialog
+from tkinter import messagebox, simpledialog
 from typing import Any
 
 from jobhunter import frozen as _gele
@@ -23,8 +23,6 @@ from jobhunter.app.theme import (
     CL,
     DEL,
     DEL_TX,
-    LOGBG,
-    LOGFG,
     SIDE,
     SIDE_ALERTE,
     SIDE_H,
@@ -63,25 +61,15 @@ class ExecutionMixin:
             wraplength=360,
             font=(_theme.FONT_UI, 10),
         )
-        self._bande.pack(fill="x", padx=12)
-        self.log = scrolledtext.ScrolledText(
-            parent,
-            bg=LOGBG,
-            fg=LOGFG,
-            insertbackground=LOGFG,
-            font=(_theme.FONT_MONO, 10),
-            relief="flat",
-            height=3,
-            wrap="word",
-        )
-        self.log.pack(fill="both", expand=True, padx=12, pady=(6, 12))
-        self._log("Prêt. « ▶ TOUT FAIRE » régénère.\n")
+        self._bande.pack(fill="x", padx=12, pady=(0, 12))
+        # No log box since 3.19: each message shows on the status line under the
+        # table; the last ones are kept here, for the tests and debugging.
+        self.log: list[str] = []
 
     # ── UI helpers ──
     def _log(self: "AppTypee", txt: Any) -> None:
         txt = _langue.journal(str(txt))  # the app's messages; F5
-        self.log.insert("end", txt)
-        self.log.see("end")
+        self.log = [*self.log[-199:], txt]
         # Same fallback, the log must be summarisable at a glance.
         ligne = next((l.strip() for l in reversed(str(txt).split(chr(10))) if l.strip()), "")
         if ligne and getattr(self, "status", None) is not None:

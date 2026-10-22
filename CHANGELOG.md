@@ -19,6 +19,11 @@ recent at the top.
   in French. Also translated: the statistics' sections, the companies' counter, the
   job sites' help line.
 - Wider « Vérifiée » and « Contrat » columns: « Checked » and « Permanent » were cut.
+- **A plainer window.** Gone: the log box at the bottom of the left menu (« Prêt… »,
+  the shortcuts list, the follow-ups reminder — each message still shows on the
+  status line under the table), the « JOBHUNTER » heading above the profile list, and
+  the « Réduire le menu » button (Ctrl+B still folds the menu, which now always
+  opens unfolded). The window is titled « JobHunter ».
 
 ## 3.18.1 — 2026-10-22
 

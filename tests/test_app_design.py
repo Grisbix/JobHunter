@@ -77,11 +77,9 @@ class DesignTests(unittest.TestCase):
                     # ⚑ added, Country and Region one click away (3.15); Publiée, Vérifiée (3.17)
                     self.assertEqual(len(app.tree.cget("displaycolumns")), 10)
                     self.assertTrue(app._sidebar_on)
-                    app._toggle_sidebar(
-                        garder=False
-                    )  # « Réduire le menu »: the table takes the width
+                    app._toggle_sidebar(garder=False)  # Ctrl+B: the table takes the width
                     self.assertFalse(app._sidebar_on)
-                    self.assertEqual(app.b_menu.cget("text"), "☰ Menu")
+                    self.assertFalse(hasattr(app, "b_menu"))  # no fold button since 3.19
                     app._toggle_sidebar(garder=False)
                     self.assertTrue(app._sidebar_on)
                     self.assertEqual(

@@ -32,7 +32,7 @@ from jobhunter.app.language import t as _t
 from jobhunter.app.my_search import MaRechercheMixin
 from jobhunter.app.panels import PanneauxMixin
 from jobhunter.app.profile_panel import ProfilPanneauMixin
-from jobhunter.app.profiles_menu import ProfilsMixin, nom_actif
+from jobhunter.app.profiles_menu import ProfilsMixin
 from jobhunter.app.settings_panel import ParametresMixin
 from jobhunter.app.table import TableauMixin
 from jobhunter.app.theme import (
@@ -105,7 +105,7 @@ class App(
             self.myemail = _profil.identite()["email"]
         except Exception:
             self.myemail = ""
-        root.title("JobHunter — " + (nom_actif() or _t("Principal")))
+        root.title("JobHunter")
         # 1320x840 is NOT the opening size: it is the one found again when
         # un-maximising. The window opens maximised.
         root.geometry("1320x840")
@@ -138,22 +138,6 @@ class App(
         self.sidebar.pack(side="left", fill="y", padx=0)
         self.sidebar.pack_propagate(False)
         self._sidebar_on = True
-        tete = CF(self.sidebar, bg=SIDE, plat=True)
-        tete.pack(fill="x", padx=(18, 8), pady=(20, 3))
-        CL(tete, text="JOBHUNTER", fg=SIDE_TX, bg=SIDE, font=(_theme.FONT_UI, 17, "bold")).pack(
-            side="left"
-        )
-        # Folds the menu where the eye already is; ☰ Menu in the top bar opens it again.
-        CB(
-            tete,
-            text="«",
-            command=self._toggle_sidebar,
-            bg=SIDE,
-            fg=SIDE_MUT,
-            activebackground=SIDE_H,
-            width=34,
-            font=(_theme.FONT_UI, 16),
-        ).pack(side="right")
         # THE ACTIVE PROFILE, always named at the top left: the whole window (queue,
         # CVs, letters, settings, fit) belongs to it. A drop-down list of the profiles:
         # choosing one opens it; it follows renames, creations and archives.
@@ -163,7 +147,7 @@ class App(
             fg=SIDE_MUT,
             bg=SIDE,
             font=(_theme.FONT_UI, 10, "bold"),
-        ).pack(anchor="w", padx=18, pady=(0, 2))
+        ).pack(anchor="w", padx=18, pady=(20, 2))
         self._nom_profil_lbl = ctk.CTkOptionMenu(
             self.sidebar,
             values=[],
@@ -354,20 +338,8 @@ class App(
         # Maintenance > Access & diagnostics.
         tp = CF(self.main, bg=BG)
         tp.pack(fill="x", pady=(0, _theme.GAP))
-        # Folds or opens the left menu (Ctrl+B): the table then takes the whole
-        # width. Named "Outils" until 3.15, nothing said it hid the menu.
-        self.b_menu = CB(
-            tp,
-            text="« Réduire le menu",
-            command=self._toggle_sidebar,
-            bg=BTN,
-            fg=TX,
-            relief="flat",
-            activebackground=BTN_H,
-            cursor="hand2",
-            font=(_theme.FONT_UI, 13),
-        )
-        self.b_menu.pack(side="left", padx=(2, 0), pady=2)
+        # The left menu has no fold button since 3.19 (Ctrl+B still folds it): the
+        # profile list and the navigation stay in view.
         # Retour de disposition : voir _dispo_retour.
         self._dispo_pile: list[Any] = []
         self.b_dispo = CB(
@@ -403,12 +375,8 @@ class App(
         self.viewer = None  # CV & Letters panel, built on first use
         self._dv = None  # full-screen offer detail panel
         self._panels: dict[str, Any] = {}  # Companies / Job sites panels
-        # The left menu as the user left it (« Réduire le menu » / Ctrl+B, remembered in
-        # _vues.json). The status line stays visible.
-        from jobhunter.app import views as _vues
-
-        if not _vues.barre_ouverte():
-            self._toggle_sidebar(memo=False, garder=False)
+        # The left menu always opens unfolded: with no button to unfold it, a menu
+        # folded by Ctrl+B in an earlier session would stay hidden.
         self._desc_busy = False
         self.load_offers()
         # A CV dragged onto the window (tkinterdnd2; without it, the CV panel's button).
@@ -441,7 +409,6 @@ class App(
         self.root.after(6000, self._auto_sync)
         # AUTO: the table follows the queue when another program writes it
         self.root.after(15000, self._surveiller_file)
-        self.root.after(4000, self._check_relances)  # relances dues → log
         # AUTO: scan of company sites, 2 min after launch then every 3 h
         self.root.after(120000, self._auto_scrape)
         self.root.bind("<FocusIn>", self._on_focus_scrape, add="+")
@@ -474,13 +441,6 @@ class App(
             ("<Control-z>", self._annuler_dernier),
         ):
             self.tree.bind(touches, lambda e, f=action: (f(), "break")[1])  # type: ignore[misc]  # lambda with a default parameter (loop capture)
-        self._log(
-            "Raccourcis : Echap retour · Alt+Gauche annule agrandir/rétrécir · "
-            "Ctrl+R recharger · F5 tout faire · "
-            "Ctrl+B barre · dans le tableau : Ctrl+Entree postuler, "
-            "Ctrl+A/D cocher/decocher, Ctrl+Z annuler · "
-            "Ctrl+L coller un lien · Ctrl+W arreter · Suppr pas intéressé" + chr(10)
-        )
 
     def _nav_actif(self, cle: Any) -> None:
         contexte = getattr(self, "nav_context", None)
@@ -660,10 +620,6 @@ class App(
         else:
             self.sidebar.pack(side="left", fill="y", padx=0, before=self.main)
         self._sidebar_on = not self._sidebar_on
-        if getattr(self, "b_menu", None) is not None:
-            self.b_menu.configure(
-                text=_t("« Réduire le menu") if self._sidebar_on else _t("☰ Menu")
-            )
         if garder:
             from jobhunter.app import views as _vues
 

@@ -283,32 +283,6 @@ class DonneesMixin:
 
         threading.Thread(target=work, daemon=True).start()
 
-    def _check_relances(self: "AppTypee") -> None:
-        """Reports at startup the "postulé" applications without answer for ≥ 10 d."""
-
-        def work() -> None:
-            try:
-                import sys as _s
-
-                if str(SCRIPTS) not in _s.path:
-                    _s.path.insert(0, str(SCRIPTS))
-                from jobhunter.programs import follow_ups as relances
-
-                lst = relances.a_relancer(10)
-            except Exception:
-                lst = []
-            if lst:
-                names = ", ".join(o.get("entreprise", "")[:18] for o, *_ in lst[:5])
-                self.root.after(
-                    0,
-                    lambda: self._log(
-                        f"🔔 {len(lst)} candidature(s) à relancer : {names}\n"
-                        "   (clic droit sur l'offre → 🔔 Relance)\n"
-                    ),
-                )
-
-        threading.Thread(target=work, daemon=True).start()
-
     def _relance_draft(self: "AppTypee", o: Any) -> None:
         """Brouillon de relance (.txt + mailto ouvert) — TU envoies, puis statut → relancé."""
         key = self._oid(o)

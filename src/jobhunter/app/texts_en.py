@@ -41,8 +41,6 @@ TEXTES: dict[str, str] = {
     "Maintenance ▸": "Maintenance ▸",
     "Maintenance ▾": "Maintenance ▾",
     "Recharger": "Reload",
-    "« Réduire le menu": "« Hide menu",
-    "☰ Menu": "☰ Menu",
     "↶ Retour": "↶ Back",
     "Retour": "Back",
     "Dossier": "Folder",
@@ -612,8 +610,6 @@ JOURNAL = {
     "the list first.",
     "✗ édition intégrée réservée aux lettres/.txt — CV .docx : bouton 📂 Ouvrir (Word)": "✗ "
     "built-in editing is for letters/.txt only — CV .docx: 📂 Open (Word) button",
-    "(clic droit sur l'offre → 🔔 Relance)": "(right-click the offer → 🔔 Follow-up)",
-    "Prêt. « ▶ TOUT FAIRE » régénère.": "Ready. “▶ DO EVERYTHING” regenerates.",
     "⏳ tâche en cours.": "⏳ a task is running.",
     "⏳ un travail de fond écrit la file (descriptions ou sync docs).": "⏳ a background job "
     "is writing the queue (descriptions or document sync).",
@@ -639,12 +635,6 @@ JOURNAL = {
     "déjà suivi": "already followed",
     "Sélectionne d'abord une entreprise dans la liste.": "Select a company in the list first.",
     "✗ colle une URL http d'offre.": "✗ paste an http offer URL.",
-    "Raccourcis : Echap retour · Alt+Gauche annule agrandir/rétrécir · Ctrl+R recharger · "
-    "F5 tout faire · Ctrl+B barre · dans le tableau : Ctrl+Entree postuler, Ctrl+A/D "
-    "cocher/decocher, Ctrl+Z annuler · Ctrl+L coller un lien · Ctrl+W arreter · Suppr pas "
-    "intéressé": "Shortcuts: Esc back · Alt+Left undo enlarge/shrink · Ctrl+R reload · F5 do "
-    "everything · Ctrl+B sidebar · in the table: Ctrl+Enter apply, Ctrl+A/D tick/untick, "
-    "Ctrl+Z undo · Ctrl+L paste a link · Ctrl+W stop · Del not interested",
     # ── templates ──
     "📌 statut: {a} → {b}": "📌 status: {a} → {b}",
     "! écriture suivi.json KO: {a}": "! writing suivi.json failed: {a}",
@@ -678,7 +668,6 @@ JOURNAL = {
     "🔁 sync docs : {a}": "🔁 document sync: {a}",
     "🔎 scan auto : +{a} offre(s). {b}": "🔎 auto scan: +{a} offer(s). {b}",
     "🔎 scan auto : {a}": "🔎 auto scan: {a}",
-    "🔔 {a} candidature(s) à relancer : {b}": "🔔 {a} application(s) to follow up: {b}",
     "📧 brouillon relance ouvert ({a}) — envoie-le puis passe le statut à « relancé ».": "📧 "
     "follow-up draft opened ({a}) — send it, then set the status to “relancé”.",
     "▶ {a} — fenêtre CONSOLE ouverte. Chrome s'ouvre ; tape Entrée après chaque envoi. "
