@@ -67,6 +67,14 @@ def test_enregistrer_lire_supprimer(fichier):
     assert V.lire()["colonnes"] == ["_chk", "poste"]
 
 
+def test_menu_de_gauche_retenu(fichier):
+    assert V.barre_ouverte()  # open by default
+    assert V.memoriser_barre(False)
+    V.memoriser_colonnes(["_chk", "poste"])  # another setting does not drop it
+    assert not V.barre_ouverte()
+    assert V.memoriser_barre(True) and V.barre_ouverte()
+
+
 @pytest.mark.parametrize("contenu", ["{pas du json", "[1, 2]", '{"vues": 3, "colonnes": "x"}'])
 def test_fichier_abime_vide(fichier, contenu):
     fichier.write_text(contenu, encoding="utf-8")

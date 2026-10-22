@@ -77,6 +77,13 @@ class DesignTests(unittest.TestCase):
                     # ⚑ added, Country and Region one click away (3.15)
                     self.assertEqual(len(app.tree.cget("displaycolumns")), 8)
                     self.assertTrue(app._sidebar_on)
+                    app._toggle_sidebar(
+                        garder=False
+                    )  # « Réduire le menu »: the table takes the width
+                    self.assertFalse(app._sidebar_on)
+                    self.assertEqual(app.b_menu.cget("text"), "☰ Menu")
+                    app._toggle_sidebar(garder=False)
+                    self.assertTrue(app._sidebar_on)
                     self.assertEqual(len(app._nav), 7)  # + "Ma recherche" (3.9)
                     self.assertEqual(set(app._offer_kpis), {"total", "fit", "post"})
                     self.assertEqual(app._offer_kpis["total"].cget("text"), "1")

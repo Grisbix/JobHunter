@@ -33,7 +33,8 @@ def _chemin(chemin: Path | None = None) -> Path | None:
 
 
 def lire(chemin: Path | None = None) -> dict[str, Any]:
-    """{"vues": {name: view}, "colonnes": [...]}; empty when absent or unreadable."""
+    """{"vues": {name: view}, "colonnes": [...]}, plus "barre" (the left menu open or
+    folded) once remembered; empty when absent or unreadable."""
     p = _chemin(chemin)
     try:
         d = json.loads(p.read_text(encoding="utf-8")) if p else {}
@@ -43,7 +44,10 @@ def lire(chemin: Path | None = None) -> dict[str, Any]:
         d = {}
     vues = d.get("vues") if isinstance(d.get("vues"), dict) else {}
     cols = d.get("colonnes") if isinstance(d.get("colonnes"), list) else []
-    return {"vues": vues, "colonnes": cols}
+    out: dict[str, Any] = {"vues": vues, "colonnes": cols}
+    if isinstance(d.get("barre"), bool):
+        out["barre"] = d["barre"]
+    return out
 
 
 def _ecrire(d: dict[str, Any], chemin: Path | None = None) -> bool:
@@ -125,6 +129,18 @@ def memoriser_colonnes(cols: list[str], chemin: Path | None = None) -> bool:
     d = lire(chemin)
     d["colonnes"] = list(cols)
     return _ecrire(d, chemin)
+
+
+def memoriser_barre(ouverte: bool, chemin: Path | None = None) -> bool:
+    """Remembers whether the left menu is open, for the next start."""
+    d = lire(chemin)
+    d["barre"] = bool(ouverte)
+    return _ecrire(d, chemin)
+
+
+def barre_ouverte(chemin: Path | None = None) -> bool:
+    """The left menu at start-up: open unless the user folded it last time."""
+    return lire(chemin).get("barre", True) is not False
 
 
 # ── in the application ──────────────────────────────────────────────────────

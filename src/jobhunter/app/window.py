@@ -132,9 +132,22 @@ class App(
         self.sidebar.pack(side="left", fill="y", padx=0)
         self.sidebar.pack_propagate(False)
         self._sidebar_on = True
-        CL(
-            self.sidebar, text="JOBHUNTER", fg=SIDE_TX, bg=SIDE, font=(_theme.FONT_UI, 17, "bold")
-        ).pack(anchor="w", padx=18, pady=(20, 3))
+        tete = CF(self.sidebar, bg=SIDE, plat=True)
+        tete.pack(fill="x", padx=(18, 8), pady=(20, 3))
+        CL(tete, text="JOBHUNTER", fg=SIDE_TX, bg=SIDE, font=(_theme.FONT_UI, 17, "bold")).pack(
+            side="left"
+        )
+        # Folds the menu where the eye already is; ☰ Menu in the top bar opens it again.
+        CB(
+            tete,
+            text="«",
+            command=self._toggle_sidebar,
+            bg=SIDE,
+            fg=SIDE_MUT,
+            activebackground=SIDE_H,
+            width=34,
+            font=(_theme.FONT_UI, 16),
+        ).pack(side="right")
         CL(
             self.sidebar,
             text="RECHERCHE D'EMPLOI",
@@ -326,9 +339,11 @@ class App(
         # Maintenance > Access & diagnostics.
         tp = CF(self.main, bg=BG)
         tp.pack(fill="x", pady=(0, _theme.GAP))
-        CB(
+        # Folds or opens the left menu (Ctrl+B): the table then takes the whole
+        # width. Named "Outils" until 3.15, nothing said it hid the menu.
+        self.b_menu = CB(
             tp,
-            text="Outils",
+            text="« Réduire le menu",
             command=self._toggle_sidebar,
             bg=BTN,
             fg=TX,
@@ -336,7 +351,8 @@ class App(
             activebackground=BTN_H,
             cursor="hand2",
             font=(_theme.FONT_UI, 13),
-        ).pack(side="left", padx=(2, 0), pady=2)
+        )
+        self.b_menu.pack(side="left", padx=(2, 0), pady=2)
         # Retour de disposition : voir _dispo_retour.
         self._dispo_pile: list[Any] = []
         self.b_dispo = CB(
@@ -372,8 +388,12 @@ class App(
         self.viewer = None  # CV & Letters panel, built on first use
         self._dv = None  # full-screen offer detail panel
         self._panels: dict[str, Any] = {}  # Companies / Job sites panels
-        # CRM navigation visible at start-up; Outils / Ctrl+B folds it
-        # for narrower screens. The status line stays visible.
+        # The left menu as the user left it (« Réduire le menu » / Ctrl+B, remembered in
+        # _vues.json). The status line stays visible.
+        from jobhunter.app import views as _vues
+
+        if not _vues.barre_ouverte():
+            self._toggle_sidebar(memo=False, garder=False)
         self._desc_busy = False
         self.load_offers()
         # A CV dragged onto the window (tkinterdnd2; without it, the CV panel's button).
@@ -614,7 +634,8 @@ class App(
         widget.bind("<ButtonPress-1>", _avant, add="+")
         widget.bind("<ButtonRelease-1>", _apres, add="+")
 
-    def _toggle_sidebar(self, memo: Any = True) -> None:
+    def _toggle_sidebar(self, memo: Any = True, garder: bool = True) -> None:
+        """Folds or opens the left menu; `garder`: remembered for the next start."""
         if memo and hasattr(self, "_dispo_pile"):
             self._dispo_memo()
         if self._sidebar_on:
@@ -622,6 +643,17 @@ class App(
         else:
             self.sidebar.pack(side="left", fill="y", padx=0, before=self.main)
         self._sidebar_on = not self._sidebar_on
+        if getattr(self, "b_menu", None) is not None:
+            self.b_menu.configure(
+                text=_t("« Réduire le menu") if self._sidebar_on else _t("☰ Menu")
+            )
+        if garder:
+            from jobhunter.app import views as _vues
+
+            try:
+                _vues.memoriser_barre(self._sidebar_on)
+            except OSError:
+                pass  # read-only folder: the choice simply lasts this session
 
 
 def _annonce_mise_a_jour(root: Any, app: Any) -> None:

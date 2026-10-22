@@ -4,6 +4,13 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.15.1 — 2026-10-22
+
+- **Fold the left menu to give the table the whole width.** The button at the top left,
+  named « Outils », already did it, but nothing said so: it is now « « Réduire le menu »
+  (« ☰ Menu » to open it again), with a « « » in the menu's header too, and Ctrl+B. The
+  choice is remembered for the next start (`data/_vues.json`).
+
 ## 3.15.0 — 2026-10-22
 
 - **A copy of each posting you apply to.** Offers close and their page goes — 2,868
