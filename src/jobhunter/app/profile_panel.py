@@ -194,8 +194,6 @@ class ProfilPanneauMixin:
             if not nom or not nom.strip():
                 return
             _profils.renommer(p.slug, nom)
-            if p.slug == _profils.actif() and self._nom_profil_lbl is not None:
-                self._nom_profil_lbl.configure(text="● " + " ".join(nom.split()))
             recharger()
 
         def archiver(p: _profils.Profil) -> None:
@@ -258,6 +256,7 @@ class ProfilPanneauMixin:
                 )
 
         def recharger() -> None:
+            self._maj_menu_profils()  # the top-left list follows renames and archives
             for x in liste.winfo_children():
                 x.destroy()
             actif = _profils.actif()

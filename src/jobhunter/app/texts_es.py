@@ -27,6 +27,7 @@ TEXTES: dict[str, str] = {
     # navigation and header
     "JOBHUNTER": "JOBHUNTER",
     "PROFIL ACTIF": "PERFIL ACTIVO",
+    "Gérer les profils…": "Gestionar perfiles…",
     "Offres": "Ofertas",
     "Mes CV": "Mis CV",
     "Entreprises": "Empresas",

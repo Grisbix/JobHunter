@@ -128,6 +128,10 @@ class DesignTests(unittest.TestCase):
                         panel()
                     self.assertEqual(len(app._panels["stats"]._cards), 10)
                     self.assertEqual(list(app._panels["profil"]._onglets), ["Profils"])
+                    # the top-left list: the profiles, then the two actions
+                    valeurs = app._nom_profil_lbl.cget("values")
+                    self.assertEqual(valeurs[-2:], ["Nouveau profil…", "Gérer les profils…"])
+                    self.assertEqual(app._nom_profil_lbl.get(), valeurs[0])
                     self.assertFalse((Path(directory) / "suivi.json").exists())
             finally:
                 for w in root.winfo_children():

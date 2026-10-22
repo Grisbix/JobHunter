@@ -8,7 +8,9 @@ recent at the top.
 
 - **The active profile is named at the top left, always**, under « PROFIL ACTIF », and
   in the window's title. It was shown only once a second profile existed, in small
-  print. A click opens the Profil panel.
+  print. It is a drop-down list: every profile (● the open one), « Nouveau profil… »
+  and « Gérer les profils… »; choosing a profile opens it. It follows renames,
+  creations and archives.
 - **A launcher that skipped the active profile no longer opens the wrong one.** An old
   copy of `JobHunter.pyw` started the app without applying the chosen profile: the
   main profile opened whatever was chosen. The app now notices it and restarts itself

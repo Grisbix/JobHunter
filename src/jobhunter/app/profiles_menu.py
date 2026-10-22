@@ -86,8 +86,52 @@ def choisir(parent: tk.Misc, titre: str, texte: str, boutons: list[str]) -> int 
     return choix["i"]
 
 
+# The drop-down list at the top left: the profiles, then two actions.
+_NOUVEAU = "Nouveau profil…"
+_GERER = "Gérer les profils…"
+
+
 class ProfilsMixin:
     """The Profiles menu and the creation of a profile."""
+
+    def _maj_menu_profils(self: "AppTypee") -> None:
+        """Fills the top-left list from the profiles on disk; shows the open one.
+
+        The open one is the profile this window runs on: after "no" to the restart,
+        the list still names it, not the one chosen for the next start.
+        """
+        w = getattr(self, "_nom_profil_lbl", None)
+        if w is None:
+            return
+        try:
+            profils = _profils.liste()
+        except RuntimeError:
+            profils = []
+        ouvert = getattr(self, "_profil_ouvert", None)
+        if ouvert is None:
+            ouvert = self._profil_ouvert = _profils.actif()
+        self._profils_par_nom = {
+            ("● " if p.slug == ouvert else "○ ") + nom_affiche(p): p.slug for p in profils
+        }
+        valeurs = [*self._profils_par_nom, _t(_NOUVEAU), _t(_GERER)]
+        w.configure(values=valeurs)
+        courant = next((n for n, s in self._profils_par_nom.items() if s == ouvert), "")
+        w.set(courant or "● " + _t("Principal"))
+        try:
+            self.root.title("JobHunter — " + courant[2:])
+        except (AttributeError, tk.TclError):
+            pass
+
+    def _choix_profil(self: "AppTypee", valeur: str) -> None:
+        """A choice in the top-left list: open that profile, or one of the two actions."""
+        self._maj_menu_profils()  # back to the open profile until a restart says otherwise
+        if valeur == _t(_NOUVEAU):
+            self._nouveau_profil()
+        elif valeur == _t(_GERER):
+            self._profil_panel("Profils")
+            self._nav_actif("profil")
+        elif (s := self._profils_par_nom.get(valeur)) is not None:
+            self._changer_profil(s)
 
     def _menu_profils(self: "AppTypee") -> None:
         """Menu of the profiles (the active one ticked), then "Nouveau profil…"."""
@@ -127,8 +171,7 @@ class ProfilsMixin:
             return
         _profils.renommer(s, nom)
         self._log(_t("Profil renommé : {nom}").format(nom=" ".join(nom.split())) + "\n")
-        if self._nom_profil_lbl is not None:
-            self._nom_profil_lbl.configure(text="\u25cf " + " ".join(nom.split()))
+        self._maj_menu_profils()
 
     def _archiver_profil(self: "AppTypee") -> None:
         """Moves the active profile to profiles/_archives/ (nothing deleted), back to main."""
@@ -233,6 +276,7 @@ class ProfilsMixin:
             )
             return
         _profils.nommer(racine)
+        self._maj_menu_profils()  # the new profile appears in the top-left list
         if messagebox.askyesno(
             "JobHunter",
             _t("Profil créé. L'ouvrir maintenant ? (JobHunter redémarre)"),

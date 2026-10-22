@@ -153,8 +153,8 @@ class App(
             font=(_theme.FONT_UI, 16),
         ).pack(side="right")
         # THE ACTIVE PROFILE, always named at the top left: the whole window (queue,
-        # CVs, letters, settings, fit) belongs to it. A click opens the Profil panel,
-        # where another profile is opened or created.
+        # CVs, letters, settings, fit) belongs to it. A drop-down list of the profiles:
+        # choosing one opens it; it follows renames, creations and archives.
         CL(
             self.sidebar,
             text="PROFIL ACTIF",
@@ -162,19 +162,25 @@ class App(
             bg=SIDE,
             font=(_theme.FONT_UI, 10, "bold"),
         ).pack(anchor="w", padx=18, pady=(0, 2))
-        self._nom_profil_lbl = CB(
+        self._nom_profil_lbl = ctk.CTkOptionMenu(
             self.sidebar,
-            text="● " + (nom_actif() or _t("Principal")),
-            command=lambda: (self._profil_panel("Profils"), self._nav_actif("profil")),  # type: ignore[func-returns-value]  # Tk lambda chaining calls without a value
-            cursor="hand2",
-            bg=SIDE_CARD,
-            fg=SIDE_TX,
-            activebackground=SIDE_H,
-            relief="flat",
-            font=(_theme.FONT_UI, 14, "bold"),
+            values=[],
+            command=self._choix_profil,
+            fg_color=SIDE_CARD,
+            button_color=SIDE_CARD,
+            button_hover_color=SIDE_H,
+            text_color=SIDE_TX,
+            dropdown_fg_color=SIDE_CARD,
+            dropdown_hover_color=SIDE_H,
+            dropdown_text_color=SIDE_TX,
+            font=ctk.CTkFont(_theme.FONT_UI, 14, "bold"),
+            dropdown_font=ctk.CTkFont(_theme.FONT_UI, 13),
+            height=40,
             anchor="w",
+            dynamic_resizing=False,
         )
         self._nom_profil_lbl.pack(fill="x", padx=12, pady=(0, 16))
+        self._maj_menu_profils()
         self._nav = {}
         for cle, texte, fn in (
             ("offres", "Offres", self._show_dash),
