@@ -72,6 +72,9 @@ class DepotCvMixin:
                 "JobHunter", _t("Dépose un CV au format .docx ou .pdf."), parent=self.root
             )
             return
+        if getattr(self, "_depot_vers_profil", False):  # dropped on the Profils tab
+            self._nouveau_profil(cv)
+            return
         i = choisir(
             self.root,
             "JobHunter",

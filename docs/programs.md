@@ -67,6 +67,7 @@ found again by the scan tomorrow; a lost application never comes back.
 | `restore.py` | Puts the queue back as it was in a backup (daily, before the audit, before the sort): `--liste`, then a name; inspection by default, `--appliquer` writes. Never restores the tracker, keeps the tracked offers, loses no description, and copies the state before so the restoration can be undone. `jobhunter restore`. |
 | `queue_tools.py` | Queue maintenance. |
 | `rescore_ats.py` | Recomputes `ats_pct` and `skills_match` over the whole queue. |
+| `fit_components.py` | Prints, as JSON, what the fit of each offer is made of apart from the weights (`scoring.fit.Composantes`): the Profil panel reads it once, then recomputes the queue for each change of weights. |
 | `export_queue_csv.py` | Readable backup as CSV. |
 
 ## Documents — CVs and letters

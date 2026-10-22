@@ -16,6 +16,7 @@ Run:
 
 import re
 import sys
+from dataclasses import dataclass
 from typing import Any
 
 from docx import Document
@@ -31,6 +32,7 @@ from jobhunter import lazy as _paresseux
 from jobhunter import profile as _P
 from jobhunter import root as _racine
 from jobhunter.paths import CV_MODELES as CV_ATS
+from jobhunter.scoring import weights as _poids
 from jobhunter.scoring.lexicon import cv_variant_key, has_skill
 
 _ici = sys.modules[__name__]
@@ -555,12 +557,16 @@ def plafond_langue(t: str | None) -> tuple[float, str]:
 
 
 def fit_detail(
-    text: str | None, title: str | None = "", raisons: list[str] | None = None
+    text: str | None,
+    title: str | None = "",
+    raisons: list[str] | None = None,
+    poids: "_poids.Ponderation | None" = None,
 ) -> tuple[int, int, float]:
     """(fit, yrs, fit_fin). `fit_fin` breaks ties between offers with the same fit.
 
     `raisons`, if passed, receives each step of the computation in plain words (see
-    `expliquer`); the computation is the same with or without it.
+    `expliquer`); the computation is the same with or without it. `poids`: other
+    weights than the active profile's (the "Comprendre le fit" panel, before saving).
 
     The user, 2026-10-09: 546 offers at 10, 1203 at 8, 3321 at 6 — within a level, the
     order meant nothing. fit_fin = fit +/- 0.45: its rounding ALWAYS returns `fit`, no
@@ -579,18 +585,105 @@ def fit_detail(
     """
     t = (text or "").lower()
     role = (title or text or "").lower()
-    sc = axis_scores(t)
-    raw = sum(sc[a] * _ici.POIDS[a] for a in _ici.AXES)
-    fit = 1 + 9 * min(1.0, raw / _ici._TARGET)  # 1..10, no stacked magic number
+    c = composantes(text, title)
+    p = poids or ponderation()
+    fit = fit_de(c, p)
     if raisons is not None:
         got = skills_in(t)
         for axe, labels in _ici.AXES.items():
             trouves = [l for l in labels if l in got]
             if trouves:
                 raisons.append(
-                    f"{axe} {sc[axe]:.0%} (x{_ici.POIDS[axe]:g}) : " + ", ".join(trouves[:6])
+                    f"{axe} {c.axes[axe]:.0%} (x{p.axes[axe]:g}) : " + ", ".join(trouves[:6])
                 )
-        raisons.append(f"vocabulaire : {fit:.1f}/10")
+        raisons.append(f"vocabulaire : {_vocabulaire(c, p):.1f}/10")
+        raisons.extend(c.notes)
+        if c.junior:
+            raisons.append(f"intitulé junior « {c.junior} » : +{p.bonus_junior:g}")
+        if c.senior:
+            raisons.append(f"intitulé senior : -{p.malus_senior:g}")
+        if c.ecarte:
+            raisons.append(f"intitulé écarté « {c.ecarte} » : -2")
+        if c.note_langue:
+            raisons.append(c.note_langue)
+        if p.malus_annees(c.annees):
+            raisons.append(
+                f"{c.annees} an(s) d'expérience demandés : -{p.malus_annees(c.annees):g}"
+            )
+    entier = max(1, min(10, round(fit)))
+    yrs = c.annees
+    return entier, yrs, round(entier - 0.45 + 0.9 * _departage(t, role, fit, entier, yrs), 3)
+
+
+@dataclass(frozen=True)
+class Composantes:
+    """What the fit of an offer is made of, apart from the weights the user can tune.
+
+    `axes`: share of each axis covered by the text (0..1). `plafond`: the cap set by the
+    core share, the title and the language. `junior`/`ecarte`: the word of the title that
+    triggers the bonus / the penalty ("" = none). `annees`: experience asked for.
+    `notes`/`note_langue`: the steps of the cap, in plain words, for `expliquer`.
+    """
+
+    axes: dict[str, float]
+    plafond: float
+    junior: str
+    senior: bool
+    ecarte: str
+    annees: int
+    notes: tuple[str, ...] = ()
+    note_langue: str = ""
+
+
+def ponderation() -> _poids.Ponderation:
+    """The weights of the active profile."""
+    return _poids.Ponderation(
+        axes=dict(_ici.POIDS),
+        cible=_ici._TARGET,
+        bonus_junior=_ici._BONUS_JUNIOR,
+        malus_senior=_ici._MALUS_SENIOR,
+        malus_experience=dict(_ici._MALUS_EXP),
+    )
+
+
+def _vocabulaire(c: Composantes, p: _poids.Ponderation) -> float:
+    raw = sum(c.axes[a] * p.axes.get(a, 0.0) for a in c.axes)
+    return 1 + 9 * min(1.0, raw / p.cible)  # 1..10, no stacked magic number
+
+
+def fit_de(c: Composantes, p: _poids.Ponderation | None = None) -> float:
+    """The fit before rounding, from the components and the weights.
+
+    The active profile's weights by default. Same operations, in the same order, as
+    before the split (3.18).
+    """
+    p = p or ponderation()
+    fit = _vocabulaire(c, p)
+    # THE BONUSES FIRST, THE CAP AFTERWARDS. The cap was applied before, and
+    # the junior bonus went over it: "Auditeur junior analyste" came out at
+    # 10 with a cap computed at 8.7. A cap that a bonus can exceed
+    # caps nothing — and the rule "neither ESG nor AI -> 6 max" no longer held.
+    if c.junior:
+        fit += p.bonus_junior
+    if c.senior:
+        fit -= p.malus_senior
+    if c.ecarte:
+        fit -= 2
+    fit = min(fit, c.plafond)
+    return fit - p.malus_annees(c.annees)
+
+
+def fit_entier(c: Composantes, p: _poids.Ponderation | None = None) -> int:
+    """The integer fit 1..10 shown in the queue."""
+    return max(1, min(10, round(fit_de(c, p))))
+
+
+def composantes(text: str | None, title: str | None = "") -> Composantes:
+    """Reads in the offer everything the fit needs, except the weights. See fit_detail."""
+    t = (text or "").lower()
+    role = (title or text or "").lower()
+    sc = axis_scores(t)
+    notes: list[str] = []
     # CAP BY PROFILE PRIORITY. Without it, finance + risk + consulting are enough
     # to reach _TARGET without the slightest ESG signal: 251 offers came out at
     # fit >= 8 with the ESG axis at ZERO, and the TOP 25 only contained 3
@@ -611,18 +704,16 @@ def fit_detail(
         cap = max(
             cap, _ici._PLAFOND_SECOND + (10.0 - _ici._PLAFOND_SECOND) * coeur
         )  # profession targeted second
-        if raisons is not None:
-            raisons.append("intitulé du métier visé en second (finance)")
+        notes.append("intitulé du métier visé en second (finance)")
     # An explicitly ESG title raises the cap: the title says what the
     # job IS, the description only mentions subjects.
     fort = _c(_ici._ESG_TITRE_FORT, role)
     hors = _titre_hors_cible(role)
     if fort or (_c(_ici._ESG_TITLE_RX, role) and not hors):
         cap = 10.0
-        if raisons is not None:
-            raisons.append("intitulé du cœur de cible : plafond 10")
-    elif raisons is not None:
-        raisons.append(f"plafond {cap:.1f} (cœur {coeur:.0%}, complément {compl:.0%})")
+        notes.append("intitulé du cœur de cible : plafond 10")
+    else:
+        notes.append(f"plafond {cap:.1f} (cœur {coeur:.0%}, complément {compl:.0%})")
     # Vetoes last: HSE, technical or non-finance profession win over
     # the environmental vocabulary of the title AND of the description, never
     # over an ESG-finance marker. The technical profession only lost the
@@ -633,48 +724,30 @@ def fit_detail(
     # points to 137 "AI Engineer" jobs that nobody judged too high.
     if not fort and _titre_hse(role):
         cap = min(cap, _ici._PLAFOND_VETO)
-        if raisons is not None:
-            raisons.append(f"intitulé HSE : plafond {cap:g}")
+        notes.append(f"intitulé HSE : plafond {cap:g}")
     elif not fort and hors:
         cap = min(cap, _ici._PLAFOND_COMPLEMENT if compl >= 0.5 else _ici._PLAFOND_VETO)
-        if raisons is not None:
-            raisons.append(f"métier hors cible dans l'intitulé : plafond {cap:g}")
-    # THE BONUSES FIRST, THE CAP AFTERWARDS. The cap was applied before, and
-    # the junior bonus went over it: "Auditeur junior analyste" came out at
-    # 10 with a cap computed at 8.7. A cap that a bonus can exceed
-    # caps nothing — and the rule "neither ESG nor AI -> 6 max" no longer held.
-    #
+        notes.append(f"métier hors cible dans l'intitulé : plafond {cap:g}")
     # JUNIOR ON THE TITLE ALONE, like SENIOR and NEG. It was also searched
     # in the whole description: an "... ouvert aux alternants" at the bottom
     # of a posting gave +1 to a job that has nothing junior about it. It is exactly
     # the false positive already fixed for the two other lists, left here.
-    if any(k in role for k in _ici.JUNIOR):
-        fit += _ici._BONUS_JUNIOR
-        if raisons is not None:
-            mot = next(k for k in _ici.JUNIOR if k in role)
-            raisons.append(f"intitulé junior « {mot.strip()} » : +{_ici._BONUS_JUNIOR:g}")
-    if any(k in role for k in _ici.SENIOR) or _c(_ici._RX_SENIOR_FIN, role):
-        fit -= _ici._MALUS_SENIOR
-        if raisons is not None:
-            raisons.append(f"intitulé senior : -{_ici._MALUS_SENIOR:g}")
-    if any(k in role for k in _ici.NEG):
-        fit -= 2
-        if raisons is not None:
-            mot = next(k for k in _ici.NEG if k in role)
-            raisons.append(f"intitulé écarté « {mot.strip()} » : -2")
+    junior = next((k.strip() for k in _ici.JUNIOR if k in role), "")
+    senior = bool(any(k in role for k in _ici.SENIOR) or _c(_ici._RX_SENIOR_FIN, role))
+    ecarte = next((k.strip() for k in _ici.NEG if k in role), "")
     # The language last: no title or bonus makes readable a
     # posting in a language the user does not speak.
     plafond_lg, motif_lg = plafond_langue(text or "")
-    cap = min(cap, plafond_lg)
-    if raisons is not None and motif_lg:
-        raisons.append(f"annonce {motif_lg} : plafond {plafond_lg:g}")
-    fit = min(fit, cap)
-    yrs = experience_years(t, role)
-    fit -= _malus_experience(yrs)
-    if raisons is not None and _malus_experience(yrs):
-        raisons.append(f"{yrs} an(s) d'expérience demandés : -{_malus_experience(yrs):g}")
-    entier = max(1, min(10, round(fit)))
-    return entier, yrs, round(entier - 0.45 + 0.9 * _departage(t, role, fit, entier, yrs), 3)
+    return Composantes(
+        axes=sc,
+        plafond=min(cap, plafond_lg),
+        junior=junior,
+        senior=senior,
+        ecarte=ecarte,
+        annees=experience_years(t, role),
+        notes=tuple(notes),
+        note_langue=f"annonce {motif_lg} : plafond {plafond_lg:g}" if motif_lg else "",
+    )
 
 
 def _departage(t: str, role: str, fit: float, entier: int, yrs: int) -> float:
@@ -734,13 +807,15 @@ if __name__ == "__main__":
     print("Module de scoring (score_offer/fit_score). CLI : rescore_ats.py")
 
 
-def expliquer(text: str | None, title: str | None = "") -> list[str]:
+def expliquer(
+    text: str | None, title: str | None = "", poids: "_poids.Ponderation | None" = None
+) -> list[str]:
     """Why the offer has this fit, step by step, in plain words.
 
     The skills found per axis, the vocabulary score, the cap and its reason, the
     title's bonuses and penalties, the language, the experience asked for, then the fit.
     """
     raisons: list[str] = []
-    fit, _yrs, _fin = fit_detail(text, title, raisons)
+    fit, _yrs, _fin = fit_detail(text, title, raisons, poids)
     raisons.append(f"fit {fit}")
     return raisons

@@ -1,0 +1,116 @@
+"""The profile's skills, as the "Compétences" tab of the Profil panel edits them.
+
+A skill lives in two places of the profile:
+  - `competences[<name>]`: the words searched in a posting (`synonymes`), its English
+    name (`en`) and, optionally, how a letter says it (`prose_fr`, `prose_en`);
+  - `scoring.axes[<axe>].competences`: the axes it counts for in the fit ("Machine
+    learning / IA" counts for data and for AI). A skill in no axis is still recognised
+    (CV coverage, letters) but does not raise the fit.
+
+The tab edits both; nothing is written before "Enregistrer" (`ecrire` of
+search_settings keeps the previous profile as `.bak`). A skill is never renamed here:
+its name is the key the letters, the CV facts and the base skills refer to.
+"""
+
+from __future__ import annotations
+
+import copy
+from dataclasses import dataclass, field
+from typing import Any
+
+
+@dataclass
+class Competence:
+    """A skill of the profile, with the axes it counts for."""
+
+    nom: str
+    axes: list[str]  # [] = counted in no axis; a skill may count for two
+    synonymes: list[str]
+    en: str = ""
+    autres: dict[str, Any] = field(default_factory=dict)  # prose_fr, prose_en… kept as is
+
+
+def axes(profil: dict[str, Any]) -> list[str]:
+    """The profile's axes, in its order."""
+    return list(((profil.get("scoring") or {}).get("axes") or {}).keys())
+
+
+def lire(profil: dict[str, Any]) -> list[Competence]:
+    """The skills of a profile, in its order, each with the axes it counts for."""
+    axes_de: dict[str, list[str]] = {}
+    for a, v in ((profil.get("scoring") or {}).get("axes") or {}).items():
+        for nom in v.get("competences") or []:
+            axes_de.setdefault(nom, []).append(a)
+    out = []
+    for nom, v in (profil.get("competences") or {}).items():
+        v = v or {}
+        out.append(
+            Competence(
+                nom=nom,
+                axes=axes_de.get(nom, []),
+                synonymes=[str(x) for x in v.get("synonymes") or []],
+                en=str(v.get("en") or ""),
+                autres={k: x for k, x in v.items() if k not in ("synonymes", "en")},
+            )
+        )
+    return out
+
+
+def depuis_texte(texte: str) -> list[str]:
+    """Synonyms typed one per line or separated by commas; blanks and repeats removed."""
+    vus: list[str] = []
+    for morceau in texte.replace("\n", ",").split(","):
+        m = " ".join(morceau.split())
+        if m and m.lower() not in {x.lower() for x in vus}:
+            vus.append(m)
+    return vus
+
+
+def valider(liste: list[Competence], profil: dict[str, Any]) -> list[str]:
+    """What prevents saving, in plain words. Empty = can be saved."""
+    erreurs = []
+    noms = [c.nom.strip() for c in liste]
+    if any(not n for n in noms):
+        erreurs.append("une compétence n'a pas de nom")
+    doublons = sorted({n for n in noms if n and noms.count(n) > 1})
+    if doublons:
+        erreurs.append("nom en double : " + ", ".join(doublons))
+    for c in liste:
+        if c.nom.strip() and not c.synonymes:
+            erreurs.append(f"« {c.nom} » : aucun mot à chercher dans les annonces")
+        if inconnus := [a for a in c.axes if a not in axes(profil)]:
+            erreurs.append(f"« {c.nom} » : axe inconnu ({', '.join(inconnus)})")
+    gardees = set(noms)
+    for n in profil.get("competences_de_base") or []:
+        if n in (profil.get("competences") or {}) and n not in gardees:
+            erreurs.append(
+                f"« {n} » est une compétence de base du CV : elle ne peut pas être retirée"
+            )
+    return erreurs
+
+
+def appliquer(profil: dict[str, Any], liste: list[Competence]) -> dict[str, Any]:
+    """A copy of the profile carrying `liste`: skills and their axis.
+
+    An axis keeps the order of its skills already there; new ones go at its end.
+    """
+    out = copy.deepcopy(profil)
+    comp: dict[str, Any] = {}
+    for c in liste:
+        v: dict[str, Any] = {"synonymes": list(c.synonymes)}
+        if c.en.strip():
+            v["en"] = c.en.strip()
+        v.update(c.autres)
+        comp[c.nom.strip()] = v
+    out["competences"] = comp
+    voulu = {c.nom.strip(): c.axes for c in liste}
+    connues = set(profil.get("competences") or {})
+    for a, v in ((out.get("scoring") or {}).get("axes") or {}).items():
+        # A name an axis carries that was never a skill of the profile stays where it
+        # is; a skill removed from the list leaves its axes.
+        avant = [
+            n for n in v.get("competences") or [] if a in voulu.get(n, [] if n in connues else [a])
+        ]
+        nouveaux = [c.nom.strip() for c in liste if a in c.axes and c.nom.strip() not in avant]
+        v["competences"] = avant + nouveaux
+    return out

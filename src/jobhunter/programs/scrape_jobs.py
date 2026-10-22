@@ -51,6 +51,14 @@ EXTRACT_OFFERS_JS = r"""
   const jobs = [];
   const seen = new Set();
   const norm = s => (s||'').trim().replace(/\s+/g, ' ');
+  // The title of a link that wraps the whole card: its heading, not all its text.
+  // recrutement.bpce.fr puts title, brand, contract, city and a "Découvrir" button in
+  // one <a>: its textContent came out as "…Groupe Crédit CoopératifCDIGrenobleDécouvrir".
+  const titreLien = a => norm(a?.querySelector('h1, h2, h3, h4, [class*="title" i]')?.textContent || '')
+    || norm(a?.textContent || '');
+  // A location given by an icon (<i class="icon-location"></i>Londres): the text is
+  // beside it, in its list item.
+  const lieu = el => norm(el?.textContent || '') || norm(el?.closest('li')?.textContent || '');
 
   // Strategy 1: structured job cards / containers
   const cardSelectors = [
@@ -78,7 +86,7 @@ EXTRACT_OFFERS_JS = r"""
         '[class*="title" i], [class*="name" i], [class*="intitule" i], ' +
         'h2, h3, h4, [class*="heading"], [class*="header"]'
       );
-      const title = norm(link?.textContent || titleEl?.textContent || card.textContent?.slice(0, 200) || '');
+      const title = norm((link && titreLien(link)) || titleEl?.textContent || card.textContent?.slice(0, 200) || '');
       const url = link?.href || '';
       const locEl = card.querySelector('[class*="location" i], [class*="lieu" i], [class*="localisation" i], [class*="place" i], [class*="ville" i]');
       const dateEl = card.querySelector('time, [class*="date" i], [class*="publi" i], [class*="posted" i], [datetime*="20"]');
@@ -90,7 +98,7 @@ EXTRACT_OFFERS_JS = r"""
           jobs.push({
             title: title,
             url: url,
-            location: norm(locEl?.textContent || ''),
+            location: lieu(locEl),
             date: norm(dateEl?.textContent || dateEl?.getAttribute('datetime') || ''),
             method: 'card'
           });
@@ -115,7 +123,7 @@ EXTRACT_OFFERS_JS = r"""
       'a[data-testid*="job"]:not(nav *):not(header *):not(footer *)'
     );
     jobLinkPattern.forEach(a => {
-      const title = norm(a.textContent || a.getAttribute('aria-label') || '');
+      const title = titreLien(a) || norm(a.getAttribute('aria-label') || '');
       const url = a.href;
       const parent = a.closest('[class*="job" i], [class*="offre" i], [class*="position" i], li, tr, [class*="row"], article');
       if (title && url && title.length > 5 && title.length < 300 && !seen.has(url)) {
@@ -124,7 +132,7 @@ EXTRACT_OFFERS_JS = r"""
         jobs.push({
           title: title,
           url: url,
-          location: norm(locEl?.textContent || ''),
+          location: lieu(locEl),
           date: '',
           method: 'link'
         });

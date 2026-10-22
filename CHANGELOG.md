@@ -4,6 +4,28 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.18.0 — 2026-10-22
+
+- **A « Profil » panel in the menu, with three tabs.**
+  - **Profils**: every profile, the active one marked; open one (JobHunter restarts on
+    it), rename, archive (nothing is deleted). Drop a CV on this tab, or choose one,
+    to create a new profile.
+  - **Fit**: how the fit is computed, and its weights to tune with sliders: each axis,
+    the score worth 10, the junior bonus and senior penalty of the title, the penalty
+    per years of experience asked for. Each move recomputes at once the queue's mean
+    fit, its offers at 8 and more and its distribution 1-10 (the saved weights drawn
+    as outlines), and the detail of the offer selected in the table. Nothing is
+    written before « Enregistrer », which keeps the previous profile as `.bak` and
+    offers to recompute the fit stored for every offer.
+  - **Compétences**: the profile's skills, the words searched for each in the postings
+    and the axes it counts for. Add, change, remove, then « Enregistrer ».
+- **BPCE and Natixis titles are no longer glued to the rest of the card.** Their sites
+  wrap the whole card in one link: the title came out as « Chargé d'affaires … - CDI
+  Groupe Crédit CoopératifCDIGrenobleDécouvrir ». The link's heading is now the title,
+  and the city given beside a location icon is read.
+- The fit is now computed in two parts: what the offer says, then the weights. The
+  result is unchanged (benchmark: 0 difference).
+
 ## 3.17.0 — 2026-10-22
 
 - **Each offer's dates in the table and the card.** New columns « Publiée » (the date

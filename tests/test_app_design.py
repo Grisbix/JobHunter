@@ -84,7 +84,7 @@ class DesignTests(unittest.TestCase):
                     self.assertEqual(app.b_menu.cget("text"), "☰ Menu")
                     app._toggle_sidebar(garder=False)
                     self.assertTrue(app._sidebar_on)
-                    self.assertEqual(len(app._nav), 7)  # + "Ma recherche" (3.9)
+                    self.assertEqual(len(app._nav), 8)  # + "Ma recherche" (3.9), "Profil" (3.18)
                     self.assertEqual(set(app._offer_kpis), {"total", "fit", "post"})
                     self.assertEqual(app._offer_kpis["total"].cget("text"), "1")
                     self.assertEqual(app._offer_kpis["fit"].cget("text"), "1")
@@ -122,10 +122,12 @@ class DesignTests(unittest.TestCase):
                         app._cv_viewer,
                         app._companies_panel,
                         app._sources_panel,
+                        app._profil_panel,
                         app._show_dash,
                     ):
                         panel()
                     self.assertEqual(len(app._panels["stats"]._cards), 10)
+                    self.assertEqual(list(app._panels["profil"]._onglets), ["Profils"])
                     self.assertFalse((Path(directory) / "suivi.json").exists())
             finally:
                 for w in root.winfo_children():

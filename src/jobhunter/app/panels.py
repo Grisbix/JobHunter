@@ -86,6 +86,7 @@ class PanneauxMixin:
             self._dv.pack_forget()
         for p in self._panels.values():
             p.pack_forget()
+        self._depot_vers_profil = False  # a dropped CV asks again what to do with it
 
     def _show_dash(self: "AppTypee") -> None:
         self._hide_all()
