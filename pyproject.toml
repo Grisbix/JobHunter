@@ -13,7 +13,7 @@ dependencies = [
     "playwright>=1.60,<2",
     "python-docx>=1.2,<2",
     "openpyxl>=3.1.5,<4",
-    "PyMuPDF>=1.27,<2",
+    "PyMuPDF>=1.27,<3",
     "httpx>=0.28.1,<0.29",
     "requests>=2.34,<3",
     # The CA bundle httpx and requests use. 2026.10.19 removes emSign roots whose
