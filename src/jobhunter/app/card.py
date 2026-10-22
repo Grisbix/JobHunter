@@ -11,7 +11,7 @@ from typing import Any
 from jobhunter.app import common as _commun
 from jobhunter.app import language as _langue
 from jobhunter.app._app_type import AppTypee
-from jobhunter.app.common import PY, QUEUE, SCRIPTS
+from jobhunter.app.common import PY, QUEUE, SCRIPTS, contrat_affiche, statut_affiche
 from jobhunter.app.language import t as _t
 from jobhunter.app.theme import ACC, ACC_H, ACC_TX, BG, BTN, BTN_H, CARD, CB, CF, TX
 from jobhunter.storage import applications as suivi_io
@@ -62,6 +62,8 @@ class FicheMixin:
         ]:
             v = o.get(k)
             if v not in (None, "", "Non précisé"):
+                if k == "contrat":
+                    v = contrat_affiche(str(v))
                 meta.append(f"{_t(lbl)} : {str(v).replace('_', ' ')}")
         if o.get("autres_lieux"):  # same job published in other cities
             meta.append(_t("Aussi à") + " : " + ", ".join(str(x) for x in o["autres_lieux"]))
@@ -222,7 +224,9 @@ class FicheMixin:
         sv = self.suivi.get(self._oid(o), {})
         if not sv.get("s"):
             return []
-        ligne = _t("Candidature") + f" : {sv['s']}" + (f" le {sv['d']}" if sv.get("d") else "")
+        ligne = _t("Candidature") + f" : {statut_affiche(sv['s'])}"
+        if sv.get("d"):
+            ligne += " " + _t("le {d}").format(d=sv["d"])
         envoi = sv.get("envoi")
         if envoi:
             ligne += {
@@ -236,7 +240,11 @@ class FicheMixin:
             lignes.append(
                 _t("Historique")
                 + " : "
-                + " → ".join(f"{_date_courte(str(x[0]))} {x[1]}" for x in h if len(x) >= 2)
+                + " → ".join(
+                    f"{_date_courte(str(x[0]))} {statut_affiche(str(x[1]))}"
+                    for x in h
+                    if len(x) >= 2
+                )
             )
         preuve = sv.get("preuve") or {}
         if preuve.get("texte"):

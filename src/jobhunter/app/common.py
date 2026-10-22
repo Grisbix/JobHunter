@@ -311,7 +311,7 @@ COLS = [
     ("poste", "Poste", 330),
     ("domaine", "Domaine", 90),
     ("fit", "Fit", 50),
-    ("contrat", "Contrat", 80),
+    ("contrat", "Contrat", 96),
     ("zone", "Zone", 125),
     ("localisation", "Lieu", 170),
     ("pays", "Pays", 100),
@@ -320,7 +320,7 @@ COLS = [
     # found it, and the last time it was seen alive (link checked, or served again).
     ("_pub", "Publiée", 80),
     ("process", "Trouvée", 80),
-    ("_verif", "Vérifiée", 80),
+    ("_verif", "Vérifiée", 92),  # "Checked", "Geprüft": wider than the date
     ("signal", "Signal", 170),
     ("_url", "Lien", 175),
     ("_date", "Suivi", 100),
@@ -401,6 +401,27 @@ DOM_SHORT = {
 
 
 CONTRAT_COURT = {"non precise": "—", "non précisé": "—", "Non précisé": "—"}
+# The contract types the collection writes; each is translated where it is shown.
+CONTRATS = ("CDI", "CDD", "V.I.E", "Freelance", "Interim")
+
+
+# STATUSES AND CONTRACTS ARE STORED IN FRENCH (applications.json, the queue): the
+# engine, the follow-ups and the tracking read those words. They are translated only
+# where they are shown, and a status chosen in another language goes back to French.
+def statut_affiche(statut: str) -> str:
+    """A tracking status in the interface language ("" stays "")."""
+    return str(_t(statut)) if statut else ""
+
+
+def statut_de(affiche: str) -> str:
+    """The stored (French) status of a status shown in the interface language."""
+    return next((s for s in STATUTS if s and statut_affiche(s) == affiche), affiche)
+
+
+def contrat_affiche(contrat: str) -> str:
+    """A contract type in the interface language (CDI -> Permanent…); "—" if unknown."""
+    court = CONTRAT_COURT.get(contrat, contrat)
+    return str(_t(court)) if court else ""
 
 
 class _ChoixStatut(ctk.CTkOptionMenu):
@@ -416,7 +437,7 @@ class _ChoixStatut(ctk.CTkOptionMenu):
     def __init__(self, parent: Any) -> None:
         super().__init__(
             parent,
-            values=[self.VIDE] + STATUTS[1:],
+            values=[self.VIDE] + [statut_affiche(s) for s in STATUTS[1:]],
             width=170,
             height=30,
             corner_radius=RAD_BTN,
@@ -434,7 +455,7 @@ class _ChoixStatut(ctk.CTkOptionMenu):
 
     def get(self) -> Any:
         v = super().get()
-        return "" if v == self.VIDE else v
+        return "" if v == self.VIDE else statut_de(v)
 
     def set(self, v: Any) -> None:
-        super().set(v or self.VIDE)
+        super().set(statut_affiche(v) if v else self.VIDE)

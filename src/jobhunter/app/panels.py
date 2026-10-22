@@ -241,9 +241,10 @@ class PanneauxMixin:
             def section(titre: Any, pairs: Any) -> None:
                 if not pairs:
                     return
-                tv.insert("", "end", values=(titre, "", ""), tags=("h",))
+                tv.insert("", "end", values=(_t(titre), "", ""), tags=("h",))
                 mx = max((n for _, n in pairs), default=0) or 1
                 for nom, n in pairs:
+                    nom = _t(nom)  # a label of the app; data values pass through as they are
                     bar = "█" * max(0, round(38 * n / mx))
                     pct = f"{100 * n / len(q):.0f}%" if q else ""
                     tv.insert("", "end", values=(f"   {nom}", n, f"{bar} {pct}"))
@@ -258,7 +259,7 @@ class PanneauxMixin:
             # What separates a well-scored offer from a sendable one. Without this
             # detail, "487 a fit >= 8" suggests that everything is ready.
             section(
-                "▶ Sur les offres a fit ≥ 8",
+                "▶ Sur les offres à fit ≥ 8",
                 [
                     ("dossiers préparés (envoi à vérifier)", len(_pretes)),
                     ("bloquees : CV ou lettre absent du disque", len(_sans_doc)),
@@ -285,7 +286,9 @@ class PanneauxMixin:
                     (_t("sans réponse depuis 30 jours"), e["silence"], ""),
                     (
                         _t("délai médian de réponse"),
-                        "" if e["delai_median"] is None else f"{e['delai_median']:.0f} j",
+                        ""
+                        if e["delai_median"] is None
+                        else _t("{n} j").format(n=f"{e['delai_median']:.0f}"),
                         _t("sur {n} réponse(s) datée(s)").format(n=len(e["delais"]))
                         if e["delais"]
                         else _t("dates d'envoi enregistrées depuis la 3.15"),
@@ -881,10 +884,14 @@ class PanneauxMixin:
                 lignes[iid] = f
             total = sum(c.offres for c in comptes.values())
             vides = sum(1 for c in comptes.values() if not c.offres)
-            texte = f"{len(flux)} entreprises · {total} offres en file · {vides} sans offre en file"
+            texte = _t("{n} entreprises · {t} offres en file · {v} sans offre en file").format(
+                n=len(flux), t=total, v=vides
+            )
             n_muets = len(_flux.muets(etat, suspendus))
             if n_muets:
-                texte += f" · ◌ {n_muets} muette(s) depuis {_flux.MUET_JOURS} j"
+                texte += " · ◌ " + _t("{n} muette(s) depuis {j} j").format(
+                    n=n_muets, j=_flux.MUET_JOURS
+                )
             if cherche:
                 texte = f"{len(ordre)} / " + texte
             w._count.configure(text=texte)

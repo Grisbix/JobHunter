@@ -14,9 +14,10 @@ three catalogues: `TEXTES` (buttons, labels), `JOURNAL` (the app's log lines) an
 module and its code to `LANGUES`; the list is explicit because the installed
 application (PyInstaller) cannot list a package's modules.
 
-The choice lives in `Scripts/_interface.json` (`{"langue": "de"}`), or in the
-`JOBHUNTER_LANGUE` variable. It applies to the interface only: the tracking statuses,
-the letters and the profile keep their language.
+The choice lives in the main folder's `data/_interface.json` (`{"langue": "de"}`), the
+same for every profile, or in the `JOBHUNTER_LANGUE` variable. It applies to the
+interface only: the letters and the profile keep their language; the tracking statuses
+and contract types are stored in French and translated where they are shown.
 """
 
 import importlib
@@ -54,6 +55,22 @@ def message_relance(code: str) -> str:
 
 
 def _fichier() -> Path | None:
+    """The choice, in the MAIN folder's data: one language for every profile (3.19).
+
+    It lived in each profile's data folder: opening another profile switched the
+    interface back to French.
+    """
+    try:
+        from jobhunter import profiles as _profils
+
+        p = _profils.principale()
+        return p / _racine.nom("Scripts", p) / FICHIER
+    except RuntimeError:
+        return None
+
+
+def _ancien_fichier() -> Path | None:
+    """Where the choice lived before 3.19: the open profile's data folder."""
     try:
         return _racine.scripts() / FICHIER
     except RuntimeError:
@@ -65,12 +82,14 @@ def lire() -> str:
     env = os.environ.get("JOBHUNTER_LANGUE", "").lower()
     if env in LANGUES:
         return env
-    f = _fichier()
-    try:
-        v = json.loads(f.read_text(encoding="utf-8")).get("langue") if f else None
-    except (OSError, ValueError, AttributeError):
-        v = None
-    return v if v in LANGUES else "fr"
+    for f in (_fichier(), _ancien_fichier()):
+        try:
+            v = json.loads(f.read_text(encoding="utf-8")).get("langue") if f else None
+        except (OSError, ValueError, AttributeError):
+            v = None
+        if v in LANGUES:
+            return str(v)
+    return "fr"
 
 
 def choisir(langue: str) -> None:
@@ -80,6 +99,7 @@ def choisir(langue: str) -> None:
     f = _fichier()
     if f is None:
         return
+    f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(json.dumps({"langue": langue}), encoding="utf-8")
 
 

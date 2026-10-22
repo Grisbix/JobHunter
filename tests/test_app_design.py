@@ -84,7 +84,9 @@ class DesignTests(unittest.TestCase):
                     self.assertEqual(app.b_menu.cget("text"), "☰ Menu")
                     app._toggle_sidebar(garder=False)
                     self.assertTrue(app._sidebar_on)
-                    self.assertEqual(len(app._nav), 8)  # + "Ma recherche" (3.9), "Profil" (3.18)
+                    self.assertEqual(
+                        len(app._nav), 9
+                    )  # + "Ma recherche" (3.9), "Profil" (3.18), "Paramètres" (3.19)
                     self.assertEqual(next(iter(app._nav)), "profil")  # at the top (3.18.1)
                     self.assertEqual(set(app._offer_kpis), {"total", "fit", "post"})
                     self.assertEqual(app._offer_kpis["total"].cget("text"), "1")
@@ -124,6 +126,7 @@ class DesignTests(unittest.TestCase):
                         app._companies_panel,
                         app._sources_panel,
                         app._profil_panel,
+                        app._parametres_panel,
                         app._show_dash,
                     ):
                         panel()

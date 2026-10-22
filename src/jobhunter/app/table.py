@@ -21,7 +21,6 @@ from jobhunter.app.common import (
     _RX_RECHERCHE_Q,
     _RX_STAGE,
     COLS,
-    CONTRAT_COURT,
     DEFAULT_ST,
     DOM_SHORT,
     LS_COLOR,
@@ -36,6 +35,8 @@ from jobhunter.app.common import (
     _pays_lieu,
     _region_lieu,
     _ville_affichee,
+    contrat_affiche,
+    statut_affiche,
 )
 from jobhunter.app.language import t as _t
 from jobhunter.app.theme import (
@@ -291,11 +292,11 @@ class TableauMixin:
                 "_chk": 34,
                 "_alerte": 34,
                 "_pub": 86,
-                "_verif": 86,
+                "_verif": 96,
                 "entreprise": 135,
                 "poste": 235,
                 "fit": 56,  # « 10.2 » was cut to « 10.: »
-                "contrat": 70,
+                "contrat": 96,  # "Permanent", "Fixed-term", "Unbefristet"
                 "localisation": 115,
                 "pays": 85,
                 "region": 95,
@@ -971,7 +972,7 @@ class TableauMixin:
             # fit 10, and clicking them opened the site's results page —
             # "it sends me to the home page". We also put it before the title.
             poste = f"{marque} {poste}"
-        st_txt = f"{ST_EMOJI.get(stt, '')} {stt}".strip() if stt else DEFAULT_ST
+        st_txt = f"{ST_EMOJI.get(stt, '')} {statut_affiche(stt)}".strip() if stt else DEFAULT_ST
         chk = "☑" if self._oid(o) in self.checked else "☐"
         # ZONE. Bordeaux and Île-de-France first, the South-East next: it is
         # a preference of the user, NOT a measure of how well the job fits. It
@@ -998,7 +999,7 @@ class TableauMixin:
             poste,
             DOM_SHORT.get(o.get("domaine"), o.get("domaine") or ""),
             self._fit_aff(o),
-            CONTRAT_COURT.get(contrat, contrat),
+            contrat_affiche(contrat),
             zone_txt,
             _ville_affichee(lieu),
             _pays.nom(_pays_lieu(lieu)),  # names in the interface language

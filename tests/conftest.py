@@ -193,3 +193,20 @@ def _compteur_api_jetable(tmp_path_factory, monkeypatch):
 
     d = tmp_path_factory.mktemp("cles")
     monkeypatch.setattr(quota, "_fichier", lambda: d / quota.FICHIER)
+
+
+@pytest.fixture(autouse=True)
+def _sans_principale_residuelle():
+    """No main folder left in the environment by a test that ran `profiles.appliquer()`.
+
+    appliquer() writes JOBHUNTER_PRINCIPALE into os.environ directly (it must, before
+    any module builds its paths). Left there, it pointed the next tests' language choice
+    (kept in the main folder since 3.19) at the repository's own data folder: the
+    following tests ran in Spanish.
+    """
+    avant = os.environ.get("JOBHUNTER_PRINCIPALE")
+    yield
+    if avant is None:
+        os.environ.pop("JOBHUNTER_PRINCIPALE", None)
+    else:
+        os.environ["JOBHUNTER_PRINCIPALE"] = avant

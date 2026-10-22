@@ -4,6 +4,22 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.19.0 — 2026-10-22
+
+- **A « Paramètres » panel** in the menu: the interface language, as one row of
+  buttons (Français, English, Deutsch, Español) — JobHunter restarts in it at once —,
+  the version and « Vérifier les mises à jour ». The language was hidden under
+  Maintenance and applied only at the next start.
+- **One language for every profile.** It was saved in each profile's folder:
+  opening another profile switched the interface back to French.
+- **Statuses and contracts translated.** In English, German or Spanish, the table,
+  the status menu, the card and the history showed « postulé », « entretien »,
+  « CDI »… They are still stored in French (the follow-ups and the tracking read
+  them), and shown in the interface language; a status chosen in English is saved
+  in French. Also translated: the statistics' sections, the companies' counter, the
+  job sites' help line.
+- Wider « Vérifiée » and « Contrat » columns: « Checked » and « Permanent » were cut.
+
 ## 3.18.1 — 2026-10-22
 
 - **The active profile is named at the top left, always**, under « PROFIL ACTIF », and

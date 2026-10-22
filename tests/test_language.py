@@ -22,6 +22,9 @@ def racine(tmp_path, monkeypatch):
     (tmp_path / "profil").mkdir()
     monkeypatch.setenv("JOBHUNTER_RACINE", str(tmp_path))
     monkeypatch.delenv("JOBHUNTER_LANGUE", raising=False)
+    # the language lives in the MAIN folder (3.19): a main folder left in the
+    # environment by another test would be read instead of this one
+    monkeypatch.delenv("JOBHUNTER_PRINCIPALE", raising=False)
     return tmp_path
 
 
@@ -246,3 +249,42 @@ def test_choisir_depuis_le_menu(racine, monkeypatch):
     assert vus == [langue.message_relance("es")]
     app._choisir_langue("fr")  # the current language: nothing to do
     assert len(vus) == 1
+
+
+@pytest.mark.parametrize("code", AUTRES)
+def test_statuts_et_contrats_traduits_a_l_affichage_seulement(monkeypatch, code):
+    """Statuses and contracts are stored in French and shown in the interface language.
+
+    A status chosen in English must go back to French: the follow-ups, the funnel and
+    the tracking read "postulé", "entretien"…
+    """
+    from jobhunter.app import common
+
+    monkeypatch.setattr(langue, "LANGUE", code)
+    for s in common.STATUTS[1:]:
+        affiche = common.statut_affiche(s)
+        assert affiche != s or s in ("V.I.E",)  # every status is translated
+        assert common.statut_de(affiche) == s  # and goes back to French
+    assert common.statut_affiche("") == ""
+    for c in common.CONTRATS:
+        assert common.contrat_affiche(c)
+    assert common.contrat_affiche("non precise") == "—"
+
+
+def test_langue_commune_a_tous_les_profils(tmp_path, monkeypatch):
+    """The choice lives in the main folder: opening another profile keeps the language."""
+    from jobhunter import profiles
+
+    principale = tmp_path / "JobHunter"
+    (principale / "data").mkdir(parents=True)
+    (principale / "profile").mkdir()
+    autre = principale / "profiles" / "b"
+    (autre / "data").mkdir(parents=True)
+    (autre / "profile").mkdir()
+    monkeypatch.delenv("JOBHUNTER_LANGUE", raising=False)
+    monkeypatch.setenv(profiles.ENV_PRINCIPALE, str(principale))
+    monkeypatch.setenv("JOBHUNTER_RACINE", str(autre))  # profile B open
+    langue.choisir("de")
+    assert (principale / "data" / langue.FICHIER).exists()
+    assert not (autre / "data" / langue.FICHIER).exists()
+    assert langue.lire() == "de"
