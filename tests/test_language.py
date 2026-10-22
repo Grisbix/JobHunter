@@ -70,8 +70,6 @@ def test_navigation_et_panneaux_traduits():
         "Statistiques",
         "Accès",
         "Actualiser les offres",
-        "Entreprises suivies",
-        "Accès aux sources",
         "Langue / Language…",
     ):
         assert fr in EN, fr

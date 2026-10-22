@@ -85,16 +85,6 @@ class DetailMixin:
         w = self._dv
         top = CF(w, bg=BG)
         top.pack(fill="x")
-        CB(
-            top,
-            text="Offres",
-            command=self._show_dash,
-            bg=BTN,
-            fg=MUT,
-            relief="flat",
-            cursor="hand2",
-            font=(_theme.FONT_UI, 13),
-        ).pack(side="left", padx=12, pady=(2, 0))
         CL(
             top,
             text=f"{o.get('entreprise', '')} — {o.get('poste', '')[:70]}",
@@ -391,18 +381,6 @@ class DetailMixin:
             return
         self.viewer = w = CF(self.main, bg=WORK)
         w.pack(fill="both", expand=True)
-        top = CF(w, bg=BG)
-        top.pack(fill="x")
-        CB(
-            top,
-            text="Offres",
-            command=self._show_dash,
-            bg=BTN,
-            fg=MUT,
-            relief="flat",
-            cursor="hand2",
-            font=(_theme.FONT_UI, 13),
-        ).pack(side="left", padx=12, pady=(2, 0))
         left = CF(w, bg=CARD, width=340)
         left.pack(side="left", fill="y", padx=(8, 4), pady=8)
         left.pack_propagate(False)

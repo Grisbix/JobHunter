@@ -26,7 +26,7 @@ from jobhunter import search_settings as _reglages
 from jobhunter.app import theme as _theme
 from jobhunter.app.common import PY
 from jobhunter.app.language import t as _t
-from jobhunter.app.theme import ACC, ACC_H, ACC_TX, BG, BTN, BTN_H, CB, CF, CL, MUT, TX, WORK
+from jobhunter.app.theme import ACC, ACC_H, ACC_TX, BTN, BTN_H, CB, CF, CL, MUT, TX, WORK
 
 if TYPE_CHECKING:
     from jobhunter.app._app_type import AppTypee
@@ -80,21 +80,6 @@ class MaRechercheMixin:
             return
         w = CF(self.main, bg=WORK)
         self._panels["recherche"] = w
-        top = CF(w, bg=BG)
-        top.pack(fill="x")
-        CB(
-            top,
-            text="Offres",
-            command=self._show_dash,
-            bg=BTN,
-            fg=MUT,
-            relief="flat",
-            cursor="hand2",
-            font=(_theme.FONT_UI, 13),
-        ).pack(side="left", padx=12, pady=(2, 0))
-        CL(top, text="Ma recherche", bg=BG, fg=TX, font=(_theme.FONT_UI, 16)).pack(
-            side="left", padx=28
-        )
         CL(
             w,
             text=_t(

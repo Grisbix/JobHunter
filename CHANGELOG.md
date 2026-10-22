@@ -16,6 +16,11 @@ recent at the top.
   and « Dossier ».
 - The « ↶ Retour » button is gone (Alt+Left still undoes a layout change). The menu
   entries are a little tighter so that everything fits without scrolling.
+- **No « Offres » button on every page**: the menu entry is enough. The pages lose
+  their duplicate title too (the bar at the top names the page), the status line moves
+  up to that bar, and the page margins shrink: each page takes the room.
+- **JobHunter's own icon** (a briefcase and a magnifier on the app's blue) on the
+  window and the taskbar, instead of Python's or CustomTkinter's.
 
 ## 3.19.0 — 2026-10-22
 

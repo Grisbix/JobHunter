@@ -14,7 +14,7 @@ import customtkinter as ctk
 
 from jobhunter.app import language as _langue
 from jobhunter.app import theme as _theme
-from jobhunter.app.theme import ACC, ACC_H, BG, BTN, BTN_H, CARD, CB, CF, CL, MUT, TX, WORK
+from jobhunter.app.theme import ACC, ACC_H, BTN, BTN_H, CARD, CB, CF, CL, MUT, TX, WORK
 
 if TYPE_CHECKING:
     from jobhunter.app._app_type import AppTypee
@@ -46,21 +46,6 @@ class ParametresMixin:
             return
         w = CF(self.main, bg=WORK)
         self._panels["parametres"] = w
-        top = CF(w, bg=BG)
-        top.pack(fill="x")
-        CB(
-            top,
-            text="Offres",
-            command=self._show_dash,
-            bg=BTN,
-            fg=MUT,
-            relief="flat",
-            cursor="hand2",
-            font=(_theme.FONT_UI, 13),
-        ).pack(side="left", padx=12, pady=(2, 0))
-        CL(top, text="Paramètres", bg=BG, fg=TX, font=(_theme.FONT_UI, 16)).pack(
-            side="left", padx=28
-        )
 
         def carte(titre: str, aide: str) -> Any:
             c = CF(w, bg=CARD)

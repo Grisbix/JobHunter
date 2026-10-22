@@ -31,7 +31,6 @@ from jobhunter.app.theme import (
     ACC,
     ACC_H,
     ACC_TX,
-    BG,
     BTN,
     BTN_H,
     CARD,
@@ -89,21 +88,6 @@ class ProfilPanneauMixin:
     def _construire_profil(self: "AppTypee") -> None:
         w = CF(self.main, bg=WORK)
         self._panels["profil"] = w
-        top = CF(w, bg=BG)
-        top.pack(fill="x")
-        CB(
-            top,
-            text="Offres",
-            command=self._show_dash,
-            bg=BTN,
-            fg=MUT,
-            relief="flat",
-            cursor="hand2",
-            font=(_theme.FONT_UI, 13),
-        ).pack(side="left", padx=12, pady=(2, 0))
-        CL(top, text="Profil", bg=BG, fg=TX, font=(_theme.FONT_UI, 16)).pack(side="left", padx=28)
-        actif_lbl = CL(top, text="", bg=BG, fg=MUT)
-        actif_lbl.pack(side="left")
         choix = ctk.CTkSegmentedButton(
             w,
             values=[_t(o) for o in ONGLETS],
@@ -122,10 +106,6 @@ class ProfilPanneauMixin:
         def montrer(nom: str) -> None:
             w._onglet = nom
             choix.set(_t(nom))
-            actif = next((p for p in _profils.liste() if p.slug == _profils.actif()), None)
-            actif_lbl.configure(
-                text=_t("profil actif : {nom}").format(nom=nom_affiche(actif)) if actif else ""
-            )
             for f in onglets.values():
                 f.pack_forget()
             if nom not in onglets:

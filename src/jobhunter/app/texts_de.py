@@ -274,7 +274,6 @@ TEXTES: dict[str, str] = {
     "↑ Haut": "↑ Oben",
     "↓ Bas": "↓ Unten",
     # Access
-    "Accès aux sources": "Zugang zu den Quellen",
     "Rafraîchir": "Aktualisieren",
     "Collecte des offres": "Angebotssammlung",
     "Connexions pour candidater": "Anmeldungen für Bewerbungen",
@@ -328,7 +327,6 @@ TEXTES: dict[str, str] = {
     "Adzuna — API officielle": "Adzuna — offizielle API",
     "Jooble — API officielle": "Jooble — offizielle API",
     # Entreprises
-    "Entreprises suivies": "Verfolgte Unternehmen",
     "Chaque entreprise est lue par son outil de recrutement (API publique) "
     "ou, à défaut, par son site carrière. Double-clic : ouvrir sa page. "
     "Les sites d'offres généraux (LinkedIn, WTJ…) sont dans « Sites d'offres ».": "Jedes "
@@ -343,7 +341,6 @@ TEXTES: dict[str, str] = {
     "Ne plus suivre": "Nicht mehr folgen",
     "Lire les sites carrière": "Karriereseiten lesen",
     # Job sites
-    "Sites d'offres généraux": "Allgemeine Jobbörsen",
     "Ajouter": "Hinzufügen",
     "Retirer": "Entfernen",
     "Scanner maintenant": "Jetzt scannen",
@@ -522,7 +519,6 @@ TEXTES: dict[str, str] = {
     "Choisir un CV…": "Lebenslauf wählen…",
     "profil actif": "aktives Profil",
     "profil principal": "Hauptprofil",
-    "profil actif : {nom}": "aktives Profil: {nom}",
     "Renommer…": "Umbenennen…",
     "Archiver…": "Archivieren…",
     "Axes": "Achsen",

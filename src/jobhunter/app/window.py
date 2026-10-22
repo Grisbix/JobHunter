@@ -9,6 +9,7 @@ import sys
 import threading
 import tkinter as tk
 from collections.abc import Callable
+from pathlib import Path
 from tkinter import messagebox
 from typing import Any
 
@@ -106,6 +107,7 @@ class App(
         except Exception:
             self.myemail = ""
         root.title("JobHunter")
+        _poser_icone(root)
         # 1320x840 is NOT the opening size: it is the one found again when
         # un-maximising. The window opens maximised.
         root.geometry("1320x840")
@@ -262,16 +264,16 @@ class App(
             side="left",
             fill="both",
             expand=True,
-            padx=_theme.PAD_PAGE,
-            pady=(_theme.GAP // 2, _theme.GAP // 2),
+            padx=(_theme.GAP // 2, _theme.GAP // 2),  # 3.19.1: the page takes the room
+            pady=(_theme.GAP // 4, _theme.GAP // 2),
         )
         # ONE SINGLE NAVIGATION RULE, otherwise nothing says where to look for
         # what: the top bar only carries DESTINATIONS (where I go),
         # the sidebar only ACTIONS (what I do). "Fermer Chrome"
         # was an action placed among the destinations, and already duplicated
         # Maintenance > Access & diagnostics.
-        tp = CF(self.main, bg=BG)
-        tp.pack(fill="x", pady=(0, _theme.GAP))
+        tp = CF(self.main, bg=BG, plat=True)
+        tp.pack(fill="x", pady=(0, _theme.GAP // 4))
         # The left menu has no fold button since 3.19 (Ctrl+B still folds it): the
         # profile list and the navigation stay in view.
         # Layout undo (_dispo_retour) has no button since 3.19.1: Alt+Left only.
@@ -286,10 +288,10 @@ class App(
         # travail de fond (auto-enrichissement, relances dues, taches lancees
         # from the top bar) was written into a panel nobody
         # sees. This line keeps the latest information always readable.
-        footer = CF(self.main, bg=BG, plat=True)
-        footer.pack(side="bottom", fill="x", pady=(8, 0))
-        self.status = CL(footer, text="", bg=BG, fg=MUT, font=(_theme.FONT_UI, 12), anchor="e")
-        self.status.pack(side="left", fill="x", expand=True)
+        # Since 3.19.1 it sits on the title's row, at the right: a row of its own at
+        # the bottom took height from every page.
+        self.status = CL(tp, text="", bg=BG, fg=MUT, font=(_theme.FONT_UI, 12), anchor="e")
+        self.status.pack(side="right", fill="x", expand=True, padx=(16, 4))
         # dashboard and viewer = 2 panels INSIDE the same window (no popup)
         self.dash = CF(self.main, bg=WORK)
         self.dash.pack(fill="both", expand=True)
@@ -640,6 +642,25 @@ def _hors_profil_actif() -> bool:
     return True
 
 
+ICONE = Path(__file__).with_name("assets") / "jobhunter.ico"
+
+
+def _poser_icone(root: Any) -> None:
+    """JobHunter's icon on the window and the taskbar, not the Python or CTk one.
+
+    iconbitmap() also stops CustomTkinter from putting back its own icon 200 ms
+    after start-up; iconphoto() covers the systems where .ico is not read.
+    """
+    try:
+        if sys.platform == "win32":
+            root.iconbitmap(default=str(ICONE))
+        image = tk.PhotoImage(file=str(ICONE.with_suffix(".png")))
+        root.iconphoto(True, image)
+        root._icone = image  # keeps the image alive: Tk only holds a name
+    except (tk.TclError, OSError):
+        pass  # an incomplete install keeps the default icon
+
+
 def main() -> None:
     # Without a console (JobHunter.pyw, the windowed exe), sys.stdout is None; some
     # fifty modules call `sys.stdout.reconfigure(...)` at import, and
@@ -650,6 +671,14 @@ def main() -> None:
     _racine.exporter_paquet()  # the steps run `python -m jobhunter...`
     if _hors_profil_actif():
         return
+    if sys.platform == "win32":
+        # Its own taskbar entry, under JobHunter's icon, not python(w).exe's.
+        try:
+            import ctypes
+
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Grisbix.JobHunter")
+        except (AttributeError, OSError):
+            pass
     r = ctk.CTk()
     a = App(r)
     _annonce_mise_a_jour(r, a)

@@ -110,19 +110,6 @@ class PanneauxMixin:
         top.pack(fill="x")
         CB(
             top,
-            text="Offres",
-            command=self._show_dash,
-            bg=BTN,
-            fg=MUT,
-            relief="flat",
-            cursor="hand2",
-            font=(_theme.FONT_UI, 13),
-        ).pack(side="left", padx=12, pady=(2, 0))
-        CL(top, text="Statistiques", bg=BG, fg=TX, font=(_theme.FONT_UI, 16)).pack(
-            side="left", padx=28
-        )
-        CB(
-            top,
             text="Rafraîchir",
             command=lambda: w._reload(),
             bg=BTN,
@@ -378,19 +365,6 @@ class PanneauxMixin:
         self._panels["acces"] = w
         top = CF(w, bg=BG)
         top.pack(fill="x")
-        CB(
-            top,
-            text="Offres",
-            command=self._show_dash,
-            bg=BTN,
-            fg=MUT,
-            relief="flat",
-            cursor="hand2",
-            font=(_theme.FONT_UI, 13),
-        ).pack(side="left", padx=12, pady=(2, 0))
-        CL(top, text="Accès aux sources", bg=BG, fg=TX, font=(_theme.FONT_UI, 16)).pack(
-            side="left", padx=28
-        )
         CB(
             top,
             text="Rafraîchir",
@@ -758,19 +732,6 @@ class PanneauxMixin:
         self._panels["companies"] = w
         top = CF(w, bg=BG)
         top.pack(fill="x")
-        CB(
-            top,
-            text="Offres",
-            command=self._show_dash,
-            bg=BTN,
-            fg=MUT,
-            relief="flat",
-            cursor="hand2",
-            font=(_theme.FONT_UI, 13),
-        ).pack(side="left", padx=12, pady=(2, 0))
-        CL(top, text="Entreprises suivies", bg=BG, fg=TX, font=(_theme.FONT_UI, 16)).pack(
-            side="left", padx=28
-        )
         w._count = CL(top, text="", bg=BG, fg=MUT)
         w._count.pack(side="right", padx=24)
         CL(
@@ -1136,19 +1097,6 @@ class PanneauxMixin:
         self._panels["sources"] = w
         top = CF(w, bg=BG)
         top.pack(fill="x")
-        CB(
-            top,
-            text="Offres",
-            command=self._show_dash,
-            bg=BTN,
-            fg=MUT,
-            relief="flat",
-            cursor="hand2",
-            font=(_theme.FONT_UI, 13),
-        ).pack(side="left", padx=12, pady=(2, 0))
-        CL(
-            top, text="Sites d'offres généraux", bg=BG, fg="#b45309", font=(_theme.FONT_UI, 16)
-        ).pack(side="left", padx=28)
         w._count = CL(top, text="", bg=BG, fg=MUT)
         w._count.pack(side="right", padx=24)
         CL(
