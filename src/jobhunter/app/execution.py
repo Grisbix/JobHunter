@@ -14,7 +14,7 @@ from jobhunter.app import language as _langue
 from jobhunter.app import progress as _progres
 from jobhunter.app import theme as _theme
 from jobhunter.app._app_type import AppTypee
-from jobhunter.app.common import INTERACTIVE, PY, QUEUE, ROOT, SCRIPTS, ouvrir
+from jobhunter.app.common import INTERACTIVE, PY, QUEUE, ROOT, SCRIPTS
 from jobhunter.app.language import t as _t
 from jobhunter.app.theme import (
     ACC,
@@ -37,14 +37,17 @@ class ExecutionMixin:
     def _build_log(self: "AppTypee", parent: Any) -> None:
         qf = CF(parent, bg=SIDE, plat=True)
         qf.pack(fill="x", padx=12, pady=(8, 2))
+        # The ⚙ wheel: scan, batch applications, maintenance, folder (_menu_reglages).
         CB(
             qf,
-            text="Dossier",
-            command=lambda: ouvrir(ROOT),
+            text="⚙",
+            command=self._ouvrir_reglages,
             bg=SIDE_H,
             fg=SIDE_TX,
             activebackground=ACC,
             relief="flat",
+            width=44,
+            font=(_theme.FONT_UI, 18),
         ).pack(side="left")
         CB(qf, text="Arrêter", command=self.stop, bg=DEL, fg=DEL_TX, relief="flat").pack(
             side="right"

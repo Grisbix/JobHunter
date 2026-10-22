@@ -13,6 +13,7 @@ os.environ["JOBHUNTER_SANS_FOND"] = "1"
 os.environ.pop("JOBHUNTER_ACTION", None)
 # The app lives in jobhunter.app since phase 3.7; JobHunter.pyw is only the launcher.
 import jobhunter.app as ui  # noqa: E402  (after the environment variables)
+from jobhunter.app import common  # noqa: E402
 
 
 class DesignTests(unittest.TestCase):
@@ -113,8 +114,13 @@ class DesignTests(unittest.TestCase):
                     app.colsel = {"poste": ("keep", {app._cell(offer, "poste")})}
                     app.refresh_table()
                     self.assertEqual(len(app.tree.get_children()), 1)
-                    app._toggle_maint()
-                    app._toggle_maint()
+                    # ⚙ wheel (3.19.1): the steps, one submenu per maintenance group,
+                    # then the folder and Recharger
+                    menu = app._menu_reglages()
+                    self.assertEqual(
+                        menu.index("end") + 1, len(common.STEPS) + len(common.MAINT) + 4
+                    )
+                    self.assertFalse(hasattr(app, "b_dispo"))  # no « Retour » button
                     app._toggle_suivi()
                     app._toggle_suivi()
                     for panel in (

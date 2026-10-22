@@ -2,11 +2,13 @@
 
 Part of jobhunter.app (former JobHunter.pyw, phase 3.7)."""
 
+import functools
 import os
 import queue
 import sys
 import threading
 import tkinter as tk
+from collections.abc import Callable
 from tkinter import messagebox
 from typing import Any
 
@@ -22,7 +24,7 @@ from jobhunter.app import theme as _theme
 from jobhunter.app.actions import ActionsMixin
 from jobhunter.app.apply_panel import CandidatureMixin
 from jobhunter.app.card import FicheMixin
-from jobhunter.app.common import MAINT, STEPS
+from jobhunter.app.common import DISPONIBILITE, MAINT, ROOT, STEPS, ouvrir
 from jobhunter.app.cv_drop import DepotCvMixin
 from jobhunter.app.data import DonneesMixin
 from jobhunter.app.detail import DetailMixin
@@ -40,8 +42,6 @@ from jobhunter.app.theme import (
     ACC_H,
     ACC_TX,
     BG,
-    BTN,
-    BTN_H,
     CB,
     CF,
     CL,
@@ -188,8 +188,9 @@ class App(
                 activebackground=SIDE_H,
                 anchor="w",
                 font=(_theme.FONT_UI, 13),
+                pady=7,  # 30 high, not 34: the two actions and the ⚙ row fit below
             )
-            b.pack(fill="x", padx=10, pady=2)
+            b.pack(fill="x", padx=10, pady=1)
             self._nav[cle] = b
         self._nav_actif("offres")
         CL(
@@ -198,10 +199,8 @@ class App(
         journal = CF(self.sidebar, bg=SIDE, plat=True)
         journal.pack(side="bottom", fill="x")
         self._build_log(journal)
-        outils = ctk.CTkScrollableFrame(
-            self.sidebar, fg_color=SIDE, corner_radius=0, scrollbar_button_color=SIDE_H
-        )
-        outils.pack(fill="both", expand=True)
+        outils = CF(self.sidebar, bg=SIDE, plat=True)  # two actions: no scrolling needed
+        outils.pack(fill="x")
         CB(
             outils,
             text="Actualiser les offres",
@@ -214,6 +213,23 @@ class App(
             cursor="hand2",
             pady=8,
         ).pack(fill="x", padx=10, pady=(8, 6))
+        # Two actions only: refresh, and check the offers are still open. Everything
+        # else (scan, batch applications, maintenance) is under the ⚙ wheel at the
+        # bottom left (_menu_reglages).
+        CB(
+            outils,
+            text="Vérifier que les offres sont disponibles",
+            command=lambda: self.run_step(
+                DISPONIBILITE, _t("Vérifier que les offres sont disponibles")
+            ),
+            font=(_theme.FONT_UI, 12),
+            bg=SIDE_CARD,
+            fg=SIDE_TX,
+            relief="flat",
+            activebackground=SIDE_H,
+            cursor="hand2",
+            pady=6,
+        ).pack(fill="x", padx=10, pady=(0, 8))
         # The morning collection in one line — fresh, running, stopped or missed — and
         # the button to start it when it did not happen (jobhunter.collect_state).
         self._collecte_lbl = CL(
@@ -240,88 +256,6 @@ class App(
             pady=5,
         )
         self.root.after(1500, self._maj_collecte)
-        for label, color, cmd, tip in STEPS:
-            CB(
-                outils,
-                text=label,
-                command=lambda c=cmd, l=label: self.run_step(c, l),
-                font=(_theme.FONT_UI, 12),
-                bg=SIDE,
-                fg=SIDE_MUT,
-                relief="flat",
-                activebackground=SIDE_H,
-                cursor="hand2",
-                pady=5,
-                anchor="w",
-            ).pack(fill="x", padx=10, pady=3)
-        # MAINTENANCE section folded: buttons rarely useful
-        self._maint_on = False
-        self.b_maint = CB(
-            outils,
-            text="Maintenance ▸",
-            command=self._toggle_maint,
-            bg=SIDE,
-            fg=SIDE_MUT,
-            relief="flat",
-            cursor="hand2",
-            activebackground=SIDE_H,
-            font=(_theme.FONT_UI, 12),
-            anchor="w",
-            pady=4,
-        )
-        self.b_maint.pack(fill="x", padx=10, pady=(6, 0))
-        self.maint = CF(outils, bg=SIDE, plat=True)  # filled in, displayed on demand
-        for groupe, items in MAINT:
-            CL(
-                self.maint,
-                text=groupe,
-                bg=SIDE,
-                fg=SIDE_MUT,
-                font=(_theme.FONT_UI, 11, "bold"),
-                anchor="w",
-            ).pack(fill="x", padx=16, pady=(12, 2))
-            for label, cmd in items:
-                CB(
-                    self.maint,
-                    text=label,
-                    command=lambda c=cmd, l=label: (
-                        self._gen_docs()
-                        if c is None
-                        else self.mettre_a_jour()
-                        if c == "maj"
-                        else self._basculer_langue()
-                        if c == "langue"
-                        else self._planifier()
-                        if c == "planifier"
-                        else _courriels.ouvrir(self)
-                        if c == "courriels"
-                        else self._menu_profils()
-                        if c == "profils"
-                        else _comparer.ouvrir(self)
-                        if c == "comparer"
-                        else _recettes.ouvrir(self)
-                        if c == "recettes"
-                        else self.run_step(c, l)
-                    ),
-                    font=(_theme.FONT_UI, 12),
-                    bg=SIDE,
-                    fg=SIDE_MUT,
-                    relief="flat",
-                    activebackground=SIDE_H,
-                    cursor="hand2",
-                    pady=3,
-                    anchor="w",
-                ).pack(fill="x", padx=16, pady=2)
-        CB(
-            outils,
-            text="Recharger",
-            command=self.load_offers,
-            bg=SIDE,
-            fg=SIDE_MUT,
-            activebackground=SIDE_H,
-            relief="flat",
-            cursor="hand2",
-        ).pack(fill="x", padx=10, pady=(6, 2))
 
         self.main = CF(body, bg=BG)
         self.main.pack(
@@ -340,26 +274,14 @@ class App(
         tp.pack(fill="x", pady=(0, _theme.GAP))
         # The left menu has no fold button since 3.19 (Ctrl+B still folds it): the
         # profile list and the navigation stay in view.
-        # Retour de disposition : voir _dispo_retour.
+        # Layout undo (_dispo_retour) has no button since 3.19.1: Alt+Left only.
         self._dispo_pile: list[Any] = []
-        self.b_dispo = CB(
-            tp,
-            text="↶ Retour",
-            command=self._dispo_retour,
-            bg=BTN,
-            fg=MUT,
-            relief="flat",
-            activebackground=BTN_H,
-            cursor="hand2",
-            font=(_theme.FONT_UI, 13),
-        )
-        self.b_dispo.pack(side="left", padx=(8, 0), pady=2)
         # The main navigation lives in the left column, not duplicated
         # in the header. This bar only keeps the context of the work.
         # The title follows the open page (_nav_actif): a fixed title "Suivi des
         # candidatures" also topped Mes CV, Entreprises and Accès.
         self.nav_context = CL(tp, text="Offres", bg=BG, fg=TX, font=(_theme.FONT_UI, 17, "bold"))
-        self.nav_context.pack(side="left", padx=(20, 0))
+        self.nav_context.pack(side="left", padx=(8, 0), pady=2)
         # The log lives in the sidebar, FOLDED at start-up: everything the
         # travail de fond (auto-enrichissement, relances dues, taches lancees
         # from the top bar) was written into a panel nobody
@@ -527,14 +449,53 @@ class App(
             "JobHunter", _langue.journal(msg), parent=self.root
         )
 
-    def _toggle_maint(self) -> None:
-        if self._maint_on:
-            self.maint.pack_forget()
-            self.b_maint.configure(text=_t("Maintenance ▸"))
+    def _maint_action(self, cmd: Any, label: str) -> None:
+        """Runs one entry of the ⚙ menu: an app action by name, else a program."""
+        actions: dict[str, Callable[[], Any]] = {
+            "maj": self.mettre_a_jour,
+            "langue": self._basculer_langue,
+            "planifier": self._planifier,
+            "courriels": lambda: _courriels.ouvrir(self),
+            "profils": self._menu_profils,
+            "comparer": lambda: _comparer.ouvrir(self),
+            "recettes": lambda: _recettes.ouvrir(self),
+        }
+        if cmd is None:
+            self._gen_docs()
+        elif isinstance(cmd, str):
+            actions[cmd]()
         else:
-            self.maint.pack(fill="x", after=self.b_maint)
-            self.b_maint.configure(text=_t("Maintenance ▾"))
-        self._maint_on = not self._maint_on
+            self.run_step(cmd, label)
+
+    def _menu_reglages(self) -> Any:
+        """The ⚙ wheel at the bottom left: every second-rank feature, by intent.
+
+        Before 3.19.1 they filled the left menu (three steps, a folded Maintenance
+        list, Recharger, Dossier); Gabriel kept only the two daily actions in view.
+        """
+        menu = tk.Menu(self.root, tearoff=0)
+        for label, _couleur, cmd, _aide in STEPS:
+            menu.add_command(label=_t(label), command=functools.partial(self.run_step, cmd, label))
+        menu.add_separator()
+        for groupe, items in MAINT:
+            sous = tk.Menu(menu, tearoff=0)
+            for label, cmd in items:
+                sous.add_command(
+                    label=_t(label), command=functools.partial(self._maint_action, cmd, label)
+                )
+            menu.add_cascade(label=_t(groupe), menu=sous)
+        menu.add_separator()
+        menu.add_command(label=_t("Ouvrir le dossier"), command=lambda: ouvrir(ROOT))
+        menu.add_command(label=_t("Recharger"), command=self.load_offers)
+        return menu
+
+    def _ouvrir_reglages(self, *args: Any, **kwargs: Any) -> None:
+        menu = self._menu_reglages()
+        x, y = self.root.winfo_pointerxy()
+        try:
+            menu.tk_popup(x, y)
+        finally:
+            menu.grab_release()
 
     # ── Retour de disposition ──
     # the user, 2026-10-07: a widened panel, a stretched column, an enlarged
@@ -564,13 +525,6 @@ class App(
         if not self._dispo_pile or self._dispo_pile[-1] != etat:
             self._dispo_pile.append(etat)
             del self._dispo_pile[:-30]
-        self._dispo_maj_bouton()
-
-    def _dispo_maj_bouton(self) -> None:
-        try:
-            self.b_dispo.configure(fg=TX if self._dispo_pile else MUT)
-        except Exception:
-            pass
 
     def _dispo_retour(self) -> None:
         if not self._dispo_pile:
@@ -593,7 +547,6 @@ class App(
                 self.tree.column(c, width=w)
             except Exception:
                 pass
-        self._dispo_maj_bouton()
 
     def _dispo_suivre(self, widget: Any) -> None:
         """Remembers the layout before any drag on `widget`

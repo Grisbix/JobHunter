@@ -36,12 +36,9 @@ TEXTES: dict[str, str] = {
     "Accès": "Acceso",
     "ACTIONS": "ACCIONES",
     "Actualiser les offres": "Actualizar ofertas",
-    "Maintenance ▸": "Mantenimiento ▸",
-    "Maintenance ▾": "Mantenimiento ▾",
     "Recharger": "Recargar",
     "↶ Retour": "↶ Volver",
     "Retour": "Volver",
-    "Dossier": "Carpeta",
     "Arrêter": "Detener",
     "Langue / Language…": "Idioma / Language…",
     # offers table
@@ -584,6 +581,9 @@ TEXTES: dict[str, str] = {
     "Version": "Versión",
     "Les mises à jour viennent de GitHub ; chacune est vérifiée avant d'être installée.": "Las actualizaciones vienen de GitHub; cada una se verifica antes de instalarse.",
     "Vérifier les mises à jour": "Buscar actualizaciones",
+    # 3.19.1: the ⚙ menu
+    "Vérifier que les offres sont disponibles": "Comprobar que las ofertas siguen abiertas",
+    "Ouvrir le dossier": "Abrir la carpeta",
 }
 
 

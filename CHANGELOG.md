@@ -4,6 +4,19 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.19.1 — 2026-10-22
+
+- **Two actions in the left menu**: « Actualiser les offres » and a new « Vérifier que
+  les offres sont disponibles » (checks each offer is still open, then removes the
+  closed ones — never one you applied to, the queue copied first; 30 minutes at most).
+- **A ⚙ wheel at the bottom left** holds everything else, by intent: Scan offres,
+  Candidatures en lot, LinkedIn, then one submenu per group (Sources & offres,
+  Documents, Hygiène de la file, Suivi, Accès & diagnostic), the folder and Recharger.
+  It replaces the three step buttons, the folded « Maintenance » list, « Recharger »
+  and « Dossier ».
+- The « ↶ Retour » button is gone (Alt+Left still undoes a layout change). The menu
+  entries are a little tighter so that everything fits without scrolling.
+
 ## 3.19.0 — 2026-10-22
 
 - **A « Paramètres » panel** in the menu: the interface language, as one row of

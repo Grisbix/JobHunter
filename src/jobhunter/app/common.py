@@ -212,6 +212,21 @@ STEPS = [
 ]
 
 
+# The second action of the left menu: checks the offers are still open (LinkedIn guest
+# API, 404/410, the page's text), then removes the closed ones — never one applied to,
+# and the queue is copied first. Bounded: 30 minutes, one pause on a rate limit.
+DISPONIBILITE = [
+    PY,
+    "-m",
+    "jobhunter.programs.availability_audit",
+    "--supprime",
+    "--pauses",
+    "1",
+    "--duree",
+    "30",
+]
+
+
 # 19 items stacked flat cannot be read. Grouped by INTENT: one
 # looks for "where are my offers going", not a script name.
 MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
