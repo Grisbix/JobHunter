@@ -131,20 +131,32 @@ def test_rien_en_attente_aucune_fenetre(outil, github):
     assert outil.approuver(demander=lambda *a: pytest.fail("fenêtre ouverte")) == 0
 
 
-def test_oui_signe_non_ne_redemande_plus(outil, github, monkeypatch):
-    github["rels"] = [rel("3.14.1", *SETUP_OK), rel("3.14.0", *SETUP_OK)]
+def test_une_seule_fenetre_pour_la_plus_recente(outil, github, monkeypatch):
+    github["rels"] = [
+        rel("3.15.1", *SETUP_OK),
+        rel("3.15.0", *SETUP_OK),
+        rel("3.14.1", *SETUP_OK),
+        rel("3.14.0", *SETUP_OK, "signature.json"),
+    ]
     signees, questions = [], []
     monkeypatch.setattr(outil, "signer", lambda v, publier: signees.append((v, publier)) or 0)
 
     def demander(titre, question):
         questions.append(question)
-        return "3.14.1" in question
+        return True
 
     assert outil.approuver(demander) == 0
-    assert signees == [("3.14.1", True)]
-    assert "3.14.0" in questions[0]  # oldest first
+    assert signees == [("3.15.1", True)] and len(questions) == 1
+    assert "JobHunter 3.15.1" in questions[0]
+    assert "remplace 3.14.1, 3.15.0" in questions[0]  # named, not asked for
     assert "piraté" in questions[0]  # says why a surprise must be refused
-    questions.clear()
-    github["rels"] = [rel("3.14.0", *SETUP_OK)]
-    outil.approuver(demander)
-    assert questions == []  # a no is remembered
+    # once the newest is signed, the older ones are never asked for
+    github["rels"][0] = rel("3.15.1", *SETUP_OK, "signature.json")
+    assert outil.approuver(lambda *a: pytest.fail("fenêtre ouverte")) == 0
+
+
+def test_non_ne_redemande_plus(outil, github, monkeypatch):
+    github["rels"] = [rel("3.14.1", *SETUP_OK)]
+    monkeypatch.setattr(outil, "signer", lambda v, publier: pytest.fail("signée"))
+    assert outil.approuver(lambda *a: False) == 0
+    assert outil.approuver(lambda *a: pytest.fail("redemandée")) == 0

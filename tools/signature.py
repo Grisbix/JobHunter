@@ -10,10 +10,13 @@ in a release). The private key is never displayed. **Back it up** (USB key, pass
 manager): if lost, no version can be signed any more, and every installation will have
 to be redone by hand with the new public key.
 
-`approuver` is what a scheduled task runs every hour, without a console: for each
-release published since the last signed one, whose installer the CI has built, a window
-asks « Signer JobHunter X.Y.Z ? » with its date and commit. Yes signs and publishes it;
-No is remembered and never asked again. Signing stays an act of the author on purpose:
+`approuver` is what a scheduled task runs every hour, without a console: ONE window asks
+« Signer JobHunter X.Y.Z ? » for the most recent release whose installer the CI has
+built, with its date and commit, and names the unsigned releases it replaces. Yes signs
+and publishes it; No is remembered and never asked again. Only the most recent is
+signed: an update always goes to the latest release and checks only its signature, so
+signing the ones it replaces would be three windows for nothing (one per release until
+3.15.1, 22/10/2026). Signing stays an act of the author on purpose:
 signing whatever appears on GitHub automatically would also sign what an attacker who
 took the GitHub account published, which is exactly what the signature is for (ADR 0012).
 
@@ -169,7 +172,12 @@ def en_attente() -> list[dict[str, str]]:
 
 
 def approuver(demander: object = None) -> int:
-    """One window per release waiting for the author's signature; yes signs it."""
+    """One window for the most recent release waiting for a signature; yes signs it.
+
+    The older unsigned releases it replaces are named, not asked for: updates go to the
+    latest release and check only its signature, and once it is signed the search for
+    pending releases stops there (`en_attente`).
+    """
     attente = en_attente()
     if not attente:
         return 0
@@ -184,23 +192,27 @@ def approuver(demander: object = None) -> int:
         def demander(titre: str, question: str) -> bool:
             return bool(messagebox.askyesno(titre, question, parent=racine))
 
-    rc = 0
-    for r in reversed(attente):  # oldest first
-        question = (
-            f"JobHunter {r['version']} a été publiée le {r['date']} (UTC).\n\n"
-            f"Commit : {r['commit']}\n\n"
-            "Signer cette version ? Réponds oui seulement si c'est une version que tu "
-            "as demandée : une version inattendue peut venir d'un compte GitHub piraté."
+    r, remplacees = attente[0], [x["version"] for x in attente[1:]]
+    question = f"JobHunter {r['version']} a été publiée le {r['date']} (UTC).\n\n"
+    question += f"Commit : {r['commit']}\n\n"
+    if remplacees:
+        question += (
+            f"Elle remplace {', '.join(sorted(remplacees, key=maj._cle_version))}, "
+            "non signée(s) : inutile de les signer, une mise à jour va toujours à la plus "
+            "récente.\n\n"
         )
-        if demander("Signer une version de JobHunter", question):  # type: ignore[operator]
-            print(f"{r['version']} : signature approuvée.")
-            rc = max(rc, signer(r["version"], True))
-        else:
-            print(f"{r['version']} : refusée, ne sera plus proposée.")
-            REFUSEES.parent.mkdir(parents=True, exist_ok=True)
-            with REFUSEES.open("a", encoding="utf-8") as f:
-                f.write(r["version"] + "\n")
-    return rc
+    question += (
+        "Signer cette version ? Réponds oui seulement si c'est une version que tu as "
+        "demandée : une version inattendue peut venir d'un compte GitHub piraté."
+    )
+    if demander("Signer une version de JobHunter", question):  # type: ignore[operator]
+        print(f"{r['version']} : signature approuvée.")
+        return signer(r["version"], True)
+    print(f"{r['version']} : refusée, ne sera plus proposée.")
+    REFUSEES.parent.mkdir(parents=True, exist_ok=True)
+    with REFUSEES.open("a", encoding="utf-8") as f:
+        f.write(r["version"] + "\n")
+    return 0
 
 
 def main() -> int:
