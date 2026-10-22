@@ -265,3 +265,10 @@ and was cut, whatever the share computed for it, because that share was only app
 after a change of columns. The share is now applied on every `<Configure>` of the table,
 unless the user has dragged a column edge (22/10).
 
+**A junior test on the whole text makes every posting junior.** `experience_years`
+returned 0 as soon as the text said « stage », « alternance » or « internship »
+anywhere — « 2 années d'expérience minimum (stages et alternance compris) », an
+« INTERNSHIP » footer tag. Seven of twenty rejected offers kept fit 10 that way. The test
+reads the title; the requirement is read in the text, ranges by their lower bound, and
+« years of » alone is no longer a context (« 15 years of working together ») (3.16, 22/10).
+

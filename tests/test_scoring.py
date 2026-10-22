@@ -189,7 +189,7 @@ def test_role_commercial_penalise():
     [
         ("10 ans d'expérience exigée", 10),
         ("5 years of experience required", 5),
-        ("expérience professionnelle antérieure de 3 à 5 ans", 5),  # fenetre large a gauche
+        ("expérience professionnelle antérieure de 3 à 5 ans", 3),  # range: its lower bound
         ("Niveau d'expérience \r\n \r\n \r\n Plus de 10 ans", 10),  # blancs ecrases
         ("Alternance. Société fondée il y a 10 ans.", 0),  # an isolated "10 ans" is noise
         ("40 ans d'expérience de notre société", 0),  # beyond 15: age or seniority
@@ -198,6 +198,39 @@ def test_role_commercial_penalise():
 )
 def test_experience_years(texte, ans):
     assert experience_years(texte) == ans
+
+
+# Seven of the twenty offers set aside by October 2026 asked for experience unseen.
+@pytest.mark.parametrize(
+    ("texte", "titre", "ans"),
+    [
+        (
+            "vous justifiez de 2 années d'expérience minimum (stages et alternance compris)",
+            "Analyste ESG Junior",
+            2,
+        ),
+        ("4 à 6 ans d’expérience au total ; encadrement (alternant, stagiaire)", "Gestionnaire", 4),
+        (
+            "Experience: Minimum of 5 years of experience. INTERNSHIP JOBS",
+            "Financial Accountant",
+            5,
+        ),
+        ("Expérience de 3 ans minimum en Business Analysis", "Product Owner", 3),
+        ("Requirements: 1-2 years of relevant Finance experience", "Financing Accountant", 1),
+        ("At least 2 years of relevant post-undergraduate professional experience", "Analyst", 2),
+        ("Expérience confirmée en gestion de projets à impact", "Chargé de projet", 3),
+        ("Niveau hiérarchique Confirmé Type d’emploi Temps plein", "Analyste", 3),
+        ("Niveau hiérarchique Directeur Type d’emploi", "M&A", 7),
+        ("Une première expérience confirmée en ESG", "Analyste", 0),
+        ("une équipe apportant en moyenne 10 ans d'expérience ESG", "Analyste", 0),
+        ("over 15 years of working together with clients", "Energy Analyst", 0),
+        ("across the 3.5 years of the programme", "Finance Grad Programme 2027", 0),
+        ("société avec plus de 10 ans d'expertise en IA", "AI Engineer", 0),
+        ("10 ans d'expérience de l'équipe", "Stagiaire ESG", 0),  # a junior TITLE: noise
+    ],
+)
+def test_experience_lue_sur_le_texte_offre_junior_sur_l_intitule(texte, titre, ans):
+    assert experience_years(texte, titre) == ans
 
 
 # ── J. the experience penalty crushes the fit ───────────────────────────────────────

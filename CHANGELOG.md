@@ -4,6 +4,28 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.16.0 — 2026-10-22
+
+- **The experience a posting asks for is read where it was missed.** Seven of the twenty
+  offers set aside by October asked for experience the engine had not seen, and kept a
+  fit of 10:
+  - one word anywhere in the text made the whole offer "junior": « 2 années
+    d'expérience minimum (stages et alternance compris) », a line about managing
+    interns, an « INTERNSHIP » tag in a job board's footer. The junior test now reads
+    the job title;
+  - « expérience confirmée », « solide expérience », « proven experience » and
+    LinkedIn's « Niveau hiérarchique : Confirmé / Mid-Senior » count as 3 years,
+    « Directeur / Director » as 7;
+  - a range asks for its lower bound: « 3 à 5 ans » is met with 3 (it was read as 5,
+    which reached the sort's limit and removed offers a three-year candidate qualifies
+    for);
+  - not the team's or the company's years: « une équipe apportant en moyenne 10 ans
+    d'expérience », « 15 years of working together », « 10 ans d'expertise », the « 5 »
+    of « 3.5 years ».
+- On a real queue of 10,425 offers: 1,630 requirements raised, 836 lowered; 181 offers
+  now ask for 5 years or more and leave the queue at the next sort (applications kept,
+  as always).
+
 ## 3.15.1 — 2026-10-22
 
 - **Fold the left menu to give the table the whole width.** The button at the top left,

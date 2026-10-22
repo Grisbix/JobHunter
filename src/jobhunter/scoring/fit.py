@@ -94,8 +94,19 @@ def skills_in(text: str | None) -> set[str]:
 
 
 # ── Required experience detector ──
-_EXP_NUM = re.compile(r"(\d{1,2})\s*(?:\+|ans?|an\b|années?|years?|yrs?)\+?", re.I)
-_EXP_CTX = re.compile(r"(exp[ée]rien|experien|ann[ée]es?\s+d|years?\s+of|d['e]\s*exp)", re.I)
+# Not the "5" of "3.5 years": a digit after a decimal point is not a number of years.
+_EXP_NUM = re.compile(r"(?<![\d.,])(\d{1,2})\s*(?:\+|ans?|an\b|années?|years?|yrs?)\+?", re.I)
+# "years of" alone is not a context: "over 15 years of working together" is the
+# company's age. "5 years of relevant experience" still has "experien" in its window.
+_EXP_CTX = re.compile(
+    r"(exp[ée]rien|experien|ann[ée]es?\s+d|d['e]\s*exp(?!ert)|years?\s+of\s+(?:relevant|related|"
+    r"professional|post|combined|progressive|industry|prior|previous|practical|hands-on|"
+    r"demonstrated|proven|direct|work\s+exp))",
+    re.I,
+)
+# Years that describe someone else: "une équipe apportant en moyenne 10 ans
+# d'expérience" (BNP AM) is the team's, the posting asked for 2.
+_EXP_AUTRUI = re.compile(r"(en moyenne|on average|cumul[ée]e?s?|apportant|combined team)\W*$", re.I)
 # Target level: profil.json, "niveau" section. Searched in the TITLE alone
 # (see fit_detail); "lead" is not there as a substring — it catches "Lead
 # Generation" — it is `senior_en_fin` that handles it, with the right negation.
@@ -105,7 +116,52 @@ _PARESSEUX["_RX_SENIOR_FIN"] = lambda: _P.motif(_P.get("niveau.senior_en_fin", [
 _PARESSEUX["NEG"] = lambda: tuple(_P.get("niveau.mots_negatifs", []) or [])
 
 
-def experience_years(text: str | None) -> int:
+_EXP_FOURCHETTE = re.compile(
+    r"\b(\d{1,2})\s*(?:à|a|-|–|to|bis)\s*\d{1,2}\s*(?=ans?\b|années?|years?|yrs?|jahre)", re.I
+)
+
+_JUNIOR_OFFRE = (
+    "alternance",
+    "alternant",
+    "apprenti",
+    "stage",
+    "stagiaire",
+    "internship",
+    "intern ",
+    "working student",
+    "jeune diplôm",
+    "débutant",
+    "debutant",
+    "entry level",
+    "graduate program",
+    "grad program",
+    "trainee",
+)
+
+# Experience asked for without a number of years. "Expérience confirmée" is what the
+# Caisse des Dépôts and many French postings write instead of "3 à 5 ans"; LinkedIn
+# adds its own "Niveau hiérarchique : Confirmé / Mid-Senior level" to the text.
+# "première expérience confirmée/réussie" is a junior's first job: left out.
+_EXP_QUALITATIVE = [
+    (
+        re.compile(
+            r"(?<!premi[eè]re )(?<!premiere )\b(?:exp[ée]rience (?:confirm[ée]e|significative|solide|"
+            r"approfondie|av[ée]r[ée]e)|solide exp[ée]rience|exp[ée]rience professionnelle "
+            r"confirm[ée]e|(?:significant|extensive|proven|substantial|solid) (?:\w+ ){0,2}"
+            r"experience|niveau hi[ée]rarchique :? ?confirm[ée]|seniority level :? ?mid-senior)",
+        ),
+        3,
+    ),
+    (
+        re.compile(
+            r"(?:niveau hi[ée]rarchique :? ?directeur|seniority level :? ?(?:director|executive))"
+        ),
+        7,
+    ),
+]
+
+
+def experience_years(text: str | None, titre: str | None = None) -> int:
     r"""Years of experience REQUIRED detected (0 if none).
 
     Takes the max of the numbers appearing near an 'expérience' word. E.g. '10 ans
@@ -121,28 +177,24 @@ def experience_years(text: str | None) -> int:
     The word "expérience" then fell outside the window and the requirement went
     unnoticed. CNP "EXPERT INVESTISSEMENT RESPONSABLE" thus came out at fit 10 with
     exp_requise = 0 while the posting asks for more than ten years.
+
+    THE JUNIOR TEST READS THE TITLE when it is given. On the whole text, one word was
+    enough: "2 années d'expérience minimum (stages et alternance compris)" (BNP AM), a
+    "manage interns" line, an "INTERNSHIP" tag in a job board's footer — and the
+    requirement went to 0, the offer to fit 10. Seven of the twenty offers the user set
+    aside by October 2026 asked for experience the engine had not seen.
     """
-    t = re.sub(r"\s+", " ", (text or "")).lower()
-    if any(
-        k in t
-        for k in (
-            "alternance",
-            "alternant",
-            "apprenti",
-            "stage",
-            "stagiaire",
-            "internship",
-            "intern ",
-            "working student",
-            "jeune diplôm",
-            "débutant",
-            "debutant",
-            "entry level",
-            "graduate program",
-        )
-    ):
+    t = re.sub(r"\s+", " ", (text or "")).replace("’", "'").lower()
+    # A range asks for its LOWER bound: "3 à 5 ans" is met with 3. Read as 5, it reached
+    # the sort's experience_max and removed offers a three-year candidate qualifies for.
+    t = _EXP_FOURCHETTE.sub(r"\1 ", t)  # the unit stays: "1-2 years of" → "1 years of"
+    porte = re.sub(r"\s+", " ", titre).lower() if titre is not None else t
+    if any(k in porte for k in _JUNIOR_OFFRE):
         return 0  # junior offer: an isolated '10 ans' = noise
     yrs = 0
+    for rx, n in _EXP_QUALITATIVE:
+        if rx.search(t):
+            yrs = max(yrs, n)
     for m in _EXP_NUM.finditer(t):
         a, b = m.start(), m.end()
         # WINDOW WIDER ON THE LEFT THAN ON THE RIGHT. The requirement is almost
@@ -154,7 +206,7 @@ def experience_years(text: str | None) -> int:
         # followed thirty characters further by an "expérience" belonging to
         # the next sentence says nothing about that number.
         ctx = t[max(0, a - 70) : min(len(t), b + 28)]
-        if _EXP_CTX.search(ctx):
+        if _EXP_CTX.search(ctx) and not _EXP_AUTRUI.search(t[max(0, a - 30) : a]):
             n = int(m.group(1))
             if 1 <= n <= 15:  # realistic exp; >15 = age/seniority → ignored
                 yrs = max(yrs, n)
@@ -617,7 +669,7 @@ def fit_detail(
     if raisons is not None and motif_lg:
         raisons.append(f"annonce {motif_lg} : plafond {plafond_lg:g}")
     fit = min(fit, cap)
-    yrs = experience_years(t)
+    yrs = experience_years(t, role)
     fit -= _malus_experience(yrs)
     if raisons is not None and _malus_experience(yrs):
         raisons.append(f"{yrs} an(s) d'expérience demandés : -{_malus_experience(yrs):g}")
