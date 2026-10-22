@@ -32,7 +32,7 @@ from jobhunter.app.language import t as _t
 from jobhunter.app.my_search import MaRechercheMixin
 from jobhunter.app.panels import PanneauxMixin
 from jobhunter.app.profile_panel import ProfilPanneauMixin
-from jobhunter.app.profiles_menu import ProfilsMixin, profil_affiche
+from jobhunter.app.profiles_menu import ProfilsMixin, nom_actif
 from jobhunter.app.table import TableauMixin
 from jobhunter.app.theme import (
     ACC,
@@ -103,7 +103,7 @@ class App(
             self.myemail = _profil.identite()["email"]
         except Exception:
             self.myemail = ""
-        root.title("Offres — suivi candidatures")
+        root.title("JobHunter — " + (nom_actif() or _t("Principal")))
         # 1320x840 is NOT the opening size: it is the one found again when
         # un-maximising. The window opens maximised.
         root.geometry("1320x840")
@@ -152,28 +152,29 @@ class App(
             width=34,
             font=(_theme.FONT_UI, 16),
         ).pack(side="right")
+        # THE ACTIVE PROFILE, always named at the top left: the whole window (queue,
+        # CVs, letters, settings, fit) belongs to it. A click opens the Profil panel,
+        # where another profile is opened or created.
         CL(
             self.sidebar,
-            text="RECHERCHE D'EMPLOI",
+            text="PROFIL ACTIF",
             fg=SIDE_MUT,
             bg=SIDE,
             font=(_theme.FONT_UI, 10, "bold"),
-        ).pack(anchor="w", padx=18, pady=(0, 18))
-        self._nom_profil_lbl = None
-        if nom_profil := profil_affiche():  # only once a second profile exists
-            self._nom_profil_lbl = CB(
-                self.sidebar,
-                text="\u25cf " + nom_profil,
-                command=self._menu_profils,
-                cursor="hand2",
-                bg=SIDE,
-                fg=SIDE_TX,
-                activebackground=SIDE_H,
-                relief="flat",
-                font=(_theme.FONT_UI, 11),
-                anchor="w",
-            )
-            self._nom_profil_lbl.pack(fill="x", padx=12, pady=(0, 14))
+        ).pack(anchor="w", padx=18, pady=(0, 2))
+        self._nom_profil_lbl = CB(
+            self.sidebar,
+            text="● " + (nom_actif() or _t("Principal")),
+            command=lambda: (self._profil_panel("Profils"), self._nav_actif("profil")),  # type: ignore[func-returns-value]  # Tk lambda chaining calls without a value
+            cursor="hand2",
+            bg=SIDE_CARD,
+            fg=SIDE_TX,
+            activebackground=SIDE_H,
+            relief="flat",
+            font=(_theme.FONT_UI, 14, "bold"),
+            anchor="w",
+        )
+        self._nom_profil_lbl.pack(fill="x", padx=12, pady=(0, 16))
         self._nav = {}
         for cle, texte, fn in (
             ("offres", "Offres", self._show_dash),
@@ -692,6 +693,34 @@ def _annonce_mise_a_jour(root: Any, app: Any) -> None:
     threading.Thread(target=verifier, daemon=True).start()
 
 
+def _hors_profil_actif() -> bool:
+    """True, after relaunching the app properly, when it was started outside the active profile.
+
+    A launcher that does not call `profiles.appliquer()` first (an old copy of
+    JobHunter.pyw) opened the main profile whatever profile was chosen: switching
+    profile did nothing. The paths are fixed at import, so the only remedy is a new
+    process, through `python -m jobhunter.app`, which applies the active profile.
+    """
+    from jobhunter import profiles as _profils
+
+    if os.environ.get(_profils.ENV_PRINCIPALE) or _gele.est_gele():
+        return False  # the profile was applied (or the frozen app applies it itself)
+    try:
+        principale = _racine.racine()
+        voulu = _profils.racine_de(_profils.actif(principale), principale)
+    except RuntimeError:
+        return False
+    if voulu.resolve() == principale.resolve():
+        return False
+    import subprocess
+
+    env = {**os.environ, "JOBHUNTER_RACINE": str(principale)}
+    subprocess.Popen(  # nosec B603 : our own program
+        [sys.executable, "-m", "jobhunter.app"], cwd=str(principale), env=env
+    )
+    return True
+
+
 def main() -> None:
     # Without a console (JobHunter.pyw, the windowed exe), sys.stdout is None; some
     # fifty modules call `sys.stdout.reconfigure(...)` at import, and
@@ -700,6 +729,8 @@ def main() -> None:
         if getattr(sys, nom) is None:
             setattr(sys, nom, open(os.devnull, "w", encoding="utf-8"))  # noqa: SIM115
     _racine.exporter_paquet()  # the steps run `python -m jobhunter...`
+    if _hors_profil_actif():
+        return
     r = ctk.CTk()
     a = App(r)
     _annonce_mise_a_jour(r, a)

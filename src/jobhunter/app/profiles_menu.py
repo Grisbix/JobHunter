@@ -34,6 +34,16 @@ def nom_affiche(p: _profils.Profil) -> str:
     return _t(p.nom) if not p.slug and p.nom == "Principal" else p.nom
 
 
+def nom_actif() -> str:
+    """The active profile's name, even when it is the only one ("" if unreadable)."""
+    try:
+        profils = _profils.liste()
+    except RuntimeError:
+        return ""
+    s = _profils.actif()
+    return next((nom_affiche(p) for p in profils if p.slug == s), "")
+
+
 def profil_affiche() -> str:
     """The active profile's name for the sidebar, "" while there is only one profile."""
     try:

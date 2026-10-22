@@ -26,7 +26,7 @@ TEXTES: dict[str, str] = {
     "{r} réponse(s), {e} entretien(s) · {p}": "{r} respuesta(s), {e} entrevista(s) · {p}",
     # navigation and header
     "JOBHUNTER": "JOBHUNTER",
-    "RECHERCHE D'EMPLOI": "BÚSQUEDA DE EMPLEO",
+    "PROFIL ACTIF": "PERFIL ACTIVO",
     "Offres": "Ofertas",
     "Mes CV": "Mis CV",
     "Entreprises": "Empresas",

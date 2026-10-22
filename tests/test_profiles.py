@@ -279,3 +279,38 @@ def test_commande_new_sans_reponses_ne_laisse_rien(principale, monkeypatch, tmp_
     monkeypatch.setattr("sys.argv", ["jobhunter profiles", "new", str(cv), "--name", "C"])
     assert C.main() == 1
     assert not (principale / "profiles" / "c").exists()
+
+
+def test_nom_actif_meme_seul(principale):
+    """The sidebar names the active profile even when it is the only one (3.18.1)."""
+    assert M.nom_actif() == M.nom_affiche(P.liste()[0])
+    r = P.creer("Chargée RSE à Lyon")
+    termine(r)
+    P.nommer(r)
+    P.activer("chargee-rse-a-lyon")
+    assert M.nom_actif() == "Chargée RSE à Lyon"
+
+
+def test_lanceur_sans_profil_actif_relance(principale):
+    """An old launcher that skips appliquer() opened the main profile whatever was chosen.
+
+    The app now notices it and relaunches itself through `python -m jobhunter.app`.
+    """
+    from jobhunter.app import window
+
+    with patch.object(subprocess, "Popen") as lancer:
+        assert window._hors_profil_actif() is False  # main profile active: nothing to do
+        r = P.creer("B")
+        termine(r)
+        P.activer("b")
+        assert window._hors_profil_actif() is True
+        cmd = lancer.call_args.args[0]
+        assert cmd[1:] == ["-m", "jobhunter.app"]
+        assert lancer.call_args.kwargs["env"]["JOBHUNTER_RACINE"] == str(principale)
+        lancer.reset_mock()
+        os.environ[P.ENV_PRINCIPALE] = str(principale)  # applied by the launcher
+        try:
+            assert window._hors_profil_actif() is False
+        finally:
+            del os.environ[P.ENV_PRINCIPALE]
+        lancer.assert_not_called()

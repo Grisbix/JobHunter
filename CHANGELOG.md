@@ -4,6 +4,16 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.18.1 — 2026-10-22
+
+- **The active profile is named at the top left, always**, under « PROFIL ACTIF », and
+  in the window's title. It was shown only once a second profile existed, in small
+  print. A click opens the Profil panel.
+- **A launcher that skipped the active profile no longer opens the wrong one.** An old
+  copy of `JobHunter.pyw` started the app without applying the chosen profile: the
+  main profile opened whatever was chosen. The app now notices it and restarts itself
+  on the active profile.
+
 ## 3.18.0 — 2026-10-22
 
 - **A « Profil » panel in the menu, with three tabs.**
