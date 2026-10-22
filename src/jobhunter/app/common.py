@@ -316,7 +316,11 @@ COLS = [
     ("localisation", "Lieu", 170),
     ("pays", "Pays", 100),
     ("region", "Région", 120),
-    ("process", "Date offre", 115),
+    # The posting's own date (when the source gives it), the day the engine first
+    # found it, and the last time it was seen alive (link checked, or served again).
+    ("_pub", "Publiée", 80),
+    ("process", "Trouvée", 80),
+    ("_verif", "Vérifiée", 80),
     ("signal", "Signal", 170),
     ("_url", "Lien", 175),
     ("_date", "Suivi", 100),

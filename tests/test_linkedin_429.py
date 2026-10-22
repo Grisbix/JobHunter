@@ -119,3 +119,14 @@ def test_duree_max_depassee_sans_429(faux_reseau, horloge, monkeypatch):
     monkeypatch.setattr(J, "_get_borne", passe_trop_longue)
     r = J.scan_linkedin(lieux={"France": 1})
     assert (len(r), len(faux_reseau.appels)) == (1, 1)
+
+
+def test_date_de_publication_de_la_carte(li):
+    carte = CARTE_LI.replace(
+        "</div></li>",
+        '<time class="job-search-card__listdate" datetime="2026-10-08">2 weeks ago</time>'
+        "</div></li>",
+    )
+    offres, _, _ = li(Reponse(carte))
+    assert offres and offres[0]["date"] == "2026-10-08"
+    assert li(page())[0][0]["date"] == ""  # a card without a date: none invented

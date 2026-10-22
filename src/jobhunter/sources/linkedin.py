@@ -27,6 +27,9 @@ _LI_CARD = re.compile(
 _LI_COMP = re.compile(r"base-search-card__subtitle[^>]*>.*?>([^<]+)<", re.S)
 
 _LI_LOC = re.compile(r"job-search-card__location[^>]*>([^<]+)<", re.S)
+# The card's posting date (<time class="job-search-card__listdate" datetime="…">). Not
+# read until 3.17: two thirds of the queue came from LinkedIn without a publication date.
+_LI_DATE = re.compile(r'<time[^>]*datetime="(\d{4}-\d{2}-\d{2})"')
 
 
 def linkedin_guest_search(
@@ -85,6 +88,7 @@ def linkedin_guest_search(
                     continue
                 comp = _LI_COMP.search(b)
                 loc = _LI_LOC.search(b)
+                quand = _LI_DATE.search(b)
                 titre = _html.unescape(mt.group(1)).strip()
                 if title_ok(titre):
                     out.append(
@@ -93,7 +97,7 @@ def linkedin_guest_search(
                             mu.group(1),
                             _html.unescape(comp.group(1)).strip() if comp else "LinkedIn",
                             _html.unescape(loc.group(1)).strip() if loc else "",
-                            "",
+                            quand.group(1) if quand else "",
                             f"linkedin-search:{keyword}",
                         )
                     )

@@ -74,8 +74,8 @@ class DesignTests(unittest.TestCase):
             try:
                 with patch.object(root, "state"):
                     app = ui.App(root)
-                    # ⚑ added, Country and Region one click away (3.15)
-                    self.assertEqual(len(app.tree.cget("displaycolumns")), 8)
+                    # ⚑ added, Country and Region one click away (3.15); Publiée, Vérifiée (3.17)
+                    self.assertEqual(len(app.tree.cget("displaycolumns")), 10)
                     self.assertTrue(app._sidebar_on)
                     app._toggle_sidebar(
                         garder=False

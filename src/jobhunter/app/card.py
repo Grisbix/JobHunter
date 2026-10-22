@@ -69,6 +69,20 @@ class FicheMixin:
         if yrs:  # years of experience required (junior user → fit penalised if ≥3)
             exp = _t("Expérience requise : {n} ans").format(n=yrs)
             meta.append("⚠️ " + exp if yrs >= 3 else exp)
+        # The dates: when the posting appeared, when the engine found it, and the last
+        # time it was seen alive (its link checked, or a source serving it again).
+        from jobhunter.app.table import _verifiee
+
+        dates = []
+        for modele, jour in (
+            ("publiée le {d}", str(o.get("date_publication") or "")[:10]),
+            ("trouvée le {d}", str(o.get("process") or "")[:10]),
+            ("vérifiée le {d}", _verifiee(o)),
+        ):
+            if len(jour) == 10 and jour[4] == "-":
+                dates.append(_t(modele).format(d=f"{jour[8:10]}/{jour[5:7]}/{jour[:4]}"))
+        if dates:
+            d.insert("end", "  ·  ".join(dates) + "\n", "m")
         # The short facts side by side: one per line, they pushed everything else
         # below the fold of a pane twelve lines high.
         if meta:

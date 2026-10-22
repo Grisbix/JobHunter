@@ -104,6 +104,8 @@ def preparer(racine: Path) -> None:
                 "description": desc,
                 "process": JOUR,
                 "vu_le": JOUR,
+                "ls_check": JOUR,
+                "date_publication": "2026-10-08",
             }
         )
     # What 3.3 adds to the card: every search that found the offer, and what its site

@@ -4,6 +4,17 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.17.0 — 2026-10-22
+
+- **Each offer's dates in the table and the card.** New columns « Publiée » (the date
+  the posting appeared, when its source gives it) and « Vérifiée » (the last time the
+  offer was seen alive: its link checked, or a collection serving it again); the
+  former « Date offre » column, which held the day the engine found the offer, is now
+  named « Trouvée ». The card shows the three dates on one line.
+- **LinkedIn's publication date is read.** Each search result carries it, and it was
+  ignored: two thirds of a queue came without a publication date. New offers get it,
+  and offers already in the queue receive it when LinkedIn serves them again.
+
 ## 3.16.0 — 2026-10-22
 
 - **The experience a posting asks for is read where it was missed.** Seven of the twenty

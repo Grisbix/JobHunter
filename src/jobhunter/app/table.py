@@ -290,6 +290,8 @@ class TableauMixin:
             compact = {
                 "_chk": 34,
                 "_alerte": 34,
+                "_pub": 86,
+                "_verif": 86,
                 "entreprise": 135,
                 "poste": 235,
                 "fit": 56,  # « 10.2 » was cut to « 10.: »
@@ -318,6 +320,8 @@ class TableauMixin:
             "fit",
             "contrat",
             "localisation",
+            "_pub",
+            "_verif",
             "_st",
         )
         self.tree.configure(displaycolumns=self._visible_cols)
@@ -814,6 +818,10 @@ class TableauMixin:
             return urlparse(o.get("url") or "").netloc.replace("www.", "")
         if key == "_date":
             return self.suivi.get(self._oid(o), {}).get("d", "")
+        if key == "_pub":
+            return str(o.get("date_publication") or "")
+        if key == "_verif":
+            return _verifiee(o)
         if key == "fit":
             # The rank, not the bare fit: reposts and contract (scoring.ranking).
             return _rang.rang(o) if o.get("fit") not in (None, "") else -1.0
@@ -995,7 +1003,9 @@ class TableauMixin:
             _ville_affichee(lieu),
             _pays.nom(_pays_lieu(lieu)),  # names in the interface language
             _pays.nom(_region_lieu(lieu)),
-            o.get("process", ""),
+            _jj_mm(o.get("date_publication")),
+            _jj_mm(o.get("process")),
+            _jj_mm(_verifiee(o)),
             o.get("signal", ""),  # programs/reposts
             host,
             sv.get("d", ""),
@@ -1151,3 +1161,21 @@ class TableauMixin:
         if getattr(self, "sw_masq", None) is not None:
             self.sw_masq.configure(text=f"{_t('Voir les masquées')} ({pas_int})")
         self._upd_apply_btn()
+
+
+def _verifiee(o: Any) -> str:
+    """The last day the offer was seen alive: its link checked (`ls_check`, availability
+    audit) or served again by a source (`vu_le`), whichever is later. ISO, '' if never."""
+    return max(str(o.get("ls_check") or "")[:10], str(o.get("vu_le") or "")[:10])
+
+
+def _jj_mm(iso: Any) -> str:
+    """'2026-10-08' → '08/10' for the table (the year is the current one, or almost);
+    another year shows as '08/10/25'. '' stays ''."""
+    s = str(iso or "")[:10]
+    if len(s) < 10 or s[4] != "-":
+        return s
+    import datetime as _dt
+
+    annee = "" if s[:4] == str(_dt.date.today().year) else f"/{s[2:4]}"
+    return f"{s[8:10]}/{s[5:7]}{annee}"
