@@ -1,4 +1,4 @@
-"""JobHunter has its own icon (3.19.1): the window showed Python's or CustomTkinter's."""
+"""JobHunter has its own icon, and its ⚑ column explains itself (3.19.1)."""
 
 import struct
 
@@ -12,3 +12,10 @@ def test_icone_livree_avec_le_paquet():
     assert (reserve, genre) == (0, 1)  # an icon file
     cotes = {data[6 + 16 * i] or 256 for i in range(n)}  # width byte, 0 means 256
     assert {16, 32, 48, 256} <= cotes
+
+
+def test_aide_du_drapeau_nomme_ses_trois_signes():
+    from jobhunter.app.table import ALERTE_AIDE
+
+    texte = ALERTE_AIDE()
+    assert all(signe in texte for signe in ("⚑", "⚠", "↻", "≡"))

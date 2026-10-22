@@ -352,6 +352,54 @@ class TableauMixin:
                 self._colonnes_reglees = True
 
         self.tree.bind("<ButtonPress-1>", _regle_a_la_main, add="+")
+        # The ⚑ column says nothing by itself (Gabriel, 3.19.1): hovering its header
+        # explains its three signs.
+        bulle: dict[str, Any] = {"w": None}
+
+        def _cacher_bulle(_e: Any = None) -> None:
+            if bulle["w"] is not None:
+                bulle["w"].destroy()
+                bulle["w"] = None
+
+        def _bulle_alerte(e: Any) -> None:
+            sur_drapeau = (
+                self.tree.identify_region(e.x, e.y) == "heading"
+                and self.tree.column(self.tree.identify_column(e.x), "id") == "_alerte"
+            )
+            if not sur_drapeau:
+                _cacher_bulle()
+                return
+            if bulle["w"] is None:
+                w = tk.Toplevel(self.tree)
+                w.wm_overrideredirect(True)
+                w.wm_attributes("-topmost", True)  # above a window kept on top
+                tk.Label(
+                    w,
+                    text=ALERTE_AIDE(),
+                    justify="left",
+                    bg="#fffbe6",
+                    relief="solid",
+                    bd=1,
+                    padx=8,
+                    pady=6,
+                ).pack()
+                bulle["w"] = w
+            bulle["w"].wm_geometry(f"+{e.x_root + 14}+{e.y_root + 18}")
+
+        self.tree.bind("<Motion>", _bulle_alerte, add="+")
+
+        def _quitte(_e: Any) -> None:
+            # Showing the tip itself sends <Leave>: only a pointer really outside the
+            # table hides it, or the tip would flicker on and off.
+            x, y = self.tree.winfo_pointerxy()
+            t = self.tree
+            if not (
+                t.winfo_rootx() <= x < t.winfo_rootx() + t.winfo_width()
+                and t.winfo_rooty() <= y < t.winfo_rooty() + t.winfo_height()
+            ):
+                _cacher_bulle()
+
+        self.tree.bind("<Leave>", _quitte, add="+")
         self.tree.bind("<Double-1>", self._fiche_popup)  # double-click = full card
         self.tree.bind("<Return>", self._fiche_popup)
         self.tree.bind("<Button-3>", self._row_menu)  # clic droit = actions (Postuler + statuts)
@@ -1162,6 +1210,20 @@ class TableauMixin:
         if getattr(self, "sw_masq", None) is not None:
             self.sw_masq.configure(text=f"{_t('Voir les masquées')} ({pas_int})")
         self._upd_apply_btn()
+
+
+def ALERTE_AIDE() -> str:  # noqa: N802  (a constant text, translated when shown)
+    """What the ⚑ column's signs mean, shown when its header is hovered."""
+    return chr(10).join(
+        _t(x)
+        for x in (
+            "⚑ Alerte — vide quand tout va bien",
+            "⚠ condition éliminatoire (permis, nationalité, droit de travail, habilitation)",
+            "↻ republiée 3 fois ou plus en 90 jours (souvent une fausse annonce)",
+            "≡ même texte publié sous une autre entreprise",
+            "Le détail est dans la fiche de l'offre.",
+        )
+    )
 
 
 def _verifiee(o: Any) -> str:

@@ -21,6 +21,9 @@ recent at the top.
   up to that bar, and the page margins shrink: each page takes the room.
 - **JobHunter's own icon** (a briefcase and a magnifier on the app's blue) on the
   window and the taskbar, instead of Python's or CustomTkinter's.
+- **The ⚑ column explains itself**: hovering its header shows its three signs
+  (⚠ knock-out condition, ↻ reposted 3 times or more in 90 days, ≡ same text under
+  another company).
 
 ## 3.19.0 — 2026-10-22
 

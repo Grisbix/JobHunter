@@ -580,6 +580,12 @@ TEXTES: dict[str, str] = {
     # 3.19.1: the ⚙ menu
     "Vérifier que les offres sont disponibles": "Comprobar que las ofertas siguen abiertas",
     "Ouvrir le dossier": "Abrir la carpeta",
+    # 3.19.1: the ⚑ column explained
+    "⚑ Alerte — vide quand tout va bien": "⚑ Alerta — vacía si todo va bien",
+    "⚠ condition éliminatoire (permis, nationalité, droit de travail, habilitation)": "⚠ condición eliminatoria (carné, nacionalidad, permiso de trabajo, habilitación)",
+    "↻ republiée 3 fois ou plus en 90 jours (souvent une fausse annonce)": "↻ republicada 3 veces o más en 90 días (a menudo una oferta fantasma)",
+    "≡ même texte publié sous une autre entreprise": "≡ mismo texto publicado bajo otra empresa",
+    "Le détail est dans la fiche de l'offre.": "El detalle está en la ficha de la oferta.",
 }
 
 

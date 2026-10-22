@@ -580,6 +580,12 @@ TEXTES: dict[str, str] = {
     # 3.19.1: the ⚙ menu
     "Vérifier que les offres sont disponibles": "Check the offers are still open",
     "Ouvrir le dossier": "Open the folder",
+    # 3.19.1: the ⚑ column explained
+    "⚑ Alerte — vide quand tout va bien": "⚑ Alert — empty when all is well",
+    "⚠ condition éliminatoire (permis, nationalité, droit de travail, habilitation)": "⚠ knock-out condition (licence, nationality, right to work, clearance)",
+    "↻ republiée 3 fois ou plus en 90 jours (souvent une fausse annonce)": "↻ reposted 3 times or more in 90 days (often a ghost posting)",
+    "≡ même texte publié sous une autre entreprise": "≡ same text posted under another company",
+    "Le détail est dans la fiche de l'offre.": "The details are in the offer's card.",
 }
 
 

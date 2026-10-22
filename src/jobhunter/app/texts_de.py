@@ -579,6 +579,12 @@ TEXTES: dict[str, str] = {
     # 3.19.1: the ⚙ menu
     "Vérifier que les offres sont disponibles": "Prüfen, ob die Stellen noch offen sind",
     "Ouvrir le dossier": "Ordner öffnen",
+    # 3.19.1: the ⚑ column explained
+    "⚑ Alerte — vide quand tout va bien": "⚑ Warnung — leer, wenn alles passt",
+    "⚠ condition éliminatoire (permis, nationalité, droit de travail, habilitation)": "⚠ Ausschlusskriterium (Führerschein, Staatsangehörigkeit, Arbeitserlaubnis, Sicherheitsfreigabe)",
+    "↻ republiée 3 fois ou plus en 90 jours (souvent une fausse annonce)": "↻ 3-mal oder öfter in 90 Tagen neu veröffentlicht (oft eine Scheinanzeige)",
+    "≡ même texte publié sous une autre entreprise": "≡ gleicher Text unter einem anderen Unternehmen veröffentlicht",
+    "Le détail est dans la fiche de l'offre.": "Details stehen in der Stellenkarte.",
 }
 
 
