@@ -388,7 +388,6 @@ TEXTES: dict[str, str] = {
     "Accès & diagnostic": "Acceso y diagnóstico",
     "CV/lettres…": "CV/cartas…",
     "Homepages": "Páginas de inicio",
-    "Mettre à jour JobHunter": "Actualizar JobHunter",
     "Collecte chaque matin…": "Recoger cada mañana…",
     "Statuts depuis mes courriels…": "Estados desde mis correos…",
     "Statuts depuis mes courriels": "Estados desde mis correos",
@@ -586,6 +585,22 @@ TEXTES: dict[str, str] = {
     "↻ republiée 3 fois ou plus en 90 jours (souvent une fausse annonce)": "↻ republicada 3 veces o más en 90 días (a menudo una oferta fantasma)",
     "≡ même texte publié sous une autre entreprise": "≡ mismo texto publicado bajo otra empresa",
     "Le détail est dans la fiche de l'offre.": "El detalle está en la ficha de la oferta.",
+    # 3.20.0: progress, the ☰ button, the Outils menu, the daily collection in Paramètres
+    "Collecte automatique": "Recogida automática",
+    "Chaque jour à l'heure choisie, l'ordinateur collecte les offres de tous tes profils, même si JobHunter est fermé.": "Cada día a la hora elegida, el ordenador recoge las ofertas de todos tus perfiles, aunque JobHunter esté cerrado.",
+    "Planification disponible sous Windows (ailleurs : schedule.sh).": "Programación disponible en Windows (en otros sistemas: schedule.sh).",
+    "Planifiée.": "Programada.",
+    "Pas planifiée.": "No programada.",
+    "Outils ▴": "Herramientas ▴",
+    "☰ Menu": "☰ Menú",
+    "{a}/{b} sources": "{a}/{b} fuentes",
+    "~{d} restantes": "~{d} restantes",
+    "{n} offres trouvées": "{n} ofertas encontradas",
+    "{n} nouvelles ajoutées": "{n} nuevas añadidas",
+    "Vérification {a}/{b}": "Comprobación {a}/{b}",
+    "{n} fermée(s)": "{n} cerrada(s)",
+    "{n} retirée(s) de la file": "{n} retirada(s) de la cola",
+    "Vérification des offres": "Comprobación de ofertas",
 }
 
 

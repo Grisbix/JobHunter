@@ -29,7 +29,7 @@ jamais de candidature.
 |---|---|
 | ![Liste des offres](docs/screenshots/offers.png) | ![Une offre en entier et sa lettre](docs/screenshots/letter.png) |
 
-<sub>Captures de l'interface en anglais, avec un profil et des entreprises **fictifs** (Camille Exemple, junior en finance durable — `profile/example_finance_esg.json`), refaites par `python tools/screenshots.py`. L'application parle **français**, anglais, allemand et espagnol : Maintenance → « Langue / Language… ».</sub>
+<sub>Captures de l'interface en anglais, avec un profil et des entreprises **fictifs** (Camille Exemple, junior en finance durable — `profile/example_finance_esg.json`), refaites par `python tools/screenshots.py`. L'application parle **français**, anglais, allemand et espagnol : Paramètres → Langue de l'interface.</sub>
 
 - [Pourquoi](#pourquoi-jobhunter) · [Comment ça marche](#comment-ça-marche) · [Sources](#sources)
 - [Installer (Windows)](#installer-windows) · [Depuis le code source](#depuis-le-code-source-windows) · [macOS / Linux](#macos--linux)

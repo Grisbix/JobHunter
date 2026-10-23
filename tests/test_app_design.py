@@ -80,7 +80,8 @@ class DesignTests(unittest.TestCase):
                     self.assertTrue(app._sidebar_on)
                     app._toggle_sidebar(garder=False)  # Ctrl+B: the table takes the width
                     self.assertFalse(app._sidebar_on)
-                    self.assertFalse(hasattr(app, "b_menu"))  # no fold button since 3.19
+                    # ☰ in the top bar (3.20): still in view once the menu is folded
+                    self.assertTrue(app.b_menu.winfo_ismapped() or app.b_menu.winfo_manager())
                     app._toggle_sidebar(garder=False)
                     self.assertTrue(app._sidebar_on)
                     self.assertEqual(

@@ -388,7 +388,6 @@ TEXTES: dict[str, str] = {
     "Accès & diagnostic": "Zugang & Diagnose",
     "CV/lettres…": "Lebensläufe/Anschreiben…",
     "Homepages": "Homepages",
-    "Mettre à jour JobHunter": "JobHunter aktualisieren",
     "Collecte chaque matin…": "Jeden Morgen sammeln…",
     "Statuts depuis mes courriels…": "Status aus meinen E-Mails…",
     "Statuts depuis mes courriels": "Status aus meinen E-Mails",
@@ -585,6 +584,22 @@ TEXTES: dict[str, str] = {
     "↻ republiée 3 fois ou plus en 90 jours (souvent une fausse annonce)": "↻ 3-mal oder öfter in 90 Tagen neu veröffentlicht (oft eine Scheinanzeige)",
     "≡ même texte publié sous une autre entreprise": "≡ gleicher Text unter einem anderen Unternehmen veröffentlicht",
     "Le détail est dans la fiche de l'offre.": "Details stehen in der Stellenkarte.",
+    # 3.20.0: progress, the ☰ button, the Outils menu, the daily collection in Paramètres
+    "Collecte automatique": "Automatische Sammlung",
+    "Chaque jour à l'heure choisie, l'ordinateur collecte les offres de tous tes profils, même si JobHunter est fermé.": "Jeden Tag zur gewählten Uhrzeit sammelt der Computer die Angebote aller deiner Profile, auch wenn JobHunter geschlossen ist.",
+    "Planification disponible sous Windows (ailleurs : schedule.sh).": "Planung unter Windows verfügbar (sonst: schedule.sh).",
+    "Planifiée.": "Geplant.",
+    "Pas planifiée.": "Nicht geplant.",
+    "Outils ▴": "Werkzeuge ▴",
+    "☰ Menu": "☰ Menü",
+    "{a}/{b} sources": "{a}/{b} Quellen",
+    "~{d} restantes": "noch ~{d}",
+    "{n} offres trouvées": "{n} Angebote gefunden",
+    "{n} nouvelles ajoutées": "{n} neue hinzugefügt",
+    "Vérification {a}/{b}": "Prüfung {a}/{b}",
+    "{n} fermée(s)": "{n} geschlossen",
+    "{n} retirée(s) de la file": "{n} aus der Liste entfernt",
+    "Vérification des offres": "Angebotsprüfung",
 }
 
 

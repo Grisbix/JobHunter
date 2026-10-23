@@ -1,4 +1,4 @@
-"""The "Paramètres" panel: the interface language, the version and the update.
+"""The "Paramètres" panel: the interface language, the version and the update, the daily collection.
 
 The language was chosen in a menu hidden under Maintenance ("Langue / Language…"), and
 applied at the next start. Here it is one row of buttons, each language under its own
@@ -14,6 +14,7 @@ import customtkinter as ctk
 
 from jobhunter.app import language as _langue
 from jobhunter.app import theme as _theme
+from jobhunter.app.language import t as _t
 from jobhunter.app.theme import ACC, ACC_H, BTN, BTN_H, CARD, CB, CF, CL, MUT, TX, WORK
 
 if TYPE_CHECKING:
@@ -108,9 +109,44 @@ class ParametresMixin:
             cursor="hand2",
         ).pack(side="left", padx=16)
 
+        # ── daily collection (scheduled task; it was under the ⚙ wheel until 3.20) ──
+        c3 = carte(
+            "Collecte automatique",
+            "Chaque jour à l'heure choisie, l'ordinateur collecte les offres de tous tes "
+            "profils, même si JobHunter est fermé.",
+        )
+        ligne3 = CF(c3, bg=CARD, plat=True)
+        ligne3.pack(fill="x", padx=18, pady=(0, 16))
+        plan_lbl = CL(ligne3, text="", bg=CARD, fg=TX, font=(_theme.FONT_UI, 13))
+        plan_lbl.pack(side="left")
+
+        def planifier() -> None:
+            self._planifier()
+            recharger()
+
+        CB(
+            ligne3,
+            text="Collecte chaque matin…",
+            command=planifier,
+            bg=BTN,
+            fg=TX,
+            activebackground=BTN_H,
+            relief="flat",
+            cursor="hand2",
+        ).pack(side="left", padx=16)
+
         def recharger() -> None:
             langues.set(noms[codes.index(_langue.LANGUE)] if _langue.LANGUE in codes else noms[0])
             v_lbl.configure(text=f"JobHunter {version()}")
+            from jobhunter import scheduling as _plan
+
+            if not _plan.disponible():
+                etat = _t("Planification disponible sous Windows (ailleurs : schedule.sh).")
+            elif _plan.planifiee():
+                etat = _t("Planifiée.")
+            else:
+                etat = _t("Pas planifiée.")
+            plan_lbl.configure(text=etat)
 
         w._reload = recharger
         w._choisir = choisir  # for the tests

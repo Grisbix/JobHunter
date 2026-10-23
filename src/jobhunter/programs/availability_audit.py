@@ -205,6 +205,13 @@ def controle_autre(url):
     return "OK", "200"
 
 
+def _progres(fait, total, fermees, fin=None):
+    """One progress line for the application (app.progress), printed at once:
+    `»» verif <checked> <total> <closed> [<seconds left before --duree>]`."""
+    reste = f" {max(0, int(fin - time.monotonic()))}" if fin is not None else ""
+    print(f"»» verif {fait} {total} {fermees}{reste}", flush=True)
+
+
 def verifier(cibles, etat, pauses_max, aujourd_hui, fin=None):
     """Checks the targets; returns True if all of them were. `fin`: instant
     (time.monotonic) at which to stop on its own, None = no duration."""
@@ -219,14 +226,21 @@ def verifier(cibles, etat, pauses_max, aujourd_hui, fin=None):
     li = [o for o in cibles if _RX_LI_ID.search(o["url"])]
     autres = [o for o in cibles if not _RX_LI_ID.search(o["url"])]
     print(f"{len(li)} LinkedIn, {len(autres)} autres sites a controler")
+    total = len(autres) + len(li)
+    _progres(0, total, 0, fin)
 
     c = collections.Counter()
     with ThreadPoolExecutor(8) as ex:
-        for o, (st, note) in zip(autres, ex.map(lambda o: controle_autre(o["url"]), autres)):
+        resultats = ex.map(lambda o: controle_autre(o["url"]), autres)
+        for n, (o, (st, note)) in enumerate(zip(autres, resultats), 1):
             etat[queue_io.oid(o)] = [st, note, o["url"], aujourd_hui]
             c[st or "invérifiable"] += 1
+            if n % 20 == 0:
+                _progres(n, total, c["FERMEE"], fin)
     sauver_etat(etat)
     print(f"  autres sites : {dict(c)}")
+    fermees = c["FERMEE"]
+    _progres(len(autres), total, fermees, fin)
 
     c = collections.Counter()
     pauses = refus = 0
@@ -282,13 +296,17 @@ def verifier(cibles, etat, pauses_max, aujourd_hui, fin=None):
             st, note = None, f"HTTP {r.status_code}"
         etat[oid] = [st, note, o["url"], aujourd_hui]
         c[st or "invérifiable"] += 1
+        fermees += st == "FERMEE"
         i += 1
+        if i % 10 == 0:
+            _progres(len(autres) + i, total, fermees, fin)
         time.sleep(0.5)
         if i % 250 == 0:
             sauver_etat(etat)
             print(f"  -- {i}/{len(li)} {dict(c)}")
     sauver_etat(etat)
     print(f"  LinkedIn : {dict(c)}")
+    _progres(len(autres) + i, total, fermees, fin)
     return i >= len(li)
 
 
@@ -496,6 +514,7 @@ def supprimer(etat, age_max, aujourd_hui, copier=True, absente_jours=30):
     )
     for m, n in motifs.most_common():
         print(f"  {n:5}  {m}")
+    print(f"»» verif retirees {avant - len(garde)}", flush=True)
 
 
 def _fit(o):

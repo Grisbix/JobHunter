@@ -6,6 +6,7 @@ import datetime
 import queue
 import subprocess
 import threading
+import time
 from tkinter import messagebox, simpledialog
 from typing import Any
 
@@ -37,17 +38,18 @@ class ExecutionMixin:
     def _build_log(self: "AppTypee", parent: Any) -> None:
         qf = CF(parent, bg=SIDE, plat=True)
         qf.pack(fill="x", padx=12, pady=(8, 2))
-        # The ⚙ wheel: scan, batch applications, maintenance, folder (_menu_reglages).
+        # "Outils": scan, batch applications, maintenance, folder (_menu_reglages).
+        # Not a ⚙ wheel any more: it sat next to the "Paramètres" page, two places
+        # for one word; the settings live in that page only.
         CB(
             qf,
-            text="⚙",
+            text="Outils ▴",
             command=self._ouvrir_reglages,
             bg=SIDE_H,
             fg=SIDE_TX,
             activebackground=ACC,
             relief="flat",
-            width=44,
-            font=(_theme.FONT_UI, 18),
+            font=(_theme.FONT_UI, 13),
         ).pack(side="left")
         CB(qf, text="Arrêter", command=self.stop, bg=DEL, fg=DEL_TX, relief="flat").pack(
             side="right"
@@ -61,7 +63,7 @@ class ExecutionMixin:
             fg=SIDE_MUT,
             anchor="w",
             justify="left",
-            wraplength=360,
+            wraplength=212,  # the menu is 238 wide: a longer line was cut, not wrapped
             font=(_theme.FONT_UI, 10),
         )
         self._bande.pack(fill="x", padx=12, pady=(0, 12))
@@ -382,7 +384,16 @@ class ExecutionMixin:
                 elif kind == "candidature":
                     self._cand_evenement(val)
         except queue.Empty:
-            pass
+            # The time left counts down between two lines too: once a second while
+            # something runs (a source can stay silent for minutes).
+            maintenant = time.monotonic()
+            if (
+                self.proc
+                and self.proc.poll() is None
+                and maintenant - getattr(self, "_bande_maj", 0.0) >= 1
+            ):
+                self._bande_maj = maintenant
+                self._bande.configure(text=self._progression.bande())
         except Exception as ex:
             # ONE FAULTY LINE KILLED THE APP. Only queue.Empty was
             # caught: any other failure exited BEFORE the `after` of the

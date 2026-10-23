@@ -43,6 +43,7 @@ from jobhunter.app.theme import (
     ACC_H,
     ACC_TX,
     BG,
+    BTN,
     CB,
     CF,
     CL,
@@ -190,7 +191,7 @@ class App(
                 activebackground=SIDE_H,
                 anchor="w",
                 font=(_theme.FONT_UI, 13),
-                pady=7,  # 30 high, not 34: the two actions and the ⚙ row fit below
+                pady=7,  # 30 high, not 34: the two actions and the Outils row fit below
             )
             b.pack(fill="x", padx=10, pady=1)
             self._nav[cle] = b
@@ -216,7 +217,7 @@ class App(
             pady=8,
         ).pack(fill="x", padx=10, pady=(8, 6))
         # Two actions only: refresh, and check the offers are still open. Everything
-        # else (scan, batch applications, maintenance) is under the ⚙ wheel at the
+        # else (scan, batch applications, maintenance) is under "Outils" at the
         # bottom left (_menu_reglages).
         CB(
             outils,
@@ -274,8 +275,18 @@ class App(
         # Maintenance > Access & diagnostics.
         tp = CF(self.main, bg=BG, plat=True)
         tp.pack(fill="x", pady=(0, _theme.GAP // 4))
-        # The left menu has no fold button since 3.19 (Ctrl+B still folds it): the
-        # profile list and the navigation stay in view.
+        # ☰ folds and opens the left menu (Ctrl+B too). It lives in the top bar, not
+        # in the menu, so that it stays in view once the menu is folded.
+        self.b_menu = CB(
+            tp,
+            text="☰ Menu",
+            command=self._toggle_sidebar,
+            bg=BTN,
+            fg=TX,
+            font=(_theme.FONT_UI, 12),
+            cursor="hand2",
+        )
+        self.b_menu.pack(side="left", padx=(4, 0))
         # Layout undo (_dispo_retour) has no button since 3.19.1: Alt+Left only.
         self._dispo_pile: list[Any] = []
         # The main navigation lives in the left column, not duplicated
@@ -299,8 +310,14 @@ class App(
         self.viewer = None  # CV & Letters panel, built on first use
         self._dv = None  # full-screen offer detail panel
         self._panels: dict[str, Any] = {}  # Companies / Job sites panels
-        # The left menu always opens unfolded: with no button to unfold it, a menu
-        # folded by Ctrl+B in an earlier session would stay hidden.
+        # The left menu opens as it was left: ☰ unfolds it again.
+        try:
+            from jobhunter.app import views as _vues
+
+            if not _vues.barre_ouverte():
+                self._toggle_sidebar(memo=False, garder=False)
+        except (OSError, ValueError):
+            pass
         self._desc_busy = False
         self.load_offers()
         # A CV dragged onto the window (tkinterdnd2; without it, the CV panel's button).
@@ -390,28 +407,6 @@ class App(
             else:
                 b.configure(fg_color=SIDE, text_color=SIDE_MUT, hover_color=SIDE_H)
 
-    def _basculer_langue(self) -> None:
-        """Menu of the interface languages, each under its own name; applies at the next start."""
-        import functools
-        import tkinter as tk
-
-        from jobhunter.app import language as _langue
-
-        menu = tk.Menu(self.root, tearoff=0)
-        self._langue_var = tk.StringVar(self.root, _langue.LANGUE)  # the current one is ticked
-        for code, nom in _langue.noms().items():
-            menu.add_radiobutton(
-                label=nom,
-                value=code,
-                variable=self._langue_var,
-                command=functools.partial(self._choisir_langue, code),
-            )
-        x, y = self.root.winfo_pointerxy()
-        try:
-            menu.tk_popup(x, y)
-        finally:
-            menu.grab_release()
-
     def _choisir_langue(self, code: str) -> None:
         """Saves the chosen language and says, in it, that a restart applies it."""
         from jobhunter.app import language as _langue
@@ -452,11 +447,8 @@ class App(
         )
 
     def _maint_action(self, cmd: Any, label: str) -> None:
-        """Runs one entry of the ⚙ menu: an app action by name, else a program."""
+        """Runs one entry of the Outils menu: an app action by name, else a program."""
         actions: dict[str, Callable[[], Any]] = {
-            "maj": self.mettre_a_jour,
-            "langue": self._basculer_langue,
-            "planifier": self._planifier,
             "courriels": lambda: _courriels.ouvrir(self),
             "profils": self._menu_profils,
             "comparer": lambda: _comparer.ouvrir(self),
@@ -470,10 +462,12 @@ class App(
             self.run_step(cmd, label)
 
     def _menu_reglages(self) -> Any:
-        """The ⚙ wheel at the bottom left: every second-rank feature, by intent.
+        """The "Outils" menu at the bottom left: every second-rank feature, by intent.
 
         Before 3.19.1 they filled the left menu (three steps, a folded Maintenance
         list, Recharger, Dossier); Gabriel kept only the two daily actions in view.
+        Settings (language, update, daily collection) live in the "Paramètres" page
+        only: a ⚙ wheel next to a "Paramètres" entry made two places to look.
         """
         menu = tk.Menu(self.root, tearoff=0)
         for label, _couleur, cmd, _aide in STEPS:

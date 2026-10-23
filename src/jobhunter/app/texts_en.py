@@ -389,7 +389,6 @@ TEXTES: dict[str, str] = {
     "Accès & diagnostic": "Access & diagnostics",
     "CV/lettres…": "CVs/letters…",
     "Homepages": "Homepages",
-    "Mettre à jour JobHunter": "Update JobHunter",
     "Collecte chaque matin…": "Collect every morning…",
     "Statuts depuis mes courriels…": "Statuses from my emails…",
     "Statuts depuis mes courriels": "Statuses from my emails",
@@ -586,6 +585,22 @@ TEXTES: dict[str, str] = {
     "↻ republiée 3 fois ou plus en 90 jours (souvent une fausse annonce)": "↻ reposted 3 times or more in 90 days (often a ghost posting)",
     "≡ même texte publié sous une autre entreprise": "≡ same text posted under another company",
     "Le détail est dans la fiche de l'offre.": "The details are in the offer's card.",
+    # 3.20.0: progress, the ☰ button, the Outils menu, the daily collection in Paramètres
+    "Collecte automatique": "Automatic collection",
+    "Chaque jour à l'heure choisie, l'ordinateur collecte les offres de tous tes profils, même si JobHunter est fermé.": "Every day at the chosen time, the computer collects the offers of all your profiles, even when JobHunter is closed.",
+    "Planification disponible sous Windows (ailleurs : schedule.sh).": "Scheduling available on Windows (elsewhere: schedule.sh).",
+    "Planifiée.": "Scheduled.",
+    "Pas planifiée.": "Not scheduled.",
+    "Outils ▴": "Tools ▴",
+    "☰ Menu": "☰ Menu",
+    "{a}/{b} sources": "{a}/{b} sources",
+    "~{d} restantes": "~{d} left",
+    "{n} offres trouvées": "{n} offers found",
+    "{n} nouvelles ajoutées": "{n} new added",
+    "Vérification {a}/{b}": "Check {a}/{b}",
+    "{n} fermée(s)": "{n} closed",
+    "{n} retirée(s) de la file": "{n} removed from the queue",
+    "Vérification des offres": "Offer check",
 }
 
 

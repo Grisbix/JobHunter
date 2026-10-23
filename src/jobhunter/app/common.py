@@ -292,10 +292,7 @@ MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
                 "Tests live (lent, ouvre un navigateur)",
                 [PY, "-m", "jobhunter.programs.test_live_nav"],
             ),
-            ("Mettre à jour JobHunter", "maj"),  # "maj" = mise a jour + relance (App.mettre_a_jour)
-            ("Collecte chaque matin…", "planifier"),  # Windows task (App._planifier)
             ("Statuts depuis mes courriels…", "courriels"),  # read-only (app.mail)
-            ("Langue / Language…", "langue"),  # chooses the interface language (app.langue)
             ("Profils…", "profils"),  # several searches, one workspace each (app.profiles_menu)
         ],
     ),

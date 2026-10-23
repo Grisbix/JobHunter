@@ -28,7 +28,7 @@ short message for each one. It runs on your computer. It never sends an applicat
 |---|---|
 | ![Offer list](docs/screenshots/offers.png) | ![Generated letter](docs/screenshots/letter.png) |
 
-<sub>Screenshots of the English interface, with a **fictitious** profile and invented companies (Camille Exemple, junior in sustainable finance — `profile/example_finance_esg.json`). Rebuilt by `python tools/screenshots.py`. The app also speaks **French, German and Spanish**: Maintenance → “Langue / Language…”.</sub>
+<sub>Screenshots of the English interface, with a **fictitious** profile and invented companies (Camille Exemple, junior in sustainable finance — `profile/example_finance_esg.json`). Rebuilt by `python tools/screenshots.py`. The app also speaks **French, German and Spanish**: Settings → Interface language.</sub>
 
 - [Why](#why-jobhunter) · [How it works](#how-it-works) · [Sources](#sources)
 - [Install (Windows)](#install-windows) · [From source](#from-source) · [macOS / Linux](#macos--linux)

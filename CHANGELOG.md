@@ -4,6 +4,22 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.20.0 — 2026-10-23
+
+- **The collection shows where it is**: under the « Outils » button, a line such as
+  « 3/8 sources · 42 % · ~6 min restantes · 812 offres trouvées », then « 136 nouvelles
+  ajoutées » once merged. The time left comes from each source's usual duration (the
+  median of its last five collections) and counts down between two lines.
+- **So does the availability check**: « Vérification 120/900 · 13 % · ~14 min restantes
+  · 7 fermée(s) », and at the end how many offers left the queue. The time left never
+  exceeds the check's own limit (30 minutes from the button).
+- **☰ at the top left folds and opens the menu** (Ctrl+B still does), and the menu
+  opens as you left it.
+- **One place for the settings**: the ⚙ wheel becomes « Outils » (scan, batch
+  applications, maintenance, folder). The language and the update were already in
+  « Paramètres » and leave that menu; « Collecte chaque matin… » moves to « Paramètres »,
+  with whether it is scheduled.
+
 ## 3.19.1 — 2026-10-22
 
 - **Two actions in the left menu**: « Actualiser les offres » and a new « Vérifier que

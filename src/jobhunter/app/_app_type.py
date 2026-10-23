@@ -22,6 +22,7 @@ class AppTypee(Protocol):
     _profil_var: Any
     _progression: Any
     _bande: Any
+    _bande_maj: float
     _empreinte_file: Any
     _nom_profil_lbl: Any
     _profil_ouvert: Any

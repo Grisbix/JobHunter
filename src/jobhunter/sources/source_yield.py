@@ -41,6 +41,9 @@ MESURES: dict[str, dict[str, Any]] = {}
 #   »» source linkedin début
 #   »» source linkedin fin ok 693 412.0
 #   »» bilan 136 nouvelles
+# and, before the first source, the sources the run will call with their usual
+# duration in seconds (absent when never measured), for a percentage and a time left:
+#   »» plan ats:35.2 linkedin:412.0 vie
 # Plain text: in a terminal or a log, they read as what they are.
 PROGRES = "»» "
 
@@ -48,6 +51,29 @@ PROGRES = "»» "
 def progres(texte: str) -> None:
     """Prints one progress line, at once (the application reads it as it comes)."""
     print(PROGRES + texte, flush=True)
+
+
+def durees_habituelles(lignes: Iterable[dict[str, Any]], n: int = 5) -> dict[str, float]:
+    """Median duration (s) of each source over its last `n` measured collections."""
+    vues: dict[str, list[float]] = {}
+    for ligne in lignes:
+        for nom, m in (ligne.get("sources") or {}).items():
+            try:
+                duree = float(m["duree"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            vues.setdefault(nom, []).append(duree)
+    sortie = {}
+    for nom, d in vues.items():
+        d = sorted(d[-n:])
+        sortie[nom] = d[len(d) // 2]
+    return sortie
+
+
+def plan(noms: Iterable[str], durees: dict[str, float]) -> None:
+    """Announces the sources of the run, each with its usual duration when known."""
+    morceaux = [f"{n}:{durees[n]:.1f}" if n in durees else n for n in noms]
+    progres("plan " + " ".join(morceaux))
 
 
 def instantane() -> dict[str, dict[str, int]]:

@@ -203,46 +203,69 @@ def main() -> int:
     ):
         a.all = True
 
-    fresh = []
+    # The calls are listed first, so that the run announces them (a percentage and a
+    # time left in the application), then made in that order.
+    etapes: list[tuple[str, str, Any, dict[str, Any]]] = []
     if a.all or a.ats:
-        print("── ATS APIs (greenhouse/lever/ashby/recruitee/smartrecruiters) ──")
-        fresh += _rendement.mesurer("ats", scan_ats)
+        etapes.append(
+            (
+                "── ATS APIs (greenhouse/lever/ashby/recruitee/smartrecruiters) ──",
+                "ats",
+                scan_ats,
+                {},
+            )
+        )
     if a.all or a.workday:
-        print("── Workday (API publique des grands groupes) ──")
-        fresh += _rendement.mesurer("workday", scan_workday)
+        etapes.append(
+            ("── Workday (API publique des grands groupes) ──", "workday", scan_workday, {})
+        )
     if a.all or a.linkedin:
-        print("── LinkedIn recherche publique (guest) ──")
-        fresh += _rendement.mesurer("linkedin", scan_linkedin, pages=a.pages, days=a.days)
+        etapes.append(
+            (
+                "── LinkedIn recherche publique (guest) ──",
+                "linkedin",
+                scan_linkedin,
+                dict(pages=a.pages, days=a.days),
+            )
+        )
     if a.all or a.vie:
-        print("── V.I.E / V.I.A (Business France) ──")
-        fresh += _rendement.mesurer("vie", scan_vie)
+        etapes.append(("── V.I.E / V.I.A (Business France) ──", "vie", scan_vie, {}))
     if a.all or a.fir:
-        print("── FIR / French SIF (100 % ISR-ESG) ──")
-        fresh += _rendement.mesurer("fir", scan_fir)
+        etapes.append(("── FIR / French SIF (100 % ISR-ESG) ──", "fir", scan_fir, {}))
     # TALENT AND INDEED OUT OF --all (2026-10-03). Talent: 0 offers in 30 min on
     # 30/09, 3 on 27/09. Indeed: 403 at the first request since 24/09.
     # They can still be run by hand (--talent, --indeed) to check whether they
     # come back; Adzuna and Jooble cover the same pool through an API.
     if a.talent:
-        print("── Talent.com (agrégateur) ──")
-        fresh += _rendement.mesurer("talent", scan_talent)
+        etapes.append(("── Talent.com (agrégateur) ──", "talent", scan_talent, {}))
     if a.indeed:
-        print("── Indeed (page 1 des résultats — voir le commentaire de scan_indeed) ──")
-        fresh += _rendement.mesurer(
-            "indeed",
-            scan_indeed,
-            lieux=[v.strip() for v in a.indeed_lieux.split(",") if v.strip()],
-            persist=not a.dry,
+        etapes.append(
+            (
+                "── Indeed (page 1 des résultats — voir le commentaire de scan_indeed) ──",
+                "indeed",
+                scan_indeed,
+                dict(
+                    lieux=[v.strip() for v in a.indeed_lieux.split(",") if v.strip()],
+                    persist=not a.dry,
+                ),
+            )
         )
     # APEC (DataDome) and Glassdoor (Cloudflare challenge) out of --all since 3.10.0:
     # every collection measured since 07/10 was refused (403 behind a CAPTCHA page,
     # checked again on 21/10). We do not get around it; their flag still runs them.
     if a.apec:
-        print("── APEC (API publique, annonce entière dans la liste) ──")
-        fresh += _rendement.mesurer("apec", scan_apec)
+        etapes.append(
+            ("── APEC (API publique, annonce entière dans la liste) ──", "apec", scan_apec, {})
+        )
     if a.glassdoor:
-        print("── Glassdoor (page 1 de la recherche, France entière) ──")
-        fresh += _rendement.mesurer("glassdoor", scan_glassdoor)
+        etapes.append(
+            (
+                "── Glassdoor (page 1 de la recherche, France entière) ──",
+                "glassdoor",
+                scan_glassdoor,
+                {},
+            )
+        )
     # eFC in --all, but BOUNDED: ESG filter, the nine sites, 30 postings at
     # most (the postings already in the queue are skipped, so each day moves forward in
     # the rest). Nine sitemaps + 30 postings at 10 s make ~6 min. The wide
@@ -263,25 +286,53 @@ def main() -> int:
             else tuple(x.strip() for x in a.efc_sites.split(",") if x.strip())
         )
         limite = 30 if (a.all and not a.efc) else a.efc_limite
-        print(
-            f"── eFinancialCareers ({filtre}, {len(sites)} site(s), sitemap public, crawl-delay 10 s) ──"
+        etapes.append(
+            (
+                f"── eFinancialCareers ({filtre}, {len(sites)} site(s), sitemap public, "
+                "crawl-delay 10 s) ──",
+                "efc",
+                scan_efc,
+                dict(limit=limite, filtre=filtre, sites=sites),
+            )
         )
-        fresh += _rendement.mesurer("efc", scan_efc, limit=limite, filtre=filtre, sites=sites)
     if a.all or a.eures:
-        print("── EURES (portail officiel UE, API publique, crawl-delay 10 s) ──")
-        fresh += _rendement.mesurer("eures", scan_eures)
+        etapes.append(
+            (
+                "── EURES (portail officiel UE, API publique, crawl-delay 10 s) ──",
+                "eures",
+                scan_eures,
+                {},
+            )
+        )
     if a.all or a.ft:
-        print("── France Travail (API officielle) ──")
-        fresh += _rendement.mesurer("francetravail", scan_france_travail)
+        etapes.append(
+            ("── France Travail (API officielle) ──", "francetravail", scan_france_travail, {})
+        )
     if a.all or a.adzuna:
-        print("── Adzuna (API officielle, France + 7 pays) ──")
-        fresh += _rendement.mesurer("adzuna", scan_adzuna)
+        etapes.append(("── Adzuna (API officielle, France + 7 pays) ──", "adzuna", scan_adzuna, {}))
     if a.all or a.jooble:
-        print("── Jooble (API officielle) ──")
-        fresh += _rendement.mesurer("jooble", scan_jooble)
+        etapes.append(("── Jooble (API officielle) ──", "jooble", scan_jooble, {}))
     if a.all or a.wtj:
-        print("── Welcome to the Jungle (sitemap public, débit bridé) ──")
-        fresh += _rendement.mesurer("wtj", scan_wtj, pages=a.pages)
+        etapes.append(
+            (
+                "── Welcome to the Jungle (sitemap public, débit bridé) ──",
+                "wtj",
+                scan_wtj,
+                dict(pages=a.pages),
+            )
+        )
+
+    try:
+        durees = _rendement.durees_habituelles(
+            _rendement.lire_journal(_racine.dans(_commun.HERE, "_rendement.jsonl"))
+        )
+    except Exception:  # an estimate never stops a collection
+        durees = {}
+    _rendement.plan([nom for _t, nom, _f, _k in etapes], durees)
+    fresh = []
+    for titre, nom, fn, kw in etapes:
+        print(titre)
+        fresh += _rendement.mesurer(nom, fn, **kw)
 
     uniq = dedoublonner(fresh)
     # --dry writes NOTHING, not even the scan: it does not hold the lock of
