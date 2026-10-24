@@ -46,10 +46,19 @@ _CHAMPS = (
     (
         "garder",
         "Intitulés à garder",
-        "Un intitulé doit contenir l'un de ces mots pour être collecté. "
-        "Une ligne qui commence par re: est un motif.",
+        "Un mot par ligne. Un intitulé doit contenir l'un d'eux pour être collecté. "
+        "Un mot trouve aussi la suite : « financ » trouve finance, financier.",
     ),
-    ("ecarter", "Intitulés à écarter", "Un intitulé qui contient l'un de ces mots est écarté."),
+    (
+        "ecarter",
+        "Intitulés à écarter",
+        "Un mot par ligne. Un intitulé qui contient l'un d'eux est écarté.",
+    ),
+)
+
+_LEGENDE = (
+    "Un mot = le début d'un mot (« rse » ne trouve pas « diverse »). « *mot » : aussi au "
+    "milieu d'un mot (« *analyst » trouve Nachhaltigkeitsanalyst). « re: » : motif avancé."
 )
 
 # The two lists of chosen places, as shown; a place chosen in neither is simply lower.
@@ -119,12 +128,15 @@ class MaRechercheMixin:
                 col,
                 height=200,
                 font=(_theme.FONT_UI, 12),
-                # the profile's re: patterns are long: wrapped, they can be read
-                wrap="none" if cle == "mots_cles" else "char",
+                # one word per line: never cut a word in two
+                wrap="none" if cle == "mots_cles" else "word",
             )
             b.pack(fill="both", expand=True)
             boites[cle] = b
         grille.rowconfigure(0, weight=1)
+        CL(w, text=_t(_LEGENDE), bg=WORK, fg=MUT, anchor="w", justify="left", wraplength=1000).pack(
+            fill="x", padx=28, pady=(4, 0)
+        )
 
         # ── Where to work: search a place, keep only the chosen ones ──
         CL(
@@ -272,7 +284,11 @@ class MaRechercheMixin:
                 return
             for c, _t1, _a in _CHAMPS:
                 boites[c].delete("1.0", "end")
-                boites[c].insert("1.0", "\n".join(getattr(r, c)))
+                lignes = getattr(r, c)
+                # A "re:(a|b|c)" list is shown one word per line (search_settings.eclater).
+                if c != "mots_cles":
+                    lignes = _reglages.eclater(lignes)
+                boites[c].insert("1.0", "\n".join(lignes))
             choisis["prioritaires"] = list(r.prioritaires or [])
             choisis["secondaires"] = list(r.secondaires or [])
             afficher_choisis()

@@ -123,6 +123,92 @@ def chercher_lieux(texte: str, limite: int = 8) -> list[tuple[Any, str]]:
     return sortie
 
 
+def _groupe(corps: str) -> list[str] | None:
+    """The alternatives of "(a|b|c)" wrapping the whole pattern, split at its top level."""
+    if not (corps.startswith("(") and corps.endswith(")")):
+        return None
+    morceaux, courant, prof, classe, i = [], "", 0, False, 1
+    while i < len(corps) - 1:
+        c = corps[i]
+        if c == "\\":
+            courant += corps[i : i + 2]
+            i += 2
+            continue
+        if classe:
+            classe = c != "]"
+        elif c == "[":
+            classe = True
+        elif c == "(":
+            prof += 1
+        elif c == ")":
+            prof -= 1
+            if prof < 0:
+                return None  # "(a)|(b)": the first group closes before the end
+        elif c == "|" and prof == 0:
+            morceaux.append(courant)
+            courant = ""
+            i += 1
+            continue
+        courant += c
+        i += 1
+    return morceaux + [courant] if prof == 0 and not classe else None
+
+
+_RX_LITTERAL = re.compile(r"[\w &'-]", re.U)
+_RX_CLASSE = re.compile(r"\[([^\]\\^-]+)\]")
+
+
+def _mots(alternative: str) -> list[str] | None:
+    r"""The plain words an alternative means: "d[ée]carbon" -> décarbon, decarbon.
+
+    None when it uses anything else (\b, ?, a nested group…): it then stays a re: line.
+    """
+    variantes = [""]
+    i = 0
+    while i < len(alternative):
+        m = _RX_CLASSE.match(alternative, i)
+        if m:
+            choix = list(dict.fromkeys(m.group(1)))
+            if not all(_RX_LITTERAL.fullmatch(c) for c in choix):
+                return None
+            variantes = [v + c for v in variantes for c in choix]
+            i = m.end()
+        elif _RX_LITTERAL.fullmatch(alternative[i]):
+            variantes = [v + alternative[i] for v in variantes]
+            i += 1
+        else:
+            return None
+        if len(variantes) > 4:
+            return None
+    return [v.strip() for v in variantes if v.strip()]
+
+
+def eclater(entrees: list[str]) -> list[str]:
+    r"""One readable entry per line: a "re:(a|b|c)" list becomes its words.
+
+    Each alternative that is only letters (and [ée]-style choices) becomes a plain
+    word; the others ("csr\b", "account (executive|manager)") stay as `re:` lines.
+    A word finds what STARTS with it ("financ": finance, financier); a "*" in front
+    lets it start inside a word too (profile.motif).
+    """
+    sortie: list[str] = []
+    for e in entrees:
+        alternatives = _groupe(e[3:]) if e.startswith("re:") else None
+        if alternatives is None:
+            sortie.append(e)
+            continue
+        for alt in alternatives:
+            mots = _mots(alt)
+            if mots is None:
+                sortie.append("re:" + alt)
+                continue
+            # In the regex they had no left boundary. A short word (an acronym: esg,
+            # rse, ux) gets one — "rse" no longer finds "diveRSE"; a longer single word
+            # keeps finding a compound: "*analyst" still finds "Nachhaltigkeitsanalyst".
+            sortie += [m if len(m) <= 4 or " " in m else "*" + m for m in mots]
+    return list(dict.fromkeys(sortie))
+
+
 def depuis_texte(texte: str) -> list[str]:
     """One entry per line, empty lines and duplicates removed, order kept."""
     vus: dict[str, None] = {}

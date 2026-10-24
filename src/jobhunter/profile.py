@@ -158,10 +158,13 @@ def _fragment(mot: object, entier: bool) -> str:
     mot = str(mot)
     if mot.startswith("re:"):
         return "(?:" + mot[3:] + ")"  # regex : prise TELLE QUELLE
+    # "*mot": found inside a word too — "*analyst" finds "Nachhaltigkeitsanalyst",
+    # where a German compound has no boundary before the job word.
+    libre = mot.startswith("*")
     # Word: LEFT boundary ("rse" must not find "diveRSE"), no boundary
     # droite sauf `entier` — « analyste » doit trouver « analystes ».
-    corps = re.escape(mot.strip()).replace(r"\ ", r"\s+")
-    return r"\b" + corps + (r"\b" if entier else "")
+    corps = re.escape(mot.lstrip("*").strip()).replace(r"\ ", r"\s+")
+    return ("" if libre else r"\b") + corps + (r"\b" if entier else "")
 
 
 def motif(mots: Iterable[object] | None, entier: bool = False) -> re.Pattern[str] | None:

@@ -17,8 +17,9 @@ change target, change the profile.
 - Full reference profile: `profile/example_finance_esg.json` (junior in sustainable
   finance). **All the tests** run on it — `_profil_test.py`, imported at the top of every
   `test_*.py`, forces `PROFIL_JOBHUNTER` to this file.
-- A word list in the profile accepts `"mot"` (bounded on the left) or `"re:motif"` (taken
-  as is). `profil.motif()` compiles them.
+- A word list in the profile accepts `"mot"` (bounded on the left), `"*mot"` (found inside
+  a word too: German compounds) or `"re:motif"` (taken as is). `profil.motif()` compiles
+  them. "Ma recherche" shows a `re:(a|b|c)` list one word per line (`search_settings.eclater`).
 - User guide: `README.md` (English) and `README.fr.md`. Setup through Claude Code: `/configure-profile` (`.claude/commands/configure-profile.md`).
 - Double-click tools (`launchers/`, each one `cd`s to the folder above): `install.bat`,
   `start.bat` (CV taken from `My_CV/`), `schedule.bat` (daily scheduled task),

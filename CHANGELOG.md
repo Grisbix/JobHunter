@@ -10,6 +10,11 @@ recent at the top.
   CSR, social economy. Its public sitemap is read, your title filter sorts the
   offers, then at most 30 new ones per collection are opened (description included).
   It runs in the morning collection, next to eFinancialCareers (`--makesense` by hand).
+- **« Intitulés à garder / à écarter » readable**: one word per line instead of one long
+  pattern cut in the middle of words. A word finds what starts with it (« financ »
+  finds finance, financier); « *mot » also finds it inside a word (« *analyst » finds
+  Nachhaltigkeitsanalyst). Saving keeps the same choices on the reference titles, and
+  short words are now bounded: « rse » no longer finds « diverse » or « vendeurse ».
 - **Choose your cities in « Ma recherche »**: type a city, a region or a country, press
   « Rechercher », then « + Prioritaire » or « + Secondaire ». Only the places you chose
   are listed, each removed by its ✕; any city of the world works (London, Geneva…).

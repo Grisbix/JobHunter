@@ -179,3 +179,55 @@ def test_lieu_libre_classe_prioritaire():
 
     secteur = Z._secteur(R.lieu_libre("London"))
     assert Z._dans_secteur(Z._n("London, England, United Kingdom"), secteur)
+
+
+def test_eclater_un_mot_par_ligne(profil):
+    e = R.eclater(["re:(esg|financ|d[ée]carbon|csr\\b|social responsibility)", "juriste"])
+    assert e == [
+        "esg",
+        "*financ",
+        "*décarbon",
+        "*decarbon",
+        "re:csr\\b",
+        "social responsibility",
+        "juriste",
+    ]
+
+
+def test_eclater_garde_les_motifs_complexes():
+    assert R.eclater(["re:account (executive|manager)"]) == ["re:account (executive|manager)"]
+    assert R.eclater(["re:(a)|(b)"]) == ["re:(a)|(b)"]  # not one wrapping group
+    assert R.eclater(["re:(design(er)?\\b|ux)"]) == ["re:design(er)?\\b", "ux"]
+
+
+def test_eclater_meme_tri_que_le_motif_d_origine(profil):
+    """On the reference profile, the split list keeps or sets aside the same titles,
+    except the short words now bounded on the left ("rse" no longer in "diverse")."""
+    from jobhunter import profile as P
+
+    titres = [
+        "Analyste ESG",
+        "Nachhaltigkeitsanalyst (m/w/d)",
+        "Kostencontrolling",
+        "Unsustainable practices officer",
+        "Chargé RSE",
+        "Contrôleur de gestion junior",
+        "Customer success manager",
+        "UX designer",
+    ]
+    for cle in ("metier", "exclus"):
+        avant = P.motif(profil["filtre_titre"][cle])
+        apres = P.motif(R.eclater(profil["filtre_titre"][cle]))
+        assert [bool(avant.search(t)) for t in titres] == [bool(apres.search(t)) for t in titres]
+    apres = P.motif(R.eclater(profil["filtre_titre"]["metier"]))
+    assert not apres.search("Diverse team lead") and not apres.search("Vendeurse")
+
+
+def test_mot_etoile_trouve_au_milieu_d_un_mot():
+    from jobhunter import profile as P
+
+    assert P.motif(["*analyst"]).search("Nachhaltigkeitsanalyst")
+    assert not P.motif(["analyst"]).search("Nachhaltigkeitsanalyst")
+    assert P.motif(["*rse"], entier=True).search("la rse") and not P.motif(
+        ["*rse"], entier=True
+    ).search("rseau")
