@@ -168,3 +168,54 @@ def test_hors_de_collecte_complete():
 
     source = open(cli.__file__, encoding="utf-8").read()
     assert "if a.hellowork:" in source  # its own flag only, never `a.all or`
+
+
+PAGE_METIER = (
+    LISTE
+    + '<a href="/fr-fr/emploi/metier_analyste-isr-ville_paris-75000.html">Paris</a>'
+    + '<a href="/fr-fr/emploi/metier_analyste-isr-ville_lille-59000.html">Lille</a>'
+    + '<a href="/fr-fr/emploi/metier_trader-ville_paris-75000.html">autre métier</a>'
+)
+
+
+def test_metiers_de_page_sans_pages_villes():
+    assert H.metiers_de_page(PAGE_METIER) == []  # city pages are not job names
+
+
+def test_pages_villes_des_zones_prioritaires_du_profil():
+    # Example profile: priority zones Bordeaux and Île-de-France; Lille is elsewhere.
+    assert H.pages_villes(PAGE_METIER, "analyste-isr") == [
+        f"{BASE}/fr-fr/emploi/metier_analyste-isr-ville_paris-75000.html"
+    ]
+
+
+def test_pages_contrats_selon_les_exclusions():
+    assert H.pages_contrats("analyste-isr", set()) == [
+        f"{BASE}/fr-fr/stage/metier_analyste-isr.html",
+        f"{BASE}/fr-fr/alternance/metier_analyste-isr.html",
+    ]
+    assert H.pages_contrats("analyste-isr", {"Stage", "Alternance"}) == []
+
+
+def test_scan_lit_ensuite_villes_et_contrats(monkeypatch, tmp_path):
+    (tmp_path / H.METIERS_FICHIER).write_text(
+        json.dumps({"le": datetime.date.today().isoformat(), "metiers": ["analyste-isr"]}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(J, "contrats_exclus", lambda: {"Alternance"})
+    _, appels = _scanner(
+        monkeypatch,
+        tmp_path,
+        {
+            "emploi/metier_analyste-isr.html": Reponse(PAGE_METIER),
+            "ville_paris": Reponse(_carte(103, "Analyste ISR junior - Mirova")),
+            "stage/metier_analyste-isr": Reponse(""),
+            "emplois/": Reponse(_offre()),
+        },
+    )
+    assert appels[:3] == [
+        f"{BASE}/fr-fr/emploi/metier_analyste-isr.html",
+        f"{BASE}/fr-fr/emploi/metier_analyste-isr-ville_paris-75000.html",
+        f"{BASE}/fr-fr/stage/metier_analyste-isr.html",
+    ]
+    assert f"{BASE}/fr-fr/emplois/103.html" in appels  # an offer only the city page had

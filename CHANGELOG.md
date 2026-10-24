@@ -22,7 +22,9 @@ recent at the top.
 - **HelloWork, as a trial** (`--hellowork`, outside the morning collection): you asked
   for it, knowing its terms forbid automated extraction. Only what its robots.txt
   allows is read: the job-name pages (the closest to your keywords first, 15 per
-  pass), then at most 30 new offers, two seconds apart. Its sitemap answers 403
+  pass), their city pages for your priority zones, their internship and work-study
+  pages unless you exclude those contracts (40 list pages in all), then at most 30
+  new offers, two seconds apart. Its sitemap answers 403
   (Cloudflare): not used. A refusal stops the pass; nothing is worked around.
 - Places of eFinancialCareers, WTJ and makesense offers lose a double space when
   the region is missing (« Paris  FR »).

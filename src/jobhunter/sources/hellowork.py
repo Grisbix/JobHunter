@@ -10,7 +10,11 @@ the owner accepts for personal use. What robots.txt allows is all that is read:
 - `/fr-fr/emploi/metier_<job>.html`: the category pages of the jobs whose name passes
   the profile's title filter, plus the profile keywords that are job names; their
   first 20 offers each. Pagination and search take a `?`, which robots.txt
-  disallows: not used.
+  disallows: not used. Two other allowed pages give OTHER offers of the same job:
+  - `metier_<job>-ville_<city>-<zip>.html`, linked from the job page, for the cities
+    in the profile's priority zones;
+  - `/fr-fr/stage/` and `/fr-fr/alternance/metier_<job>.html`, unless the profile
+    excludes internships or work-study (`contrats_exclus`).
 - `/fr-fr/emplois/<id>.html`: the offer, with a JobPosting ld+json block.
 
 The declared sitemap (`/fr-fr/horizon.xml`) answers 403 behind Cloudflare: not used.
@@ -47,7 +51,8 @@ _log = _journal.journal(__name__)
 BASE = "https://www.hellowork.com"
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 HELLOWORK_PAUSE = 2.0  # seconds between two pages
-HELLOWORK_METIERS = 15  # category pages read per pass at most
+HELLOWORK_METIERS = 15  # jobs whose pages are read per pass at most
+HELLOWORK_PAGES = 40  # listing pages read per pass at most (job, city, contract)
 METIERS_JOURS = 30  # age of the job-name list before it is read again
 METIERS_FICHIER = "_hellowork_metiers.json"
 
@@ -60,6 +65,8 @@ _RX_LDJSON = re.compile(
 _RX_SLUG = re.compile(r"[^a-z0-9]+")
 _RX_DOMAINE = re.compile(r'href="/fr-fr/emploi/(index-domaine_[\w-]+\.html)"')
 _RX_METIER = re.compile(r'href="/fr-fr/emploi/metier_([\w-]+)\.html"')
+# A city page of a job: metier_<job>-ville_<city>-<zip>.html.
+_RX_VILLE = re.compile(r'href="/fr-fr/emploi/(metier_[\w-]+?-ville_([a-z-]+)-(\d{5})\.html)"')
 
 
 class Refus(Exception):
@@ -101,7 +108,29 @@ def fiche(texte: str) -> dict[str, Any] | None:
 
 def metiers_de_page(texte: str) -> list[str]:
     """The job names linked from an index page, in order, without duplicates."""
-    return list(dict.fromkeys(_RX_METIER.findall(texte)))
+    return [m for m in dict.fromkeys(_RX_METIER.findall(texte)) if "-ville_" not in m]
+
+
+def pages_villes(texte: str, metier: str) -> list[str]:
+    """City pages of `metier` linked from its page, for the profile's priority zones."""
+    from jobhunter.scoring import zones as _zones
+
+    sortie = []
+    for page, ville, cp in _RX_VILLE.findall(texte):
+        if not page.startswith(f"metier_{metier}-ville_"):
+            continue
+        if _zones.zone_lieu(f"{ville.replace('-', ' ')} {cp}") == _zones.PRIORITAIRE:
+            sortie.append(f"{BASE}/fr-fr/emploi/{page}")
+    return list(dict.fromkeys(sortie))
+
+
+def pages_contrats(metier: str, exclus: set[str]) -> list[str]:
+    """The internship and work-study pages of `metier`, unless the profile excludes them."""
+    return [
+        f"{BASE}/fr-fr/{chemin}/metier_{metier}.html"
+        for chemin, contrat in (("stage", "Stage"), ("alternance", "Alternance"))
+        if contrat not in exclus
+    ]
 
 
 def _metiers(client: Any) -> list[str]:
@@ -188,18 +217,37 @@ def scan_hellowork(limite: int = 30) -> list[dict[str, Any]]:
         try:
             metiers = choisir_metiers(_metiers(client), list(_commun.KEYWORDS))
             _log.info(f"  HelloWork : {len(metiers)} métier(s) au filtre du titre")
-            for m in metiers[:HELLOWORK_METIERS]:
-                r = _lire(client, f"{BASE}/fr-fr/emploi/metier_{m}.html")
+            lues = 0
+
+            def lire_liste(url: str) -> Any:
+                nonlocal lues
+                lues += 1
+                r = _lire(client, url)
                 time.sleep(HELLOWORK_PAUSE)
                 if r is None:
-                    continue  # no category page for this keyword
-                for url, titre in cartes(r.text):
+                    return None  # no such page for this job
+                for offre, titre in cartes(r.text):
                     if (
                         title_ok(titre)
                         and contrat_du_titre(titre) not in _EX
-                        and _norm_url(url) not in connues
+                        and _norm_url(offre) not in connues
                     ):
-                        cibles.setdefault(url, titre)
+                        cibles.setdefault(offre, titre)
+                return r
+
+            # Each job's own page first, so that every job is seen once before the
+            # page budget goes to the city and contract pages.
+            suites: list[str] = []
+            for m in metiers[:HELLOWORK_METIERS]:
+                if lues >= HELLOWORK_PAGES:
+                    break
+                r = lire_liste(f"{BASE}/fr-fr/emploi/metier_{m}.html")
+                if r is not None:
+                    suites += pages_villes(r.text, m) + pages_contrats(m, _EX)
+            for url in suites:
+                if lues >= HELLOWORK_PAGES:
+                    break
+                lire_liste(url)
             _log.info(
                 f"  HelloWork : {len(cibles)} offres nouvelles au filtre du titre "
                 f"— {min(len(cibles), limite)} lue(s) cette passe"
