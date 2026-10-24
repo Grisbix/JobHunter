@@ -129,3 +129,17 @@ def test_ton_de_la_lettre_selon_les_annees():
     }
     assert fl.construire(CV, "cv.docx", {**rep, "annees": 3})["lettre"]["ton"] == "experimente"
     assert fl.construire(CV, "cv.docx", {**rep, "annees": 1})["lettre"]["ton"] == ""
+
+
+def test_mots_generiques_ecartes_du_filtre():
+    assert fl.mots_significatifs("Infirmière diplômée d'État") == ["infirmier"]
+    assert fl.mots_significatifs("Contrôleur de gestion") == ["contrôleur"]
+    # Nothing more specific: the generic word stays, the filter is never empty.
+    assert fl.mots_significatifs("Chargé de projet") == ["chargé", "projet"]
+
+
+def test_langues_d_un_cv_en_anglais():
+    assert fl.langues_du_cv("LANGUAGES\nFrench, English (C1)") == (
+        "Je parle anglais (C1).",
+        "I speak English (C1).",
+    )

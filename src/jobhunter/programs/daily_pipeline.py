@@ -368,7 +368,16 @@ def _executer(a, journal):
     #   c) slow sites, which often refuse — last, so that their pauses
     #   delay nothing else.
     if a.rapide:
-        collectes = [("1/5  Collecte — APEC seule (essai)", ["--apec"], 5400)]
+        # A sample from sources that answer: APEC, the old sample, refuses every
+        # request since 07/10, so a trial collected nothing and every later step ran
+        # on an empty queue (measured 2026-10-24 on four new profiles).
+        collectes = [
+            (
+                "1/5  Collecte — LinkedIn 1 page + makesense (essai)",
+                ["--linkedin", "--pages", "1", "--makesense"],
+                5400,
+            )
+        ]
     else:
         # FIVE PASSES since 2026-10-02. With three, pass a (ATS + Workday
         # + LinkedIn) and pass c (Talent + Indeed + Glassdoor + APEC + WTJ)

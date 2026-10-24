@@ -67,6 +67,19 @@ _DESC_JS = r"""
 }"""
 
 
+def _description_ld(page):
+    """The description of the page's JobPosting ld+json block, "" if none."""
+    from jobhunter.sources.common import _strip_html
+    from jobhunter.sources.hellowork import fiche
+
+    try:
+        jp = fiche(page.content())
+    except Exception:
+        return ""
+    txt = _strip_html(str((jp or {}).get("description") or "")).strip()
+    return txt if len(txt) >= 120 else ""
+
+
 def fetch_one(page, url):
     from jobhunter.navigation import dismiss_cookies, robust_goto
 
@@ -93,6 +106,12 @@ def fetch_one(page, url):
     txt = (r or {}).get("text", "").strip()
     via = r.get("via", "?")
     if len(txt) < 120:
+        # The JobPosting block (schema.org) the page publishes for search engines:
+        # jobs.makesense.org renders its text in a way no selector reads, but writes
+        # the whole posting there (measured 2026-10-24: 0 out of 2 before).
+        ld = _description_ld(page)
+        if ld:
+            return {"ok": True, "text": ld[:CAP], "via": "ld+json"}
         return {"ok": False, "note": "description introuvable (page JS/mur login ?)"}
     # anti-bot guard: challenge page caught instead of the description (Indeed/Cloudflare)
     low = txt.lower()[:600]
@@ -112,6 +131,32 @@ def fetch_one(page, url):
     return {"ok": True, "text": txt, "via": via}
 
 
+# Sites whose sources read the posting with a plain request (its JobPosting ld+json
+# block): jobs.makesense.org answers 403 to the automated browser and 200 to that request
+# (measured 2026-10-24). Read the way their source reads them, nothing more.
+_PAGES_LD = {"jobs.makesense.org", "www.hellowork.com"}
+
+
+def _fetch_ld(url):
+    """The posting's text from its JobPosting block, by a plain request; None if refused."""
+    import httpx
+
+    from jobhunter.sources import common as _commun
+    from jobhunter.sources.hellowork import fiche
+    from jobhunter.sources.makesense import UA
+
+    try:
+        with httpx.Client(follow_redirects=True) as client:
+            r = _commun._get_borne(client, url, headers=UA, timeout=30)
+    except Exception:
+        return None
+    if r.status_code != 200:
+        return None
+    jp = fiche(r.text)
+    txt = _commun._strip_html(str((jp or {}).get("description") or "")).strip()
+    return {"ok": True, "text": txt[:CAP], "via": "ld+json"} if len(txt) >= 120 else None
+
+
 def fetch_api(url):
     """Description through the public API when the ATS has one, without a browser.
 
@@ -122,6 +167,8 @@ def fetch_api(url):
     from urllib.parse import urlsplit
 
     u = urlsplit(url or "")
+    if u.netloc in _PAGES_LD:
+        return _fetch_ld(url)
     if not u.netloc.endswith(".myworkdayjobs.com") or "/job/" not in u.path:
         return None
     tenant, hote = u.netloc.split(".")[:2]

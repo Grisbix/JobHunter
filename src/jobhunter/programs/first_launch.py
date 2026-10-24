@@ -257,6 +257,20 @@ _LANGUES_EN = {
     "néerlandais": "Dutch",
     "polonais": "Polish",
 }
+# An English CV names its languages in English: said in French in the French messages.
+_LANGUES_FR = {
+    "english": "anglais",
+    "spanish": "espagnol",
+    "german": "allemand",
+    "italian": "italien",
+    "portuguese": "portugais",
+    "arabic": "arabe",
+    "chinese": "chinois",
+    "japanese": "japonais",
+    "russian": "russe",
+    "dutch": "néerlandais",
+    "polish": "polonais",
+}
 _RX_SECTION_LANGUES = re.compile(r"^\s*(?:langues?|languages?)\s*(?::\s*(.*))?$", re.I)
 
 
@@ -280,6 +294,7 @@ def langues_du_cv(texte):
             if not nom or nom in ("français", "francais", "french"):
                 continue
             niveau = it[len(it.split("(")[0]) :].strip() if "(" in it else ""
+            nom = _LANGUES_FR.get(nom, nom)
             fr.append(f"{nom} {niveau}".strip())
             en.append(f"{_LANGUES_EN.get(nom, nom.capitalize())} {niveau}".strip())
         if fr:
@@ -384,9 +399,32 @@ def _radical(mot):
     return mot[:-1] if len(mot) > 4 and mot[-1] in "sx" and mot[-2] not in "su" else mot
 
 
+# Words that say little alone: in a title filter, "gestion" lets in every "gestion de
+# projet", "état" every title of the public service. Dropped when the title has a more
+# specific word ("Contrôleur de gestion" -> contrôleur; "Infirmière diplômée d'État" ->
+# infirmier), kept when it has none.
+_GENERIQUES = {
+    "gestion",
+    "projet",
+    "chargé",
+    "responsable",
+    "assistant",
+    "état",
+    "etat",
+    "diplômé",
+    "diplome",
+    "full",
+    "stack",
+    "affaire",
+    "service",
+    "client",
+}
+
+
 def mots_significatifs(titre):
     mots = re.findall(r"[a-zA-ZÀ-ÿ&+#.]+", titre.lower())
-    return list(dict.fromkeys(_radical(m) for m in mots if m not in _VIDES and len(m) >= 3))
+    tous = list(dict.fromkeys(_radical(m) for m in mots if m not in _VIDES and len(m) >= 3))
+    return [m for m in tous if m not in _GENERIQUES] or tous
 
 
 _NOMBRES = {
@@ -625,7 +663,9 @@ def construire(cv_txt, cv_nom, rep):
     # Masculine form too: postings write "Chargé(e)", "Chargé H/F".
     formes = list(dict.fromkeys(f for t in metiers for f in (t.lower(), masculin(t.lower()))))
     mots_cles = list(
-        dict.fromkeys(formes + ([f"{t} junior" for t in formes[:2]] if junior else []))
+        dict.fromkeys(
+            formes + ([f"{t} junior" for t in formes[:2] if "junior" not in t] if junior else [])
+        )
     )
     top = sorted(
         (l for l, v in comps.items() if v.get("famille")),
