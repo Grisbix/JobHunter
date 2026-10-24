@@ -146,8 +146,12 @@ def resume_du_cv(texte):
     return ""
 
 
+_RX_ADRESSE = re.compile(r"\S*(?:@|https?://|www\.|linkedin\.com|\.com/|\.fr/)\S*", re.I)
+
+
 def competences_du_cv(texte):
-    t = " " + texte.lower() + " "
+    # Without the addresses: "linkedin.com/in/x" in the header is not a social media skill.
+    t = " " + _RX_ADRESSE.sub(" ", texte).lower() + " "
     trouvees = {}
     for lab, v in catalogue().items():
         for s in v["synonymes"]:
@@ -161,6 +165,58 @@ def competences_du_cv(texte):
                 trouvees[lab] = v
                 break
     return trouvees
+
+
+_RX_SECTION_COMP = re.compile(
+    r"^\s*(?:comp[ée]tences?(?:\s+techniques)?|skills|technical skills|outils|logiciels"
+    r"|savoir[\s-]faire|expertises?|tools)\s*(?::\s*(.*))?$",
+    re.I,
+)
+_RX_AUTRE_SECTION = re.compile(
+    r"^\s*(?:langues?|languages?|exp[ée]riences?|formations?|education|dipl[oô]mes?"
+    r"|centres? d'int[ée]r[eê]t|int[ée]r[eê]ts|loisirs|hobbies|interests|projets?|r[ée]f[ée]rences?"
+    r"|certifications?|publications?|activit[ée]s)\b",
+    re.I,
+)
+_RX_SEPARATEUR = re.compile(r"\s*[,;•·|]\s*|\s+[-–]\s+")
+
+
+def competences_libres(texte, connues):
+    """The skills the CV lists in its Skills section and the catalogue does not know.
+
+    Any profession: "Nastran", "soins palliatifs", "cuisine japonaise" — written as
+    the CV writes them, each one its own synonym. `connues` are the catalogue skills
+    already found: an item one of them covers ("CATIA V5" when "catia" is known) is
+    not added twice. At most 15.
+    """
+    lignes = texte.splitlines()
+    items = []
+    for i, l in enumerate(lignes):
+        m = _RX_SECTION_COMP.match(l)
+        if not m:
+            continue
+        bloc = [m.group(1)] if m.group(1) else []
+        for x in lignes[i + 1 : i + 15]:
+            if _RX_AUTRE_SECTION.match(x) or _RX_SECTION_COMP.match(x):
+                break
+            bloc.append(x)
+        for x in bloc:
+            items += _RX_SEPARATEUR.split(x.strip(" .:"))
+        break
+    synonymes = [s.lower() for v in connues.values() for s in v.get("synonymes", ())]
+    libres = {}
+    for it in items:
+        it = re.sub(r"\s*\(.*?\)\s*", " ", it).strip(" .:-")
+        bas = it.lower()
+        if not (2 <= len(it) <= 35) or len(it.split()) > 4 or not re.search(r"[a-zA-ZÀ-ÿ]", it):
+            continue
+        if any(s in bas for s in synonymes if len(s) > 2) or bas in synonymes:
+            continue
+        libres.setdefault(
+            it[0].upper() + it[1:],
+            {"synonymes": [bas], "en": it, "prose_fr": it, "prose_en": it, "libre": True},
+        )
+    return dict(list(libres.items())[:15])
 
 
 def langue_du_cv(texte):
@@ -230,9 +286,75 @@ _VIDES = {
 }
 
 
+# Feminine endings of a job title -> masculine: postings mostly write the masculine
+# ("Ingénieur H/F"), and the sorting families are written in it.
+_FEMININS = (
+    (re.compile(r"(\w)ée\b"), r"\1é"),  # chargée
+    (re.compile(r"(\w{3})eure\b"), r"\1eur"),  # ingénieure
+    (re.compile(r"(\w{2})trice\b"), r"\1teur"),  # directrice
+    (re.compile(r"(\w{3})euse\b"), r"\1eur"),  # vendeuse
+    (re.compile(r"(\w{3})ienne\b"), r"\1ien"),  # technicienne
+    (re.compile(r"(\w{3})ère\b"), r"\1er"),  # conseillère
+)
+_RX_FEMININ = re.compile(r"\b\w+(?:ée|eure|trice|euse|ienne|ère)\b", re.I)
+
+
+def masculin(titre):
+    """The masculine form of a job title: "Ingénieure chargée" -> "Ingénieur chargé"."""
+    for rx, rempl in _FEMININS:
+        titre = rx.sub(rempl, titre)
+    return titre
+
+
+def _radical(mot):
+    """A title word as a word START: masculine, singular ("structures" -> "structure").
+
+    The profile's words find what starts with them: the stem finds both forms.
+    """
+    mot = masculin(mot)
+    return mot[:-1] if len(mot) > 4 and mot[-1] in "sx" and mot[-2] not in "su" else mot
+
+
 def mots_significatifs(titre):
     mots = re.findall(r"[a-zA-ZÀ-ÿ&+#.]+", titre.lower())
-    return [m for m in mots if m not in _VIDES and len(m) >= 3]
+    return list(dict.fromkeys(_radical(m) for m in mots if m not in _VIDES and len(m) >= 3))
+
+
+_NOMBRES = {
+    "un": 1,
+    "une": 1,
+    "deux": 2,
+    "trois": 3,
+    "quatre": 4,
+    "cinq": 5,
+    "six": 6,
+    "sept": 7,
+    "huit": 8,
+    "neuf": 9,
+    "dix": 10,
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+}
+_RX_ANNEES = re.compile(
+    r"\b(\d{1,2}|" + "|".join(_NOMBRES) + r")\+?\s*(?:ans|années|years?)\s+(?:d'|d’|de\s+|of\s+)"
+    r"(?:exp[ée]rience|experience)",
+    re.I,
+)
+
+
+def annees_du_cv(texte):
+    """The years of experience the CV states ("Trois ans d'expérience"), 0 if none."""
+    vues = [
+        int(n) if n.isdigit() else _NOMBRES.get(n.lower(), 0) for n in _RX_ANNEES.findall(texte)
+    ]
+    return max((v for v in vues if v < 45), default=0)
 
 
 def slug(s):
@@ -365,7 +487,7 @@ def construire(cv_txt, cv_nom, rep):
     competences = {}
     for lab, v in comps.items():
         e = {k: v[k] for k in ("synonymes", "en", "prose_fr", "prose_en") if k in v}
-        if v.get("technique") is False or not v.get("famille"):
+        if v.get("technique") is False or not (v.get("famille") or v.get("libre")):
             e["technique"] = False
         competences[lab] = e
 
@@ -377,6 +499,12 @@ def construire(cv_txt, cv_nom, rep):
         axes[f] = {"poids": 1.0, "competences": labs}
     if len(ordre) > 1 and ordre[1] in axes:
         axes[ordre[1]]["poids"] = 2.0
+    # The CV's own skills (competences_libres) are the job's core: in the core axis.
+    libres = [l for l, v in comps.items() if v.get("libre")]
+    if libres:
+        if not coeur:
+            coeur = "metier"
+        axes.setdefault(coeur, {"poids": 3.0, "competences": []})["competences"] += libres
     if coeur in axes:
         axes[coeur]["poids"] = 3.0
 
@@ -425,12 +553,7 @@ def construire(cv_txt, cv_nom, rep):
     )
 
     # Masculine form too: postings write "Chargé(e)", "Chargé H/F".
-    formes = []
-    for t in metiers:
-        formes.append(t.lower())
-        masc = re.sub(r"(\w)ée\b", r"\1é", t.lower())
-        if masc != t.lower():
-            formes.append(masc)
+    formes = list(dict.fromkeys(f for t in metiers for f in (t.lower(), masculin(t.lower()))))
     mots_cles = list(
         dict.fromkeys(formes + ([f"{t} junior" for t in formes[:2]] if junior else []))
     )
@@ -461,7 +584,7 @@ def construire(cv_txt, cv_nom, rep):
             "densite_coeur_min": 0.0,
             "densite_coeur_longueur": 800,
             "intitules_coeur": mots_cibles,
-            "intitules_coeur_forts": [t.lower() for t in metiers],
+            "intitules_coeur_forts": formes,
             "intitules_second": [],
             "plafond_second": 8.0,
             "veto_sigles": [],
@@ -474,7 +597,7 @@ def construire(cv_txt, cv_nom, rep):
         },
         "niveau": niv,
         "filtre_titre": {
-            "metier": mots_cibles + [m for m in (FAMILLES.get(coeur, ("", []))[1])],
+            "metier": list(dict.fromkeys(mots_cibles + list(FAMILLES.get(coeur, ("", []))[1]))),
             "exclus": exclus,
             "exclus_sauf_complement": [],
             "complement": [],
@@ -536,9 +659,17 @@ def familles_tri_a_exclure(metiers):
     jobs: they are removed from the queue. A targeted family stays."""
     from jobhunter.scoring import sorting as tri_file
 
+    # Each title as written, in the masculine, and with its words singular: the family
+    # patterns are masculine and bounded ("ingénieur structure\b"), and an "Ingénieure
+    # structures" profile would otherwise remove its own job from the queue.
+    formes = [
+        f
+        for t in metiers
+        for f in (t, masculin(t), " ".join(_radical(m) for m in masculin(t).split()))
+    ]
     exclure = []
     for fam, rx in tri_file._METIERS_CATALOGUE.items():
-        if not any(rx.search(t) for t in metiers):
+        if not any(rx.search(t) for t in formes):
             exclure.append(fam)
     return exclure
 
@@ -584,6 +715,7 @@ def main():
         )
     ident = identite_du_cv(txt)
     comps = competences_du_cv(txt)
+    comps.update(competences_libres(txt, comps))
     print(
         f"  nom : {ident['prenom']} {ident['nom']} · email : {ident['email'] or '?'} · "
         f"tel : {ident['telephone'] or '?'} · ville : {ident['ville'] or '?'}"
@@ -611,12 +743,17 @@ def main():
     ]
     try:
         annees = int(
-            demander("Années d'expérience professionnelle (stages compris)", "0", a.auto, a.annees)
+            demander(
+                "Années d'expérience professionnelle (stages compris)",
+                str(annees_du_cv(txt)),
+                a.auto,
+                a.annees,
+            )
         )
     except ValueError:
         annees = 0
-    # A title in the feminine ("Chargée", "Directrice") suggests "f".
-    fem = bool(re.search(r"\b\w+(?:ée|trice|euse)\b", " ".join(metiers), re.I))
+    # A title in the feminine ("Chargée", "Directrice", "Ingénieure") suggests "f".
+    fem = bool(_RX_FEMININ.search(" ".join(metiers)))
     genre = demander(
         "Accords dans les lettres : « diplômé » (m) ou « diplômée » (f) ?",
         "f" if fem else "m",

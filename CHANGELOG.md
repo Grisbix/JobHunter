@@ -4,6 +4,26 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.21.1 — 2026-10-24
+
+A new user with another job, checked from start to end (CV, profile, collection,
+sorting, letters). The profile made from a CV is better for any job, not only finance:
+
+- **A job title in the feminine** (« Ingénieure », « Technicienne », « Conseillère »)
+  no longer removes its own offers: the sorting used to drop « Ingénieur structure »
+  postings for an « Ingénieure structures » profile. The masculine form is also
+  searched, and the letters' agreement is guessed right.
+- **Title words in the plural** (« structures ») now also find the singular.
+- **Years of experience** are read from the CV (« Trois ans d'expérience ») and proposed,
+  instead of 0, which set aside every « confirmé » posting.
+- **Skills**: the LinkedIn address no longer counts as « Réseaux sociaux ». New in the
+  catalogue: structural analysis (Nastran, finite elements…), composites, fatigue,
+  aircraft certification, numerical simulation. The skills your CV lists in its own
+  « Compétences » section and the catalogue does not know are kept too, in your core axis.
+- **Welcome to the Jungle** reads the postings your title filter keeps, your core
+  titles first, instead of a fixed ESG list.
+- An empty list now says what to do: click « Actualiser les offres ».
+
 ## 3.21.0 — 2026-10-24
 
 - **New source: Jobs that make sense** (jobs.makesense.org), impact jobs: climate,

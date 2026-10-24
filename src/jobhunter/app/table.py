@@ -1181,7 +1181,9 @@ class TableauMixin:
                         "aucune offre ne passe les filtres — clique sur ▾ dans une entete pour les lever"
                     )
                 else:
-                    msg = _t("aucune offre dans la file")
+                    msg = _t(
+                        "aucune offre pour l'instant : clique « Actualiser les offres » à gauche"
+                    )
                 self.lbl_count.configure(text=msg, text_color=TX_AMBRE)
             else:
                 base = len(self.offers) - masques - (0 if self._voir_masquees else pas_int)

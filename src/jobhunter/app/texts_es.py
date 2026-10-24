@@ -476,7 +476,7 @@ TEXTES: dict[str, str] = {
     "Double-clic ou Entrée : fiche complète  ·  clic droit : actions  ·  Suppr : pas intéressé": "Doble clic o Intro: ficha completa  ·  clic derecho: acciones  ·  Supr: no me interesa",
     "aucune offre ne contient « {t} » — Echap ou ✕ pour effacer": "ninguna oferta contiene «{t}» — Esc o ✕ para borrar",
     "aucune offre ne passe les filtres — clique sur ▾ dans une entete pour les lever": "ninguna oferta pasa los filtros — haz clic en ▾ en un encabezado para quitarlos",
-    "aucune offre dans la file": "ninguna oferta en la lista",
+    "aucune offre pour l'instant : clique « Actualiser les offres » à gauche": "aún no hay ofertas: haz clic en « Actualizar ofertas » a la izquierda",
     "sur {base}": "de {base}",
     "{m} masquée(s) :": "{m} oculta(s):",
     "{n} offre(s)": "{n} oferta(s)",

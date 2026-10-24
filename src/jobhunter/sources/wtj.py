@@ -18,9 +18,16 @@ from jobhunter.sources.common import (
     en_france,
     title_ok,
 )
-from jobhunter.sources.efc import _RX_EFC_ESG, _efc_lieu
+from jobhunter.sources.efc import _efc_lieu
 
 _log = _journal.journal(__name__)
+
+
+def _coeur() -> Any:
+    """The profile's core title words (scoring.intitules_coeur), compiled; None if none."""
+    from jobhunter import profile as _P
+
+    return _P.motif(_P.get("scoring.intitules_coeur"))
 
 
 # ═══════════════ 3. Welcome to the Jungle — sitemap public ═══════════════
@@ -166,8 +173,14 @@ def scan_wtj(pages: int = 2) -> list[dict[str, Any]]:
                 approx = l.split("/jobs/")[-1].replace("-", " ")
                 if contrat_du_titre(approx) in _EX:
                     continue
-                if _RX_EFC_ESG.search(approx):
+                if title_ok(approx):
                     cibles.append(l)
+        # The profile's own title filter, not a fixed list: an engineer reads
+        # engineering postings. Its core title words first (scoring.intitules_coeur),
+        # since only a few postings are read per pass.
+        rx = _coeur()
+        if rx is not None:
+            cibles.sort(key=lambda u: not rx.search(u.split("/jobs/")[-1].replace("-", " ")))
 
         # We do not read again what is already in the queue: each posting costs a
         # request on a very limited rate.
@@ -181,7 +194,7 @@ def scan_wtj(pages: int = 2) -> list[dict[str, Any]]:
         neuves = [u for u in cibles if _norm_url(u) not in connues]
         plafond = max(1, pages) * 5
         _log.info(
-            f"  WTJ : {len(cibles)} offres ESG au sitemap, {len(neuves)} nouvelles "
+            f"  WTJ : {len(cibles)} offres au filtre du titre, {len(neuves)} nouvelles "
             f"— {min(len(neuves), plafond)} lue(s) cette passe (le reste au prochain scan)"
         )
 
