@@ -614,3 +614,13 @@ def test_racine_de_l_installation_meme_sur_un_profil_secondaire(tmp_path, monkey
     finally:
         monkeypatch.undo()
         importlib.reload(maj)
+
+
+def test_pas_de_crontab_sur_le_systeme(monkeypatch):
+    # A Linux without crontab (a container): nothing scheduled, the check goes on.
+    def absent(*a, **k):
+        raise FileNotFoundError("crontab")
+
+    monkeypatch.setattr(maj.sys, "platform", "linux")
+    monkeypatch.setattr(maj.subprocess, "run", absent)
+    assert maj.signaler_tache_ancienne() is False

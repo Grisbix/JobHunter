@@ -94,7 +94,9 @@ class AccesTest(unittest.TestCase):
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as p:
-            navigateur = p.chromium.launch(channel="chrome", headless=True)
+            # The session-signal script only: Playwright's Chromium is enough (Google
+            # Chrome, which access.py uses for its profile, is not on every machine).
+            navigateur = p.chromium.launch(headless=True)
             try:
                 page = navigateur.new_page()
                 for html, attendu in [

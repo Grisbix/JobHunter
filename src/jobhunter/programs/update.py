@@ -360,16 +360,17 @@ def signaler_tache_ancienne():
     Scripts/pipeline_quotidien.py, which no longer exists, and would fail every morning
     silently. We say so (read-only: the task is not changed)."""
     if sys.platform == "win32":
-        r = subprocess.run(
-            ["schtasks", "/Query", "/TN", "JobHunter - collecte quotidienne", "/XML"],
-            capture_output=True,
-            text=True,
-            errors="replace",
-        )
+        cmd = ["schtasks", "/Query", "/TN", "JobHunter - collecte quotidienne", "/XML"]
         lanceur = "launchers\\schedule.bat"
     else:
-        r = subprocess.run(["crontab", "-l"], capture_output=True, text=True, errors="replace")
+        cmd = ["crontab", "-l"]
         lanceur = "./launchers/schedule.sh"
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
+    except OSError:
+        # No crontab on this system (a container, some Linux installs): nothing is
+        # scheduled, so nothing old to report. It used to fail the update's check.
+        return False
     if r.returncode == 0 and "pipeline_quotidien.py" in (r.stdout or ""):
         print(
             f"\n! La collecte planifiee lance encore l'ancien Scripts/pipeline_quotidien.py, "
