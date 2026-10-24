@@ -102,6 +102,15 @@ _PARESSEUX["SOCLE_FR"] = lambda: ({d["cle"]: d.get("parcours_fr") or "" for d in
 _PARESSEUX["SOCLE_EN"] = lambda: ({d["cle"]: d.get("parcours_en") or "" for d in _ici._DOMAINES})
 
 
+def _experimente() -> bool:
+    """Is the profile's letter tone `lettre.ton` = "experimente"?
+
+    The letter then speaks of experience put to work, not of a path started at
+    school. Set by `first_launch` from 3 years on; absent = the young-graduate wording.
+    """
+    return _P.get("lettre.ton", "") == "experimente"
+
+
 def socle(cle: str, langue: str = "fr") -> str:
     """Background paragraph of the `cle` domain, or that of the first domain that has one: a letter without a background says nothing about the candidate."""
     table = _ici.SOCLE_EN if langue == "en" else _ici.SOCLE_FR
@@ -624,7 +633,11 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
         para(
             "I read your advertisement with great interest: "
             + (_val_en if _connue_en else "this role")
-            + " matches the career path I have been building since my studies."
+            + (
+                " matches the experience I have built and where I want to take it next."
+                if _experimente()
+                else " matches the career path I have been building since my studies."
+            )
         )
         # The background follows the offer's DOMAIN: writing "je me suis
         # specialise en finance durable" to an oil company looking for
@@ -665,14 +678,25 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
                     )
                     if m.lower() not in prose_en.lower()
                 ][:4]
-                ph = f"Along the way I became familiar with {prose_en}."
+                ph = (
+                    f"In these roles I have put into practice {prose_en}."
+                    if _experimente()
+                    else f"Along the way I became familiar with {prose_en}."
+                )
                 if len(techs_en) >= 2:
                     ph += (
                         " I also work with what your advertisement describes: "
                         + ", ".join(techs_en)
                         + "."
                     )
-                para(ph + " These are foundations I would be glad to deepen within your teams.")
+                para(
+                    ph
+                    + (
+                        " I would bring this experience to your teams."
+                        if _experimente()
+                        else " These are foundations I would be glad to deepen within your teams."
+                    )
+                )
         if _citable(profil, "en") and profil.lower() not in ("non précisé", "à compléter", "nan"):
             # The English semicolon was no better than the French one.
             _pp_en = _P.get("lettre.phrase_profil_en", "") or ""
@@ -740,8 +764,12 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
     _connue = bool(_valeur)
     _sujet = _valeur if _connue else "ce poste"
     para(
-        f"Votre annonce a retenu mon attention : {_sujet} rejoint le projet "
-        "professionnel que je construis depuis mes études."
+        f"Votre annonce a retenu mon attention : {_sujet} "
+        + (
+            "correspond à mon expérience et à la suite que je veux lui donner."
+            if _experimente()
+            else "rejoint le projet professionnel que je construis depuis mes études."
+        )
     )
 
     # body 1: proof through the background (facts, no superlatives)
@@ -807,14 +835,22 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
                 )
                 if m.lower() not in prose.lower()
             ][:4]
-            phrase = f"Au fil de ce parcours, je me suis {_P.accord('familiarisé', 'familiarisée')} avec {prose}."
+            if _experimente():
+                phrase = f"Dans ces postes, j'ai mis en œuvre {prose}."
+            else:
+                phrase = f"Au fil de ce parcours, je me suis {_P.accord('familiarisé', 'familiarisée')} avec {prose}."
             if len(techs) >= 2:
                 phrase += (
                     " Je pratique aussi ce que décrit votre annonce : " + ", ".join(techs) + "."
                 )
             para(
-                phrase + f" Ce sont des acquis que je serais {_P.accord('heureux', 'heureuse')} "
-                "d'approfondir au sein de vos équipes."
+                phrase
+                + (
+                    " J'apporterai cette expérience à vos équipes."
+                    if _experimente()
+                    else f" Ce sont des acquis que je serais {_P.accord('heureux', 'heureuse')} "
+                    "d'approfondir au sein de vos équipes."
+                )
             )
     # The profile is no longer quoted either: same truncated copy-paste, followed
     # by a semicolon that nobody writes in a letter.

@@ -219,6 +219,75 @@ def competences_libres(texte, connues):
     return dict(list(libres.items())[:15])
 
 
+_RX_LIGNE_DIPLOME = re.compile(
+    r"^\s*(?:\d{4}(?:\s*[-–]\s*\d{4})?\s*[:,–-]?\s*)?"
+    r"((?:dipl[oô]me|master|licence|bachelor|mba|doctorat|phd|bts|dut|but|msc|mastère)\b.*)$",
+    re.I,
+)
+
+
+def diplome_du_cv(texte):
+    """The CV's first degree line as a phrase of the messages: "titulaire d'un master
+    en finance". Cut at the first comma (the phrase sits between two commas). "" if none.
+    """
+    for l in texte.splitlines():
+        m = _RX_LIGNE_DIPLOME.match(l)
+        if not m:
+            continue
+        d = re.split(r"\s*[,(—–|]\s*|\s+-\s+", m.group(1).strip())[0].strip(" .")
+        mot = d.split()[0]
+        if not mot.isupper():  # "MBA", "BTS" stay as they are
+            d = d[0].lower() + d[1:]
+        article = "d'une" if mot.lower() == "licence" else "d'un"
+        return f"titulaire {article} {d}"
+    return ""
+
+
+_LANGUES_EN = {
+    "anglais": "English",
+    "espagnol": "Spanish",
+    "allemand": "German",
+    "italien": "Italian",
+    "portugais": "Portuguese",
+    "arabe": "Arabic",
+    "chinois": "Chinese",
+    "mandarin": "Mandarin",
+    "japonais": "Japanese",
+    "russe": "Russian",
+    "néerlandais": "Dutch",
+    "polonais": "Polish",
+}
+_RX_SECTION_LANGUES = re.compile(r"^\s*(?:langues?|languages?)\s*(?::\s*(.*))?$", re.I)
+
+
+def _et(items, et):
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + f" {et} " + items[-1]
+
+
+def langues_du_cv(texte):
+    """("Je parle anglais (C1) et espagnol (B2).", "I speak English (C1) and Spanish
+    (B2).") from the CV's Languages section, French left out; ("", "") if none."""
+    lignes = texte.splitlines()
+    for i, l in enumerate(lignes):
+        m = _RX_SECTION_LANGUES.match(l)
+        if not m:
+            continue
+        bloc = m.group(1) or next((x for x in lignes[i + 1 : i + 4] if x.strip()), "")
+        fr, en = [], []
+        for it in _RX_SEPARATEUR.split(bloc.strip(" .")):
+            it = it.strip()
+            nom = it.split("(")[0].split(":")[0].strip().lower()
+            if not nom or nom in ("français", "francais", "french"):
+                continue
+            niveau = it[len(it.split("(")[0]) :].strip() if "(" in it else ""
+            fr.append(f"{nom} {niveau}".strip())
+            en.append(f"{_LANGUES_EN.get(nom, nom.capitalize())} {niveau}".strip())
+        if fr:
+            return f"Je parle {_et(fr, 'et')}.", f"I speak {_et(en, 'and')}."
+        return "", ""
+    return "", ""
+
+
 def langue_du_cv(texte):
     t = texte.lower()
     fr = len(re.findall(r"\b(et|les|des|une|pour|avec|exp[ée]rience|comp[ée]tences)\b", t))
@@ -509,6 +578,7 @@ def construire(cv_txt, cv_nom, rep):
         axes[coeur]["poids"] = 3.0
 
     niv, junior = niveau(rep["annees"])
+    langues = langues_du_cv(cv_txt)
     visees = {f for f in ordre if score[f] >= 3} | ({coeur} if coeur else set())
     exclus = [
         m
@@ -626,12 +696,14 @@ def construire(cv_txt, cv_nom, rep):
         "zones": {"prioritaires": rep["prioritaires"], "secondaires": rep["secondaires"]},
         "collecte": {"mots_cles": mots_cles},
         "message": {
-            "diplome_fr": "",
+            # Read from the CV's Education and Languages sections: the messages say
+            # them without waiting for the profile to be completed by hand.
+            "diplome_fr": diplome_du_cv(cv_txt),
             "diplome_detente_fr": "",
             "diplome_en": "",
-            "langues_fr": "",
+            "langues_fr": langues[0],
             "langues_detente_fr": "",
-            "langues_en": "",
+            "langues_en": langues[1],
             "sources": {},
             "faits": {},
             "phrase_contexte_fr": {},
@@ -643,6 +715,8 @@ def construire(cv_txt, cv_nom, rep):
             "phrase_profil_fr": "",
             "phrase_profil_en": "",
             "contextes": [],
+            # From 3 years of experience the letter speaks of experience put to work.
+            "ton": "experimente" if rep["annees"] >= 3 else "",
             "presentation_llm": f"Profil : {', '.join(metiers)}. {resume[:300]}",
         },
         "formulaire": {
@@ -892,13 +966,17 @@ def main():
             f"competences : seulement {len(comps)} reconnue(s) — ajoute les tiennes "
             "(libelle + synonymes que les annonces emploient)"
         )
-    manque.append("message.diplome_fr / langues_fr et lettre.phrase_profil_fr : une phrase chacun")
+    vides = [k for k in ("diplome_fr", "langues_fr") if not profil["message"][k]]
+    if vides:
+        manque.append(f"message.{' / '.join(vides)} : une phrase chacun (pas trouvé dans le CV)")
     if cv.suffix.lower() == ".pdf":
         manque.append(
             "CV en PDF : il partira tel quel. Fournis un .docx pour des CV adaptes a chaque offre"
         )
     for m in manque:
         print(f"  - {m}")
+    if not manque:
+        print("  rien d'obligatoire : tout ce qu'il faut a été lu dans le CV")
     print(
         "\nVerifier : python JobHunter.pyw show-profile   ·   Lancer l'app : python JobHunter.pyw"
     )

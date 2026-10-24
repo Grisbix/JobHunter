@@ -4,6 +4,24 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.22.0 — 2026-10-24
+
+Still for someone whose job is not finance:
+
+- **No Claude Code needed after the profile**: your degree and languages are read from
+  the CV for the messages, and the end message points to « Ma recherche » and
+  « Profil » in the app (Claude Code stays optional).
+- **Letters with experience**: from 3 years of experience, the letter says « Dans ces
+  postes, j'ai mis en œuvre… J'apporterai cette expérience à vos équipes » instead of
+  the young-graduate wording. Set by `lettre.ton` in the profile.
+- **Companies from your offers**: « Entreprises » › « Trouver depuis mes offres » looks
+  for the public recruiting feed of the companies of your good offers, and follows
+  only the feeds that really hold one of their offers (a feed guessed from a name can
+  belong to another company). Same thing by hand: `probe_ats_queue --ajouter`.
+- **eFinancialCareers and FIR** (finance and ESG job sites) are skipped when your title
+  filter keeps no finance job: they would bring nothing.
+- Statistiques: the Domaine section shows each domain's name, not its file key.
+
 ## 3.21.1 — 2026-10-24
 
 A new user with another job, checked from start to end (CV, profile, collection,

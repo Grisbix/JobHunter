@@ -11,6 +11,7 @@ from tkinter import ttk
 from typing import Any
 from urllib.parse import quote, urlparse
 
+from jobhunter import profile as _P
 from jobhunter import root as _racine
 from jobhunter.app import common as _commun
 from jobhunter.app import inventory as _inventaire
@@ -302,7 +303,14 @@ class PanneauxMixin:
                                 ),
                             ),
                         )
-            section("Domaine", count("domaine")[:8])
+            # The domain's label ("Ingénieure structures"), not its key
+            # ("Ingenieure_structures_aeronautiques"): the key is a file name.
+            libelles = {d["cle"]: str(d.get("libelle") or d["cle"]) for d in _P.domaines()}
+            par_domaine: dict[str, int] = {}
+            for v, n in count("domaine"):
+                lib = libelles.get(v, v)
+                par_domaine[lib] = par_domaine.get(lib, 0) + n
+            section("Domaine", sorted(par_domaine.items(), key=lambda x: -x[1])[:8])
             section("Canal", count("canal"))
             section("État des liens", count("link_status"))
             fits = [
@@ -987,6 +995,21 @@ class PanneauxMixin:
             relief="flat",
             cursor="hand2",
         ).pack(side="left", padx=(0, 12))
+        # The companies of the offers already found, whose own feed holds one of
+        # those offers (probe_ats_queue): a profile outside finance starts with none.
+        CB(
+            barre_f,
+            text="Trouver depuis mes offres",
+            command=lambda: self.run_step(
+                [PY, "-m", "jobhunter.programs.probe_ats_queue", "--fit", "7", "--ajouter"],
+                _t("Entreprises de mes offres : flux publics"),
+            ),
+            bg=BTN,
+            fg=TX,
+            activebackground=BTN_H,
+            relief="flat",
+            cursor="hand2",
+        ).pack(side="right")
         CB(
             bar,
             text="Suspendre / Reprendre",

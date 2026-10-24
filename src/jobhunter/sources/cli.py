@@ -43,6 +43,23 @@ def __getattr__(nom: str) -> Any:
     return _paresseux.lire(_ici, _PARESSEUX, nom)
 
 
+# Typical titles of the finance-only sites (eFC, FIR).
+_TITRES_FINANCE = (
+    "Analyste financier",
+    "Analyste ESG",
+    "Financial analyst",
+    "Contrôleur de gestion",
+    "Gérant de portefeuille",
+    "Risk analyst",
+    "Analyste crédit",
+)
+
+
+def _vise_finance() -> bool:
+    """Does the profile's title filter keep any finance title?"""
+    return any(_commun.title_ok(t) for t in _TITRES_FINANCE)
+
+
 _PARESSEUX["INDEED_LIEUX"] = lambda: (
     importlib.import_module("jobhunter.sources.indeed").INDEED_LIEUX
 )
@@ -217,6 +234,11 @@ def main() -> int:
     ):
         a.all = True
 
+    if not _vise_finance() and (a.all or a.fir or a.efc or a.efc_tout or a.efc_metier):
+        print(
+            "── FIR et eFinancialCareers sautés : ton filtre de titre ne garde aucun métier finance ──"
+        )
+
     # The calls are listed first, so that the run announces them (a percentage and a
     # time left in the application), then made in that order.
     etapes: list[tuple[str, str, Any, dict[str, Any]]] = []
@@ -244,7 +266,10 @@ def main() -> int:
         )
     if a.all or a.vie:
         etapes.append(("── V.I.E / V.I.A (Business France) ──", "vie", scan_vie, {}))
-    if a.all or a.fir:
+    # FIR and eFC only list finance and ESG jobs: every one of their offers would fail
+    # a title filter that keeps no finance title (an engineer's profile). Skipped then.
+    finance = _vise_finance()
+    if (a.all or a.fir) and finance:
         etapes.append(("── FIR / French SIF (100 % ISR-ESG) ──", "fir", scan_fir, {}))
     # TALENT AND INDEED OUT OF --all (2026-10-03). Talent: 0 offers in 30 min on
     # 30/09, 3 on 27/09. Indeed: 403 at the first request since 24/09.
@@ -284,7 +309,7 @@ def main() -> int:
     # most (the postings already in the queue are skipped, so each day moves forward in
     # the rest). Nine sitemaps + 30 postings at 10 s make ~6 min. The wide
     # filters (--efc-metier, --efc-tout) are still run separately, in passes.
-    if a.all or a.efc or a.efc_tout or a.efc_graduate or a.efc_metier:
+    if (a.all or a.efc or a.efc_tout or a.efc_graduate or a.efc_metier) and finance:
         filtre = (
             "tout"
             if a.efc_tout

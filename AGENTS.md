@@ -33,6 +33,11 @@ change target, change the profile.
   recognised).
 - `langues_parlees` (profile): a posting written in another language is capped at 2, a
   required language at 4 (`ats_match.plafond_langue`).
+- `lettre.ton` (profile): "experimente" (set by `first_launch` from 3 years) changes the
+  letter's young-graduate sentences; absent for the reference profile, whose letters the
+  bench checks.
+- The engine must work for any job: `tests/test_first_launch.py` builds a profile from a
+  fictitious aerospace engineer's CV (feminine title, plural words, skills section).
 - CI: `.github/workflows/tests.yml` runs the network-free suites on every push.
 
 ## Read before touching the code
@@ -209,7 +214,10 @@ Jooble go through their official API, key in the files adzuna.json / jooble.json
 (Greenhouse, Lever, Ashby, Recruitee, SmartRecruiters, Teamtailor); `autres_flux` by
 `ats.fetch_autre` (Workable, Personio, Breezy, Pinpoint, Eightfold, SuccessFactors…).
 A kind put in the wrong list is never read, without any error: `inventory.ajouter_flux`
-routes a pasted career-page URL to the right one.
+routes a pasted career-page URL to the right one. A profile outside finance starts
+with none: `probe_ats_queue --ajouter` follows the feeds of the queue's companies, only
+those holding an offer already seen there (a slug guessed from a name can be another
+company's). eFC and FIR are skipped when the title filter keeps no finance title.
 `job_sources` only merges at the end of its pass: in a single `--all` pass, an
 overrun lost the whole day's collection — four mornings out of five from 24 to
 28/09/2026; with three passes, two still overran on 30/09.

@@ -103,3 +103,29 @@ def test_construire_profil_d_une_autre_profession():
     # Three years: not the junior settings, "confirmé" stays.
     assert "confirmé" not in p["niveau"]["mots_senior"]
     assert p["tri"]["retirer_seniors"] is False
+
+
+def test_diplome_et_langues_lus_dans_le_cv():
+    assert fl.diplome_du_cv(CV) == ""  # no degree line in this short CV
+    cv = CV + "FORMATION\n2023 Diplôme d'ingénieur ISAE-SUPAERO, mécanique\n"
+    assert fl.diplome_du_cv(cv) == "titulaire d'un diplôme d'ingénieur ISAE-SUPAERO"
+    assert fl.diplome_du_cv("Licence d'économie, Lyon 2") == "titulaire d'une licence d'économie"
+    assert fl.diplome_du_cv("MBA - HEC Paris") == "titulaire d'un MBA"
+    assert fl.langues_du_cv(CV) == ("Je parle anglais (C1).", "I speak English (C1).")
+    assert fl.langues_du_cv("Langues : Français, Espagnol, Allemand (B1)") == (
+        "Je parle espagnol et allemand (B1).",
+        "I speak Spanish and German (B1).",
+    )
+
+
+def test_ton_de_la_lettre_selon_les_annees():
+    rep = {
+        "identite": fl.identite_du_cv(CV),
+        "competences": fl.competences_du_cv(CV),
+        "metiers": ["Ingénieure structures"],
+        "genre": "f",
+        "prioritaires": [],
+        "secondaires": [],
+    }
+    assert fl.construire(CV, "cv.docx", {**rep, "annees": 3})["lettre"]["ton"] == "experimente"
+    assert fl.construire(CV, "cv.docx", {**rep, "annees": 1})["lettre"]["ton"] == ""

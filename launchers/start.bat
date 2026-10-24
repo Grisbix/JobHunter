@@ -22,7 +22,7 @@ if not defined CV (
 echo Premier lancement : creation du profil a partir de %CV%
 "%PY%" JobHunter.pyw profile "%CV%" || (pause & exit /b 1)
 echo.
-echo Profil cree dans profile\profile.json. Relis-le, ou demande a Claude Code : /configure-profile
+echo Profil cree. Dans l'app : Ma recherche (mots-cles, villes), Profil (competences), puis Actualiser les offres.
 pause
 :app
 start "" "%PYW%" JobHunter.pyw

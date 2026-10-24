@@ -298,6 +298,8 @@ TEXTES: dict[str, str] = {
     "Filtrer : entreprise, outil ou adresse": "Filtrar: empresa, herramienta o dirección",
     "Adresse de sa page carrière, ou nom de l'entreprise (annuaire)": "Dirección de su página "
     "de empleo, o nombre de la empresa (directorio)",
+    "Trouver depuis mes offres": "Buscar desde mis ofertas",
+    "Entreprises de mes offres : flux publics": "Empresas de mis ofertas: feeds públicos",
     "Annuaire": "Directorio",
     "Annuaire des entreprises": "Directorio de empresas",
     "3 600 entreprises lues par l'API publique de Lever, Ashby ou Greenhouse. "

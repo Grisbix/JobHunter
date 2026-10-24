@@ -187,8 +187,11 @@ def assurer_profil() -> None:
         messagebox.showinfo(
             "JobHunter",
             f"Profil créé : {_profil.FICHIER.parent.name}/{_profil.FICHIER.name}.\n\n"
-            "Pour le compléter "
-            "(compétences, recherches, lettres), ouvre Claude Code dans ce "
-            "dossier et tape /configure-profile.",
+            "Ensuite, dans JobHunter :\n"
+            "· « Ma recherche » : tes mots-clés, les intitulés gardés, tes villes ;\n"
+            "· « Profil » : tes compétences ;\n"
+            "· « Actualiser les offres » : la première collecte.\n\n"
+            "Si tu as Claude Code (facultatif) : /configure-profile dans ce dossier "
+            "complète tout, lettres comprises.",
         )
         _r.destroy()
