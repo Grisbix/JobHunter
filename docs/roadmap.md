@@ -222,3 +222,5 @@ What remains out of reach, whatever happens:
   robots.txt also forbids the search pages. Compliant leads: Adzuna and Jooble
   (official APIs, which carry over part of these offers), adding an offer by its
   link, or a licence requested from HelloWork.
+  Checked again on 2026-10-24: robots.txt still disallows `/fr-fr/search/`,
+  `/fr-fr/rss/`, `/fr-fr/api/` and every URL with `?`; the decision stands.

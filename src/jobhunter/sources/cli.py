@@ -24,6 +24,7 @@ from jobhunter.sources.francetravail import scan_france_travail
 from jobhunter.sources.glassdoor import scan_glassdoor
 from jobhunter.sources.indeed import scan_indeed
 from jobhunter.sources.linkedin import scan_linkedin
+from jobhunter.sources.makesense import scan_makesense
 from jobhunter.sources.merge import merge_into_queue
 from jobhunter.sources.talent import scan_talent
 from jobhunter.sources.vie import scan_vie
@@ -63,6 +64,11 @@ def main() -> int:
     )
     ap.add_argument("--linkedin", action="store_true")
     ap.add_argument("--wtj", action="store_true")
+    ap.add_argument(
+        "--makesense",
+        action="store_true",
+        help="Jobs that make sense : sitemap public, offres à impact (30 lues par passe)",
+    )
     ap.add_argument("--vie", action="store_true")
     ap.add_argument("--fir", action="store_true")
     ap.add_argument("--talent", action="store_true")
@@ -186,6 +192,7 @@ def main() -> int:
         or a.workday
         or a.linkedin
         or a.wtj
+        or a.makesense
         or a.vie
         or a.fir
         or a.talent
@@ -293,6 +300,15 @@ def main() -> int:
                 "efc",
                 scan_efc,
                 dict(limit=limite, filtre=filtre, sites=sites),
+            )
+        )
+    if a.all or a.makesense:
+        etapes.append(
+            (
+                "── Jobs that make sense (sitemap public, offres à impact) ──",
+                "makesense",
+                scan_makesense,
+                {},
             )
         )
     if a.all or a.eures:

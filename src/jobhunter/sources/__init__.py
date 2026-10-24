@@ -7,6 +7,7 @@ ats            public ATS APIs (Greenhouse, Lever, Ashby...) and other recruitin
 workday        Workday
 linkedin       LinkedIn public search (guest API), waiting on 429
 wtj, efc       Welcome to the Jungle, eFinancialCareers (public sitemaps)
+makesense      Jobs that make sense, impact jobs (public sitemap)
 eures          European portal
 indeed, apec, glassdoor   results pages, hard stop on refusal
 vie, fir, talent, francetravail, agregateurs   V.I.E, FIR, Talent.com, France Travail, Adzuna/Jooble
@@ -33,6 +34,7 @@ _SOUS_MODULES = (
     "linkedin",
     "wtj",
     "efc",
+    "makesense",
     "eures",
     "indeed",
     "apec",

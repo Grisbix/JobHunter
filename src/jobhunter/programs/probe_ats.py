@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""probe_ats.py — Tests candidate slugs on the 5 public ATS APIs.
+"""probe_ats.py — Tests candidate slugs on the public ATS APIs (5 in ATS_SLUGS, 2 in AUTRES_FLUX).
 
 Goal: find which companies (French AM / ESG boutiques) expose a MACHINE-READABLE feed
 of offers. Those that answer can be added to ATS_SLUGS in job_sources.py → scanned
@@ -17,6 +17,7 @@ Run:
 import argparse
 import concurrent.futures as cf
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -117,6 +118,92 @@ CANDIDATS = [
     "normative",
     "greenly",
     "sweep",
+    # ── Private equity, infrastructure, private debt (France) ──
+    "eurazeo",
+    "antin",
+    "antininfrastructure",
+    "paipartners",
+    "meridiam",
+    "infravia",
+    "mirova",
+    "omnescapital",
+    "omnes",
+    "idinvest",
+    "andera",
+    "anderapartners",
+    "siparex",
+    "isai",
+    "partechpartners",
+    "partech",
+    "eurazeoinvestmentmanager",
+    "keensight",
+    "keensightcapital",
+    "abenex",
+    "capza",
+    "sofinnova",
+    "seventure",
+    "raisefund",
+    "raise",
+    "starquest",
+    "swen",
+    "swencp",
+    "ginkgo",
+    "tikehauinvestmentmanagement",
+    # ── Fintech, banks and insurers that hire in finance (France) ──
+    "qonto",
+    "lydia",
+    "sumeria",
+    "swile",
+    "spendesk",
+    "pennylane",
+    "agicap",
+    "libeo",
+    "alan",
+    "younited",
+    "younitedcredit",
+    "october",
+    "wakam",
+    "stoik",
+    "descartesunderwriting",
+    "shifttechnology",
+    "mangopay",
+    "lemonway",
+    "ibanfirst",
+    "memobank",
+    "shine",
+    "nickel",
+    "luko",
+    "akur8",
+    "ledger",
+    "fygr",
+    "defacto",
+    "silvr",
+    "karmen",
+    "finary",
+    # ── Sustainable finance and savings (France) ──
+    "goodvest",
+    "ramify",
+    "yomoni",
+    "nalo",
+    "lita",
+    "enerfip",
+    "wiseed",
+    "lendosphere",
+    "miimosa",
+    "tudigo",
+    "helios",
+    "greengot",
+    "carbo",
+    "hellocarbo",
+    "toovalu",
+    "ekodev",
+    "sami",
+    "fairly",
+    "trackyourwaste",
+    "ecovadis",
+    "moodysesg",
+    "vigeoeiris",
+    "ofiinvest-am",
 ]
 
 APIS = {
@@ -127,7 +214,12 @@ APIS = {
     "smartrecruiters": lambda s: (
         f"https://api.smartrecruiters.com/v1/companies/{s}/postings?limit=100"
     ),
+    # Scanned through AUTRES_FLUX (sources.ats.fetch_autre), not ATS_SLUGS.
+    "personio": lambda s: f"https://{s}.jobs.personio.de/xml",
+    "breezy": lambda s: f"https://{s}.breezy.hr/json",
 }
+# Workable is left out: its API answers 429 (Cloudflare 1015) after a few calls in a row.
+AUTRES = {"personio", "breezy"}
 
 
 def count_jobs(kind, data):
@@ -143,6 +235,10 @@ def count_jobs(kind, data):
             return len(data.get("offers", []))
         if kind == "smartrecruiters":
             return int(data.get("totalFound") or len(data.get("content", [])))
+        if kind == "personio":
+            return data.count("<position>")
+        if kind == "breezy":
+            return len(data) if isinstance(data, list) else 0
     except Exception:
         pass
     return 0
@@ -160,6 +256,10 @@ def titles(kind, data, n=3):
             return [j.get("title", "") for j in data.get("offers", [])[:n]]
         if kind == "smartrecruiters":
             return [j.get("name", "") for j in data.get("content", [])[:n]]
+        if kind == "personio":
+            return re.findall(r"<name>(.*?)</name>", data)[:n]
+        if kind == "breezy":
+            return [j.get("name", "") for j in data[:n]]
     except Exception:
         pass
     return []
@@ -172,7 +272,7 @@ def probe(kind, slug):
         r = httpx.get(APIS[kind](slug), timeout=12, headers=UA, follow_redirects=True)
         if r.status_code != 200:
             return None
-        data = r.json()
+        data = r.text if kind == "personio" else r.json()
     except Exception:
         return None
     n = count_jobs(kind, data)
@@ -205,12 +305,19 @@ def main():
     found.sort(key=lambda r: -r["n"])
     print(f"\n=== {len(found)} flux ATS actifs sur {len(slugs)} slugs testés ===")
     if found:
-        print("\nÀ ajouter dans job_sources.ATS_SLUGS :")
-        par = {}
+        par: dict[str, list[str]] = {}
         for r in found:
-            par.setdefault(r["ats"], []).append(r["slug"])
-        for k, v in par.items():
-            print(f'  "{k}": {v},')
+            if r["ats"] not in AUTRES:
+                par.setdefault(r["ats"], []).append(r["slug"])
+        if par:
+            print("\nÀ ajouter dans sources.common.ATS_SLUGS :")
+            for k, v in par.items():
+                print(f'  "{k}": {v},')
+        autres = [r for r in found if r["ats"] in AUTRES]
+        if autres:
+            print("\nÀ ajouter dans sources.common.AUTRES_FLUX :")
+            for r in autres:
+                print(f'  ("{r["ats"]}", "{r["slug"]}", "{r["slug"]}"),')
     if a.json:
         Path(a.json).write_text(json.dumps(found, ensure_ascii=False, indent=1), encoding="utf-8")
         print(f"\n-> {a.json}")

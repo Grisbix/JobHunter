@@ -367,6 +367,10 @@ _RX_SM_ID = re.compile(r"^\d{3,}[\s/]+")
 
 _RX_SM_H1 = re.compile(r"<h1[^>]*>(.*?)</h1>", re.S)
 
+# One <position> of a Personio feed. Its <additionalOffices> holds <office> tags
+# too: the first <office> of the block is the main one.
+_RX_PERSONIO_POSTE = re.compile(r"<position>(.*?)</position>", re.S)
+
 
 def _sans_cdata(s: str) -> str:
     m = _RX_CDATA.match(s.strip())
@@ -407,6 +411,59 @@ def fetch_autre(kind: str, cle: str, nom: str) -> list[dict[str, Any]]:
                         lieu,
                         j.get("published_on", ""),
                         f"workable:{cle}",
+                    )
+                )
+        elif kind == "personio":
+            # Public XML feed of the career page (start-ups and SMEs, Germany and France).
+            # Key: the account ("acme" -> acme.jobs.personio.de) or the full host.
+            hote = cle if "." in cle else f"{cle}.jobs.personio.de"
+            r = _commun._get_borne(
+                httpx, f"https://{hote}/xml", timeout=15, headers=UA, follow_redirects=True
+            )
+            if _ats_ko(kind, cle, r):
+                return []
+            for bloc in _RX_PERSONIO_POSTE.findall(r.text):
+
+                def champ(nom_champ: str, b: str = bloc) -> str:
+                    m = re.search(rf"<{nom_champ}>(.*?)</{nom_champ}>", b, re.S)
+                    return html.unescape(_sans_cdata(m.group(1))).strip() if m else ""
+
+                ident = champ("id")
+                if not ident:
+                    continue
+                desc = " ".join(
+                    _strip_html(_sans_cdata(v))
+                    for v in re.findall(r"<value>(.*?)</value>", bloc, re.S)
+                )
+                out.append(
+                    _mk(
+                        champ("name"),
+                        f"https://{hote}/job/{ident}",
+                        nom,
+                        champ("office"),
+                        champ("createdAt")[:10],
+                        f"personio:{cle}",
+                        desc,
+                    )
+                )
+        elif kind == "breezy":
+            # Public JSON of a Breezy HR career page: <account>.breezy.hr/json.
+            r = _commun._get_borne(httpx, f"https://{cle}.breezy.hr/json", timeout=15, headers=UA)
+            if _ats_ko(kind, cle, r):
+                return []
+            for j in r.json() or []:
+                lieu = j.get("location") or {}
+                ville = ", ".join(
+                    x for x in (lieu.get("city"), (lieu.get("country") or {}).get("name")) if x
+                )
+                out.append(
+                    _mk(
+                        j.get("name", ""),
+                        j.get("url", ""),
+                        nom,
+                        ville,
+                        str(j.get("published_date") or "")[:10],
+                        f"breezy:{cle}",
                     )
                 )
         elif kind == "pinpoint":

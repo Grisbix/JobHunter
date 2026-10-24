@@ -4,6 +4,23 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.21.0 — 2026-10-24
+
+- **New source: Jobs that make sense** (jobs.makesense.org), impact jobs: climate,
+  CSR, social economy. Its public sitemap is read, your title filter sorts the
+  offers, then at most 30 new ones per collection are opened (description included).
+  It runs in the morning collection, next to eFinancialCareers (`--makesense` by hand).
+- **Two more career-page feeds**: Personio (`personio`, XML) and Breezy HR (`breezy`,
+  JSON), to list in `autres_flux`. `probe_ats` now looks for them too, and its built-in
+  list gained about 80 finance names (private equity, fintech, sustainable savings).
+- **Company lists checked live**: 22 accounts no longer answered (the company had
+  moved to another recruiting tool, or closed its page) and left. Pennylane, Qonto,
+  Back Market and Sweep were found at their new address. Added: Shift Technology,
+  Younited, Finary, Akur8, iBanFirst, PAI Partners, Capza, EcoVadis.
+- HelloWork checked again: its robots.txt still forbids search, RSS and API, and its
+  terms forbid automated extraction. It stays out; an offer can still be added by its
+  link.
+
 ## 3.20.0 — 2026-10-23
 
 - **The collection shows where it is**: under the « Outils » button, a line such as

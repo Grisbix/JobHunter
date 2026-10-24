@@ -81,7 +81,7 @@ flowchart LR
 
 | Job boards | Company career sites |
 |---|---|
-| LinkedIn (public pages, no login) · Welcome to the Jungle · eFinancialCareers (9 countries) · EURES (EU) · V.I.E (Business France) · FIR · **official APIs**: France Travail, Adzuna, Jooble · on request only: APEC, Glassdoor (they refuse automated visits) | Greenhouse · Lever · Ashby · Workday · SmartRecruiters · Recruitee · Teamtailor · Workable · iCIMS · SuccessFactors · Oracle · Phenom · Eightfold · Avature · Cornerstone · Talentsoft · Pinpoint · and more |
+| LinkedIn (public pages, no login) · Welcome to the Jungle · Jobs that make sense (impact jobs) · eFinancialCareers (9 countries) · EURES (EU) · V.I.E (Business France) · FIR · **official APIs**: France Travail, Adzuna, Jooble · on request only: APEC, Glassdoor (they refuse automated visits) | Greenhouse · Lever · Ashby · Workday · SmartRecruiters · Recruitee · Teamtailor · Workable · iCIMS · SuccessFactors · Oracle · Phenom · Eightfold · Avature · Cornerstone · Talentsoft · Pinpoint · Personio · Breezy · and more |
 
 Add a company from the app (**Entreprises** → paste its careers link): JobHunter recognises the
 platform and follows it; each company shows its last collection, and can be suspended

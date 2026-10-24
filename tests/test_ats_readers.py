@@ -385,6 +385,60 @@ def test_workable_filtre_et_lieu(lire):
     ]
 
 
+# ── Personio (XML) / Breezy (JSON): public career page feeds ─────────────────────
+PERSONIO = """<?xml version="1.0" encoding="UTF-8"?>
+<workzag-jobs>
+<position>
+    <id>1834171</id>
+    <office>Paris</office>
+    <additionalOffices><office>Lyon</office></additionalOffices>
+    <name>Sustainable Finance Analyst</name>
+    <jobDescriptions>
+      <jobDescription><name>Missions</name><value><![CDATA[<p>SFDR &amp; taxonomy reporting.</p>]]></value></jobDescription>
+    </jobDescriptions>
+    <createdAt>2026-10-20T14:10:41+00:00</createdAt>
+</position>
+<position><id>2</id><office>Paris</office><name>Office Manager</name></position>
+</workzag-jobs>"""
+
+
+def test_personio_titre_lieu_date_et_description(lire):
+    r, appels, _ = lire("personio", "acme", PERSONIO)
+    assert appels == ["https://acme.jobs.personio.de/xml"]
+    assert [(o["titre"], o["url"], o["location"]) for o in r] == [
+        (
+            "Sustainable Finance Analyst",
+            "https://acme.jobs.personio.de/job/1834171",
+            "Paris",  # the main office, not the additional one
+        )
+    ]
+    assert "SFDR & taxonomy reporting." in r[0]["description"]
+
+
+def test_personio_hote_complet_et_refus(lire):
+    r, appels, incidents = lire("personio", "acme.jobs.personio.com", "", statut=503)
+    assert r == [] and appels == ["https://acme.jobs.personio.com/xml"]
+    assert incidents == {"ats:personio": {"HTTP 503": 1}}  # a 404 (no such account) stays silent
+
+
+def test_breezy_lieu_et_filtre(lire):
+    r, appels, _ = lire(
+        "breezy",
+        "acme",
+        [
+            {
+                "name": "ESG Risk Analyst",
+                "url": "https://acme.breezy.hr/p/1-esg",
+                "published_date": "2026-10-01T10:00:00.000Z",
+                "location": {"city": "Paris", "country": {"name": "France"}},
+            },
+            {"name": "Receptionist", "url": "https://acme.breezy.hr/p/2"},
+        ],
+    )
+    assert appels == ["https://acme.breezy.hr/json"]
+    assert [(o["titre"], o["location"]) for o in r] == [("ESG Risk Analyst", "Paris, France")]
+
+
 @pytest.fixture
 def pinpoint(lire):
     return lire(

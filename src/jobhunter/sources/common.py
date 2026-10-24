@@ -60,51 +60,50 @@ _PARESSEUX["KEYWORDS"] = lambda: list(_P.get("collecte.mots_cles", []) or [])
 # ⚠ Do NOT add "metron" on greenhouse: namesake = US defence company
 # (Reston VA, autonomous systems), nothing to do with French energy efficiency.
 ATS_SLUGS = {
+    # Checked live on 2026-10-24: 22 slugs answered 404 (the company had moved to
+    # another ATS, or closed its board) and left; probe_ats found where most went.
     "greenhouse": [
-        "sweep",
         "watershed",
-        "vestiairecollective",
-        "backmarket",
-        "ecovadis",
         "mirakl",
-        "payfit",
-        "spendesk",
-        "swile",
-        "pigment",
-        "clarityai",
         # Probe of the consulting firms of 2026-10-08: Forvis Mazars Germany
         # (160 offers), AlixPartners including Paris (114).
         "forvismazars",
         "alixpartners",
+        "shifttechnology",  # Shift Technology, AI for insurers (Paris)
     ],
     # theodo: found by probing the companies whose career page returns 404.
     # 141 offers, including AI jobs — the vibe-coding axis. The shop window's 404
     # said nothing about the feed, which does answer.
     "lever": [
-        "greenly",
-        "carbometrix",
-        "sami",
-        "plana",
-        "descartesunderwriting",
-        "shine",
         "agicap",
+        "theodo",
+        "swile",
+        "pigment",
+        "vestiairecollective",
+        "younited",  # Younited (consumer credit): credit, risk, compliance
+    ],
+    "ashby": [
+        "alan",
+        "swan",
+        "altruistiq",
+        "climatiq",
         "pennylane",
         "qonto",
-        "theodo",
+        "backmarket",
+        "sweep",
+        "finary",  # wealth management (private bankers, wealth engineers)
+        "akur8",  # insurance pricing (actuaries)
     ],
-    "ashby": ["pigment", "alan", "swan", "defacto", "hero", "altruistiq", "climatiq"],
     # grantthornton = Grant Thornton France (Neuilly, 60 offers); meridiam =
     # their real career site; forvismazars = Ireland; bakertilly = Netherlands.
     "recruitee": [
-        "carbo",
         "vertuoza",
-        "greenscope",
-        "sweep",
-        "tikehaucapital",
         "grantthornton",
         "meridiam",
         "forvismazars",
         "bakertilly",
+        "ibanfirst",  # iBanFirst (FX payments): KYC, FX sales
+        "paipartners",  # PAI Partners (private equity, Paris)
     ],
     "smartrecruiters": [
         "SycomoreAssetManagement",
@@ -114,6 +113,8 @@ ATS_SLUGS = {
         "Natixis",
         "Amundi",
         "rolandberger",
+        "ecovadis",
+        "capza",  # Capza (private debt and equity, Paris)
     ],
 }
 
