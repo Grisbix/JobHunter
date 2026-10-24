@@ -554,6 +554,7 @@ TEXTES: dict[str, str] = {
     "Interim": "ETT",
     "Freelance": "Autónomo",
     "V.I.E": "V.I.E",
+    "Bénévolat": "Voluntariado",
     "le {d}": "el {d}",
     "{n} j": "{n} d",
     "▶ Sur les offres à fit ≥ 8": "▶ Ofertas con fit ≥ 8",

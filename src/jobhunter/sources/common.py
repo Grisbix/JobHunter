@@ -486,6 +486,10 @@ _TITRE_CONTRAT = [
     ),
     ("Freelance", re.compile(r"\bfreelance\b", re.I)),
     ("Interim", re.compile(r"\bint[ée]rim\b", re.I)),
+    # Unpaid: "Full-Stack Web Developer | Remote Volunteer" came first (fit 10) for a
+    # junior developer (2026-10-24). The V.I.E ("volontariat international") is
+    # recognised before this list.
+    ("Bénévolat", re.compile(r"\bb[ée]n[ée]vol\w*|\bvolunteer\w*", re.I)),
 ]
 
 

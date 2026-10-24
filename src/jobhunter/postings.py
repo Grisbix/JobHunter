@@ -96,7 +96,7 @@ def _pdf(cible: Path, contenu: str) -> None:
     """HTML to an A4 PDF, with PyMuPDF's Story (it flows the text over the pages)."""
     import io
 
-    import fitz
+    import pymupdf as fitz
 
     story = fitz.Story(html=contenu)
     # In memory, then one write: a DocumentWriter on a path keeps the file open on

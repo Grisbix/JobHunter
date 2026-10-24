@@ -30,7 +30,7 @@ def test_archiver_ecrit_pdf_et_texte_une_seule_fois(tmp_path):
     # the posting changes later: the copy stays the version applied to
     postings.archiver({**OFFRE, "description": "autre " * 100}, tmp_path, "2026-11-01")
     assert "taxonomie" in p.with_suffix(".txt").read_text(encoding="utf-8")
-    import fitz
+    import pymupdf as fitz
 
     with fitz.open(p) as doc:
         assert "Analyste climat" in doc[0].get_text()

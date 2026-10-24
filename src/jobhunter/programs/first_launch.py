@@ -45,7 +45,7 @@ A_COMPLETER = "A COMPLETER"
 def lire_cv(chemin):
     p = Path(chemin)
     if p.suffix.lower() == ".pdf":
-        import fitz
+        import pymupdf as fitz
 
         with fitz.open(str(p)) as d:
             return "\n".join(page.get_text() for page in d)

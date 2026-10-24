@@ -25,10 +25,7 @@ ROOT = _racine.racine()
 from jobhunter import paths as chemins
 
 LT_DIR = chemins.LT_PAR_OFFRE
-SOFFICE = [
-    r"C:\Program Files\LibreOffice\program\soffice.exe",
-    r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
-]
+from jobhunter.documents.rendering import SOFFICE  # noqa: E402  Windows, macOS, PATH
 
 # aggressive formulas → calm version (keeps the rest of the sentence)
 SOFTEN = [

@@ -68,7 +68,7 @@ def piece_finale(chemin: Path | None) -> Path | None:
 def lire_pdf(chemin: Path) -> tuple[str, int] | None:
     """(text, number of pages) of a PDF, or None if it does not open."""
     try:
-        import fitz
+        import pymupdf as fitz
 
         with fitz.open(str(chemin)) as doc:
             texte = "\n".join(page.get_text() for page in doc)

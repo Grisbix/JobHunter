@@ -143,3 +143,46 @@ def test_langues_d_un_cv_en_anglais():
         "Je parle anglais (C1).",
         "I speak English (C1).",
     )
+
+
+def test_benevolat_reconnu():
+    from jobhunter.sources.common import contrat_du_titre
+
+    assert contrat_du_titre("Full-Stack Web Developer | Remote Volunteer") == "Bénévolat"
+    assert contrat_du_titre("Trésorier bénévole") == "Bénévolat"
+    assert contrat_du_titre("VIE - Volontariat International en Entreprise") == "V.I.E"
+
+
+def test_cv_pdf_et_tableaux_lus_pour_l_ats(monkeypatch, tmp_path):
+    # A PDF CV gave "" (ATS 0 % on every offer); a table-laid .docx lost its cells.
+    import pymupdf as fitz
+    from docx import Document
+
+    from jobhunter.scoring import fit
+
+    pdf = fitz.open()
+    pdf.new_page().insert_text((50, 72), "Infirmière en réanimation, hygiène hospitalière")
+    pdf.save(tmp_path / "cv.pdf")
+    d = Document()
+    d.add_table(rows=1, cols=1).cell(0, 0).text = "Nastran, Patran"
+    d.save(tmp_path / "cv.docx")
+    monkeypatch.setattr(fit, "CV_ATS", tmp_path)
+    monkeypatch.setattr(fit, "CV_VARIANT", {"a": "cv.pdf", "b": "cv.docx"}, raising=False)
+    assert "réanimation" in fit.cv_text("a")
+    assert "nastran" in fit.cv_text("b")
+
+
+def test_competences_sante_d_un_cv_infirmier():
+    cv = (
+        "Infirmière en réanimation. Prise en charge de patients lourds, travail en équipe "
+        "pluridisciplinaire, hygiène hospitalière, transmissions."
+    )
+    comps = fl.competences_du_cv(cv)
+    for c in (
+        "Urgences et réanimation",
+        "Prise en charge des patients",
+        "Équipe pluridisciplinaire",
+        "Hygiène et prévention des infections",
+        "Transmissions et dossier de soins",
+    ):
+        assert c in comps

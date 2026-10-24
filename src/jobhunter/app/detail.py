@@ -197,7 +197,7 @@ class DetailMixin:
                 try:
                     import base64
 
-                    import fitz
+                    import pymupdf as fitz
 
                     doc = fitz.open(str(path))
                     surface("pdf")
@@ -544,7 +544,7 @@ class DetailMixin:
                 return
             import base64
 
-            import fitz
+            import pymupdf as fitz
 
             try:
                 cv_canvas.delete("all")
@@ -585,7 +585,7 @@ class DetailMixin:
             ext = path.suffix.lower()
             if ext == ".pdf":
                 try:
-                    import fitz
+                    import pymupdf as fitz
 
                     state["doc"] = fitz.open(str(path))
                     show_surface("pdf")

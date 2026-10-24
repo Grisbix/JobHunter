@@ -17,7 +17,6 @@ import argparse
 import importlib
 import subprocess
 import sys
-from pathlib import Path
 
 from jobhunter import root as _racine
 
@@ -29,20 +28,11 @@ QUEUE = HERE / "apply_queue.json"
 
 from jobhunter import links as liens
 from jobhunter import paths as chemins
+from jobhunter.documents import rendering as _rendu
 
 DIRS = [chemins.CV_PAR_OFFRE, chemins.LT_PAR_OFFRE]
 LT_DIR = chemins.LT_PAR_OFFRE
-SOFFICE = next(
-    (
-        s
-        for s in (
-            r"C:\Program Files\LibreOffice\program\soffice.exe",
-            r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
-        )
-        if Path(s).exists()
-    ),
-    None,
-)
+SOFFICE = _rendu.soffice()  # Windows, macOS or the PATH (documents.rendering)
 
 
 def to_pdf(docx):

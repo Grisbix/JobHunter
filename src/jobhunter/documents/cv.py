@@ -253,7 +253,7 @@ def tailor_cv(
 
 def _pages_pdf(pdf: Path) -> int:
     try:
-        import fitz
+        import pymupdf as fitz
 
         with fitz.open(str(pdf)) as d:
             pages: int = d.page_count

@@ -73,3 +73,13 @@ def test_le_message_se_charge_sans_tailor_application():
     r = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     assert not set(json.loads(r.stdout)) & {"tailor_application", "message_offre", "jutil"}
+
+
+def test_libreoffice_trouve_hors_windows(monkeypatch, tmp_path):
+    # macOS and Linux: the PATH's soffice, not only C:\Program Files (no PDF before).
+    exe = tmp_path / "soffice"
+    exe.write_text("")
+    monkeypatch.setattr(rendu, "SOFFICE", [r"C:\Program Files\absent\soffice.exe", str(exe)])
+    assert rendu.soffice() == str(exe)
+    monkeypatch.setattr(rendu, "SOFFICE", [])
+    assert rendu.soffice() is None

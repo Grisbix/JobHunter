@@ -3,7 +3,7 @@
 PDFs made on the fly (PyMuPDF): a good file, then each defect alone.
 """
 
-import fitz
+import pymupdf as fitz
 import pytest
 
 from jobhunter.documents import checks as controle

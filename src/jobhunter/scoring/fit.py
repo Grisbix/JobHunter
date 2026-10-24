@@ -61,8 +61,16 @@ def cv_text(variant_key: str) -> str:
     if not p.exists():
         return ""
     try:
+        # A PDF CV read as a .docx gave "": every offer at ATS 0 % (2026-10-24).
+        if p.suffix.lower() == ".pdf":
+            import pymupdf as fitz
+
+            with fitz.open(str(p)) as pdf:
+                return " ".join(page.get_text() for page in pdf).lower()
         d = Document(str(p))
-        return " ".join(par.text for par in d.paragraphs).lower()
+        # The table cells too: many CVs are laid out in a table.
+        cellules = [c.text for t in d.tables for row in t.rows for c in row.cells]
+        return " ".join([par.text for par in d.paragraphs] + cellules).lower()
     except Exception:
         return ""
 

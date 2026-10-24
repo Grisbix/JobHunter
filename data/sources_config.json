@@ -155,7 +155,8 @@
  },
  "contrats_exclus": [
   "Stage",
-  "Alternance"
+  "Alternance",
+  "Bénévolat"
  ],
  "pays_exclus": [
   "(?i:\\bunited\\s+kingdom\\b)",

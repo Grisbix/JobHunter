@@ -4,6 +4,29 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.23.0 — 2026-10-24
+
+Four new profiles (aerospace engineer, nurse, junior developer, management
+controller) run from the CV to the letters, with the morning routine:
+
+- **PDF on macOS and Linux**: LibreOffice was looked for only in `C:\Program Files`:
+  the CV and letter stayed `.docx` everywhere else. Now found on every system.
+- **A CV in PDF** (or a Word CV laid out in a table) is read for the ATS %: it gave 0 %
+  on every offer.
+- **Health skills** in the catalogue (nursing care, multidisciplinary team, care
+  records, emergency and intensive care, infection prevention…): a nurse's offers
+  scored 4 almost all; now 41 at fit 9 or more out of 127.
+- **Volunteer roles** (« bénévole », « volunteer ») are a contract type, set aside like
+  internships: an unpaid role came first for a junior developer.
+- **makesense offers** get their description again (the page refuses the automated
+  browser; it is read the way the collection reads it).
+- **A first profile from a CV**: generic words of a title (« gestion », « État »,
+  « diplômé »…) no longer widen the title filter; an English CV's languages are said
+  in French in the messages.
+- **The quick trial** (`pipeline --rapide`) collects from LinkedIn and makesense: APEC,
+  which refuses every request, left the trial with an empty list.
+- Updating no longer fails on a system without `crontab`.
+
 ## 3.22.0 — 2026-10-24
 
 Still for someone whose job is not finance:

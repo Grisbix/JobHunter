@@ -32,7 +32,7 @@ def lire_cv(chemin: Path) -> str:
     """The text of a .docx or .pdf CV (raises ValueError for another format)."""
     suffixe = chemin.suffix.lower()
     if suffixe == ".pdf":
-        import fitz
+        import pymupdf as fitz
 
         with fitz.open(str(chemin)) as d:
             return "\n".join(page.get_text() for page in d)

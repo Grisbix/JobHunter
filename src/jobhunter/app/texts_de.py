@@ -553,6 +553,7 @@ TEXTES: dict[str, str] = {
     "Interim": "Zeitarbeit",
     "Freelance": "Freiberuflich",
     "V.I.E": "V.I.E",
+    "Bénévolat": "Ehrenamt",
     "le {d}": "am {d}",
     "{n} j": "{n} T",
     "▶ Sur les offres à fit ≥ 8": "▶ Stellen mit Fit ≥ 8",
