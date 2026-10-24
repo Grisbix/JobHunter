@@ -15,8 +15,8 @@
    "cle": "ESG_Finance_Durable",
    "libelle": "ESG",
    "mots_titre": [
-    "re:\\b(isr|csrd|sri)\\b",
-    "re:(?:sustainable|stewardship|capital\\ naturel|natural\\ capital|finance\\ durable|investissement\\ durable|impact\\ investing|transition\\ finance|climate\\ finance|esg|durable|durabilit|climat|carbon|carbone|decarbon|net\\ zero|transition|green|extra\\-financier|rse|sustainability|sfdr|taxonomie|biodiversité|environnemental|decarbonation|responsable|impact\\ investing|green\\ bond|investissement\\ responsable)"
+    "re:\\b(isr|(?<![a-z])csrd(?![a-z])|sri)\\b",
+    "re:(?:sustainable|stewardship|capital\\ naturel|natural\\ capital|finance\\ durable|investissement\\ durable|impact\\ investing|transition\\ finance|climate\\ finance|(?<![a-z])esg(?![a-z])|durable|durabilit|climat(?!is)|carbon|carbone|decarbon|net\\ zero|transition|green|extra\\-financier|(?<![a-z])rse(?![a-z])|sustainability|(?<![a-z])sfdr(?![a-z])|taxonomie|biodiversité|environnemental|decarbonation|responsable|impact\\ investing|green\\ bond|investissement\\ responsable)"
    ],
    "cv": "CV_Prenom_Nom_ESG_Finance_Durable.docx",
    "cv_en": "",
@@ -954,10 +954,10 @@
   "densite_coeur_min": 1.0,
   "densite_coeur_longueur": 800,
   "intitules_coeur": [
-   "re:\\b(esg|isr|rse|csr|csrd|sfdr|taxonomi\\w*|extra.?financier\\w*|durable\\w*|sustainab\\w*|climat\\w*|carbone?|d[ée]carbonation|green|environnement\\w*|environmental|transition\\s+[ée]nerg[ée]tique|biodiversit[ée]|impact|e&s)\\b"
+   "re:\\b((?<![a-z])esg(?![a-z])|isr|(?<![a-z])rse(?![a-z])|(?<![a-z])csr(?![a-z])|(?<![a-z])csrd(?![a-z])|(?<![a-z])sfdr(?![a-z])|taxonomi\\w*|extra.?financier\\w*|durable\\w*|sustainab\\w*|climat\\w*|carbone?|d[ée]carbonation|green|environnement\\w*|environmental|transition\\s+[ée]nerg[ée]tique|biodiversit[ée]|impact|(?<![a-z])e&s(?![a-z]))\\b"
   ],
   "intitules_coeur_forts": [
-   "re:\\b(esg|isr|rse|csr|csrd|sfdr|taxonomi\\w*|extra.?financi\\w*|e&s|pai|finance\\s+durable|sustainable\\s+financ\\w*|sustainable\\s+invest\\w*|investissement\\s+responsable|responsible\\s+invest\\w*|impact\\s+invest\\w*|green\\s+bonds?|climate\\s+financ\\w*|stewardship)\\b"
+   "re:\\b((?<![a-z])esg(?![a-z])|isr|(?<![a-z])rse(?![a-z])|(?<![a-z])csr(?![a-z])|(?<![a-z])csrd(?![a-z])|(?<![a-z])sfdr(?![a-z])|taxonomi\\w*|extra.?financi\\w*|(?<![a-z])e&s(?![a-z])|pai|finance\\s+durable|sustainable\\s+financ\\w*|sustainable\\s+invest\\w*|investissement\\s+responsable|responsible\\s+invest\\w*|impact\\s+invest\\w*|green\\s+bonds?|climate\\s+financ\\w*|stewardship)\\b"
   ],
   "intitules_second": [
    "re:\\b(analyste\\s+(financier|financi[eè]re|investissement|cr[ée]dit|m&a|fp&a|private\\s+equity|actions|buy.?side|sell.?side|gestion|portefeuille|fusions?)|financial\\s+analyst|investment\\s+analyst|credit\\s+analyst|equity\\s+research|(m&a|fp&a|corporate\\s+finance|private\\s+equity|portfolio|valuation|treasury)\\s+analyst|charg[ée]\\s+d.?(affaires|investissements?)|contr[ôo]leur\\s+de\\s+gestion|financial\\s+controller|business\\s+analyst\\s+financ\\w*)"
@@ -1033,10 +1033,10 @@
  },
  "filtre_titre": {
   "metier": [
-   "re:(esg|financ|durab|sustainab|climat|carbon|d[ée]carbon|green|csrd|sfdr|taxonom|extra-financier|rse|csr\\b|social responsibility|transition|environnement|environmental|hse\\b|qhse|e&s\\b|impact|biodiversit|data|quant|risk|risque|cr[ée]dit|credit|invest|audit|actuar|treasury|tr[ée]sorerie|m&a|portfolio|asset|analyst|analyste|analytic|consultant|conseil|[ée]conom|comptab|controlling|contr[ôo]leur? de gestion)"
+   "re:((?<![a-z])esg(?![a-z])|financ|durab|sustainab|climat(?!is)|carbon|d[ée]carbon|green|(?<![a-z])csrd(?![a-z])|(?<![a-z])sfdr(?![a-z])|taxonom|extra-financier|(?<![a-z])rse(?![a-z])|(?<![a-z])csr(?![a-z])|social responsibility|transition|environnement|environmental|(?<![a-z])hse(?![a-z])|(?<![a-z])qhse(?![a-z])|(?<![a-z])e&s(?![a-z])|impact|biodiversit|data|quant|risk|risque|cr[ée]dit|credit|invest|audit|actuar|treasury|tr[ée]sorerie|(?<![a-z])m&a(?![a-z])|portfolio|asset|analyst|analyste|analytic|consultant|conseil|[ée]conom|comptab|controlling|contr[ôo]leur? de gestion)"
   ],
   "exclus": [
-   "re:(brand|design(er)?\\b|ux|ui\\b|graphi|marketing|growth|sales|account (executive|manager)|business developer|commercial\\b|talent acquisition|recruiter|recruteur|people ops|office manager|customer (success|care|support)|community manager|copywriter|content (manager|creator)|social media|juriste|legal counsel|avocat|paie\\b|payroll)"
+   "re:(brand|design(er)?\\b|(?<![a-z])ux(?![a-z])|(?<![a-z])ui(?![a-z])|(?<![a-z])graphi|marketing|growth|sales|account (executive|manager)|business developer|commercial\\b|talent acquisition|recruiter|recruteur|people ops|office manager|customer (success|care|support)|community manager|copywriter|content (manager|creator)|social media|juriste|legal counsel|avocat|(?<![a-z])paie(?![a-z])|payroll)"
   ],
   "exclus_sauf_complement": [
    "re:(développeur|developer|devops|software engineer|fullstack|full-stack|backend|back-end|frontend|front-end)"
@@ -1206,7 +1206,7 @@
    "sante"
   ],
   "sauvetage": [
-   "re:\\b(?:esg|isr|rse|csr|csrd|sfdr|fp&a|m&a)\\b|\\b(?:taxonomi|extra[\\s-]?financi|durabl|durabilit|sustainab|climat|carbon|d[ée]carbon|environnement|environmental|biodiversit|transition\\s+[ée]nerg|green\\s+(?:finance|bond)|finance\\s+verte|analyste\\s+financi|financial\\s+analyst|financial\\s+control|contr[oô]le\\s+de\\s+gestion|contr[oô]leur\\s+de\\s+gestion|contr[oô]leur\\s+financi|audit|comptab|corporate\\s+finance|private\\s+equity|asset\\s+management|gestion\\s+d'actifs|investment\\s+analyst|analyste\\s+investissement|risk\\s+analyst|analyste\\s+risque|tr[ée]sorerie|treasury)\\w*"
+   "re:\\b(?:esg|isr|(?<![a-z])rse(?![a-z])|(?<![a-z])csr(?![a-z])|(?<![a-z])csrd(?![a-z])|(?<![a-z])sfdr(?![a-z])|fp&a|(?<![a-z])m&a(?![a-z]))\\b|\\b(?:taxonomi|extra[\\s-]?financi|durabl|durabilit|sustainab|climat(?!is)|carbon|d[ée]carbon|environnement|environmental|biodiversit|transition\\s+[ée]nerg|green\\s+(?:finance|bond)|finance\\s+verte|analyste\\s+financi|financial\\s+analyst|financial\\s+control|contr[oô]le\\s+de\\s+gestion|contr[oô]leur\\s+de\\s+gestion|contr[oô]leur\\s+financi|audit|comptab|corporate\\s+finance|private\\s+equity|asset\\s+management|gestion\\s+d'actifs|investment\\s+analyst|analyste\\s+investissement|risk\\s+analyst|analyste\\s+risque|tr[ée]sorerie|treasury)\\w*"
   ],
   "outils_max": 4
  },
