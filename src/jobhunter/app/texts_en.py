@@ -601,6 +601,13 @@ TEXTES: dict[str, str] = {
     "{n} fermée(s)": "{n} closed",
     "{n} retirée(s) de la file": "{n} removed from the queue",
     "Vérification des offres": "Offer check",
+    # 3.21.0: places in « Ma recherche »
+    "Où tu veux travailler": "Where you want to work",
+    "La ville ne change pas le fit : elle remplit la colonne Zone (1 · prioritaire, 2 · secondaire, puis le reste), pour trier et filtrer. Les villes prioritaires servent aussi à la collecte HelloWork.": "The city does not change the fit: it fills the Zone column (1 · priority, 2 · secondary, then the rest), to sort and filter. Priority cities also drive the HelloWork collection.",
+    "Prioritaire": "Priority",
+    "Secondaire": "Secondary",
+    "Non": "No",
+    "Zones des offres mises à jour": "Offer zones updated",
 }
 
 

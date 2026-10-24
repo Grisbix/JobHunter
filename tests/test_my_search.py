@@ -129,3 +129,26 @@ def test_lire_cv_docx(tmp_path):
     assert "Python" in S.lire_cv(tmp_path / "cv.docx")
     with pytest.raises(ValueError):
         S.lire_cv(tmp_path / "cv.txt")
+
+
+def test_lieux_lus_et_ecrits(profil):
+    r = R.lire(profil)
+    assert r.prioritaires == ["bordeaux", "idf"]  # the example profile
+    r.prioritaires = ["idf"]
+    r.secondaires = ["bordeaux", "lyon"]
+    zones = R.appliquer(profil, r)["zones"]
+    assert zones == {"prioritaires": ["idf"], "secondaires": ["bordeaux", "lyon"]}
+
+
+def test_lieux_non_edites_laisses_tels_quels(profil):
+    nouveau = R.appliquer(profil, R.Reglages(["x"], ["analyste"], []))
+    assert nouveau["zones"] == profil["zones"]
+
+
+def test_secteur_declare_a_la_main_garde(profil):
+    a_la_main = {"cle": "geneve", "libelle": "Genève", "lieux": ["geneve"]}
+    profil["zones"]["prioritaires"].append(a_la_main)
+    r = R.lire(profil)
+    assert r.prioritaires == ["bordeaux", "idf"]  # only the catalogue keys are edited
+    r.prioritaires = ["lyon"]
+    assert R.appliquer(profil, r)["zones"]["prioritaires"] == [a_la_main, "lyon"]

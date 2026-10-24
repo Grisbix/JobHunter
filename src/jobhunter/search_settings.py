@@ -1,10 +1,13 @@
-"""The search, edited in the application: keywords, titles kept, titles set aside.
+"""The search, edited in the application: keywords, titles kept, titles set aside, places.
 
-Three sections of the active profile's `profile.json`, the ones a user changes most:
+Four sections of the active profile's `profile.json`, the ones a user changes most:
 
 - `collecte.mots_cles`: the searches run on LinkedIn, Welcome to the Jungle…;
 - `filtre_titre.metier`: a title must contain one of these to be collected;
-- `filtre_titre.exclus`: a title containing one of these is set aside.
+- `filtre_titre.exclus`: a title containing one of these is set aside;
+- `zones.prioritaires` / `zones.secondaires`: where the user wants to work, as keys of
+  `scoring.zones.CATALOGUE` ("idf", "bordeaux", "lyon"…). They never touch the fit: they
+  fill the Zone column. A sector the profile declares by hand (a dict) is kept as is.
 
 An entry is a word or phrase (found anywhere in the title, case ignored) or, starting
 with `re:`, a regular expression — the profile's own syntax, unchanged. `valider()` says
@@ -26,6 +29,9 @@ class Reglages:
     mots_cles: list[str] = field(default_factory=list)
     garder: list[str] = field(default_factory=list)
     ecarter: list[str] = field(default_factory=list)
+    # None = left as they are in the profile (a caller that does not edit the places).
+    prioritaires: list[str] | None = None
+    secondaires: list[str] | None = None
 
 
 def _liste(v: object) -> list[str]:
@@ -37,10 +43,15 @@ def _liste(v: object) -> list[str]:
 def lire(profil: dict[str, Any]) -> Reglages:
     """The search settings of a loaded profile."""
     ft = profil.get("filtre_titre") or {}
+    zones = profil.get("zones") or {}
     return Reglages(
         mots_cles=_liste((profil.get("collecte") or {}).get("mots_cles")),
         garder=_liste(ft.get("metier")),
         ecarter=_liste(ft.get("exclus")),
+        prioritaires=[
+            str(x).lower() for x in zones.get("prioritaires") or [] if isinstance(x, str)
+        ],
+        secondaires=[str(x).lower() for x in zones.get("secondaires") or [] if isinstance(x, str)],
     )
 
 
@@ -78,6 +89,11 @@ def appliquer(profil: dict[str, Any], r: Reglages) -> dict[str, Any]:
     ft = nouveau.setdefault("filtre_titre", {})
     ft["metier"] = list(r.garder)
     ft["exclus"] = list(r.ecarter)
+    zones = nouveau.setdefault("zones", {})
+    for cle, choix in (("prioritaires", r.prioritaires), ("secondaires", r.secondaires)):
+        if choix is not None:
+            a_la_main = [x for x in zones.get(cle) or [] if isinstance(x, dict)]
+            zones[cle] = a_la_main + list(choix)
     return nouveau
 
 

@@ -1,4 +1,9 @@
-"""The "Ma recherche" panel: keywords and title filter edited in the app, CV suggestions.
+"""The "Ma recherche" panel: keywords, title filter and places edited in the app, CV suggestions.
+
+Places ("Où tu veux travailler"): one row per sector of `scoring.zones.CATALOGUE`, three
+choices — priority, secondary, no. They never touch the fit; they fill the Zone column
+(1 · prioritaire, 2 · secondaire…), and the offers already in the queue are labelled
+again after "Enregistrer" (`python -m jobhunter.scoring.zones --ecrire`).
 
 What the panel edits lives in the active profile (jobhunter.search_settings); nothing is
 written before "Enregistrer", which keeps the previous profile as `.bak`. "Aperçu sur ma
@@ -27,6 +32,7 @@ from jobhunter.app import theme as _theme
 from jobhunter.app.common import PY
 from jobhunter.app.language import t as _t
 from jobhunter.app.theme import ACC, ACC_H, ACC_TX, BTN, BTN_H, CB, CF, CL, MUT, TX, WORK
+from jobhunter.scoring.zones import CATALOGUE as _SECTEURS
 
 if TYPE_CHECKING:
     from jobhunter.app._app_type import AppTypee
@@ -45,6 +51,9 @@ _CHAMPS = (
     ),
     ("ecarter", "Intitulés à écarter", "Un intitulé qui contient l'un de ces mots est écarté."),
 )
+
+# The three choices of a place, as shown; "Non" = neither priority nor secondary.
+_PRIO, _SEC, _NON = "Prioritaire", "Secondaire", "Non"
 
 
 def _sans_fenetre() -> int:
@@ -108,7 +117,7 @@ class MaRechercheMixin:
             ).pack(fill="x", pady=(0, 4))
             b = ctk.CTkTextbox(
                 col,
-                height=320,
+                height=200,
                 font=(_theme.FONT_UI, 12),
                 # the profile's re: patterns are long: wrapped, they can be read
                 wrap="none" if cle == "mots_cles" else "char",
@@ -117,14 +126,65 @@ class MaRechercheMixin:
             boites[cle] = b
         grille.rowconfigure(0, weight=1)
 
+        # ── Where to work: one row per sector, three choices ──
+        CL(
+            w,
+            text="Où tu veux travailler",
+            bg=WORK,
+            fg=TX,
+            font=(_theme.FONT_UI, 13, "bold"),
+            anchor="w",
+        ).pack(fill="x", padx=28, pady=(10, 0))
+        CL(
+            w,
+            text=_t(
+                "La ville ne change pas le fit : elle remplit la colonne Zone (1 · prioritaire, "
+                "2 · secondaire, puis le reste), pour trier et filtrer. Les villes prioritaires "
+                "servent aussi à la collecte HelloWork."
+            ),
+            bg=WORK,
+            fg=MUT,
+            anchor="w",
+            justify="left",
+            wraplength=900,
+        ).pack(fill="x", padx=28, pady=(0, 4))
+        zone_lieux = ctk.CTkScrollableFrame(w, height=170, fg_color="transparent")
+        zone_lieux.pack(fill="x", padx=28, pady=(0, 4))
+        choix_lieux: dict[str, Any] = {}
+        for i, (cle, sect) in enumerate(_SECTEURS.items()):
+            # Two columns, label then choices, aligned on a grid.
+            col = (i % 2) * 2
+            CL(zone_lieux, text=sect["libelle"], bg=WORK, fg=TX, anchor="w").grid(
+                row=i // 2, column=col, sticky="w", padx=(0 if col == 0 else 40, 10), pady=2
+            )
+            seg = ctk.CTkSegmentedButton(
+                zone_lieux,
+                values=[_t(_PRIO), _t(_SEC), _t(_NON)],
+                selected_color=ACC,
+                selected_hover_color=ACC_H,
+                font=ctk.CTkFont(_theme.FONT_UI, 11),
+            )
+            seg.grid(row=i // 2, column=col + 1, sticky="w", pady=2)
+            choix_lieux[cle] = seg
+
+        def lieux_choisis() -> tuple[list[str], list[str]]:
+            prio = [c for c, b in choix_lieux.items() if b.get() == _t(_PRIO)]
+            sec = [c for c, b in choix_lieux.items() if b.get() == _t(_SEC)]
+            return prio, sec
+
         etat = CL(w, text="", bg=WORK, fg=MUT, anchor="w", justify="left", wraplength=1000)
         barre = CF(w, bg=WORK, plat=True)
         barre.pack(fill="x", padx=28, pady=(8, 4))
         etat.pack(fill="x", padx=28, pady=(0, 12))
 
         def reglages() -> _reglages.Reglages:
+            prio, sec = lieux_choisis()
             return _reglages.Reglages(
-                **{c: _reglages.depuis_texte(boites[c].get("1.0", "end")) for c, _t1, _a in _CHAMPS}
+                **{
+                    c: _reglages.depuis_texte(boites[c].get("1.0", "end")) for c, _t1, _a in _CHAMPS
+                },
+                prioritaires=prio,
+                secondaires=sec,
             )
 
         def brut() -> dict[str, Any]:
@@ -139,6 +199,14 @@ class MaRechercheMixin:
             for c, _t1, _a in _CHAMPS:
                 boites[c].delete("1.0", "end")
                 boites[c].insert("1.0", "\n".join(getattr(r, c)))
+            for cle, seg in choix_lieux.items():
+                seg.set(
+                    _t(_PRIO)
+                    if cle in (r.prioritaires or [])
+                    else _t(_SEC)
+                    if cle in (r.secondaires or [])
+                    else _t(_NON)
+                )
             etat.configure(text="")
 
         def enregistrer() -> None:
@@ -151,8 +219,15 @@ class MaRechercheMixin:
                 )
                 return
             fichier = Path(_profil.FICHIER)
+            avant = _reglages.lire(brut())
             bak = _reglages.ecrire(fichier, _reglages.appliquer(brut(), r))
             _profil.recharger()
+            if (avant.prioritaires, avant.secondaires) != (r.prioritaires, r.secondaires):
+                # The Zone column of the offers already there follows the new places.
+                self.run_step(
+                    [PY, "-m", "jobhunter.scoring.zones", "--ecrire"],
+                    _t("Zones des offres mises à jour"),
+                )
             texte = _t(
                 "Recherche enregistrée (profil d'avant : {bak}). Effet à la prochaine collecte."
             )

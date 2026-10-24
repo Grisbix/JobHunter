@@ -600,6 +600,13 @@ TEXTES: dict[str, str] = {
     "{n} fermée(s)": "{n} geschlossen",
     "{n} retirée(s) de la file": "{n} aus der Liste entfernt",
     "Vérification des offres": "Angebotsprüfung",
+    # 3.21.0: places in « Ma recherche »
+    "Où tu veux travailler": "Wo du arbeiten willst",
+    "La ville ne change pas le fit : elle remplit la colonne Zone (1 · prioritaire, 2 · secondaire, puis le reste), pour trier et filtrer. Les villes prioritaires servent aussi à la collecte HelloWork.": "Die Stadt ändert den Fit nicht: Sie füllt die Spalte Zone (1 · vorrangig, 2 · zweitrangig, dann der Rest), zum Sortieren und Filtern. Die vorrangigen Städte steuern auch die HelloWork-Sammlung.",
+    "Prioritaire": "Vorrangig",
+    "Secondaire": "Zweitrangig",
+    "Non": "Nein",
+    "Zones des offres mises à jour": "Zonen der Angebote aktualisiert",
 }
 
 
