@@ -51,6 +51,7 @@ python JobHunter.pyw
 python -m jobhunter collect --all
 python -m jobhunter collect --linkedin --apec --efc
 python -m jobhunter collect --efc --efc-sites monde --eures   # abroad: eFC ×9 sites, EURES
+python -m jobhunter probe_ats --slugs airbus,thales            # which companies have a public ATS feed
 
 # Documents: CV + letter per offer
 python -m jobhunter documents --top 30
@@ -196,11 +197,18 @@ live lock is never broken; every network request goes through the bounded functi
 Details (reentrancy, recycled PIDs, double lock of `job_sources`, httpx timeouts):
 `.claude/rules/locks.md`.
 
-**The pipeline collection runs in five passes, each merged** (ATS/Workday/V.I.E;
-LinkedIn; eFC/EURES; APEC/France Travail/Adzuna/Jooble; Glassdoor/WTJ last).
-Talent and Indeed have been out of `--all` since 2026-10-03 (0 offers, 403); Adzuna and
+**The pipeline collection runs in five passes, each merged** (ATS/Workday/V.I.E/FIR;
+LinkedIn; eFC/EURES/makesense; France Travail/Adzuna/Jooble; WTJ last).
+Talent and Indeed have been out of `--all` since 2026-10-03 (0 offers, 403), APEC and
+Glassdoor since 2026-10-21 (DataDome, Cloudflare); HelloWork was never added (its terms
+forbid automated extraction; re-checked 2026-10-24, `docs/roadmap.md` F3). Adzuna and
 Jooble go through their official API, key in the files adzuna.json / jooble.json of the Scripts folder
 (ignored by git, to be created by the user; absent = source ignored).
+**Company feeds live in two lists.** `ats_slugs` is read by `ats.fetch_ats`
+(Greenhouse, Lever, Ashby, Recruitee, SmartRecruiters, Teamtailor); `autres_flux` by
+`ats.fetch_autre` (Workable, Personio, Breezy, Pinpoint, Eightfold, SuccessFactors…).
+A kind put in the wrong list is never read, without any error: `inventory.ajouter_flux`
+routes a pasted career-page URL to the right one.
 `job_sources` only merges at the end of its pass: in a single `--all` pass, an
 overrun lost the whole day's collection — four mornings out of five from 24 to
 28/09/2026; with three passes, two still overran on 30/09.

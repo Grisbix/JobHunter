@@ -47,6 +47,8 @@ NOMS_OUTILS = {
     "smartrecruiters": "SmartRecruiters",
     "teamtailor": "Teamtailor",
     "workable": "Workable",
+    "personio": "Personio",
+    "breezy": "Breezy HR",
     "pinpoint": "Pinpoint",
     "workday": "Workday",
     "sfrss": "SuccessFactors",
@@ -182,7 +184,12 @@ _RX_ATS = (
     ("smartrecruiters", re.compile(r"(?:careers|jobs)\.smartrecruiters\.com/([\w-]+)", re.I)),
     ("teamtailor", re.compile(r"//([\w-]+)\.teamtailor\.com", re.I)),
     ("workable", re.compile(r"apply\.workable\.com/([\w-]+)", re.I)),
+    ("personio", re.compile(r"//([\w-]+)\.jobs\.personio\.(?:de|com)", re.I)),
+    ("breezy", re.compile(r"//([\w-]+)\.breezy\.hr", re.I)),
 )
+# Read by sources.ats.fetch_autre, so listed in `autres_flux`, not `ats_slugs`: a Workable
+# URL pasted in the Companies panel used to land in ats_slugs, which never reads it.
+AUTRES_OUTILS = ("workable", "personio", "breezy")
 _RX_WORKDAY = re.compile(
     r"//([\w-]+)\.(wd\d+)\.myworkdayjobs\.com/(?:[a-z]{2}-[A-Z]{2}/)?([\w-]+)", re.I
 )
@@ -223,6 +230,7 @@ SOURCES_COLLECTE = (
     ("apec", "APEC", ""),
     ("glassdoor", "Glassdoor", ""),
     ("wtj", "Welcome to the Jungle", ""),
+    ("makesense", "Jobs that make sense (emplois à impact)", ""),
 )
 
 # The `python -m jobhunter.sources` flag that collects this source alone.
@@ -240,6 +248,7 @@ DRAPEAUX_COLLECTE = {
     "apec": "--apec",
     "glassdoor": "--glassdoor",
     "wtj": "--wtj",
+    "makesense": "--makesense",
 }
 
 # A refused source is not retried before this delay (ADR 0004).
@@ -404,6 +413,12 @@ def ajouter_flux(cfg: dict[str, Any], defauts: dict[str, Any], trouve: tuple[str
             return f"déjà suivi : Workday {tenant}"
         lst.append([tenant, hote, site, _nom_de_slug(tenant)])
         return f"＋ flux Workday {tenant} — lu par API dès la prochaine collecte"
+    if outil in AUTRES_OUTILS:
+        autres = _graine(cfg, "autres_flux", [list(x) for x in defauts.get("autres_flux", [])])
+        if any(x[0] == outil and str(x[1]).lower() == str(cle).lower() for x in autres):
+            return f"déjà suivi : {NOMS_OUTILS[outil]} {cle}"
+        autres.append([outil, cle, _nom_de_slug(cle)])
+        return f"＋ flux {NOMS_OUTILS[outil]} {cle} — lu par API dès la prochaine collecte"
     slugs_par_outil = _graine(
         cfg, "ats_slugs", {k: list(v) for k, v in defauts.get("ats_slugs", {}).items()}
     )

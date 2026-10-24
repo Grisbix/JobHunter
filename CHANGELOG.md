@@ -17,6 +17,8 @@ recent at the top.
   moved to another recruiting tool, or closed its page) and left. Pennylane, Qonto,
   Back Market and Sweep were found at their new address. Added: Shift Technology,
   Younited, Finary, Akur8, iBanFirst, PAI Partners, Capza, EcoVadis.
+- **A Workable, Personio or Breezy career page pasted in « Entreprises » is now
+  collected.** A Workable address used to go into a list the collection never reads.
 - HelloWork checked again: its robots.txt still forbids search, RSS and API, and its
   terms forbid automated extraction. It stays out; an offer can still be added by its
   link.

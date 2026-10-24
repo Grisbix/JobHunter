@@ -203,6 +203,28 @@ def test_ajouter_flux_seme_les_defauts_sans_les_perdre():
     assert DEFAUTS["ats_slugs"]["lever"] == ["agicap"]  # the defaults are not modified
 
 
+def test_flux_depuis_url_personio_breezy():
+    assert inv.flux_depuis_url("https://acme.jobs.personio.de/job/1834171") == ("personio", "acme")
+    assert inv.flux_depuis_url("https://acme.jobs.personio.com/") == ("personio", "acme")
+    assert inv.flux_depuis_url("https://acme.breezy.hr/p/1-esg") == ("breezy", "acme")
+
+
+def test_workable_personio_breezy_vont_dans_autres_flux():
+    """fetch_autre reads them: in ats_slugs, the collection never saw them."""
+    cfg: dict = {}
+    for outil in ("workable", "personio", "breezy"):
+        assert inv.ajouter_flux(cfg, DEFAUTS, (outil, "acme")).startswith("＋")
+    assert "ats_slugs" not in cfg
+    assert cfg["autres_flux"] == [
+        ["sfrss", "careers.ey.com|ey.com", "EY"],
+        ["workable", "acme", "Acme"],
+        ["personio", "acme", "Acme"],
+        ["breezy", "acme", "Acme"],
+    ]
+    assert inv.ajouter_flux(cfg, DEFAUTS, ("breezy", "ACME")).startswith("déjà suivi")
+    assert inv.retirer_flux(cfg, DEFAUTS, inv.Flux("Acme", "breezy", "acme", ""))
+
+
 def test_retirer_flux():
     cfg: dict = {"ats_slugs": {"lever": ["agicap", "pigment"]}}
     assert inv.retirer_flux(cfg, DEFAUTS, inv.Flux("Pigment", "lever", "pigment", ""))
