@@ -200,8 +200,8 @@ Details (reentrancy, recycled PIDs, double lock of `job_sources`, httpx timeouts
 **The pipeline collection runs in five passes, each merged** (ATS/Workday/V.I.E/FIR;
 LinkedIn; eFC/EURES/makesense; France Travail/Adzuna/Jooble; WTJ last).
 Talent and Indeed have been out of `--all` since 2026-10-03 (0 offers, 403), APEC and
-Glassdoor since 2026-10-21 (DataDome, Cloudflare); HelloWork was never added (its terms
-forbid automated extraction; re-checked 2026-10-24, `docs/roadmap.md` F3). Adzuna and
+Glassdoor since 2026-10-21 (DataDome, Cloudflare). HelloWork, Aerocontact and Climatebase
+are to be tried: see "Sites to try" below. Adzuna and
 Jooble go through their official API, key in the files adzuna.json / jooble.json of the Scripts folder
 (ignored by git, to be created by the user; absent = source ignored).
 **Company feeds live in two lists.** `ats_slugs` is read by `ats.fetch_ats`
@@ -243,6 +243,23 @@ them by following the link.
 | `.claude/rules/web-navigation.md` | `web_nav.py`, `site_strategies.py`, `apply_runner.py`, `access.py` |
 | `.claude/rules/desktop-app.md` | `JobHunter.pyw` |
 | `.claude/rules/locks.md` | `util.py`, `job_sources.py`, `linkedin_desc.py`, `daily_pipeline.py`, `availability_audit.py` |
+
+## Sites to try (decided 2026-10-24)
+
+The owner asked to try collecting these sites, set aside so far. Each try is honest: a
+plain request from a client that says what it is, at a low rate, and it stops at the
+first refusal. The "No anti-bot circumvention" limit below still holds in full.
+
+| Site | State on 2026-10-24 | How to try |
+|---|---|---|
+| HelloWork | robots.txt allows offer pages (`/fr-fr/emplois/<id>.html`) and declares `Sitemap: /fr-fr/horizon.xml`; search, RSS, API and every `?` URL are disallowed. Its terms (art. 8.2) forbid automated extraction: the owner accepts that risk for personal use. | Sitemap, then offer pages only, like `sources/wtj.py`: pre-filter on the slug, at most ~30 pages per pass, a pause between pages, `--hellowork` outside `--all` until a few runs are measured. |
+| APEC, Glassdoor | DataDome, Cloudflare challenge on every collection since 07/10 | Their flag still runs them: one try per pass, verdict in the yield log. |
+| Aerocontact, Climatebase | Cloudflare challenge page (HTTP 403) on the first request | One plain request; a challenge page counts as a refusal. |
+
+On a refusal (403, 429, 999, a challenge or CAPTCHA page, or a 202 with an empty body): stop
+the source for the pass, count it in `INCIDENTS`, and do not retry before 30 days
+(ADR 0004). Never: a stealth browser, a spoofed user agent or TLS fingerprint, rotating
+IPs or proxies, solving or outsourcing a CAPTCHA, replaying cookies from a personal browser.
 
 ## Limits that are decisions, not gaps
 

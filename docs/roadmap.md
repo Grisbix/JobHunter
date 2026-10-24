@@ -224,3 +224,5 @@ What remains out of reach, whatever happens:
   link, or a licence requested from HelloWork.
   Checked again on 2026-10-24: robots.txt still disallows `/fr-fr/search/`,
   `/fr-fr/rss/`, `/fr-fr/api/` and every URL with `?`; the decision stands.
+  Reopened the same day by the owner, who accepts the terms risk for personal use:
+  a try through the sitemap and the offer pages (AGENTS.md, "Sites to try").
