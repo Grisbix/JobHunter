@@ -288,6 +288,29 @@ def test_offre_retenue(titre, attendu):
     assert offre_retenue(titre) is attendu
 
 
+# ── acronyms of filtre_titre carry BOTH boundaries ───────────────────────────
+# "rse" without them took "diveRSE" and "vendeuRSE"; "ux" in `exclus` threw away
+# every "LUXembourg" offer, "graphi" every "cartoGRAPHIe des risques".
+@pytest.mark.parametrize(
+    ("titre", "attendu"),
+    [
+        ("Diverse team lead", False),
+        ("Vendeurse", False),
+        ("Technicien climatisation", False),
+        ("Chargé RSE", True),
+        ("Responsable RSE / CSR", True),
+        ("M&A Analyst", True),
+        ("QHSE Manager", True),
+        ("Analyste ESG Luxembourg", True),
+        ("Analyste crédit - Luxembourg", True),
+        ("Chargé de cartographie des risques", True),
+        ("UX Designer", False),
+    ],
+)
+def test_title_ok_acronymes_bornes(titre, attendu):
+    assert J.title_ok(titre) is attendu
+
+
 # ── the \b safeguard covers ALL patterns ─────────────────────────────────────
 def test_au_moins_25_motifs_compiles():
     # the patterns live in the submodules of jobhunter.sources (phase 3.4)

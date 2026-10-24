@@ -1033,10 +1033,10 @@
  },
  "filtre_titre": {
   "metier": [
-   "re:(esg|financ|durab|sustainab|climat|carbon|d[ée]carbon|green|csrd|sfdr|taxonom|extra-financier|rse|csr\\b|social responsibility|transition|environnement|environmental|hse\\b|qhse|e&s\\b|impact|biodiversit|data|quant|risk|risque|cr[ée]dit|credit|invest|audit|actuar|treasury|tr[ée]sorerie|m&a|portfolio|asset|analyst|analyste|analytic|consultant|conseil|[ée]conom|comptab|controlling|contr[ôo]leur? de gestion)"
+   "re:(\\besg\\b|financ|durab|sustainab|climat(?!is)|carbon|d[ée]carbon|green|\\bcsrd\\b|\\bsfdr\\b|taxonom|extra-financier|\\brse\\b|\\bcsr\\b|social responsibility|transition|environnement|environmental|\\bhse\\b|\\bqhse\\b|\\be&s\\b|impact|biodiversit|data|quant|risk|risque|cr[ée]dit|credit|invest|audit|actuar|treasury|tr[ée]sorerie|\\bm&a\\b|portfolio|asset|analyst|analyste|analytic|consultant|conseil|[ée]conom|comptab|controlling|contr[ôo]leur? de gestion)"
   ],
   "exclus": [
-   "re:(brand|design(er)?\\b|ux|ui\\b|graphi|marketing|growth|sales|account (executive|manager)|business developer|commercial\\b|talent acquisition|recruiter|recruteur|people ops|office manager|customer (success|care|support)|community manager|copywriter|content (manager|creator)|social media|juriste|legal counsel|avocat|paie\\b|payroll)"
+   "re:(brand|design(er)?\\b|\\bux\\b|\\bui\\b|\\bgraphi|marketing|growth|sales|account (executive|manager)|business developer|commercial\\b|talent acquisition|recruiter|recruteur|people ops|office manager|customer (success|care|support)|community manager|copywriter|content (manager|creator)|social media|juriste|legal counsel|avocat|\\bpaie\\b|payroll)"
   ],
   "exclus_sauf_complement": [
    "re:(développeur|developer|devops|software engineer|fullstack|full-stack|backend|back-end|frontend|front-end)"
