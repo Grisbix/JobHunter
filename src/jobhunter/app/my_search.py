@@ -1,7 +1,8 @@
 """The "Ma recherche" panel: keywords, title filter and places edited in the app, CV suggestions.
 
-Places ("Où tu veux travailler"): one row per sector of `scoring.zones.CATALOGUE`, three
-choices — priority, secondary, no. They never touch the fit; they fill the Zone column
+Places ("Où tu veux travailler"): a search field ("Rechercher") finds a place of
+`scoring.zones.CATALOGUE` or any city or country of the world; only the chosen places
+are shown, as priority or secondary, each removed by its ✕. They never touch the fit; they fill the Zone column
 (1 · prioritaire, 2 · secondaire…), and the offers already in the queue are labelled
 again after "Enregistrer" (`python -m jobhunter.scoring.zones --ecrire`).
 
@@ -32,7 +33,6 @@ from jobhunter.app import theme as _theme
 from jobhunter.app.common import PY
 from jobhunter.app.language import t as _t
 from jobhunter.app.theme import ACC, ACC_H, ACC_TX, BTN, BTN_H, CB, CF, CL, MUT, TX, WORK
-from jobhunter.scoring.zones import CATALOGUE as _SECTEURS
 
 if TYPE_CHECKING:
     from jobhunter.app._app_type import AppTypee
@@ -52,8 +52,8 @@ _CHAMPS = (
     ("ecarter", "Intitulés à écarter", "Un intitulé qui contient l'un de ces mots est écarté."),
 )
 
-# The three choices of a place, as shown; "Non" = neither priority nor secondary.
-_PRIO, _SEC, _NON = "Prioritaire", "Secondaire", "Non"
+# The two lists of chosen places, as shown; a place chosen in neither is simply lower.
+_PRIO, _SEC = "Prioritaire", "Secondaire"
 
 
 def _sans_fenetre() -> int:
@@ -126,7 +126,7 @@ class MaRechercheMixin:
             boites[cle] = b
         grille.rowconfigure(0, weight=1)
 
-        # ── Where to work: one row per sector, three choices ──
+        # ── Where to work: search a place, keep only the chosen ones ──
         CL(
             w,
             text="Où tu veux travailler",
@@ -139,8 +139,9 @@ class MaRechercheMixin:
             w,
             text=_t(
                 "La ville ne change pas le fit : elle remplit la colonne Zone (1 · prioritaire, "
-                "2 · secondaire, puis le reste), pour trier et filtrer. Les villes prioritaires "
-                "servent aussi à la collecte HelloWork."
+                "2 · secondaire, puis le reste), pour trier et filtrer. Une ville non choisie "
+                "reste visible, simplement plus bas. À l'étranger, écris le nom comme dans les "
+                "offres (London, Geneva)."
             ),
             bg=WORK,
             fg=MUT,
@@ -148,29 +149,102 @@ class MaRechercheMixin:
             justify="left",
             wraplength=900,
         ).pack(fill="x", padx=28, pady=(0, 4))
-        zone_lieux = ctk.CTkScrollableFrame(w, height=170, fg_color="transparent")
-        zone_lieux.pack(fill="x", padx=28, pady=(0, 4))
-        choix_lieux: dict[str, Any] = {}
-        for i, (cle, sect) in enumerate(_SECTEURS.items()):
-            # Two columns, label then choices, aligned on a grid.
-            col = (i % 2) * 2
-            CL(zone_lieux, text=sect["libelle"], bg=WORK, fg=TX, anchor="w").grid(
-                row=i // 2, column=col, sticky="w", padx=(0 if col == 0 else 40, 10), pady=2
+        cherche = CF(w, bg=WORK, plat=True)
+        cherche.pack(fill="x", padx=28, pady=(0, 4))
+        champ_lieu = ctk.CTkEntry(
+            cherche,
+            width=360,
+            placeholder_text=_t("Une ville, une région ou un pays…"),
+        )
+        champ_lieu.pack(side="left")
+        # Packed only while it shows results: an empty CTkFrame keeps its 200 px.
+        resultats = CF(w, bg=WORK, plat=True)
+        choisis: dict[str, list[Any]] = {"prioritaires": [], "secondaires": []}
+        rangees: dict[str, Any] = {}
+        for cle, titre in (("prioritaires", _PRIO), ("secondaires", _SEC)):
+            r_ = CF(w, bg=WORK, plat=True)
+            r_.pack(fill="x", padx=28, pady=2)
+            ctk.CTkLabel(r_, text=_t(titre) + " :", text_color=TX, anchor="w", width=110).pack(
+                side="left"
             )
-            seg = ctk.CTkSegmentedButton(
-                zone_lieux,
-                values=[_t(_PRIO), _t(_SEC), _t(_NON)],
-                selected_color=ACC,
-                selected_hover_color=ACC_H,
-                font=ctk.CTkFont(_theme.FONT_UI, 11),
-            )
-            seg.grid(row=i // 2, column=col + 1, sticky="w", pady=2)
-            choix_lieux[cle] = seg
+            rangees[cle] = CF(r_, bg=WORK, plat=True)
+            rangees[cle].pack(side="left", fill="x", expand=True)
 
-        def lieux_choisis() -> tuple[list[str], list[str]]:
-            prio = [c for c, b in choix_lieux.items() if b.get() == _t(_PRIO)]
-            sec = [c for c, b in choix_lieux.items() if b.get() == _t(_SEC)]
-            return prio, sec
+        def afficher_choisis() -> None:
+            for cle, cadre in rangees.items():
+                for enfant in cadre.winfo_children():
+                    enfant.destroy()
+                if not choisis[cle]:
+                    CL(cadre, text=_t("aucune"), bg=WORK, fg=MUT).pack(side="left")
+                for entree in choisis[cle]:
+                    CB(
+                        cadre,
+                        text=f"{_reglages.libelle_lieu(entree)}  ✕",
+                        command=lambda c=cle, e=entree: retirer_lieu(c, e),
+                        bg=ACC if cle == "prioritaires" else BTN,
+                        fg=ACC_TX if cle == "prioritaires" else TX,
+                        relief="flat",
+                        cursor="hand2",
+                    ).pack(side="left", padx=(0, 6))
+
+        def retirer_lieu(cle: str, entree: Any) -> None:
+            ident = _reglages.cle_lieu(entree)
+            choisis[cle] = [x for x in choisis[cle] if _reglages.cle_lieu(x) != ident]
+            afficher_choisis()
+
+        def ajouter_lieu(cle: str, entree: Any) -> None:
+            ident = _reglages.cle_lieu(entree)
+            for c in choisis:  # a place is in one list only
+                choisis[c] = [x for x in choisis[c] if _reglages.cle_lieu(x) != ident]
+            choisis[cle].append(entree)
+            for enfant in resultats.winfo_children():
+                enfant.destroy()
+            resultats.pack_forget()
+            champ_lieu.delete(0, "end")
+            afficher_choisis()
+
+        def rechercher_lieu() -> None:
+            for enfant in resultats.winfo_children():
+                enfant.destroy()
+            trouves = _reglages.chercher_lieux(champ_lieu.get())
+            resultats.pack(fill="x", padx=28, after=cherche)
+            if not trouves:
+                CL(resultats, text=_t("Tape au moins deux lettres."), bg=WORK, fg=MUT).pack(
+                    anchor="w"
+                )
+            for entree, libelle in trouves:
+                ligne = CF(resultats, bg=WORK, plat=True)
+                ligne.pack(fill="x", pady=1)
+                # CL ignores `width`: a fixed width keeps the buttons in one column.
+                ctk.CTkLabel(ligne, text=libelle, text_color=TX, anchor="w", width=320).pack(
+                    side="left"
+                )
+                for cle, titre in (("prioritaires", _PRIO), ("secondaires", _SEC)):
+                    CB(
+                        ligne,
+                        text="+ " + _t(titre),
+                        command=lambda c=cle, e=entree: ajouter_lieu(c, e),
+                        bg=BTN,
+                        fg=TX,
+                        activebackground=BTN_H,
+                        relief="flat",
+                        cursor="hand2",
+                    ).pack(side="left", padx=(0, 6))
+
+        CB(
+            cherche,
+            text="Rechercher",
+            command=rechercher_lieu,
+            bg=BTN,
+            fg=TX,
+            activebackground=BTN_H,
+            relief="flat",
+            cursor="hand2",
+        ).pack(side="left", padx=10)
+        champ_lieu.bind("<Return>", lambda _e: rechercher_lieu())
+
+        def lieux_choisis() -> tuple[list[Any], list[Any]]:
+            return list(choisis["prioritaires"]), list(choisis["secondaires"])
 
         etat = CL(w, text="", bg=WORK, fg=MUT, anchor="w", justify="left", wraplength=1000)
         barre = CF(w, bg=WORK, plat=True)
@@ -199,14 +273,9 @@ class MaRechercheMixin:
             for c, _t1, _a in _CHAMPS:
                 boites[c].delete("1.0", "end")
                 boites[c].insert("1.0", "\n".join(getattr(r, c)))
-            for cle, seg in choix_lieux.items():
-                seg.set(
-                    _t(_PRIO)
-                    if cle in (r.prioritaires or [])
-                    else _t(_SEC)
-                    if cle in (r.secondaires or [])
-                    else _t(_NON)
-                )
+            choisis["prioritaires"] = list(r.prioritaires or [])
+            choisis["secondaires"] = list(r.secondaires or [])
+            afficher_choisis()
             etat.configure(text="")
 
         def enregistrer() -> None:
@@ -324,6 +393,12 @@ class MaRechercheMixin:
             ).pack(side="left", padx=(0, 12))
 
         w._reload = recharger
+        w._chercher_lieu = lambda texte: (  # for the tests
+            champ_lieu.delete(0, "end"),
+            champ_lieu.insert(0, texte),
+            rechercher_lieu(),
+        )
+        w._choisis = choisis
         recharger()
         w.pack(fill="both", expand=True)
 

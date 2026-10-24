@@ -603,10 +603,13 @@ TEXTES: dict[str, str] = {
     "Vérification des offres": "Comprobación de ofertas",
     # 3.21.0: places in « Ma recherche »
     "Où tu veux travailler": "Dónde quieres trabajar",
-    "La ville ne change pas le fit : elle remplit la colonne Zone (1 · prioritaire, 2 · secondaire, puis le reste), pour trier et filtrer. Les villes prioritaires servent aussi à la collecte HelloWork.": "La ciudad no cambia el fit: rellena la columna Zona (1 · prioritaria, 2 · secundaria, luego el resto), para ordenar y filtrar. Las ciudades prioritarias también guían la recogida de HelloWork.",
+    "La ville ne change pas le fit : elle remplit la colonne Zone (1 · prioritaire, 2 · secondaire, puis le reste), pour trier et filtrer. Une ville non choisie reste visible, simplement plus bas. À l'étranger, écris le nom comme dans les offres (London, Geneva).": "La ciudad no cambia el fit: rellena la columna Zona (1 · prioritaria, 2 · secundaria, luego el resto), para ordenar y filtrar. Una ciudad no elegida sigue visible, solo más abajo. En el extranjero, escribe el nombre como en las ofertas (London, Geneva).",
+    "Une ville, une région ou un pays…": "Una ciudad, una región o un país…",
+    "aucune": "ninguna",
+    "Tape au moins deux lettres.": "Escribe al menos dos letras.",
+    "Rechercher": "Buscar",
     "Prioritaire": "Prioritaria",
     "Secondaire": "Secundaria",
-    "Non": "No",
     "Zones des offres mises à jour": "Zonas de las ofertas actualizadas",
 }
 

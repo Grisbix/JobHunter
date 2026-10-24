@@ -145,10 +145,37 @@ def test_lieux_non_edites_laisses_tels_quels(profil):
     assert nouveau["zones"] == profil["zones"]
 
 
-def test_secteur_declare_a_la_main_garde(profil):
+def test_secteur_declare_a_la_main_lu_et_garde(profil):
     a_la_main = {"cle": "geneve", "libelle": "Genève", "lieux": ["geneve"]}
     profil["zones"]["prioritaires"].append(a_la_main)
     r = R.lire(profil)
-    assert r.prioritaires == ["bordeaux", "idf"]  # only the catalogue keys are edited
-    r.prioritaires = ["lyon"]
+    assert r.prioritaires == ["bordeaux", "idf", a_la_main]
+    r.prioritaires = [a_la_main, "lyon"]
     assert R.appliquer(profil, r)["zones"]["prioritaires"] == [a_la_main, "lyon"]
+
+
+def test_chercher_lieux_catalogue_ville_et_monde():
+    assert R.chercher_lieux("bordeaux")[0] == ("bordeaux", "Bordeaux")
+    # A town of a sector gives the sector, without a duplicate free place.
+    assert R.chercher_lieux("Mérignac") == [("bordeaux", "Bordeaux (comprend Merignac)")]
+    assert R.chercher_lieux("courbevoie")[0][0] == "idf"
+    # Any other place of the world: the typed text, as a declared sector.
+    assert R.chercher_lieux("london") == [
+        ({"cle": "london", "libelle": "London", "lieux": ["London"]}, "London (ville ou pays)")
+    ]
+    assert R.chercher_lieux("p") == []
+
+
+def test_libelle_et_cle_lieu():
+    libre = R.lieu_libre("  genève ")
+    assert libre == {"cle": "geneve", "libelle": "Genève", "lieux": ["Genève"]}
+    assert R.libelle_lieu("idf") == "Paris" and R.libelle_lieu(libre) == "Genève"
+    assert R.cle_lieu("IDF") == "idf" and R.cle_lieu(libre) == "geneve"
+
+
+def test_lieu_libre_classe_prioritaire():
+    """A free place really fills the Zone column (scoring.zones reads declared sectors)."""
+    from jobhunter.scoring import zones as Z
+
+    secteur = Z._secteur(R.lieu_libre("London"))
+    assert Z._dans_secteur(Z._n("London, England, United Kingdom"), secteur)

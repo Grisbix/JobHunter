@@ -10,10 +10,12 @@ recent at the top.
   CSR, social economy. Its public sitemap is read, your title filter sorts the
   offers, then at most 30 new ones per collection are opened (description included).
   It runs in the morning collection, next to eFinancialCareers (`--makesense` by hand).
-- **Choose your cities in « Ma recherche »**: each region or city (Paris, Bordeaux,
-  Lyon, PACA…) is « Prioritaire », « Secondaire » or « Non », one click each. Until now
-  they could only be changed by editing `profile.json`. They never change the fit: they
-  fill the Zone column, and the offers already in your list are relabelled when you save.
+- **Choose your cities in « Ma recherche »**: type a city, a region or a country, press
+  « Rechercher », then « + Prioritaire » or « + Secondaire ». Only the places you chose
+  are listed, each removed by its ✕; any city of the world works (London, Geneva…).
+  Until now they could only be changed by editing `profile.json`. They never change
+  the fit: they fill the Zone column, and the offers already in your list are
+  relabelled when you save.
 - **Two more career-page feeds**: Personio (`personio`, XML) and Breezy HR (`breezy`,
   JSON), to list in `autres_flux`. `probe_ats` now looks for them too, and its built-in
   list gained about 80 finance names (private equity, fintech, sustainable savings).

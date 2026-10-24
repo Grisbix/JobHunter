@@ -5,9 +5,10 @@ Four sections of the active profile's `profile.json`, the ones a user changes mo
 - `collecte.mots_cles`: the searches run on LinkedIn, Welcome to the Jungle…;
 - `filtre_titre.metier`: a title must contain one of these to be collected;
 - `filtre_titre.exclus`: a title containing one of these is set aside;
-- `zones.prioritaires` / `zones.secondaires`: where the user wants to work, as keys of
-  `scoring.zones.CATALOGUE` ("idf", "bordeaux", "lyon"…). They never touch the fit: they
-  fill the Zone column. A sector the profile declares by hand (a dict) is kept as is.
+- `zones.prioritaires` / `zones.secondaires`: where the user wants to work. An entry is a
+  key of `scoring.zones.CATALOGUE` ("idf", "bordeaux"…) or, for any other place in the
+  world, a sector {"cle", "libelle", "lieux"} (`lieu_libre`). `chercher_lieux` finds
+  both from what the user types. They never touch the fit: they fill the Zone column.
 
 An entry is a word or phrase (found anywhere in the title, case ignored) or, starting
 with `re:`, a regular expression — the profile's own syntax, unchanged. `valider()` says
@@ -21,6 +22,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from jobhunter.text import sans_accent
+
 
 @dataclass
 class Reglages:
@@ -30,8 +33,9 @@ class Reglages:
     garder: list[str] = field(default_factory=list)
     ecarter: list[str] = field(default_factory=list)
     # None = left as they are in the profile (a caller that does not edit the places).
-    prioritaires: list[str] | None = None
-    secondaires: list[str] | None = None
+    # An entry: a catalogue key (str) or a sector declared in full (dict).
+    prioritaires: list[Any] | None = None
+    secondaires: list[Any] | None = None
 
 
 def _liste(v: object) -> list[str]:
@@ -48,11 +52,75 @@ def lire(profil: dict[str, Any]) -> Reglages:
         mots_cles=_liste((profil.get("collecte") or {}).get("mots_cles")),
         garder=_liste(ft.get("metier")),
         ecarter=_liste(ft.get("exclus")),
-        prioritaires=[
-            str(x).lower() for x in zones.get("prioritaires") or [] if isinstance(x, str)
-        ],
-        secondaires=[str(x).lower() for x in zones.get("secondaires") or [] if isinstance(x, str)],
+        prioritaires=_lieux(zones.get("prioritaires")),
+        secondaires=_lieux(zones.get("secondaires")),
     )
+
+
+def _lieux(v: object) -> list[Any]:
+    """The entries of a zone list: catalogue keys lowered, declared sectors as they are."""
+    return [
+        x.lower() if isinstance(x, str) else x
+        for x in (v if isinstance(v, list) else [])
+        if isinstance(x, dict) or (isinstance(x, str) and x.strip())
+    ]
+
+
+def _norme(t: object) -> str:
+    return " ".join(sans_accent(t).replace("-", " ").split())
+
+
+def libelle_lieu(entree: Any) -> str:
+    """What the app shows for a zone entry: "Paris", "Londres"."""
+    from jobhunter.scoring.zones import CATALOGUE
+
+    if isinstance(entree, dict):
+        return str(entree.get("libelle") or entree.get("cle") or "?")
+    return str(CATALOGUE.get(str(entree), {}).get("libelle") or entree)
+
+
+def cle_lieu(entree: Any) -> str:
+    """The identity of a zone entry, to avoid choosing a place twice."""
+    return str(entree.get("cle") if isinstance(entree, dict) else entree).lower()
+
+
+def lieu_libre(nom: str) -> dict[str, Any]:
+    """A place outside the catalogue (Londres, Genève, Montréal…), declared as a sector."""
+    nom = " ".join(nom.split())
+    if nom.islower():
+        nom = nom.title()  # "londres" -> "Londres": the name as the app shows it
+    return {"cle": _norme(nom).replace(" ", "-"), "libelle": nom, "lieux": [nom]}
+
+
+def chercher_lieux(texte: str, limite: int = 8) -> list[tuple[Any, str]]:
+    """The places matching what the user typed: [(entry, label shown)].
+
+    The catalogue first — by name, then by a town it contains ("Mérignac" gives
+    Bordeaux, "Courbevoie" gives Paris) — then the typed text itself as a free
+    place, so that any city of the world can be chosen.
+    """
+    from jobhunter.scoring.zones import CATALOGUE
+
+    q = _norme(texte)
+    if len(q) < 2:
+        return []
+    par_nom, par_ville = [], []
+    exact = False
+    for cle, s in CATALOGUE.items():
+        if q in _norme(s["libelle"]) or q in _norme(cle):
+            par_nom.append((cle, str(s["libelle"])))
+            continue
+        villes = [*s.get("lieux", ()), *s.get("communes", ())]
+        trouve = next((v for v in villes if q in _norme(v)), None)
+        if trouve:
+            par_ville.append((cle, f"{s['libelle']} (comprend {trouve.title()})"))
+            exact = exact or _norme(trouve) == q
+    sortie = (par_nom + par_ville)[: limite - 1]
+    # The typed text as a place of its own, unless the catalogue already names it.
+    if not exact and not any(_norme(lib) == q for _e, lib in sortie):
+        libre = lieu_libre(texte)
+        sortie.append((libre, f"{libre['libelle']} (ville ou pays)"))
+    return sortie
 
 
 def depuis_texte(texte: str) -> list[str]:
@@ -92,8 +160,7 @@ def appliquer(profil: dict[str, Any], r: Reglages) -> dict[str, Any]:
     zones = nouveau.setdefault("zones", {})
     for cle, choix in (("prioritaires", r.prioritaires), ("secondaires", r.secondaires)):
         if choix is not None:
-            a_la_main = [x for x in zones.get(cle) or [] if isinstance(x, dict)]
-            zones[cle] = a_la_main + list(choix)
+            zones[cle] = json.loads(json.dumps(list(choix)))
     return nouveau
 
 
