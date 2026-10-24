@@ -22,6 +22,7 @@ from jobhunter.sources.eures import scan_eures
 from jobhunter.sources.fir import scan_fir
 from jobhunter.sources.francetravail import scan_france_travail
 from jobhunter.sources.glassdoor import scan_glassdoor
+from jobhunter.sources.hellowork import scan_hellowork
 from jobhunter.sources.indeed import scan_indeed
 from jobhunter.sources.linkedin import scan_linkedin
 from jobhunter.sources.makesense import scan_makesense
@@ -64,6 +65,11 @@ def main() -> int:
     )
     ap.add_argument("--linkedin", action="store_true")
     ap.add_argument("--wtj", action="store_true")
+    ap.add_argument(
+        "--hellowork",
+        action="store_true",
+        help="HelloWork : pages métier puis offres (30 lues par passe) ; hors --all",
+    )
     ap.add_argument(
         "--makesense",
         action="store_true",
@@ -193,6 +199,7 @@ def main() -> int:
         or a.linkedin
         or a.wtj
         or a.makesense
+        or a.hellowork
         or a.vie
         or a.fir
         or a.talent
@@ -300,6 +307,16 @@ def main() -> int:
                 "efc",
                 scan_efc,
                 dict(limit=limite, filtre=filtre, sites=sites),
+            )
+        )
+    # HelloWork outside --all until a few runs are measured (AGENTS.md, "Sites to try").
+    if a.hellowork:
+        etapes.append(
+            (
+                "── HelloWork (pages métier puis offres, sans contournement) ──",
+                "hellowork",
+                scan_hellowork,
+                {},
             )
         )
     if a.all or a.makesense:

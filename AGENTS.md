@@ -252,7 +252,7 @@ first refusal. The "No anti-bot circumvention" limit below still holds in full.
 
 | Site | State on 2026-10-24 | How to try |
 |---|---|---|
-| HelloWork | robots.txt allows offer pages (`/fr-fr/emplois/<id>.html`) and declares `Sitemap: /fr-fr/horizon.xml`; search, RSS, API and every `?` URL are disallowed. Its terms (art. 8.2) forbid automated extraction: the owner accepts that risk for personal use. | Sitemap, then offer pages only, like `sources/wtj.py`: pre-filter on the slug, at most ~30 pages per pass, a pause between pages, `--hellowork` outside `--all` until a few runs are measured. |
+| HelloWork | robots.txt allows the job-name pages and offer pages; search, RSS, API and every `?` URL are disallowed; the declared sitemap answers 403 (Cloudflare). Its terms (art. 8.2) forbid automated extraction: the owner accepts that risk for personal use. | Done in `sources/hellowork.py` (3.21.0): job-name pages ranked by the keywords, then at most 30 offer pages per pass, 2 s apart; `--hellowork`, outside `--all` until a few runs are measured. |
 | APEC, Glassdoor | DataDome, Cloudflare challenge on every collection since 07/10 | Their flag still runs them: one try per pass, verdict in the yield log. |
 | Aerocontact, Climatebase | Cloudflare challenge page (HTTP 403) on the first request | One plain request; a challenge page counts as a refusal. |
 

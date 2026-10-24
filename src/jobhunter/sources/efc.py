@@ -185,9 +185,12 @@ def _efc_lieu(jp: Any) -> str:
     if not isinstance(loc, dict):
         return ""
     ad = loc.get("address") or {}
+    # Empty parts skipped: a missing region gave "Paris  FR", two spaces.
     return " ".join(
-        str(ad.get(k) or "") for k in ("addressLocality", "addressRegion", "addressCountry")
-    ).strip()
+        str(ad.get(k)).strip()
+        for k in ("addressLocality", "addressRegion", "addressCountry")
+        if ad.get(k) and str(ad.get(k)).strip()
+    )
 
 
 def scan_efc(

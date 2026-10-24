@@ -231,6 +231,7 @@ SOURCES_COLLECTE = (
     ("glassdoor", "Glassdoor", ""),
     ("wtj", "Welcome to the Jungle", ""),
     ("makesense", "Jobs that make sense (emplois à impact)", ""),
+    ("hellowork", "HelloWork (essai, hors collecte du matin)", ""),
 )
 
 # The `python -m jobhunter.sources` flag that collects this source alone.
@@ -249,6 +250,7 @@ DRAPEAUX_COLLECTE = {
     "glassdoor": "--glassdoor",
     "wtj": "--wtj",
     "makesense": "--makesense",
+    "hellowork": "--hellowork",
 }
 
 # A refused source is not retried before this delay (ADR 0004).

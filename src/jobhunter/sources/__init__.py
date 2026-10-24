@@ -8,6 +8,7 @@ workday        Workday
 linkedin       LinkedIn public search (guest API), waiting on 429
 wtj, efc       Welcome to the Jungle, eFinancialCareers (public sitemaps)
 makesense      Jobs that make sense, impact jobs (public sitemap)
+hellowork      HelloWork category and offer pages (outside --all, AGENTS.md "Sites to try")
 eures          European portal
 indeed, apec, glassdoor   results pages, hard stop on refusal
 vie, fir, talent, francetravail, agregateurs   V.I.E, FIR, Talent.com, France Travail, Adzuna/Jooble
@@ -35,6 +36,7 @@ _SOUS_MODULES = (
     "wtj",
     "efc",
     "makesense",
+    "hellowork",
     "eures",
     "indeed",
     "apec",

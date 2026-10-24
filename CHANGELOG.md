@@ -19,9 +19,13 @@ recent at the top.
   Younited, Finary, Akur8, iBanFirst, PAI Partners, Capza, EcoVadis.
 - **A Workable, Personio or Breezy career page pasted in « Entreprises » is now
   collected.** A Workable address used to go into a list the collection never reads.
-- HelloWork checked again: its robots.txt still forbids search, RSS and API, and its
-  terms forbid automated extraction. It stays out; an offer can still be added by its
-  link.
+- **HelloWork, as a trial** (`--hellowork`, outside the morning collection): you asked
+  for it, knowing its terms forbid automated extraction. Only what its robots.txt
+  allows is read: the job-name pages (the closest to your keywords first, 15 per
+  pass), then at most 30 new offers, two seconds apart. Its sitemap answers 403
+  (Cloudflare): not used. A refusal stops the pass; nothing is worked around.
+- Places of eFinancialCareers, WTJ and makesense offers lose a double space when
+  the region is missing (« Paris  FR »).
 
 ## 3.20.0 — 2026-10-23
 
