@@ -309,13 +309,22 @@ _C = [
         "le développement web",
         "web development",
     ),
+    # Two skills, not one: a CV with Docker alone made the letter claim "le cloud".
     (
-        "Cloud / DevOps",
+        "Cloud",
         "dev",
-        ["aws", "azure", "gcp", "docker", "kubernetes", "ci/cd", "devops", "terraform"],
-        "cloud / DevOps",
-        "le cloud et le DevOps",
-        "cloud and DevOps",
+        ["aws", "azure", "gcp", "google cloud", "kubernetes", "terraform"],
+        "cloud",
+        "le cloud",
+        "the cloud",
+    ),
+    (
+        "DevOps / intégration continue",
+        "dev",
+        ["docker", "ci/cd", "devops", "github actions", "gitlab ci", "jenkins"],
+        "DevOps / CI",
+        "l'intégration continue et les conteneurs",
+        "continuous integration and containers",
     ),
     ("Git", "dev", ["git ", "github", "gitlab"], "Git", "Git", "Git"),
     (
@@ -654,7 +663,7 @@ _C = [
         "sante",
         ["soins", "patient", "infirmier", "médical", "clinique"],
         "healthcare",
-        "le soin",
+        "les soins aux patients",
         "healthcare",
     ),
     # The words of real nursing postings (36 read on 2026-10-24): with "Soins / santé"
@@ -744,7 +753,7 @@ _C = [
         "enseignement",
         ["pédagogie", "enseignement", "formateur", "formatrice", "tutorat"],
         "teaching / training",
-        "la pédagogie",
+        "la formation et le tutorat",
         "teaching",
     ),
 ]

@@ -38,6 +38,9 @@ change target, change the profile.
   bench checks.
 - `competences_ats` (profile): the job's skills the CV does not name, written by
   `first_launch`; read only by `score_offer` (ATS %), never by the fit nor the letters.
+- `cv.ordonner_competences` (profile, set by `first_launch`): the CV's skills line puts
+  the ones the posting names first (`documents.cv.ordonner_competences`); absent for the
+  reference profile.
 - The engine must work for any job: `tests/test_first_launch.py` builds a profile from a
   fictitious aerospace engineer's CV (feminine title, plural words, skills section).
 - CI: `.github/workflows/tests.yml` runs the network-free suites on every push.

@@ -146,6 +146,30 @@ def resume_du_cv(texte):
     return ""
 
 
+# A CV summary is written without a subject ("Ingénieure diplômée de…"): in a letter it
+# reads as notes. A first word that names the person (a job, a participle) gets "Je suis".
+_RX_SANS_SUJET_FR = re.compile(
+    r"^[A-ZÀ-Ý][a-zà-ÿ-]*(?:ée?s?|eure?|rice|euse|ienne?|[iy]ste|ière|ier|ante?|ente?|ive|if|elle?)\b"
+)
+_RX_SANS_SUJET_EN = re.compile(
+    r"^(?:(?:junior|senior|experienced|motivated|passionate|certified|qualified)\b"
+    r"|(?:[a-z-]+\s){0,2}[a-z-]*(?:er|or|ist|yst|ant|ent)\s+(?:with|in|at|who|special|focus))",
+    re.I,
+)
+
+
+def a_la_premiere_personne(txt, langue="fr"):
+    """ "Ingénieure diplômée de…" -> "Je suis ingénieure diplômée de…" (letters say "I")."""
+    if len(txt) < 2 or not txt[1].islower():
+        return txt
+    if langue == "en" and _RX_SANS_SUJET_EN.match(txt):
+        debut = txt[0].lower() + txt[1:]
+        return ("I am an " if debut[0] in "aeiou" else "I am a ") + debut
+    if langue != "en" and _RX_SANS_SUJET_FR.match(txt):
+        return "Je suis " + txt[0].lower() + txt[1:]
+    return txt
+
+
 _RX_ADRESSE = re.compile(r"\S*(?:@|https?://|www\.|linkedin\.com|\.com/|\.fr/)\S*", re.I)
 
 
@@ -647,7 +671,9 @@ def construire(cv_txt, cv_nom, rep):
     resume = resume_du_cv(cv_txt)
     # The summary goes in its own language: an English CV wrote English in parcours_fr.
     en = langue_du_cv(cv_txt) == "en"
-    resume_fr, resume_en = ("", resume) if en else (resume, "")
+    resume_fr, resume_en = (
+        ("", a_la_premiere_personne(resume, "en")) if en else (a_la_premiere_personne(resume), "")
+    )
     ordre, score = familles_visees(metiers, comps)
     coeur = ordre[0] if ordre else ""
     mots_cibles = sorted({m for t in metiers for m in mots_significatifs(t)})
@@ -824,6 +850,9 @@ def construire(cv_txt, cv_nom, rep):
             "phrase_contexte_fr": {},
             "phrase_contexte_en": {},
         },
+        # The CV is the person's own, sent as is: per offer, its skills line puts the
+        # ones the posting names first (documents.cv.ordonner_competences).
+        "cv": {"ordonner_competences": True},
         "lettre": {
             "valeurs_entreprises_fr": {},
             "valeurs_entreprises_en": {},
@@ -841,6 +870,31 @@ def construire(cv_txt, cv_nom, rep):
             ),
         },
     }
+
+
+def reclasser_domaines():
+    """A rebuilt profile (--force): the queue's offers take its domains.
+
+    The domain is written at collection; the old profile's keys stayed on every offer,
+    and the stats showed "Autre" for three developer postings out of four.
+    """
+    from jobhunter.scoring.domains import classify_domaine
+    from jobhunter.storage import queue as _file
+
+    if not (HERE / "apply_queue.json").exists():
+        return 0
+    n = 0
+    try:
+        with _file.transaction(HERE / "apply_queue.json", descriptions=False) as q:
+            for o in q:
+                d = classify_domaine(o.get("poste") or "")
+                if o.get("domaine") != d:
+                    o["domaine"] = d
+                    n += 1
+    except Exception as e:  # queue busy: the profile is written all the same
+        print(f"  offres        : domaines non recalculés ({type(e).__name__}), relance plus tard")
+        return 0
+    return n
 
 
 def familles_tri_a_exclure(metiers):
@@ -1037,6 +1091,9 @@ def main():
     for nom, vide in (("apply_queue.json", "[]"), (_racine.nom("suivi.json"), "{}")):
         if not (HERE / nom).exists():
             (HERE / nom).write_text(vide, encoding="utf-8")
+    n = reclasser_domaines()
+    if n:
+        print(f"  offres        : {n} rangée(s) dans les domaines du nouveau profil")
     faits = RACINE / "CV" / _racine.nom("Faits.json")
     if not faits.exists():
         faits.write_text(

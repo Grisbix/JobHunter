@@ -658,7 +658,7 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
         # letter. When the agricultural one goes in, the generic one stays silent.
         _dur_en = "" if _agri_en else contexte_durable(offer, "en")
         if _dur_en:
-            socle_en += " " + _dur_en
+            socle_en = (socle_en + " " + _dur_en).strip()
         if socle_en.strip():
             para(socle_en)
         if _agri_en:
@@ -682,6 +682,9 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
                     f"In my roles so far I have put into practice {prose_en}."
                     if _experimente()
                     else f"Along the way I became familiar with {prose_en}."
+                    if socle_en.strip()
+                    # No background paragraph above: "along the way" pointed at nothing.
+                    else f"I have become familiar with {prose_en}."
                 )
                 if len(techs_en) >= 2:
                     ph += (
@@ -803,7 +806,7 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
     # THE CONCRETE DRIVES OUT THE GENERIC, see the English branch.
     _dur = "" if _agri else contexte_durable(offer, "fr")
     if _dur:
-        socle_txt += " " + _dur
+        socle_txt = (socle_txt + " " + _dur).strip()
     if socle_txt.strip():  # empty background in the profile: no hollow paragraph
         para(socle_txt)
     if _agri:
@@ -837,8 +840,10 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
             ][:4]
             if _experimente():
                 phrase = f"Dans mes postes, j'ai mis en œuvre {prose}."
-            else:
+            elif socle_txt.strip():
                 phrase = f"Au fil de ce parcours, je me suis {_P.accord('familiarisé', 'familiarisée')} avec {prose}."
+            else:  # no background paragraph above: "ce parcours" pointed at nothing
+                phrase = f"Je me suis {_P.accord('familiarisé', 'familiarisée')} avec {prose}."
             if len(techs) >= 2:
                 phrase += (
                     " Je pratique aussi ce que décrit votre annonce : " + ", ".join(techs) + "."

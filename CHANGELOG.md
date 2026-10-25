@@ -4,6 +4,23 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.24.0 — 2026-10-25
+
+The CV and the letter, read one by one for four new profiles:
+
+- **The CV follows the offer**: on a profile created from your CV, the skills line puts
+  first the ones the posting names. Nothing is added or removed.
+- **The letter says « Je »**: the summary taken from the CV (« Ingénieure diplômée
+  de… ») becomes « Je suis ingénieure diplômée de… ».
+- **No hollow sentence**: without a background paragraph (an English CV in a French
+  letter), « Au fil de ce parcours » becomes « Je me suis familiarisé avec… ».
+- **No claim the CV does not make**: Docker alone no longer makes the letter say « le
+  cloud » (cloud and continuous integration are two skills now); a nurse's letter says
+  « les soins aux patients », not « le soin ».
+- « d'État » keeps its capital in the letter's subject too.
+- Recreating your profile (`profile <cv> --force`) puts the queue's offers in its new
+  domains (the statistics showed « Autre » for most of them).
+
 ## 3.23.1 — 2026-10-25
 
 Every command and every panel of the app run again on four new profiles:

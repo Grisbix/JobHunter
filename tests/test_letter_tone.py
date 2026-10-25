@@ -57,3 +57,15 @@ def test_ton_experimente(monkeypatch, texte_de_la_lettre, langue, attendu, absen
     assert "familiaris" not in t and "became familiar" not in t
     # The CV's summary already says "N ans d'expérience": the letter does not repeat it.
     assert "expérience" not in t and "experience" not in t
+
+
+@pytest.mark.parametrize(
+    ("langue", "attendu", "absent"),
+    [("fr", "Je me suis familiaris", "Au fil de ce parcours"), ("en", "I have become", "Along")],
+)
+def test_sans_paragraphe_de_parcours(monkeypatch, texte_de_la_lettre, langue, attendu, absent):
+    # An English CV leaves parcours_fr empty: "ce parcours" pointed at nothing.
+    monkeypatch.setattr(letter, "socle", lambda cle, lg: "")
+    monkeypatch.setattr(letter, "contexte_durable", lambda offre, lg: "")
+    t = texte_de_la_lettre(langue)
+    assert attendu in t and absent not in t

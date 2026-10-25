@@ -173,7 +173,8 @@ def minuscule_titre(t: str) -> str:
             sortie.append(m)  # sigle : RSE, M&A, IT, SAP
         else:
             sortie.append(m.lower())
-    return " ".join(sortie)
+    # The State keeps its capital: "infirmier diplômé d'État", not "d'état".
+    return re.sub(r"\b([dl]['’])état\b", r"\1État", " ".join(sortie))
 
 
 def _de(mot: str, apostrophe: str = "'") -> str:

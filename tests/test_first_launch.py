@@ -249,3 +249,42 @@ def test_ats_compte_les_competences_du_metier_absentes_du_cv(monkeypatch):
     monkeypatch.setattr(fit, "cv_text_cached", lambda k: "")
     r = fit.score_offer(dict(role="Ingénieur calcul", missions="Nastran", profil="", domaine=""))
     assert r["missing"] == {"Nastran"} and r["pct"] == 0
+
+
+def test_competences_du_cv_dans_l_ordre_de_l_annonce():
+    from docx import Document
+
+    from jobhunter.documents.cv import ordonner_competences
+
+    d = Document()
+    d.add_paragraph("COMPÉTENCES")
+    d.add_paragraph("CATIA V5, Nastran, Patran, Python, gestion de projet")
+    assert ordonner_competences(d, "Vous maîtrisez Python et Patran. Gestion de projet appréciée.")
+    # Nothing added nor removed: the cited ones first, in the CV's order.
+    assert d.paragraphs[1].text == "Patran, Python, gestion de projet, CATIA V5, Nastran"
+    e = Document()
+    e.add_paragraph("Skills: React, Node.js, Docker, Git")
+    assert ordonner_competences(e, "Docker and Git required")
+    assert e.paragraphs[0].text == "Skills: Docker, Git, React, Node.js"
+
+
+def test_resume_du_cv_a_la_premiere_personne():
+    assert fl.a_la_premiere_personne("Ingénieure diplômée de l'ISAE") == (
+        "Je suis ingénieure diplômée de l'ISAE"
+    )
+    assert fl.a_la_premiere_personne("Trois ans d'expérience en audit") == (
+        "Trois ans d'expérience en audit"
+    )
+    assert fl.a_la_premiere_personne("Junior developer with one year", "en") == (
+        "I am a junior developer with one year"
+    )
+
+
+def test_profil_refait_reclasse_les_offres(monkeypatch, tmp_path):
+    from jobhunter.storage import queue as _file
+
+    q = tmp_path / "apply_queue.json"
+    _file.sauver([{"entreprise": "A", "poste": "Analyste ESG", "domaine": "Vieux_domaine"}], q)
+    monkeypatch.setattr(fl, "HERE", tmp_path)
+    assert fl.reclasser_domaines() == 1
+    assert _file.charger(q, descriptions=False)[0]["domaine"] != "Vieux_domaine"

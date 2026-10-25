@@ -5,6 +5,7 @@ Part of jobhunter.documents (formerly Scripts/tailor_application.py, phase 3.5).
 
 import importlib
 import json
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -15,6 +16,7 @@ from docx import Document
 from jobhunter import lazy as _paresseux
 from jobhunter import log as _journal
 from jobhunter import paths as chemins
+from jobhunter import profile as _P
 from jobhunter.documents import generated as _generes
 from jobhunter.documents.common import CV_ATS, _de, _slug, titre_poste
 from jobhunter.documents.rendering import to_pdf
@@ -118,6 +120,53 @@ def appliquer_cv_sur_mesure(doc: Any, retouches: dict[str, Any]) -> list[str]:
             continue
         p._p.getparent().remove(p._p)
     return manquees
+
+
+_RX_TITRE_COMPETENCES = re.compile(
+    r"^\s*(?:comp[ée]tences?(?:\s+techniques)?|skills|technical skills|outils|logiciels"
+    r"|tools)\s*:?\s*(.*)$",
+    re.I,
+)
+
+
+def ordonner_competences(doc: Any, texte_offre: str) -> bool:
+    """The CV's skills line, the ones the posting names first. Nothing added, nothing removed.
+
+    A CV given as is (a profile built from it, no facts in CV/Facts.json) went out
+    identical for every offer; an ATS and a recruiter read the start of that line first.
+    Only a plain line (one formatting) is reordered: bold labels would be lost.
+    """
+    t = (texte_offre or "").lower()
+    if not t:
+        return False
+    ps = doc.paragraphs
+    for i, p in enumerate(ps):
+        m = _RX_TITRE_COMPETENCES.match(p.text)
+        if not m:
+            continue
+        cible = p if m.group(1).count(",") >= 2 else (ps[i + 1] if i + 1 < len(ps) else None)
+        if cible is None or len({(r.bold, r.italic) for r in cible.runs}) > 1:
+            return False
+        tete = ""
+        corps = cible.text
+        if cible is p:
+            tete, corps = p.text[: m.start(1)], m.group(1)
+        items = [x.strip() for x in corps.split(",") if x.strip()]
+        if len(items) < 3:
+            return False
+
+        def cite(item: str) -> bool:
+            mot = item.lower()
+            return bool(re.search(r"(?<!\w)" + re.escape(mot) + r"(?!\w)", t))
+
+        ordre = sorted(items, key=lambda x: not cite(x))  # stable: CV order within each group
+        if ordre == items:
+            return False
+        for r in cible.runs:
+            r.text = ""
+        cible.runs[0].text = tete + ", ".join(ordre)
+        return True
+    return False
 
 
 # ---- CV: injects title + targeted skills line ----
@@ -237,6 +286,9 @@ def tailor_cv(
         # Missed anchors: NORMAL here. Each CV variant does not have the same
         # lines, and a fact sometimes targets only one of them.
         appliquer_cv_sur_mesure(doc, faits_auto)
+        # A profile built from the CV (first_launch): the skills the posting names, first.
+        if _P.get("cv.ordonner_competences"):
+            ordonner_competences(doc, offer.get("offer_text") or "")
 
     # 2) REMOVED (2026-07-12): the line "Compétences ciblées pour ce poste : …"
     #    gave away an auto-generated CV to recruiters. The skills still serve
