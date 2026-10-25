@@ -279,6 +279,8 @@ class MaRechercheMixin:
         def recharger() -> None:
             try:
                 r = _reglages.lire(brut())
+                # The list the collection really uses (sources_config.json first).
+                r.mots_cles = _reglages.mots_cles_collecte(brut())
             except (OSError, ValueError) as e:
                 etat.configure(text=f"! {type(e).__name__}: {e}")
                 return
@@ -306,6 +308,7 @@ class MaRechercheMixin:
             fichier = Path(_profil.FICHIER)
             avant = _reglages.lire(brut())
             bak = _reglages.ecrire(fichier, _reglages.appliquer(brut(), r))
+            _reglages.ecrire_mots_cles(r.mots_cles)  # what the collection reads
             _profil.recharger()
             if (avant.prioritaires, avant.secondaires) != (r.prioritaires, r.secondaires):
                 # The Zone column of the offers already there follows the new places.

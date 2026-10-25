@@ -257,6 +257,39 @@ def _indentation(texte: str) -> int:
     return 1
 
 
+# ── The collection's keywords live in two files ──────────────────────────────
+# The collection reads `sources_config.json` ("keywords") before the profile's
+# `collecte.mots_cles` (sources.common._load_cfg), and first_launch writes both. A
+# keyword added or removed in "Ma recherche" only reached the profile: the collection
+# went on with the old list, silently. Both are now read and written together.
+def _fichier_sources() -> Path:
+    from jobhunter import root as _racine
+
+    return _racine.dans(_racine.scripts(), "sources_config.json")
+
+
+def mots_cles_collecte(profil: dict[str, Any]) -> list[str]:
+    """The keywords the collection really uses: sources_config's, else the profile's."""
+    try:
+        cfg = json.loads(_fichier_sources().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        cfg = {}
+    return _liste(cfg.get("keywords")) or _liste((profil.get("collecte") or {}).get("mots_cles"))
+
+
+def ecrire_mots_cles(mots: list[str]) -> None:
+    """Writes the collection's keywords into sources_config.json (other keys kept)."""
+    f = _fichier_sources()
+    try:
+        cfg = json.loads(f.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        cfg = {}
+    cfg["keywords"] = list(mots)
+    tmp = f.with_name(f.name + ".tmp")
+    tmp.write_text(json.dumps(cfg, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(f)
+
+
 def ecrire(fichier: Path, profil: dict[str, Any]) -> Path:
     """Writes the profile: the previous one kept as `<name>.bak`, atomic replace.
 

@@ -7,6 +7,7 @@ import json
 import subprocess
 import threading
 import webbrowser
+from pathlib import Path
 from tkinter import ttk
 from typing import Any
 from urllib.parse import quote, urlparse
@@ -1071,6 +1072,18 @@ class PanneauxMixin:
 
         def _save(c: Any) -> None:
             CFG.write_text(json.dumps(c, ensure_ascii=False, indent=1), encoding="utf-8")
+            # The same keywords in the profile, so that "Ma recherche" shows them.
+            from jobhunter import search_settings as _rg
+
+            fichier = Path(_P.FICHIER)
+            try:
+                p = json.loads(fichier.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                return
+            if (p.get("collecte") or {}).get("mots_cles") != c.get("keywords", []):
+                p.setdefault("collecte", {})["mots_cles"] = list(c.get("keywords", []))
+                _rg.ecrire(fichier, p)
+                _P.recharger()
 
         def add(v: Any) -> Any:
             if ":" not in v:

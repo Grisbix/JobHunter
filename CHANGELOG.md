@@ -4,6 +4,16 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.25.4 — 2026-10-25
+
+- **Keywords changed in « Ma recherche » were never used by the collection**: it reads
+  `sources_config.json` first, and the page only wrote the profile. Both are now
+  written together, and the page shows the list the collection really uses. A keyword
+  added or removed in « Sites d'offres » is also written to the profile.
+- Checked: a skill added, changed or removed in the app reaches the fit, the ATS %,
+  the letter, and leaves its axis when removed; a title word kept or set aside in
+  « Ma recherche » changes the title filter at once.
+
 ## 3.25.3 — 2026-10-25
 
 - Switching profile in the app (Profil → Ouvrir) was tested for real, there and back:

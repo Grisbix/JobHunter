@@ -231,3 +231,21 @@ def test_mot_etoile_trouve_au_milieu_d_un_mot():
     assert P.motif(["*rse"], entier=True).search("la rse") and not P.motif(
         ["*rse"], entier=True
     ).search("rseau")
+
+
+def test_mots_cles_de_ma_recherche_atteignent_la_collecte(monkeypatch, tmp_path):
+    # The collection reads sources_config.json first: a keyword added in "Ma recherche"
+    # only reached the profile, and the collection went on with the old list.
+    import json
+
+    from jobhunter import search_settings as R
+
+    cfg = tmp_path / "sources_config.json"
+    cfg.write_text(json.dumps({"keywords": ["ancien"], "pays_exclus": ["X"]}), encoding="utf-8")
+    monkeypatch.setattr(R, "_fichier_sources", lambda: cfg)
+    assert R.mots_cles_collecte({"collecte": {"mots_cles": ["autre"]}}) == ["ancien"]
+    R.ecrire_mots_cles(["ancien", "trésorier"])
+    lu = json.loads(cfg.read_text(encoding="utf-8"))
+    assert lu == {"keywords": ["ancien", "trésorier"], "pays_exclus": ["X"]}
+    cfg.unlink()
+    assert R.mots_cles_collecte({"collecte": {"mots_cles": ["autre"]}}) == ["autre"]
