@@ -431,6 +431,9 @@ def outils_techniques(desc: str | None) -> set[str]:
 _PARESSEUX["EXP_MAX"] = lambda: int(_P.get("niveau.experience_max", 5) or 99)
 _PARESSEUX["_SENIORITE"] = lambda: bool(_ici._TRI.get("retirer_seniors", True))
 _PARESSEUX["_ETUDIANT"] = lambda: bool(_ici._TRI.get("retirer_etudiants", True))
+# The person's own job, when its title carries a seniority word ("Chef de rayon",
+# "Responsable logistique"): written by first_launch, it is never removed as senior.
+_PARESSEUX["_RX_PROPRE_METIER"] = lambda: _P.motif(_ici._TRI.get("seniorite_sauf"))
 
 # ── 4. LIENS MORTS ──────────────────────────────────────────────────────────
 # ANTI-BOT is NOT a dead link: it is a page that could not be read, not
@@ -513,10 +516,12 @@ def motif(o: Offre, proteges: set[str]) -> str | None:
     if _ici._ETUDIANT and demande_etudiant(o.get("description")):
         return "etudiant"
 
-    if _ici._SENIORITE and _RX_SENIOR_DUR.search(titre):
+    propre = _P.cherche(_ici._RX_PROPRE_METIER, titre)
+    if _ici._SENIORITE and not propre and _RX_SENIOR_DUR.search(titre):
         return "seniorite"
     if (
         _ici._SENIORITE
+        and not propre
         and _RX_SENIOR_MOU.search(_sans_resp_adjectif(titre))
         and not _RX_JUNIOR.search(titre)
     ):

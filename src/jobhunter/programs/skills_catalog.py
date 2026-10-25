@@ -163,10 +163,21 @@ _C = [
         "la modélisation financière",
         "financial modelling",
     ),
+    # Sweep of 2026-10-25: substrings claimed skills the CV does not have. "valuation"
+    # is inside "évaluation" (a teacher), "fusion" inside "perfusion" (a nurse),
+    # "tableau" in "tableaux électriques", "acquisition" in a marketer's "campagnes
+    # d'acquisition", "linkedin" in a recruiter's "LinkedIn Recruiter".
     (
         "Valorisation (DCF)",
         "finance",
-        ["dcf", "valorisation", "valuation", "multiples"],
+        [
+            "dcf",
+            "valorisation d",
+            "évaluation d'entreprise",
+            "business valuation",
+            "company valuation",
+            "multiples de valorisation",
+        ],
         "valuation (DCF)",
         "la valorisation d'entreprise",
         "company valuation",
@@ -213,7 +224,14 @@ _C = [
     (
         "M&A / Corporate Finance",
         "finance",
-        ["m&a", "fusion", "acquisition", "corporate finance", "levée de fonds"],
+        [
+            "m&a",
+            "fusion-acquisition",
+            "fusions-acquisitions",
+            "fusions et acquisitions",
+            "corporate finance",
+            "levée de fonds",
+        ],
         "M&A / corporate finance",
         "les opérations de fusion-acquisition",
         "M&A transactions",
@@ -247,7 +265,17 @@ _C = [
     (
         "Power BI / Tableau",
         "data",
-        ["power bi", "tableau", "looker", "qlik", "dataviz", "tableau de bord"],
+        [
+            "power bi",
+            "tableau software",
+            "tableau desktop",
+            "tableau dashboard",
+            "looker",
+            "qlik",
+            "dataviz",
+            "datavisualisation",
+            "tableaux de bord",
+        ],
         "Power BI / Tableau",
         "la datavisualisation",
         "data visualisation",
@@ -339,7 +367,14 @@ _C = [
     (
         "Marketing digital",
         "marketing",
-        ["marketing digital", "digital marketing", "acquisition", "sea", "google ads", "campagne"],
+        [
+            "marketing digital",
+            "digital marketing",
+            "acquisition digitale",
+            "sea",
+            "google ads",
+            "campagnes digitales",
+        ],
         "digital marketing",
         "le marketing digital",
         "digital marketing",
@@ -355,7 +390,7 @@ _C = [
     (
         "Réseaux sociaux",
         "marketing",
-        ["réseaux sociaux", "social media", "community", "linkedin", "instagram"],
+        ["réseaux sociaux", "social media", "community manag", "instagram", "tiktok"],
         "social media",
         "les réseaux sociaux",
         "social media",
@@ -590,13 +625,23 @@ _C = [
         "maintenance",
     ),
     # logistique
+    # "stocks" or "entrepôt" alone made a sales assistant and a forklift driver claim
+    # "la supply chain" in their letters (sweep of 2026-10-25).
     (
         "Supply chain",
         "logistique",
-        ["supply chain", "logistique", "stocks", "entrepôt", "flux"],
+        ["supply chain", "chaîne logistique", "approvisionnement", "gestion des flux"],
         "supply chain",
         "la supply chain",
         "supply chain",
+    ),
+    (
+        "Gestion des stocks",
+        "logistique",
+        ["gestion des stocks", "gestion de stock", "inventaire", "réapprovisionnement", "wms"],
+        "inventory management",
+        "la gestion des stocks",
+        "inventory management",
     ),
     (
         "Achats",
@@ -635,7 +680,15 @@ _C = [
     (
         "Conseil / stratégie",
         "conseil",
-        ["conseil", "consulting", "stratégie", "strategy", "transformation"],
+        # Not "conseil" alone: a sales assistant's "conseil client" read as strategy.
+        [
+            "cabinet de conseil",
+            "consulting",
+            "conseil en stratégie",
+            "strategy consulting",
+            "stratégie d'entreprise",
+            "transformation",
+        ],
         "consulting / strategy",
         "le conseil en stratégie",
         "strategy consulting",
@@ -755,6 +808,56 @@ _C = [
         "teaching / training",
         "la formation et le tutorat",
         "teaching",
+    ),
+    # A sweep of 45 fictitious CVs (tools/sweep_cv.py, 2026-10-25): a trainer, a lawyer
+    # and a CSR officer came out with one or two skills of their job.
+    (
+        "Ingénierie pédagogique",
+        "enseignement",
+        ["ingénierie pédagogique", "ingénierie de formation", "instructional design"],
+        "instructional design",
+        "l'ingénierie pédagogique",
+        "instructional design",
+    ),
+    (
+        "Droit des contrats",
+        "juridique",
+        ["droit des contrats", "contrats commerciaux", "rédaction de contrats", "contract law"],
+        "contract law",
+        "le droit des contrats",
+        "contract law",
+    ),
+    (
+        "Droit des sociétés",
+        "juridique",
+        ["droit des sociétés", "corporate law", "secrétariat juridique"],
+        "corporate law",
+        "le droit des sociétés",
+        "corporate law",
+    ),
+    (
+        "Protection des données",
+        "juridique",
+        ["rgpd", "gdpr", "protection des données personnelles"],
+        "data protection",
+        "la protection des données",
+        "data protection",
+    ),
+    (
+        "Reporting extra-financier",
+        "rse",
+        ["csrd", "reporting extra-financier", "dpef", "esrs", "non-financial reporting"],
+        "non-financial reporting",
+        "le reporting extra-financier",
+        "non-financial reporting",
+    ),
+    (
+        "Analyse de cycle de vie",
+        "rse",
+        ["analyse de cycle de vie", "life cycle assessment", "acv"],
+        "life cycle assessment",
+        "l'analyse de cycle de vie",
+        "life cycle assessment",
     ),
 ]
 

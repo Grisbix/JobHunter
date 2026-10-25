@@ -108,7 +108,9 @@ def titre_du_cv(lignes, ident):
         mots = {w.lower() for w in l.split()}
         if (
             4 < len(l) < 60
-            and not re.search(r"[@\d]", l)
+            # A contact or a date, not a digit: "Commercial B2B" is a title.
+            and not re.search(r"@|\d{3}|\d{2}[\s./-]\d{2}", l)
+            and not (l.isupper() and len(l.split()) == 1)  # a heading: "PROFIL"
             and not (mots and mots <= nom)
             and not re.fullmatch(r"(?:\w ){3,}\w", l)
         ):
@@ -186,7 +188,7 @@ def resume_du_cv(texte):
                     break
                 bloc.append(x)
             txt = re.sub(r"\s+", " ", " ".join(bloc)).strip()
-            if len(txt) > 60:
+            if len(txt) > 25:  # "Comptable en cabinet, tenue des comptes de PME." is one
                 return txt[:700]
     return ""
 
@@ -194,8 +196,8 @@ def resume_du_cv(texte):
 # A CV summary is written without a subject ("Ingénieure diplômée de…"): in a letter it
 # reads as notes. A first word that names the person (a job, a participle) gets "Je suis".
 _RX_SANS_SUJET_FR = re.compile(
-    r"^[A-ZÀ-Ý][a-zà-ÿ-]*(?:ée?s?|eure?|rice|euse|ienne?|[iy]ste|ière|ier|ante?|ente?|ive|if|elle?"
-    r"|[ai]ble|aire)\b"
+    r"^[A-ZÀ-Ý][a-zà-ÿ-]*(?:ée?s?|eure?|rice|euse|ien(?:ne)?|[iy]ste|ière|ier|ante?|ente?|ive|if"
+    r"|el(?:le)?|[ai]ble|aire)\b"
 )
 _RX_SANS_SUJET_EN = re.compile(
     r"^(?:(?:junior|senior|experienced|motivated|passionate|certified|qualified)\b"
@@ -204,15 +206,26 @@ _RX_SANS_SUJET_EN = re.compile(
 )
 
 
-def a_la_premiere_personne(txt, langue="fr"):
-    """ "Ingénieure diplômée de…" -> "Je suis ingénieure diplômée de…" (letters say "I")."""
-    if len(txt) < 2 or not txt[1].islower():
+def a_la_premiere_personne(txt, langue="fr", titres=()):
+    """ "Ingénieure diplômée de…" -> "Je suis ingénieure diplômée de…" (letters say "I").
+
+    `titres`: the target jobs. A summary that starts with one of them ("Chef de rayon en
+    grande distribution", "UX designer sur…") names the person, whatever its ending.
+    """
+    if len(txt) < 2:
         return txt
-    if langue == "en" and _RX_SANS_SUJET_EN.match(txt):
-        debut = txt[0].lower() + txt[1:]
-        return ("I am an " if debut[0] in "aeiou" else "I am a ") + debut
-    if langue != "en" and _RX_SANS_SUJET_FR.match(txt):
-        return "Je suis " + txt[0].lower() + txt[1:]
+    bas = txt.lower()
+    # The title, or its first word when it is a real word ("Commercial terrain en B2B"
+    # for "Commercial B2B").
+    formes = {t.lower() for x in titres for t in (x, masculin(x), x.split()[0] if x else "")}
+    propre = any(re.match(re.escape(t) + r"\b", bas) for t in formes if len(t) >= 4)
+    if not propre and not txt[1].islower():
+        return txt
+    debut = txt if txt[:2].isupper() else txt[0].lower() + txt[1:]
+    if langue == "en" and (propre or _RX_SANS_SUJET_EN.match(txt)):
+        return ("I am an " if debut[0].lower() in "aeiou" else "I am a ") + debut
+    if langue != "en" and (propre or _RX_SANS_SUJET_FR.match(txt)):
+        return "Je suis " + debut
     return txt
 
 
@@ -280,11 +293,16 @@ def competences_libres(texte, connues):
         bas = it.lower()
         if not (2 <= len(it) <= 35) or len(it.split()) > 4 or not re.search(r"[a-zA-ZÀ-ÿ]", it):
             continue
+        # The end of a list cut at its comma: "CACES 1, 3 et 5" gave a skill "3 et 5".
+        if it[0].isdigit():
+            continue
         if any(s in bas for s in synonymes if len(s) > 2) or bas in synonymes:
             continue
+        # Said in a sentence in lower case ("management d'équipe"), an acronym as it is.
+        dit = it if it[:2].isupper() else it[0].lower() + it[1:]
         libres.setdefault(
             it[0].upper() + it[1:],
-            {"synonymes": [bas], "en": it, "prose_fr": it, "prose_en": it, "libre": True},
+            {"synonymes": [bas], "en": it, "prose_fr": dit, "prose_en": dit, "libre": True},
         )
     return dict(list(libres.items())[:15])
 
@@ -292,7 +310,8 @@ def competences_libres(texte, connues):
 _RX_LIGNE_DIPLOME = re.compile(
     r"^\s*(?:\d{4}(?:\s*[-–]\s*\d{4})?\s*[:,–-]?\s*)?"
     r"((?:dipl[oô]me|master|licence|bachelor|mba|doctorat|phd|bts|dut|but|msc|mastère"
-    r"|dcg|dscg|deug|bsc)\b.*)$",
+    r"|dcg|dscg|deug|bsc|cap|bep|bac(?:calaur[ée]at)?|caces|fimo|cqp|dn\s+made"
+    r"|titre\s+professionnel|certificat)\b.*)$",
     re.I,
 )
 
@@ -602,7 +621,43 @@ def annees_du_cv(texte):
     vues = [
         int(n) if n.isdigit() else _NOMBRES.get(n.lower(), 0) for n in _RX_ANNEES.findall(texte)
     ]
-    return max((v for v in vues if v < 45), default=0)
+    dit = max((v for v in vues if v < 45), default=0)
+    return dit or annees_des_dates(texte)
+
+
+# "2018-2026", "2019 – aujourd'hui", "2021 - present": a job's span on a CV line.
+_RX_PERIODE = re.compile(
+    r"\b((?:19|20)\d{2})\s*[-–—à]+\s*((?:19|20)\d{2}|aujourd.hui|ce jour|pr[ée]sent|present|now"
+    r"|en cours|actuel(?:lement)?)\b",
+    re.I,
+)
+
+
+def annees_des_dates(texte):
+    """The years from the experience lines' dates when the CV states no "N ans": a
+    seven-year department manager was taken for a junior, and his own job sorted out
+    as senior. The degree lines (2016-2019 Licence) do not count."""
+    import datetime
+
+    debuts, fins = [], []
+    for l in texte.splitlines():
+        # A degree line, not a job line that says "Ingénieure qualité".
+        if _RX_LIGNE_DIPLOME.search(l):
+            continue
+        for d, f in _RX_PERIODE.findall(l):
+            debuts.append(int(d))
+            fins.append(int(f) if f.isdigit() else datetime.date.today().year)
+    if not debuts:
+        return 0
+    return max(0, min(max(fins) - min(debuts), 44))
+
+
+# The seniority words of scoring.sorting, in a target title.
+_RX_TITRE_SENIOR = re.compile(
+    r"\b(?:senior|confirm|exp[ée]riment|director|directeur|directrice|head|chief|principal"
+    r"|manager|lead|responsable|expert|chef|g[ée]rant|superviseur)",
+    re.I,
+)
 
 
 def slug(s):
@@ -735,7 +790,9 @@ def construire(cv_txt, cv_nom, rep):
     # The summary goes in its own language: an English CV wrote English in parcours_fr.
     en = langue_du_cv(cv_txt) == "en"
     resume_fr, resume_en = (
-        ("", a_la_premiere_personne(resume, "en")) if en else (a_la_premiere_personne(resume), "")
+        ("", a_la_premiere_personne(resume, "en", metiers))
+        if en
+        else (a_la_premiere_personne(resume, "fr", metiers), "")
     )
     ordre, score = familles_visees(metiers, comps)
     coeur = ordre[0] if ordre else ""
@@ -882,6 +939,13 @@ def construire(cv_txt, cv_nom, rep):
             "retirer_etudiants": True,
             "metiers_durs": [],
             "sauvetage": mots_cibles,
+            # The person's own job is never sorted out as senior ("Chef de rayon").
+            "seniorite_sauf": [
+                f
+                for t in metiers
+                for f in dict.fromkeys((t.lower(), masculin(t.lower())))
+                if _RX_TITRE_SENIOR.search(f)
+            ],
             "outils_max": 0 if coeur in ("dev", "data") else 4,
         },
         # Languages spoken: French (tool in French), plus those of the CV.

@@ -344,3 +344,19 @@ def test_offre_au_maghreb_en_francais():
     assert langue_offre("Comptable", "", "Ech-Charguia, Tunis, Tunisia") == "fr"
     assert langue_offre("Comptable", "", "Casablanca, Morocco") == "fr"
     assert langue_offre("Accountant", "", "London, United Kingdom") == "en"
+
+
+def test_annees_lues_dans_les_dates_des_postes():
+    cv = "EXPÉRIENCE\n2019-2026 Chef de rayon — Magasin\nFORMATION\n2015-2018 Licence de gestion\n"
+    assert fl.annees_du_cv(cv) == 7  # not the degree's years
+
+
+def test_son_propre_metier_n_est_pas_trie_comme_senior(monkeypatch):
+    from jobhunter.scoring import sorting
+
+    offre = {"entreprise": "A", "poste": "Chef de rayon H/F", "url": "https://exemple.fr/1"}
+    assert sorting.motif(offre, set()) == "seniorite"  # the reference profile: junior
+    from jobhunter import profile as _P
+
+    monkeypatch.setattr(sorting, "_RX_PROPRE_METIER", _P.motif(["chef de rayon"]), raising=False)
+    assert sorting.motif(offre, set()) is None

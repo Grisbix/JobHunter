@@ -4,6 +4,29 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.25.0 — 2026-10-25
+
+**Any CV**: 45 fictitious CVs (42 jobs, from nurse to forklift driver, lawyer or
+architect; Word, two columns, Canva PDF, English) now go through the profile creation
+and are checked automatically (`python tools/sweep_cv.py`). All 45 pass. What the
+sweep found and fixed:
+
+- **Your own job was sorted out as senior** when its title says « Chef de rayon »,
+  « Responsable logistique » or « Responsable RH ».
+- **Years of experience** are read from the dates of your jobs (« 2019-2026 ») when the
+  CV does not write « N ans d'expérience »: a seven-year manager was taken for a junior.
+- **Skills the CV does not have** no longer appear in the letter: « perfusion » read as
+  mergers and acquisitions, « tableaux électriques » as Tableau, « évaluation » as DCF
+  valuation, « conseil client » as strategy consulting, « gestion des stocks » as supply
+  chain.
+- **New skills** in the catalogue: instructional design, contract law, company law,
+  data protection, non-financial reporting, life cycle assessment, inventory management.
+- A title with a digit (« Commercial B2B ») is proposed as your job, not « PROFIL ».
+- The letter says « Je suis… » for any job, and short CV summaries are kept.
+- CAP, bac pro, CACES, FIMO, CQP, DN MADE, titre professionnel are degrees.
+- Your own skills are written in lower case in the letter, and « CACES 1, 3 et 5 » is no
+  longer split into a skill « 3 et 5 ».
+
 ## 3.24.1 — 2026-10-25
 
 Harder CVs and the rest of the app, tested:

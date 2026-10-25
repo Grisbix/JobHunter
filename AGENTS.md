@@ -43,6 +43,10 @@ change target, change the profile.
   reference profile.
 - The engine must work for any job: `tests/test_first_launch.py` builds a profile from a
   fictitious aerospace engineer's CV (feminine title, plural words, skills section).
+  `python tools/sweep_cv.py` makes 45 CVs (42 jobs, Word / two columns / Canva PDF /
+  English) and checks each profile end to end (identity, own job kept by the filter, the
+  domain and the sorting, fit, letter and message); `tests/test_sweep_cv.py` runs four.
+  After a change of `first_launch` or `skills_catalog`, run the full sweep.
 - CI: `.github/workflows/tests.yml` runs the network-free suites on every push.
 
 ## Read before touching the code
