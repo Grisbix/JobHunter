@@ -4,6 +4,29 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.24.1 — 2026-10-25
+
+Harder CVs and the rest of the app, tested:
+
+- **Canva CVs** (PDF in columns): the name on two lines, the spaced headings
+  (« C O M P É T E N C E S »), one language per line and a degree such as « DCG » are
+  read. A name in capitals is signed « Julie Moreau », not « JULIE MOREAU ».
+- **A scanned CV** (an image) no longer creates an empty profile: nothing is written
+  until a text CV or the jobs (`--metiers`) are given.
+- **Foreign phone numbers** (+44, +1…) are read.
+- « bilan » or « portefeuille » alone no longer make an accountant a financial analyst
+  or an asset manager.
+- **Automatic CV facts**: the example file wrote `\b` in JSON, which is an invisible
+  character: those triggers never fired. Fixed, and such triggers in your own
+  `CV/Facts.json` now work — **check your facts**: some may start to apply.
+- **Offers in Tunisia, Morocco, Algeria, Senegal, Côte d'Ivoire, Cameroon** get a
+  French letter when their text is too short to tell.
+- **Linux/macOS**: `schedule.sh` no longer says « planifiée » when cron is missing;
+  a Python without Tk is explained at install and start instead of a crash.
+- `mail-statuses --eml` accepts a single `.eml` file.
+- The app's « Vérifier les offres en ligne » button fits the side bar; the statistics
+  translate « Autre », « manuel », « auto ».
+
 ## 3.24.0 — 2026-10-25
 
 The CV and the letter, read one by one for four new profiles:

@@ -322,3 +322,25 @@ def test_backspace_du_json_lu_comme_frontiere_de_mot():
     assert cv_auto.faits_retenus("Parc solaire de 20 MW", banque)
     assert _P.motif(["re:\x08rse\x08"]).search("Chargé RSE")
     assert not _P.motif(["re:\x08rse\x08"]).search("diverse")
+
+
+def test_cv_canva_langues_une_par_ligne_et_diplome_sigle():
+    cv = "PROFIL\nComptable avec six ans d'expérience en cabinet.\nLANGUES\nArabe\nAnglais (B1)\n"
+    assert fl.langues_du_cv(cv) == (
+        "Je parle arabe et anglais (B1).",
+        "I speak Arabic and English (B1).",
+    )
+    assert fl.langues_du_cv("LANGUES\nFrançais\nAnglais (C1)\nCENTRES D'INTÉRÊT\nVoile")[0] == (
+        "Je parle anglais (C1)."
+    )
+    assert fl.diplome_du_cv("2019 DCG · Lycée Thiers, Marseille") == "titulaire d'un DCG"
+    assert fl.a_la_premiere_personne("Comptable avec six ans") == "Je suis comptable avec six ans"
+
+
+def test_offre_au_maghreb_en_francais():
+    # A short "Comptable" offer in Tunis was promised an English letter.
+    from jobhunter.scoring.language import langue_offre
+
+    assert langue_offre("Comptable", "", "Ech-Charguia, Tunis, Tunisia") == "fr"
+    assert langue_offre("Comptable", "", "Casablanca, Morocco") == "fr"
+    assert langue_offre("Accountant", "", "London, United Kingdom") == "en"

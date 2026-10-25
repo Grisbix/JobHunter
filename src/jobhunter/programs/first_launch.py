@@ -194,7 +194,8 @@ def resume_du_cv(texte):
 # A CV summary is written without a subject ("Ingénieure diplômée de…"): in a letter it
 # reads as notes. A first word that names the person (a job, a participle) gets "Je suis".
 _RX_SANS_SUJET_FR = re.compile(
-    r"^[A-ZÀ-Ý][a-zà-ÿ-]*(?:ée?s?|eure?|rice|euse|ienne?|[iy]ste|ière|ier|ante?|ente?|ive|if|elle?)\b"
+    r"^[A-ZÀ-Ý][a-zà-ÿ-]*(?:ée?s?|eure?|rice|euse|ienne?|[iy]ste|ière|ier|ante?|ente?|ive|if|elle?"
+    r"|[ai]ble|aire)\b"
 )
 _RX_SANS_SUJET_EN = re.compile(
     r"^(?:(?:junior|senior|experienced|motivated|passionate|certified|qualified)\b"
@@ -290,7 +291,8 @@ def competences_libres(texte, connues):
 
 _RX_LIGNE_DIPLOME = re.compile(
     r"^\s*(?:\d{4}(?:\s*[-–]\s*\d{4})?\s*[:,–-]?\s*)?"
-    r"((?:dipl[oô]me|master|licence|bachelor|mba|doctorat|phd|bts|dut|but|msc|mastère)\b.*)$",
+    r"((?:dipl[oô]me|master|licence|bachelor|mba|doctorat|phd|bts|dut|but|msc|mastère"
+    r"|dcg|dscg|deug|bsc)\b.*)$",
     re.I,
 )
 
@@ -303,7 +305,7 @@ def diplome_du_cv(texte):
         m = _RX_LIGNE_DIPLOME.match(l)
         if not m:
             continue
-        d = re.split(r"\s*[,(—–|]\s*|\s+-\s+", m.group(1).strip())[0].strip(" .")
+        d = re.split(r"\s*[,(—–|·•]\s*|\s+-\s+", m.group(1).strip())[0].strip(" .")
         mot = d.split()[0]
         if not mot.isupper():  # "MBA", "BTS" stay as they are
             d = d[0].lower() + d[1:]
@@ -347,6 +349,22 @@ def _et(items, et):
     return items[0] if len(items) == 1 else ", ".join(items[:-1]) + f" {et} " + items[-1]
 
 
+def _lignes_de_section(suite):
+    """The short lines under a heading, up to the next heading: a Canva or two-column CV
+    puts one language per line ("Arabe" / "Anglais (B1)"); only the first was read."""
+    out = []
+    for x in suite:
+        x = x.strip()
+        if not x:
+            if out:
+                break
+            continue
+        if len(x) > 40 or (x.isupper() and len(x) > 3) or _RX_AUTRE_SECTION.match(x):
+            break
+        out.append(x)
+    return out
+
+
 def langues_du_cv(texte):
     """("Je parle anglais (C1) et espagnol (B2).", "I speak English (C1) and Spanish
     (B2).") from the CV's Languages section, French left out; ("", "") if none."""
@@ -355,7 +373,7 @@ def langues_du_cv(texte):
         m = _RX_SECTION_LANGUES.match(l)
         if not m:
             continue
-        bloc = m.group(1) or next((x for x in lignes[i + 1 : i + 4] if x.strip()), "")
+        bloc = m.group(1) or ", ".join(_lignes_de_section(lignes[i + 1 : i + 8]))
         fr, en = [], []
         for it in _RX_SEPARATEUR.split(bloc.strip(" .")):
             it = it.strip()

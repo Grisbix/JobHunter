@@ -52,10 +52,13 @@ _RX_EN = re.compile(_EN, re.I)
 _RX_FRANCOPHONE_ETRANGER = re.compile(
     r"\bluxembourg\b|\bmonaco\b|\bbruxelles\b|\bwallonie\b|\bnamur\b|\bli[eè]ge\b|"
     r"\bsuisse\b|\bswitzerland\b|\bgen[eè]ve\b|\bgeneva\b|\blausanne\b|"
-    r"\bneuch[aâ]tel\b|\bfribourg\b|\bqu[ée]bec\b|\bmontr[ée]al\b",
+    r"\bneuch[aâ]tel\b|\bfribourg\b|\bqu[ée]bec\b|\bmontr[ée]al\b|"
+    # Maghreb and French-speaking Africa: an accountant's offer in Tunis was promised
+    # an English letter (2026-10-25).
+    r"\btunisi[ae]\b|\btunisie\b|\bmaroc\b|\bmorocco\b|\balg[ée]rie\b|\balgeria\b|"
+    r"\bs[ée]n[ée]gal\b|\bc[ôo]te d.ivoire\b|\bivory coast\b|\bcameroun\b|\bcameroon\b",
     re.I,
-)
-# German- or Italian-speaking: Switzerland is no longer French-speaking there.
+)  # German- or Italian-speaking: Switzerland is no longer French-speaking there.
 _RX_CH_NON_FR = re.compile(
     r"\bz[uü]rich\b|\bbasel\b|\bb[aâ]le\b|\bbern\b|\bberne\b|"
     r"\bzug\b|\bluzern\b|\bst\.?\s*gallen\b|\blugano\b",
