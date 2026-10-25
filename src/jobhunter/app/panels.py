@@ -226,7 +226,8 @@ class PanneauxMixin:
 
             tv.delete(*tv.get_children())
 
-            def section(titre: Any, pairs: Any) -> None:
+            def section(titre: Any, pairs: Any, base: int | None = None) -> None:
+                """`base`: what the percentages are of (default: the whole queue)."""
                 if not pairs:
                     return
                 tv.insert("", "end", values=(_t(titre), "", ""), tags=("h",))
@@ -234,7 +235,8 @@ class PanneauxMixin:
                 for nom, n in pairs:
                     nom = _t(nom)  # a label of the app; data values pass through as they are
                     bar = "█" * max(0, round(38 * n / mx))
-                    pct = f"{100 * n / len(q):.0f}%" if q else ""
+                    total = len(q) if base is None else base
+                    pct = f"{100 * n / total:.0f}%" if total else ""
                     tv.insert("", "end", values=(f"   {nom}", n, f"{bar} {pct}"))
 
             def count(key: Any, src: Any = None) -> Any:
@@ -254,6 +256,9 @@ class PanneauxMixin:
                     ("bloquees : description trop courte", len(_sans_desc)),
                     ("bloquees : lien jamais verifie", len(_lien_douteux)),
                 ],
+                # Of the offers at fit >= 8, not of the queue: 21 blocked out of 24
+                # showed "12%".
+                base=len(_top),
             )
             # From sending to answer (status history, 3.15): the figures that say
             # whether the search works, not only how much it collects.
@@ -319,7 +324,7 @@ class PanneauxMixin:
                 (f"fit {i}", sum(1 for o in ok if (o.get("fit") or 0) == i))
                 for i in range(10, 0, -1)
             ]
-            section("Fit (offres vivantes)", [p for p in fits if p[1]])
+            section("Fit (offres vivantes)", [p for p in fits if p[1]], base=len(ok))
             ats_b = [
                 ("100 %", 0),
                 ("80-99 %", 0),
@@ -343,7 +348,7 @@ class PanneauxMixin:
                     d["40-59 %"] += 1
                 else:
                     d["< 40 %"] += 1
-            section("ATS % (offres vivantes)", [(k, v) for k, v in d.items() if v])
+            section("ATS % (offres vivantes)", [(k, v) for k, v in d.items() if v], base=len(ok))
             src = count("source")
             section("Sources (top 10)", [(s[:46], n) for s, n in src[:10]])
 

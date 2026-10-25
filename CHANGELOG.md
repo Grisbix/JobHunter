@@ -4,6 +4,17 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.25.2 — 2026-10-25
+
+The Profile, Fit, Statistics and Companies pages, read for seven profiles:
+
+- **Companies**: a new finance profile kept « the ~90 finance companies » but got
+  none: it copied the main profile's settings, whose lists were empty. Fixed.
+- **Statistics**: under « Sur les offres à fit ≥ 8 », the percentages were of the whole
+  queue (21 blocked out of 24 showed « 12% »); they are now of those offers.
+- **Fit**: the axes show their name (« Santé », « Développement »), not their key
+  (« Sante », « DEV »).
+
 ## 3.25.1 — 2026-10-25
 
 **The app, clicked everywhere**: every button of every page and every entry of

@@ -360,3 +360,56 @@ def test_son_propre_metier_n_est_pas_trie_comme_senior(monkeypatch):
 
     monkeypatch.setattr(sorting, "_RX_PROPRE_METIER", _P.motif(["chef de rayon"]), raising=False)
     assert sorting.motif(offre, set()) is None
+
+
+def test_nouveau_profil_finance_retrouve_les_entreprises(tmp_path):
+    # A new profile copies the main one's settings; a non-finance main profile had
+    # emptied the company lists, and "keep them" gave a controller no company at all.
+    import json
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    from docx import Document
+
+    ici = Path(__file__).resolve().parent.parent
+    for d in ("data", "profile"):
+        (tmp_path / d).mkdir()
+    (tmp_path / "data" / "sources_config.json").write_text(
+        json.dumps({"keywords": ["x"], "ats_slugs": {}, "workday_flux": [], "autres_flux": []}),
+        encoding="utf-8",
+    )
+    doc = Document()
+    for l in (
+        "Thomas ROUX",
+        "Contrôleur de gestion",
+        "thomas@exemple.fr",
+        "PROFIL",
+        "Contrôleur de gestion, budget et reporting en entreprise industrielle.",
+        "EXPÉRIENCE",
+        "2020-2026 Contrôleur de gestion — Groupe industriel, Bordeaux",
+        "Construction du budget, clôtures mensuelles, tableaux de bord, analyse des coûts.",
+    ):
+        doc.add_paragraph(l)
+    doc.save(tmp_path / "cv.docx")
+    env = {k: v for k, v in os.environ.items() if k != "PROFIL_JOBHUNTER"}
+    env.update(JOBHUNTER_RACINE=str(tmp_path), JOBHUNTER_PRINCIPALE=str(tmp_path))
+    r = subprocess.run(
+        [
+            sys.executable,
+            str(ici / "JobHunter.pyw"),
+            "profile",
+            str(tmp_path / "cv.docx"),
+            "--entreprises",
+            "o",
+        ],
+        env=env,
+        capture_output=True,
+        text=True,
+        stdin=subprocess.DEVNULL,
+        timeout=120,
+    )
+    assert r.returncode == 0, r.stdout + r.stderr
+    cfg = json.loads((tmp_path / "data" / "sources_config.json").read_text(encoding="utf-8"))
+    assert not {"ats_slugs", "workday_flux", "autres_flux"} & set(cfg)  # the engine's lists

@@ -61,6 +61,12 @@ _MALUS_EXP = (0.0, 9.0, 0.5)
 
 
 def _nom_axe(axe: str) -> str:
+    # A profile built from a CV names its axes after the catalogue's families: their
+    # label, not the key ("Santé", not "Sante"; "Développement", not "DEV").
+    from jobhunter.programs.skills_catalog import FAMILLES
+
+    if axe in FAMILLES:
+        return _t(FAMILLES[axe][0])
     return axe.upper() if len(axe) <= 3 else axe.capitalize()
 
 
