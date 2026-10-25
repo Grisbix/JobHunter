@@ -4,6 +4,16 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.25.3 — 2026-10-25
+
+- Switching profile in the app (Profil → Ouvrir) was tested for real, there and back:
+  the window restarts on the other profile with its own offers, name, job and skills.
+- Saving « Ma recherche », the skills or the fit weights keeps every other detail of
+  the profile.
+- **A skill added in the app is quoted in the letter**: it had no sentence form, so
+  the letter never named it. It is now written in lower case (« consolidation »), an
+  acronym as it is (« SAP »).
+
 ## 3.25.2 — 2026-10-25
 
 The Profile, Fit, Statistics and Companies pages, read for seven profiles:

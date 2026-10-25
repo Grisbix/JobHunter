@@ -101,6 +101,13 @@ def appliquer(profil: dict[str, Any], liste: list[Competence]) -> dict[str, Any]
         if c.en.strip():
             v["en"] = c.en.strip()
         v.update(c.autres)
+        # A skill added in the app had no sentence form: the letter never quoted it.
+        # Its name, in lower case unless it is an acronym ("consolidation", "SAP").
+        if c.nom.strip() not in (profil.get("competences") or {}):
+            nom = c.nom.strip()
+            dit = nom if nom[:2].isupper() else nom[:1].lower() + nom[1:]
+            v.setdefault("prose_fr", dit)
+            v.setdefault("prose_en", v.get("en") or dit)
         comp[c.nom.strip()] = v
     out["competences"] = comp
     voulu = {c.nom.strip(): c.axes for c in liste}

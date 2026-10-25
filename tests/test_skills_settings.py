@@ -36,7 +36,12 @@ def test_ajouter_et_changer_d_axe():
     liste.append(S.Competence("CSRD", ["esg"], ["csrd"], "CSRD"))
     next(c for c in liste if c.nom == "Python / SQL").axes = ["ia"]
     out = S.appliquer(PROFIL, liste)
-    assert out["competences"]["CSRD"] == {"synonymes": ["csrd"], "en": "CSRD"}
+    assert out["competences"]["CSRD"] == {
+        "synonymes": ["csrd"],
+        "en": "CSRD",
+        "prose_fr": "CSRD",  # a new skill gets its sentence form
+        "prose_en": "CSRD",
+    }
     assert out["scoring"]["axes"]["esg"]["competences"] == ["SFDR", "CSRD"]
     assert out["scoring"]["axes"]["data"]["competences"] == ["Machine learning"]
     # the unknown name an axis carried stays; the moved skill goes to the end
@@ -74,3 +79,17 @@ def test_depuis_texte():
         "Article 8",
         "art. 9",
     ]
+
+
+def test_competence_ajoutee_dans_l_app_citable_dans_la_lettre():
+    # Without a sentence form, a skill added in the app was never quoted by the letter.
+    p = {"competences": {"Audit": {"synonymes": ["audit"]}}, "scoring": {"axes": {}}}
+    liste = [
+        S.Competence(nom="Audit", axes=[], synonymes=["audit"]),
+        S.Competence(nom="Consolidation", axes=[], synonymes=["consolidation"]),
+        S.Competence(nom="SAP FI", axes=[], synonymes=["sap"]),
+    ]
+    out = S.appliquer(p, liste)
+    assert out["competences"]["Consolidation"]["prose_fr"] == "consolidation"
+    assert out["competences"]["SAP FI"]["prose_fr"] == "SAP FI"
+    assert "prose_fr" not in out["competences"]["Audit"]  # an existing one is left as is
