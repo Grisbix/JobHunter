@@ -72,6 +72,15 @@ _PARESSEUX["_SUB_SKILL"] = lambda: (
 )
 
 
+def contient(noms: list[str], t: str) -> bool:
+    """Is one of these synonyms in the text (lowercase)? Same rule as has_skill."""
+    for n in noms:
+        n = n.strip().lower()
+        if n and (re.search(r"\b" + re.escape(n) + r"\b", t) if len(n) <= _SHORT else n in t):
+            return True
+    return False
+
+
 def has_skill(label: str, t: str) -> bool:
     """Is the label present in the text (already lowercase)?"""
     return any(n in t for n in _ici._SUB_SKILL[label]) or any(

@@ -128,3 +128,10 @@ def rapport(bilan, pipeline):
 )
 def test_rapport_dit(rapport, extrait):
     assert extrait in rapport
+
+
+def test_nouvelle_installation_ne_manque_pas_les_jours_d_avant(tmp_path):
+    (tmp_path / "pipeline_2026-10-11_0900.log").write_text(
+        "Merge : +2 nouvelles\n", encoding="utf-8"
+    )
+    assert M.bilan_pipeline(tmp_path, AUJ)["jours_sans_run"] == [date(2026, 10, 12)]

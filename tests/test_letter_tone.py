@@ -39,14 +39,14 @@ def texte_de_la_lettre(monkeypatch, tmp_path):
 def test_jeune_diplome_par_defaut(texte_de_la_lettre):
     t = texte_de_la_lettre("fr")
     assert "depuis mes études" in t
-    assert "J'apporterai cette expérience" not in t
+    assert "J'apporterai ce savoir-faire" not in t
 
 
 @pytest.mark.parametrize(
     ("langue", "attendu", "absent"),
     [
-        ("fr", "correspond à mon expérience", "depuis mes études"),
-        ("en", "matches the experience I have built", "since my studies"),
+        ("fr", "correspond à mon parcours et à la suite", "depuis mes études"),
+        ("en", "matches the work I have done so far", "since my studies"),
     ],
 )
 def test_ton_experimente(monkeypatch, texte_de_la_lettre, langue, attendu, absent):
@@ -55,3 +55,5 @@ def test_ton_experimente(monkeypatch, texte_de_la_lettre, langue, attendu, absen
     assert attendu in t
     assert absent not in t
     assert "familiaris" not in t and "became familiar" not in t
+    # The CV's summary already says "N ans d'expérience": the letter does not repeat it.
+    assert "expérience" not in t and "experience" not in t

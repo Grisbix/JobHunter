@@ -4,6 +4,26 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.23.1 — 2026-10-25
+
+Every command and every panel of the app run again on four new profiles:
+
+- **The ATS %** is measured against the job's usual skills, not only the CV's own: a
+  profile built from a CV showed 100 % on every offer. Recreate your profile
+  (`jobhunter profile <cv> --force`) to benefit, then « Recalculer le fit ».
+- **Job titles in both genders and both languages**: « Infirmière » postings were not
+  recognised for an « Infirmier » profile, nor « Développeur » for an English CV
+  (« Developer »); « Software Engineer » now counts as a developer's posting.
+- **An English CV** writes its summary in the English letter, not in the French one.
+- **« Sonder mots-clés »** tries keywords of your own job (a nurse was offered
+  « notation esg »).
+- **Adding an offer from a French LinkedIn page** reads its title and company (the
+  company was « Fr »).
+- An experienced profile's letter no longer says « expérience » three times; a message
+  no longer starts a paragraph with a space; « d'État » keeps its capital.
+- `profiles use principal` finds the main profile after it was renamed; the weekly
+  summary of a new installation no longer lists the days before it.
+
 ## 3.23.0 — 2026-10-24
 
 Four new profiles (aerospace engineer, nurse, junior developer, management

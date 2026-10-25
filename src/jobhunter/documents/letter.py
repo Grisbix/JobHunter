@@ -634,7 +634,7 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
             "I read your advertisement with great interest: "
             + (_val_en if _connue_en else "this role")
             + (
-                " matches the experience I have built and where I want to take it next."
+                " matches the work I have done so far and where I want to take it next."
                 if _experimente()
                 else " matches the career path I have been building since my studies."
             )
@@ -679,7 +679,7 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
                     if m.lower() not in prose_en.lower()
                 ][:4]
                 ph = (
-                    f"In these roles I have put into practice {prose_en}."
+                    f"In my roles so far I have put into practice {prose_en}."
                     if _experimente()
                     else f"Along the way I became familiar with {prose_en}."
                 )
@@ -692,7 +692,7 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
                 para(
                     ph
                     + (
-                        " I would bring this experience to your teams."
+                        " I would bring these skills to your teams."
                         if _experimente()
                         else " These are foundations I would be glad to deepen within your teams."
                     )
@@ -766,7 +766,7 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
     para(
         f"Votre annonce a retenu mon attention : {_sujet} "
         + (
-            "correspond à mon expérience et à la suite que je veux lui donner."
+            "correspond à mon parcours et à la suite que je veux lui donner."
             if _experimente()
             else "rejoint le projet professionnel que je construis depuis mes études."
         )
@@ -836,7 +836,7 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
                 if m.lower() not in prose.lower()
             ][:4]
             if _experimente():
-                phrase = f"Dans ces postes, j'ai mis en œuvre {prose}."
+                phrase = f"Dans mes postes, j'ai mis en œuvre {prose}."
             else:
                 phrase = f"Au fil de ce parcours, je me suis {_P.accord('familiarisé', 'familiarisée')} avec {prose}."
             if len(techs) >= 2:
@@ -846,7 +846,7 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
             para(
                 phrase
                 + (
-                    " J'apporterai cette expérience à vos équipes."
+                    " J'apporterai ce savoir-faire à vos équipes."
                     if _experimente()
                     else f" Ce sont des acquis que je serais {_P.accord('heureux', 'heureuse')} "
                     "d'approfondir au sein de vos équipes."

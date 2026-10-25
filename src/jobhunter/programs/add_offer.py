@@ -74,6 +74,14 @@ def analyze_url(url):
         except Exception:
             pass
         b.close()
+    out["titre"], out["entreprise"] = titre_et_entreprise(m, url)
+    if len(out["description"]) < 120:
+        out["description"] = ""
+    return out, "ok"
+
+
+def titre_et_entreprise(m, url):
+    """(job title, company) from the page's meta tags."""
     import html as _html
 
     # title: og:title > h1 > <title> — cleans entities + "| Site"
@@ -82,6 +90,13 @@ def analyze_url(url):
     ent = _html.unescape((m.get("ogSite") or "").strip())
     # LinkedIn: "COMPANY hiring JOB in CITY" → split
     mm = re.match(r"^(.{2,50}?)\s+hiring\s+(.+?)(?:\s+in\s+.{2,60})?$", t, re.I)
+    # French LinkedIn: "COMPANY recrute pour des postes de JOB (CITY)"
+    mm = mm or re.match(
+        r"^(.{2,50}?)\s+recrute\s+(?:pour\s+des\s+postes\s+de\s+|un\(?e?\)?\s+|une?\s+)?"
+        r"(.+?)(?:\s+\([^()]{2,60}\))?$",
+        t,
+        re.I,
+    )
     if mm:
         ent, t = mm.group(1).strip(), mm.group(2).strip()
     # boards: og:site_name = name of the site, not the employer
@@ -94,16 +109,14 @@ def analyze_url(url):
         "apec",
     ):
         mm = re.search(r"(?:chez|at)\s+([A-Z][\w&' .-]{2,40})", t)
-        ent = (
-            mm.group(1).strip()
-            if mm
-            else urlparse(url).netloc.replace("www.", "").split(".")[0].title()
-        )
-    out["titre"] = t[:120] or "Offre sans titre"
-    out["entreprise"] = ent[:60]
-    if len(out["description"]) < 120:
-        out["description"] = ""
-    return out, "ok"
+        # The site's own name, not its language subdomain ("fr.linkedin.com" gave "Fr").
+        hote = urlparse(url).netloc.split(".")
+        ent = mm.group(1).strip() if mm else (hote[-2] if len(hote) > 1 else hote[0]).title()
+        # A LinkedIn job URL names the company: ".../jobs/view/<job>-at-<company>-<id>".
+        lk = re.search(r"-at-([a-z0-9-]{2,60}?)-\d+/?$", urlparse(url).path)
+        if not mm and lk and "linkedin" in urlparse(url).netloc:
+            ent = lk.group(1).replace("-", " ").title()
+    return t[:120] or "Offre sans titre", ent[:60]
 
 
 def add_to_queue(url, meta):

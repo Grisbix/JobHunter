@@ -100,19 +100,22 @@ def bilan_pipeline(dossier, aujourdhui, jours=7):
     A day without a log is a day the pipeline did not run."""
     debut = aujourdhui - timedelta(days=jours)
     par_jour = {}
+    premier = aujourdhui
     for f in sorted(Path(dossier).glob("pipeline_*_*.log")):
         m = _LOG_DATE.search(f.name)
         if not m:
             continue
         d = datetime.strptime(m.group(1), "%Y-%m-%d").date()
+        premier = min(premier, d)
         if not (debut < d <= aujourdhui):
             continue
         texte = f.read_text(encoding="utf-8", errors="replace")
         par_jour[d] = par_jour.get(d, 0) + sum(int(n) for n in _MERGE.findall(texte))
+    # Not the days before the first run: a new installation is not missing them.
     manquants = [
         debut + timedelta(days=i)
         for i in range(1, jours + 1)
-        if debut + timedelta(days=i) not in par_jour
+        if premier < debut + timedelta(days=i) and debut + timedelta(days=i) not in par_jour
     ]
     return {"par_jour": par_jour, "total": sum(par_jour.values()), "jours_sans_run": manquants}
 

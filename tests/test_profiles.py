@@ -266,6 +266,9 @@ def test_commande_profiles(principale, monkeypatch, capsys):
     assert lancer("rename", "b", "Second") == 0 and P.trouver("Second").slug == "b"
     assert lancer("archive", "Principal") == 1
     assert lancer("archive", "second") == 0 and P.actif() == ""
+    # Renamed, the main one is still found by the word the list shows for it.
+    assert lancer("rename", "principal", "Camille") == 0
+    assert P.trouver("principal").slug == ""
     with pytest.raises(SystemExit):
         lancer("use", "inconnu")
 

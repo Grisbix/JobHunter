@@ -103,6 +103,9 @@ def trouver(nom: str, p: Path | None = None) -> Profil | None:
     for pr in liste(p):
         if nom in (pr.slug, pr.nom) or nom.casefold() == pr.nom.casefold() or slug(nom) == pr.slug:
             return pr
+        # The main one is listed "(principal)": that word still finds it once renamed.
+        if not pr.slug and nom.casefold() == "principal":
+            return pr
     return None
 
 

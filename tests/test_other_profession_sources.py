@@ -44,3 +44,43 @@ def test_ajouter_les_flux_confirmes(monkeypatch, tmp_path):
     pq.ajouter([r])  # twice: followed once
     cfg = json.loads((tmp_path / "sources_config.json").read_text(encoding="utf-8"))
     assert cfg["ats_slugs"] == {"greenhouse": ["relativity"]}
+
+
+def test_mots_cles_a_sonder_du_profil_de_reference():
+    from jobhunter.programs import probe_keywords as pk
+
+    # The owner's run is unchanged: every built-in theme, whole.
+    assert pk.candidats_du_profil() == pk.CANDIDATS
+
+
+def test_mots_cles_a_sonder_d_une_infirmiere(monkeypatch):
+    import jobhunter.sources
+    from jobhunter import profile as _P
+    from jobhunter.programs import probe_keywords as pk
+
+    monkeypatch.setattr(jobhunter.sources, "title_ok", lambda t: "infirm" in t, raising=False)
+    valeurs = {
+        "scoring": {"axe_coeur": "sante", "axes": {"sante": {"competences": ["Réa"]}}},
+        "competences": {"Réa": {"synonymes": ["réanimation", "soins intensifs"]}},
+    }
+    monkeypatch.setattr(_P, "get", lambda k, d=None: valeurs.get(k, d))
+    monkeypatch.setattr(_P, "domaines", lambda: [{"mots_titre": ["infirmier"]}, {}])
+    # No "notation esg" for a nurse: her job word with her core skills.
+    assert pk.candidats_du_profil() == {
+        "Ton métier": ["infirmier réanimation", "infirmier soins intensifs"]
+    }
+
+
+def test_offre_ajoutee_depuis_linkedin_en_francais():
+    from jobhunter.programs.add_offer import titre_et_entreprise
+
+    url = "https://fr.linkedin.com/jobs/view/controleur-de-gestion-at-meilleurtaux-4482052576"
+    meta = {
+        "ogTitle": "Meilleurtaux recrute pour des postes de Contrôleur de Gestion H/F (Courbevoie)",
+        "ogSite": "LinkedIn",
+    }
+    assert titre_et_entreprise(meta, url) == ("Contrôleur de Gestion H/F", "Meilleurtaux")
+    # Not "Fr", the language subdomain: the company named in the URL.
+    assert (
+        titre_et_entreprise({"title": "Contrôleur", "ogSite": "LinkedIn"}, url)[1] == "Meilleurtaux"
+    )

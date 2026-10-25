@@ -32,10 +32,12 @@ def test_masculin():
 
 
 def test_mots_significatifs_radicaux():
-    # Masculine and singular: the word START finds both forms.
+    # Masculine and singular: the word START finds both forms. "structures" is too
+    # wide alone (a "structure d'accueil"): dropped next to a more specific word.
     assert fl.mots_significatifs("Ingénieure structures aéronautiques") == [
         "ingénieur",
-        "structure",
+        "engineer",
+        "ingenieur",
         "aéronautique",
     ]
     # A word ending in "ss" or "us" keeps its end.
@@ -132,10 +134,31 @@ def test_ton_de_la_lettre_selon_les_annees():
 
 
 def test_mots_generiques_ecartes_du_filtre():
-    assert fl.mots_significatifs("Infirmière diplômée d'État") == ["infirmier"]
-    assert fl.mots_significatifs("Contrôleur de gestion") == ["contrôleur"]
+    assert fl.mots_significatifs("Infirmière diplômée d'État") == [
+        "infirmier",
+        "nurse",
+        "infirmière",
+    ]
+    assert fl.mots_significatifs("Contrôleur de gestion") == [
+        "contrôleur",
+        "controller",
+        "controleur",
+    ]
     # Nothing more specific: the generic word stays, the filter is never empty.
     assert fl.mots_significatifs("Chargé de projet") == ["chargé", "projet"]
+
+
+def test_mots_du_titre_aux_deux_genres():
+    # "infirmier" does not find "infirmière": both forms, whichever the CV writes.
+    assert fl.mots_significatifs("Conseiller") == ["conseiller", "conseillère"]
+    assert fl.mots_significatifs("Directrice financière") == [
+        "directeur",
+        "directrice",
+        "financier",
+        "financière",
+    ]
+    # And the other language: an English CV finds the French postings.
+    assert fl.mots_significatifs("Developer") == ["developer", "développeur", "developpeur"]
 
 
 def test_langues_d_un_cv_en_anglais():
@@ -186,3 +209,43 @@ def test_competences_sante_d_un_cv_infirmier():
         "Transmissions et dossier de soins",
     ):
         assert c in comps
+
+
+def test_cv_anglais_resume_en_anglais():
+    cv = (
+        "Lucas PETIT\nJunior Full-stack Developer\nSUMMARY\nJunior developer with one year of "
+        "experience building web applications with React and the Node.js stack, for the web.\n"
+        "SKILLS\nReact, Node.js\n"
+    )
+    rep = {
+        "identite": fl.identite_du_cv(cv),
+        "competences": fl.competences_du_cv(cv),
+        "metiers": ["Junior Full-stack Developer"],
+        "annees": 1,
+        "genre": "m",
+        "prioritaires": [],
+        "secondaires": [],
+    }
+    d = fl.construire(cv, "cv.docx", rep)["domaines"][0]
+    assert d["parcours_fr"] == "" and d["parcours_en"]
+    # "Software Engineer" is a developer's posting too.
+    assert "software" in d["mots_titre"]
+
+
+def test_titre_dans_une_phrase():
+    assert fl.en_phrase("Infirmière diplômée d'État") == "infirmière diplômée d'État"
+
+
+def test_ats_compte_les_competences_du_metier_absentes_du_cv(monkeypatch):
+    # Built from the CV alone, the profile covered 100 % of every posting.
+    from jobhunter import profile as _P
+    from jobhunter.scoring import fit
+
+    lire = _P.get
+    autres = {"Nastran": {"synonymes": ["nastran"]}}
+    monkeypatch.setattr(
+        _P, "get", lambda k, d=None: autres if k == "competences_ats" else lire(k, d)
+    )
+    monkeypatch.setattr(fit, "cv_text_cached", lambda k: "")
+    r = fit.score_offer(dict(role="Ingénieur calcul", missions="Nastran", profil="", domaine=""))
+    assert r["missing"] == {"Nastran"} and r["pct"] == 0

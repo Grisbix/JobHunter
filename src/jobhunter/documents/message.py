@@ -456,7 +456,7 @@ def _message(offre: dict[str, Any], langue: str | None = None, ton: str = "sobre
             f"{appel(offre, 'en')}\n\n"
             f"I am {_un(_dom(cle, 'accroche_en'))}{lien(dip)} and I am "
             f"applying for the {titre} position at {soc}.\n\n"
-            + f"{_intro_role(offre, 'en')} {_ici._MSG.get('langues_en', '')}".rstrip()
+            + f"{_intro_role(offre, 'en')} {_ici._MSG.get('langues_en', '')}".strip()
             + "\n\n"
             "My CV and cover letter are attached. I would be glad to discuss the role with you "
             "and am available at your convenience.\n\n"
@@ -481,7 +481,7 @@ def _message(offre: dict[str, Any], langue: str | None = None, ton: str = "sobre
         f"{appel(offre, 'fr')}\n\n"
         f"Je suis {_dom(cle, 'accroche_fr')}{lien(dip)} et je "
         f"postule au poste {_de_titre(titre)} chez {soc}.\n\n"
-        + f"{_intro_role(offre, 'fr')} {_ici._MSG.get('langues_fr', '')}".rstrip()
+        + f"{_intro_role(offre, 'fr')} {_ici._MSG.get('langues_fr', '')}".strip()
         + "\n\n"
         "Mon CV et ma lettre de motivation sont joints. Je serais "
         f"{_P.accord('heureux', 'heureuse')} d'échanger avec vous "

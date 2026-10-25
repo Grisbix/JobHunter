@@ -32,6 +32,7 @@ from jobhunter import lazy as _paresseux
 from jobhunter import profile as _P
 from jobhunter import root as _racine
 from jobhunter.paths import CV_MODELES as CV_ATS
+from jobhunter.scoring import lexicon as _lexique
 from jobhunter.scoring import weights as _poids
 from jobhunter.scoring.lexicon import cv_variant_key, has_skill
 
@@ -793,12 +794,26 @@ def score_offer(offer: dict[str, Any]) -> dict[str, Any]:
         {required, covered, missing, pct}; pct = None if the posting asks for no
         known skill.
     """
-    required = skills_in(f"{offer['role']} {offer['missions']} {offer['profil']}")
+    texte = f"{offer['role']} {offer['missions']} {offer['profil']}"
+    required = skills_in(texte)
+    # Skills of the job that the CV may lack (profile key competences_ats, written by
+    # first_launch): a profile built from the CV alone covered 100 % of every posting.
+    t = texte.lower()
+    autres = {
+        lab: list(v.get("synonymes") or [])
+        for lab, v in (_P.get("competences_ats", {}) or {}).items()
+        if lab not in _ici.SKILL_LEX
+    }
+    required |= {lab for lab, ns in autres.items() if _lexique.contient(ns, t)}
     if not required:
         # nothing detected -> neutral
         return dict(required=set(), covered=set(), missing=set(), pct=None)
     cv = cv_text_cached(cv_variant_key(offer["domaine"]))
-    covered = {s for s in required if has_skill(s, cv)}  # same matcher (whole word)
+    covered = {  # same matcher (whole word)
+        s
+        for s in required
+        if (_lexique.contient(autres[s], cv) if s in autres else has_skill(s, cv))
+    }
     missing = required - covered
     pct = round(100 * len(covered) / len(required))
     return dict(required=required, covered=covered, missing=missing, pct=pct)

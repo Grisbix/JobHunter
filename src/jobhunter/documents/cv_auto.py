@@ -119,6 +119,8 @@ def main() -> int:
     a = ap.parse_args()
     b = banque()
     if a.liste or not a.essai:
+        if not b.get("faits"):
+            print("Aucun fait dans CV/Facts.json : le CV part tel que le modele.")
         for f in b.get("faits", []):
             etat = "valide " if f.get("valide") else "A VALIDER"
             print(

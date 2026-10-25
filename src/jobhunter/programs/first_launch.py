@@ -418,12 +418,66 @@ _GENERIQUES = {
     "affaire",
     "service",
     "client",
+    "structure",
 }
+
+
+def _formes(mot):
+    """The word's stems for both genders, when one is not the start of the other.
+
+    "ingénieur" finds "ingénieure", but "infirmier" does not find "infirmière" nor
+    "directeur" "directrice": a nurse's own postings fell in the "Autre" domain.
+    """
+    masc = _radical(mot)
+    formes = [masc]
+    tel = mot[:-1] if len(mot) > 4 and mot[-1] in "sx" and mot[-2] not in "su" else mot
+    if not tel.startswith(masc):
+        formes.append(tel)
+    elif re.search(r"(?:i|ll)er$", masc):
+        formes.append(masc[:-2] + "ère")
+    elif masc.endswith("teur") and len(masc) > 6:
+        formes.append(masc[:-4] + "trice")
+    return formes
+
+
+# A title word and its other language: an English CV ("Developer") must find the
+# French postings ("Développeur"), and the reverse. Stems, as _formes gives them.
+_TRADUCTIONS = (
+    ("developer", "développeur", "developpeur"),
+    ("engineer", "ingénieur", "ingenieur"),
+    ("analyst", "analyste"),
+    ("accountant", "comptable"),
+    ("controller", "contrôleur", "controleur"),
+    ("nurse", "infirmier", "infirmière"),
+    ("auditor", "auditeur", "auditrice"),
+    ("consultant",),
+    ("teacher", "enseignant", "professeur"),
+    ("technician", "technicien"),
+    ("lawyer", "avocat", "juriste"),
+    ("buyer", "acheteur", "acheteuse"),
+    ("sales", "commercial"),
+    ("researcher", "chercheur", "chercheuse"),
+)
+
+
+def _traductions(forme):
+    for groupe in _TRADUCTIONS:
+        if forme in groupe:
+            return (forme, *(g for g in groupe if g != forme))
+    return (forme,)
 
 
 def mots_significatifs(titre):
     mots = re.findall(r"[a-zA-ZÀ-ÿ&+#.]+", titre.lower())
-    tous = list(dict.fromkeys(_radical(m) for m in mots if m not in _VIDES and len(m) >= 3))
+    tous = list(
+        dict.fromkeys(
+            t
+            for m in mots
+            if m not in _VIDES and len(m) >= 3
+            for f in _formes(m)
+            for t in _traductions(f)
+        )
+    )
     return [m for m in tous if m not in _GENERIQUES] or tous
 
 
@@ -580,11 +634,20 @@ def niveau(annees):
     }, False
 
 
+def en_phrase(titre):
+    """A title inside a sentence: lower case, but the State keeps its capital
+    ("Je suis infirmière diplômée d'État")."""
+    return re.sub(r"\b([dl]')état\b", r"\1État", titre.lower())
+
+
 def construire(cv_txt, cv_nom, rep):
     ident = rep["identite"]
     comps = rep["competences"]
     metiers = rep["metiers"]
     resume = resume_du_cv(cv_txt)
+    # The summary goes in its own language: an English CV wrote English in parcours_fr.
+    en = langue_du_cv(cv_txt) == "en"
+    resume_fr, resume_en = ("", resume) if en else (resume, "")
     ordre, score = familles_visees(metiers, comps)
     coeur = ordre[0] if ordre else ""
     mots_cibles = sorted({m for t in metiers for m in mots_significatifs(t)})
@@ -626,18 +689,23 @@ def construire(cv_txt, cv_nom, rep):
     ]
 
     domaines = []
-    for t in metiers:
+    for i, t in enumerate(metiers):
+        mots_t = mots_significatifs(t) or [t.lower()]
+        if i == 0:
+            # The job's usual titles too: "Software Engineer" is a developer's posting,
+            # it fell in "Autre" with "developer" alone.
+            mots_t = list(dict.fromkeys(mots_t + list(FAMILLES.get(coeur, ("", []))[1])))
         domaines.append(
             {
                 "cle": slug(t)[:40],
                 "libelle": t[:30],
-                "mots_titre": mots_significatifs(t) or [t.lower()],
+                "mots_titre": mots_t,
                 "cv": cv_nom,
                 "cv_en": "",
-                "parcours_fr": resume,
-                "parcours_en": "",
-                "accroche_fr": t.lower(),
-                "accroche_en": t.lower(),
+                "parcours_fr": resume_fr,
+                "parcours_en": resume_en,
+                "accroche_fr": en_phrase(t),
+                "accroche_en": en_phrase(t),
                 "preuve_fr": "",
                 "preuve_en": "",
                 "preuve_detente_fr": "",
@@ -650,10 +718,10 @@ def construire(cv_txt, cv_nom, rep):
             "mots_titre": [],
             "cv": cv_nom,
             "cv_en": "",
-            "parcours_fr": resume,
-            "parcours_en": "",
-            "accroche_fr": (metiers[0].lower() if metiers else "candidat"),
-            "accroche_en": (metiers[0].lower() if metiers else "candidate"),
+            "parcours_fr": resume_fr,
+            "parcours_en": resume_en,
+            "accroche_fr": (en_phrase(metiers[0]) if metiers else "candidat"),
+            "accroche_en": (en_phrase(metiers[0]) if metiers else "candidate"),
             "preuve_fr": "",
             "preuve_en": "",
             "preuve_detente_fr": "",
@@ -681,6 +749,13 @@ def construire(cv_txt, cv_nom, rep):
         "identite": {**ident, "genre": rep["genre"]},
         "domaines": domaines,
         "competences": competences,
+        # The job's skills the CV does not name: only for the ATS % (score_offer),
+        # never quoted in a letter nor counted in the fit.
+        "competences_ats": {
+            lab: {"synonymes": v["synonymes"]}
+            for lab, v in catalogue().items()
+            if v.get("famille") in set(ordre[:2]) and lab not in comps
+        },
         "competences_de_base": top,
         "termes": {},
         "scoring": {
@@ -939,7 +1014,7 @@ def main():
     prefixe = slug(f"{ident['prenom']} {ident['nom']}")
     cv_nom = f"CV_{prefixe}{cv.suffix.lower()}"
     shutil.copyfile(cv, cv_dir / cv_nom)
-    print(f"  CV modele     : CV/Modèles/{cv_nom}")
+    print(f"  CV modele     : {(cv_dir / cv_nom).relative_to(RACINE).as_posix()}")
 
     profil = construire(txt, cv_nom, rep)
     sortie.parent.mkdir(parents=True, exist_ok=True)
@@ -955,7 +1030,7 @@ def main():
     _profil.recharger(sortie)
     profil["tri"]["metiers_exclus"] = familles_tri_a_exclure(metiers)
     sortie.write_text(json.dumps(profil, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"  profil        : {sortie.relative_to(RACINE)}")
+    print(f"  profil        : {sortie.relative_to(RACINE).as_posix()}")
 
     # Empty data files: the queue of offers and the application tracking.
     # The app finds its root through Scripts/apply_queue.json.
@@ -979,7 +1054,7 @@ def main():
             ),
             encoding="utf-8",
         )
-        print("  faits du CV   : CV/Faits.json (vide)")
+        print(f"  faits du CV   : {faits.relative_to(RACINE).as_posix()} (vide)")
 
     cfg_p = HERE / "sources_config.json"
     cfg = json.loads(cfg_p.read_text(encoding="utf-8")) if cfg_p.exists() else {}
@@ -992,7 +1067,7 @@ def main():
         + ("" if garder else " · listes d'entreprises finance/ESG videes")
     )
 
-    print("\n4. A relire dans profil/profil.json")
+    print(f"\n4. A relire dans {sortie.relative_to(RACINE).as_posix()}")
     manque = []
     if A_COMPLETER in json.dumps(profil["identite"], ensure_ascii=False):
         manque.append("identite : champs « A COMPLETER »")

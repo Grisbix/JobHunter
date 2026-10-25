@@ -20,6 +20,7 @@ Run:
 import argparse
 import importlib
 import json
+import re
 import sys
 import time
 
@@ -129,6 +130,49 @@ CANDIDATS_IA = {
 }
 
 
+def _sans_accent(s):
+    import unicodedata
+
+    return "".join(c for c in unicodedata.normalize("NFD", s) if not unicodedata.combining(c))
+
+
+def candidats_du_profil():
+    """The candidates for THIS profile: the built-in lists keep what its title filter
+    keeps (a nurse was offered "notation esg"), plus its job word with its core skills.
+    """
+    from jobhunter import profile as _P
+    from jobhunter.sources import title_ok
+
+    groupes = {}
+    for theme, kws in CANDIDATS.items():
+        gardes = [k for k in kws if title_ok(k)]
+        if gardes:
+            # Mostly the profile's ground: the whole theme, as the owner always ran it.
+            groupes[theme] = kws if 2 * len(gardes) >= len(kws) else gardes
+    sc = _P.get("scoring", {}) or {}
+    coeur = (sc.get("axes", {}) or {}).get(sc.get("axe_coeur", ""), {})
+    comps = _P.get("competences", {}) or {}
+    simple = re.compile(r"^[\wÀ-ÿ' -]+$")
+    mots = [
+        d["mots_titre"][0]
+        for d in _P.domaines()
+        if d.get("mots_titre") and simple.match(d["mots_titre"][0])
+    ]
+    metier = []
+    for w in mots[:2]:
+        for lab in coeur.get("competences", []):
+            for syn in (comps.get(lab, {}).get("synonymes") or [])[:2]:
+                if (
+                    simple.match(syn)
+                    and len(syn) > 3
+                    and _sans_accent(syn)[:5] != _sans_accent(w)[:5]
+                ):
+                    metier.append(f"{w} {syn}")
+    if metier:
+        groupes["Ton métier"] = list(dict.fromkeys(metier))[:20]
+    return groupes
+
+
 def norm_url(u):
     from jobhunter.sources import _norm_url
 
@@ -140,9 +184,9 @@ def main():
     ap.add_argument("--kw", help="liste CSV de mots-clés (sinon liste intégrée)")
     ap.add_argument(
         "--set",
-        choices=["esg", "ia"],
-        default="esg",
-        help="jeu de candidats intégré à tester (déf. esg)",
+        choices=["profil", "esg", "ia"],
+        default="profil",
+        help="jeu de candidats à tester (déf. : tiré du profil)",
     )
     ap.add_argument("--pages", type=int, default=1)
     ap.add_argument("--days", type=int, default=30, help="fraîcheur LinkedIn (jours)")
@@ -172,8 +216,6 @@ def main():
     )
     a = ap.parse_args()
 
-    import re
-
     rx = re.compile(a.relevant_rx, re.I) if a.relevant_rx else None
 
     from jobhunter.sources import linkedin_guest_search
@@ -192,8 +234,10 @@ def main():
         groupes = {"(demandés)": [s.strip() for s in a.kw.split(",") if s.strip()]}
     elif a.set == "ia":
         groupes = CANDIDATS_IA
-    else:
+    elif a.set == "esg":
         groupes = CANDIDATS
+    else:
+        groupes = candidats_du_profil()
 
     res = []
     for theme, kws in groupes.items():
