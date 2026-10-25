@@ -556,6 +556,7 @@ TEXTES: dict[str, str] = {
     "Bénévolat": "Ehrenamt",
     "CV / lettres": "Lebensläufe / Anschreiben",
     "Combien d'offres traiter ?\n\n{n} offre(s) a fit ≥ 8 attendent encore leurs documents.": "Wie viele Stellen bearbeiten?\n\n{n} Stelle(n) mit Fit ≥ 8 warten noch auf ihre Unterlagen.",
+    "Ne plus suivre « {nom} » ? Son adresse de flux sera retirée ; « Suspendre / Reprendre » la garde.": "„{nom}“ nicht mehr verfolgen? Die Feed-Adresse wird entfernt; „Pausieren / Fortsetzen“ behält sie.",
     # Statistics: the default domain and the channel values.
     "Autre": "Sonstiges",
     "manuel": "manuell",

@@ -159,10 +159,11 @@ def _mk(
     source: str = "",
     description: str = "",
 ) -> dict[str, Any]:
+    titre, entreprise = _ligne(titre), _ligne(entreprise)
     return {
-        "titre": titre.strip(),
+        "titre": titre,
         "url": url,
-        "entreprise": entreprise.strip(),
+        "entreprise": entreprise,
         "domaine": classify_domaine(titre),
         "location": location,
         "date": date,
@@ -170,6 +171,19 @@ def _mk(
         "description": description[:30000],
         "scraped_at": time.strftime("%Y-%m-%d"),
     }
+
+
+def _ligne(s: str | None) -> str:
+    """A title or a company name on one clean line.
+
+    Entities decoded ("AT&amp;T"), tags removed ("<b>France</b>"), line breaks and
+    repeated spaces folded. A source that sent them raw put them as is in the table, the
+    letter's subject and the file names (break-ui, 2026-10-25).
+    """
+    import html as _html
+
+    t = re.sub(r"<[^>]*>", " ", _html.unescape(s or ""))
+    return " ".join(t.split())
 
 
 def _strip_html(h: str) -> str:

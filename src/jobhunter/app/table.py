@@ -1011,7 +1011,8 @@ class TableauMixin:
         u = o.get("url") or ""
         host = urlparse(u).netloc.replace("www.", "") if u.startswith("http") else "chercher"
         marque = self._marque_lien(o)
-        poste = o.get("poste", "")
+        # A title carrying a line break doubled its row's height (break-ui, 2026-10-25).
+        poste = " ".join(str(o.get("poste") or "").split())
         if marque and u.startswith("http"):
             host = marque + " " + host
             # THE MARKER MUST BE WHERE THE EYE GOES. It only lived in the
@@ -1043,7 +1044,7 @@ class TableauMixin:
             chk,
             self._alerte(o),
             st_txt,
-            o.get("entreprise", ""),
+            " ".join(str(o.get("entreprise") or "").split()),
             poste,
             DOM_SHORT.get(o.get("domaine"), o.get("domaine") or ""),
             self._fit_aff(o),

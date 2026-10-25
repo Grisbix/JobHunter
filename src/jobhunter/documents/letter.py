@@ -527,6 +527,8 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
     chemins.preparer()  # output folders, at write time
     company = offer["company"]
     role = (offer["role"] or "ce poste").strip()
+    # No title at all: a spontaneous application, not "au poste de ce poste".
+    _sans_titre = not str(offer["role"] or "").strip()
     skills = match_skills(offer["offer_text"])
     missions = (offer["missions"] or "").strip()
     profil = (offer["profil"] or "").strip()
@@ -601,7 +603,7 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
         12,
     )
     if langue == "en":
-        _titre_en = titre_poste(_sans_societe(role, company))
+        _titre_en = "" if _sans_titre else titre_poste(_sans_societe(role, company))
         para(
             f"Subject: Application for the position of {_titre_en}"
             if _titre_en
@@ -726,7 +728,7 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
     # In French a job title is a common noun. Postings
     # capitalise it the English way — "Contrôleur de Gestion Financier" — and we
     # copied it as is into the subject.
-    _titre = minuscule_titre(titre_poste(_sans_societe(role, company)))
+    _titre = "" if _sans_titre else minuscule_titre(titre_poste(_sans_societe(role, company)))
     para(
         f"Objet : Candidature au poste {_de(_titre)}"
         if _titre

@@ -4,6 +4,23 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.25.5 — 2026-10-25
+
+Five design and testing methods applied to the app (break-ui, emil-design-eng,
+create-design-md, UI UX Pro Max, webapp-testing):
+
+- **Worst-case data** (break-ui: very long names, Chinese, Arabic, emoji, HTML in a
+  title, a line break, empty fields, a fit written as text, 0, 1 and 5,000 offers):
+  - the Statistics page no longer stops on a fit written as text (« 9 »);
+  - a title with a line break no longer doubles its row in the table;
+  - « AT&amp;T » and HTML tags from a source are cleaned at collection;
+  - an offer without a title gets « Candidature spontanée », not « au poste de ce
+    poste ».
+- **« Ne plus suivre » a company** asks first: its feed address is lost with it.
+- **DESIGN.md** at the root documents the app's colours, fonts, shapes and rules,
+  validated with the DESIGN.md linter.
+- Checked: every text colour of the theme reaches the 4.5:1 contrast (WCAG AA).
+
 ## 3.25.4 — 2026-10-25
 
 - **Keywords changed in « Ma recherche » were never used by the collection**: it reads

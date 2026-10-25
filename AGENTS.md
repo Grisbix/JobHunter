@@ -51,6 +51,8 @@ change target, change the profile.
   button of every panel and every "Outils" entry on a COPY of the data, nothing started
   (programs, browser and dialogs are recorded); exit 1 if a Tk callback raises. Needs a
   display (`xvfb-run -a` on a server). Run it after a change in `src/jobhunter/app/`.
+- `DESIGN.md` (root): the app's colours, fonts, shapes and rules, from `app/theme.py`;
+  keep both in step (`npx @google/design.md lint DESIGN.md`).
 - CI: `.github/workflows/tests.yml` runs the network-free suites on every push.
 
 ## Read before touching the code

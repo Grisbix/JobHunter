@@ -84,6 +84,25 @@ def _est_la_file(p: Chemin) -> bool:
         return False
 
 
+def _nombres(offres: list[Offre]) -> None:
+    """`fit` and `fit_fin` as numbers, whatever the file holds.
+
+    A fit written as text ("9", "NaN": an old or hand-edited queue) made the Statistics
+    page raise on `"9" >= 8`, and twenty other places compare it the same way. Read
+    once here: a number stays, a numeric text becomes a number, anything else None.
+    """
+    for o in offres:
+        for cle, conv in (("fit", int), ("fit_fin", float)):
+            v = o.get(cle)
+            if v is None or isinstance(v, (int, float)) and not isinstance(v, bool) and v == v:
+                continue
+            try:
+                n = float(str(v).replace(",", "."))
+                o[cle] = conv(n) if n == n else None  # NaN is not a fit
+            except ValueError:
+                o[cle] = None
+
+
 def charger(chemin: Chemin | None = None, descriptions: bool = True) -> list[Offre]:
     """The offers, READ ONLY, descriptions reinjected.
 
@@ -106,6 +125,7 @@ def charger(chemin: Chemin | None = None, descriptions: bool = True) -> list[Off
         offres: list[Offre] = json.loads(p.read_text(encoding="utf-8"))
     except FileNotFoundError:
         return []
+    _nombres(offres)
     if descriptions and _est_la_file(p):
         textes = _lire_descriptions()
         if textes:

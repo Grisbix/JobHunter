@@ -84,3 +84,12 @@ def test_offre_ajoutee_depuis_linkedin_en_francais():
     assert (
         titre_et_entreprise({"title": "Contrôleur", "ogSite": "LinkedIn"}, url)[1] == "Meilleurtaux"
     )
+
+
+def test_titre_et_entreprise_nettoyes_a_la_source():
+    # break-ui: "AT&amp;T <b>France</b>" and a line break went as is into the table,
+    # the letter's subject and the file names.
+    o = _commun._mk(
+        "Contrôleur\n de  gestion <b>H/F</b>", "https://x.fr/1", "AT&amp;T <b>France</b>"
+    )
+    assert (o["titre"], o["entreprise"]) == ("Contrôleur de gestion H/F", "AT&T France")

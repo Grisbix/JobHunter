@@ -69,3 +69,18 @@ def test_sans_paragraphe_de_parcours(monkeypatch, texte_de_la_lettre, langue, at
     monkeypatch.setattr(letter, "contexte_durable", lambda offre, lg: "")
     t = texte_de_la_lettre(langue)
     assert attendu in t and absent not in t
+
+
+def test_offre_sans_titre_candidature_spontanee(monkeypatch, tmp_path):
+    # break-ui: an offer without a title gave "Candidature au poste de ce poste".
+    textes = []
+    monkeypatch.setattr(
+        letter._generes,
+        "enregistrer",
+        lambda doc, out: textes.append("\n".join(p.text for p in doc.paragraphs)),
+    )
+    monkeypatch.setattr(letter, "LT_OUT", tmp_path, raising=False)
+    letter.tailor_letter(dict(OFFRE, role=""), nom="essai", langue="fr")
+    letter.tailor_letter(dict(OFFRE, role=""), nom="essai", langue="en")
+    assert "Objet : Candidature spontanée" in textes[0] and "ce poste de" not in textes[0]
+    assert "Subject: Speculative application" in textes[1]

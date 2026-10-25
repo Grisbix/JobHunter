@@ -233,3 +233,26 @@ def test_champ_modifie_ecrit(ecriture_sans_descriptions):
 
 def test_description_de_mirova_survit(ecriture_sans_descriptions):
     assert len(queue_io.charger()[1]["description"]) == 3000
+
+
+def test_fit_en_texte_lu_comme_un_nombre(tmp_path):
+    # A fit written as text made the Statistics page raise on "9" >= 8.
+    import json
+
+    from jobhunter.storage import queue as Q
+
+    f = tmp_path / "apply_queue.json"
+    f.write_text(
+        json.dumps(
+            [
+                {"entreprise": "A", "poste": "x", "fit": "9", "fit_fin": "9,2"},
+                {"entreprise": "B", "poste": "y", "fit": "NaN", "fit_fin": "abc"},
+                {"entreprise": "C", "poste": "z", "fit": 7, "fit_fin": 7.1},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    a, b, c = Q.charger(f, descriptions=False)
+    assert (a["fit"], a["fit_fin"]) == (9, 9.2)
+    assert (b["fit"], b["fit_fin"]) == (None, None)
+    assert (c["fit"], c["fit_fin"]) == (7, 7.1)

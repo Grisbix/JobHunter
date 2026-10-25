@@ -8,7 +8,7 @@ import subprocess
 import threading
 import webbrowser
 from pathlib import Path
-from tkinter import ttk
+from tkinter import messagebox, ttk
 from typing import Any
 from urllib.parse import quote, urlparse
 
@@ -946,6 +946,16 @@ class PanneauxMixin:
             f = lignes.get(tv.focus())
             if f is None:
                 self._log("Sélectionne d'abord une entreprise dans la liste.\n")
+                return
+            # Its feed address is lost with it (a slug, a Workday URL): asked first
+            # (UI UX Pro Max, "confirm before irreversible actions"). "Suspendre" keeps it.
+            if not messagebox.askyesno(
+                "JobHunter",
+                _t(
+                    "Ne plus suivre « {nom} » ? Son adresse de flux sera retirée ; « Suspendre / Reprendre » la garde."
+                ).format(nom=f.nom),
+                parent=self.root,
+            ):
                 return
             if f.outil == "site":
                 F, urls = self._domains_file()
