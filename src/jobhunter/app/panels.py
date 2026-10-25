@@ -304,7 +304,9 @@ class PanneauxMixin:
                             ),
                         )
             # The domain's label ("Ingénieure structures"), not its key
-            # ("Ingenieure_structures_aeronautiques"): the key is a file name.
+            # ("Ingenieure_structures_aeronautiques"): the key is a file name. The
+            # fallback domain of a profile built from a CV is labelled "Autre":
+            # section() translates it like the channel values.
             libelles = {d["cle"]: str(d.get("libelle") or d["cle"]) for d in _P.domaines()}
             par_domaine: dict[str, int] = {}
             for v, n in count("domaine"):

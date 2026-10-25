@@ -43,6 +43,18 @@ A_COMPLETER = "A COMPLETER"
 
 
 def lire_cv(chemin):
+    return _titres_serres(_lire_cv(chemin))
+
+
+def _titres_serres(texte):
+    """A Canva heading spaced out letter by letter ("C O M P É T E N C E S") is read as
+    the word it spells: the sections were not found, nor the skills under them."""
+    return "\n".join(
+        l.replace(" ", "") if _RX_ESPACE.fullmatch(l.strip()) else l for l in texte.splitlines()
+    )
+
+
+def _lire_cv(chemin):
     p = Path(chemin)
     if p.suffix.lower() == ".pdf":
         import pymupdf as fitz
@@ -66,6 +78,9 @@ _RX_EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 _RX_TEL = re.compile(
     r"(?:\+\d{2,3}[\s.]?\(?0?\)?[\s.]?[1-9](?:[\s.-]?\d{2}){4}|\b0[1-9](?:[\s.-]?\d{2}){4})\b"
 )
+_RX_ESPACE = re.compile(r"(?:\w ){3,}\w")
+# Any other country: "+44 7700 900123", "+1 (415) 555-0100".
+_RX_TEL_INTER = re.compile(r"\+\d{1,3}(?:[\s.-]?\(?\d{2,4}\)?){2,4}\b")
 _RX_LINKEDIN = re.compile(r"(?:https?://)?(?:[a-z]{2,3}\.)?linkedin\.com/in/[\w%-]+/?", re.I)
 _RX_TITRE_SECTION = re.compile(
     r"^\s*(profil|profile|r[ée]sum[ée]|summary|about( me)?|[àa] propos|objectif|pr[ée]sentation)\s*:?\s*$",
@@ -80,12 +95,41 @@ def _sans_accent(s):
     return "".join(c for c in unicodedata.normalize("NFD", s) if not unicodedata.combining(c))
 
 
+def _nom_propre(m):
+    """ "JEAN-PIERRE" -> "Jean-Pierre"; a name already in mixed case stays as written."""
+    return "-".join(x.capitalize() for x in m.split("-")) if m.isupper() else m
+
+
+def titre_du_cv(lignes, ident):
+    """The CV's title: the first short line after the name that is not the name itself,
+    a contact or a spaced heading ("C O N T A C T")."""
+    nom = {w.lower() for w in f"{ident.get('prenom', '')} {ident.get('nom', '')}".split()}
+    for l in lignes[:8]:
+        mots = {w.lower() for w in l.split()}
+        if (
+            4 < len(l) < 60
+            and not re.search(r"[@\d]", l)
+            and not (mots and mots <= nom)
+            and not re.fullmatch(r"(?:\w ){3,}\w", l)
+        ):
+            return l
+    return ""
+
+
 def identite_du_cv(texte):
     lignes = [l.strip() for l in texte.splitlines() if l.strip()]
     email = (_RX_EMAIL.search(texte) or [""])[0]
-    tel = (_RX_TEL.search(texte) or [""])[0]
+    tel = (_RX_TEL.search(texte) or _RX_TEL_INTER.search(texte) or [""])[0]
     lk = (_RX_LINKEDIN.search(texte) or [""])[0]
     prenom = nom = ""
+    # A Canva CV puts the first name and the surname on two lines ("KARIM" / "BENALI").
+    if (
+        len(lignes) > 1
+        and all(re.fullmatch(r"[A-Za-zÀ-ÿ'’-]{2,}", x) for x in lignes[:2])
+        and lignes[0].isupper()
+        and lignes[1].isupper()
+    ):
+        lignes = [f"{lignes[0]} {lignes[1]}"] + lignes[2:]
     # The name: one of the first lines, 2 to 4 alphabetic words, without a digit.
     for l in lignes[:8]:
         mots = l.replace("-", " - ").split()
@@ -100,8 +144,9 @@ def identite_du_cv(texte):
             if maj and len(maj) < len(vrais):
                 nom = " ".join(m.capitalize() for m in maj)
                 prenom = " ".join(m for m in vrais if m not in maj)
-            else:
-                prenom, nom = vrais[0], " ".join(vrais[1:])
+            else:  # all in capitals ("JULIE MOREAU"): signed "Julie Moreau"
+                prenom = _nom_propre(vrais[0])
+                nom = " ".join(_nom_propre(m) for m in vrais[1:])
             break
     # The city: a sector of the zone catalogue named in the header.
     ville = ""
@@ -956,6 +1001,11 @@ def main():
         print(
             "  ! Presque aucun texte lu. Un CV scanne (image) ne se lit pas : fournis un PDF texte ou un .docx."
         )
+        # Without text the profile would collect "a completer" postings: nothing written,
+        # unless the jobs are given (--metiers).
+        if not a.metiers:
+            print("  Rien n'est écrit. Relance avec le CV en .docx, ou donne --metiers.")
+            return 1
     ident = identite_du_cv(txt)
     comps = competences_du_cv(txt)
     comps.update(competences_libres(txt, comps))
@@ -973,7 +1023,7 @@ def main():
     ident["ville"] = demander("Ville", ident["ville"], a.auto)
     # Job: the line under the name is often the CV's title.
     lignes = [l.strip() for l in txt.splitlines() if l.strip()]
-    propose = next((l for l in lignes[1:8] if 4 < len(l) < 60 and not re.search(r"[@\d]", l)), "")
+    propose = titre_du_cv(lignes, ident)
     metiers = [
         m.strip()
         for m in demander(

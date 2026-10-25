@@ -221,10 +221,8 @@ class App(
         # bottom left (_menu_reglages).
         CB(
             outils,
-            text="Vérifier que les offres sont disponibles",
-            command=lambda: self.run_step(
-                DISPONIBILITE, _t("Vérifier que les offres sont disponibles")
-            ),
+            text="Vérifier les offres en ligne",
+            command=lambda: self.run_step(DISPONIBILITE, _t("Vérifier les offres en ligne")),
             font=(_theme.FONT_UI, 12),
             bg=SIDE_CARD,
             fg=SIDE_TX,

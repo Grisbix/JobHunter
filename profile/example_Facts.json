@@ -7,8 +7,8 @@
    "priorite": 5,
    "declencheurs": [
     "photovolta",
-    "\bsolaire",
-    "\b[ée]olien",
+    "\\bsolaire",
+    "\\b[ée]olien",
     "renouvelable"
    ],
    "fr": [

@@ -143,7 +143,7 @@ _C = [
     (
         "Analyse financière",
         "finance",
-        ["analyse financi", "financial analysis", "états financiers", "bilan"],
+        ["analyse financi", "financial analysis", "états financiers", "analyse de bilan"],
         "financial analysis",
         "l'analyse financière",
         "financial analysis",
@@ -221,7 +221,7 @@ _C = [
     (
         "Gestion d'actifs",
         "finance",
-        ["asset management", "gestion d'actifs", "portefeuille", "portfolio"],
+        ["asset management", "gestion d'actifs", "gestion de portefeuille", "portfolio manag"],
         "asset management",
         "la gestion d'actifs",
         "asset management",

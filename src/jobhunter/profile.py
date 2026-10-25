@@ -157,7 +157,9 @@ def accord(masculin: str, feminin: str) -> str:
 def _fragment(mot: object, entier: bool) -> str:
     mot = str(mot)
     if mot.startswith("re:"):
-        return "(?:" + mot[3:] + ")"  # regex : prise TELLE QUELLE
+        # Taken as is, except the backspace that "\b" becomes when the profile is
+        # edited by hand in JSON: there it can only mean a word boundary.
+        return "(?:" + mot[3:].replace("\x08", r"\b") + ")"
     # "*mot": found inside a word too — "*analyst" finds "Nachhaltigkeitsanalyst",
     # where a German compound has no boundary before the job word.
     libre = mot.startswith("*")

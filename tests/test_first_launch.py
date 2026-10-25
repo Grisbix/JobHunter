@@ -288,3 +288,37 @@ def test_profil_refait_reclasse_les_offres(monkeypatch, tmp_path):
     monkeypatch.setattr(fl, "HERE", tmp_path)
     assert fl.reclasser_domaines() == 1
     assert _file.charger(q, descriptions=False)[0]["domaine"] != "Vieux_domaine"
+
+
+def test_cv_canva_nom_sur_deux_lignes_et_titres_espaces():
+    txt = fl._titres_serres(
+        "KARIM\nBENALI\nComptable\nC O N T A C T\nkarim@exemple.fr\n+44 7700 900123\n"
+        "C O M P É T E N C E S\nSage\n"
+    )
+    ident = fl.identite_du_cv(txt)
+    assert (ident["prenom"], ident["nom"]) == ("Karim", "Benali")
+    assert ident["telephone"] == "+44 7700 900123"
+    lignes = [l for l in txt.splitlines() if l]
+    assert fl.titre_du_cv(lignes, ident) == "Comptable"  # not "BENALI"
+    assert "COMPÉTENCES" in txt.splitlines()
+
+
+def test_nom_en_capitales():
+    ident = fl.identite_du_cv("JEAN-PIERRE DURAND\nComptable")
+    assert (ident["prenom"], ident["nom"]) == ("Jean-Pierre", "Durand")
+
+
+def test_synonymes_trop_larges():
+    comps = fl.competences_du_cv("Portefeuille de 40 clients, bilans annuels et TVA.")
+    assert "Gestion d'actifs" not in comps and "Analyse financière" not in comps
+
+
+def test_backspace_du_json_lu_comme_frontiere_de_mot():
+    # "\bsolaire" written in JSON is a backspace then "solaire": never found before.
+    from jobhunter import profile as _P
+    from jobhunter.documents import cv_auto
+
+    banque = {"faits": [{"id": "s", "valide": True, "declencheurs": ["\x08solaire"]}]}
+    assert cv_auto.faits_retenus("Parc solaire de 20 MW", banque)
+    assert _P.motif(["re:\x08rse\x08"]).search("Chargé RSE")
+    assert not _P.motif(["re:\x08rse\x08"]).search("diverse")

@@ -57,6 +57,15 @@ def banque() -> dict[str, Any]:
         return {}
 
 
+def _motif(declencheur: str) -> str:
+    r"""A trigger as written in JSON: "\bsolaire" there is a BACKSPACE then "solaire".
+
+    The example bank itself carried two of them, so the fact never triggered, with no
+    error. In a trigger, the backspace can only be a word boundary meant as \b.
+    """
+    return declencheur.replace("\x08", r"\b")
+
+
 def faits_retenus(texte: str | None, b: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     """The valid facts one of whose triggers appears in `texte`, by priority."""
     b = banque() if b is None else b
@@ -65,7 +74,7 @@ def faits_retenus(texte: str | None, b: dict[str, Any] | None = None) -> list[di
     for f in b.get("faits", []):
         if not f.get("valide"):
             continue
-        if any(re.search(d, t, re.I) for d in f.get("declencheurs", [])):
+        if any(re.search(_motif(d), t, re.I) for d in f.get("declencheurs", [])):
             out.append(f)
     out.sort(key=lambda f: -int(f.get("priorite", 0)))
     return out

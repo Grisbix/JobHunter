@@ -555,6 +555,10 @@ TEXTES: dict[str, str] = {
     "Freelance": "Autónomo",
     "V.I.E": "V.I.E",
     "Bénévolat": "Voluntariado",
+    # Statistics: the default domain and the channel values.
+    "Autre": "Otro",
+    "manuel": "manual",
+    "auto": "automático",
     "le {d}": "el {d}",
     "{n} j": "{n} d",
     "▶ Sur les offres à fit ≥ 8": "▶ Ofertas con fit ≥ 8",
@@ -578,7 +582,7 @@ TEXTES: dict[str, str] = {
     "Les mises à jour viennent de GitHub ; chacune est vérifiée avant d'être installée.": "Las actualizaciones vienen de GitHub; cada una se verifica antes de instalarse.",
     "Vérifier les mises à jour": "Buscar actualizaciones",
     # 3.19.1: the ⚙ menu
-    "Vérifier que les offres sont disponibles": "Comprobar que las ofertas siguen abiertas",
+    "Vérifier les offres en ligne": "Ofertas aún en línea",
     "Ouvrir le dossier": "Abrir la carpeta",
     # 3.19.1: the ⚑ column explained
     "⚑ Alerte — vide quand tout va bien": "⚑ Alerta — vacía si todo va bien",
