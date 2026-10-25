@@ -301,3 +301,10 @@ def test_noms_courts_reconnus_en_mot_entier():
     # "ey" inside keyrecruit, "hp" inside php: not those companies
     assert statuts.candidature(c("Jobs <jobs@keyrecruit.com>", "Hello", refus), suivi) is None
     assert statuts.candidature(c("HR <hr@php-jobs.io>", "PHP role", refus), suivi) is None
+
+
+def test_un_fichier_eml_donne_directement(tmp_path):
+    # "--eml refus.eml" read nothing, silently: only a folder was walked.
+    f = tmp_path / "refus.eml"
+    f.write_bytes(b"From: a@b.fr\nSubject: Votre candidature\n\nNon retenue.\n")
+    assert len(list(lecture.depuis_eml(f))) == 1

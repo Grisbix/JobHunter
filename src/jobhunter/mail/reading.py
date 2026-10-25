@@ -102,8 +102,11 @@ def depuis_mbox(chemin: Path) -> Iterator[Courriel]:
 
 
 def depuis_eml(dossier: Path) -> Iterator[Courriel]:
-    """The .eml files of a folder (an email dragged out of the mail client)."""
-    for p in sorted(dossier.rglob("*.eml")):
+    """The .eml files of a folder (an email dragged out of the mail client).
+
+    One .eml file given directly is read too: it gave "0 courriel(s) lus" silently.
+    """
+    for p in [dossier] if dossier.is_file() else sorted(dossier.rglob("*.eml")):
         yield depuis_octets(p.read_bytes())
 
 

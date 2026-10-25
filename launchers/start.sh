@@ -16,4 +16,10 @@ if [ ! -f profile/profile.json ] && [ ! -f profil/profil.json ]; then
   echo
   echo "Profil cree. Dans l'app : Ma recherche (mots-cles, villes), Profil (competences), puis Actualiser les offres."
 fi
+if ! "$PY" -c "import tkinter" 2>/dev/null; then
+  echo "Il manque Tk a Python : la fenetre ne peut pas s'ouvrir."
+  echo "  Linux : sudo apt install python3-tk   macOS : brew install python-tk@3.12"
+  echo "La collecte marche sans : $PY JobHunter.pyw pipeline"
+  exit 1
+fi
 exec "$PY" JobHunter.pyw
