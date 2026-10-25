@@ -457,9 +457,10 @@ class ExecutionMixin:
             if (o.get("fit") or 0) >= 8 and not (_f(o.get("cv")) and _f(o.get("lettre")))
         )
         n = simpledialog.askinteger(
-            "CV / lettres",
-            f"Combien d'offres traiter ?\n\n"
-            f"{reste} offre(s) a fit ≥ 8 attendent encore leurs documents.",
+            _t("CV / lettres"),
+            _t(
+                "Combien d'offres traiter ?\n\n{n} offre(s) a fit ≥ 8 attendent encore leurs documents."
+            ).format(n=reste),
             parent=self.root,
             initialvalue=min(reste or 30, 50),
             minvalue=1,

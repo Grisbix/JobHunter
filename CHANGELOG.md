@@ -4,6 +4,14 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.25.1 — 2026-10-25
+
+**The app, clicked everywhere**: every button of every page and every entry of
+« Outils », on five profiles and in the four languages, with the questions answered
+« yes » and the buttons of the windows that open clicked too (`tools/sweep_app.py`,
+over 590 clicks). No error. One window stayed in French in the other languages (« CV /
+lettres », how many offers to process): translated.
+
 ## 3.25.0 — 2026-10-25
 
 **Any CV**: 45 fictitious CVs (42 jobs, from nurse to forklift driver, lawyer or

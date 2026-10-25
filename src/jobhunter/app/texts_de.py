@@ -554,6 +554,8 @@ TEXTES: dict[str, str] = {
     "Freelance": "Freiberuflich",
     "V.I.E": "V.I.E",
     "Bénévolat": "Ehrenamt",
+    "CV / lettres": "Lebensläufe / Anschreiben",
+    "Combien d'offres traiter ?\n\n{n} offre(s) a fit ≥ 8 attendent encore leurs documents.": "Wie viele Stellen bearbeiten?\n\n{n} Stelle(n) mit Fit ≥ 8 warten noch auf ihre Unterlagen.",
     # Statistics: the default domain and the channel values.
     "Autre": "Sonstiges",
     "manuel": "manuell",

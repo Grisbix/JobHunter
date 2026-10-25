@@ -47,6 +47,10 @@ change target, change the profile.
   English) and checks each profile end to end (identity, own job kept by the filter, the
   domain and the sorting, fit, letter and message); `tests/test_sweep_cv.py` runs four.
   After a change of `first_launch` or `skills_catalog`, run the full sweep.
+- `python tools/sweep_app.py --racine <data folder> [--oui] [--langue en]` clicks every
+  button of every panel and every "Outils" entry on a COPY of the data, nothing started
+  (programs, browser and dialogs are recorded); exit 1 if a Tk callback raises. Needs a
+  display (`xvfb-run -a` on a server). Run it after a change in `src/jobhunter/app/`.
 - CI: `.github/workflows/tests.yml` runs the network-free suites on every push.
 
 ## Read before touching the code
