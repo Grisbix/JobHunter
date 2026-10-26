@@ -15,44 +15,95 @@ STATIC = Path(__file__).parent / "static"
 _DWMWA_USE_IMMERSIVE_DARK_MODE = 20
 _DWMWA_WINDOW_CORNER_PREFERENCE = 33
 _DWMWA_SYSTEMBACKDROP_TYPE = 38
+_DWMWCP_DONOTROUND = 1
 _DWMWCP_ROUND = 2
 _DWMSBT_TRANSIENTWINDOW = 3  # acrylic: the wallpaper, blurred, behind the window
+_SPI_GETWORKAREA = 0x0030
+_SWP_NOZORDER = 0x0004
+_SWP_FRAMECHANGED = 0x0020
 
 
-def _vitre(fenetre: Any) -> None:
-    """Rounded corners and acrylic backdrop behind the transparent page (Windows 11).
+class _Cadre:
+    """The two sizes of the frameless window, drawn by hand on Windows 11.
 
-    The page is drawn on a transparent WebView2; the form is painted black, which DWM
-    treats as "show the backdrop" once the frame is extended over the whole client
-    area. Anything failing here only leaves a plain window: never fatal.
+    The system "maximize" misplaces a frameless WinForms window (it keeps its
+    position and overflows the screen), so: full = the work area (taskbar left
+    visible), square corners; windowed = 90 % of it, centred, rounded corners.
+    Anything failing here only leaves a plain window: never fatal.
     """
-    if sys.platform != "win32":
-        return
-    try:
+
+    def __init__(self, fenetre: Any) -> None:
+        self.fenetre = fenetre
+        self.hwnd = 0
+        self.plein = False
+
+    def _attribut(self, code: int, valeur: int) -> None:
         import ctypes
 
-        forme = fenetre.native
-        hwnd = forme.Handle.ToInt32()
-        dwm = ctypes.windll.dwmapi
+        v = ctypes.c_int(valeur)
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(
+            self.hwnd, code, ctypes.byref(v), ctypes.sizeof(v)
+        )
 
-        def attribut(code: int, valeur: int) -> None:
-            v = ctypes.c_int(valeur)
-            dwm.DwmSetWindowAttribute(hwnd, code, ctypes.byref(v), ctypes.sizeof(v))
+    def _placer(self, plein: bool) -> None:
+        import ctypes
+        from ctypes import wintypes
 
-        class Marges(ctypes.Structure):
-            _fields_ = [(n, ctypes.c_int) for n in ("g", "d", "h", "b")]
+        zone = wintypes.RECT()
+        ctypes.windll.user32.SystemParametersInfoW(_SPI_GETWORKAREA, 0, ctypes.byref(zone), 0)
+        lz, hz = zone.right - zone.left, zone.bottom - zone.top
+        if plein:
+            x, y, lg, ht = zone.left, zone.top, lz, hz
+        else:
+            lg, ht = int(lz * 0.9), int(hz * 0.9)
+            x, y = zone.left + (lz - lg) // 2, zone.top + (hz - ht) // 2
+        self._attribut(
+            _DWMWA_WINDOW_CORNER_PREFERENCE, _DWMWCP_DONOTROUND if plein else _DWMWCP_ROUND
+        )
+        ctypes.windll.user32.SetWindowPos(
+            self.hwnd, 0, x, y, lg, ht, _SWP_NOZORDER | _SWP_FRAMECHANGED
+        )
+        self.plein = plein
 
-        dwm.DwmExtendFrameIntoClientArea(hwnd, ctypes.byref(Marges(-1, -1, -1, -1)))
-        attribut(_DWMWA_USE_IMMERSIVE_DARK_MODE, 0)
-        attribut(_DWMWA_WINDOW_CORNER_PREFERENCE, _DWMWCP_ROUND)
-        attribut(_DWMWA_SYSTEMBACKDROP_TYPE, _DWMSBT_TRANSIENTWINDOW)
+    def installer(self) -> None:
+        """Acrylic backdrop behind the transparent page, then the full size.
 
-        from System import Action
-        from System.Drawing import Color
+        The page is drawn on a transparent WebView2; the form is painted black, which
+        DWM treats as "show the backdrop" once the frame covers the client area.
+        """
+        if sys.platform != "win32":
+            return
+        try:
+            import ctypes
 
-        forme.Invoke(Action(lambda: setattr(forme, "BackColor", Color.Black)))
-    except Exception as e:  # noqa: BLE001 — cosmetic only
-        print(f"vitre : {e}")
+            forme = self.fenetre.native
+            self.hwnd = forme.Handle.ToInt32()
+
+            class Marges(ctypes.Structure):
+                _fields_ = [(n, ctypes.c_int) for n in ("g", "d", "h", "b")]
+
+            ctypes.windll.dwmapi.DwmExtendFrameIntoClientArea(
+                self.hwnd, ctypes.byref(Marges(-1, -1, -1, -1))
+            )
+            self._attribut(_DWMWA_USE_IMMERSIVE_DARK_MODE, 0)
+            self._attribut(_DWMWA_SYSTEMBACKDROP_TYPE, _DWMSBT_TRANSIENTWINDOW)
+
+            from System import Action
+            from System.Drawing import Color
+
+            forme.Invoke(Action(lambda: setattr(forme, "BackColor", Color.Black)))
+            self._placer(True)
+        except Exception as e:  # noqa: BLE001 — cosmetic only
+            print(f"cadre : {e}")
+
+    def basculer(self) -> None:
+        """Full screen <-> rounded window (title bar button, double click)."""
+        if not self.hwnd:
+            return
+        try:
+            self._placer(not self.plein)
+        except Exception as e:  # noqa: BLE001 — cosmetic only
+            print(f"cadre : {e}")
 
 
 def main() -> int:
@@ -66,25 +117,21 @@ def main() -> int:
     from jobhunter.web.api import Api
 
     api = Api()
-    # Large but not maximized: Windows squares the corners of a maximized window.
-    ecran = webview.screens[0] if webview.screens else None
-    largeur = min(1600, ecran.width - 32) if ecran else 1440
-    hauteur = min(1000, ecran.height - 72) if ecran else 920
     fenetre = webview.create_window(
         "JobHunter",
         str(STATIC / "index.html"),
         js_api=api,
-        width=largeur,
-        height=hauteur,
-        x=(ecran.width - largeur) // 2 if ecran else None,
-        y=max(0, (ecran.height - hauteur) // 2 - 20) if ecran else None,
-        min_size=(1100, 720),
+        width=1280,
+        height=800,
+        min_size=(900, 560),
         frameless=True,
         easy_drag=False,
         transparent=True,
     )
+    cadre = _Cadre(fenetre)
     api._fenetre = fenetre
-    fenetre.events.shown += lambda: _vitre(fenetre)
+    api._basculer = cadre.basculer
+    fenetre.events.shown += cadre.installer
     webview.start()
     return 0
 

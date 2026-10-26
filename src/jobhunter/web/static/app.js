@@ -43,7 +43,7 @@ const nombre = (n) => Number(n || 0).toLocaleString("fr-FR");
 const JOURS = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
 const jourCourt = (iso) => {
   const d = new Date(iso + "T12:00:00");
-  return isNaN(d) ? iso : `${JOURS[d.getDay()]} ${d.getDate()}`;
+  return isNaN(d) ? iso : `${JOURS[d.getDay()].slice(0, 2)} ${d.getDate()}`;
 };
 const dateFr = (iso) => (iso ? iso.split("-").reverse().slice(0, 2).join("/") : "");
 

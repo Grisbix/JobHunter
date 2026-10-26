@@ -117,7 +117,7 @@ class Api:
 
     # Set by __main__ once the window exists; private, so pywebview does not expose it.
     _fenetre: Any = None
-    _maximisee = False
+    _basculer: Any = None  # full screen <-> rounded window
 
     def tableau(self) -> dict[str, Any]:
         """The home screen data, from the real queue and applications."""
@@ -139,10 +139,7 @@ class Api:
         if action == "reduire":
             f.minimize()
         elif action == "agrandir":
-            if self._maximisee:
-                f.restore()
-            else:
-                f.maximize()
-            self._maximisee = not self._maximisee
+            if self._basculer:
+                self._basculer()
         elif action == "fermer":
             f.destroy()
