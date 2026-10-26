@@ -368,6 +368,7 @@ def ecrire_reglages(valeurs: Any) -> dict[str, Any]:
 # (app/execution.py, app/common.py), and nothing else. None of them sends anything.
 TACHES: dict[str, tuple[str, list[str]]] = {
     "collecte": ("Collecte du matin", ["jobhunter.programs.daily_pipeline", "--un-profil"]),
+    "scan": ("Scan offres", ["jobhunter.sources", "--all"]),  # the desktop's first step
     "brouillons": ("Brouillons de relance", ["jobhunter.programs.follow_ups", "--brouillons"]),
     "regenerer_cv": ("Refaire les CV", ["jobhunter.programs.regenerate_docs", "--cv"]),
     "disponibilite": (
@@ -383,10 +384,14 @@ TACHES: dict[str, tuple[str, list[str]]] = {
     "rescore": ("Recalculer le fit", ["jobhunter.programs.rescore_ats"]),
     # + the offer's URL, which generate_docs matches by substring
     "documents": ("CV et lettre de l'offre", ["jobhunter.programs.generate_docs", "--url"]),
+    # + an http(s) link pasted by the user: title, company, description → queue
+    "ajout": ("Ajouter une offre", ["jobhunter.programs.add_offer", "--url"]),
+    # + the offer's identity: its description fetched online (headless)
+    "description": ("Description de l'offre", ["jobhunter.programs.scrape_desc", "--key"]),
 }
 
-# Statuses the page may set on an application.
-STATUTS = (*COLONNES, *ECARTEES)
+# Statuses the page may set on an application: the desktop's list ("" clears it).
+STATUTS = ("à postuler", "à vérifier", "postulé", "relancé", "entretien", "refus", *ECARTEES)
 
 
 class Tache:
@@ -506,6 +511,8 @@ class Api:
         """An empty cache: each data file is read on first use."""
         self._cache: dict[str, tuple[float, Any]] = {}
         self._propositions: list[Any] = []  # last email suggestions, applied by index
+        # Undo (the desktop's Ctrl+Z): per gesture, each application as it was before.
+        self._annuler: list[list[tuple[str, dict[str, Any]]]] = []
 
     # Data, reloaded only when its file changed.
     def _lire(self, cle: str, fichier: Path, charger: Any) -> Any:
@@ -955,20 +962,28 @@ class Api:
         return {"ok": True}
 
     # Actions that write: a status, or a program started by a button.
-    def marquer(self, ident: str, statut: str) -> dict[str, Any]:
-        """Sets the status of one application, dated today, under the tracker's lock."""
+    def _ecrire_suivi(
+        self, changements: dict[str, Callable[[dict[str, Any]], dict[str, Any]]]
+    ) -> dict[str, Any]:
+        """Applies one change per application in ONE locked write; the gesture can be undone.
+
+        Each change receives the entry as re-read on disk (a note or a follow-up
+        written meanwhile survives) and returns the new one; empty erases it.
+        """
         from jobhunter.storage import applications
 
-        if statut not in STATUTS:
-            return {"ok": False, "erreur": f"statut inconnu : {statut}"}
-        if ident not in self._suivi() and not any(_oid(o) == ident for o in self._file()):
-            return {"ok": False, "erreur": "offre introuvable"}
+        geste: list[tuple[str, dict[str, Any]]] = []
 
         def _f(s: dict[str, Any]) -> None:
-            rec = dict(s.get(ident) or {})
-            rec["s"] = statut
-            rec["d"] = date.today().isoformat()
-            s[ident] = rec
+            geste.clear()
+            for oid, changer in changements.items():
+                avant = dict(s.get(oid) or {})
+                apres = changer(dict(avant))
+                if apres:
+                    s[oid] = apres
+                else:
+                    s.pop(oid, None)
+                geste.append((oid, avant))
 
         try:
             applications.modifier(_f, attente=4)
@@ -977,28 +992,307 @@ class Api:
                 "ok": False,
                 "erreur": "Un autre programme écrit le suivi : réessaie dans un instant.",
             }
+        self._annuler.append(list(geste))
+        del self._annuler[:-50]
+        return {"ok": True, "n": len(geste)}
+
+    def _connue(self, ident: str) -> bool:
+        return ident in self._suivi() or any(_oid(o) == ident for o in self._file())
+
+    def _garder_annonces(self, idents: list[str], statut: str) -> None:
+        """Keeps the posting's copy of an offer applied to (postings), in a thread."""
+        from jobhunter import postings
+
+        if statut not in postings.ENVOYEES:
+            return
+        offres = [o for o in self._file() if _oid(o) in idents]
+
+        def garder() -> None:
+            for o in offres:
+                try:
+                    postings.archiver(o)
+                except Exception:  # noqa: BLE001,S110 — the morning pipeline tries again
+                    pass
+
+        threading.Thread(target=garder, daemon=True).start()
+
+    def marquer(self, ident: str | list[str], statut: str) -> dict[str, Any]:
+        """Sets the status of one or several applications; "" clears it (undoable).
+
+        The date is today's when the status changes; the note and the rest stay.
+        """
+        idents = [ident] if isinstance(ident, str) else [str(x) for x in ident or []]
+        if statut and statut not in STATUTS:
+            return {"ok": False, "erreur": f"statut inconnu : {statut}"}
+        if not idents or not all(self._connue(i) for i in idents):
+            return {"ok": False, "erreur": "offre introuvable"}
+        jour = date.today().isoformat()
+
+        def changer(rec: dict[str, Any]) -> dict[str, Any]:
+            if not statut:
+                return {}
+            if rec.get("s") != statut:
+                rec["d"] = jour
+            rec["s"] = statut
+            return rec
+
+        r = self._ecrire_suivi(dict.fromkeys(idents, changer))
+        if r["ok"]:
+            self._garder_annonces(idents, statut)
+        return r
+
+    def suivre(self, ident: str, d: dict[str, Any]) -> dict[str, Any]:
+        """The tracking fields of the offer sheet: status, note, date (the desktop's card)."""
+        if not self._connue(ident):
+            return {"ok": False, "erreur": "offre introuvable"}
+        statut = str(d.get("statut") or "")
+        if statut and statut not in STATUTS:
+            return {"ok": False, "erreur": f"statut inconnu : {statut}"}
+        le = str(d.get("date") or "").strip()
+        if le and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", le):
+            return {"ok": False, "erreur": "date au format AAAA-MM-JJ"}
+
+        def changer(rec: dict[str, Any]) -> dict[str, Any]:
+            for cle, val in (("s", statut), ("n", str(d.get("note") or "").strip()), ("d", le)):
+                if val:
+                    rec[cle] = val
+                else:
+                    rec.pop(cle, None)
+            return rec if any(rec.get(k) for k in ("s", "n", "d")) else {}
+
+        r = self._ecrire_suivi({ident: changer})
+        if r["ok"]:
+            self._garder_annonces([ident], statut)
+        return r
+
+    def declarer_envoi(self, ident: str) -> dict[str, Any]:
+        """Records an application the user says they sent ("déclaré", ADR 0009).
+
+        Nothing is sent here: the page asks "As-tu envoyé cette candidature ?" first.
+        """
+        from jobhunter.storage import applications
+
+        if not self._connue(ident):
+            return {"ok": False, "erreur": "offre introuvable"}
+        avant = dict(self._suivi().get(ident) or {})
+        try:
+            applications.declarer_envoi(ident, "déclaré", attente=4)
+        except applications.VerrouIndisponible:
+            return {
+                "ok": False,
+                "erreur": "Un autre programme écrit le suivi : réessaie dans un instant.",
+            }
+        self._annuler.append([(ident, avant)])
+        self._garder_annonces([ident], "postulé")
         return {"ok": True}
+
+    def annuler(self) -> dict[str, Any]:
+        """Puts the tracking of the last gesture back as it was (the desktop's Ctrl+Z)."""
+        from jobhunter.storage import applications
+
+        if not self._annuler:
+            return {"ok": False, "erreur": "Rien à annuler."}
+        geste = self._annuler.pop()
+
+        def _f(s: dict[str, Any]) -> None:
+            for oid, avant in geste:
+                if avant:
+                    s[oid] = avant
+                else:
+                    s.pop(oid, None)
+
+        try:
+            applications.modifier(_f, attente=4)
+        except applications.VerrouIndisponible:
+            self._annuler.append(geste)
+            return {"ok": False, "erreur": "Suivi occupé : réessaie dans un instant."}
+        return {"ok": True, "n": len(geste)}
+
+    def motifs(self) -> list[str]:
+        """The frequent reasons to set offers aside (exclusions.MOTIFS)."""
+        from jobhunter.programs import exclusions
+
+        return list(exclusions.MOTIFS)
+
+    def ecarter(self, idents: list[str], motif: str) -> dict[str, Any]:
+        """Sets offers aside WITH a reason: out of the queue, and the scan will not re-add them.
+
+        The refusal is recorded before the offers leave: one exclusion too many is
+        better than an offer gone without its reason.
+        """
+        from jobhunter.programs import exclusions
+        from jobhunter.storage import queue as queue_io
+
+        motif = str(motif or "").strip()
+        oids = {str(x) for x in idents or []}
+        if not motif or not oids:
+            return {"ok": False, "erreur": "il faut des offres et un motif"}
+        try:
+            with queue_io.transaction(attente=20) as file:
+                n_exc = exclusions.ajouter([o for o in file if queue_io.oid(o) in oids], motif)
+                avant = len(file)
+                file[:] = [o for o in file if queue_io.oid(o) not in oids]
+                retirees = avant - len(file)
+        except queue_io.VerrouIndisponible:
+            return {
+                "ok": False,
+                "erreur": "Un autre programme modifie la file : réessaie dans un instant.",
+            }
+        return {"ok": True, "retirees": retirees, "exclusions": n_exc}
+
+    def supprimer(self, idents: list[str]) -> dict[str, Any]:
+        """Removes offers from the queue after a dated copy in _corbeille/ (nothing lost)."""
+        from jobhunter import root
+        from jobhunter.storage import queue as queue_io
+
+        oids = {str(x) for x in idents or []}
+        if not oids:
+            return {"ok": False, "erreur": "aucune offre"}
+        corbeille = root.scripts() / "_corbeille"
+        try:
+            with queue_io.transaction(attente=20) as file:
+                partantes = [o for o in file if queue_io.oid(o) in oids]
+                # THE COPY FIRST: if it fails, the block raises and nothing is written.
+                corbeille.mkdir(parents=True, exist_ok=True)
+                f = corbeille / f"supprimees_{datetime.now():%Y-%m-%d_%H%M%S}.json"
+                _ecrire_json(f, partantes)
+                file[:] = [o for o in file if queue_io.oid(o) not in oids]
+        except queue_io.VerrouIndisponible:
+            return {
+                "ok": False,
+                "erreur": "Un autre programme modifie la file : réessaie dans un instant.",
+            }
+        except OSError as e:
+            return {"ok": False, "erreur": f"copie impossible, rien supprimé : {e}"}
+        return {"ok": True, "n": len(partantes), "copie": f.name}
+
+    def ajouter_offre(self, url: str) -> dict[str, Any]:
+        """Analyses a pasted offer link (add_offer) and adds it to the queue."""
+        url = str(url or "").strip()
+        if not re.match(r"^https?://", url):
+            return {"ok": False, "erreur": "colle un lien http(s) d'offre"}
+        if self._tache and self._tache.code is None:
+            return {"ok": False, "erreur": f"« {self._tache.libelle} » tourne encore."}
+        return self._demarrer("ajout", TACHES["ajout"][0], [*TACHES["ajout"][1], url])
+
+    def chercher_web(self, ident: str) -> bool:
+        """Searches the company and the job on the web (the desktop's right-click entry)."""
+        from urllib.parse import quote
+
+        entreprise, _, poste = str(ident).partition("|")
+        return webbrowser.open(
+            f"https://www.google.com/search?q={quote(f'{entreprise} {poste} recrutement')}"
+        )
+
+    def compte(self, ident: str) -> dict[str, Any]:
+        """Marks or unmarks "I have an account on this site" (comptes_sites.json, no password)."""
+        from urllib.parse import urlparse
+
+        from jobhunter import profile, root
+
+        o = next((x for x in self._file() if _oid(x) == ident), None)
+        url = str((o or {}).get("url") or "")
+        if not url.startswith("http"):
+            return {"ok": False, "erreur": "pas de lien, donc pas de site"}
+        hote = urlparse(url).netloc.replace("www.", "").lower()
+        f = root.dans(root.scripts(), "comptes_sites.json")
+        try:
+            comptes = json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
+        except (OSError, ValueError) as e:
+            return {"ok": False, "erreur": f"comptes_sites.json illisible : {e}"}
+        lies = [h for h in comptes if hote == h or hote.endswith("." + h) or h.endswith("." + hote)]
+        if lies:
+            for h in lies:
+                comptes.pop(h, None)
+        else:
+            email = str((profile.charger().get("identite") or {}).get("email") or "")
+            comptes[hote] = {
+                "site": (o or {}).get("entreprise", ""),
+                "login": url,
+                "email": email,
+                "src": "manuel",
+            }
+        _ecrire_json(f, comptes)
+        return {"ok": True, "compte": not lies, "site": hote}
 
     def lancer(self, cle: str, ident: str = "") -> dict[str, Any]:
         """Starts one of TACHES, one at a time. `ident`: the offer, for "documents"."""
-        from jobhunter import root
-
         if self._tache and self._tache.code is None:
             return {"ok": False, "erreur": f"« {self._tache.libelle} » tourne encore."}
         if cle not in TACHES:
             return {"ok": False, "erreur": f"tâche inconnue : {cle}"}
         libelle, args = TACHES[cle][0], list(TACHES[cle][1])
-        if cle == "documents":
+        if cle == "ajout":
+            return {"ok": False, "erreur": "passe par ajouter_offre"}
+        if cle == "description":
+            if not any(_oid(o) == ident for o in self._file()):
+                return {"ok": False, "erreur": "offre introuvable"}
+            args.append(ident)
+            libelle = f"{libelle} · {ident.partition('|')[0]}"
+        elif cle == "documents":
             url = next((str(o.get("url") or "") for o in self._file() if _oid(o) == ident), "")
             if not re.match(r"^https?://", url):
                 return {"ok": False, "erreur": "cette offre n'a pas de lien"}
             args.append(url)
             libelle = f"{libelle} · {ident.partition('|')[0]}"
+        return self._demarrer(cle, libelle, args)
+
+    def _demarrer(self, cle: str, libelle: str, args: list[str]) -> dict[str, Any]:
+        from jobhunter import root
+
         try:
             self._tache = Tache(cle, libelle, [sys.executable, "-m", *args], root.scripts())
         except OSError as e:
             return {"ok": False, "erreur": str(e)}
         return {"ok": True}
+
+    def outils(self) -> list[dict[str, Any]]:
+        """The Outils menu, the desktop's own list (tools_catalog), by group."""
+        from jobhunter import tools_catalog as cat
+
+        def genre(quoi: list[str] | str) -> str:
+            args = cat.programme(quoi)
+            return "action" if args is None else "console" if cat.interactif(args) else "tache"
+
+        return [
+            {
+                "groupe": groupe,
+                "outils": [
+                    {"libelle": lib, "genre": genre(q), "action": q if isinstance(q, str) else ""}
+                    for lib, q in items
+                ],
+            }
+            for groupe, items in cat.OUTILS
+        ]
+
+    def lancer_outil(self, libelle: str) -> dict[str, Any]:
+        """Runs one tool of the Outils menu, found by its label (never a command sent by the page).
+
+        A program that reads the keyboard opens in a console of its own, as on the
+        desktop: its output is not followed here. An action is the page's to open.
+        """
+        from jobhunter import root
+        from jobhunter import tools_catalog as cat
+
+        quoi = next((q for _g, items in cat.OUTILS for lib, q in items if lib == libelle), None)
+        if quoi is None:
+            return {"ok": False, "erreur": f"outil inconnu : {libelle}"}
+        args = cat.programme(quoi)
+        if args is None:
+            return {"ok": True, "action": quoi}
+        if cat.interactif(args):
+            try:
+                subprocess.Popen(  # nosec B603 : a program of tools_catalog
+                    [sys.executable, "-m", *args],
+                    cwd=str(root.scripts()),
+                    creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0x10),
+                )
+            except OSError as e:
+                return {"ok": False, "erreur": str(e)}
+            return {"ok": True, "console": True}
+        if self._tache and self._tache.code is None:
+            return {"ok": False, "erreur": f"« {self._tache.libelle} » tourne encore."}
+        return self._demarrer("outil", libelle, args)
 
     def tache(self) -> dict[str, Any] | None:
         """The running (or last) task for the task panel; None when none was started."""
@@ -1030,6 +1324,13 @@ class Api:
         if not p.is_file():
             return False
         os.startfile(p)  # type: ignore[attr-defined,unused-ignore]  # Windows only
+        return True
+
+    def ouvrir_dossier(self) -> bool:
+        """Opens the data folder in the Explorer (the desktop's "Ouvrir le dossier")."""
+        from jobhunter import root
+
+        os.startfile(root.racine())  # type: ignore[attr-defined,unused-ignore]  # nosec B606
         return True
 
     def ouvrir(self, url: str) -> bool:

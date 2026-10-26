@@ -16,6 +16,7 @@ from jobhunter import lazy as _paresseux
 from jobhunter import paths as chemins
 from jobhunter import profile as _profil
 from jobhunter import root as _racine
+from jobhunter import tools_catalog as _outils
 from jobhunter.app import theme as _theme
 from jobhunter.app.language import t as _t
 
@@ -227,84 +228,22 @@ DISPONIBILITE = [
 ]
 
 
-# 19 items stacked flat cannot be read. Grouped by INTENT: one
-# looks for "where are my offers going", not a script name.
+# The Outils menu: one list shared with the web interface (jobhunter.tools_catalog).
+# A program becomes [PY, "-m", module, args…]; an action stays its name.
 MAINT: list[tuple[str, list[tuple[str, Any]]]] = [
     (
-        "Sources & offres",
+        groupe,
         [
-            ("Scrape les sites", [PY, "-m", "jobhunter.programs.scrape_jobs", "--headless"]),
-            ("Homepages", [PY, "-m", "jobhunter.programs.enrich_homepages"]),
-            # The daily scan only sees 7 days (LinkedIn f_TPR filter). An
-            # offer published at the start of the month and missed at the time stays
-            # invisible without this wider pass.
-            ("Rattrapage 31 j", [PY, "-m", "jobhunter.sources", "--all", "--days", "31"]),
-            ("Sonder flux ATS", [PY, "-m", "jobhunter.programs.probe_ats"]),
-            ("Sonder flux Workday", [PY, "-m", "jobhunter.programs.probe_workday"]),
-            (
-                "Sonder mots-clés",
-                [PY, "-m", "jobhunter.programs.probe_keywords", "--days", "30", "--min-new", "3"],
-            ),
+            (label, [PY, "-m", *args] if (args := _outils.programme(quoi)) else quoi)
+            for label, quoi in items
         ],
-    ),
-    (
-        "Documents",
-        [
-            ("CV/lettres…", None),  # None = command built on the fly
-            ("Documents à comparer…", "comparer"),  # retouched vs regenerated (app.compare)
-            ("Sync docs+format", [PY, "-m", "jobhunter.programs.sync_docs", "--format"]),
-            ("Export CSV", [PY, "-m", "jobhunter.programs.export_queue_csv", "--keep", "8"]),
-            ("Relire les lettres", [PY, "-m", "jobhunter.programs.proofread_letters"]),
-            ("Contrôler les dossiers", [PY, "-m", "jobhunter.programs.check_folders"]),
-        ],
-    ),
-    (
-        "Hygiène de la file",
-        [
-            ("URLs mortes", [PY, "-m", "jobhunter.programs.queue_tools", "mark"]),
-            (
-                "Recheck 404",
-                [PY, "-m", "jobhunter.programs.recheck_dead", "--status", "OK", "--limit", "120"],
-            ),
-            ("Re-score", [PY, "-m", "jobhunter.programs.rescore_ats"]),
-            ("Recettes de nettoyage…", "recettes"),  # normalisation rules (app.recipes)
-        ],
-    ),
-    (
-        "Suivi",
-        [
-            ("Relances", [PY, "-m", "jobhunter.programs.follow_ups"]),
-            ("Alerte matchs", [PY, "-m", "jobhunter.programs.notify_matches", "--min-fit", "8"]),
-        ],
-    ),
-    (
-        "Accès & diagnostic",
-        [
-            # Masked entry of the API secret: it goes neither through the chat nor through
-            # l'historique shell. Console reelle obligatoire (getpass lit stdin).
-            ("Clés France Travail", [PY, "-m", "jobhunter.programs.setup_francetravail"]),
-            ("Fermer Chrome", [PY, "-m", "jobhunter.programs.access", "--close"]),
-            (
-                "Tester accès aux sites",
-                [PY, "-m", "jobhunter.programs.test_site_access", "--all", "--limit", "0"],
-            ),
-            (
-                "Tests live (lent, ouvre un navigateur)",
-                [PY, "-m", "jobhunter.programs.test_live_nav"],
-            ),
-            ("Statuts depuis mes courriels…", "courriels"),  # read-only (app.mail)
-            ("Profils…", "profils"),  # several searches, one workspace each (app.profiles_menu)
-        ],
-    ),
+    )
+    for groupe, items in _outils.OUTILS
 ]
 
 
 # interactive scripts (input()) -> run in a REAL console, not a piped subprocess
-INTERACTIVE = (
-    "jobhunter.programs.apply_runner",
-    "jobhunter.programs.setup_francetravail",
-    "jobhunter.programs.access",
-)
+INTERACTIVE = _outils.INTERACTIVE
 
 
 SCRAPE_TAG = "\U0001f50e"  # magnifier, prefix of the automatic scan's logs

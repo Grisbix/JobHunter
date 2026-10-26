@@ -18,6 +18,9 @@ const ICONES = {
   copie: "M8 3h10a2 2 0 0 1 2 2v12h-2V5H8zM5 7h10a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z",
   eclair: "M13 2 4 14h6l-1 8 9-12h-6z",
   fleche: "M12 4a8 8 0 1 1-7.7 10h2.1A6 6 0 1 0 12 6V9L7.5 5 12 1z",
+  dossier: "M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2h8.5A1.5 1.5 0 0 1 21 8.5v10a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z",
+  clavier: "M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm1 3v2h2V9zm4 0v2h2V9zm4 0v2h2V9zm4 0v2h2V9zM7 13v2h10v-2z",
+  fenetre: "M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 5v9h14V9z",
   reglage: "M3 6h9v2H3zm14 0h4v2h-4zM3 16h4v2H3zm8 0h10v2H11zM12 4h4v6h-4zM7 14h4v6H7z",
 };
 
@@ -93,6 +96,30 @@ async function lancer(cle, ident = "") {
   suivreTache();
 }
 const action = (texte, icone, cle, classe = "") => bouton(texte, icone, () => lancer(cle), classe);
+
+// The Outils menu (tools_catalog, the desktop's list): a program, a console, or a page.
+const ACTIONS_OUTILS = {};
+async function lancerOutil(libelle) {
+  if (!window.pywebview) return toast(HORS_APPLI, true);
+  const r = await window.pywebview.api.lancer_outil(libelle);
+  if (!r.ok) return toast(r.erreur, true);
+  if (r.action) return ACTIONS_OUTILS[r.action] ? ACTIONS_OUTILS[r.action]() : toast(`${libelle} : pas encore dans cette fenêtre.`, true);
+  if (r.console) return toast(`${libelle} : fenêtre console ouverte, réponds-y au clavier.`);
+  suivreTache();
+}
+function carteOutils(groupes) {
+  return h("div", { class: "verre panneau large" },
+    h("div", { class: "entete-panneau" }, h("h2", {}, "Outils"),
+      h("span", { class: "sous" }, "les mêmes que le menu Outils de l'application de bureau")),
+    h("div", { class: "outils" },
+      h("div", { class: "groupe-outils" }, h("h3", {}, "Collecte"),
+        bouton("Scan offres", "eclair", () => lancer("scan"), "outil"),
+        bouton("Ouvrir le dossier", "dossier", () => window.pywebview ? window.pywebview.api.ouvrir_dossier() : toast(HORS_APPLI, true), "outil"),
+        bouton("Recharger", "fleche", () => redessiner(), "outil")),
+      (groupes || []).map((g) => h("div", { class: "groupe-outils" }, h("h3", {}, g.groupe),
+        g.outils.map((o) => bouton(o.libelle, o.genre === "console" ? "clavier" : o.genre === "action" ? "fenetre" : "eclair",
+          () => lancerOutil(o.libelle), "outil"))))));
+}
 
 function duree(s) {
   return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")}`;
@@ -655,6 +682,7 @@ ECRANS.sources = {
 
 // --- Statuses from emails (Candidatures) -----------------------------------------------
 
+ACTIONS_OUTILS.courriels = () => ouvrirCourriels();
 function ouvrirCourriels() {
   const corps = $("tiroir-corps");
   const liste = h("div", { class: "colonne" });
@@ -727,7 +755,8 @@ ECRANS.maintenance = {
           h("dt", {}, "Offres"), h("dd", {}, nombre(m.offres)), h("dt", {}, "Candidatures"), h("dd", {}, nombre(m.candidatures)),
           m.tailles.map((t) => [h("dt", {}, t.nom), h("dd", {}, taille(t.octets))])),
         h("div", { class: "actions-col" }, action("Contrôler les offres fermées", "loupe", "disponibilite"))),
-      carte("Sauvegardes", h("div", { class: "sous", style: "margin:0 0 10px" }, "une par jour, sept jours glissants"), puces(m.sauvegardes))));
+      carte("Sauvegardes", h("div", { class: "sous", style: "margin:0 0 10px" }, "une par jour, sept jours glissants"), puces(m.sauvegardes)),
+      carteOutils(await appel("outils"))));
   },
 };
 
