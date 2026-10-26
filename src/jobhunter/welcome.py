@@ -64,20 +64,157 @@ def activer_depot(fenetre: Any, rappel: Callable[[list[Path]], None]) -> bool:
         return False
 
 
-def demander_cv(fenetre: tk.Tk) -> str:
+# ── The application's look (app.theme), without loading the app package ─────
+# jobhunter.app reads the profile when it loads, and these windows run before one
+# exists: the few colours they use are repeated here (tests/test_cv_text.py checks
+# they stay equal to app.theme's).
+BG = "#E9EFF7"
+CARD = "#FFFFFF"
+LINE = "#D8E2EF"
+LINE_SAISIE = "#74869F"
+TX = "#19283F"
+MUT = "#52647B"
+ACC = "#325EDF"
+ACC_H = "#234FC7"
+BTN = "#E7EDF7"
+BTN_H = "#D4E1F7"
+BAD = "#AC3E49"
+RAD_BTN = 6
+RAD_CARD = 10
+ICONE = Path(__file__).parent / "app" / "assets" / "jobhunter.ico"
+
+
+def _police(taille: int = 13, gras: bool = False) -> Any:
+    """The application's font (IBM Plex Sans when installed, Segoe UI otherwise)."""
+    import tkinter.font as tkf
+
+    import customtkinter as ctk
+
+    familles = set(tkf.families())
+    nom = next((n for n in ("IBM Plex Sans", "Segoe UI") if n in familles), "TkDefaultFont")
+    return ctk.CTkFont(nom, taille, "bold" if gras else "normal")
+
+
+def fenetre_accueil() -> Any:
+    """The hidden root of the welcome windows: JobHunter's background and icon."""
+    import customtkinter as ctk
+
+    ctk.set_appearance_mode("light")
+    r = ctk.CTk(fg_color=BG)
+    r.title("JobHunter")
+    try:
+        if sys.platform == "win32":
+            r.iconbitmap(default=str(ICONE))
+        image = tk.PhotoImage(file=str(ICONE.with_suffix(".png")))
+        r.iconphoto(True, image)
+        r._icone = image  # Tk only holds a name
+    except (tk.TclError, OSError):
+        pass
+    r.withdraw()
+    return r
+
+
+def _carte(fenetre: Any) -> Any:
+    import customtkinter as ctk
+
+    carte = ctk.CTkFrame(
+        fenetre, fg_color=CARD, corner_radius=RAD_CARD, border_width=1, border_color=LINE
+    )
+    carte.pack(fill="both", expand=True, padx=20, pady=20)
+    return carte
+
+
+def _bouton(parent: Any, texte: str, commande: Any, principal: bool = False) -> Any:
+    import customtkinter as ctk
+
+    return ctk.CTkButton(
+        parent,
+        text=texte,
+        command=commande,
+        corner_radius=RAD_BTN,
+        height=34,
+        font=_police(13, True),
+        fg_color=ACC if principal else BTN,
+        hover_color=ACC_H if principal else BTN_H,
+        text_color="#FFFFFF" if principal else TX,
+    )
+
+
+def _texte(
+    parent: Any,
+    texte: str,
+    couleur: str = TX,
+    taille: int = 13,
+    gras: bool = False,
+    largeur: int = 0,
+) -> Any:
+    import customtkinter as ctk
+
+    return ctk.CTkLabel(
+        parent,
+        text=texte,
+        text_color=couleur,
+        font=_police(taille, gras),
+        justify="left",
+        anchor="w",
+        wraplength=largeur,
+    )
+
+
+def _centrer(fenetre: Any) -> None:
+    fenetre.update_idletasks()
+    w, h = fenetre.winfo_reqwidth(), fenetre.winfo_reqheight()
+    x = max(0, (fenetre.winfo_screenwidth() - w) // 2)
+    y = max(0, (fenetre.winfo_screenheight() - h) // 3)
+    fenetre.geometry(f"+{x}+{y}")
+
+
+def _montrer(fenetre: Any) -> None:
+    """Centres and shows the window, also once its event loop has started.
+
+    A CTk withdrawn before its first mainloop is withdrawn again by it (customtkinter
+    restores that state after colouring the title bar on Windows): measured on
+    2026-10-26, the welcome window never appeared.
+    """
+    _centrer(fenetre)
+    fenetre.deiconify()
+
+    def devant() -> None:
+        fenetre.deiconify()
+        fenetre.lift()
+        fenetre.focus_force()
+
+    fenetre.after(50, devant)
+
+
+def demander_cv(fenetre: Any) -> str:
     """The welcome window: drop the CV on it, or choose it. "" = later."""
+    import customtkinter as ctk
+
     choix = {"cv": ""}
     fenetre.title("JobHunter — bienvenue")
-    cadre = tk.Frame(fenetre, padx=28, pady=22)
-    cadre.pack()
-    tk.Label(
-        cadre,
-        text="Aucun profil pour l'instant.\n\nDonne ton CV (.docx de préférence, ou .pdf) : "
-        "JobHunter le lit\npuis te pose quelques questions.",
-        justify="left",
-    ).pack(anchor="w")
-    zone = tk.Label(cadre, text="Dépose ton CV ici", relief="groove", padx=60, pady=34)
-    zone.pack(fill="x", pady=14)
+    carte = _carte(fenetre)
+    corps = ctk.CTkFrame(carte, fg_color="transparent")
+    corps.pack(fill="both", expand=True, padx=28, pady=24)
+    _texte(corps, "Bienvenue dans JobHunter", taille=20, gras=True).pack(anchor="w")
+    _texte(
+        corps,
+        "Aucun profil pour l'instant. Donne ton CV (.docx de préférence, ou .pdf) : "
+        "JobHunter le lit puis te pose quelques questions.",
+        couleur=MUT,
+        largeur=440,
+    ).pack(anchor="w", pady=(6, 0))
+    zone = ctk.CTkLabel(
+        corps,
+        text="Dépose ton CV ici",
+        fg_color=BG,
+        corner_radius=RAD_CARD,
+        text_color=MUT,
+        font=_police(14, True),
+        height=120,
+        wraplength=400,
+    )
+    zone.pack(fill="x", pady=18)
 
     def fin(p: str) -> None:
         choix["cv"] = p
@@ -103,14 +240,14 @@ def demander_cv(fenetre: tk.Tk) -> str:
 
     if not activer_depot(fenetre, depot):
         zone.configure(text="Choisis ton CV avec le bouton ci-dessous.")
-    boutons = tk.Frame(cadre)
+    boutons = ctk.CTkFrame(corps, fg_color="transparent")
     boutons.pack(fill="x")
-    tk.Button(boutons, text="Choisir mon CV…", command=choisir).pack(side="left")
-    tk.Button(boutons, text="Plus tard", command=lambda: fin("")).pack(side="right")
+    _bouton(boutons, "Choisir mon CV…", choisir, principal=True).pack(side="left")
+    _bouton(boutons, "Plus tard", lambda: fin("")).pack(side="right")
     fenetre.protocol("WM_DELETE_WINDOW", lambda: fin(""))
-    fenetre.deiconify()
+    _montrer(fenetre)
     fenetre.mainloop()
-    cadre.destroy()
+    carte.destroy()
     fenetre.withdraw()
     return choix["cv"]
 
@@ -166,36 +303,63 @@ def arguments_profil(cv: str, rep: dict[str, Any]) -> list[str]:
     return args
 
 
-def demander_reponses(fenetre: tk.Tk, cv: str, texte: str) -> dict[str, Any] | str | None:
+def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str | None:
     """The form prefilled from the CV. Its answers, "autre" for another CV, None = later."""
+    import customtkinter as ctk
+
     from jobhunter.programs import first_launch as _premier
     from jobhunter.scoring import zones
 
     prop = _premier.propositions(texte)
     secteurs = list(zones.CATALOGUE)
     fenetre.title("JobHunter — ton profil")
-    cadre = tk.Frame(fenetre, padx=24, pady=18)
-    cadre.pack(fill="both", expand=True)
-    tk.Label(cadre, text=f"CV lu : {Path(cv).name}", font=("Segoe UI", 10, "bold")).grid(
+    carte = _carte(fenetre)
+    # The buttons stay at the bottom; the form scrolls when the screen is short (a
+    # laptop at 150 %: about 700 points high).
+    pied = ctk.CTkFrame(carte, fg_color="transparent")
+    pied.pack(side="bottom", fill="x", padx=24, pady=(4, 18))
+    echelle = ctk.ScalingTracker.get_window_scaling(fenetre) or 1
+    hauteur = int(min(820, fenetre.winfo_screenheight() / echelle - 230))
+    cadre = ctk.CTkScrollableFrame(carte, fg_color="transparent", width=660, height=hauteur)
+    cadre.pack(fill="both", expand=True, padx=(24, 8), pady=(20, 0))
+    cadre.grid_columnconfigure(1, weight=1)
+    _texte(cadre, "Ton profil", taille=20, gras=True).grid(
         row=0, column=0, columnspan=2, sticky="w"
     )
-    ligne = 1
+    _texte(cadre, f"CV lu : {Path(cv).name}", couleur=MUT).grid(
+        row=1, column=0, columnspan=2, sticky="w"
+    )
+    ligne = 2
     if len(texte.strip()) < PEU_DE_TEXTE:
-        tk.Label(
+        _texte(
             cadre,
-            fg="#b3261e",
-            justify="left",
-            wraplength=520,
-            text="Presque rien n'a pu être lu dans ce CV : il est sans doute scanné ou "
+            "Presque rien n'a pu être lu dans ce CV : il est sans doute scanné ou "
             "enregistré en image. Choisis plutôt un .docx, ou un PDF exporté depuis Word ; "
             "sinon, remplis au moins les métiers visés.",
-        ).grid(row=ligne, column=0, columnspan=2, sticky="w", pady=(6, 0))
+            couleur=BAD,
+            largeur=560,
+        ).grid(row=ligne, column=0, columnspan=2, sticky="w", pady=(8, 0))
         ligne += 1
-    tk.Label(
-        cadre, text="Vérifie et complète : rien n'est écrit tant que tu n'as pas validé."
-    ).grid(row=ligne, column=0, columnspan=2, sticky="w", pady=(6, 10))
+    _texte(
+        cadre, "Vérifie et complète : rien n'est écrit tant que tu n'as pas validé.", couleur=MUT
+    ).grid(row=ligne, column=0, columnspan=2, sticky="w", pady=(4, 12))
     ligne += 1
-    champs: dict[str, tk.StringVar] = {}
+
+    def champ(valeur: str, largeur: int = 360) -> Any:
+        e = ctk.CTkEntry(
+            cadre,
+            width=largeur,
+            corner_radius=RAD_BTN,
+            border_width=1,
+            border_color=LINE_SAISIE,
+            fg_color=CARD,
+            text_color=TX,
+            font=_police(),
+        )
+        e.insert(0, valeur)
+        return e
+
+    champs: dict[str, Any] = {}
     for cle, libelle in (
         ("prenom", "Prénom"),
         ("nom", "Nom"),
@@ -204,51 +368,79 @@ def demander_reponses(fenetre: tk.Tk, cv: str, texte: str) -> dict[str, Any] | s
         ("ville", "Ville"),
         ("metiers", "Métiers visés (séparés par des virgules)"),
     ):
-        champs[cle] = tk.StringVar(value=str(prop.get(cle) or ""))
-        tk.Label(cadre, text=libelle).grid(row=ligne, column=0, sticky="w", pady=2)
-        tk.Entry(cadre, textvariable=champs[cle], width=52).grid(
-            row=ligne, column=1, sticky="we", pady=2
-        )
+        _texte(cadre, libelle).grid(row=ligne, column=0, sticky="w", pady=3, padx=(0, 16))
+        champs[cle] = champ(str(prop.get(cle) or ""))
+        champs[cle].grid(row=ligne, column=1, sticky="we", pady=3)
         ligne += 1
-    annees = tk.StringVar(value=str(prop["annees"]))
-    tk.Label(cadre, text="Années d'expérience (stages compris)").grid(
-        row=ligne, column=0, sticky="w"
+    _texte(cadre, "Années d'expérience (stages compris)").grid(
+        row=ligne, column=0, sticky="w", pady=3, padx=(0, 16)
     )
-    tk.Spinbox(cadre, from_=0, to=50, textvariable=annees, width=6).grid(
-        row=ligne, column=1, sticky="w"
-    )
+    annees = champ(str(prop["annees"]), largeur=70)
+    annees.grid(row=ligne, column=1, sticky="w", pady=3)
     ligne += 1
     genre = tk.StringVar(value=prop["genre"])
-    tk.Label(cadre, text="Accords dans les lettres").grid(row=ligne, column=0, sticky="w")
-    accords = tk.Frame(cadre)
-    accords.grid(row=ligne, column=1, sticky="w")
-    tk.Radiobutton(accords, text="« diplômé »", variable=genre, value="m").pack(side="left")
-    tk.Radiobutton(accords, text="« diplômée »", variable=genre, value="f").pack(side="left")
+    _texte(cadre, "Accords dans les lettres").grid(
+        row=ligne, column=0, sticky="w", pady=3, padx=(0, 16)
+    )
+    accords = ctk.CTkFrame(cadre, fg_color="transparent")
+    accords.grid(row=ligne, column=1, sticky="w", pady=3)
+    for val, lib in (("m", "« diplômé »"), ("f", "« diplômée »")):
+        ctk.CTkRadioButton(
+            accords,
+            text=lib,
+            variable=genre,
+            value=val,
+            fg_color=ACC,
+            hover_color=ACC_H,
+            text_color=TX,
+            font=_police(),
+        ).pack(side="left", padx=(0, 16))
     ligne += 1
 
-    listes = {}
+    coches: dict[str, dict[str, tk.BooleanVar]] = {}
     for cle, libelle, choisis in (
         ("prioritaires", "Secteurs prioritaires", prop["prioritaires"]),
         ("secondaires", "Secteurs secondaires (facultatif)", []),
     ):
-        tk.Label(cadre, text=libelle).grid(row=ligne, column=0, sticky="nw", pady=(6, 0))
-        lb = tk.Listbox(cadre, selectmode="multiple", height=5, exportselection=False)
+        _texte(cadre, libelle).grid(row=ligne, column=0, columnspan=2, sticky="w", pady=(12, 4))
+        ligne += 1
+        liste = ctk.CTkFrame(cadre, fg_color=BG, corner_radius=RAD_BTN)
+        liste.grid(row=ligne, column=0, columnspan=2, sticky="we", padx=(0, 12))
+        for c in range(3):
+            liste.grid_columnconfigure(c, weight=1, uniform="secteur")
+        coches[cle] = {}
         for i, s in enumerate(secteurs):
-            lb.insert("end", str(zones.CATALOGUE[s].get("libelle") or s))
-            if s in choisis:
-                lb.selection_set(i)
-                lb.see(i)
-        lb.grid(row=ligne, column=1, sticky="we", pady=(6, 0))
-        listes[cle] = lb
+            v = tk.BooleanVar(value=s in choisis)
+            ctk.CTkCheckBox(
+                liste,
+                text=str(zones.CATALOGUE[s].get("libelle") or s),
+                variable=v,
+                fg_color=ACC,
+                hover_color=ACC_H,
+                border_color=LINE_SAISIE,
+                text_color=TX,
+                font=_police(12),
+                corner_radius=4,
+                checkbox_width=18,
+                checkbox_height=18,
+            ).grid(row=i // 3, column=i % 3, sticky="w", padx=8, pady=3)
+            coches[cle][s] = v
         ligne += 1
     entreprises = tk.BooleanVar(value=bool(prop["entreprises"]))
-    tk.Checkbutton(
-        cadre, text="Suivre les ~90 entreprises de finance / ESG proposées", variable=entreprises
-    ).grid(row=ligne, column=0, columnspan=2, sticky="w", pady=(8, 0))
+    ctk.CTkCheckBox(
+        cadre,
+        text="Suivre les ~90 entreprises de finance / ESG proposées",
+        variable=entreprises,
+        fg_color=ACC,
+        hover_color=ACC_H,
+        border_color=LINE_SAISIE,
+        text_color=TX,
+        font=_police(),
+        corner_radius=4,
+    ).grid(row=ligne, column=0, columnspan=2, sticky="w", pady=(12, 0))
     ligne += 1
-    erreur = tk.Label(cadre, fg="#b3261e", text="")
-    erreur.grid(row=ligne, column=0, columnspan=2, sticky="w")
-    ligne += 1
+    erreur = _texte(pied, "", couleur=BAD)
+    erreur.pack(anchor="w")
 
     choix: dict[str, Any] = {"r": None}
 
@@ -267,7 +459,7 @@ def demander_reponses(fenetre: tk.Tk, cv: str, texte: str) -> dict[str, Any] | s
             "annees": n,
             "genre": genre.get(),
             "entreprises": entreprises.get(),
-            **{k: [secteurs[i] for i in lb.curselection()] for k, lb in listes.items()},  # type: ignore[no-untyped-call]
+            **{k: [s for s, v in c.items() if v.get()] for k, c in coches.items()},
         }
         fenetre.quit()
 
@@ -275,20 +467,28 @@ def demander_reponses(fenetre: tk.Tk, cv: str, texte: str) -> dict[str, Any] | s
         choix["r"] = r
         fenetre.quit()
 
-    boutons = tk.Frame(cadre)
-    boutons.grid(row=ligne, column=0, columnspan=2, sticky="we", pady=(12, 0))
-    tk.Button(boutons, text="Créer mon profil", command=valider).pack(side="left")
-    tk.Button(boutons, text="Choisir un autre CV…", command=lambda: fin("autre")).pack(
-        side="left", padx=8
-    )
-    tk.Button(boutons, text="Plus tard", command=lambda: fin(None)).pack(side="right")
+    boutons = ctk.CTkFrame(pied, fg_color="transparent")
+    boutons.pack(fill="x", pady=(4, 0))
+    _bouton(boutons, "Créer mon profil", valider, principal=True).pack(side="left")
+    _bouton(boutons, "Choisir un autre CV…", lambda: fin("autre")).pack(side="left", padx=8)
+    _bouton(boutons, "Plus tard", lambda: fin(None)).pack(side="right")
     fenetre.protocol("WM_DELETE_WINDOW", lambda: fin(None))
-    fenetre.deiconify()
+    _montrer(fenetre)
     fenetre.mainloop()
-    cadre.destroy()
+    carte.destroy()
     fenetre.withdraw()
     reponse: dict[str, Any] | str | None = choix["r"]
     return reponse
+
+
+def _attente(fenetre: Any) -> Any:
+    """The "Création du profil…" card while first_launch writes the profile."""
+    carte = _carte(fenetre)
+    _texte(carte, "Création du profil…", taille=15, gras=True).pack(padx=48, pady=32)
+    fenetre.title("JobHunter")
+    _montrer(fenetre)
+    fenetre.update()
+    return carte
 
 
 def creer_profil(cv: str, rep: dict[str, Any]) -> tuple[bool, str]:
@@ -321,7 +521,7 @@ def creer_profil(cv: str, rep: dict[str, Any]) -> tuple[bool, str]:
     return True, sortie
 
 
-def profil_guide(fenetre: tk.Tk, cv: str = "") -> bool:
+def profil_guide(fenetre: Any, cv: str = "") -> bool:
     """CV, questions and writing, until a profile exists (True) or the user gives up.
 
     `cv` already chosen (a new profile from the application), or "" to ask for it.
@@ -350,12 +550,10 @@ def profil_guide(fenetre: tk.Tk, cv: str = "") -> bool:
             continue
         if not isinstance(rep, dict):
             return False
-        attente = tk.Toplevel(fenetre)
-        attente.title("JobHunter")
-        tk.Label(attente, text="Création du profil…", padx=40, pady=24).pack()
-        attente.update()
+        attente = _attente(fenetre)
         ok, sortie = creer_profil(cv, rep)
         attente.destroy()
+        fenetre.withdraw()
         if ok:
             return True
         fin = "\n".join(sortie.strip().splitlines()[-12:]) or "(aucun message)"
@@ -380,8 +578,7 @@ def assurer_profil() -> None:
         return
     except _profil.ProfilAbsent:
         pass
-    _r = tk.Tk()
-    _r.withdraw()
+    _r = fenetre_accueil()
     if not profil_guide(_r):
         messagebox.showinfo(
             "JobHunter",
@@ -408,8 +605,7 @@ def main(argv: list[str] | None = None) -> int:
     without a console. 0 when the profile exists, 1 otherwise.
     """
     args = sys.argv[1:] if argv is None else argv
-    r = tk.Tk()
-    r.withdraw()
+    r = fenetre_accueil()
     try:
         return 0 if profil_guide(r, args[0] if args else "") else 1
     finally:

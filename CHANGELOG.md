@@ -14,6 +14,9 @@ recent at the top.
   city, jobs, years of experience, regions and companies, prefilled from the CV, to check
   and complete. If the profile cannot be created, the window says why and offers another
   CV. A scanned PDF (an image, no text) is flagged in the form: use the .docx instead.
+- **The welcome windows look like the application**: its colours, font, buttons, white
+  card and icon, instead of Tk's grey default. The form scrolls on a short screen, its
+  buttons stay visible at the bottom.
 - “New profile” (desktop and web interface) uses the same window.
 
 ## 3.27.1 — 2026-10-26

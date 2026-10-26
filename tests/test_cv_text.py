@@ -160,3 +160,27 @@ def test_profil_d_un_cv_en_zones_de_texte_sans_clavier(tmp_path):
     profil = json.loads((tmp_path / "profile" / "profile.json").read_text(encoding="utf-8"))
     assert profil["identite"]["prenom"] == "Camille"
     assert profil["identite"]["email"] == "camille.exemple@example.com"
+
+
+def test_fenetres_d_accueil_aux_couleurs_de_l_application():
+    # welcome cannot import app.theme (the package reads the profile): same values.
+    from jobhunter import welcome
+    from jobhunter.app import theme
+
+    for nom in (
+        "BG",
+        "CARD",
+        "LINE",
+        "LINE_SAISIE",
+        "TX",
+        "MUT",
+        "ACC",
+        "ACC_H",
+        "BTN",
+        "BTN_H",
+        "BAD",
+        "RAD_BTN",
+        "RAD_CARD",
+    ):
+        assert getattr(welcome, nom) == getattr(theme, nom), nom
+    assert welcome.ICONE.is_file()
