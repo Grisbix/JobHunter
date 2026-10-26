@@ -162,25 +162,92 @@ def test_profil_d_un_cv_en_zones_de_texte_sans_clavier(tmp_path):
     assert profil["identite"]["email"] == "camille.exemple@example.com"
 
 
-def test_fenetres_d_accueil_aux_couleurs_de_l_application():
-    # welcome cannot import app.theme (the package reads the profile): same values.
-    from jobhunter import welcome
-    from jobhunter.app import theme
+def test_fenetres_d_accueil_aux_couleurs_de_l_interface_web():
+    # welcome draws in customtkinter what web/static/style.css draws in HTML.
+    import re
 
-    for nom in (
-        "BG",
-        "CARD",
-        "LINE",
-        "LINE_SAISIE",
-        "TX",
-        "MUT",
-        "ACC",
-        "ACC_H",
-        "BTN",
-        "BTN_H",
-        "BAD",
-        "RAD_BTN",
-        "RAD_CARD",
+    from jobhunter import welcome
+
+    css = (Path(welcome.__file__).parent / "web" / "static" / "style.css").read_text("utf-8")
+    racine = css[css.index(":root {") : css.index("}", css.index(":root {"))]
+    var = dict(re.findall(r"--([\w-]+):\s*([^;]+);", racine))
+    for nom, cle in (
+        ("ENCRE", "encre"),
+        ("TEXTE_DOUX", "texte-doux"),
+        ("SOMBRE", "sombre"),
+        ("BRUN", "brun"),
+        ("C1B", "c1b"),
     ):
-        assert getattr(welcome, nom) == getattr(theme, nom), nom
+        assert getattr(welcome, nom).lower() == var[cle].strip().lower(), nom
+    r, g, b = (int(x) for x in var["fond-rgb"].split(","))
+    assert welcome.FOND.lower() == f"#{r:02x}{g:02x}{b:02x}"
     assert welcome.ICONE.is_file()
+
+
+# ── PDF ──────────────────────────────────────────────────────────────────────
+def _pdf_deux_colonnes(chemin):
+    import pymupdf
+
+    d = pymupdf.open()
+    pg = d.new_page()
+    y = 160  # the sidebar first in the stream, as Canva writes it
+    for l in (
+        "CONTACT",
+        "06 00 00 00 00",
+        "camille.exemple@example.com",
+        "Bordeaux",
+        "COMPETENCES",
+        "Gestion de projet",
+        "Analyse ESG",
+    ):
+        pg.insert_text((30, y), l, fontsize=10)
+        y += 18
+    pg.insert_text((220, 70), "Camille EXEMPLE", fontsize=28)
+    pg.insert_text((220, 100), "Analyste ESG junior", fontsize=14)
+    pg.insert_text((220, 160), "Stage analyste ESG, 6 mois : classification SFDR.", fontsize=10)
+    d.save(str(chemin))
+    return chemin
+
+
+def test_pdf_deux_colonnes_le_nom_d_abord(tmp_path):
+    from jobhunter.programs.first_launch import propositions
+
+    texte = texte_fichier(_pdf_deux_colonnes(tmp_path / "cv.pdf"))
+    assert texte.splitlines()[:2] == ["Camille EXEMPLE", "Analyste ESG junior"]
+    p = propositions(texte)
+    assert (p["prenom"], p["nom"], p["metiers"]) == ("Camille", "Exemple", "Analyste ESG junior")
+    assert p["email"] == "camille.exemple@example.com"
+
+
+def test_pdf_ligatures_et_caracteres_invisibles():
+    from jobhunter.cv_text import _propre
+
+    assert _propre("ﬁnance durable, ﬂux­, �x") == "finance durable, flux, x"
+
+
+def test_pdf_protege_et_sans_texte(tmp_path):
+    import pymupdf
+
+    from jobhunter.cv_text import pourquoi_peu_de_texte
+
+    src = _pdf_deux_colonnes(tmp_path / "cv.pdf")
+    pymupdf.open(str(src)).save(
+        str(tmp_path / "protege.pdf"), encryption=pymupdf.PDF_ENCRYPT_AES_256, user_pw="x"
+    )
+    with pytest.raises(ValueError):
+        texte_fichier(tmp_path / "protege.pdf")
+    assert "mot de passe" in pourquoi_peu_de_texte(tmp_path / "protege.pdf")
+    d = pymupdf.open()
+    pg = d.new_page()
+    for i in range(60):  # text turned into curves
+        pg.draw_rect(pymupdf.Rect(30 + i * 5, 50, 33 + i * 5, 60))
+    d.save(str(tmp_path / "courbes.pdf"))
+    assert texte_fichier(tmp_path / "courbes.pdf") == ""
+    assert "dessins" in pourquoi_peu_de_texte(tmp_path / "courbes.pdf")
+    pix = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 20, 20), False)
+    d = pymupdf.open()
+    pg = d.new_page()
+    pg.insert_image(pg.rect, pixmap=pix)
+    d.save(str(tmp_path / "scan.pdf"))
+    assert "image" in pourquoi_peu_de_texte(tmp_path / "scan.pdf")
+    assert pourquoi_peu_de_texte(src) == ""

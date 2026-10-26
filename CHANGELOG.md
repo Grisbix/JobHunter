@@ -14,9 +14,17 @@ recent at the top.
   city, jobs, years of experience, regions and companies, prefilled from the CV, to check
   and complete. If the profile cannot be created, the window says why and offers another
   CV. A scanned PDF (an image, no text) is flagged in the form: use the .docx instead.
-- **The welcome windows look like the application**: its colours, font, buttons, white
-  card and icon, instead of Tk's grey default. The form scrolls on a short screen, its
-  buttons stay visible at the bottom.
+- **PDF first, and read better**: the PDF is the format most CVs come in.
+  - On a two-column design (Canva), the name now comes first. Before, the sidebar came
+    first: on a fictitious CV, the name read was “Gestion de projet” and the job
+    “Bordeaux”.
+  - Ligatures (“ﬁ”, “ﬂ”) are expanded, so “ﬁnance” matches the keywords again.
+  - A PDF protected by a password, scanned, or with its text turned into curves now
+    gets its own advice.
+  - Measured on 10 real PDF CVs: name, e-mail, phone and jobs read identically.
+- **The welcome windows take the new interface's design**: warm background, pale panel,
+  dark main button, brown ticks, Inter font, instead of Tk's grey default. The form
+  scrolls on a short screen, and its buttons stay visible at the bottom.
 - “New profile” (desktop and web interface) uses the same window.
 
 ## 3.27.1 — 2026-10-26

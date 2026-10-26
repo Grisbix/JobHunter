@@ -63,7 +63,8 @@ def _lire_cv(chemin):
     try:
         return texte_fichier(chemin)
     except ValueError as e:
-        raise SystemExit(f"Format non pris en charge : {Path(chemin).suffix} (PDF ou DOCX)") from e
+        # An unknown format, or a PDF protected by a password: cv_text says which.
+        raise SystemExit(str(e)[:1].upper() + str(e)[1:]) from e
 
 
 _RX_EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
