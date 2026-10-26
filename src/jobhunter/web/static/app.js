@@ -434,7 +434,7 @@ function appliquerReglages(r) {
   document.body.classList.toggle("sans-fond", r.fond === "aucun");
 }
 
-const FONDS = [["acrylique", "Acrylique"], ["mica", "Mica"], ["aucun", "Aucun"]];
+const FONDS = [["acrylique", "Acrylique"], ["net", "Net"], ["mica", "Mica"], ["aucun", "Aucun"]];
 
 ECRANS.reglages = {
   titre: "Réglages",
@@ -470,12 +470,12 @@ ECRANS.reglages = {
         h("div", { class: "titre-ligne" }, h("h2", {}, "Apparence")),
         h("div", { class: "reglage" },
           h("div", {}, h("div", { class: "nom-reglage" }, "Fond de la fenêtre"),
-            h("div", { class: "sous" }, "Acrylique : le fond d'écran, flouté. Mica : une teinte douce, très diffuse. Aucun : opaque.")),
+            h("div", { class: "sous" }, "Acrylique : le bureau, flouté. Net : le bureau tel quel. Mica : une teinte douce. Aucun : opaque.")),
           place),
         h("div", { class: "reglage" },
           h("div", { class: "titre-ligne" }, h("div", { class: "nom-reglage" }, "Transparence"), valeur),
           h("div", { class: "ligne-curseur" }, h("span", {}, "Opaque"), curseur, h("span", {}, "Verre")),
-          h("div", { class: "sous" }, "Combien le fond flouté transparaît. Le rayon du flou est fixé par Windows."))),
+          h("div", { class: "sous" }, "Combien le bureau transparaît. La force du flou acrylique est fixée par Windows."))),
       window.pywebview ? null : h("div", { class: "verre panneau" },
         h("div", { class: "sous" }, "Aperçu navigateur : ces réglages ne s'enregistrent que dans l'application."))));
   },

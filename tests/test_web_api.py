@@ -199,6 +199,7 @@ def test_ouvrir_fichier_seulement_sous_cv_ou_lettres(monkeypatch, tmp_path):
 def test_reglages_valeurs_par_defaut_et_bornes():
     assert web_api.reglages(None) == {"fond": "acrylique", "verre": 50}
     assert web_api.reglages({"fond": "mica", "verre": 140}) == {"fond": "mica", "verre": 100}
+    assert web_api.reglages({"fond": "net", "verre": -5}) == {"fond": "net", "verre": 0}
     assert web_api.reglages({"fond": "autre", "verre": "x"}) == {"fond": "acrylique", "verre": 50}
 
 

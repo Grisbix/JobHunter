@@ -277,9 +277,10 @@ def rendement(lignes: Sequence[Mapping[str, Any]], derniers: int = 7) -> list[di
 
 # --- Settings screen -------------------------------------------------------------------
 
-# Windows 11 backdrops (DWMWA_SYSTEMBACKDROP_TYPE): acrylic blurs the wallpaper behind
-# the window, mica only tints it, "aucun" shows none (the page is then opaque).
-FONDS = {"acrylique": 3, "mica": 2, "aucun": 1}
+# Windows 11 backdrops (DWMWA_SYSTEMBACKDROP_TYPE): acrylic blurs what is behind the
+# window, mica only tints the wallpaper, "net" draws nothing so the desktop shows sharp
+# through the see-through page, "aucun" draws nothing either but the page is opaque.
+FONDS = {"acrylique": 3, "mica": 2, "net": 1, "aucun": 1}
 REGLAGES: dict[str, Any] = {"fond": "acrylique", "verre": 50}
 
 
