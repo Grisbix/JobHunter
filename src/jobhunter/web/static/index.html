@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JobHunter</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="fond" aria-hidden="true"><i></i><i></i><i></i></div>
+<main class="fenetre">
+  <nav class="menu">
+    <div class="marque"><span class="logo"></span>JobHunter</div>
+    <div class="groupe">Recherche</div>
+    <a class="actif" data-icone="maison">Accueil</a>
+    <a data-icone="valise">Offres</a>
+    <a data-icone="avion">Candidatures</a>
+    <a data-icone="cloche">Relances</a>
+    <a data-icone="doc">Documents</a>
+    <div class="groupe">Outils</div>
+    <a data-icone="profil">Profil</a>
+    <a data-icone="sources">Sources</a>
+    <a data-icone="cle">Maintenance</a>
+  </nav>
+
+  <header class="tete">
+    <h1>Accueil</h1>
+    <button class="pilule profil"><span class="avatar">J</span>Mon profil<span class="chevron"></span></button>
+  </header>
+
+  <section class="centre">
+    <div class="verre stats" id="stats"></div>
+
+    <div class="verre kpi">
+      <div class="graphe">
+        <div class="ligne-titre">
+          <h2>Collecte du matin</h2>
+          <button class="pilule petite">7 derniers scans<span class="chevron"></span></button>
+        </div>
+        <div class="grand" id="dernier">—</div>
+        <div class="ecart" id="ecart"></div>
+        <div class="barres" id="barres"></div>
+      </div>
+      <div class="carte meilleures">
+        <h3>Meilleures offres</h3>
+        <ol id="meilleures"></ol>
+      </div>
+    </div>
+
+    <div class="verre tableau">
+      <h2>Candidatures</h2>
+      <table>
+        <thead><tr><th>Entreprise</th><th>Poste</th><th>Statut</th><th>Le</th><th>Score</th></tr></thead>
+        <tbody id="candidatures"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <aside class="droite">
+    <div class="sombre">
+      <h2>À faire</h2>
+      <ul id="relances"></ul>
+    </div>
+    <div class="zones">
+      <h2>Par zone</h2>
+      <div class="sous">offres notées 7 et plus</div>
+      <div id="zones"></div>
+    </div>
+  </aside>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
