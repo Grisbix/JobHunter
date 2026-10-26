@@ -115,6 +115,10 @@ def tableau(
 class Api:
     """Methods the page calls through `window.pywebview.api`."""
 
+    # Set by __main__ once the window exists; private, so pywebview does not expose it.
+    _fenetre: Any = None
+    _maximisee = False
+
     def tableau(self) -> dict[str, Any]:
         """The home screen data, from the real queue and applications."""
         from jobhunter.storage import applications, queue
@@ -126,3 +130,19 @@ class Api:
         if not re.match(r"^https?://", url or ""):
             return False
         return webbrowser.open(url)
+
+    def fenetre(self, action: str) -> None:
+        """The title bar buttons of the frameless window: reduire, agrandir, fermer."""
+        f = self._fenetre
+        if f is None:
+            return
+        if action == "reduire":
+            f.minimize()
+        elif action == "agrandir":
+            if self._maximisee:
+                f.restore()
+            else:
+                f.maximize()
+            self._maximisee = not self._maximisee
+        elif action == "fermer":
+            f.destroy()

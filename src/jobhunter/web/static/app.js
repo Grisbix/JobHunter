@@ -140,8 +140,20 @@ async function charger() {
   }
 }
 
+// Native window: no Windows frame, our own title bar over a see-through background.
+function natif() {
+  document.body.classList.add("natif");
+  for (const b of document.querySelectorAll(".feux button")) {
+    b.addEventListener("click", () => window.pywebview.api.fenetre(b.dataset.action));
+  }
+  document.getElementById("barre").addEventListener("dblclick", (e) => {
+    if (!e.target.closest("button")) window.pywebview.api.fenetre("agrandir");
+  });
+  charger();
+}
+
 icones();
-if (window.pywebview) charger();
-else window.addEventListener("pywebviewready", charger);
+if (window.pywebview) natif();
+else window.addEventListener("pywebviewready", natif);
 // Outside pywebview the event never comes: load the demo after a short wait.
 setTimeout(() => { if (!window.pywebview) charger(); }, 300);
