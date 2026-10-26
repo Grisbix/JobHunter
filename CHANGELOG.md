@@ -4,6 +4,18 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.27.2 — 2026-10-26
+
+- **The CV is read whatever its template**: text boxes (Canva and Word “design”
+  templates), content controls (Microsoft resume templates), tables inside tables, and
+  the page header and footer, where the name often sits. Before, such a CV gave almost
+  no text and the first launch created no profile.
+- **The first launch's questions are in a window, not a console**: name, e-mail, phone,
+  city, jobs, years of experience, regions and companies, prefilled from the CV, to check
+  and complete. If the profile cannot be created, the window says why and offers another
+  CV. A scanned PDF (an image, no text) is flagged in the form: use the .docx instead.
+- “New profile” (desktop and web interface) uses the same window.
+
 ## 3.27.1 — 2026-10-26
 
 - **Dark mode in the web interface**: Settings → Colours and font → Mode, “Comme
