@@ -1,6 +1,7 @@
 """Screen data and guards of the web interface prototype (jobhunter.web.api)."""
 
 from datetime import date
+from pathlib import Path
 
 from jobhunter.web import api as web_api
 from jobhunter.web.api import Api, candidatures, fiche, offres, rendement, tableau
@@ -196,11 +197,18 @@ def test_ouvrir_fichier_seulement_sous_cv_ou_lettres(monkeypatch, tmp_path):
     assert ouverts == [cv.resolve()]
 
 
+def _fv(r):
+    return {"fond": r["fond"], "verre": r["verre"]}
+
+
 def test_reglages_valeurs_par_defaut_et_bornes():
-    assert web_api.reglages(None) == {"fond": "acrylique", "verre": 50}
-    assert web_api.reglages({"fond": "mica", "verre": 140}) == {"fond": "mica", "verre": 100}
-    assert web_api.reglages({"fond": "net", "verre": -5}) == {"fond": "net", "verre": 0}
-    assert web_api.reglages({"fond": "autre", "verre": "x"}) == {"fond": "acrylique", "verre": 50}
+    assert web_api.reglages(None) == web_api.REGLAGES
+    assert _fv(web_api.reglages({"fond": "mica", "verre": 140})) == {"fond": "mica", "verre": 100}
+    assert _fv(web_api.reglages({"fond": "net", "verre": -5})) == {"fond": "net", "verre": 0}
+    assert _fv(web_api.reglages({"fond": "autre", "verre": "x"})) == {
+        "fond": "acrylique",
+        "verre": 50,
+    }
 
 
 def test_ecrire_reglages_garde_la_langue(monkeypatch, tmp_path):
@@ -212,12 +220,10 @@ def test_ecrire_reglages_garde_la_langue(monkeypatch, tmp_path):
     fonds = []
     api = Api()
     api._fond = fonds.append
-    assert api.regler({"fond": "mica", "verre": 20}) == {"fond": "mica", "verre": 20}
-    assert json.loads(f.read_text(encoding="utf-8")) == {
-        "langue": "de",
-        "web": {"fond": "mica", "verre": 20},
-    }
-    assert fonds == ["mica"] and api.reglages() == {"fond": "mica", "verre": 20}
+    voulu = {**web_api.REGLAGES, "fond": "mica", "verre": 20, "teinte": "bleu"}
+    assert api.regler({"fond": "mica", "verre": 20, "teinte": "bleu"}) == voulu
+    assert json.loads(f.read_text(encoding="utf-8")) == {"langue": "de", "web": voulu}
+    assert fonds == ["mica"] and api.reglages() == voulu
 
 
 def test_ecrire_reglages_laisse_un_fichier_illisible(monkeypatch, tmp_path):
@@ -226,3 +232,82 @@ def test_ecrire_reglages_laisse_un_fichier_illisible(monkeypatch, tmp_path):
     monkeypatch.setattr(web_api, "_fichier_reglages", lambda: f)
     web_api.ecrire_reglages({"verre": 10})
     assert f.read_text(encoding="utf-8") == "{pas du json"
+
+
+def test_reglages_teinte_et_police():
+    r = web_api.reglages({"teinte": "vert", "police": "georgia"})
+    assert (r["teinte"], r["police"]) == ("vert", "georgia")
+    r = web_api.reglages({"teinte": "rose", "police": "comic"})
+    assert (r["teinte"], r["police"]) == ("terre", "segoe")
+
+
+def _api_sur(file, suivi):
+    api = Api()
+    api._file = lambda: file
+    api._suivi = lambda: suivi
+    return api
+
+
+def test_marquer_date_le_statut_sous_verrou(monkeypatch):
+    from jobhunter.storage import applications
+
+    disque = {"A|a": {"s": "postulé", "d": "2026-10-01", "n": "garder"}}
+    monkeypatch.setattr(applications, "modifier", lambda fn, attente=30: fn(disque))
+    api = _api_sur([_offre("B", "b", 8)], disque)
+    assert api.marquer("A|a", "relancé")["ok"]
+    assert disque["A|a"]["s"] == "relancé" and disque["A|a"]["n"] == "garder"
+    assert disque["A|a"]["d"] == date.today().isoformat()
+    assert api.marquer("B|b", "postulé")["ok"] and disque["B|b"]["s"] == "postulé"
+    assert not api.marquer("C|c", "postulé")["ok"]
+    assert not api.marquer("A|a", "envoyé")["ok"]
+
+
+def test_marquer_dit_quand_le_suivi_est_occupe(monkeypatch):
+    from jobhunter.storage import applications
+
+    def occupe(fn, attente=30):
+        raise applications.VerrouIndisponible("x")
+
+    monkeypatch.setattr(applications, "modifier", occupe)
+    r = _api_sur([_offre("A", "a", 8)], {}).marquer("A|a", "postulé")
+    assert not r["ok"] and "réessaie" in r["erreur"]
+
+
+def test_lancer_seulement_les_taches_connues(monkeypatch):
+    lances = []
+
+    class Faux:
+        def __init__(self, cle, libelle, cmd, cwd):
+            lances.append(cmd)
+            self.code, self.libelle = None, libelle
+
+    monkeypatch.setattr(web_api, "Tache", Faux)
+    monkeypatch.setattr("jobhunter.root.scripts", lambda: Path("."))
+    api = _api_sur([_offre("A", "a", 8, url="https://ex.org/1"), _offre("B", "b", 8)], {})
+    assert not api.lancer("rm -rf")["ok"]
+    assert not api.lancer("documents", "B|b")["ok"]  # no link
+    assert api.lancer("documents", "A|a")["ok"]
+    assert lances[-1][-3:] == ["jobhunter.programs.generate_docs", "--url", "https://ex.org/1"]
+    assert not api.lancer("collecte")["ok"]  # one at a time
+    api._tache.code = 0
+    assert api.lancer("collecte")["ok"]
+    assert lances[-1][-2:] == ["jobhunter.programs.daily_pipeline", "--un-profil"]
+    assert all("apply" not in " ".join(c) for _, c in web_api.TACHES.values())
+
+
+def test_tache_lit_la_sortie_et_le_code(tmp_path):
+    import sys
+    import time
+
+    t = web_api.Tache(
+        "x",
+        "Essai",
+        [sys.executable, "-c", "print('un'); print('deux'); raise SystemExit(3)"],
+        tmp_path,
+    )
+    for _ in range(100):
+        if t.etat()["fini"]:
+            break
+        time.sleep(0.05)
+    e = t.etat()
+    assert e["fini"] and e["code"] == 3 and e["lignes"] == ["un", "deux"]

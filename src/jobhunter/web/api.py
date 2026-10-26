@@ -9,6 +9,10 @@ from __future__ import annotations
 import json
 import os
 import re
+import subprocess
+import sys
+import threading
+import time
 import webbrowser
 from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
@@ -281,7 +285,10 @@ def rendement(lignes: Sequence[Mapping[str, Any]], derniers: int = 7) -> list[di
 # window, mica only tints the wallpaper, "net" draws nothing so the desktop shows sharp
 # through the see-through page, "aucun" draws nothing either but the page is opaque.
 FONDS = {"acrylique": 3, "mica": 2, "net": 1, "aucun": 1}
-REGLAGES: dict[str, Any] = {"fond": "acrylique", "verre": 50}
+# Accent families and fonts of the settings screen; their looks live in style.css / app.js.
+TEINTES = ("terre", "vert", "bleu", "noir")
+POLICES = ("segoe", "bahnschrift", "corbel", "sitka", "georgia")
+REGLAGES: dict[str, Any] = {"fond": "acrylique", "verre": 50, "teinte": "terre", "police": "segoe"}
 
 
 def reglages(brut: Any) -> dict[str, Any]:
@@ -295,7 +302,13 @@ def reglages(brut: Any) -> dict[str, Any]:
         verre = min(100, max(0, int(d.get("verre", REGLAGES["verre"]))))
     except (TypeError, ValueError):
         verre = REGLAGES["verre"]
-    return {"fond": fond if fond in FONDS else REGLAGES["fond"], "verre": verre}
+    teinte, police = d.get("teinte"), d.get("police")
+    return {
+        "fond": fond if fond in FONDS else REGLAGES["fond"],
+        "verre": verre,
+        "teinte": teinte if teinte in TEINTES else REGLAGES["teinte"],
+        "police": police if police in POLICES else REGLAGES["police"],
+    }
 
 
 def _fichier_reglages() -> Path | None:
@@ -349,6 +362,88 @@ def ecrire_reglages(valeurs: Any) -> dict[str, Any]:
     return propres
 
 
+# --- Tasks -------------------------------------------------------------------------------
+
+# What the buttons may start: programs the desktop app's buttons already run
+# (app/execution.py, app/common.py), and nothing else. None of them sends anything.
+TACHES: dict[str, tuple[str, list[str]]] = {
+    "collecte": ("Collecte du matin", ["jobhunter.programs.daily_pipeline", "--un-profil"]),
+    "brouillons": ("Brouillons de relance", ["jobhunter.programs.follow_ups", "--brouillons"]),
+    "regenerer_cv": ("Refaire les CV", ["jobhunter.programs.regenerate_docs", "--cv"]),
+    "disponibilite": (
+        "Contrôle des offres fermées",
+        ["jobhunter.programs.availability_audit", "--supprime"],
+    ),
+    "documents_top": (
+        "CV et lettres des 30 meilleures offres",
+        ["jobhunter.programs.generate_docs", "--top", "30"],
+    ),
+    # + the offer's URL, which generate_docs matches by substring
+    "documents": ("CV et lettre de l'offre", ["jobhunter.programs.generate_docs", "--url"]),
+}
+
+# Statuses the page may set on an application.
+STATUTS = (*COLONNES, *ECARTEES)
+
+
+class Tache:
+    """One program started by a button, its output kept for the page to poll."""
+
+    def __init__(self, cle: str, libelle: str, cmd: list[str], cwd: Path) -> None:
+        """Starts `cmd` without a console window; a thread reads its output."""
+        self.cle, self.libelle = cle, libelle
+        self.lignes: list[str] = []
+        self.code: int | None = None
+        self.debut = time.time()
+        self.proc = subprocess.Popen(  # nosec B603 : our own programs, from TACHES
+            cmd,
+            cwd=str(cwd),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            bufsize=1,
+            env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        threading.Thread(target=self._lire, daemon=True).start()
+
+    def _lire(self) -> None:
+        assert self.proc.stdout is not None
+        for ligne in self.proc.stdout:
+            self.lignes.append(ligne.rstrip("\n"))
+            if len(self.lignes) > 500:
+                del self.lignes[:100]
+        self.code = self.proc.wait()
+
+    def etat(self) -> dict[str, Any]:
+        """What the task panel shows: label, last lines, finished or not, exit code."""
+        return {
+            "cle": self.cle,
+            "libelle": self.libelle,
+            "lignes": [x for x in self.lignes if x.strip()][-8:],
+            "fini": self.code is not None,
+            "code": self.code,
+            "duree": int(time.time() - self.debut),
+        }
+
+
+def _derniere_version(timeout: float = 6) -> str:
+    """The latest release tag of the public repository, "" when offline."""
+    import urllib.request
+
+    req = urllib.request.Request(
+        "https://api.github.com/repos/Grisbix/JobHunter/releases/latest",
+        headers={"User-Agent": "JobHunter-web", "Accept": "application/vnd.github+json"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:  # nosec B310 : fixed https URL
+            return str(json.loads(r.read()).get("tag_name") or "").removeprefix("v")
+    except (OSError, ValueError):
+        return ""
+
+
 class Api:
     """Methods the page calls through `window.pywebview.api`.
 
@@ -360,6 +455,7 @@ class Api:
     _fenetre: Any = None
     _basculer: Any = None  # full screen <-> rounded window
     _fond: Any = None  # applies a backdrop by name, see FONDS
+    _tache: Tache | None = None
 
     def __init__(self) -> None:
         """An empty cache: each data file is read on first use."""
@@ -599,7 +695,84 @@ class Api:
             self._fond(r["fond"])
         return r
 
+    # Actions that write: a status, or a program started by a button.
+    def marquer(self, ident: str, statut: str) -> dict[str, Any]:
+        """Sets the status of one application, dated today, under the tracker's lock."""
+        from jobhunter.storage import applications
+
+        if statut not in STATUTS:
+            return {"ok": False, "erreur": f"statut inconnu : {statut}"}
+        if ident not in self._suivi() and not any(_oid(o) == ident for o in self._file()):
+            return {"ok": False, "erreur": "offre introuvable"}
+
+        def _f(s: dict[str, Any]) -> None:
+            rec = dict(s.get(ident) or {})
+            rec["s"] = statut
+            rec["d"] = date.today().isoformat()
+            s[ident] = rec
+
+        try:
+            applications.modifier(_f, attente=4)
+        except applications.VerrouIndisponible:
+            return {
+                "ok": False,
+                "erreur": "Un autre programme écrit le suivi : réessaie dans un instant.",
+            }
+        return {"ok": True}
+
+    def lancer(self, cle: str, ident: str = "") -> dict[str, Any]:
+        """Starts one of TACHES, one at a time. `ident`: the offer, for "documents"."""
+        from jobhunter import root
+
+        if self._tache and self._tache.code is None:
+            return {"ok": False, "erreur": f"« {self._tache.libelle} » tourne encore."}
+        if cle not in TACHES:
+            return {"ok": False, "erreur": f"tâche inconnue : {cle}"}
+        libelle, args = TACHES[cle][0], list(TACHES[cle][1])
+        if cle == "documents":
+            url = next((str(o.get("url") or "") for o in self._file() if _oid(o) == ident), "")
+            if not re.match(r"^https?://", url):
+                return {"ok": False, "erreur": "cette offre n'a pas de lien"}
+            args.append(url)
+            libelle = f"{libelle} · {ident.partition('|')[0]}"
+        try:
+            self._tache = Tache(cle, libelle, [sys.executable, "-m", *args], root.scripts())
+        except OSError as e:
+            return {"ok": False, "erreur": str(e)}
+        return {"ok": True}
+
+    def tache(self) -> dict[str, Any] | None:
+        """The running (or last) task for the task panel; None when none was started."""
+        return self._tache.etat() if self._tache else None
+
+    def arreter(self) -> bool:
+        """Stops the running task."""
+        if self._tache and self._tache.code is None:
+            self._tache.proc.terminate()
+            return True
+        return False
+
+    def mise_a_jour(self) -> dict[str, Any]:
+        """Installed engine version and the latest published one (a check only)."""
+        from importlib.metadata import PackageNotFoundError, version
+
+        try:
+            installee = version("jobhunter")
+        except PackageNotFoundError:
+            installee = "?"
+        return {"installee": installee, "derniere": _derniere_version()}
+
     # Actions that only open things.
+    def ouvrir_profil(self) -> bool:
+        """Opens profile.json in its editor (no password lives there)."""
+        from jobhunter import profile
+
+        p = Path(profile.FICHIER)
+        if not p.is_file():
+            return False
+        os.startfile(p)  # type: ignore[attr-defined,unused-ignore]  # Windows only
+        return True
+
     def ouvrir(self, url: str) -> bool:
         """Opens an offer in the default browser; only web links."""
         if not re.match(r"^https?://", url or ""):
@@ -608,8 +781,6 @@ class Api:
 
     def ouvrir_fichier(self, chemin: str) -> bool:
         """Opens a CV or a letter with its program; only files under CV/ or Letters/."""
-        import os
-
         from jobhunter import root
 
         p = _chemin_local(chemin)
@@ -618,7 +789,7 @@ class Api:
         permis = (root.racine() / "CV", root.dossier("Lettres"))
         if not any(p.is_relative_to(d.resolve()) for d in permis):
             return False
-        os.startfile(p)  # Windows, like the desktop app
+        os.startfile(p)  # type: ignore[attr-defined,unused-ignore]  # Windows only
         return True
 
     def fenetre(self, action: str) -> None:

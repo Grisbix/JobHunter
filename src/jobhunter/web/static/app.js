@@ -72,6 +72,81 @@ function ouvrir(url) {
 }
 const ouvrirFichier = (chemin) => window.pywebview && window.pywebview.api.ouvrir_fichier(chemin);
 
+// A short message at the bottom of the window, gone after a few seconds.
+function toast(texte, erreur = false) {
+  const t = h("div", { class: `toast ${erreur ? "erreur" : ""}` }, texte);
+  document.body.append(t);
+  setTimeout(() => t.classList.add("parti"), 3800);
+  setTimeout(() => t.remove(), 4300);
+}
+const HORS_APPLI = "Aperçu navigateur : les actions ne tournent que dans l'application.";
+
+// --- Tasks: one program at a time, followed in the task panel ------------------------
+
+let minuteurTache = null;
+let tacheEnCours = false;
+
+async function lancer(cle, ident = "") {
+  if (!window.pywebview) return toast(HORS_APPLI, true);
+  const r = await window.pywebview.api.lancer(cle, ident);
+  if (!r.ok) return toast(r.erreur, true);
+  suivreTache();
+}
+const action = (texte, icone, cle, classe = "") => bouton(texte, icone, () => lancer(cle), classe);
+
+function duree(s) {
+  return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")}`;
+}
+
+async function suivreTache() {
+  clearTimeout(minuteurTache);
+  if (!window.pywebview) return;
+  const e = await window.pywebview.api.tache();
+  const p = $("tache");
+  if (!e) { p.hidden = true; return; }
+  const etat = !e.fini ? `en cours · ${duree(e.duree)}`
+    : e.code === 0 ? `terminé en ${duree(e.duree)}`
+    : e.code === 3 ? "file occupée par un autre programme : rien n'a été touché"
+    : `arrêté (code ${e.code})`;
+  p.hidden = false;
+  p.classList.toggle("fini", e.fini);
+  p.classList.toggle("echec", e.fini && e.code !== 0);
+  p.replaceChildren(
+    h("div", { class: "tache-tete" },
+      h("span", { class: "point" }),
+      h("div", { style: "min-width:0;flex:1" }, h("div", { class: "t" }, e.libelle), h("div", { class: "s" }, etat)),
+      e.fini
+        ? h("button", { class: "bouton", onclick: () => { p.hidden = true; } }, "Fermer")
+        : h("button", { class: "bouton", onclick: async () => { await window.pywebview.api.arreter(); suivreTache(); } }, "Arrêter")),
+    h("pre", {}, e.lignes.join("\n") || "…"));
+  if (!e.fini) {
+    tacheEnCours = true;
+    minuteurTache = setTimeout(suivreTache, 1000);
+  } else if (tacheEnCours) {
+    tacheEnCours = false;
+    redessiner();  // the data may have changed: show it
+  }
+}
+
+// Redraws the current screen without leaving it (the drawer stays open).
+function redessiner() {
+  if (courant && ECRANS[courant]) ECRANS[courant].dessiner($("vue")).catch(console.error);
+}
+
+// --- Application status ---------------------------------------------------------------
+
+const STATUTS = ["à postuler", "postulé", "relancé", "entretien", "refus", "mauvaise", "pas intéressé", "expiré"];
+const majuscule = (s) => s[0].toUpperCase() + s.slice(1);
+
+async function marquer(id, statut) {
+  if (!window.pywebview) return toast(HORS_APPLI, true);
+  const r = await window.pywebview.api.marquer(id, statut);
+  if (!r.ok) return toast(r.erreur, true);
+  toast(`Statut : ${statut}`);
+  ouvrirOffre(id);
+  redessiner();
+}
+
 // A button that is drawn but not yet wired to the engine: it says so.
 const aBrancher = (texte, icone, classe = "") =>
   h("button", { class: `bouton ${classe}`, disabled: true, title: "À brancher sur le moteur" },
@@ -117,8 +192,12 @@ async function ouvrirOffre(id) {
       bouton("Voir l'annonce", "sortie", () => ouvrir(o.url), "plein"),
       o.cv ? bouton("CV", "doc", () => ouvrirFichier(o.cv)) : null,
       o.lettre ? bouton("Lettre", "doc", () => ouvrirFichier(o.lettre)) : null,
-      aBrancher("Préparer CV et lettre", "eclair"),
-      aBrancher("Marquer postulée", "avion")),
+      bouton(o.cv ? "Refaire CV et lettre" : "Préparer CV et lettre", "eclair", () => lancer("documents", o.id)),
+      o.suivi === "postulé" ? null : bouton("Marquer postulée", "avion", () => marquer(o.id, "postulé"), "chaud")),
+    h("label", { class: "ligne-statut" }, h("span", {}, "Suivi"),
+      h("select", { class: "choix", onchange: (e) => e.target.value && marquer(o.id, e.target.value) },
+        h("option", { value: "" }, o.suivi ? majuscule(o.suivi) : "Pas de statut"),
+        STATUTS.filter((s) => s !== o.suivi).map((s) => h("option", { value: s }, majuscule(s))))),
     o.note ? h("div", { class: "carte description" }, h("h3", {}, "Note"), o.note) : null,
     h("div", { class: "carte description" },
       o.description || "Pas de description enregistrée pour cette offre."),
@@ -136,7 +215,7 @@ const ECRANS = {};
 
 ECRANS.accueil = {
   titre: "Accueil",
-  actions: () => [aBrancher("Lancer la collecte", "eclair", "plein")],
+  actions: () => [action("Lancer la collecte", "eclair", "collecte", "plein")],
   async dessiner(vue) {
     const d = await appel("tableau");
     const col = d.collecte;
@@ -212,7 +291,7 @@ function tableCandidatures(lignes) {
 const filtresOffres = { texte: "", statut: "à traiter", zone: "", fit_min: 0, tri: "fit", page: 0 };
 ECRANS.offres = {
   titre: "Offres",
-  actions: () => [aBrancher("Préparer les documents", "eclair", "plein")],
+  actions: () => [action("Préparer les 30 meilleures", "eclair", "documents_top", "plein")],
   async dessiner(vue) {
     const f = filtresOffres;
     const relancer = () => ECRANS.offres.dessiner(vue);
@@ -271,7 +350,7 @@ ECRANS.candidatures = {
 
 ECRANS.relances = {
   titre: "Relances",
-  actions: () => [aBrancher("Écrire les brouillons du jour", "eclair", "plein")],
+  actions: () => [action("Écrire les brouillons du jour", "eclair", "brouillons", "plein")],
   async dessiner(vue) {
     const d = await appel("relances");
     const apercu = h("div", { class: "carte apercu" }, h("div", { class: "vide" }, "Choisis un brouillon pour le lire."));
@@ -314,7 +393,7 @@ ECRANS.relances = {
 const filtresDocs = { texte: "", page: 0 };
 ECRANS.documents = {
   titre: "Documents",
-  actions: () => [aBrancher("Régénérer après un changement de modèle", "fleche")],
+  actions: () => [action("Refaire les CV après un changement de modèle", "fleche", "regenerer_cv")],
   async dessiner(vue) {
     const f = filtresDocs;
     const relancer = () => ECRANS.documents.dessiner(vue);
@@ -344,7 +423,10 @@ const puces = (liste, classe = "puce") => liste.length
 
 ECRANS.profil = {
   titre: "Profil",
-  actions: () => [aBrancher("Modifier le profil", "profil", "plein")],
+  actions: () => [bouton("Modifier le profil", "profil", async () => {
+    if (!window.pywebview) return toast(HORS_APPLI, true);
+    if (!(await window.pywebview.api.ouvrir_profil())) toast("profile.json introuvable", true);
+  }, "plein")],
   async dessiner(vue) {
     const p = await appel("profil");
     const id = p.identite;
@@ -370,7 +452,7 @@ ECRANS.profil = {
 
 ECRANS.sources = {
   titre: "Sources",
-  actions: () => [aBrancher("Collecter maintenant", "eclair", "plein")],
+  actions: () => [action("Collecter maintenant", "eclair", "collecte", "plein")],
   async dessiner(vue) {
     const s = await appel("sources");
     const max = Math.max(1, ...s.rendement.map((r) => r.nouvelles));
@@ -408,18 +490,27 @@ ECRANS.maintenance = {
     vue.replaceChildren(h("div", { class: "grille" },
       h("div", { class: "sombre" }, h("h2", {}, "Moteur"), h("div", { class: "chiffre", style: "margin-top:14px" }, m.version),
         h("div", { class: "sous", style: "color:#8f8783" }, "version installée"),
-        h("div", { class: "actions-col" }, aBrancher("Chercher une mise à jour", "fleche", "plein"))),
+        h("div", { class: "actions-col" }, bouton("Chercher une mise à jour", "fleche", async (ev) => {
+          if (!window.pywebview) return toast(HORS_APPLI, true);
+          const b = ev.currentTarget;
+          b.disabled = true;
+          const v = await window.pywebview.api.mise_a_jour();
+          b.disabled = false;
+          if (!v.derniere) toast("GitHub injoignable : réessaie plus tard.", true);
+          else if (v.derniere === v.installee) toast(`À jour : ${v.installee} est la dernière version.`);
+          else toast(`Version ${v.derniere} publiée (installée : ${v.installee}). Installe-la depuis Recherche_emploi avec pip.`);
+        }, "plein"))),
       carte("Dernière collecte",
         h("div", { class: c.etat === "ok" ? "etat ok" : "etat" }, c.etat === "ok" ? "Réussie" : (c.etat || "inconnue")),
         h("dl", { class: "paires", style: "margin-top:14px" },
           h("dt", {}, "Début"), h("dd", {}, c.debut || "—"), h("dt", {}, "Fin"), h("dd", {}, c.fin || "—"),
           h("dt", {}, "Erreurs"), h("dd", {}, String(c.erreurs)), h("dt", {}, "Dernier succès"), h("dd", {}, c.dernier_succes || "—")),
-        h("div", { class: "actions-col" }, aBrancher("Relancer la collecte", "eclair"))),
+        h("div", { class: "actions-col" }, action("Relancer la collecte", "eclair", "collecte"))),
       carte("Données",
         h("dl", { class: "paires" },
           h("dt", {}, "Offres"), h("dd", {}, nombre(m.offres)), h("dt", {}, "Candidatures"), h("dd", {}, nombre(m.candidatures)),
           m.tailles.map((t) => [h("dt", {}, t.nom), h("dd", {}, taille(t.octets))])),
-        h("div", { class: "actions-col" }, aBrancher("Contrôler les offres fermées", "loupe"))),
+        h("div", { class: "actions-col" }, action("Contrôler les offres fermées", "loupe", "disponibilite"))),
       carte("Sauvegardes", h("div", { class: "sous", style: "margin:0 0 10px" }, "une par jour, sept jours glissants"), puces(m.sauvegardes))));
   },
 };
@@ -432,7 +523,25 @@ function appliquerReglages(r) {
   if (!r) return;
   document.body.style.setProperty("--t", String(r.verre / 100));
   document.body.classList.toggle("sans-fond", r.fond === "aucun");
+  document.body.dataset.teinte = r.teinte || "terre";
+  document.body.style.setProperty("--police", (POLICES.find(([v]) => v === r.police) || POLICES[0])[2]);
 }
+
+// [value, label, CSS stack]: fonts every Windows 11 has, nothing to download.
+const POLICES = [
+  ["segoe", "Segoe", '"Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif'],
+  ["bahnschrift", "Bahnschrift", 'Bahnschrift, "Segoe UI", sans-serif'],
+  ["corbel", "Corbel", 'Corbel, "Segoe UI", sans-serif'],
+  ["sitka", "Sitka", '"Sitka Text", Sitka, Georgia, serif'],
+  ["georgia", "Georgia", 'Georgia, "Times New Roman", serif'],
+];
+// [value, label, the three colours of its swatch]
+const TEINTES = [
+  ["terre", "Terre", ["#eaa476", "#c98366", "#a8766b"]],
+  ["vert", "Vert", ["#a9d4b4", "#6fa98a", "#4e7f6a"]],
+  ["bleu", "Bleu", ["#9fc4ec", "#6b97cf", "#4b6fa8"]],
+  ["noir", "Noir et blanc", ["#d4d4d4", "#5e5e5e", "#161616"]],
+];
 
 const FONDS = [["acrylique", "Acrylique"], ["net", "Net"], ["mica", "Mica"], ["aucun", "Aucun"]];
 
@@ -440,7 +549,7 @@ ECRANS.reglages = {
   titre: "Réglages",
   actions: () => [],
   async dessiner(vue) {
-    let r = (await appel("reglages")) || { fond: "acrylique", verre: 50 };
+    let r = (await appel("reglages")) || { fond: "acrylique", verre: 50, teinte: "terre", police: "segoe" };
     const enregistrer = async (maj) => {
       r = { ...r, ...maj };
       appliquerReglages(r);
@@ -465,6 +574,16 @@ ECRANS.reglages = {
       dessinerFond();
     }));
     dessinerFond();
+    const teintes = h("div", { class: "nuancier" });
+    const dessinerTeintes = () => teintes.replaceChildren(...TEINTES.map(([v, lib, c]) =>
+      h("button", { class: `nuance ${v === r.teinte ? "on" : ""}`, title: lib, onclick: async () => { await enregistrer({ teinte: v }); dessinerTeintes(); } },
+        h("span", { class: "pastille", style: `background:linear-gradient(135deg, ${c[0]}, ${c[1]} 55%, ${c[2]})` }), lib)));
+    dessinerTeintes();
+    const polices = h("div", { class: "polices" });
+    const dessinerPolices = () => polices.replaceChildren(...POLICES.map(([v, lib, pile]) =>
+      h("button", { class: `police ${v === r.police ? "on" : ""}`, onclick: async () => { await enregistrer({ police: v }); dessinerPolices(); } },
+        h("span", { class: "exemple", style: `font-family:${pile}` }, "Aa"), lib)));
+    dessinerPolices();
     vue.replaceChildren(h("div", { class: "grille" },
       h("div", { class: "verre panneau" },
         h("div", { class: "titre-ligne" }, h("h2", {}, "Apparence")),
@@ -476,6 +595,10 @@ ECRANS.reglages = {
           h("div", { class: "titre-ligne" }, h("div", { class: "nom-reglage" }, "Transparence"), valeur),
           h("div", { class: "ligne-curseur" }, h("span", {}, "Opaque"), curseur, h("span", {}, "Verre")),
           h("div", { class: "sous" }, "Combien le bureau transparaît. La force du flou acrylique est fixée par Windows."))),
+      h("div", { class: "verre panneau" },
+        h("div", { class: "titre-ligne" }, h("h2", {}, "Couleurs et police")),
+        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Couleur"), teintes),
+        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Police"), polices)),
       window.pywebview ? null : h("div", { class: "verre panneau" },
         h("div", { class: "sous" }, "Aperçu navigateur : ces réglages ne s'enregistrent que dans l'application."))));
   },
@@ -517,6 +640,7 @@ function demarrer() {
 function natif() {
   document.body.classList.add("natif");
   appel("reglages").then(appliquerReglages).catch(() => { /* defaults from style.css */ });
+  suivreTache();  // a task started before a reload keeps being followed
   for (const b of document.querySelectorAll(".feux button")) {
     b.addEventListener("click", () => window.pywebview.api.fenetre(b.dataset.action));
   }

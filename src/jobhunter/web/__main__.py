@@ -40,7 +40,7 @@ class _Cadre:
         import ctypes
 
         v = ctypes.c_int(valeur)
-        ctypes.windll.dwmapi.DwmSetWindowAttribute(
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(  # type: ignore[attr-defined,unused-ignore]
             self.hwnd, code, ctypes.byref(v), ctypes.sizeof(v)
         )
 
@@ -49,7 +49,7 @@ class _Cadre:
         from ctypes import wintypes
 
         zone = wintypes.RECT()
-        ctypes.windll.user32.SystemParametersInfoW(_SPI_GETWORKAREA, 0, ctypes.byref(zone), 0)
+        ctypes.windll.user32.SystemParametersInfoW(_SPI_GETWORKAREA, 0, ctypes.byref(zone), 0)  # type: ignore[attr-defined,unused-ignore]
         lz, hz = zone.right - zone.left, zone.bottom - zone.top
         if plein:
             x, y, lg, ht = zone.left, zone.top, lz, hz
@@ -59,7 +59,7 @@ class _Cadre:
         self._attribut(
             _DWMWA_WINDOW_CORNER_PREFERENCE, _DWMWCP_DONOTROUND if plein else _DWMWCP_ROUND
         )
-        ctypes.windll.user32.SetWindowPos(
+        ctypes.windll.user32.SetWindowPos(  # type: ignore[attr-defined,unused-ignore]
             self.hwnd, 0, x, y, lg, ht, _SWP_NOZORDER | _SWP_FRAMECHANGED
         )
         self.plein = plein
