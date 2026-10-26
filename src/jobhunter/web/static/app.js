@@ -1428,10 +1428,22 @@ async function verifierMaj(ev) {
   const v = await window.pywebview.api.mise_a_jour();
   if (b) b.disabled = false;
   if (!v.derniere) return toast("GitHub injoignable : réessaie plus tard.", true);
-  if (v.derniere === v.installee) return toast(`À jour : ${v.installee} est la dernière version.`);
+  if (!v.nouvelle) return toast(`À jour : ${v.installee} est la dernière version.`);
+  if (!v.signee) return toast(`La version ${v.derniere} attend la signature de son auteur : réessaie plus tard.`);
   const ok = await dialogue(`Version ${v.derniere} disponible`, `Installée : ${v.installee}. Elle est vérifiée (signature) avant d'être installée ; relance JobHunter ensuite.`,
     null, [["Installer", "plein", () => true]]);
   if (ok) lancer("maj");
+}
+
+// At start-up: a newer signed version shows as a button in the title bar.
+async function annonceMaj() {
+  const v = await appel("annonce_maj").catch(() => null);
+  if (!v) return;
+  const b = $("maj");
+  b.textContent = `Mettre à jour (${v.derniere})`;
+  b.title = `Version installée : ${v.installee}`;
+  b.hidden = false;
+  b.addEventListener("click", verifierMaj);
 }
 
 async function cartesParametres() {
@@ -1543,6 +1555,7 @@ function natif() {
     if (!e.target.closest("button")) window.pywebview.api.fenetre("agrandir");
   });
   demarrer();
+  annonceMaj();
 }
 
 if (window.pywebview) natif();

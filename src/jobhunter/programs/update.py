@@ -204,25 +204,49 @@ def _signature(version):
     return _sig.ouvrir(contenu, version)
 
 
+def prete(version, timeout=5):
+    """Can `version` be installed yet: is its signature published?
+
+    VERSION changes on main as soon as the release is merged, before the author signs
+    it: announcing it then led to "pas encore signée" on the click. Without a public
+    key, the published fingerprint plays that part."""
+    nom = _sig.FICHIER if _sig.CLE_PUBLIQUE else SETUP + ".sha256"
+    try:
+        _get(ASSET_URL.format(version, nom), timeout)
+        return True
+    except Exception:
+        return False
+
+
 def nouvelle_version(timeout=5, intervalle_h=24):
     """Available version if it is more recent than the installed one, otherwise None.
 
-    For the application, at startup: a single small file (VERSION), at most
-    once a day, and any error (offline, slow GitHub) counts as "nothing
-    new" — a check must never hinder the launch."""
+    For the application, at startup: two small files (VERSION, then the signature of
+    a newer version), at most once a day, and any error (offline, slow GitHub)
+    counts as "nothing new" — a check must never hinder the launch. The version found
+    is remembered with the date of the check: until it is installed, every start
+    shows it again without asking GitHub. A version not signed yet leaves no date,
+    so the next start asks again."""
     # Without a VERSION file, it is not a published installation (development
     # copy, repository that syncs the engine): nothing to announce.
     if not _gele.est_gele() and not (RACINE / "VERSION").exists():
         return None
+    locale = _cle_version(version_locale())
     try:
         if (
             DERNIERE_VERIF.exists()
             and time.time() - DERNIERE_VERIF.stat().st_mtime < intervalle_h * 3600
         ):
-            return None
-        DERNIERE_VERIF.write_text(time.strftime("%Y-%m-%d %H:%M"), encoding="utf-8")
+            # "date|version": the line of an earlier check (before 3.28, the date alone)
+            vue = DERNIERE_VERIF.read_text(encoding="utf-8").partition("|")[2].strip()
+            return vue if vue and _cle_version(vue) > locale else None
         distante = _get(VERSION_URL, timeout)[:64].decode("utf-8").strip()
-        return distante if _cle_version(distante) > _cle_version(version_locale()) else None
+        if _cle_version(distante) <= locale:
+            distante = ""
+        elif not prete(distante, timeout):
+            return None
+        DERNIERE_VERIF.write_text(f"{time.strftime('%Y-%m-%d %H:%M')}|{distante}", encoding="utf-8")
+        return distante or None
     except Exception:
         return None
 

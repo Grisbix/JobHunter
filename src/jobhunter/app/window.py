@@ -594,20 +594,42 @@ class App(
 
 
 def _annonce_mise_a_jour(root: Any, app: Any) -> None:
-    """At start-up, in the background: a more recent version on GitHub?
-    At most one check per day; offline, nothing is displayed."""
+    """At start-up, in the background: a more recent version on GitHub, signed?
+
+    It shows as a button at the right of the top bar, on every page, until it is
+    installed: one click updates. A dialog at start-up was answered "Non" in a hurry
+    and not seen again for a day. At most one check per day; offline, nothing shows."""
 
     def proposer(v: Any, installee: Any) -> None:
-        if messagebox.askyesno(
-            _t("JobHunter — mise à jour disponible"),
-            _t(
-                "La version {v} est disponible (installée : {installee}).\n\n"
-                "L'installer maintenant ? Ton profil, ton CV, tes lettres et ton suivi ne "
-                "sont pas touchés, et la version d'avant est sauvegardée."
-            ).format(v=v, installee=installee),
-            parent=root,
-        ):
+        def installer() -> None:
+            if not messagebox.askyesno(
+                _t("JobHunter — mise à jour disponible"),
+                _t(
+                    "La version {v} est disponible (installée : {installee}).\n\n"
+                    "L'installer maintenant ? Ton profil, ton CV, tes lettres et ton suivi ne "
+                    "sont pas touchés, et la version d'avant est sauvegardée."
+                ).format(v=v, installee=installee),
+                parent=root,
+            ):
+                return
+            bouton.configure(text=_t("Mise à jour en cours…"), state="disabled")
             app.mettre_a_jour()
+
+        bouton = CB(
+            app.status.master,
+            text=_t("Mettre à jour ({v})").format(v=v),
+            command=installer,
+            font=(_theme.FONT_UI, 12, "bold"),
+            bg=ACC,
+            fg=ACC_TX,
+            relief="flat",
+            activebackground=ACC_H,
+            cursor="hand2",
+        )
+        # Packed before the status line, both on the right: the button takes the edge.
+        bouton.pack(side="right", padx=(8, 4), before=app.status)
+        _bulle(bouton, lambda: _t("Version installée : {installee}").format(installee=installee))
+        app.b_maj = bouton
 
     def verifier() -> None:
         try:

@@ -577,6 +577,34 @@ def _derniere_version(timeout: float = 6) -> str:
         return ""
 
 
+def _signee(version: str, timeout: float = 6) -> bool:
+    """Is the author's signature of `version` published (the release asset)?
+
+    A release exists as soon as it is merged, before the author signs it: offering it
+    then led to "pas encore signée" on the click (programs.update.prete).
+    """
+    import urllib.request
+
+    from jobhunter import signature
+
+    url = f"https://github.com/Grisbix/JobHunter/releases/download/v{version}/{signature.FICHIER}"
+    req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": "JobHunter-web"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout):  # nosec B310 : fixed https URL
+            return True
+    except (OSError, ValueError):
+        return False
+
+
+def _plus_recente(a: str, b: str) -> bool:
+    """Is version `a` more recent than `b`? ("3.28.0" > "3.27.2")."""
+
+    def cle(v: str) -> tuple[int, ...]:
+        return tuple(int(x) if x.isdigit() else 0 for x in v.strip().split("."))
+
+    return bool(a) and cle(a) > cle(b)
+
+
 class Api(PanneauxApi, AtelierApi):
     """Methods the page calls through `window.pywebview.api`.
 
@@ -1431,7 +1459,19 @@ class Api(PanneauxApi, AtelierApi):
             installee = version("jobhunter")
         except PackageNotFoundError:
             installee = "?"
-        return {"installee": installee, "derniere": _derniere_version()}
+        derniere = _derniere_version()
+        nouvelle = _plus_recente(derniere, installee)
+        return {
+            "installee": installee,
+            "derniere": derniere,
+            "nouvelle": nouvelle,
+            "signee": nouvelle and _signee(derniere),
+        }
+
+    def annonce_maj(self) -> dict[str, Any] | None:
+        """A newer signed version, for the button of the title bar; None otherwise."""
+        v = self.mise_a_jour()
+        return v if v["signee"] else None
 
     # Actions that only open things.
     def ouvrir_profil(self) -> bool:

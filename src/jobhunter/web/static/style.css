@@ -328,6 +328,9 @@ body.natif .barre {
 body.natif .fenetre { inset: 0; border: 0; border-radius: 0; padding-top: 44px; background: rgba(var(--blanc-rgb), calc(.28 - .28 * var(--t))); backdrop-filter: none; }
 body.natif .tiroir { top: 52px; }
 .feux { display: flex; gap: 8px; }
+/* A newer signed version: one click updates (annonceMaj). */
+.barre .maj { height: 30px; padding: 0 14px; margin-right: 12px; font-size: 13px; }
+.barre .maj[hidden] { display: none; }
 .feux button {
   width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center;
   background: rgba(var(--blanc-rgb),.42); border: 1px solid rgba(var(--blanc-rgb),.65); transition: background .15s;

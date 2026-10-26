@@ -464,6 +464,9 @@ TEXTES: dict[str, str] = {
     "details are in the log. Your data was not touched.",
     "Version {v} installée. Relancer JobHunter maintenant ?": "Version {v} installed. "
     "Restart JobHunter now?",
+    "Mettre à jour ({v})": "Update ({v})",
+    "Mise à jour en cours…": "Updating…",
+    "Version installée : {installee}": "Installed version: {installee}",
     "JobHunter — mise à jour disponible": "JobHunter — update available",
     "La version {v} est disponible (installée : {installee}).\n\n"
     "L'installer maintenant ? Ton profil, ton CV, tes lettres et ton suivi ne "
