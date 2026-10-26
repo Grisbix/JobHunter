@@ -378,6 +378,9 @@ TACHES: dict[str, tuple[str, list[str]]] = {
         "CV et lettres des 30 meilleures offres",
         ["jobhunter.programs.generate_docs", "--top", "30"],
     ),
+    # after a change of places / of skills (the desktop app runs the same)
+    "zones": ("Zones des offres mises à jour", ["jobhunter.scoring.zones", "--ecrire"]),
+    "rescore": ("Recalculer le fit", ["jobhunter.programs.rescore_ats"]),
     # + the offer's URL, which generate_docs matches by substring
     "documents": ("CV et lettre de l'offre", ["jobhunter.programs.generate_docs", "--url"]),
 }
@@ -429,6 +432,48 @@ class Tache:
         }
 
 
+# --- Profile and search, edited ----------------------------------------------------------
+
+
+def _textes(v: Any) -> list[str]:
+    """A list of non-empty strings from whatever the page sent."""
+    return [str(x).strip() for x in (v if isinstance(v, list) else []) if str(x).strip()]
+
+
+def _entrees(v: Any) -> list[str]:
+    """Words of a list as typed, repeats removed: NOT stripped.
+
+    A space can be meant: the synonym "ia " finds "IA " but not "social", "git " not
+    "digital". Stripping it, as the desktop's skill editor does, widens the match.
+    """
+    vus: dict[str, None] = {}
+    for x in v if isinstance(v, list) else []:
+        s = str(x)
+        if s.strip() and s.lower() not in {k.lower() for k in vus}:
+            vus[s] = None
+    return list(vus)
+
+
+def _lieu(e: Any) -> Any:
+    """A zone entry the page sent back: a catalogue key, or a declared sector; else None."""
+    if isinstance(e, str) and e.strip():
+        return e.strip().lower()
+    if isinstance(e, Mapping) and str(e.get("cle") or "").strip():
+        return {
+            "cle": str(e["cle"]).strip(),
+            "libelle": str(e.get("libelle") or e["cle"]).strip(),
+            "lieux": _textes(e.get("lieux")) or [str(e.get("libelle") or e["cle"]).strip()],
+        }
+    return None
+
+
+def _ecrire_json(f: Path, donnees: Any) -> None:
+    """Atomic write, the way search_settings writes sources_config.json."""
+    tmp = f.with_name(f.name + ".tmp")
+    tmp.write_text(json.dumps(donnees, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(f)
+
+
 def _derniere_version(timeout: float = 6) -> str:
     """The latest release tag of the public repository, "" when offline."""
     import urllib.request
@@ -460,6 +505,7 @@ class Api:
     def __init__(self) -> None:
         """An empty cache: each data file is read on first use."""
         self._cache: dict[str, tuple[float, Any]] = {}
+        self._propositions: list[Any] = []  # last email suggestions, applied by index
 
     # Data, reloaded only when its file changed.
     def _lire(self, cle: str, fichier: Path, charger: Any) -> Any:
@@ -694,6 +740,219 @@ class Api:
         if self._fond:
             self._fond(r["fond"])
         return r
+
+    # Profile and search, edited: the same functions as the desktop app's panels
+    # (search_settings, skills_settings): checked first, previous profile kept as .bak.
+    def _profil_brut(self) -> dict[str, Any]:
+        from jobhunter import profile
+
+        return dict(json.loads(Path(profile.FICHIER).read_text(encoding="utf-8")))
+
+    def _ecrire_profil(self, nouveau: dict[str, Any]) -> str:
+        from jobhunter import profile, search_settings
+
+        bak = search_settings.ecrire(Path(profile.FICHIER), nouveau)
+        profile.recharger()
+        return bak.name
+
+    def recherche(self) -> dict[str, Any]:
+        """Collection keywords, titles kept and set aside, places, as the page edits them."""
+        from jobhunter import search_settings as rs
+
+        p = self._profil_brut()
+        r = rs.lire(p)
+
+        def lieux(v: list[Any] | None) -> list[dict[str, Any]]:
+            return [{"entree": e, "libelle": rs.libelle_lieu(e)} for e in v or []]
+
+        return {
+            "mots_cles": rs.mots_cles_collecte(p),
+            "garder": rs.eclater(r.garder),
+            "ecarter": rs.eclater(r.ecarter),
+            "prioritaires": lieux(r.prioritaires),
+            "secondaires": lieux(r.secondaires),
+        }
+
+    def lieux(self, texte: str) -> list[dict[str, Any]]:
+        """Places matching what is typed: the catalogue, then the text as a free place."""
+        from jobhunter import search_settings as rs
+
+        return [{"entree": e, "libelle": lib} for e, lib in rs.chercher_lieux(str(texte or ""))]
+
+    def enregistrer_recherche(self, d: dict[str, Any]) -> dict[str, Any]:
+        """Saves the search (profile + sources_config keywords); new places re-zone the queue."""
+        from jobhunter import search_settings as rs
+
+        def places(cle: str) -> list[Any]:
+            return [x for x in (_lieu((e or {}).get("entree")) for e in d.get(cle) or []) if x]
+
+        p = self._profil_brut()
+        avant = rs.lire(p)
+        mots, garder, ecarter = (_entrees(d.get(k)) for k in ("mots_cles", "garder", "ecarter"))
+        # A list left as it was keeps its form in the file: the page shows "re:(a|b)" as
+        # one word per line (eclater), which would otherwise be rewritten at each save.
+        mots_changes = mots != rs.mots_cles_collecte(p)
+        r = rs.Reglages(
+            mots_cles=mots if mots_changes else avant.mots_cles or mots,
+            garder=avant.garder if garder == rs.eclater(avant.garder) else garder,
+            ecarter=avant.ecarter if ecarter == rs.eclater(avant.ecarter) else ecarter,
+            prioritaires=places("prioritaires"),
+            secondaires=places("secondaires"),
+        )
+        if erreurs := rs.valider(r):
+            return {"ok": False, "erreurs": erreurs}
+        bak = self._ecrire_profil(rs.appliquer(p, r))
+        if mots_changes:
+            rs.ecrire_mots_cles(r.mots_cles)  # what the collection reads
+        zones = (avant.prioritaires, avant.secondaires) != (r.prioritaires, r.secondaires)
+        if zones:
+            self.lancer("zones")  # the Zone column follows the new places
+        return {"ok": True, "bak": bak, "zones": zones}
+
+    def competences(self) -> dict[str, Any]:
+        """The skills, the axes they count for, and which are CV base skills (not removable)."""
+        from jobhunter import skills_settings as sk
+
+        p = self._profil_brut()
+        base = set(p.get("competences_de_base") or [])
+        return {
+            "axes": sk.axes(p),
+            "liste": [
+                {
+                    "nom": c.nom,
+                    "axes": c.axes,
+                    "synonymes": c.synonymes,
+                    "en": c.en,
+                    "base": c.nom in base,
+                }
+                for c in sk.lire(p)
+            ],
+        }
+
+    def enregistrer_competences(self, liste: list[dict[str, Any]]) -> dict[str, Any]:
+        """Saves the skills; what the page does not show (prose_fr…) is kept by name."""
+        from jobhunter import skills_settings as sk
+
+        p = self._profil_brut()
+        autres = {c.nom: c.autres for c in sk.lire(p)}
+        nouvelles = []
+        for x in liste if isinstance(liste, list) else []:
+            nom = str(x.get("nom") or "").strip()
+            nouvelles.append(
+                sk.Competence(
+                    nom=nom,
+                    axes=_textes(x.get("axes")),
+                    synonymes=_entrees(x.get("synonymes")),
+                    en=str(x.get("en") or "").strip(),
+                    autres=dict(autres.get(nom, {})),
+                )
+            )
+        if erreurs := sk.valider(nouvelles, p):
+            return {"ok": False, "erreurs": erreurs}
+        return {"ok": True, "bak": self._ecrire_profil(sk.appliquer(p, nouvelles))}
+
+    def enregistrer_identite(self, d: dict[str, Any]) -> dict[str, Any]:
+        """Saves name, town, email, LinkedIn and the languages spoken."""
+        p = self._profil_brut()
+        ident = dict(p.get("identite") or {})
+        for k in ("prenom", "nom", "ville", "email", "linkedin"):
+            if k in d:
+                ident[k] = str(d.get(k) or "").strip()
+        if not ident.get("prenom") or not ident.get("nom"):
+            return {"ok": False, "erreurs": ["le prénom et le nom sont nécessaires (lettres, CV)"]}
+        nouveau = json.loads(json.dumps(p))
+        nouveau["identite"] = ident
+        if "langues" in d:
+            codes = [c.lower() for c in _textes(d.get("langues"))]
+            if bad := [c for c in codes if not re.fullmatch(r"[a-z]{2}", c)]:
+                return {
+                    "ok": False,
+                    "erreurs": [f"code de langue à deux lettres : {', '.join(bad)}"],
+                }
+            nouveau["langues_parlees"] = list(dict.fromkeys(codes))
+        return {"ok": True, "bak": self._ecrire_profil(nouveau)}
+
+    def enregistrer_exclusions(self, d: dict[str, Any]) -> dict[str, Any]:
+        """Saves the contracts and countries the collection leaves out (sources_config.json)."""
+        from jobhunter import search_settings as rs
+
+        f = rs._fichier_sources()
+        try:
+            conf = json.loads(f.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            conf = {}
+        except (OSError, ValueError) as e:
+            return {"ok": False, "erreurs": [f"sources_config.json illisible : {e}"]}
+        for cle in ("contrats_exclus", "pays_exclus"):
+            if cle in d:
+                conf[cle] = list(dict.fromkeys(_textes(d.get(cle))))
+        _ecrire_json(f, conf)
+        return {"ok": True}
+
+    # Statuses from emails: read an export or Gmail (read-only), suggest, apply one by one.
+    def lire_courriels(self, source: str) -> dict[str, Any]:
+        """Reads the emails and returns the status suggestions; nothing is written here."""
+        from jobhunter import root
+        from jobhunter.mail import reading, statuses
+        from jobhunter.storage import applications
+
+        if source == "gmail":
+            lot: Callable[[], Any] = lambda: reading.depuis_gmail(root.dossier_cles())  # noqa: E731
+        elif source in ("mbox", "eml"):
+            if self._fenetre is None:
+                return {"ok": False, "erreur": "il faut l'application pour choisir un fichier"}
+            import webview
+
+            if source == "mbox":
+                choix = self._fenetre.create_file_dialog(
+                    webview.FileDialog.OPEN,
+                    file_types=("Courriels (*.mbox)", "Tous les fichiers (*.*)"),
+                )
+            else:
+                choix = self._fenetre.create_file_dialog(webview.FileDialog.FOLDER)
+            if not choix:
+                return {"ok": False, "annule": True}
+            chemin = Path(choix[0])
+            lot = (
+                (lambda: reading.depuis_mbox(chemin))
+                if source == "mbox"
+                else (lambda: reading.depuis_eml(chemin))
+            )
+        else:
+            return {"ok": False, "erreur": f"source inconnue : {source}"}
+        try:
+            tous = list(lot())
+            self._propositions = statuses.propositions(tous, applications.charger())
+        except ImportError:
+            return {
+                "ok": False,
+                "erreur": 'Lecture Gmail : installe d\'abord pip install "jobhunter[gmail]".',
+            }
+        except Exception as e:  # noqa: BLE001 — shown to the user, never swallowed
+            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+        champs = ("oid", "actuel", "propose", "raison", "de", "sujet", "le")
+        return {
+            "ok": True,
+            "lus": len(tous),
+            "propositions": [
+                {k: str(getattr(x, k, "")) for k in champs} for x in self._propositions
+            ],
+        }
+
+    def appliquer_proposition(self, i: int) -> dict[str, Any]:
+        """Applies one suggestion if it still moves the application forward."""
+        from jobhunter.programs import mail_statuses
+        from jobhunter.storage import applications
+
+        if not 0 <= int(i) < len(self._propositions):
+            return {"ok": False, "erreur": "proposition inconnue"}
+        try:
+            ecrit = mail_statuses.appliquer(self._propositions[int(i)], attente=3)
+        except applications.VerrouIndisponible:
+            return {"ok": False, "erreur": "Suivi occupé : réessaie dans un instant."}
+        if not ecrit:
+            return {"ok": False, "erreur": "Le suivi a changé entre-temps : rien écrit."}
+        return {"ok": True}
 
     # Actions that write: a status, or a program started by a button.
     def marquer(self, ident: str, statut: str) -> dict[str, Any]:

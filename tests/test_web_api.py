@@ -3,6 +3,8 @@
 from datetime import date
 from pathlib import Path
 
+import pytest
+
 from jobhunter.web import api as web_api
 from jobhunter.web.api import Api, candidatures, fiche, offres, rendement, tableau
 
@@ -311,3 +313,123 @@ def test_tache_lit_la_sortie_et_le_code(tmp_path):
         time.sleep(0.05)
     e = t.etat()
     assert e["fini"] and e["code"] == 3 and e["lignes"] == ["un", "deux"]
+
+
+PROFIL = {
+    "identite": {"prenom": "Ada", "nom": "Lovelace", "ville": "Londres"},
+    "langues_parlees": ["fr"],
+    "collecte": {"mots_cles": ["analyste esg"]},
+    "filtre_titre": {"metier": ["re:(esg|climat)"], "exclus": ["stage"]},
+    "zones": {"prioritaires": ["idf"], "secondaires": []},
+    "competences": {"IA": {"synonymes": ["ia ", "machine learning"], "prose_fr": "l'IA"}},
+    "competences_de_base": ["IA"],
+    "scoring": {"axes": {"data": {"competences": ["IA"]}, "esg": {"competences": []}}},
+}
+
+
+@pytest.fixture
+def profil_tmp(tmp_path, monkeypatch):
+    import json
+
+    from jobhunter import profile, search_settings
+
+    f = tmp_path / "profile.json"
+    f.write_text(json.dumps(PROFIL, ensure_ascii=False, indent=2), encoding="utf-8")
+    src = tmp_path / "sources_config.json"
+    src.write_text('{"keywords": ["analyste esg"], "pays_exclus": ["Inde"]}', encoding="utf-8")
+    monkeypatch.setattr(profile, "FICHIER", f)
+    monkeypatch.setattr(profile, "recharger", lambda *a: None)
+    monkeypatch.setattr(search_settings, "_fichier_sources", lambda: src)
+    api = Api()
+    api.lanceees = []
+    monkeypatch.setattr(api, "lancer", lambda cle, ident="": api.lanceees.append(cle))
+    return api, f, src
+
+
+def test_recherche_sans_changement_ne_reecrit_rien(profil_tmp):
+    api, f, src = profil_tmp
+    avant, savant = f.read_text(encoding="utf-8"), src.read_text(encoding="utf-8")
+    r = api.recherche()
+    assert len(r["garder"]) == 2  # "re:(a|b)" shown one word per line
+    assert api.enregistrer_recherche(r)["ok"]
+    assert f.read_text(encoding="utf-8").strip() == avant.strip()
+    assert src.read_text(encoding="utf-8") == savant and api.lanceees == []
+
+
+def test_recherche_ajout_mot_cle_et_lieu(profil_tmp):
+    import json
+
+    api, f, src = profil_tmp
+    r = api.recherche()
+    r["mots_cles"].append("finance durable")
+    r["secondaires"].append({"entree": {"cle": "geneve", "libelle": "Genève"}, "libelle": "Genève"})
+    res = api.enregistrer_recherche(r)
+    assert res["ok"] and res["zones"] and api.lanceees == ["zones"]
+    p = json.loads(f.read_text(encoding="utf-8"))
+    assert p["collecte"]["mots_cles"] == ["analyste esg", "finance durable"]
+    assert p["zones"]["secondaires"] == [
+        {"cle": "geneve", "libelle": "Genève", "lieux": ["Genève"]}
+    ]
+    assert json.loads(src.read_text(encoding="utf-8"))["keywords"][-1] == "finance durable"
+    assert (f.parent / "profile.json.bak").exists()
+
+
+def test_recherche_refuse_sans_intitule(profil_tmp):
+    api, f, _ = profil_tmp
+    avant = f.read_text(encoding="utf-8")
+    r = {**api.recherche(), "garder": []}
+    res = api.enregistrer_recherche(r)
+    assert not res["ok"] and res["erreurs"] and f.read_text(encoding="utf-8") == avant
+
+
+def test_competences_gardent_l_espace_et_la_prose(profil_tmp):
+    import json
+
+    api, f, _ = profil_tmp
+    c = api.competences()
+    assert c["axes"] == ["data", "esg"] and c["liste"][0]["base"]
+    liste = c["liste"]
+    liste[0]["axes"] = ["data", "esg"]
+    liste.append({"nom": "SFDR", "axes": ["esg"], "synonymes": ["sfdr"], "en": ""})
+    assert api.enregistrer_competences(liste)["ok"]
+    p = json.loads(f.read_text(encoding="utf-8"))
+    assert p["competences"]["IA"]["synonymes"] == ["ia ", "machine learning"]
+    assert p["competences"]["IA"]["prose_fr"] == "l'IA"
+    assert p["scoring"]["axes"]["esg"]["competences"] == ["IA", "SFDR"]
+    assert not api.enregistrer_competences([])["ok"]  # a CV base skill cannot go
+
+
+def test_identite_et_langues(profil_tmp):
+    import json
+
+    api, f, _ = profil_tmp
+    assert not api.enregistrer_identite({"prenom": ""})["ok"]
+    assert not api.enregistrer_identite({"langues": ["français"]})["ok"]
+    assert api.enregistrer_identite({"ville": "Bordeaux", "langues": ["fr", "EN", "fr"]})["ok"]
+    p = json.loads(f.read_text(encoding="utf-8"))
+    assert p["identite"]["ville"] == "Bordeaux" and p["langues_parlees"] == ["fr", "en"]
+
+
+def test_exclusions_gardent_les_autres_cles(profil_tmp):
+    import json
+
+    api, _, src = profil_tmp
+    assert api.enregistrer_exclusions({"contrats_exclus": ["stage", "stage"]})["ok"]
+    conf = json.loads(src.read_text(encoding="utf-8"))
+    assert conf == {
+        "keywords": ["analyste esg"],
+        "pays_exclus": ["Inde"],
+        "contrats_exclus": ["stage"],
+    }
+
+
+def test_appliquer_une_proposition_de_courriel(monkeypatch):
+    from jobhunter.programs import mail_statuses
+
+    vus = []
+    monkeypatch.setattr(mail_statuses, "appliquer", lambda p, attente=30: vus.append(p) or p == "b")
+    api = Api()
+    api._propositions = ["a", "b"]
+    assert not api.appliquer_proposition(5)["ok"]
+    assert not api.appliquer_proposition(0)["ok"]  # the tracking moved: nothing written
+    assert api.appliquer_proposition(1)["ok"] and vus == ["a", "b"]
