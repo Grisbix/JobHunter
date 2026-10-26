@@ -765,6 +765,8 @@ ECRANS.profil = {
         [h("dt", {}, k.replaceAll("_", " ")), h("dd", {}, String(v))]))),
       carteRech,
       carteComp,
+      await cartePoids(),
+      carteCvBase(),
       carte("Outils", puces(p.outils))));
   },
 };
@@ -1043,6 +1045,170 @@ ECRANS.stats = {
             h("span", { class: "num" }, `${nombre(l.n)} ${pc(l.part)}`))));
       }))));
   },
+};
+
+// --- Workshop: fit weights, base CV, recipes, documents to compare, CV/letters in bulk --
+
+// The desktop's Profil → Fit tab: each slider recomputes the queue at once, nothing written.
+async function cartePoids() {
+  const d = await appel("poids");
+  if (!d) return null;
+  const valeurs = Object.fromEntries(d.curseurs.map((c) => [c.cle, c.v]));
+  const resume = h("div", { class: "sous", style: "margin:10px 0" }, "Lecture de la file…");
+  const histo = h("div", { class: "histo" });
+  let minuteur, essais = 0;
+  const recalculer = async () => {
+    const b = await appel("bilan_poids", valeurs);
+    if (!b) return;
+    if (!b.pret) {
+      resume.textContent = b.erreur ? `Lecture de la file impossible (${b.erreur}).` : "Lecture de la file… (une trentaine de secondes la première fois)";
+      if (!b.erreur && essais++ < 200) minuteur = setTimeout(recalculer, 1500);
+      return;
+    }
+    const e = b.essai, s = b.enregistre;
+    resume.textContent = `${nombre(e.n)} offres · fit moyen ${e.moyenne.toFixed(2)} (enregistré ${s.moyenne.toFixed(2)}) · à 8 et plus : ${nombre(e.haut)} (enregistré ${nombre(s.haut)})`;
+    const max = Math.max(1, ...e.repartition, ...s.repartition);
+    histo.replaceChildren(...e.repartition.map((n, i) => h("div", { class: "histo-col", title: `fit ${i + 1} : ${n} (enregistré : ${s.repartition[i]})` },
+      h("div", { class: "histo-barres" },
+        h("span", { class: "apres", style: `height:${100 * n / max}%` }),
+        h("span", { class: "avant", style: `height:${100 * s.repartition[i] / max}%` })),
+      h("span", { class: "sous" }, String(i + 1)))));
+  };
+  const planifier = () => { clearTimeout(minuteur); minuteur = setTimeout(recalculer, 80); };
+  const groupes = [
+    ["axes", "Poids des axes", "Combien compte chaque axe du profil quand l'annonce cite ses compétences."],
+    ["cible", "Score qui vaut 10", "La somme pondérée des axes qui donne 10. Plus bas : les notes montent."],
+    ["titre", "Intitulé", "Ajouté ou retiré selon les mots du titre de l'offre."],
+    ["exp", "Expérience demandée", "Retiré quand l'annonce demande au moins ce nombre d'années."],
+  ];
+  const blocs = groupes.map(([g, titre, sous]) => {
+    const cs = d.curseurs.filter((c) => c.groupe === g);
+    if (!cs.length) return null;
+    return h("div", { class: "groupe-poids" }, h("h3", {}, titre), h("div", { class: "sous" }, sous),
+      cs.map((c) => {
+        const val = h("span", { class: "num" }, String(c.v));
+        const curseur = h("input", { type: "range", min: c.b[0], max: c.b[1], step: c.b[2], value: c.v,
+          oninput: (ev) => { valeurs[c.cle] = Number(ev.target.value); val.textContent = ev.target.value; planifier(); } });
+        return h("label", { class: "ligne-poids" }, h("span", {}, c.nom), curseur, val);
+      }));
+  });
+  recalculer();
+  const enregistrer = async () => {
+    const r = await ecrire("enregistrer_poids", valeurs);
+    if (!r) return;
+    toast(`Pondération enregistrée (profil d'avant : ${r.bak}).`);
+    const ok = await dialogue("Recalculer le fit ?", "Recalculer maintenant le fit enregistré de chaque offre de ta file ? Le tableau et le tri l'utilisent.",
+      null, [["Recalculer", "plein", () => true]]);
+    if (ok) lancer("rescore");
+    redessiner();
+  };
+  return h("div", { class: "verre panneau large" }, h("div", { class: "titre-ligne" }, h("h2", {}, "Fit : les poids")),
+    h("div", { class: "sous", style: "margin-bottom:10px" }, "Chaque curseur recalcule la file aussitôt, sans rien écrire. Barres claires : les poids enregistrés."),
+    h("div", { class: "poids" }, blocs), resume, histo,
+    h("div", { class: "boutons", style: "margin-top:12px" },
+      bouton("Enregistrer", "", enregistrer, "plein"),
+      bouton("Annuler les modifications", "", () => redessiner()),
+      bouton("Relire la file", "fleche", async () => { if (await ecrire("relire_composantes")) { essais = 0; resume.textContent = "Lecture de la file…"; setTimeout(recalculer, 1500); } })));
+}
+
+function carteCvBase() {
+  return carte("CV de base",
+    h("div", { class: "sous", style: "margin-bottom:10px" }, "Le CV d'où partent tous les CV préparés. L'ancien est gardé à côté, en .bak."),
+    bouton("Remplacer mon CV de base…", "doc", remplacerCvBase, "plein"));
+}
+
+async function remplacerCvBase() {
+  const c = await ecrire("choisir_cv_base");
+  if (!c) return;
+  const ok = await dialogue("Remplacer le CV de base ?", `Remplacer ton CV de base (${c.ancien}${c.autres ? ` + ${c.autres}` : ""}) par ${c.cv} ? L'ancien est gardé à côté, en .bak.`,
+    null, [["Remplacer", "plein", () => true]]);
+  if (!ok) return;
+  const r = await ecrire("remplacer_cv_base");
+  if (!r) return;
+  toast(`CV de base remplacé : ${r.neuf}`);
+  const refaire = await dialogue("Refaire les CV ?", "Refaire maintenant les CV déjà préparés pour les offres ?", null, [["Refaire les CV", "plein", () => true]]);
+  if (refaire) lancer("regenerer_cv");
+}
+
+ACTIONS_OUTILS.profils = () => aller("reglages");
+
+ACTIONS_OUTILS.documents = async () => {
+  const reste = await ecrire("documents_restants");
+  if (reste == null) return;
+  const champ = h("input", { class: "champ-texte", type: "number", min: 1, max: 1000, value: Math.min(reste || 30, 50), style: "width:120px" });
+  const n = await dialogue("CV et lettres", `Combien d'offres traiter ? ${reste} offre(s) à fit 8 et plus attendent encore leurs documents.`,
+    champ, [["Préparer", "plein", () => Number(champ.value) || undefined]]);
+  if (n && await ecrire("documents_lot", n)) suivreTache();
+};
+
+ACTIONS_OUTILS.recettes = async () => {
+  const r = await ecrire("recettes");
+  if (!r) return;
+  const corps = $("tiroir-corps");
+  const zone = h("textarea", { class: "zone-code", rows: 8, spellcheck: "false" });
+  zone.value = r.texte;
+  const etat = h("div", { class: "sous" }, "");
+  const corpsTable = h("tbody");
+  const apercu = async () => {
+    const a = await appel("apercu_recettes", zone.value);
+    if (!a) return null;
+    if (!a.ok) { toast(a.erreurs.join(" · "), true); return null; }
+    etat.textContent = `${a.n} changement(s), ${a.ecartes} écarté(s). Rien n'est écrit.`;
+    const raison = { candidature: "candidature : gardé", doublon: "doublon : gardé" };
+    corpsTable.replaceChildren(...a.lignes.map((c) => h("tr", { class: c.ecarte ? "pale" : "" },
+      h("td", {}, c.champ), h("td", {}, c.avant), h("td", {}, c.apres), h("td", {}, raison[c.ecarte] || ""))));
+    return a;
+  };
+  const appliquer = async () => {
+    const x = await ecrire("appliquer_recettes", zone.value);
+    if (!x) return;
+    if (x.tache) { fermerTiroir(); suivreTache(); } else toast(x.message);
+  };
+  corps.replaceChildren(
+    h("div", { class: "fiche-tete" }, h("div", {}, h("h2", {}, "Recettes de nettoyage"),
+      h("div", { class: "sous" }, "Une règle par ligne : champ | valeur à remplacer | nouvelle valeur. « re: » introduit un motif. Une offre à laquelle tu as postulé n'est jamais renommée."))),
+    zone, etat,
+    h("div", { class: "boutons" }, bouton("Aperçu", "loupe", apercu), bouton("Enregistrer et appliquer", "", appliquer, "plein")),
+    h("div", { class: "defile" }, h("table", { class: "tableau-simple" },
+      h("thead", {}, h("tr", {}, ["Champ", "Avant", "Après", "Remarque"].map((t) => h("th", {}, t)))), corpsTable)));
+  $("tiroir").classList.add("ouvert");
+  $("voile").classList.add("ouvert");
+};
+
+ACTIONS_OUTILS.comparer = async () => {
+  const corps = $("tiroir-corps");
+  const liste = h("div", { class: "liste-profils" });
+  const diff = h("div", { class: "diff" });
+  let choisi = null;
+  const montrer = async (i) => {
+    choisi = i;
+    for (const el of liste.children) el.classList.toggle("on", Number(el.dataset.i) === i);
+    const d = await ecrire("diff_document", i);
+    if (!d) return diff.replaceChildren();
+    diff.replaceChildren(...d.lignes.map(([g, p]) => h("p", { class: `diff-${{ "-": "moins", "+": "plus", "=": "egal" }[g]}` }, { "-": "− ", "+": "+ ", "=": "" }[g] + p)));
+  };
+  const remplir = async () => {
+    const docs = (await ecrire("a_comparer")) || [];
+    choisi = null;
+    diff.replaceChildren(docs.length ? "" : h("div", { class: "sous" }, "Aucun document en attente de comparaison."));
+    liste.replaceChildren(...docs.map((d) => h("div", { class: "ligne-profil", "data-i": d.i, onclick: () => montrer(d.i), style: "cursor:pointer" },
+      h("span", {}, d.doc), h("span", { class: "etiq gris" }, `${d.ecart} paragraphe(s)`))));
+    if (docs.length) montrer(docs[0].i);
+  };
+  const choisir = async (prendre) => {
+    if (choisi == null) return;
+    const r = await ecrire("choisir_version", choisi, prendre);
+    if (r) { toast(r.message); remplir(); }
+  };
+  corps.replaceChildren(
+    h("div", { class: "fiche-tete" }, h("div", {}, h("h2", {}, "Documents à comparer"),
+      h("div", { class: "sous" }, "Tu as retouché ces documents ; une version plus récente attend à côté. Rouge : seulement dans ta version. Vert : seulement dans la nouvelle. Celle que tu ne gardes pas est mise de côté, jamais supprimée."))),
+    liste,
+    h("div", { class: "boutons" }, bouton("Prendre la nouvelle version", "", () => choisir(true), "plein"), bouton("Garder ma version", "", () => choisir(false))),
+    diff);
+  $("tiroir").classList.add("ouvert");
+  $("voile").classList.add("ouvert");
+  remplir();
 };
 
 ECRANS.maintenance = {

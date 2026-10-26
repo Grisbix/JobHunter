@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from jobhunter.web.panels import PanneauxApi
+from jobhunter.web.workshop import AtelierApi
 
 # Statuses of an application still waiting for an answer (same as the follow-ups).
 EN_ATTENTE = ("postulé", "relancé")
@@ -517,7 +518,7 @@ def _derniere_version(timeout: float = 6) -> str:
         return ""
 
 
-class Api(PanneauxApi):
+class Api(PanneauxApi, AtelierApi):
     """Methods the page calls through `window.pywebview.api`.
 
     Nothing here writes to the queue, the applications or the profile; only the

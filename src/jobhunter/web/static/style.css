@@ -526,3 +526,22 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
 .ligne-barre .piste { height: 8px; border-radius: 4px; background: var(--piste); overflow: hidden; }
 .ligne-barre .rempli { display: block; height: 100%; background: var(--degrade-h); border-radius: 4px; }
 .ligne-barre .num { color: var(--gris); font-variant-numeric: tabular-nums; min-width: 70px; text-align: right; }
+
+/* Workshop: fit weights, recipes, documents to compare. */
+.poids { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.groupe-poids h3 { margin: 0 0 2px; font-size: 14px; }
+.groupe-poids .sous { margin-bottom: 6px; }
+.ligne-poids { display: grid; grid-template-columns: minmax(0, 1fr) 140px 40px; gap: 10px; align-items: center; font-size: 13px; padding: 3px 0; }
+.ligne-poids .num { text-align: right; font-variant-numeric: tabular-nums; color: var(--gris); }
+.histo { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; align-items: end; height: 120px; }
+.histo-col { display: flex; flex-direction: column; align-items: center; height: 100%; gap: 4px; }
+.histo-barres { position: relative; flex: 1; width: 100%; }
+.histo-barres span { position: absolute; bottom: 0; border-radius: 4px 4px 0 0; }
+.histo-barres .avant { left: 10%; width: 80%; border: 1.5px solid var(--gris); background: transparent; }
+.histo-barres .apres { left: 10%; width: 80%; background: var(--degrade-h); opacity: .85; }
+.zone-code { width: 100%; box-sizing: border-box; font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--filet); background: rgba(255, 255, 255, .5); color: inherit; resize: vertical; margin: 10px 0 6px; }
+.diff { margin-top: 12px; font-size: 13px; line-height: 1.5; }
+.diff p { margin: 0 0 4px; padding: 4px 8px; border-radius: 6px; white-space: pre-wrap; }
+.diff-moins { background: #fde2e2; color: #8a1c1c; }
+.diff-plus { background: #dcf5e3; color: #145c2c; }
+.diff-egal { color: var(--gris); }
