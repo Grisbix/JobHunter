@@ -11,8 +11,8 @@ from pathlib import Path
 from tkinter import scrolledtext, ttk
 from typing import Any
 
+from jobhunter import inventory as _inventaire
 from jobhunter import lazy as _paresseux
-from jobhunter.app import inventory as _inventaire
 from jobhunter.app import theme as _theme
 from jobhunter.app._app_type import AppTypee
 from jobhunter.app.common import CV_ATS_DIR, PY, SCRIPTS, ouvrir

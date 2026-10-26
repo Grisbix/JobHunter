@@ -7,7 +7,7 @@ import re
 import pytest
 from conftest import SRC
 
-from jobhunter.app import inventory as inventaire
+from jobhunter import inventory as inventaire
 from jobhunter.sources import directory as annuaire
 
 DOSSIER = SRC / "jobhunter" / "sources" / "directories"

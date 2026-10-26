@@ -18,12 +18,7 @@ from jobhunter.app.language import t as _t
 from jobhunter.app.theme import BG, CF, CL, MUT, TX
 from jobhunter.storage import applications as suivi_io
 
-EXEMPLE = (
-    "# champ | de | vers   (champs : entreprise, localisation, contrat ; re: = motif)\n"
-    "# entreprise | PricewaterhouseCoopers | PwC\n"
-    "# entreprise | re:\\s+(SAS|SA|GmbH)$ |\n"
-    "# localisation | re:^Paris \\d+e$ | Paris\n"
-)
+EXEMPLE = R.EXEMPLE
 
 
 def ouvrir(app: Any) -> None:

@@ -100,7 +100,15 @@ def choisir(langue: str) -> None:
     if f is None:
         return
     f.parent.mkdir(parents=True, exist_ok=True)
-    f.write_text(json.dumps({"langue": langue}), encoding="utf-8")
+    # The file holds other settings too (the web interface's): keep them.
+    try:
+        tout = json.loads(f.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        tout = {}
+    if not isinstance(tout, dict):
+        tout = {}
+    tout["langue"] = langue
+    f.write_text(json.dumps(tout, ensure_ascii=False), encoding="utf-8")
 
 
 LANGUE = lire()

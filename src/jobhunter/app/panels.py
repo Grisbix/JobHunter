@@ -12,10 +12,10 @@ from tkinter import messagebox, ttk
 from typing import Any
 from urllib.parse import quote, urlparse
 
+from jobhunter import inventory as _inventaire
 from jobhunter import profile as _P
 from jobhunter import root as _racine
 from jobhunter.app import common as _commun
-from jobhunter.app import inventory as _inventaire
 from jobhunter.app import theme as _theme
 from jobhunter.app._app_type import AppTypee
 from jobhunter.app.common import PAS_INTERESSE, PY, QUEUE, SCRIPTS
@@ -735,7 +735,7 @@ class PanneauxMixin:
 
         One row per followed company, read through its recruiting tool (public API:
         `sources_config.json`) or, failing that, through its career site in the
-        browser (`unique_domains.txt`). The counts come from jobhunter.app.inventory:
+        browser (`unique_domains.txt`). The counts come from jobhunter.inventory:
         exact, by source marker. A pasted URL is recognised: an ATS readable through
         an API becomes a feed, another site goes into the list read by the browser."""
         self._hide_all()

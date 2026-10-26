@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JobHunter</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="fond" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="barre pywebview-drag-region" id="barre">
+  <div class="feux">
+    <button data-action="reduire" title="Réduire"><svg viewBox="0 0 12 12"><path d="M2.5 6h7"/></svg></button>
+    <button data-action="agrandir" title="Plein écran ou fenêtre"><svg viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7" rx="1.5"/></svg></button>
+    <button data-action="fermer" class="fermer" title="Fermer"><svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
+  </div>
+</div>
+<main class="fenetre">
+  <nav class="menu" id="menu">
+    <div class="marque"><span class="logo"></span>JobHunter</div>
+    <div class="groupe">Recherche</div>
+    <a data-ecran="accueil" data-icone="maison">Accueil</a>
+    <a data-ecran="offres" data-icone="valise">Offres</a>
+    <a data-ecran="candidatures" data-icone="avion">Candidatures</a>
+    <a data-ecran="relances" data-icone="cloche">Relances</a>
+    <a data-ecran="documents" data-icone="doc">Documents</a>
+    <a data-ecran="stats" data-icone="etoile">Statistiques</a>
+    <div class="groupe">Outils</div>
+    <a data-ecran="profil" data-icone="profil">Profil</a>
+    <a data-ecran="sources" data-icone="sources">Sources</a>
+    <a data-ecran="maintenance" data-icone="cle">Maintenance</a>
+    <a data-ecran="reglages" data-icone="reglage">Réglages</a>
+  </nav>
+
+  <header class="tete">
+    <h1 id="titre">Accueil</h1>
+    <div class="actions" id="actions"></div>
+  </header>
+
+  <section class="vue" id="vue"></section>
+</main>
+
+<div class="voile" id="voile"></div>
+<aside class="tiroir" id="tiroir" aria-hidden="true">
+  <button class="rond-fermer" id="fermer-tiroir" title="Fermer"><svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
+  <div id="tiroir-corps"></div>
+</aside>
+<div class="tache" id="tache" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

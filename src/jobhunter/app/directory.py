@@ -12,9 +12,9 @@ from typing import Any
 import customtkinter as ctk
 
 from jobhunter.app import theme as _theme
-from jobhunter.app.inventory import NOMS_OUTILS
 from jobhunter.app.language import t as _t
 from jobhunter.app.theme import ACC, ACC_H, ACC_TX, BG, BTN, BTN_H, CB, CE, CF, CL, MUT, ROW0, TX
+from jobhunter.inventory import NOMS_OUTILS
 from jobhunter.sources import directory as annuaire
 
 

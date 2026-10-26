@@ -469,7 +469,7 @@ class App(
             "comparer": lambda: _comparer.ouvrir(self),
             "recettes": lambda: _recettes.ouvrir(self),
         }
-        if cmd is None:
+        if cmd == "documents":
             self._gen_docs()
         elif isinstance(cmd, str):
             actions[cmd]()

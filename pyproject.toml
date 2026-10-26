@@ -29,6 +29,8 @@ jobhunter = "jobhunter.cli:main"
 # export does not need it.
 [project.optional-dependencies]
 gmail = ["google-auth-oauthlib>=1.2,<2"]
+# The web interface prototype (python -m jobhunter.web): a native window drawing HTML.
+web = ["pywebview>=6.2,<7"]
 
 [dependency-groups]
 dev = [

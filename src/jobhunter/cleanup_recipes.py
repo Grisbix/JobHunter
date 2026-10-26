@@ -30,6 +30,14 @@ from typing import Any
 CHAMPS = ("entreprise", "localisation", "contrat")
 FICHIER = "_recettes.json"
 
+# Shown in an empty editor (the desktop's and the web's).
+EXEMPLE = (
+    "# champ | de | vers   (champs : entreprise, localisation, contrat ; re: = motif)\n"
+    "# entreprise | PricewaterhouseCoopers | PwC\n"
+    "# entreprise | re:\\s+(SAS|SA|GmbH)$ |\n"
+    "# localisation | re:^Paris \\d+e$ | Paris\n"
+)
+
 
 @dataclass(frozen=True)
 class Recette:
