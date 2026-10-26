@@ -47,8 +47,8 @@ def _vitre(fenetre: Any) -> None:
         attribut(_DWMWA_WINDOW_CORNER_PREFERENCE, _DWMWCP_ROUND)
         attribut(_DWMWA_SYSTEMBACKDROP_TYPE, _DWMSBT_TRANSIENTWINDOW)
 
-        from System import Action  # type: ignore[import-not-found]
-        from System.Drawing import Color  # type: ignore[import-not-found]
+        from System import Action
+        from System.Drawing import Color
 
         forme.Invoke(Action(lambda: setattr(forme, "BackColor", Color.Black)))
     except Exception as e:  # noqa: BLE001 — cosmetic only
