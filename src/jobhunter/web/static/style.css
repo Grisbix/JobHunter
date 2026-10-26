@@ -545,3 +545,4 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
 .diff-moins { background: #fde2e2; color: #8a1c1c; }
 .diff-plus { background: #dcf5e3; color: #145c2c; }
 .diff-egal { color: var(--gris); }
+.ligne-poids input[type="range"] { width: 100%; accent-color: rgb(var(--c1-rgb)); }
