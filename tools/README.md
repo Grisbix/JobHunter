@@ -11,6 +11,7 @@ the user never runs them. Run them from the repository root with `uv run python 
 | `replay.py` | Records a source's real public response once, then replays it in `tests/test_source_replay.py` without network. |
 | `directories.py` | Regenerates the Lever, Ashby and Greenhouse company directories shipped in the package. |
 | `personal_data.py` | Pre-commit check: refuses personal data (CV, queue, tracker, keys) in the public repository. |
+| `release.py` | A release in two commands: `preparer X.Y.Z` (branch, VERSION, pyproject, uv.lock), then `publier <PR>` once the CI is green (main, GitHub release, local main; `--installer <dossier>` upgrades the installed package). Never signs. |
 | `check_version.py` | Checks that `VERSION` and `pyproject.toml` carry the same version (CI and pre-commit). |
 | `signature.py` | Signs a published release with the author's private key (`cle` once, then `signer X.Y.Z --publier`). ADR 0012. |
 | `installer/` | Standalone application and Windows installer: `build.py` builds them, `JobHunter.spec` (PyInstaller) and `JobHunter.iss` (Inno Setup) describe them, `launcher.py` is the executables' entry point, `check_installed.py` is the CI trial of the installed app. ADR 0011. |

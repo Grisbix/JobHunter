@@ -98,8 +98,18 @@ uv run pytest -q tests/test_scoring.py   # one file; -k word to filter cases
 uv run pytest -q --cov --cov-report=term # with coverage (threshold in CI)
 uv run python tools/bench.py comparer tools/bench_reference.json   # non-regression
 uv run ruff check . && uv run ruff format --check .
+uv run mypy                              # the CI runs it: ~60 errors went unseen in 25 pushes
 python tools/screenshots.py --lang en  # README screenshots, fictitious data (Windows, Pillow, LibreOffice)
 ```
+
+**Before every push, run `uv run ruff check .`, `uv run mypy` and `uv run pytest -q -x`** —
+including from a cloud or remote session, where no hook is installed. On 24–25/10/2026 a
+branch was pushed 25 times with the CI red at each push. Locally,
+`uv run pre-commit install --hook-type pre-push` runs ruff and mypy before each push.
+
+**A release**: `python tools/release.py preparer X.Y.Z`, the CHANGELOG section, commit, PR;
+once the CI is green, `python tools/release.py publier <PR>`. The signature stays the
+author's (`tools/signature.py`).
 
 **The non-regression bench** (`tools/bench.py`) records what the engine decides on
 384 fictitious offers — title filter, fit, fit_fin, domain, triage, zone, country, contract,

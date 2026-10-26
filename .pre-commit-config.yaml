@@ -27,3 +27,10 @@ repos:
         entry: python tools/check_version.py
         files: ^(VERSION|pyproject\.toml)$
         pass_filenames: false
+      # Before a push only (pre-commit install --hook-type pre-push): what the CI checks.
+      - id: mypy-avant-push
+        name: mypy (comme la CI)
+        language: system
+        entry: uv run mypy
+        pass_filenames: false
+        stages: [pre-push]

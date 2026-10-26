@@ -4,6 +4,16 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.26.2 — 2026-10-26
+
+- Development: `tools/release.py` makes a release in two commands (`preparer X.Y.Z`,
+  then `publier <PR>` once the CI is green); it never signs. A pre-push hook runs
+  mypy as the CI does (`pre-commit install --hook-type pre-push`), and AGENTS.md asks
+  every session, cloud ones included, to run ruff, mypy and the tests before a push.
+- Development: `bench.py comparer` must run on an installed copy of the engine
+  (`pip install --no-deps --target <dossier> .`, then `PYTHONPATH=<dossier>`); with
+  `PYTHONPATH=src` it reported thousands of false differences on real data.
+
 ## 3.26.1 — 2026-10-26
 
 - **Postings in a non-Latin script are recognised.** One written mostly in Japanese,
