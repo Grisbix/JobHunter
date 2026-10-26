@@ -15,6 +15,7 @@ its name is the key the letters, the CV facts and the base skills refer to.
 from __future__ import annotations
 
 import copy
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -57,12 +58,24 @@ def lire(profil: dict[str, Any]) -> list[Competence]:
 
 
 def depuis_texte(texte: str) -> list[str]:
-    """Synonyms typed one per line or separated by commas; blanks and repeats removed."""
+    """Synonyms typed one per line or separated by commas; blanks and repeats removed.
+
+    A space at the edge of a line is kept: synonyms are matched as substrings, so
+    "ia " finds "IA " but not "social", "git " not "digital". Stripping it widened
+    the match each time a skill was saved in the app. Only the space that follows a
+    comma (or precedes one) is a separator; runs of spaces become one.
+    """
     vus: list[str] = []
-    for morceau in texte.replace("\n", ",").split(","):
-        m = " ".join(morceau.split())
-        if m and m.lower() not in {x.lower() for x in vus}:
-            vus.append(m)
+    for ligne in texte.splitlines():
+        morceaux = ligne.split(",")
+        for j, morceau in enumerate(morceaux):
+            if j > 0:
+                morceau = morceau.lstrip()
+            if j < len(morceaux) - 1:
+                morceau = morceau.rstrip()
+            m = re.sub(r"\s+", " ", morceau)
+            if m.strip() and m.lower() not in {x.lower() for x in vus}:
+                vus.append(m)
     return vus
 
 

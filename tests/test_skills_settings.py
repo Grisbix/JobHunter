@@ -74,11 +74,23 @@ def test_valider():
 
 
 def test_depuis_texte():
-    assert S.depuis_texte("sfdr, Article 8\n\n article 8 \nart.  9") == [
+    assert S.depuis_texte("sfdr, Article 8\n\narticle 8\nart.  9") == [
         "sfdr",
         "Article 8",
         "art. 9",
     ]
+
+
+def test_depuis_texte_garde_l_espace_en_bord_de_ligne():
+    # "ia " must not become "ia", which finds "social"; the app's text box ends with "\n".
+    assert S.depuis_texte("ia \nmachine learning\n git\nia \n") == [
+        "ia ",
+        "machine learning",
+        " git",
+    ]
+    assert S.depuis_texte("rag , llm") == ["rag", "llm"]  # around a comma: a separator
+    liste = ["ia ", "git ", "nlp"]
+    assert S.depuis_texte("\n".join(liste) + "\n") == liste  # what the editor shows, saved back
 
 
 def test_competence_ajoutee_dans_l_app_citable_dans_la_lettre():
