@@ -126,6 +126,9 @@ def main() -> int:
     except ImportError:
         print('pywebview manque : python -m pip install "jobhunter[web]"')
         return 1
+    from jobhunter.profiles import appliquer
+
+    appliquer()  # the active profile, before any module builds its paths (as the desktop)
     from jobhunter.web.api import Api
 
     api = Api()

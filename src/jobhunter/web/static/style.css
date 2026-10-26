@@ -473,3 +473,32 @@ body[data-teinte="noir"] {
 .groupe-outils h3 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); margin: 0 0 4px; }
 .bouton.outil { justify-content: flex-start; height: 34px; font-size: 13px; background: rgba(255, 255, 255, .45); }
 .bouton.outil:hover { background: rgba(var(--c1-rgb), .18); }
+
+/* Offers: ticks, selection bar; the offer sheet's tracking; dialogs. */
+.coche { width: 16px; height: 16px; accent-color: var(--brun); cursor: pointer; }
+tr.cochee td { background: rgba(var(--c1-rgb), .12); }
+.barre-selection { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-radius: 14px; }
+.boutons.secondaires .bouton { height: 32px; font-size: 12.5px; background: rgba(255, 255, 255, .4); }
+.suivi-fiche { display: grid; gap: 10px; }
+.champs-suivi { display: flex; gap: 14px; flex-wrap: wrap; }
+.champs-suivi label { display: grid; gap: 4px; font-size: 12px; color: var(--gris); }
+.champ-texte {
+  width: 100%; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--filet); background: var(--verre-fort);
+  font: inherit; font-size: 13.5px; color: var(--encre); outline: 0; resize: vertical;
+}
+.champ-texte:focus { box-shadow: 0 0 0 2px rgba(var(--c2-rgb), .45); }
+.dialogue-fond { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; background: rgba(var(--ombre-rgb), .25); }
+.dialogue { width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 64px); overflow: auto; padding: 24px; border-radius: 22px; display: grid; gap: 12px; background: rgba(var(--fond-rgb), .96); }
+.dialogue h2 { margin: 0; }
+.dialogue .boutons { justify-content: flex-end; }
+.motifs { display: grid; gap: 6px; margin-bottom: 10px; }
+.motif { text-align: left; padding: 9px 14px; border-radius: 10px; background: rgba(255, 255, 255, .5); font-size: 13.5px; }
+.motif:hover { background: rgba(var(--c1-rgb), .16); }
+.motif.on { background: var(--degrade-h); color: #fff; }
+
+/* Settings: daily collection, profiles. */
+.ligne-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.liste-profils { display: grid; gap: 6px; margin-bottom: 12px; }
+.ligne-profil { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; border-radius: 12px; background: rgba(255, 255, 255, .35); }
+.ligne-profil.on { background: rgba(var(--c1-rgb), .18); font-weight: 500; }
+.ligne-profil .bouton { height: 30px; }

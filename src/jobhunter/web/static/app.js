@@ -162,16 +162,105 @@ function redessiner() {
 
 // --- Application status ---------------------------------------------------------------
 
-const STATUTS = ["à postuler", "postulé", "relancé", "entretien", "refus", "mauvaise", "pas intéressé", "expiré"];
+const STATUTS = ["à postuler", "à vérifier", "postulé", "relancé", "entretien", "refus", "mauvaise", "pas intéressé", "expiré"];
 const majuscule = (s) => s[0].toUpperCase() + s.slice(1);
 
-async function marquer(id, statut) {
-  if (!window.pywebview) return toast(HORS_APPLI, true);
-  const r = await window.pywebview.api.marquer(id, statut);
-  if (!r.ok) return toast(r.erreur, true);
-  toast(`Statut : ${statut}`);
-  ouvrirOffre(id);
+// A call that writes: outside the application it only says so; an error becomes a toast.
+async function ecrire(nom, ...args) {
+  if (!window.pywebview) { toast(HORS_APPLI, true); return null; }
+  const r = await window.pywebview.api[nom](...args);
+  if (r && r.ok === false) { toast(r.erreur || (r.erreurs || []).join(" · "), true); return null; }
+  return r;
+}
+
+async function marquer(id, statut, rouvrir = true) {
+  const r = await ecrire("marquer", id, statut);
+  if (!r) return;
+  const n = Array.isArray(id) ? id.length : 1;
+  toast(`${n > 1 ? `${n} offres · ` : ""}${statut ? `Statut : ${statut}` : "Statut vidé"} — « Annuler » pour revenir.`);
+  if (rouvrir && !Array.isArray(id)) ouvrirOffre(id);
   redessiner();
+}
+
+async function annulerGeste() {
+  const r = await ecrire("annuler");
+  if (!r) return;
+  toast(`Annulé (${r.n} offre${r.n > 1 ? "s" : ""}).`);
+  redessiner();
+}
+
+// A small modal window; resolves with what a button returns, null when closed.
+function dialogue(titre, sous, contenu, boutons) {
+  return new Promise((fin) => {
+    const fond = h("div", { class: "dialogue-fond" });
+    const fermer = (v) => { fond.remove(); fin(v); };
+    fond.addEventListener("click", (e) => { if (e.target === fond) fermer(null); });
+    fond.append(h("div", { class: "dialogue verre" },
+      h("h2", {}, titre), sous ? h("p", { class: "sous" }, sous) : null,
+      contenu,
+      h("div", { class: "boutons" }, bouton("Annuler", "", () => fermer(null)),
+        boutons.map(([texte, classe, valeur]) => bouton(texte, "", () => {
+          const v = valeur();
+          if (v !== undefined) fermer(v);
+        }, classe)))));
+    document.body.append(fond);
+    const champ = fond.querySelector("input, textarea");
+    if (champ) champ.focus();
+    fond.addEventListener("keydown", (e) => { if (e.key === "Escape") fermer(null); });
+  });
+}
+
+async function demanderMotif(n) {
+  const motifs = (await appel("motifs")) || [];
+  let choix = "";
+  const libre = h("input", { class: "champ-texte", placeholder: "ou une autre raison…", oninput: () => {
+    choix = libre.value.trim(); liste.querySelectorAll("button").forEach((b) => b.classList.remove("on")); } });
+  const liste = h("div", { class: "motifs" }, motifs.map((m) => h("button", { class: "motif", onclick: (e) => {
+    choix = m; libre.value = "";
+    liste.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b === e.currentTarget)); } }, m)));
+  return dialogue(`Écarter ${n} offre${n > 1 ? "s" : ""}`,
+    "Retirées de la file et bloquées au prochain scan. Le motif sert à corriger la notation.",
+    h("div", {}, liste, libre),
+    [["Écarter", "chaud", () => (choix ? choix : (toast("Choisis un motif.", true), undefined))]]);
+}
+
+async function ecarter(ids) {
+  const motif = await demanderMotif(ids.length);
+  if (!motif) return;
+  const r = await ecrire("ecarter", ids, motif);
+  if (!r) return;
+  toast(`${r.retirees} offre(s) écartée(s) — « ${motif} ». ${r.exclusions} nouvelle(s) exclusion(s).`);
+  coches.clear();
+  fermerTiroir();
+  redessiner();
+}
+
+async function supprimer(ids) {
+  const ok = await dialogue(`Supprimer ${ids.length} offre${ids.length > 1 ? "s" : ""} ?`,
+    "Une copie est gardée dans _corbeille/ : rien n'est perdu. Pour qu'elles ne reviennent pas au prochain scan, préfère « Écarter ».",
+    null, [["Supprimer", "chaud", () => true]]);
+  if (!ok) return;
+  const r = await ecrire("supprimer", ids);
+  if (!r) return;
+  toast(`${r.n} offre(s) supprimée(s) — copie : _corbeille/${r.copie}`);
+  coches.clear();
+  fermerTiroir();
+  redessiner();
+}
+
+async function ajouterOffre() {
+  const champ = h("input", { class: "champ-texte", placeholder: "https://…" });
+  const url = await dialogue("Ajouter une offre", "Colle le lien de l'annonce : titre, entreprise et description sont lus, puis l'offre entre dans la file.",
+    champ, [["Ajouter", "plein", () => champ.value.trim() || undefined]]);
+  if (!url) return;
+  if (await ecrire("ajouter_offre", url)) suivreTache();
+}
+
+async function declarerEnvoi(id) {
+  const ok = await dialogue("Confirmer l'envoi", "As-tu envoyé cette candidature ? Rien n'est envoyé ici : c'est noté dans le suivi.",
+    null, [["Oui, je l'ai envoyée", "plein", () => true]]);
+  if (!ok) return;
+  if (await ecrire("declarer_envoi", id)) { toast("Candidature notée comme envoyée."); ouvrirOffre(id); redessiner(); }
 }
 
 // A button that is drawn but not yet wired to the engine: it says so.
@@ -220,19 +309,45 @@ async function ouvrirOffre(id) {
       o.cv ? bouton("CV", "doc", () => ouvrirFichier(o.cv)) : null,
       o.lettre ? bouton("Lettre", "doc", () => ouvrirFichier(o.lettre)) : null,
       bouton(o.cv ? "Refaire CV et lettre" : "Préparer CV et lettre", "eclair", () => lancer("documents", o.id)),
-      o.suivi === "postulé" ? null : bouton("Marquer postulée", "avion", () => marquer(o.id, "postulé"), "chaud")),
-    h("label", { class: "ligne-statut" }, h("span", {}, "Suivi"),
-      h("select", { class: "choix", onchange: (e) => e.target.value && marquer(o.id, e.target.value) },
-        h("option", { value: "" }, o.suivi ? majuscule(o.suivi) : "Pas de statut"),
-        STATUTS.filter((s) => s !== o.suivi).map((s) => h("option", { value: s }, majuscule(s))))),
-    o.note ? h("div", { class: "carte description" }, h("h3", {}, "Note"), o.note) : null,
+      ["postulé", "relancé", "entretien", "refus"].includes(o.suivi) ? null
+        : bouton("J'ai envoyé cette candidature", "avion", () => declarerEnvoi(o.id), "chaud")),
+    h("div", { class: "boutons secondaires" },
+      ["pas intéressé", "expiré", "mauvaise"].includes(o.suivi)
+        ? bouton("Finalement intéressé", "fleche", () => marquer(o.id, ""))
+        : bouton("Pas intéressé", "", () => marquer(o.id, "pas intéressé")),
+      bouton("Écarter…", "", () => ecarter([o.id])),
+      bouton("Supprimer…", "", () => supprimer([o.id])),
+      ["postulé", "relancé"].includes(o.suivi) ? bouton("Brouillon de relance", "cloche", () => lancer("relance", o.id)) : null,
+      bouton("Chercher sur le web", "loupe", () => ecrire("chercher_web", o.id)),
+      bouton(o.description ? "Recharger la description" : "Récupérer la description", "fleche", () => lancer("description", o.id)),
+      bouton("J'ai un compte sur ce site", "cle", async () => {
+        const r = await ecrire("compte", o.id);
+        if (r) toast(r.compte ? `Compte noté pour ${r.site}.` : `Compte retiré pour ${r.site}.`);
+      })),
+    (() => {
+      const st = h("select", { class: "choix" }, h("option", { value: "" }, "Pas de statut"),
+        STATUTS.map((s) => h("option", { value: s, selected: s === o.suivi }, majuscule(s))));
+      const note = h("textarea", { class: "champ-texte", rows: 3, placeholder: "Note (contact, impression, suite…)" }, o.note || "");
+      const le = h("input", { class: "champ-texte", type: "date", value: o.postule_le || "" });
+      return h("div", { class: "carte suivi-fiche" }, h("h3", {}, "Suivi"),
+        h("div", { class: "champs-suivi" }, h("label", {}, "Statut", st), h("label", {}, "Date", le)),
+        note,
+        h("div", { class: "boutons" }, bouton("Enregistrer le suivi", "", async () => {
+          const r = await ecrire("suivre", o.id, { statut: st.value, note: note.value, date: le.value });
+          if (r) { toast("Suivi enregistré."); ouvrirOffre(o.id); redessiner(); }
+        }, "plein"), o.envoi ? h("span", { class: "sous" }, `envoi ${o.envoi}`) : null));
+    })(),
+    o.pourquoi ? h("div", { class: "carte description" }, h("h3", {}, "Pourquoi ce score"), o.pourquoi) : null,
     h("div", { class: "carte description" },
       o.description || "Pas de description enregistrée pour cette offre."),
     h("dl", { class: "paires" },
       h("dt", {}, "Domaine"), h("dd", {}, o.domaine || "—"),
       h("dt", {}, "Source"), h("dd", { title: o.source }, o.source || "—"),
       h("dt", {}, "Statut"), h("dd", {}, o.statut || "—"),
-      h("dt", {}, "Score fin"), h("dd", {}, o.fit_fin ? o.fit_fin.toFixed(2) : "—")),
+      h("dt", {}, "Score fin"), h("dd", {}, o.fit_fin ? o.fit_fin.toFixed(2) : "—"),
+      h("dt", {}, "Expérience"), h("dd", {}, o.exp_requise ? `${o.exp_requise} ans` : "—"),
+      h("dt", {}, "Salaire"), h("dd", {}, o.salaire || "—"),
+      h("dt", {}, "Télétravail"), h("dd", {}, o.teletravail || "—")),
   ].filter(Boolean));
 }
 
@@ -315,10 +430,14 @@ function tableCandidatures(lignes) {
         h("td", {}, c.fit == null ? "—" : h("div", { class: "prog", title: `${c.fit}/10` }, h("i", { style: `width:${c.fit * 10}%` })))))));
 }
 
-const filtresOffres = { texte: "", statut: "à traiter", zone: "", fit_min: 0, tri: "fit", page: 0 };
+const filtresOffres = { texte: "", statut: "à traiter", zone: "", domaine: "", contrat: "", fit_min: 0, tri: "fit", page: 0 };
+const coches = new Set();  // ticked offers, kept across pages (the desktop's ☐ column)
 ECRANS.offres = {
   titre: "Offres",
-  actions: () => [action("Préparer les 30 meilleures", "eclair", "documents_top", "plein")],
+  actions: () => [
+    bouton("Annuler", "fleche", annulerGeste),
+    bouton("Ajouter une offre", "sortie", ajouterOffre),
+    action("Préparer les 30 meilleures", "eclair", "documents_top", "plein")],
   async dessiner(vue) {
     const f = filtresOffres;
     const relancer = () => ECRANS.offres.dessiner(vue);
@@ -330,6 +449,20 @@ ECRANS.offres = {
     const zone = h("select", { class: "choix", onchange: (e) => changer("zone", e.target.value) },
       h("option", { value: "" }, "Toutes les zones"),
       d.zones.map((z) => h("option", { value: z, selected: z === f.zone }, z)));
+    const liste = (cle, tous, valeurs) => h("select", { class: "choix", onchange: (e) => changer(cle, e.target.value) },
+      h("option", { value: "" }, tous), (valeurs || []).map((v) => h("option", { value: v, selected: v === f[cle] }, v)));
+    const ids = () => [...coches];
+    const barreSel = coches.size ? h("div", { class: "barre-selection verre" },
+      h("strong", {}, `${coches.size} cochée${coches.size > 1 ? "s" : ""}`),
+      bouton("Pas intéressé", "", () => { marquer(ids(), "pas intéressé", false); coches.clear(); }),
+      bouton("Écarter…", "", () => ecarter(ids())),
+      h("select", { class: "choix", onchange: (e) => { if (e.target.value) { marquer(ids(), e.target.value === "—" ? "" : e.target.value, false); coches.clear(); } } },
+        h("option", { value: "" }, "Statut…"), h("option", { value: "—" }, "Vider le statut"),
+        STATUTS.map((s) => h("option", { value: s }, majuscule(s)))),
+      bouton("Supprimer…", "", () => supprimer(ids()), "chaud"),
+      bouton("Tout décocher", "", () => { coches.clear(); relancer(); })) : null;
+    const cocher = (id, e) => { e.stopPropagation(); coches.has(id) ? coches.delete(id) : coches.add(id); relancer(); };
+    const tous = d.lignes.length && d.lignes.every((o) => coches.has(o.id));
     const tri = h("select", { class: "choix", onchange: (e) => changer("tri", e.target.value) },
       [["fit", "Meilleur score"], ["date", "Plus récentes"], ["entreprise", "Entreprise A → Z"]].map(([v, l]) =>
         h("option", { value: v, selected: v === f.tri }, l)));
@@ -339,12 +472,16 @@ ECRANS.offres = {
         h("label", { class: "champ" }, svg("loupe"), champ),
         segment(d.statuts.map((s) => [s, s[0].toUpperCase() + s.slice(1)]), f.statut, (v) => changer("statut", v)),
         segment([[0, "Tous"], [7, "7+"], [8, "8+"], [9, "9+"]], f.fit_min, (v) => changer("fit_min", v)),
-        zone, tri),
+        zone, liste("domaine", "Tous les domaines", d.domaines), liste("contrat", "Tous les contrats", d.contrats), tri),
+      barreSel,
       h("div", { class: "verre panneau" },
         d.lignes.length ? h("table", {},
-          h("colgroup", {}, h("col", { style: "width:40%" }), h("col", { style: "width:22%" }), h("col", { style: "width:13%" }), h("col", { style: "width:11%" }), h("col", {})),
-          h("thead", {}, h("tr", {}, ["Offre", "Lieu", "Zone", "Date", "Suivi"].map((t) => h("th", {}, t)))),
-          h("tbody", {}, d.lignes.map((o) => h("tr", { onclick: () => ouvrirOffre(o.id) },
+          h("colgroup", {}, h("col", { style: "width:36px" }), h("col", { style: "width:40%" }), h("col", { style: "width:22%" }), h("col", { style: "width:13%" }), h("col", { style: "width:11%" }), h("col", {})),
+          h("thead", {}, h("tr", {}, h("th", {}, h("input", { type: "checkbox", class: "coche", checked: tous, title: "Cocher la page",
+            onclick: () => { d.lignes.forEach((o) => (tous ? coches.delete(o.id) : coches.add(o.id))); relancer(); } })),
+            ["Offre", "Lieu", "Zone", "Date", "Suivi"].map((t) => h("th", {}, t)))),
+          h("tbody", {}, d.lignes.map((o) => h("tr", { onclick: () => ouvrirOffre(o.id), class: coches.has(o.id) ? "cochee" : "" },
+            h("td", { onclick: (e) => cocher(o.id, e) }, h("input", { type: "checkbox", class: "coche", checked: coches.has(o.id) })),
             h("td", {}, h("div", { class: "cellule-offre" }, h("span", { class: classeScore(o.fit) }, nombre(o.fit)),
               h("div", {}, h("div", { class: "t", title: o.poste }, o.poste), h("div", { class: "s" }, o.entreprise)))),
             h("td", { title: o.lieu }, o.lieu || "—"),
@@ -734,16 +871,7 @@ ECRANS.maintenance = {
     vue.replaceChildren(h("div", { class: "grille" },
       h("div", { class: "sombre" }, h("h2", {}, "Moteur"), h("div", { class: "chiffre", style: "margin-top:14px" }, m.version),
         h("div", { class: "sous", style: "color:#8f8783" }, "version installée"),
-        h("div", { class: "actions-col" }, bouton("Chercher une mise à jour", "fleche", async (ev) => {
-          if (!window.pywebview) return toast(HORS_APPLI, true);
-          const b = ev.currentTarget;
-          b.disabled = true;
-          const v = await window.pywebview.api.mise_a_jour();
-          b.disabled = false;
-          if (!v.derniere) toast("GitHub injoignable : réessaie plus tard.", true);
-          else if (v.derniere === v.installee) toast(`À jour : ${v.installee} est la dernière version.`);
-          else toast(`Version ${v.derniere} publiée (installée : ${v.installee}). Installe-la depuis Recherche_emploi avec pip.`);
-        }, "plein"))),
+        h("div", { class: "actions-col" }, bouton("Chercher une mise à jour", "fleche", verifierMaj, "plein"))),
       carte("Dernière collecte",
         h("div", { class: c.etat === "ok" ? "etat ok" : "etat" }, c.etat === "ok" ? "Réussie" : (c.etat || "inconnue")),
         h("dl", { class: "paires", style: "margin-top:14px" },
@@ -844,10 +972,90 @@ ECRANS.reglages = {
         h("div", { class: "titre-ligne" }, h("h2", {}, "Couleurs et police")),
         h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Couleur"), teintes),
         h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Police"), polices)),
+      await cartesParametres(),
       window.pywebview ? null : h("div", { class: "verre panneau" },
         h("div", { class: "sous" }, "Aperçu navigateur : ces réglages ne s'enregistrent que dans l'application."))));
   },
 };
+
+// The desktop's Paramètres page: language, update, daily collection, profiles.
+async function verifierMaj(ev) {
+  if (!window.pywebview) return toast(HORS_APPLI, true);
+  const b = ev && ev.currentTarget;
+  if (b) b.disabled = true;
+  const v = await window.pywebview.api.mise_a_jour();
+  if (b) b.disabled = false;
+  if (!v.derniere) return toast("GitHub injoignable : réessaie plus tard.", true);
+  if (v.derniere === v.installee) return toast(`À jour : ${v.installee} est la dernière version.`);
+  const ok = await dialogue(`Version ${v.derniere} disponible`, `Installée : ${v.installee}. Elle est vérifiée (signature) avant d'être installée ; relance JobHunter ensuite.`,
+    null, [["Installer", "plein", () => true]]);
+  if (ok) lancer("maj");
+}
+
+async function cartesParametres() {
+  const p = await appel("parametres");
+  if (!p) return null;
+  const relire = () => redessiner();
+  const langue = h("select", { class: "choix", onchange: async (e) => {
+    if (await ecrire("choisir_langue", e.target.value)) toast("Langue des programmes enregistrée (lettres, messages, journaux).");
+  } }, Object.entries(p.langues).map(([c, n]) => h("option", { value: c, selected: c === p.langue }, n)));
+  const heure = h("input", { class: "champ-texte", type: "time", value: "08:00", style: "width:120px" });
+  const planif = !p.planif.disponible
+    ? h("div", { class: "sous" }, "Planification disponible sous Windows (ailleurs : schedule.sh).")
+    : p.planif.planifiee
+      ? h("div", { class: "ligne-actions" }, h("span", { class: "etat ok" }, "Planifiée"),
+          bouton("Retirer la collecte automatique", "", async () => {
+            const ok = await dialogue("Retirer la collecte automatique ?", "Les offres ne seront plus collectées chaque jour.", null, [["Retirer", "chaud", () => true]]);
+            if (ok && await ecrire("planifier", "")) { toast("Collecte automatique retirée."); relire(); }
+          }))
+      : h("div", { class: "ligne-actions" }, h("span", { class: "etat" }, "Pas planifiée"), heure,
+          bouton("Collecter chaque jour à cette heure", "eclair", async () => {
+            const r = await ecrire("planifier", heure.value);
+            if (r) { toast(r.message || "Collecte planifiée."); relire(); }
+          }, "plein"));
+  const profils = h("div", { class: "liste-profils" }, (p.profils.length ? p.profils : [{ slug: "", nom: "Principal" }]).map((x) =>
+    h("div", { class: `ligne-profil ${x.slug === p.actif ? "on" : ""}` }, h("span", {}, x.nom),
+      x.slug === p.actif ? h("span", { class: "etiq gris" }, "ouvert")
+        : bouton("Ouvrir", "sortie", () => ecrire("changer_profil", x.slug)))));
+  return [
+    carte("Langue",
+      h("div", { class: "sous", style: "margin-bottom:10px" }, "Langue des lettres, des messages et des journaux des programmes."), langue),
+    carte("Mise à jour",
+      h("div", { class: "sous", style: "margin-bottom:10px" }, "Les mises à jour viennent de GitHub ; chacune est vérifiée avant d'être installée."),
+      bouton("Vérifier les mises à jour", "fleche", verifierMaj, "plein")),
+    carte("Collecte automatique",
+      h("div", { class: "sous", style: "margin-bottom:10px" }, "Chaque jour à l'heure choisie, l'ordinateur collecte les offres de tous tes profils, même si JobHunter est fermé."),
+      planif),
+    carte("Profils",
+      h("div", { class: "sous", style: "margin-bottom:10px" }, "Plusieurs recherches, un dossier chacune. Changer de profil relance la fenêtre."),
+      profils,
+      h("div", { class: "boutons" },
+        bouton("Nouveau profil depuis un CV…", "profil", nouveauProfil, "plein"),
+        p.actif ? bouton("Renommer", "", async () => {
+          const champ = h("input", { class: "champ-texte", value: (p.profils.find((x) => x.slug === p.actif) || {}).nom || "" });
+          const nom = await dialogue("Renommer le profil", "Seul le nom affiché change ; son dossier reste le même.", champ, [["Renommer", "plein", () => champ.value.trim() || undefined]]);
+          if (nom && await ecrire("renommer_profil", nom)) relire();
+        }) : null,
+        p.actif ? bouton("Archiver ce profil", "", async () => {
+          const ok = await dialogue("Archiver ce profil ?", "Il est déplacé dans profiles/_archives (rien n'est supprimé), puis le profil principal s'ouvre.", null, [["Archiver", "chaud", () => true]]);
+          if (ok) ecrire("archiver_profil");
+        }) : null)),
+  ];
+}
+
+async function nouveauProfil() {
+  const champ = h("input", { class: "champ-texte", placeholder: "par exemple : Chargée RSE à Lyon" });
+  const nom = await dialogue("Nouveau profil", "Donne-lui un nom, puis choisis son CV. Les questions se posent dans une fenêtre de commande.",
+    champ, [["Choisir le CV…", "plein", () => champ.value.trim() || undefined]]);
+  if (!nom) return;
+  const r = await ecrire("nouveau_profil", nom);
+  if (!r || !r.slug) return;
+  const fini = await dialogue("Réponds aux questions", "Une fenêtre de commande s'est ouverte. Quand elle a fini, clique ci-dessous.",
+    null, [["C'est fait, ouvrir le profil", "plein", () => "ouvrir"], ["C'est fait", "", () => "garder"]]);
+  if (!fini) return;
+  const c = await ecrire("profil_cree", r.slug, fini === "ouvrir");
+  if (c) { toast("Profil créé."); redessiner(); }
+}
 
 async function aller(nom) {
   if (!ECRANS[nom]) nom = "accueil";

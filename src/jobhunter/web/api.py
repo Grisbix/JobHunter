@@ -123,7 +123,8 @@ def tableau(
 # --- Offers screen ---------------------------------------------------------------
 
 # What the "Statut" filter offers, and which queue statuses each one keeps.
-FILTRES_STATUT = ("à traiter", "postulées", "toutes")
+# "écartées": the offers the desktop hides (pas intéressé, expiré, mauvaise).
+FILTRES_STATUT = ("à traiter", "postulées", "écartées", "toutes")
 PAR_PAGE = 40
 
 
@@ -160,6 +161,8 @@ def offres(
     zone: str = "",
     fit_min: float = 0,
     statut: str = "à traiter",
+    domaine: str = "",
+    contrat: str = "",
     tri: str = "fit",
     page: int = 0,
 ) -> dict[str, Any]:
@@ -172,6 +175,12 @@ def offres(
         if statut == "à traiter" and (not _RX_SCAN.match(st) or k in suivi):
             continue
         if statut == "postulées" and (suivi.get(k) or {}).get("s") not in EN_ATTENTE:
+            continue
+        if statut == "écartées" and (suivi.get(k) or {}).get("s") not in ECARTEES:
+            continue
+        if domaine and o.get("domaine") != domaine:
+            continue
+        if contrat and o.get("contrat") != contrat:
             continue
         if zone and o.get("zone") != zone:
             continue
@@ -196,6 +205,8 @@ def offres(
         "pages": max(1, -(-len(gardees) // PAR_PAGE)),
         "lignes": [_ligne(o, suivi) for o in gardees[debut : debut + PAR_PAGE]],
         "zones": sorted({str(o.get("zone")) for o in offres if o.get("zone")}),
+        "domaines": sorted({str(o.get("domaine")) for o in offres if o.get("domaine")}),
+        "contrats": sorted({str(o.get("contrat")) for o in offres if o.get("contrat")}),
         "statuts": list(FILTRES_STATUT),
     }
 
@@ -213,6 +224,11 @@ def fiche(o: Mapping[str, Any], suivi: Mapping[str, Any], description: str) -> d
         "description": description or "",
         "note": s.get("n") or "",
         "postule_le": s.get("d") or "",
+        "envoi": s.get("envoi") or "",
+        "pourquoi": o.get("pourquoi") or "",
+        "exp_requise": o.get("exp_requise") or "",
+        "salaire": o.get("salaire") or "",
+        "teletravail": o.get("teletravail") or "",
         "cv": o.get("cv") or "",
         "lettre": o.get("lettre") or "",
     }
@@ -382,6 +398,8 @@ TACHES: dict[str, tuple[str, list[str]]] = {
     # after a change of places / of skills (the desktop app runs the same)
     "zones": ("Zones des offres mises à jour", ["jobhunter.scoring.zones", "--ecrire"]),
     "rescore": ("Recalculer le fit", ["jobhunter.programs.rescore_ats"]),
+    # signed release, checked before it is installed (programs.update)
+    "maj": ("Mise à jour de JobHunter", ["jobhunter.programs.update"]),
     # + the offer's URL, which generate_docs matches by substring
     "documents": ("CV et lettre de l'offre", ["jobhunter.programs.generate_docs", "--url"]),
     # + an http(s) link pasted by the user: title, company, description → queue
@@ -389,6 +407,9 @@ TACHES: dict[str, tuple[str, list[str]]] = {
     # + the offer's identity: its description fetched online (headless)
     "description": ("Description de l'offre", ["jobhunter.programs.scrape_desc", "--key"]),
 }
+
+# Interface languages (jobhunter.app.language.noms; that module is the desktop's).
+LANGUES = {"fr": "Français", "en": "English", "de": "Deutsch", "es": "Español"}
 
 # Statuses the page may set on an application: the desktop's list ("" clears it).
 STATUTS = ("à postuler", "à vérifier", "postulé", "relancé", "entretien", "refus", *ECARTEES)
@@ -556,6 +577,8 @@ class Api:
             zone=str(f.get("zone") or ""),
             fit_min=float(f.get("fit_min") or 0),
             statut=str(f.get("statut") or "à traiter"),
+            domaine=str(f.get("domaine") or ""),
+            contrat=str(f.get("contrat") or ""),
             tri=str(f.get("tri") or "fit"),
             page=int(f.get("page") or 0),
         )
@@ -1325,6 +1348,175 @@ class Api:
             return False
         os.startfile(p)  # type: ignore[attr-defined,unused-ignore]  # Windows only
         return True
+
+    # Settings: language, daily collection, profiles (the desktop's Paramètres page).
+    def parametres(self) -> dict[str, Any]:
+        """Interface language, daily collection state, profiles."""
+        from jobhunter import profiles, scheduling
+
+        f = _fichier_reglages()
+        try:
+            langue = (
+                str(json.loads(f.read_text(encoding="utf-8")).get("langue") or "fr") if f else "fr"
+            )
+        except (OSError, ValueError, AttributeError):
+            langue = "fr"
+        try:
+            liste = profiles.liste()
+            actif = profiles.actif()
+        except Exception:  # noqa: BLE001 — no profiles folder: the main one only
+            liste, actif = [], ""
+        return {
+            "langue": langue,
+            "langues": LANGUES,
+            "planif": {
+                "disponible": scheduling.disponible(),
+                "planifiee": scheduling.disponible() and scheduling.planifiee(),
+            },
+            "profils": [{"slug": x.slug, "nom": x.nom or "Principal"} for x in liste],
+            "actif": actif,
+        }
+
+    def choisir_langue(self, code: str) -> dict[str, Any]:
+        """The programs' language (letters, messages, logs): same file and key as the desktop."""
+        if code not in LANGUES:
+            return {"ok": False, "erreur": f"langue inconnue : {code}"}
+        f = _fichier_reglages()
+        if f is None:
+            return {"ok": False, "erreur": "dossier de données introuvable"}
+        try:
+            tout = json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
+        except (OSError, ValueError):
+            return {"ok": False, "erreur": f"{f.name} illisible : rien écrit"}
+        if not isinstance(tout, dict):
+            tout = {}
+        tout["langue"] = code
+        f.parent.mkdir(parents=True, exist_ok=True)
+        _ecrire_json(f, tout)
+        return {"ok": True}
+
+    def planifier(self, heure: str = "") -> dict[str, Any]:
+        """Creates the daily collection at `heure` (HH:MM), or removes it when heure is ""."""
+        from jobhunter import scheduling
+
+        if not scheduling.disponible():
+            return {"ok": False, "erreur": "Planification disponible sous Windows seulement."}
+        heure = str(heure or "").strip()
+        if heure and not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", heure):
+            return {"ok": False, "erreur": "heure au format 08:00"}
+        ok, msg = scheduling.creer(heure) if heure else scheduling.supprimer()
+        return {"ok": ok, "message": msg, "erreur": "" if ok else msg}
+
+    def _relancer(self) -> None:
+        """Starts the web interface again on the active profile, then closes this window."""
+        from jobhunter import profiles
+
+        principale = profiles.principale()
+        env = {k: v for k, v in os.environ.items() if k != profiles.ENV_PRINCIPALE}
+        env["JOBHUNTER_RACINE"] = str(principale)
+        subprocess.Popen(  # nosec B603 : our own program
+            [sys.executable, "-m", "jobhunter.web"], cwd=str(principale), env=env
+        )
+        if self._fenetre is not None:
+            self._fenetre.destroy()
+
+    def changer_profil(self, slug: str) -> dict[str, Any]:
+        """Opens another profile: the window restarts on its data (paths are fixed at start)."""
+        from jobhunter import profiles
+
+        if slug not in {x.slug for x in profiles.liste()}:
+            return {"ok": False, "erreur": "profil inconnu"}
+        if self._tache and self._tache.code is None:
+            return {
+                "ok": False,
+                "erreur": "Une tâche tourne sur ce profil : attends qu'elle finisse.",
+            }
+        profiles.activer(slug)
+        self._relancer()
+        return {"ok": True}
+
+    def renommer_profil(self, nom: str) -> dict[str, Any]:
+        """Renames the open profile (its displayed name only; its folder never changes)."""
+        from jobhunter import profiles
+
+        nom = str(nom or "").strip()
+        if not nom:
+            return {"ok": False, "erreur": "nom vide"}
+        profiles.renommer(profiles.actif(), nom)
+        return {"ok": True}
+
+    def archiver_profil(self) -> dict[str, Any]:
+        """Moves the open profile to the archives (never deleted), then opens the main one."""
+        from jobhunter import profiles
+
+        s = profiles.actif()
+        if not s:
+            return {"ok": False, "erreur": "Le profil principal ne s'archive pas."}
+        if self._tache and self._tache.code is None:
+            return {"ok": False, "erreur": "Une tâche tourne : attends qu'elle finisse."}
+        try:
+            profiles.archiver(s)  # the main profile becomes the active one
+        except (ValueError, RuntimeError) as e:
+            return {"ok": False, "erreur": str(e)}
+        self._relancer()
+        return {"ok": True}
+
+    def nouveau_profil(self, nom: str) -> dict[str, Any]:
+        """A new profile from a CV: its folder, then the guided first launch in a console.
+
+        The questions are answered in that console; `profil_cree` checks the result.
+        """
+        from jobhunter import profiles
+
+        nom = str(nom or "").strip()
+        if not nom:
+            return {"ok": False, "erreur": "donne un nom au profil"}
+        if self._fenetre is None:
+            return {"ok": False, "erreur": "il faut l'application pour choisir un CV"}
+        import webview
+
+        choix = self._fenetre.create_file_dialog(
+            webview.FileDialog.OPEN, file_types=("CV (*.docx;*.pdf)", "Tous les fichiers (*.*)")
+        )
+        if not choix:
+            return {"ok": False, "annule": True}
+        try:
+            racine = profiles.creer(nom)
+        except FileExistsError:
+            return {"ok": False, "erreur": "Un profil de ce nom existe déjà."}
+        env = {
+            **os.environ,
+            "JOBHUNTER_RACINE": str(racine),
+            profiles.ENV_PRINCIPALE: str(profiles.principale()),
+        }
+        subprocess.Popen(  # nosec B603 : our own program, arguments built here
+            [sys.executable, "-m", "jobhunter.programs.first_launch", str(choix[0])],
+            cwd=str(racine),
+            env=env,
+            creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0x10),
+        )
+        return {"ok": True, "slug": racine.name}
+
+    def profil_cree(self, slug: str, ouvrir: bool = False) -> dict[str, Any]:
+        """After the console: the profile exists if its questions were answered.
+
+        An unfinished one is moved to the archives (never deleted).
+        """
+        from jobhunter import profiles
+
+        racine = profiles.racine_de(slug)
+        if not (racine / "profile" / "profile.json").exists():
+            if racine.exists():
+                try:
+                    profiles.archiver(slug)
+                except (ValueError, RuntimeError):
+                    pass  # left as it is: never deleted
+            return {"ok": False, "erreur": "Le profil n'a pas été créé (questions non terminées)."}
+        profiles.nommer(racine)
+        if ouvrir:
+            profiles.activer(slug)
+            self._relancer()
+        return {"ok": True}
 
     def ouvrir_dossier(self) -> bool:
         """Opens the data folder in the Explorer (the desktop's "Ouvrir le dossier")."""
