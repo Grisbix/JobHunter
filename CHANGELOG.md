@@ -4,6 +4,16 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.27.1 — 2026-10-26
+
+- **Dark mode in the web interface**: Settings → Colours and font → Mode, “Comme
+  Windows” (follows the Windows setting, live), light or dark.
+- **Narrow window**: below 1100 px the offers' filters stay on one line that scrolls
+  sideways, instead of five lines pushing the table down.
+- **README**: the screenshots are rebuilt, and the new interface is shown (home in light
+  mode, offers in dark mode) with how to install and open it. `tools/screenshots.py`
+  captures it headless, on the fictitious profile only.
+
 ## 3.27.0 — 2026-10-26
 
 - **A new interface, in a web window** (`python -m jobhunter.web`, extra `web`:
