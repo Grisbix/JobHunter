@@ -144,16 +144,16 @@ def _date_offre(o: Mapping[str, Any]) -> str:
 
 @cache
 def _pays(lieu: str) -> str:
-    from jobhunter.scoring import zones
+    from jobhunter.scoring import zones as _zones
 
-    return zones.pays_lieu(lieu)
+    return _zones.pays_lieu(lieu)
 
 
 @cache
 def _region(lieu: str) -> str:
-    from jobhunter.scoring import zones
+    from jobhunter.scoring import zones as _zones
 
-    return zones.region_pays(_pays(lieu))
+    return _zones.region_pays(_pays(lieu))
 
 
 def _alerte(o: Mapping[str, Any]) -> str:
