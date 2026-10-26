@@ -42,6 +42,16 @@ def test_choisir_puis_lire(racine):
         langue.choisir("xx")
 
 
+def test_choisir_garde_les_autres_reglages(racine):
+    f = racine / "Scripts" / "_interface.json"
+    f.write_text('{"langue": "fr", "web": {"fond": "mica", "verre": 30}}', encoding="utf-8")
+    langue.choisir("es")
+    assert json.loads(f.read_text(encoding="utf-8")) == {
+        "langue": "es",
+        "web": {"fond": "mica", "verre": 30},
+    }
+
+
 def test_variable_d_environnement(racine, monkeypatch):
     monkeypatch.setenv("JOBHUNTER_LANGUE", "EN")
     assert langue.lire() == "en"

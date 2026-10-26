@@ -194,3 +194,34 @@ def test_ouvrir_fichier_seulement_sous_cv_ou_lettres(monkeypatch, tmp_path):
     assert api.ouvrir_fichier("https://example.org/cv.pdf") is False
     assert api.ouvrir_fichier(cv.as_uri()) is True
     assert ouverts == [cv.resolve()]
+
+
+def test_reglages_valeurs_par_defaut_et_bornes():
+    assert web_api.reglages(None) == {"fond": "acrylique", "verre": 50}
+    assert web_api.reglages({"fond": "mica", "verre": 140}) == {"fond": "mica", "verre": 100}
+    assert web_api.reglages({"fond": "autre", "verre": "x"}) == {"fond": "acrylique", "verre": 50}
+
+
+def test_ecrire_reglages_garde_la_langue(monkeypatch, tmp_path):
+    import json
+
+    f = tmp_path / "_interface.json"
+    f.write_text('{"langue": "de"}', encoding="utf-8")
+    monkeypatch.setattr(web_api, "_fichier_reglages", lambda: f)
+    fonds = []
+    api = Api()
+    api._fond = fonds.append
+    assert api.regler({"fond": "mica", "verre": 20}) == {"fond": "mica", "verre": 20}
+    assert json.loads(f.read_text(encoding="utf-8")) == {
+        "langue": "de",
+        "web": {"fond": "mica", "verre": 20},
+    }
+    assert fonds == ["mica"] and api.reglages() == {"fond": "mica", "verre": 20}
+
+
+def test_ecrire_reglages_laisse_un_fichier_illisible(monkeypatch, tmp_path):
+    f = tmp_path / "_interface.json"
+    f.write_text("{pas du json", encoding="utf-8")
+    monkeypatch.setattr(web_api, "_fichier_reglages", lambda: f)
+    web_api.ecrire_reglages({"verre": 10})
+    assert f.read_text(encoding="utf-8") == "{pas du json"

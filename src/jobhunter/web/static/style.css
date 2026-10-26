@@ -296,14 +296,18 @@ tbody tr td:first-child { padding-left: 6px; }
 
 /* Title bar of the frameless native window: only shown there. Drag anywhere on it. */
 .barre { display: none; }
-body.natif { background: transparent; }
-body.natif .fond { background: rgba(232, 226, 222, 0.38); }
-body.natif .fond i { opacity: .42; }
+/* --t (0 opaque … 1 glass) comes from the settings screen; .5 = the original look. */
+body.natif { background: transparent; --t: .5; --verre: rgba(255, 255, 255, calc(.66 - .4 * var(--t))); }
+body.natif .fond { background: rgba(232, 226, 222, calc(.76 - .76 * var(--t))); }
+body.natif .fond i { opacity: calc(.84 - .84 * var(--t)); }
+body.natif.sans-fond { --verre: rgba(255, 255, 255, 0.46); }
+body.natif.sans-fond .fond { background: #e3dfdd; }
+body.natif.sans-fond .fond i { opacity: .85; }
 body.natif .barre {
   display: flex; justify-content: flex-end; align-items: center;
   position: fixed; top: 0; left: 0; right: 0; height: 44px; padding: 0 16px; z-index: 5;
 }
-body.natif .fenetre { inset: 0; border: 0; border-radius: 0; padding-top: 44px; background: rgba(255, 255, 255, 0.14); backdrop-filter: none; }
+body.natif .fenetre { inset: 0; border: 0; border-radius: 0; padding-top: 44px; background: rgba(255, 255, 255, calc(.28 - .28 * var(--t))); backdrop-filter: none; }
 body.natif .tiroir { top: 52px; }
 .feux { display: flex; gap: 8px; }
 .feux button {
@@ -330,3 +334,20 @@ body.natif .tiroir { top: 52px; }
   .marque, .groupe { font-size: 0; }
   .accueil { grid-template-columns: 1fr; }
 }
+
+/* Settings screen. */
+.reglage { display: grid; gap: 12px; padding: 16px 0; border-top: 1px solid rgba(28, 25, 23, .06); }
+.reglage:nth-child(2) { border-top: 0; padding-top: 4px; }
+.reglage .titre-ligne { margin: 0; }
+.nom-reglage { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
+.ligne-curseur { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--gris); }
+.curseur {
+  -webkit-appearance: none; appearance: none; flex: 1; height: 6px; border-radius: 3px; outline: 0;
+  background: linear-gradient(90deg, #c98366 var(--p, 50%), var(--piste) var(--p, 50%));
+}
+.curseur::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; cursor: pointer;
+  background: #fff; border: 1px solid var(--filet); box-shadow: 0 1px 6px rgba(92, 60, 46, .28);
+}
+.curseur:disabled { opacity: .4; }
+.curseur:disabled::-webkit-slider-thumb { cursor: default; }

@@ -6,6 +6,8 @@ Pure functions over plain lists and dicts, so the tests need neither a window no
 
 from __future__ import annotations
 
+import json
+import os
 import re
 import webbrowser
 from collections import Counter
@@ -273,15 +275,82 @@ def rendement(lignes: Sequence[Mapping[str, Any]], derniers: int = 7) -> list[di
     return sorted(par_source.values(), key=lambda s: -s["nouvelles"])
 
 
+# --- Settings screen -------------------------------------------------------------------
+
+# Windows 11 backdrops (DWMWA_SYSTEMBACKDROP_TYPE): acrylic blurs the wallpaper behind
+# the window, mica only tints it, "aucun" shows none (the page is then opaque).
+FONDS = {"acrylique": 3, "mica": 2, "aucun": 1}
+REGLAGES: dict[str, Any] = {"fond": "acrylique", "verre": 50}
+
+
+def reglages(brut: Any) -> dict[str, Any]:
+    """The display settings, each missing or wrong value replaced by its default.
+
+    verre: 0 (opaque) to 100 (the blurred wallpaper shows the most), in steps of 1.
+    """
+    d = brut if isinstance(brut, Mapping) else {}
+    fond = d.get("fond")
+    try:
+        verre = min(100, max(0, int(d.get("verre", REGLAGES["verre"]))))
+    except (TypeError, ValueError):
+        verre = REGLAGES["verre"]
+    return {"fond": fond if fond in FONDS else REGLAGES["fond"], "verre": verre}
+
+
+def _fichier_reglages() -> Path | None:
+    """The main folder's settings file, the same as the interface language's."""
+    from jobhunter.app import language
+
+    return language._fichier()
+
+
+def lire_reglages() -> dict[str, Any]:
+    """The saved display settings, defaults when there are none."""
+    f = _fichier_reglages()
+    try:
+        brut = json.loads(f.read_text(encoding="utf-8")).get("web") if f else None
+    except (OSError, ValueError, AttributeError):
+        brut = None
+    return reglages(brut)
+
+
+def ecrire_reglages(valeurs: Any) -> dict[str, Any]:
+    """Saves the display settings under "web", keeping the file's other keys.
+
+    A file that exists but cannot be read is left alone: overwriting it would lose
+    the interface language.
+    """
+    propres = reglages(valeurs)
+    f = _fichier_reglages()
+    if f is None:
+        return propres
+    try:
+        tout = json.loads(f.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        tout = {}
+    except (OSError, ValueError):
+        return propres
+    if not isinstance(tout, dict):
+        return propres
+    tout["web"] = propres
+    f.parent.mkdir(parents=True, exist_ok=True)
+    tmp = f.with_name(f.name + ".tmp")
+    tmp.write_text(json.dumps(tout, ensure_ascii=False), encoding="utf-8")
+    os.replace(tmp, f)
+    return propres
+
+
 class Api:
     """Methods the page calls through `window.pywebview.api`.
 
-    Read-only: nothing here writes to the queue, the applications or the profile.
+    Nothing here writes to the queue, the applications or the profile; only the
+    display settings are saved.
     """
 
     # Set by __main__ once the window exists; private, so pywebview does not expose it.
     _fenetre: Any = None
     _basculer: Any = None  # full screen <-> rounded window
+    _fond: Any = None  # applies a backdrop by name, see FONDS
 
     def __init__(self) -> None:
         """An empty cache: each data file is read on first use."""
@@ -509,6 +578,17 @@ class Api:
             "offres": len(self._file()),
             "candidatures": sum(1 for e in self._suivi().values() if e.get("s")),
         }
+
+    def reglages(self) -> dict[str, Any]:
+        """The display settings: window backdrop and glass strength."""
+        return lire_reglages()
+
+    def regler(self, valeurs: dict[str, Any]) -> dict[str, Any]:
+        """Saves the display settings; a new backdrop applies at once."""
+        r = ecrire_reglages(valeurs)
+        if self._fond:
+            self._fond(r["fond"])
+        return r
 
     # Actions that only open things.
     def ouvrir(self, url: str) -> bool:

@@ -17,7 +17,6 @@ _DWMWA_WINDOW_CORNER_PREFERENCE = 33
 _DWMWA_SYSTEMBACKDROP_TYPE = 38
 _DWMWCP_DONOTROUND = 1
 _DWMWCP_ROUND = 2
-_DWMSBT_TRANSIENTWINDOW = 3  # acrylic: the wallpaper, blurred, behind the window
 _SPI_GETWORKAREA = 0x0030
 _SWP_NOZORDER = 0x0004
 _SWP_FRAMECHANGED = 0x0020
@@ -66,7 +65,7 @@ class _Cadre:
         self.plein = plein
 
     def installer(self) -> None:
-        """Acrylic backdrop behind the transparent page, then the full size.
+        """The saved backdrop behind the transparent page, then the full size.
 
         The page is drawn on a transparent WebView2; the form is painted black, which
         DWM treats as "show the backdrop" once the frame covers the client area.
@@ -86,13 +85,26 @@ class _Cadre:
                 self.hwnd, ctypes.byref(Marges(-1, -1, -1, -1))
             )
             self._attribut(_DWMWA_USE_IMMERSIVE_DARK_MODE, 0)
-            self._attribut(_DWMWA_SYSTEMBACKDROP_TYPE, _DWMSBT_TRANSIENTWINDOW)
+            from jobhunter.web.api import lire_reglages
+
+            self.fond(lire_reglages()["fond"])
 
             from System import Action
             from System.Drawing import Color
 
             forme.Invoke(Action(lambda: setattr(forme, "BackColor", Color.Black)))
             self._placer(True)
+        except Exception as e:  # noqa: BLE001 — cosmetic only
+            print(f"cadre : {e}")
+
+    def fond(self, nom: str) -> None:
+        """Acrylic, mica or no backdrop (FONDS), at start and from the settings screen."""
+        from jobhunter.web.api import FONDS
+
+        if not self.hwnd:
+            return
+        try:
+            self._attribut(_DWMWA_SYSTEMBACKDROP_TYPE, FONDS.get(nom, FONDS["acrylique"]))
         except Exception as e:  # noqa: BLE001 — cosmetic only
             print(f"cadre : {e}")
 
@@ -131,6 +143,7 @@ def main() -> int:
     cadre = _Cadre(fenetre)
     api._fenetre = fenetre
     api._basculer = cadre.basculer
+    api._fond = cadre.fond
     fenetre.events.shown += cadre.installer
     webview.start()
     return 0

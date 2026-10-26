@@ -18,6 +18,7 @@ const ICONES = {
   copie: "M8 3h10a2 2 0 0 1 2 2v12h-2V5H8zM5 7h10a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z",
   eclair: "M13 2 4 14h6l-1 8 9-12h-6z",
   fleche: "M12 4a8 8 0 1 1-7.7 10h2.1A6 6 0 1 0 12 6V9L7.5 5 12 1z",
+  reglage: "M3 6h9v2H3zm14 0h4v2h-4zM3 16h4v2H3zm8 0h10v2H11zM12 4h4v6h-4zM7 14h4v6H7z",
 };
 
 function svg(nom) {
@@ -426,6 +427,60 @@ ECRANS.maintenance = {
 // --- Navigation ---------------------------------------------------------------------
 
 let courant = null;
+// Display settings: --t drives every see-through surface of the native window (style.css).
+function appliquerReglages(r) {
+  if (!r) return;
+  document.body.style.setProperty("--t", String(r.verre / 100));
+  document.body.classList.toggle("sans-fond", r.fond === "aucun");
+}
+
+const FONDS = [["acrylique", "Acrylique"], ["mica", "Mica"], ["aucun", "Aucun"]];
+
+ECRANS.reglages = {
+  titre: "Réglages",
+  actions: () => [],
+  async dessiner(vue) {
+    let r = (await appel("reglages")) || { fond: "acrylique", verre: 50 };
+    const enregistrer = async (maj) => {
+      r = { ...r, ...maj };
+      appliquerReglages(r);
+      if (window.pywebview) r = await window.pywebview.api.regler(r);
+    };
+    const valeur = h("span", { class: "compte" }, `${r.verre} %`);
+    const curseur = h("input", {
+      type: "range", min: 0, max: 100, step: 5, value: r.verre, class: "curseur",
+      style: `--p:${r.verre}%`, disabled: r.fond === "aucun",
+      oninput: (e) => {
+        const v = Number(e.target.value);
+        valeur.textContent = `${v} %`;
+        e.target.style.setProperty("--p", `${v}%`);
+        appliquerReglages({ ...r, verre: v });
+      },
+      onchange: (e) => enregistrer({ verre: Number(e.target.value) }),
+    });
+    const place = h("div");
+    const dessinerFond = () => place.replaceChildren(segment(FONDS, r.fond, async (v) => {
+      await enregistrer({ fond: v });
+      curseur.disabled = v === "aucun";
+      dessinerFond();
+    }));
+    dessinerFond();
+    vue.replaceChildren(h("div", { class: "grille" },
+      h("div", { class: "verre panneau" },
+        h("div", { class: "titre-ligne" }, h("h2", {}, "Apparence")),
+        h("div", { class: "reglage" },
+          h("div", {}, h("div", { class: "nom-reglage" }, "Fond de la fenêtre"),
+            h("div", { class: "sous" }, "Acrylique : le fond d'écran, flouté. Mica : une teinte douce, très diffuse. Aucun : opaque.")),
+          place),
+        h("div", { class: "reglage" },
+          h("div", { class: "titre-ligne" }, h("div", { class: "nom-reglage" }, "Transparence"), valeur),
+          h("div", { class: "ligne-curseur" }, h("span", {}, "Opaque"), curseur, h("span", {}, "Verre")),
+          h("div", { class: "sous" }, "Combien le fond flouté transparaît. Le rayon du flou est fixé par Windows."))),
+      window.pywebview ? null : h("div", { class: "verre panneau" },
+        h("div", { class: "sous" }, "Aperçu navigateur : ces réglages ne s'enregistrent que dans l'application."))));
+  },
+};
+
 async function aller(nom) {
   if (!ECRANS[nom]) nom = "accueil";
   courant = nom;
@@ -461,6 +516,7 @@ function demarrer() {
 // Native window: no Windows frame, our own title bar over a see-through background.
 function natif() {
   document.body.classList.add("natif");
+  appel("reglages").then(appliquerReglages).catch(() => { /* defaults from style.css */ });
   for (const b of document.querySelectorAll(".feux button")) {
     b.addEventListener("click", () => window.pywebview.api.fenetre(b.dataset.action));
   }
