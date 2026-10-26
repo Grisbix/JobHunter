@@ -720,8 +720,9 @@ def assurer_profil() -> None:
     """Guarantees a profile before opening the application.
 
     Without a profile: the CV (dropped or chosen), the questions in a form, then the
-    profile written by first_launch; the application then starts normally. Everything
-    happens in windows, and a failure says why in one.
+    profile written by first_launch, and a short tour (sites, API keys, first
+    collection); the application then starts normally. Everything happens in windows,
+    and a failure says why in one.
     """
     _migrer_si_besoin()
     try:
@@ -736,16 +737,10 @@ def assurer_profil() -> None:
             "Pas de profil pour l'instant : relance JobHunter quand tu auras ton CV sous la main.",
         )
         sys.exit(1)
-    messagebox.showinfo(
-        "JobHunter",
-        f"Profil créé : {_profil.FICHIER.parent.name}/{_profil.FICHIER.name}.\n\n"
-        "Ensuite, dans JobHunter :\n"
-        "· « Ma recherche » : tes mots-clés, les intitulés gardés, tes villes ;\n"
-        "· « Profil » : tes compétences ;\n"
-        "· « Actualiser les offres » : la première collecte.\n\n"
-        "Si tu as Claude Code (facultatif) : /configure-profile dans ce dossier "
-        "complète tout, lettres comprises.",
-    )
+    # The sites read, the API keys and a first collection (jobhunter.welcome_tour).
+    from jobhunter.welcome_tour import visite
+
+    visite(_r)
     _r.destroy()
 
 

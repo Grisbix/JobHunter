@@ -28,6 +28,15 @@ recent at the top.
   carries the brand, “reduce” and “close” (drag it to move the window). The form scrolls
   on a short screen, and its buttons stay visible at the bottom.
 - “New profile” (desktop and web interface) uses the same window.
+- **A three-step tour after the first profile**, in the same window, each step skippable:
+  1. the job sites scanned, by group, and which ones refuse robots (outside the daily
+     collection);
+  2. the free API keys (France Travail, Adzuna, Jooble): what each brings, a link to its
+     official page, masked fields; the key goes into the file the source reads, on this
+     PC only;
+  3. a first real scan of the quick sources (LinkedIn, V.I.E, makesense, plus each API
+     whose key is set), with its log, then the three best offers and how to go on in
+     the application. Nothing is ever sent.
 
 ## 3.27.1 — 2026-10-26
 
