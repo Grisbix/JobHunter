@@ -296,10 +296,10 @@ tbody tr td:first-child { padding-left: 6px; }
 
 /* Title bar of the frameless native window: only shown there. Drag anywhere on it. */
 .barre { display: none; }
-/* --t (0 opaque … 1 glass) comes from the settings screen; .5 = the original look. */
+/* --t (0 fully opaque … 1 glass) comes from the settings screen. */
 body.natif { background: transparent; --t: .5; --verre: rgba(255, 255, 255, calc(.66 - .4 * var(--t))); }
-body.natif .fond { background: rgba(232, 226, 222, calc(.76 - .76 * var(--t))); }
-body.natif .fond i { opacity: calc(.84 - .84 * var(--t)); }
+body.natif .fond { background: rgba(227, 223, 221, calc(1 - var(--t))); }
+body.natif .fond i { opacity: calc(.85 - .85 * var(--t)); }
 body.natif.sans-fond { --verre: rgba(255, 255, 255, 0.46); }
 body.natif.sans-fond .fond { background: #e3dfdd; }
 body.natif.sans-fond .fond i { opacity: .85; }
