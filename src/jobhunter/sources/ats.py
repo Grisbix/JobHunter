@@ -452,9 +452,11 @@ def fetch_autre(kind: str, cle: str, nom: str) -> list[dict[str, Any]]:
             if _ats_ko(kind, cle, r):
                 return []
             for j in r.json() or []:
-                lieu = j.get("location") or {}
+                endroit = j.get("location") or {}
                 ville = ", ".join(
-                    x for x in (lieu.get("city"), (lieu.get("country") or {}).get("name")) if x
+                    x
+                    for x in (endroit.get("city"), (endroit.get("country") or {}).get("name"))
+                    if x
                 )
                 out.append(
                     _mk(

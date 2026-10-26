@@ -26,6 +26,7 @@ import json
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
 
 from jobhunter import root as racine
 from jobhunter.storage import atomic as atomique
@@ -91,16 +92,21 @@ def _nombres(offres: list[Offre]) -> None:
     page raise on `"9" >= 8`, and twenty other places compare it the same way. Read
     once here: a number stays, a numeric text becomes a number, anything else None.
     """
+
+    def nombre(v: Any, conv: type) -> Any:
+        if v is None or isinstance(v, (int, float)) and not isinstance(v, bool) and v == v:
+            return v
+        try:
+            n = float(str(v).replace(",", "."))
+        except ValueError:
+            return None
+        return conv(n) if n == n else None  # NaN is not a fit
+
     for o in offres:
-        for cle, conv in (("fit", int), ("fit_fin", float)):
-            v = o.get(cle)
-            if v is None or isinstance(v, (int, float)) and not isinstance(v, bool) and v == v:
-                continue
-            try:
-                n = float(str(v).replace(",", "."))
-                o[cle] = conv(n) if n == n else None  # NaN is not a fit
-            except ValueError:
-                o[cle] = None
+        if "fit" in o:
+            o["fit"] = nombre(o["fit"], int)
+        if "fit_fin" in o:
+            o["fit_fin"] = nombre(o["fit_fin"], float)
 
 
 def charger(chemin: Chemin | None = None, descriptions: bool = True) -> list[Offre]:

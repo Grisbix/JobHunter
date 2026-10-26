@@ -412,11 +412,13 @@ class MaRechercheMixin:
             ).pack(side="left", padx=(0, 12))
 
         w._reload = recharger
-        w._chercher_lieu = lambda texte: (  # for the tests
-            champ_lieu.delete(0, "end"),
-            champ_lieu.insert(0, texte),
-            rechercher_lieu(),
-        )
+
+        def chercher_lieu(texte: str) -> None:  # for the tests
+            champ_lieu.delete(0, "end")
+            champ_lieu.insert(0, texte)
+            rechercher_lieu()
+
+        w._chercher_lieu = chercher_lieu
         w._choisis = choisis
         recharger()
         w.pack(fill="both", expand=True)

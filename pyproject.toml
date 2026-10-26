@@ -119,7 +119,7 @@ warn_unused_ignores = true
 # The programs (formerly Scripts/*.py, moved into the package in 2.0) are checked in
 # normal mode since 2026-10-19 (82 errors cleared); most of their functions remain
 # unannotated, hence the exclusion below of untyped calls.
-untyped_calls_exclude = ["jobhunter.programs"]
+untyped_calls_exclude = ["jobhunter.programs", "pymupdf"]  # pymupdf: partly typed
 
 [[tool.mypy.overrides]]
 module = [

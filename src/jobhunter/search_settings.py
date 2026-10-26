@@ -104,7 +104,8 @@ def chercher_lieux(texte: str, limite: int = 8) -> list[tuple[Any, str]]:
     q = _norme(texte)
     if len(q) < 2:
         return []
-    par_nom, par_ville = [], []
+    par_nom: list[tuple[Any, str]] = []
+    par_ville: list[tuple[Any, str]] = []
     exact = False
     for cle, s in CATALOGUE.items():
         if q in _norme(s["libelle"]) or q in _norme(cle):

@@ -108,7 +108,7 @@ def _experimente() -> bool:
     The letter then speaks of experience put to work, not of a path started at
     school. Set by `first_launch` from 3 years on; absent = the young-graduate wording.
     """
-    return _P.get("lettre.ton", "") == "experimente"
+    return bool(_P.get("lettre.ton", "") == "experimente")
 
 
 def socle(cle: str, langue: str = "fr") -> str:
