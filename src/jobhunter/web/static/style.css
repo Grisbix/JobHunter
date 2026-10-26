@@ -560,9 +560,11 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
 .case-colonne input { accent-color: rgb(var(--c1-rgb)); }
 .cellule-offre .alerte { color: #b2432f; font-weight: 600; }
 
-/* Dark mode (Réglages → Mode). On :root, not body: the surface tokens above are built
-   from --blanc-rgb where they are declared, so they must be redefined at the same level. */
-:root.sombre {
+/* Dark mode (Réglages → Mode). Not ".sombre", the dark card's class: on <html> it added
+   the card's padding and glow to the whole page. On :root, not body: the surface tokens
+   above are built from --blanc-rgb where they are declared, so they must be redefined
+   at the same level. */
+:root.mode-sombre {
   color-scheme: dark;
   --blanc-rgb: 44, 39, 37;
   --encre: #f1ece8;
@@ -583,16 +585,16 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
   --ombre-rgb: 0, 0, 0;
   --blob2: #3a3330;
 }
-:root.sombre body.natif { --verre: rgba(44, 39, 37, calc(.72 - .4 * var(--t))); }
-:root.sombre .fond i { opacity: .22; }
-:root.sombre body.natif .fond i { opacity: calc(.22 - .22 * var(--t)); }
-:root.sombre .diff-moins { background: #4a2423; color: #f3b7b0; }
-:root.sombre .diff-plus { background: #1f3b2a; color: #a9dfba; }
-:root.sombre .etat-source.ok { color: #86c79f; }
-:root.sombre .etat-source.ko, :root.sombre .cellule-offre .alerte { color: #f08f7f; }
-:root.sombre .etat-source.ancien { color: #e2b06a; }
-:root.sombre .zone-code { background: rgba(0, 0, 0, .25); }
-:root.sombre select option { background: #2c2725; color: #f1ece8; }
+:root.mode-sombre body.natif { --verre: rgba(44, 39, 37, calc(.72 - .4 * var(--t))); }
+:root.mode-sombre .fond i { opacity: .22; }
+:root.mode-sombre body.natif .fond i { opacity: calc(.22 - .22 * var(--t)); }
+:root.mode-sombre .diff-moins { background: #4a2423; color: #f3b7b0; }
+:root.mode-sombre .diff-plus { background: #1f3b2a; color: #a9dfba; }
+:root.mode-sombre .etat-source.ok { color: #86c79f; }
+:root.mode-sombre .etat-source.ko, :root.mode-sombre .cellule-offre .alerte { color: #f08f7f; }
+:root.mode-sombre .etat-source.ancien { color: #e2b06a; }
+:root.mode-sombre .zone-code { background: rgba(0, 0, 0, .25); }
+:root.mode-sombre select option { background: #2c2725; color: #f1ece8; }
 
 /* Narrow window: the offers' filters stay on one scrolling line instead of five. */
 @media (max-width: 1100px) {
@@ -600,4 +602,4 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
   .barre-outils > * { flex: none; }
   .barre-outils .champ { min-width: 220px; }
 }
-:root.sombre .score b { color: var(--fond-page); }
+:root.mode-sombre .score b { color: var(--fond-page); }

@@ -1323,7 +1323,7 @@ let modeAffiche = "auto";
 const systemeSombre = window.matchMedia("(prefers-color-scheme: dark)");
 function appliquerMode() {
   const sombre = modeAffiche === "sombre" || (modeAffiche === "auto" && systemeSombre.matches);
-  document.documentElement.classList.toggle("sombre", sombre);
+  document.documentElement.classList.toggle("mode-sombre", sombre);  // not "sombre": the dark card
 }
 systemeSombre.addEventListener("change", appliquerMode);
 appliquerMode();
