@@ -298,10 +298,18 @@ def reglages(brut: Any) -> dict[str, Any]:
 
 
 def _fichier_reglages() -> Path | None:
-    """The main folder's settings file, the same as the interface language's."""
-    from jobhunter.app import language
+    """The main folder's settings file, the same as the interface language's.
 
-    return language._fichier()
+    Same path as `jobhunter.app.language._fichier()`, rebuilt here: only the desktop
+    app may import jobhunter.app (tests/test_architecture.py).
+    """
+    from jobhunter import profiles, root
+
+    try:
+        p = profiles.principale()
+    except RuntimeError:
+        return None
+    return p / root.nom("Scripts", p) / "_interface.json"
 
 
 def lire_reglages() -> dict[str, Any]:
