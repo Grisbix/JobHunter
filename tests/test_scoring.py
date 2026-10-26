@@ -492,6 +492,36 @@ def test_langue_parlee_sans_plafond(texte):
     assert ats_match.plafond_langue(texte)[0] == 10.0
 
 
+# Non-Latin scripts: the function words cannot see them (the user, 2026-10-26).
+@pytest.mark.parametrize(
+    "texte, code",
+    [
+        (
+            "Financial Analyst ・ " + "サステナビリティ情報開示の分析を担当していただきます。" * 3,
+            "ja",
+        ),
+        ("ESG Consultant " + "協助企業推動永續發展與氣候變遷相關的顧問服務。" * 3, "zh"),
+        ("ESG Manager " + "지속가능경영 전략 수립 및 운영을 담당합니다. " * 3, "ko"),
+        ("Data Analyst " + "ניתוח נתונים ובניית דוחות עבור הצוות העסקי. " * 3, "he"),
+        ("Αναλυτής Δεδομένων " + "ανάλυση δεδομένων για την ομάδα βιωσιμότητας. " * 3, "el"),
+        ("ESG-менеджер " + "подготовка отчетности по устойчивому развитию. " * 3, "ru"),
+    ],
+    ids=["ja", "zh", "ko", "he", "el", "ru"],
+)
+def test_ecriture_non_latine_plafonnee(texte, code):
+    assert ats_match.langue_redaction(texte) == code
+    assert ats_match.plafond_langue(texte) == (2.0, f"redigee en {code}")
+
+
+def test_quelques_signes_non_latins_ne_plafonnent_pas():
+    # An English posting naming its Tokyo office: a few ideographs, not the language.
+    texte = (
+        "You will join our sustainability team and work with the portfolio managers on "
+        "the reporting of the funds. Our office in Tokyo (東京本社) is your base. "
+    ) * 3
+    assert ats_match.plafond_langue(texte)[0] == 10.0
+
+
 # ── expliquer: the calculation in clear, without changing the calculation (G3) ────────────────
 
 

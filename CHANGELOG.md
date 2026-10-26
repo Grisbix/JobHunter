@@ -4,6 +4,17 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.26.1 — 2026-10-26
+
+- **Postings in a non-Latin script are recognised.** One written mostly in Japanese,
+  Chinese, Korean, Thai, Hebrew, Arabic, Greek, Cyrillic, Hindi, Bengali, Tamil, Georgian
+  or Armenian now gets the cap of a language not spoken (fit 2), like a Dutch or
+  Spanish one. The language check only counted Latin function words, so these came
+  out « undecided » and kept their fit: 113 offers of a real queue, 36 of them at 6 or
+  more. A few ideographs in an English posting (an office address) change nothing:
+  the script must make a fifth of the letters.
+- Development: `virtualenv` 21.14.13 in `uv.lock` (security advisory on 21.14.9–12).
+
 ## 3.26.0 — 2026-10-26
 
 - **The progress moves to the top bar**, right of the page title: a progress bar and

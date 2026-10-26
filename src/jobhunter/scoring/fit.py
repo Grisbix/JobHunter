@@ -444,6 +444,41 @@ _NOMS_LANGUES = {
 }
 
 
+# Scripts other than the Latin one: the function words above cannot see them, so a
+# posting in Japanese or Korean came out "undecided" and kept its fit (the user,
+# 2026-10-26: 103 offers in CJK, Hangul, Hebrew, Greek, Cyrillic… in the queue).
+# Kana before the ideographs: a Japanese text uses both, a Chinese one only the second.
+_ECRITURES = (
+    ("ja", re.compile(r"[\u3040-\u30ff]")),
+    ("zh", re.compile(r"[\u4e00-\u9fff]")),
+    ("ko", re.compile(r"[\uac00-\ud7af\u1100-\u11ff]")),
+    ("th", re.compile(r"[\u0e00-\u0e7f]")),
+    ("he", re.compile(r"[\u0590-\u05ff]")),
+    ("ar", re.compile(r"[\u0600-\u06ff]")),
+    ("el", re.compile(r"[\u0370-\u03ff]")),
+    ("ru", re.compile(r"[\u0400-\u04ff]")),
+    ("hi", re.compile(r"[\u0900-\u097f]")),
+    ("bn", re.compile(r"[\u0980-\u09ff]")),
+    ("ta", re.compile(r"[\u0b80-\u0bff]")),
+    ("ka", re.compile(r"[\u10a0-\u10ff]")),
+    ("hy", re.compile(r"[\u0530-\u058f]")),
+)
+_RX_LETTRE = re.compile(r"[^\W\d_]")
+
+
+def _ecriture(t: str) -> str:
+    """Code of a non-Latin script making a fifth of the letters (at least 30), else ''."""
+    lettres = len(_RX_LETTRE.findall(t))
+    for code, rx in _ECRITURES:
+        n = len(rx.findall(t))
+        # Japanese: the kana alone are fewer than the ideographs around them.
+        if code == "ja" and n >= 10:
+            n += len(_ECRITURES[1][1].findall(t))
+        if n >= 30 and n >= 0.2 * lettres:
+            return code
+    return ""
+
+
 def _compte_langues(mots: list[str]) -> dict[str, int]:
     return {k: sum(1 for m in mots if m in v) for k, v in _MOTS_OUTILS.items()}
 
@@ -455,6 +490,9 @@ def langue_redaction(t: str | None) -> str:
     English; the English body won (26 function words against 4). The first lines are
     the employer's: if they are clearly in a language not spoken, the posting is.
     """
+    ecrite = _ecriture((t or "")[:4000])
+    if ecrite:
+        return ecrite
     tete = _compte_langues(_RX_MOT.findall((t or "")[:600].lower()))
     lg = max(tete, key=tete.__getitem__)
     parlees = [tete[k] for k in _ici.LANGUES_PARLEES if k in tete] or [0]
