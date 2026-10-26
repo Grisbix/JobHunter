@@ -85,6 +85,10 @@ def balayer(app, journal: str, oui: bool) -> None:
     for n in ("askopenfilename", "askdirectory", "asksaveasfilename"):
         setattr(filedialog, n, lambda *a, **k: "")
     tkinter.Misc.wait_window = lambda self, *a: None
+    # A popup menu (« Outils », « Profils… ») is modal on Windows: it waited for a
+    # click elsewhere on the user's screen and the sweep stood still. Its entries are
+    # clicked through _menu_reglages below; here it is only written down.
+    tkinter.Menu.tk_popup = lambda self, *a, **k: dire("   menu", self.index("end"))
 
     erreurs = []
 

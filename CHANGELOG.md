@@ -15,6 +15,8 @@ recent at the top.
   the signs mean (✓ answered, ◐ in part, ⏸ limited, ⛔ refused, ∅ nothing new).
 - `tools/sweep_app.py` works on Windows: its fake process now supports
   `subprocess.run` (the scheduled-task check), which it reported as an app error.
+  It no longer opens the « Outils » and « Profils… » menus on screen either: on
+  Windows they waited for a click elsewhere, and the sweep stood still.
 
 ## 3.25.5 — 2026-10-25
 
