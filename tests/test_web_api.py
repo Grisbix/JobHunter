@@ -1,8 +1,9 @@
-"""Home screen data of the web interface prototype (jobhunter.web.api.tableau)."""
+"""Screen data and guards of the web interface prototype (jobhunter.web.api)."""
 
 from datetime import date
 
-from jobhunter.web.api import Api, tableau
+from jobhunter.web import api as web_api
+from jobhunter.web.api import Api, candidatures, fiche, offres, rendement, tableau
 
 JOUR = date(2026, 10, 26)
 
@@ -76,3 +77,120 @@ def test_ouvrir_refuse_ce_qui_n_est_pas_un_lien_web(monkeypatch):
     assert api.ouvrir("javascript:alert(1)") is False
     assert api.ouvrir("https://example.org/offre") is True
     assert ouverts == ["https://example.org/offre"]
+
+
+def test_offres_a_traiter_filtres_et_tri():
+    file = [
+        _offre("Alpha", "Analyste ESG", 8, localisation="Paris"),
+        _offre("Beta", "Analyste risque", 9, zone="international"),
+        _offre("Gamma", "ESG manager", 6),
+        _offre("Delta", "Analyste ESG", 9.5, statut="Expirée"),
+        _offre("Eps", "Analyste ESG", 7),
+    ]
+    suivi = {"Eps|Analyste ESG": {"s": "postulé", "d": "2026-10-20"}}
+    d = offres(file, suivi)
+    assert [l["entreprise"] for l in d["lignes"]] == ["Beta", "Alpha", "Gamma"]
+    assert d["zones"] == ["international", "prioritaire"]
+    assert [l["entreprise"] for l in offres(file, suivi, texte="esg paris")["lignes"]] == ["Alpha"]
+    assert offres(file, suivi, zone="international", fit_min=8)["total"] == 1
+    assert [l["entreprise"] for l in offres(file, suivi, statut="postulées")["lignes"]] == ["Eps"]
+    assert offres(file, suivi, statut="toutes")["total"] == 5
+    assert [l["entreprise"] for l in offres(file, suivi, tri="entreprise")["lignes"]] == [
+        "Alpha",
+        "Beta",
+        "Gamma",
+    ]
+
+
+def test_offres_pagination():
+    file = [_offre("A", str(i), 5) for i in range(web_api.PAR_PAGE + 3)]
+    d = offres(file, {}, page=1)
+    assert (d["total"], d["pages"], len(d["lignes"])) == (web_api.PAR_PAGE + 3, 2, 3)
+
+
+def test_fiche_reprend_le_suivi_et_la_description():
+    o = _offre("A", "a", 8, fit_fin="8.4", source="linkedin", cv="file:///C:/x.pdf")
+    f = fiche(o, {"A|a": {"s": "postulé", "d": "2026-10-20", "n": "relu"}}, "Texte")
+    assert (f["id"], f["fit_fin"], f["suivi"], f["note"], f["postule_le"]) == (
+        "A|a",
+        8.4,
+        "postulé",
+        "relu",
+        "2026-10-20",
+    )
+    assert f["description"] == "Texte" and f["cv"] == "file:///C:/x.pdf" and f["lettre"] == ""
+
+
+def test_candidatures_par_colonne_sans_ecartees_ni_retirees():
+    suivi = {
+        "A|a": {"s": "postulé", "d": "2026-10-10"},
+        "B|b": {"s": "postulé", "d": "2026-10-20"},
+        "C|c": {"s": "mauvaise"},
+        "D|d": {"s": "entretien", "retiree": "fermée"},
+        "E|e": {"s": "à vérifier", "d": "2026-10-01"},
+        "F|f": {"n": "sans statut"},
+    }
+    d = candidatures([_offre("A", "a", 8)], suivi)
+    cols = {c["statut"]: [e["entreprise"] for e in c["entrees"]] for c in d["colonnes"]}
+    assert list(cols) == [*web_api.COLONNES, "autres"]
+    assert cols["postulé"] == ["B", "A"] and cols["autres"] == ["E"] and cols["entretien"] == []
+    assert d["ecartees"] == 1
+
+
+def test_rendement_cumule_et_garde_le_dernier_verdict():
+    lignes = [
+        {
+            "le": "2026-10-24T08:00",
+            "sources": {"apec": {"ramenees": 5, "nouvelles": 1, "verdict": "ok"}},
+        },
+        {
+            "le": "2026-10-25T08:00",
+            "sources": {
+                "apec": {"ramenees": 0, "nouvelles": 0, "verdict": "refus"},
+                "efc": {"ramenees": 9, "nouvelles": 4, "verdict": "ok"},
+            },
+        },
+    ]
+    r = rendement(lignes)
+    assert [s["source"] for s in r] == ["efc", "apec"]
+    assert (r[1]["ramenees"], r[1]["nouvelles"], r[1]["verdict"], r[1]["dernier"]) == (
+        5,
+        1,
+        "refus",
+        "2026-10-25",
+    )
+
+
+def test_chemin_local():
+    assert web_api._chemin_local("https://example.org/a.pdf") is None
+    assert web_api._chemin_local("") is None
+    p = web_api._chemin_local("file:///C:/Dossier%20A/cv.pdf")
+    assert p is not None and p.name == "cv.pdf" and p.parent.name == "Dossier A"
+
+
+def test_brouillon_refuse_un_chemin():
+    api = Api()
+    assert api.brouillon("../secret.txt") == ""
+    assert api.brouillon(r"C:\x.txt") == ""
+    assert api.brouillon("note.md") == ""
+
+
+def test_ouvrir_fichier_seulement_sous_cv_ou_lettres(monkeypatch, tmp_path):
+    from jobhunter import root
+
+    (tmp_path / "CV").mkdir()
+    (tmp_path / "Letters").mkdir()
+    cv = tmp_path / "CV" / "cv.pdf"
+    cv.write_bytes(b"x")
+    dehors = tmp_path / "autre.exe"
+    dehors.write_bytes(b"x")
+    monkeypatch.setattr(root, "racine", lambda: tmp_path)
+    monkeypatch.setattr(root, "dossier", lambda nom: tmp_path / "Letters")
+    ouverts = []
+    monkeypatch.setattr("os.startfile", lambda p: ouverts.append(p), raising=False)
+    api = Api()
+    assert api.ouvrir_fichier(str(dehors)) is False
+    assert api.ouvrir_fichier(str(tmp_path / "CV" / ".." / "autre.exe")) is False
+    assert api.ouvrir_fichier("https://example.org/cv.pdf") is False
+    assert api.ouvrir_fichier(cv.as_uri()) is True
+    assert ouverts == [cv.resolve()]

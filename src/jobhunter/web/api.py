@@ -9,8 +9,9 @@ from __future__ import annotations
 import re
 import webbrowser
 from collections import Counter
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from datetime import date, datetime
+from pathlib import Path
 from typing import Any
 
 # Statuses of an application still waiting for an answer (same as the follow-ups).
@@ -104,6 +105,7 @@ def tableau(
             for o in meilleures
         ],
         "relances": relances[:4],
+        "relances_toutes": relances,
         "zones": [
             {"zone": z, "n": n, "pct": round(100 * n / total_zones)}
             for z, n in zones.most_common(3)
@@ -112,24 +114,423 @@ def tableau(
     }
 
 
+# --- Offers screen ---------------------------------------------------------------
+
+# What the "Statut" filter offers, and which queue statuses each one keeps.
+FILTRES_STATUT = ("à traiter", "postulées", "toutes")
+PAR_PAGE = 40
+
+
+def _date_offre(o: Mapping[str, Any]) -> str:
+    """The most telling date of an offer: its publication, else when it was seen, else its scan."""
+    for champ in ("date_publication", "vu_le"):
+        d = _date(str(o.get(champ) or "")[:10])
+        if d:
+            return d.isoformat()
+    m = _RX_SCAN.match(str(o.get("statut") or ""))
+    return m.group(1) if m else ""
+
+
+def _ligne(o: Mapping[str, Any], suivi: Mapping[str, Any]) -> dict[str, Any]:
+    k = _oid(o)  # type: ignore[arg-type]
+    return {
+        "id": k,
+        "poste": o.get("poste") or "",
+        "entreprise": o.get("entreprise") or "",
+        "lieu": o.get("localisation") or "",
+        "fit": _fit(o),  # type: ignore[arg-type]
+        "zone": o.get("zone") or "",
+        "contrat": o.get("contrat") or "",
+        "date": _date_offre(o),
+        "suivi": (suivi.get(k) or {}).get("s") or "",
+        "url": o.get("url") or "",
+    }
+
+
+def offres(
+    offres: Sequence[Any],
+    suivi: Mapping[str, Any],
+    texte: str = "",
+    zone: str = "",
+    fit_min: float = 0,
+    statut: str = "à traiter",
+    tri: str = "fit",
+    page: int = 0,
+) -> dict[str, Any]:
+    """One page of the offers screen, filtered and sorted, with the filter choices."""
+    mots = [m for m in (texte or "").lower().split() if m]
+    gardees = []
+    for o in offres:
+        st = str(o.get("statut") or "")
+        k = _oid(o)
+        if statut == "à traiter" and (not _RX_SCAN.match(st) or k in suivi):
+            continue
+        if statut == "postulées" and (suivi.get(k) or {}).get("s") not in EN_ATTENTE:
+            continue
+        if zone and o.get("zone") != zone:
+            continue
+        if fit_min and _fit(o) < fit_min:
+            continue
+        if mots:
+            botte = f"{o.get('poste') or ''} {o.get('entreprise') or ''} {o.get('localisation') or ''}".lower()
+            if not all(m in botte for m in mots):
+                continue
+        gardees.append(o)
+    cles: dict[str, Callable[[Any], Any]] = {
+        "fit": lambda o: (-_fit(o), -_fit(o, "fit_fin")),
+        "date": lambda o: _date_offre(o),
+        "entreprise": lambda o: str(o.get("entreprise") or "").lower(),
+    }
+    gardees.sort(key=cles.get(tri, cles["fit"]), reverse=(tri == "date"))
+    page = max(0, int(page))
+    debut = page * PAR_PAGE
+    return {
+        "total": len(gardees),
+        "page": page,
+        "pages": max(1, -(-len(gardees) // PAR_PAGE)),
+        "lignes": [_ligne(o, suivi) for o in gardees[debut : debut + PAR_PAGE]],
+        "zones": sorted({str(o.get("zone")) for o in offres if o.get("zone")}),
+        "statuts": list(FILTRES_STATUT),
+    }
+
+
+def fiche(o: Mapping[str, Any], suivi: Mapping[str, Any], description: str) -> dict[str, Any]:
+    """Everything the detail sheet of one offer shows."""
+    k = _oid(o)  # type: ignore[arg-type]
+    s = suivi.get(k) or {}
+    return {
+        **_ligne(o, suivi),
+        "statut": o.get("statut") or "",
+        "domaine": o.get("domaine") or "",
+        "source": o.get("source") or "",
+        "fit_fin": _fit(o, "fit_fin"),  # type: ignore[arg-type]
+        "description": description or "",
+        "note": s.get("n") or "",
+        "postule_le": s.get("d") or "",
+        "cv": o.get("cv") or "",
+        "lettre": o.get("lettre") or "",
+    }
+
+
+# --- Applications screen ------------------------------------------------------------
+
+# Columns of the applications board, in order; any other status goes to "Autres".
+COLONNES = ("à postuler", "postulé", "relancé", "entretien", "refus")
+
+
+def candidatures(offres: Sequence[Any], suivi: Mapping[str, Any]) -> dict[str, Any]:
+    """The applications grouped by status, most recent first in each column."""
+    par_oid = {_oid(o): o for o in offres}
+    colonnes: dict[str, list[dict[str, Any]]] = {c: [] for c in (*COLONNES, "autres")}
+    ecartees = 0
+    for k, v in suivi.items():
+        s = v.get("s")
+        if not s or v.get("retiree"):
+            continue
+        if s in ECARTEES:
+            ecartees += 1
+            continue
+        entreprise, _, poste = k.partition("|")
+        o = par_oid.get(k, {})
+        colonnes[s if s in colonnes else "autres"].append(
+            {
+                "id": k,
+                "entreprise": entreprise,
+                "poste": poste,
+                "statut": s,
+                "date": v.get("d") or "",
+                "note": v.get("n") or "",
+                "fit": _fit(o) if o else None,
+                "url": o.get("url") or "",
+            }
+        )
+    for c in colonnes.values():
+        c.sort(key=lambda e: e["date"], reverse=True)
+    return {
+        "colonnes": [
+            {"statut": c, "entrees": colonnes[c]} for c in colonnes if colonnes[c] or c in COLONNES
+        ],
+        "ecartees": ecartees,
+    }
+
+
+# --- Sources screen --------------------------------------------------------------------
+
+
+def rendement(lignes: Sequence[Mapping[str, Any]], derniers: int = 7) -> list[dict[str, Any]]:
+    """Per source, over the last runs of the yield log: offers brought, new, verdict."""
+    par_source: dict[str, dict[str, Any]] = {}
+    for ligne in list(lignes)[-derniers * 6 :]:
+        le = str(ligne.get("le") or "")[:10]
+        for nom, r in (ligne.get("sources") or {}).items():
+            s = par_source.setdefault(
+                nom, {"source": nom, "ramenees": 0, "nouvelles": 0, "dernier": "", "verdict": ""}
+            )
+            s["ramenees"] += int(r.get("ramenees") or 0)
+            s["nouvelles"] += int(r.get("nouvelles") or 0)
+            if le >= s["dernier"]:
+                s["dernier"], s["verdict"] = le, str(r.get("verdict") or "")
+    return sorted(par_source.values(), key=lambda s: -s["nouvelles"])
+
+
 class Api:
-    """Methods the page calls through `window.pywebview.api`."""
+    """Methods the page calls through `window.pywebview.api`.
+
+    Read-only: nothing here writes to the queue, the applications or the profile.
+    """
 
     # Set by __main__ once the window exists; private, so pywebview does not expose it.
     _fenetre: Any = None
     _basculer: Any = None  # full screen <-> rounded window
 
+    def __init__(self) -> None:
+        """An empty cache: each data file is read on first use."""
+        self._cache: dict[str, tuple[float, Any]] = {}
+
+    # Data, reloaded only when its file changed.
+    def _lire(self, cle: str, fichier: Path, charger: Any) -> Any:
+        try:
+            mtime = fichier.stat().st_mtime
+        except OSError:
+            mtime = 0.0
+        vu = self._cache.get(cle)
+        if vu is None or vu[0] != mtime:
+            vu = (mtime, charger())
+            self._cache[cle] = vu
+        return vu[1]
+
+    def _file(self) -> list[Any]:
+        from jobhunter.storage import queue
+
+        return self._lire("file", queue.CHEMIN, lambda: queue.charger(descriptions=False))
+
+    def _suivi(self) -> Mapping[str, Any]:
+        from jobhunter.storage import applications
+
+        return self._lire("suivi", applications.CHEMIN, applications.charger)
+
+    def _descriptions(self) -> Mapping[str, str]:
+        from jobhunter.storage import queue
+
+        return self._lire("desc", queue.DESCRIPTIONS, queue._lire_descriptions)
+
+    # Screens.
     def tableau(self) -> dict[str, Any]:
         """The home screen data, from the real queue and applications."""
-        from jobhunter.storage import applications, queue
+        return tableau(self._file(), self._suivi())
 
-        return tableau(queue.charger(descriptions=False), applications.charger())
+    def offres(self, filtres: dict[str, Any] | None = None) -> dict[str, Any]:
+        """One page of the offers screen; filtres: texte, zone, fit_min, statut, tri, page."""
+        f = filtres or {}
+        return offres(
+            self._file(),
+            self._suivi(),
+            texte=str(f.get("texte") or ""),
+            zone=str(f.get("zone") or ""),
+            fit_min=float(f.get("fit_min") or 0),
+            statut=str(f.get("statut") or "à traiter"),
+            tri=str(f.get("tri") or "fit"),
+            page=int(f.get("page") or 0),
+        )
 
+    def offre(self, ident: str) -> dict[str, Any] | None:
+        """The detail sheet of one offer, by its "entreprise|poste" identity."""
+        for o in self._file():
+            if _oid(o) == ident:
+                return fiche(o, self._suivi(), self._descriptions().get(ident, ""))
+        return None
+
+    def candidatures(self) -> dict[str, Any]:
+        """The applications board."""
+        return candidatures(self._file(), self._suivi())
+
+    def relances(self) -> dict[str, Any]:
+        """Follow-ups due, and the drafts already written in Letters/Follow_ups."""
+        dossier = _dossier_relances()
+        brouillons = []
+        if dossier.is_dir():
+            for p in sorted(dossier.glob("*.txt"), key=lambda p: -p.stat().st_mtime):
+                brouillons.append(
+                    {
+                        "nom": p.name,
+                        "titre": p.stem.replace("_", " "),
+                        "date": datetime.fromtimestamp(p.stat().st_mtime).date().isoformat(),
+                    }
+                )
+        d = tableau(self._file(), self._suivi())
+        return {"dues": d["relances_toutes"], "brouillons": brouillons[:60]}
+
+    def brouillon(self, nom: str) -> str:
+        """The text of one follow-up draft; only a plain file name of that folder."""
+        if not re.fullmatch(r"[^\\/:*?\"<>|]+\.txt", nom or ""):
+            return ""
+        try:
+            return (_dossier_relances() / nom).read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            return ""
+
+    def documents(self, filtres: dict[str, Any] | None = None) -> dict[str, Any]:
+        """CVs and letters made per offer, most recent first, filtered by text."""
+        from jobhunter import root
+
+        f = filtres or {}
+        mots = [m for m in str(f.get("texte") or "").lower().split() if m]
+        fichiers: list[dict[str, Any]] = []
+        for genre, dossier in (
+            ("CV", root.dans(root.racine() / "CV", "Par_offre")),
+            ("Lettre", root.dans(root.dossier("Lettres"), "Par_offre")),
+        ):
+            if not dossier.is_dir():
+                continue
+            for p in dossier.iterdir():
+                if p.suffix.lower() not in (".pdf", ".docx"):
+                    continue
+                if mots and not all(m in p.stem.lower() for m in mots):
+                    continue
+                st = p.stat()
+                fichiers.append(
+                    {
+                        "genre": genre,
+                        "nom": p.stem.replace("_", " "),
+                        "chemin": str(p),
+                        "format": p.suffix[1:].upper(),
+                        "date": datetime.fromtimestamp(st.st_mtime).date().isoformat(),
+                        "ko": round(st.st_size / 1024),
+                    }
+                )
+        fichiers.sort(key=lambda x: x["date"], reverse=True)
+        page = max(0, int(f.get("page") or 0))
+        return {
+            "total": len(fichiers),
+            "page": page,
+            "pages": max(1, -(-len(fichiers) // PAR_PAGE)),
+            "fichiers": fichiers[page * PAR_PAGE : (page + 1) * PAR_PAGE],
+        }
+
+    def profil(self) -> dict[str, Any]:
+        """What the profile says, without the application form fields."""
+        from jobhunter import profile, search_settings
+
+        p = profile.charger()
+        ident = p.get("identite") or {}
+        reg = search_settings.lire(p)
+        sc = p.get("scoring") or {}
+        return {
+            "identite": {
+                k: ident.get(k) or "" for k in ("prenom", "nom", "ville", "email", "linkedin")
+            },
+            "langues": p.get("langues_parlees") or [],
+            "domaines": [
+                {"libelle": d.get("libelle") or d.get("cle") or "", "cle": d.get("cle") or ""}
+                for d in (p.get("domaines") or [])
+            ],
+            "competences": list((p.get("competences") or {}).keys()),
+            "outils": list((p.get("termes") or {}).keys()),
+            "prioritaires": [search_settings.libelle_lieu(e) for e in reg.prioritaires or []],
+            "secondaires": [search_settings.libelle_lieu(e) for e in reg.secondaires or []],
+            "garder": reg.garder,
+            "ecarter": reg.ecarter,
+            "scoring": {
+                k: sc.get(k)
+                for k in (
+                    "cible_score",
+                    "plafond_complement",
+                    "plafond_sans_coeur",
+                    "plafond_second",
+                )
+                if k in sc
+            },
+        }
+
+    def sources(self) -> dict[str, Any]:
+        """Collection keywords, career-site slugs, exclusions and the yield of each source."""
+        import json
+
+        from jobhunter import root
+
+        donnees = root.scripts()
+        try:
+            conf = json.loads((donnees / "sources_config.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            conf = {}
+        lignes = []
+        try:
+            texte = (donnees / root.nom("_rendement.jsonl")).read_text(encoding="utf-8")
+        except OSError:
+            texte = ""
+        for t in texte.splitlines():
+            try:
+                lignes.append(json.loads(t))
+            except ValueError:
+                continue
+        slugs = conf.get("ats_slugs") or {}
+        return {
+            "mots_cles": conf.get("keywords") or [],
+            "ats": {k: len(v) if isinstance(v, (list, dict)) else 1 for k, v in slugs.items()},
+            "contrats_exclus": conf.get("contrats_exclus") or [],
+            "pays_exclus": conf.get("pays_exclus") or [],
+            "rendement": rendement(lignes),
+        }
+
+    def maintenance(self) -> dict[str, Any]:
+        """Engine version, last collection, backups and data sizes."""
+        import json
+        from importlib.metadata import PackageNotFoundError, version
+
+        from jobhunter import root
+
+        donnees = root.scripts()
+        try:
+            v = version("jobhunter")
+        except PackageNotFoundError:
+            v = "?"
+        try:
+            c = json.loads((donnees / "_derniere_collecte.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            c = {}
+        sauvegardes = root.dans(donnees, "_sauvegardes")
+        tailles = []
+        for nom in ("apply_queue.json", "descriptions.json", root.nom("suivi.json")):
+            p = donnees / nom
+            if p.exists():
+                tailles.append({"nom": nom, "octets": p.stat().st_size})
+        jours = (
+            sorted((p.name for p in sauvegardes.iterdir() if p.is_dir()), reverse=True)[:7]
+            if sauvegardes.is_dir()
+            else []
+        )
+        collecte = {k: c.get(k) for k in ("etat", "debut", "fin", "code", "dernier_succes")}
+        collecte["erreurs"] = len(c.get("erreurs") or [])
+        return {
+            "version": v,
+            "collecte": collecte,
+            "sauvegardes": jours,
+            "tailles": tailles,
+            "offres": len(self._file()),
+            "candidatures": sum(1 for e in self._suivi().values() if e.get("s")),
+        }
+
+    # Actions that only open things.
     def ouvrir(self, url: str) -> bool:
         """Opens an offer in the default browser; only web links."""
         if not re.match(r"^https?://", url or ""):
             return False
         return webbrowser.open(url)
+
+    def ouvrir_fichier(self, chemin: str) -> bool:
+        """Opens a CV or a letter with its program; only files under CV/ or Letters/."""
+        import os
+
+        from jobhunter import root
+
+        p = _chemin_local(chemin)
+        if p is None or not p.is_file():
+            return False
+        permis = (root.racine() / "CV", root.dossier("Lettres"))
+        if not any(p.is_relative_to(d.resolve()) for d in permis):
+            return False
+        os.startfile(p)  # Windows, like the desktop app
+        return True
 
     def fenetre(self, action: str) -> None:
         """The title bar buttons of the frameless window: reduire, agrandir, fermer."""
@@ -143,3 +544,28 @@ class Api:
                 self._basculer()
         elif action == "fermer":
             f.destroy()
+
+
+def _dossier_relances() -> Path:
+    from jobhunter import root
+
+    return root.dans(root.dossier("Lettres"), "Relances")
+
+
+def _chemin_local(chemin: str) -> Path | None:
+    """A local path from a path or a file:// URL, resolved; None for anything else."""
+    from urllib.parse import unquote, urlparse
+
+    t = (chemin or "").strip()
+    if t.lower().startswith("file:"):
+        t = unquote(urlparse(t).path)
+        if re.match(r"^/[A-Za-z]:", t):
+            t = t[1:]
+    elif re.match(r"^[a-z][a-z0-9+.-]*://", t, re.I):
+        return None
+    if not t:
+        return None
+    try:
+        return Path(t).resolve()
+    except OSError:
+        return None

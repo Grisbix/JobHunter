@@ -11,70 +11,38 @@
 <div class="barre pywebview-drag-region" id="barre">
   <div class="feux">
     <button data-action="reduire" title="Réduire"><svg viewBox="0 0 12 12"><path d="M2.5 6h7"/></svg></button>
-    <button data-action="agrandir" title="Agrandir"><svg viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7" rx="1.5"/></svg></button>
+    <button data-action="agrandir" title="Plein écran ou fenêtre"><svg viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7" rx="1.5"/></svg></button>
     <button data-action="fermer" class="fermer" title="Fermer"><svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
   </div>
 </div>
 <main class="fenetre">
-  <nav class="menu">
+  <nav class="menu" id="menu">
     <div class="marque"><span class="logo"></span>JobHunter</div>
     <div class="groupe">Recherche</div>
-    <a class="actif" data-icone="maison">Accueil</a>
-    <a data-icone="valise">Offres</a>
-    <a data-icone="avion">Candidatures</a>
-    <a data-icone="cloche">Relances</a>
-    <a data-icone="doc">Documents</a>
+    <a data-ecran="accueil" data-icone="maison">Accueil</a>
+    <a data-ecran="offres" data-icone="valise">Offres</a>
+    <a data-ecran="candidatures" data-icone="avion">Candidatures</a>
+    <a data-ecran="relances" data-icone="cloche">Relances</a>
+    <a data-ecran="documents" data-icone="doc">Documents</a>
     <div class="groupe">Outils</div>
-    <a data-icone="profil">Profil</a>
-    <a data-icone="sources">Sources</a>
-    <a data-icone="cle">Maintenance</a>
+    <a data-ecran="profil" data-icone="profil">Profil</a>
+    <a data-ecran="sources" data-icone="sources">Sources</a>
+    <a data-ecran="maintenance" data-icone="cle">Maintenance</a>
   </nav>
 
   <header class="tete">
-    <h1>Accueil</h1>
-    <button class="pilule profil"><span class="avatar">J</span>Mon profil<span class="chevron"></span></button>
+    <h1 id="titre">Accueil</h1>
+    <div class="actions" id="actions"></div>
   </header>
 
-  <section class="centre">
-    <div class="verre stats" id="stats"></div>
-
-    <div class="verre kpi">
-      <div class="graphe">
-        <div class="ligne-titre">
-          <h2>Collecte du matin</h2>
-          <button class="pilule petite">7 derniers scans<span class="chevron"></span></button>
-        </div>
-        <div class="grand" id="dernier">—</div>
-        <div class="ecart" id="ecart"></div>
-        <div class="barres" id="barres"></div>
-      </div>
-      <div class="carte meilleures">
-        <h3>Meilleures offres</h3>
-        <ol id="meilleures"></ol>
-      </div>
-    </div>
-
-    <div class="verre tableau">
-      <h2>Candidatures</h2>
-      <table>
-        <thead><tr><th>Entreprise</th><th>Poste</th><th>Statut</th><th>Le</th><th>Score</th></tr></thead>
-        <tbody id="candidatures"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <aside class="droite">
-    <div class="sombre">
-      <h2>À faire</h2>
-      <ul id="relances"></ul>
-    </div>
-    <div class="zones">
-      <h2>Par zone</h2>
-      <div class="sous">offres notées 7 et plus</div>
-      <div id="zones"></div>
-    </div>
-  </aside>
+  <section class="vue" id="vue"></section>
 </main>
+
+<div class="voile" id="voile"></div>
+<aside class="tiroir" id="tiroir" aria-hidden="true">
+  <button class="rond-fermer" id="fermer-tiroir" title="Fermer"><svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
+  <div id="tiroir-corps"></div>
+</aside>
 <script src="app.js"></script>
 </body>
 </html>
