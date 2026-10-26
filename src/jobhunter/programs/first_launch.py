@@ -412,23 +412,40 @@ def langue_du_cv(texte):
 # ── 2. Questions ─────────────────────────────────────────────────────────────
 
 
-def demander(question, defaut, auto, impose=None, prive=False):
-    # A private answer (e-mail, phone) is not echoed: the output often goes to a log.
-    def echo(valeur):
-        return ("(renseigné)" if valeur and valeur != A_COMPLETER else valeur) if prive else valeur
-
+def demander(question, defaut, auto, impose=None):
     # An answer given as an option (--metiers...) comes before the question: an agent
     # like Claude Code fills in everything without a keyboard.
     if impose is not None:
-        print(f"  {question} -> {echo(impose)}")
+        print(f"  {question} -> {impose}")
         return impose
     # Without a keyboard (agent, pipe), input() would raise EOFError: we take the proposed value.
     if auto or not sys.stdin.isatty():
-        print(f"  {question} -> {echo(defaut)}")
+        print(f"  {question} -> {defaut}")
         return defaut
     try:
         r = input(f"  {question} [{defaut}] : ").strip()
     except EOFError:  # console without a keyboard: the proposed value
+        r = ""
+    return r or defaut
+
+
+def demander_prive(question, defaut, auto, impose=None):
+    """demander() for the e-mail and phone: the value is never echoed.
+
+    The first launch's output often goes to a log; only the console prompt shows it.
+    """
+    if impose is not None:
+        print(f"  {question} -> (renseigné)")
+        return impose
+    if auto or not sys.stdin.isatty():
+        print(
+            f"  {question} -> "
+            + ("(à compléter)" if defaut in ("", A_COMPLETER) else "(renseigné)")
+        )
+        return defaut
+    try:
+        r = input(f"  {question} [{defaut}] : ").strip()
+    except EOFError:
         r = ""
     return r or defaut
 
@@ -1130,10 +1147,8 @@ def main():
     print("\n2. Quelques questions (Entree = valeur proposee)")
     ident["prenom"] = demander("Prénom", ident["prenom"] or A_COMPLETER, a.auto, a.prenom or None)
     ident["nom"] = demander("Nom", ident["nom"] or A_COMPLETER, a.auto, a.nom or None)
-    ident["email"] = demander(
-        "Email", ident["email"] or A_COMPLETER, a.auto, a.email or None, prive=True
-    )
-    ident["telephone"] = demander("Téléphone", ident["telephone"], a.auto, a.telephone, prive=True)
+    ident["email"] = demander_prive("Email", ident["email"] or A_COMPLETER, a.auto, a.email or None)
+    ident["telephone"] = demander_prive("Téléphone", ident["telephone"], a.auto, a.telephone)
     ident["ville"] = demander("Ville", ident["ville"], a.auto, a.ville)
     # Job: the line under the name is often the CV's title.
     lignes = [l.strip() for l in txt.splitlines() if l.strip()]
