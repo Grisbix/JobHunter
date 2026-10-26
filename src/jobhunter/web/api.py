@@ -357,7 +357,15 @@ FONDS = {"acrylique": 3, "mica": 2, "net": 1, "aucun": 1}
 # Accent families and fonts of the settings screen; their looks live in style.css / app.js.
 TEINTES = ("terre", "vert", "bleu", "noir")
 POLICES = ("segoe", "bahnschrift", "corbel", "sitka", "georgia")
-REGLAGES: dict[str, Any] = {"fond": "acrylique", "verre": 50, "teinte": "terre", "police": "segoe"}
+# Light or dark; "auto" follows Windows.
+MODES = ("auto", "clair", "sombre")
+REGLAGES: dict[str, Any] = {
+    "fond": "acrylique",
+    "verre": 50,
+    "teinte": "terre",
+    "police": "segoe",
+    "mode": "auto",
+}
 
 
 def reglages(brut: Any) -> dict[str, Any]:
@@ -377,6 +385,7 @@ def reglages(brut: Any) -> dict[str, Any]:
         "verre": verre,
         "teinte": teinte if teinte in TEINTES else REGLAGES["teinte"],
         "police": police if police in POLICES else REGLAGES["police"],
+        "mode": d.get("mode") if d.get("mode") in MODES else REGLAGES["mode"],
     }
 
 

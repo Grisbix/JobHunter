@@ -1313,8 +1313,21 @@ function appliquerReglages(r) {
   document.body.style.setProperty("--t", String(r.verre / 100));
   document.body.classList.toggle("sans-fond", r.fond === "aucun");
   document.body.dataset.teinte = r.teinte || "terre";
+  modeAffiche = r.mode || "auto";
+  appliquerMode();
   document.body.style.setProperty("--police", (POLICES.find(([v]) => v === r.police) || POLICES[0])[2]);
 }
+
+// Light or dark: "auto" follows Windows (WebView2 passes its setting to the page).
+let modeAffiche = "auto";
+const systemeSombre = window.matchMedia("(prefers-color-scheme: dark)");
+function appliquerMode() {
+  const sombre = modeAffiche === "sombre" || (modeAffiche === "auto" && systemeSombre.matches);
+  document.documentElement.classList.toggle("sombre", sombre);
+}
+systemeSombre.addEventListener("change", appliquerMode);
+appliquerMode();
+const MODES = [["auto", "Comme Windows"], ["clair", "Clair"], ["sombre", "Sombre"]];
 
 // [value, label, CSS stack]: fonts every Windows 11 has, nothing to download.
 const POLICES = [
@@ -1338,7 +1351,7 @@ ECRANS.reglages = {
   titre: "Réglages",
   actions: () => [],
   async dessiner(vue) {
-    let r = (await appel("reglages")) || { fond: "acrylique", verre: 50, teinte: "terre", police: "segoe" };
+    let r = (await appel("reglages")) || { fond: "acrylique", verre: 50, teinte: "terre", police: "segoe", mode: "auto" };
     const enregistrer = async (maj) => {
       r = { ...r, ...maj };
       appliquerReglages(r);
@@ -1368,6 +1381,9 @@ ECRANS.reglages = {
       h("button", { class: `nuance ${v === r.teinte ? "on" : ""}`, title: lib, onclick: async () => { await enregistrer({ teinte: v }); dessinerTeintes(); } },
         h("span", { class: "pastille", style: `background:linear-gradient(135deg, ${c[0]}, ${c[1]} 55%, ${c[2]})` }), lib)));
     dessinerTeintes();
+    const placeMode = h("div");
+    const dessinerMode = () => placeMode.replaceChildren(segment(MODES, r.mode || "auto", async (v) => { await enregistrer({ mode: v }); dessinerMode(); }));
+    dessinerMode();
     const polices = h("div", { class: "polices" });
     const dessinerPolices = () => polices.replaceChildren(...POLICES.map(([v, lib, pile]) =>
       h("button", { class: `police ${v === r.police ? "on" : ""}`, onclick: async () => { await enregistrer({ police: v }); dessinerPolices(); } },
@@ -1386,6 +1402,7 @@ ECRANS.reglages = {
           h("div", { class: "sous" }, "Combien le bureau transparaît. La force du flou acrylique est fixée par Windows."))),
       h("div", { class: "verre panneau" },
         h("div", { class: "titre-ligne" }, h("h2", {}, "Couleurs et police")),
+        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Mode"), placeMode),
         h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Couleur"), teintes),
         h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Police"), polices)),
       await cartesParametres(),
