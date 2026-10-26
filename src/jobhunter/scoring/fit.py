@@ -19,8 +19,6 @@ import sys
 from dataclasses import dataclass
 from typing import Any
 
-from docx import Document
-
 try:
     sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console : TextIOWrapper
 except Exception:
@@ -62,16 +60,11 @@ def cv_text(variant_key: str) -> str:
     if not p.exists():
         return ""
     try:
-        # A PDF CV read as a .docx gave "": every offer at ATS 0 % (2026-10-24).
-        if p.suffix.lower() == ".pdf":
-            import pymupdf as fitz
+        # A PDF CV read as a .docx gave "": every offer at ATS 0 % (2026-10-24). Text
+        # boxes, content controls and headers count too (jobhunter.cv_text).
+        from jobhunter.cv_text import texte_fichier
 
-            with fitz.open(str(p)) as pdf:
-                return " ".join(page.get_text() for page in pdf).lower()
-        d = Document(str(p))
-        # The table cells too: many CVs are laid out in a table.
-        cellules = [c.text for t in d.tables for row in t.rows for c in row.cells]
-        return " ".join([par.text for par in d.paragraphs] + cellules).lower()
+        return " ".join(texte_fichier(p).split("\n")).lower()
     except Exception:
         return ""
 

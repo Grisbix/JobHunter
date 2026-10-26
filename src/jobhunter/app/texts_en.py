@@ -242,7 +242,7 @@ TEXTES: dict[str, str] = {
     "Le CV du nouveau profil": "The new profile's CV",
     "Nom du nouveau profil (par exemple : Chargée RSE à Lyon)": "Name of the new profile (for example: CSR officer in Lyon)",
     "Un profil de ce nom existe déjà.": "A profile with this name already exists.",
-    "Nouveau profil « {nom} » : réponds aux questions dans la fenêtre de commande.": "New profile “{nom}”: answer the questions in the command window.",
+    "Nouveau profil « {nom} » : vérifie et complète ce que JobHunter a lu dans le CV.": "New profile “{nom}”: check and complete what JobHunter read in the CV.",
     "Une tâche tourne sur ce profil : attends qu'elle finisse (ou « Arrêter »), puis change de profil.": 'A task is running on this profile: wait for it to finish (or "Stop"), then change profile.',
     "Le profil n'a pas été créé (les questions n'ont pas été terminées).": "The profile was not created (the questions were not finished).",
     "Profil créé. L'ouvrir maintenant ? (JobHunter redémarre)": "Profile created. Open it now? (JobHunter restarts)",

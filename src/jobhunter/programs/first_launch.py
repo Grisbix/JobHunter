@@ -30,7 +30,9 @@ from pathlib import Path
 
 from jobhunter import root as _racine
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
+# No stdout at all when imported by the windowed application (jobhunter.welcome).
+if sys.stdout is not None:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 HERE = _racine.scripts()
 RACINE = HERE.parent
 
@@ -55,23 +57,13 @@ def _titres_serres(texte):
 
 
 def _lire_cv(chemin):
-    p = Path(chemin)
-    if p.suffix.lower() == ".pdf":
-        import pymupdf as fitz
+    # Text boxes, content controls, nested tables, headers: see jobhunter.cv_text.
+    from jobhunter.cv_text import texte_fichier
 
-        with fitz.open(str(p)) as d:
-            return "\n".join(page.get_text() for page in d)
-    if p.suffix.lower() == ".docx":
-        from docx import Document
-
-        d = Document(str(p))
-        lignes = [x.text for x in d.paragraphs]
-        for t in d.tables:
-            for row in t.rows:
-                for c in row.cells:
-                    lignes.append(c.text)
-        return "\n".join(lignes)
-    raise SystemExit(f"Format non pris en charge : {p.suffix} (PDF ou DOCX)")
+    try:
+        return texte_fichier(chemin)
+    except ValueError as e:
+        raise SystemExit(f"Format non pris en charge : {Path(chemin).suffix} (PDF ou DOCX)") from e
 
 
 _RX_EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
@@ -1047,12 +1039,45 @@ def familles_tri_a_exclure(metiers):
 # ── 4. Programme ─────────────────────────────────────────────────────────────
 
 
+def propositions(txt):
+    """The answers main() proposes, read from the CV's text.
+
+    The welcome window (jobhunter.welcome) prefills its form with them, then passes the
+    answers back as options: the same defaults as in the console, without a keyboard.
+    """
+    from jobhunter.scoring import zones
+
+    ident = identite_du_cv(txt)
+    lignes = [l.strip() for l in txt.splitlines() if l.strip()]
+    metiers = titre_du_cv(lignes, ident) or ""
+    v = _sans_accent(ident["ville"] or "").lower()
+    candidats = [
+        (len(s.get("departements", ())), cle)
+        for cle, s in zones.CATALOGUE.items()
+        if v and v in s.get("lieux", ())
+    ]
+    comps = competences_du_cv(txt)
+    comps.update(competences_libres(txt, comps))
+    ordre, _ = familles_visees([m.strip() for m in metiers.split(",") if m.strip()], comps)
+    return {
+        **{k: ident.get(k) or "" for k in ("prenom", "nom", "email", "telephone", "ville")},
+        "metiers": metiers,
+        "annees": annees_du_cv(txt),
+        "genre": "f" if _RX_FEMININ.search(metiers) else "m",
+        "prioritaires": [min(candidats)[1]] if candidats else [],
+        "entreprises": bool(ordre) and ordre[0] in ("finance", "rse", "conseil"),
+    }
+
+
 def main():
     ap = argparse.ArgumentParser(description="Cree profil/profil.json a partir de ton CV.")
     ap.add_argument("cv", help="ton CV, .pdf ou .docx")
     ap.add_argument("--auto", action="store_true", help="accepter toutes les reponses proposees")
     ap.add_argument("--force", action="store_true", help="remplacer un profil existant")
     ap.add_argument("--profil", default=str(_racine.dossier("profil") / _racine.nom("profil.json")))
+    # The identity, when the welcome window has asked for it (jobhunter.welcome).
+    for champ in ("prenom", "nom", "email", "telephone", "ville"):
+        ap.add_argument(f"--{champ}")
     ap.add_argument("--metiers", help="metiers vises, separes par des virgules")
     ap.add_argument("--annees", help="annees d'experience, stages compris")
     ap.add_argument("--genre", choices=["m", "f"], help="accords des lettres")
@@ -1098,11 +1123,11 @@ def main():
     print(f"  {len(comps)} competence(s) reconnue(s) : {', '.join(sorted(comps))[:300]}")
 
     print("\n2. Quelques questions (Entree = valeur proposee)")
-    ident["prenom"] = demander("Prénom", ident["prenom"] or A_COMPLETER, a.auto)
-    ident["nom"] = demander("Nom", ident["nom"] or A_COMPLETER, a.auto)
-    ident["email"] = demander("Email", ident["email"] or A_COMPLETER, a.auto)
-    ident["telephone"] = demander("Téléphone", ident["telephone"], a.auto)
-    ident["ville"] = demander("Ville", ident["ville"], a.auto)
+    ident["prenom"] = demander("Prénom", ident["prenom"] or A_COMPLETER, a.auto, a.prenom or None)
+    ident["nom"] = demander("Nom", ident["nom"] or A_COMPLETER, a.auto, a.nom or None)
+    ident["email"] = demander("Email", ident["email"] or A_COMPLETER, a.auto, a.email or None)
+    ident["telephone"] = demander("Téléphone", ident["telephone"], a.auto, a.telephone)
+    ident["ville"] = demander("Ville", ident["ville"], a.auto, a.ville)
     # Job: the line under the name is often the CV's title.
     lignes = [l.strip() for l in txt.splitlines() if l.strip()]
     propose = titre_du_cv(lignes, ident)

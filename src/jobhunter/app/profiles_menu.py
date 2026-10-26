@@ -3,7 +3,7 @@
 A profile is a workspace of its own (jobhunter.profiles): its queue, its applications,
 its CVs and letters. The paths are fixed when the modules load, so changing profile
 restarts the application on the new one. Creating a profile runs the usual guided first
-launch (questions in a console) inside the new workspace.
+launch (jobhunter.welcome: the questions in a window) inside the new workspace.
 """
 
 import functools
@@ -252,7 +252,7 @@ class ProfilsMixin:
             )
             return
         consigne = _t(
-            "Nouveau profil « {nom} » : réponds aux questions dans la fenêtre de commande."
+            "Nouveau profil « {nom} » : vérifie et complète ce que JobHunter a lu dans le CV."
         )
         self._log(consigne.format(nom=nom.strip()) + "\n")
         env = {
@@ -263,10 +263,11 @@ class ProfilsMixin:
 
         def tache() -> None:
             subprocess.run(  # nosec B603 : our own program, arguments built here
-                [PY, "-m", "jobhunter.programs.first_launch", str(cv)],
+                [PY, "-m", "jobhunter.welcome", str(cv)],
                 cwd=str(racine),
                 env=env,
-                creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0),
+                # Its own windows; no console (PY is a console program).
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
             )
             self.root.after(0, functools.partial(self._profil_cree, racine))
 

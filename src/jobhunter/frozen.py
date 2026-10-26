@@ -7,8 +7,8 @@ in the same folder, compiled from this package:
 - `jobhunter-cli.exe`, with a console: everything the application launches as a
   subprocess. The app calls its programs with `[PY, "-m", module, ...]`; here PY is
   this executable, which understands `-m module` like `python -m module`. A console
-  is necessary: the first launch asks its questions at the keyboard, and an
-  executable without a console has no standard output to read for the app's log.
+  is necessary: an executable without a console has no standard output to read for
+  the app's log (the first launch's questions are asked in a window, jobhunter.welcome).
 
 The user's data never lives in the program's folder (replaced at each update): it goes
 into `Documents/JobHunter`, or into `JOBHUNTER_RACINE` if the variable is set. At first

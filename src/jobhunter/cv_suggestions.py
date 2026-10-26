@@ -30,20 +30,9 @@ class Suggestion:
 
 def lire_cv(chemin: Path) -> str:
     """The text of a .docx or .pdf CV (raises ValueError for another format)."""
-    suffixe = chemin.suffix.lower()
-    if suffixe == ".pdf":
-        import pymupdf as fitz
+    from jobhunter.cv_text import texte_fichier
 
-        with fitz.open(str(chemin)) as d:
-            return "\n".join(page.get_text() for page in d)
-    if suffixe == ".docx":
-        from docx import Document
-
-        d = Document(str(chemin))
-        lignes = [x.text for x in d.paragraphs]
-        lignes += [c.text for t in d.tables for row in t.rows for c in row.cells]
-        return "\n".join(lignes)
-    raise ValueError(f"format non pris en charge : {chemin.suffix}")
+    return texte_fichier(chemin)
 
 
 def _phrase(texte: str, synonyme: str) -> str | None:

@@ -1557,9 +1557,10 @@ class Api(PanneauxApi, AtelierApi):
         return {"ok": True}
 
     def nouveau_profil(self, nom: str) -> dict[str, Any]:
-        """A new profile from a CV: its folder, then the guided first launch in a console.
+        """A new profile from a CV: its folder, then the guided first launch in it.
 
-        The questions are answered in that console; `profil_cree` checks the result.
+        The questions are answered in a window of their own (jobhunter.welcome);
+        `profil_cree` checks the result.
         """
         from jobhunter import profiles
 
@@ -1585,10 +1586,10 @@ class Api(PanneauxApi, AtelierApi):
             profiles.ENV_PRINCIPALE: str(profiles.principale()),
         }
         subprocess.Popen(  # nosec B603 : our own program, arguments built here
-            [sys.executable, "-m", "jobhunter.programs.first_launch", str(choix[0])],
+            [sys.executable, "-m", "jobhunter.welcome", str(choix[0])],
             cwd=str(racine),
             env=env,
-            creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0x10),
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
         )
         return {"ok": True, "slug": racine.name}
 
