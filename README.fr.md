@@ -222,6 +222,20 @@ Les mêmes programmes ont une entrée unique : `python -m jobhunter` liste les c
 `python JobHunter.pyw update --verifier` pour seulement voir ce qu'apporte la nouvelle version,
 `--annuler` pour revenir à la précédente. Nouveautés de chaque version : [`CHANGELOG.md`](CHANGELOG.md).
 
+### La nouvelle interface (aperçu, depuis le code source)
+
+Depuis la 3.27, la même application existe aussi en fenêtre moderne dessinée en HTML : mêmes
+écrans, mêmes données, mode clair ou sombre (Réglages → Mode, ou comme Windows). Elle demande
+une bibliothèque de plus :
+
+```
+python -m pip install "jobhunter[web]"
+python -m jobhunter.web
+```
+
+Elle fait tout ce que fait l'application classique, sauf la candidature à plusieurs offres
+d'affilée, qui reste dans l'application classique. Elle n'envoie jamais de candidature non plus.
+
 ## Le profil
 
 Tout ce qui te concerne vit dans **`profile/profile.json`**. Le moteur ne connaît aucun métier :
