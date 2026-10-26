@@ -502,3 +502,27 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
 .ligne-profil { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; border-radius: 12px; background: rgba(255, 255, 255, .35); }
 .ligne-profil.on { background: rgba(var(--c1-rgb), .18); font-weight: 500; }
 .ligne-profil .bouton { height: 30px; }
+
+/* Panels: companies, boards, access, statistics. */
+.tableau-simple { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tableau-simple th { text-align: left; font-weight: 500; color: var(--gris); padding: 8px 10px; border-bottom: 1px solid var(--filet); }
+.tableau-simple td { padding: 8px 10px; border-bottom: 1px solid var(--filet); vertical-align: middle; }
+.tableau-simple td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.tableau-simple tr.pale td { color: var(--gris); }
+.defile { max-height: 60vh; overflow: auto; }
+.actions-ligne { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+.actions-ligne .bouton { height: 30px; font-size: 12.5px; padding: 0 10px; }
+.bouton.icone { width: 30px; padding: 0; justify-content: center; }
+.ligne-ajout { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.ligne-ajout .champ-texte { flex: 1; min-width: 220px; }
+.etat-source.ok { color: #2f7a4f; }
+.etat-source.ko { color: #b2432f; }
+.etat-source.ancien { color: #a8701d; }
+.cartes-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.carte-stat { padding: 16px 18px; border-radius: 18px; }
+.carte-stat .chiffre { font-size: 28px; font-weight: 600; }
+.ligne-barre { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr auto; gap: 10px; align-items: center; font-size: 13px; padding: 4px 0; }
+.ligne-barre .nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ligne-barre .piste { height: 8px; border-radius: 4px; background: var(--piste); overflow: hidden; }
+.ligne-barre .rempli { display: block; height: 100%; background: var(--degrade-h); border-radius: 4px; }
+.ligne-barre .num { color: var(--gris); font-variant-numeric: tabular-nums; min-width: 70px; text-align: right; }

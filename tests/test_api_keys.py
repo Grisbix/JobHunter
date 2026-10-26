@@ -5,7 +5,7 @@ import json
 import pytest
 
 from jobhunter import api_keys as cles_api
-from jobhunter.app import inventory as inventaire
+from jobhunter import inventory as inventaire
 from jobhunter.sources.aggregators import _cle
 
 

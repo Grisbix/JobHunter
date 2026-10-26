@@ -91,7 +91,7 @@ def test_chaque_cle_courte_existe_dans_l_app():
     Long texts, written in several pieces in the code, are not checked here.
     """
     # Modules outside app/ whose sentences the app translates (they take `tr`).
-    hors_app = [APP.parent / "collect_state.py", APP.parent / "tools_catalog.py"]
+    hors_app = [APP.parent / n for n in ("collect_state.py", "tools_catalog.py", "inventory.py")]
     source = "\n".join(
         p.read_text(encoding="utf-8")
         for p in [*APP.glob("*.py"), *hors_app]
@@ -226,7 +226,9 @@ def test_journal_modeles_coherents():
     JOURNAL_EN = texts_en.JOURNAL
 
     source = "\n".join(
-        p.read_text(encoding="utf-8") for p in APP.glob("*.py") if not p.name.startswith("texts_")
+        p.read_text(encoding="utf-8")
+        for p in [*APP.glob("*.py"), APP.parent / "inventory.py"]
+        if not p.name.startswith("texts_")
     )
     trous = re.compile(r"\{(\w+)\}")
     morts = []
