@@ -808,6 +808,14 @@ def construire(cv_txt, cv_nom, rep):
         if en
         else (a_la_premiere_personne(resume, "fr", metiers), "")
     )
+    # A paragraph checked in the welcome form (often taken from the owner's own
+    # letter) comes before the one drawn from the CV, in its own language.
+    parcours = (rep.get("parcours") or "").strip()
+    if parcours:
+        if langue_du_cv(parcours) == "en":
+            resume_en = parcours
+        else:
+            resume_fr = parcours
     ordre, score = familles_visees(metiers, comps)
     coeur = ordre[0] if ordre else ""
     mots_cibles = sorted({m for t in metiers for m in mots_significatifs(t)})
@@ -1088,6 +1096,12 @@ def propositions(txt):
         "genre": "f" if _RX_FEMININ.search(metiers) else "m",
         "prioritaires": [min(candidats)[1]] if candidats else [],
         "entreprises": bool(ordre) and ordre[0] in ("finance", "rse", "conseil"),
+        # The letters' background paragraph, as construire() would draw it from the CV.
+        "parcours": a_la_premiere_personne(
+            resume_du_cv(txt),
+            langue_du_cv(txt),
+            [m.strip() for m in metiers.split(",") if m.strip()],
+        ),
     }
 
 
@@ -1110,6 +1124,13 @@ def main():
         choices=["o", "n"],
         help="garder (o) ou vider (n) les entreprises finance/ESG suivies",
     )
+    ap.add_argument(
+        "--word",
+        choices=["o", "n"],
+        default="n",
+        help="CV en PDF : en refaire un .docx adapte a chaque offre (o), ou l'envoyer tel quel (n)",
+    )
+    ap.add_argument("--parcours", help="paragraphe de parcours des lettres (sinon tire du CV)")
     a = ap.parse_args()
 
     sortie = Path(a.profil)
@@ -1239,6 +1260,7 @@ def main():
         "genre": "f" if genre.lower().startswith("f") else "m",
         "prioritaires": prio,
         "secondaires": sec,
+        "parcours": a.parcours or "",
     }
 
     print("\n3. Ecriture")
@@ -1247,6 +1269,16 @@ def main():
     prefixe = slug(f"{ident['prenom']} {ident['nom']}")
     cv_nom = f"CV_{prefixe}{cv.suffix.lower()}"
     shutil.copyfile(cv, cv_dir / cv_nom)
+    # A PDF goes out as is for every offer; its rebuilt .docx can be adapted (cv_word).
+    # The PDF stays next to it: the owner can switch back in profile.json.
+    if a.word == "o" and cv.suffix.lower() == ".pdf":
+        from jobhunter import cv_word
+
+        try:
+            cv_word.pdf_en_docx(cv, cv_dir / f"CV_{prefixe}.docx")
+            cv_nom = f"CV_{prefixe}.docx"
+        except ValueError as e:
+            print(f"  ! Version Word impossible ({e}) : le PDF part tel quel.")
     print(f"  CV modele     : {(cv_dir / cv_nom).relative_to(RACINE).as_posix()}")
 
     profil = construire(txt, cv_nom, rep)

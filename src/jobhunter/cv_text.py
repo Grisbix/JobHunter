@@ -28,7 +28,7 @@ import re
 import statistics
 import unicodedata
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 FORMATS = (".docx", ".pdf")
 _W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
@@ -97,31 +97,54 @@ def _drapeaux() -> int:
     return int(pymupdf.TEXTFLAGS_TEXT) & ~int(pymupdf.TEXT_PRESERVE_LIGATURES)
 
 
-def _premiere_page(page: Any) -> str:
-    """Page 1 with the name first: the largest text, then its column, then the rest."""
+class Ligne(NamedTuple):
+    """A text line of a PDF page."""
+
+    taille: float  # its largest font size
+    bbox: tuple[float, float, float, float]
+    texte: str
+    gras: bool  # every span of it bold
+    bloc: int  # number of the PDF block it belongs to
+
+
+def lignes_pdf(page: Any) -> list[Ligne]:
+    """Each text line of a PyMuPDF page, in stream order."""
     lignes = []
-    for bloc in page.get_text("dict", flags=_drapeaux())["blocks"]:
+    for n, bloc in enumerate(page.get_text("dict", flags=_drapeaux())["blocks"]):
         for ligne in bloc.get("lines", ()):
             spans = [s for s in ligne["spans"] if s["text"].strip()]
             if spans:
                 texte = "".join(s["text"] for s in ligne["spans"]).strip()
-                lignes.append((max(s["size"] for s in spans), ligne["bbox"], texte))
+                gras = all(s["flags"] & 16 or "bold" in s["font"].lower() for s in spans)
+                lignes.append(
+                    Ligne(max(s["size"] for s in spans), tuple(ligne["bbox"]), texte, gras, n)
+                )
+    return lignes
+
+
+def ordre_lecture(lignes: list[Ligne]) -> list[Ligne]:
+    """Page 1 with the name first: the largest text, then its column, then the rest."""
     if len(lignes) < 3:
-        return "\n".join(texte for _, _, texte in lignes)
-    tailles = [taille for taille, _, _ in lignes]
+        return lignes
+    tailles = [l.taille for l in lignes]
     grande = max(tailles)
     if grande < 1.3 * statistics.median(tailles):  # no title stands out: as streamed
-        return "\n".join(texte for _, _, texte in lignes)
-    nom = [l for l in lignes if l[0] >= grande - 0.5][:3]
-    x0 = min(l[1][0] for l in nom)
-    x1 = max(l[1][2] for l in nom)
+        return lignes
+    nom = [l for l in lignes if l.taille >= grande - 0.5][:3]
+    x0 = min(l.bbox[0] for l in nom)
+    x1 = max(l.bbox[2] for l in nom)
     autres = [l for l in lignes if l not in nom]
     colonne = sorted(
-        (l for l in autres if l[1][0] < x1 and l[1][2] > x0),
-        key=lambda l: (round(l[1][1]), l[1][0]),
+        (l for l in autres if l.bbox[0] < x1 and l.bbox[2] > x0),
+        key=lambda l: (round(l.bbox[1]), l.bbox[0]),
     )
     reste = [l for l in autres if l not in colonne]
-    return "\n".join(texte for _, _, texte in nom + colonne + reste)
+    return nom + colonne + reste
+
+
+def _premiere_page(page: Any) -> str:
+    """Page 1's text, the name first (ordre_lecture)."""
+    return "\n".join(l.texte for l in ordre_lecture(lignes_pdf(page)))
 
 
 def texte_pdf(document: Any) -> str:

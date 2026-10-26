@@ -12,6 +12,7 @@ function, called by the launcher BEFORE loading jobhunter.app (which reads the p
 as soon as it loads) -- hence this module outside the app package.
 """
 
+import os
 import sys
 import tkinter as tk
 from collections.abc import Callable
@@ -437,7 +438,20 @@ def arguments_profil(cv: str, rep: dict[str, Any]) -> list[str]:
         args += ["--prioritaires", ",".join(rep["prioritaires"])]
     args += ["--secondaires", ",".join(rep.get("secondaires") or [])]
     args += ["--entreprises", "o" if rep.get("entreprises") else "n"]
+    args += ["--word", "o" if rep.get("word") else "n"]
+    if str(rep.get("parcours") or "").strip():
+        args += ["--parcours", str(rep["parcours"]).strip()]
     return args
+
+
+def _ouvrir(chemin: Path) -> None:
+    """Opens a file in its usual application (Word, LibreOffice…)."""
+    if sys.platform == "win32":
+        os.startfile(chemin)  # type: ignore[attr-defined,unused-ignore]  # Windows only
+    else:
+        import subprocess
+
+        subprocess.Popen(["open" if sys.platform == "darwin" else "xdg-open", str(chemin)])  # nosec B603
 
 
 def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str | None:
@@ -592,6 +606,107 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
     erreur = _texte(pied, "", couleur=BAD)
     erreur.pack(anchor="w")
 
+    # ── The CV sent, and the letters' background paragraph ──
+    _texte(cadre, "Ton CV et tes lettres", taille=16, gras=True).grid(
+        row=ligne, column=0, columnspan=2, sticky="w", pady=(20, 4)
+    )
+    ligne += 1
+    pdf = Path(cv).suffix.lower() == ".pdf"
+    word = tk.BooleanVar(value=pdf and len(texte.strip()) >= PEU_DE_TEXTE)
+    if pdf:
+
+        def apercu() -> None:
+            import tempfile
+
+            from jobhunter import cv_word
+
+            try:
+                sortie = Path(tempfile.mkdtemp()) / "Apercu_CV.docx"
+                _ouvrir(cv_word.pdf_en_docx(cv, sortie))
+            except (OSError, ValueError) as e:
+                erreur.configure(text=f"Version Word impossible : {e}.")
+
+        rang = ctk.CTkFrame(cadre, fg_color="transparent")
+        rang.grid(row=ligne, column=0, columnspan=2, sticky="w")
+        ctk.CTkCheckBox(
+            rang,
+            text="Adapter mon CV à chaque offre",
+            variable=word,
+            fg_color=BRUN,
+            hover_color=BRUN_H,
+            border_color=BORD_CHAMP,
+            text_color=ENCRE,
+            font=_police(),
+            corner_radius=4,
+        ).pack(side="left")
+        _bouton(rang, "Voir la version Word", apercu).pack(side="left", padx=12)
+        ligne += 1
+        _texte(
+            cadre,
+            "Un PDF ne se modifie pas : il partirait identique pour chaque offre. JobHunter "
+            "en refait une version Word, plus sobre, où les compétences demandées passent en "
+            "premier. Ton PDF reste à côté ; décoche pour l'envoyer tel quel.",
+            couleur=TEXTE_DOUX,
+            largeur=640,
+        ).grid(row=ligne, column=0, columnspan=2, sticky="w", pady=(2, 8))
+        ligne += 1
+    _texte(cadre, "Le paragraphe de parcours de tes lettres").grid(
+        row=ligne, column=0, columnspan=2, sticky="w", pady=(6, 2)
+    )
+    ligne += 1
+    parcours = ctk.CTkTextbox(
+        cadre,
+        height=110,
+        wrap="word",
+        corner_radius=RAD_CHAMP,
+        border_width=1,
+        border_color=BORD_CHAMP,
+        fg_color=SURFACE,
+        text_color=ENCRE,
+        font=_police(),
+    )
+    parcours.insert("1.0", str(prop.get("parcours") or ""))
+    parcours.grid(row=ligne, column=0, columnspan=2, sticky="we", padx=(0, 12))
+    ligne += 1
+
+    def depuis_lettre() -> None:
+        from jobhunter import own_letter
+
+        f = filedialog.askopenfilename(
+            parent=fenetre,
+            title="Ta lettre de motivation",
+            initialdir=str(Path(cv).parent),
+            filetypes=[("Lettre", "*.pdf *.docx"), ("PDF", "*.pdf"), ("Word", "*.docx")],
+        )
+        if not f:
+            return
+        try:
+            trouve = own_letter.parcours_de_lettre(f)
+        except (OSError, ValueError) as e:
+            source.configure(text=f"Lettre illisible : {e}.", text_color=BAD)
+            return
+        if not trouve:
+            source.configure(
+                text="Aucun paragraphe de parcours trouvé dans cette lettre : écris-le ici.",
+                text_color=BAD,
+            )
+            return
+        parcours.delete("1.0", "end")
+        parcours.insert("1.0", trouve)
+        source.configure(text=f"Repris de {Path(f).name}. Relis-le.", text_color=TEXTE_DOUX)
+
+    rang_lettre = ctk.CTkFrame(cadre, fg_color="transparent")
+    rang_lettre.grid(row=ligne, column=0, columnspan=2, sticky="we", pady=(6, 0))
+    _bouton(rang_lettre, "Reprendre celui de ma lettre…", depuis_lettre).pack(side="left")
+    source = _texte(
+        rang_lettre,
+        "Tiré de ton CV. Tu as déjà une lettre que tu aimes ? Reprends-en le paragraphe.",
+        couleur=TEXTE_DOUX,
+        largeur=380,
+    )
+    source.pack(side="left", padx=12)
+    ligne += 1
+
     choix: dict[str, Any] = {"r": None}
 
     def valider() -> None:
@@ -609,6 +724,8 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
             "annees": n,
             "genre": genre.get(),
             "entreprises": entreprises.get(),
+            "word": word.get(),
+            "parcours": parcours.get("1.0", "end").strip(),
             **{k: [s for s, v in c.items() if v.get()] for k, c in coches.items()},
         }
         fenetre.quit()
