@@ -412,15 +412,19 @@ def langue_du_cv(texte):
 # ── 2. Questions ─────────────────────────────────────────────────────────────
 
 
-def demander(question, defaut, auto, impose=None):
+def demander(question, defaut, auto, impose=None, prive=False):
+    # A private answer (e-mail, phone) is not echoed: the output often goes to a log.
+    def echo(valeur):
+        return ("(renseigné)" if valeur and valeur != A_COMPLETER else valeur) if prive else valeur
+
     # An answer given as an option (--metiers...) comes before the question: an agent
     # like Claude Code fills in everything without a keyboard.
     if impose is not None:
-        print(f"  {question} -> {impose}")
+        print(f"  {question} -> {echo(impose)}")
         return impose
     # Without a keyboard (agent, pipe), input() would raise EOFError: we take the proposed value.
     if auto or not sys.stdin.isatty():
-        print(f"  {question} -> {defaut}")
+        print(f"  {question} -> {echo(defaut)}")
         return defaut
     try:
         r = input(f"  {question} [{defaut}] : ").strip()
@@ -1126,8 +1130,10 @@ def main():
     print("\n2. Quelques questions (Entree = valeur proposee)")
     ident["prenom"] = demander("Prénom", ident["prenom"] or A_COMPLETER, a.auto, a.prenom or None)
     ident["nom"] = demander("Nom", ident["nom"] or A_COMPLETER, a.auto, a.nom or None)
-    ident["email"] = demander("Email", ident["email"] or A_COMPLETER, a.auto, a.email or None)
-    ident["telephone"] = demander("Téléphone", ident["telephone"], a.auto, a.telephone)
+    ident["email"] = demander(
+        "Email", ident["email"] or A_COMPLETER, a.auto, a.email or None, prive=True
+    )
+    ident["telephone"] = demander("Téléphone", ident["telephone"], a.auto, a.telephone, prive=True)
     ident["ville"] = demander("Ville", ident["ville"], a.auto, a.ville)
     # Job: the line under the name is often the CV's title.
     lignes = [l.strip() for l in txt.splitlines() if l.strip()]
