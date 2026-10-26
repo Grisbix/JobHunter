@@ -21,7 +21,6 @@ from jobhunter.app.theme import (
     ACC,
     CB,
     CF,
-    CL,
     DEL,
     DEL_TX,
     SIDE,
@@ -56,20 +55,31 @@ class ExecutionMixin:
         )
         # Which source the collection is on, and how each one ended (app.progress).
         self._progression = _progres.Progression()
-        self._bande = CL(
-            parent,
-            text="",
-            bg=SIDE,
-            fg=SIDE_MUT,
-            anchor="w",
-            justify="left",
-            wraplength=212,  # the menu is 238 wide: a longer line was cut, not wrapped
-            font=(_theme.FONT_UI, 10),
-        )
-        self._bande.pack(fill="x", padx=12, pady=(0, 12))
+        # Shown in the top bar since 3.26 (window.py: _prog_cadre, _barre, _bande).
         # No log box since 3.19: each message shows on the status line under the
         # table; the last ones are kept here, for the tests and debugging.
         self.log: list[str] = []
+
+    def _maj_bande(self: "AppTypee") -> None:
+        """The progress in the top bar: shown while a run reports it, hidden after."""
+        cadre = getattr(self, "_prog_cadre", None)
+        if cadre is None:
+            return
+        p = self._progression
+        texte = p.entete() or p.bande()
+        if not texte:
+            cadre.pack_forget()
+            return
+        f = p.fraction()
+        if f is None:
+            self._barre.pack_forget()
+        else:
+            if not self._barre.winfo_manager():
+                self._barre.pack(side="left", padx=(0, 12), before=self._bande)
+            self._barre.set(f)
+        self._bande.configure(text=texte.split(chr(10))[0])  # one line: details on hover
+        if not cadre.winfo_manager():
+            cadre.pack(side="left", padx=(24, 0), after=self.nav_context)
 
     # ── UI helpers ──
     def _log(self: "AppTypee", txt: Any) -> None:
@@ -361,7 +371,7 @@ class ExecutionMixin:
                 kind, val = self.q.get_nowait()
                 if kind == "line":
                     if self._progression.lire(val):
-                        self._bande.configure(text=self._progression.bande())
+                        self._maj_bande()
                     else:
                         self._log(val)
                 elif kind == "reload":
@@ -369,6 +379,7 @@ class ExecutionMixin:
                     if bilan := self._progression.bilan():
                         self._log(f"\n📋 {bilan}\n")
                         self._progression = _progres.Progression()
+                        self._maj_bande()
                     self.load_offers()
                     self.root.after(1500, self._auto_enrich)
                     self._maj_collecte(repeter=False)
@@ -393,7 +404,7 @@ class ExecutionMixin:
                 and maintenant - getattr(self, "_bande_maj", 0.0) >= 1
             ):
                 self._bande_maj = maintenant
-                self._bande.configure(text=self._progression.bande())
+                self._maj_bande()
         except Exception as ex:
             # ONE FAULTY LINE KILLED THE APP. Only queue.Empty was
             # caught: any other failure exited BEFORE the `after` of the

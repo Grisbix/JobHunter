@@ -132,3 +132,29 @@ def test_durees_habituelles_mediane_des_dernieres():
     lignes = [{"sources": {"ats": {"duree": d}}} for d in (100, 10, 20, 30, 40, 50)]
     lignes.append({"sources": {"vie": {"duree": "x"}, "wtj": {}}})
     assert R.durees_habituelles(lignes) == {"ats": 30.0}
+
+
+def test_fraction_pour_la_barre():
+    """3.26: the top bar's progress bar, 0 to 1 (None without anything to measure)."""
+    p = P.Progression(horloge=lambda: 0.0)
+    assert p.fraction() is None
+    p.lire("»» plan ats:60 linkedin:60\n")
+    assert p.fraction() == 0
+    p.lire("»» source ats fin ok 12 60.0\n")
+    assert p.fraction() == 0.5
+    p.lire("»» source linkedin fin ok 30 60.0\n")
+    assert p.fraction() == 0.99  # never full before the merge says it ended
+    v = P.Progression()
+    v.lire("»» verif 120 900 7\n")
+    assert round(v.fraction() or 0, 3) == round(120 / 900, 3)
+
+
+def test_detail_une_source_par_ligne_et_la_legende():
+    p = P.Progression()
+    assert p.detail() == ""
+    p.lire("»» source ats fin ok 12 60.0\n")
+    p.lire("»» source efc fin refusé 0 4.0\n")
+    p.lire("»» source linkedin début\n")
+    lignes = p.detail().splitlines()
+    assert lignes[:3] == ["✓ ats : 12", "⛔ efc", "… linkedin"]
+    assert any(ligne.startswith("⏸") for ligne in lignes)  # the legend follows

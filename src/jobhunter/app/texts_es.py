@@ -622,6 +622,13 @@ TEXTES: dict[str, str] = {
     "Prioritaire": "Prioritaria",
     "Secondaire": "Secundaria",
     "Zones des offres mises à jour": "Zonas de las ofertas actualizadas",
+    # 3.26: progress legend
+    "✓ a répondu": "✓ respondió",
+    "◐ a répondu en partie": "◐ respondió en parte",
+    "⏸ limitée (trop de requêtes) : reprise plus tard": "⏸ limitada (demasiadas solicitudes): se reanuda más tarde",
+    "⛔ a refusé l'accès : pas de nouvel essai": "⛔ denegó el acceso: no se vuelve a intentar",
+    "∅ rien de nouveau à prendre": "∅ nada nuevo que recoger",
+    "… en cours": "… en curso",
 }
 
 

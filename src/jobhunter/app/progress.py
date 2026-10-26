@@ -32,6 +32,15 @@ _RX_RETIREES = re.compile(r"^»» verif retirees (\d+)\s*$")
 
 # The verdicts of sources.source_yield, and how the strip shows them.
 SIGNES = {"ok": "✓", "partiel": "◐", "limité": "⏸", "refusé": "⛔", "rien à prendre": "∅"}
+# What each sign means, shown when the progress is hovered (3.26).
+LEGENDE = (
+    "✓ a répondu",
+    "◐ a répondu en partie",
+    "⏸ limitée (trop de requêtes) : reprise plus tard",
+    "⛔ a refusé l'accès : pas de nouvel essai",
+    "∅ rien de nouveau à prendre",
+    "… en cours",
+)
 
 
 def duree_lisible(secondes: float) -> str:
@@ -110,12 +119,8 @@ class Progression:
         connues = [x for x in self.prevues.values() if x is not None]
         return sum(connues) / len(connues) if connues else 60.0
 
-    def entete(self) -> str:
-        """The run at a glance: percentage, time left, offers found ("" without a plan)."""
-        if self.verif is not None:
-            return self._entete_verif()
-        if not self.prevues:
-            return ""
+    def _mesure(self) -> tuple[list[str], float, float, float]:
+        """(sources planned or seen, time done, time left, total time), in seconds."""
         noms = list(self.prevues) + [n for n in self.sources if n not in self.prevues]
         total = sum(self._estime(n) for n in noms) or 1.0
         fait = reste = 0.0
@@ -132,6 +137,25 @@ class Progression:
                 fait += estime
             else:
                 reste += estime
+        return noms, fait, reste, total
+
+    def fraction(self) -> float | None:
+        """How far the run is, 0 to 1, for a progress bar (None: nothing to measure)."""
+        if self.verif is not None:
+            vus, prevus = self.verif[0], self.verif[1]
+            return min(1.0, vus / prevus) if prevus else 1.0
+        if not self.prevues:
+            return None
+        _noms, fait, _reste, total = self._mesure()
+        return min(0.99, fait / total)
+
+    def entete(self) -> str:
+        """The run at a glance: percentage, time left, offers found ("" without a plan)."""
+        if self.verif is not None:
+            return self._entete_verif()
+        if not self.prevues:
+            return ""
+        noms, fait, reste, total = self._mesure()
         finies = sum(1 for n in noms if self.sources.get(n, ("", 0))[0] not in ("", "en cours"))
         trouvees = sum(n for _e, n in self.sources.values())
         morceaux = [
@@ -176,6 +200,16 @@ class Progression:
         sources = "  ·  ".join(morceaux)
         entete = self.entete()
         return f"{entete}\n{sources}" if entete and sources else entete or sources
+
+    def detail(self) -> str:
+        """Each source on its own line with its sign, then the legend of the signs."""
+        lignes = []
+        for nom, (etat, n) in self.sources.items():
+            signe = "…" if etat == "en cours" else SIGNES.get(etat, "·")
+            lignes.append(f"{signe} {nom}" + (f" : {n}" if n else ""))
+        if not lignes:
+            return ""
+        return chr(10).join([*lignes, "", *(_t(x) for x in LEGENDE)])
 
     def bilan(self) -> str:
         """The concrete outcome, once the run ended ("" if nothing was collected)."""

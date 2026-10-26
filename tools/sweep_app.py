@@ -51,7 +51,7 @@ def balayer(app, journal: str, oui: bool) -> None:
         def __init__(self, cmd, *a, **k):
             dire("   lance", " ".join(map(str, cmd))[-140:] if isinstance(cmd, list) else cmd)
             self.stdout, self.stderr = io.StringIO(""), io.StringIO("")
-            self.returncode, self.pid = 0, 1
+            self.returncode, self.pid, self.args = 0, 1, cmd
 
         def poll(self):
             return 0
@@ -66,6 +66,13 @@ def balayer(app, journal: str, oui: bool) -> None:
             pass
 
         terminate = kill
+
+        # subprocess.run() uses Popen as a context manager (schtasks, on Windows).
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
 
     subprocess.Popen = FauxProc
     webbrowser.open = lambda *a, **k: dire("   navigateur", a[0] if a else "")

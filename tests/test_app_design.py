@@ -13,7 +13,7 @@ os.environ["JOBHUNTER_SANS_FOND"] = "1"
 os.environ.pop("JOBHUNTER_ACTION", None)
 # The app lives in jobhunter.app since phase 3.7; JobHunter.pyw is only the launcher.
 import jobhunter.app as ui  # noqa: E402  (after the environment variables)
-from jobhunter.app import common  # noqa: E402
+from jobhunter.app import common, progress  # noqa: E402
 
 
 class DesignTests(unittest.TestCase):
@@ -122,6 +122,16 @@ class DesignTests(unittest.TestCase):
                         menu.index("end") + 1, len(common.STEPS) + len(common.MAINT) + 4
                     )
                     self.assertFalse(hasattr(app, "b_dispo"))  # no « Retour » button
+                    # 3.26: the progress sits in the top bar, hidden when nothing runs
+                    self.assertEqual(app._prog_cadre.winfo_manager(), "")
+                    app._progression.lire("»» plan ats:60 linkedin:60")
+                    app._progression.lire("»» source ats fin ok 12 60.0")
+                    app._maj_bande()
+                    self.assertEqual(app._prog_cadre.winfo_manager(), "pack")
+                    self.assertIn("1/2 sources", app._bande.cget("text"))
+                    app._progression = progress.Progression()
+                    app._maj_bande()
+                    self.assertEqual(app._prog_cadre.winfo_manager(), "")
                     app._toggle_suivi()
                     app._toggle_suivi()
                     for panel in (

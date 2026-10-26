@@ -4,6 +4,18 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.26.0 — 2026-10-26
+
+- **The progress moves to the top bar**, right of the page title: a progress bar and
+  one line (« 3/8 sources · 58 % · ~7 min restantes · 642 offres trouvées », or
+  « Vérification 120/900 · 13 % · 7 fermée(s) »), shown only while something runs. It
+  sat at the bottom of the left menu in small type, over four lines, and pushed the
+  « Lancer la collecte du matin » button out of shape.
+- **Hovering the progress** lists each source on its own line with its sign, then what
+  the signs mean (✓ answered, ◐ in part, ⏸ limited, ⛔ refused, ∅ nothing new).
+- `tools/sweep_app.py` works on Windows: its fake process now supports
+  `subprocess.run` (the scheduled-task check), which it reported as an app error.
+
 ## 3.25.5 — 2026-10-25
 
 Five design and testing methods applied to the app (break-ui, emil-design-eng,

@@ -47,6 +47,7 @@ from jobhunter.app.theme import (
     CB,
     CF,
     CL,
+    LINE,
     MUT,
     SIDE,
     SIDE_CARD,
@@ -58,6 +59,7 @@ from jobhunter.app.theme import (
     _resoudre_espacements,
     _resoudre_polices,
 )
+from jobhunter.app.tooltip import bulle as _bulle
 from jobhunter.welcome import activer_depot as _activer_depot
 
 
@@ -299,6 +301,21 @@ class App(
         # sees. This line keeps the latest information always readable.
         # Since 3.19.1 it sits on the title's row, at the right: a row of its own at
         # the bottom took height from every page.
+        # A run's progress (collection, availability check): a bar and one line right
+        # of the title, shown only while something runs (3.26). It sat at the bottom of
+        # the left menu in small type, and grew over the buttons above it. Hovering it
+        # lists each source with its sign and what the signs mean.
+        self._prog_cadre = CF(tp, bg=BG, plat=True)
+        self._barre = ctk.CTkProgressBar(
+            self._prog_cadre, width=200, height=10, progress_color=ACC, fg_color=LINE
+        )
+        self._barre.pack(side="left", padx=(0, 12))
+        self._bande = CL(
+            self._prog_cadre, text="", bg=BG, fg=TX, font=(_theme.FONT_UI, 12), anchor="w"
+        )
+        self._bande.pack(side="left")
+        for w in (self._barre, self._bande):
+            _bulle(w, lambda: self._progression.detail())
         self.status = CL(tp, text="", bg=BG, fg=MUT, font=(_theme.FONT_UI, 12), anchor="e")
         self.status.pack(side="right", fill="x", expand=True, padx=(16, 4))
         # dashboard and viewer = 2 panels INSIDE the same window (no popup)

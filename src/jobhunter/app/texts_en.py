@@ -622,6 +622,13 @@ TEXTES: dict[str, str] = {
     "Prioritaire": "Priority",
     "Secondaire": "Secondary",
     "Zones des offres mises à jour": "Offer zones updated",
+    # 3.26: progress legend
+    "✓ a répondu": "✓ answered",
+    "◐ a répondu en partie": "◐ answered in part",
+    "⏸ limitée (trop de requêtes) : reprise plus tard": "⏸ limited (too many requests): resumed later",
+    "⛔ a refusé l'accès : pas de nouvel essai": "⛔ refused access: not tried again",
+    "∅ rien de nouveau à prendre": "∅ nothing new to take",
+    "… en cours": "… running",
 }
 
 
