@@ -546,3 +546,9 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
 .diff-plus { background: #dcf5e3; color: #145c2c; }
 .diff-egal { color: var(--gris); }
 .ligne-poids input[type="range"] { width: 100%; accent-color: rgb(var(--c1-rgb)); }
+
+/* Offers: columns picker, alerts. */
+.grille-cases { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 16px; margin: 6px 0 12px; }
+.case-colonne { display: flex; align-items: center; gap: 8px; font-size: 13.5px; cursor: pointer; }
+.case-colonne input { accent-color: rgb(var(--c1-rgb)); }
+.cellule-offre .alerte { color: #b2432f; font-weight: 600; }

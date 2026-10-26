@@ -430,7 +430,72 @@ function tableCandidatures(lignes) {
         h("td", {}, c.fit == null ? "—" : h("div", { class: "prog", title: `${c.fit}/10` }, h("i", { style: `width:${c.fit * 10}%` })))))));
 }
 
-const filtresOffres = { texte: "", statut: "à traiter", zone: "", domaine: "", contrat: "", fit_min: 0, tri: "fit", page: 0 };
+const filtresOffres = { texte: "", statut: "à traiter", zone: "", domaine: "", contrat: "", pays: "", region: "", fit_min: 0, tri: "fit", page: 0 };
+// The table's optional columns (the desktop's COLS); the offer itself is always shown.
+const COLONNES_OFFRES = [
+  ["lieu", "Lieu", (o) => h("span", { title: o.lieu }, o.lieu || "—")],
+  ["zone", "Zone", (o) => (o.zone ? h("span", { class: "etiq gris" }, o.zone) : "—")],
+  ["date", "Date", (o) => dateFr(o.date) || "—"],
+  ["suivi", "Suivi", (o) => (o.suivi ? h("span", { class: `etiq ${o.suivi}` }, o.suivi) : "")],
+  ["domaine", "Domaine", (o) => o.domaine || "—"],
+  ["contrat", "Contrat", (o) => o.contrat || "—"],
+  ["pays", "Pays", (o) => o.pays || "—"],
+  ["region", "Région", (o) => o.region || "—"],
+  ["publiee", "Publiée", (o) => dateFr(o.publiee) || "—"],
+  ["trouvee", "Trouvée", (o) => dateFr(o.trouvee) || "—"],
+  ["verifiee", "Vérifiée", (o) => dateFr(o.verifiee) || "—"],
+  ["signal", "Signal", (o) => h("span", { title: o.signal }, o.signal || "")],
+];
+let vuesOffres = null;  // {vues: {name: filters}, colonnes: [...]}, read once
+
+async function choisirColonnes() {
+  const visibles = new Set(vuesOffres.colonnes);
+  const cases = COLONNES_OFFRES.map(([cle, nom]) => h("label", { class: "case-colonne" },
+    h("input", { type: "checkbox", checked: visibles.has(cle), onchange: (e) => { e.target.checked ? visibles.add(cle) : visibles.delete(cle); } }), nom));
+  const ok = await dialogue("Colonnes", "Les colonnes montrées dans le tableau ; le choix est gardé pour la prochaine fois.",
+    h("div", { class: "grille-cases" }, cases), [["Appliquer", "plein", () => (visibles.size ? true : undefined)]]);
+  if (!ok) return;
+  vuesOffres.colonnes = COLONNES_OFFRES.map(([c]) => c).filter((c) => visibles.has(c));
+  if (window.pywebview) ecrire("memoriser_colonnes", vuesOffres.colonnes);
+  redessiner();
+}
+
+async function enregistrerVue() {
+  const champ = h("input", { class: "champ-texte", placeholder: "par exemple : ESG à Paris, 8+" });
+  const nom = await dialogue("Enregistrer la vue", "Garde les filtres et le tri de l'écran sous un nom (même nom : remplacée).",
+    champ, [["Enregistrer", "plein", () => champ.value.trim() || undefined]]);
+  if (!nom) return;
+  const { page, ...filtres } = filtresOffres;
+  if (await ecrire("enregistrer_vue", nom, filtres)) {
+    vuesOffres.vues[nom] = filtres;
+    toast(`Vue « ${nom} » enregistrée.`);
+    redessiner();
+  }
+}
+
+function menuVues() {
+  const noms = Object.keys(vuesOffres.vues).sort((a, b) => a.localeCompare(b, "fr"));
+  return h("select", { class: "choix", onchange: async (e) => {
+    const v = e.target.value;
+    e.target.value = "";
+    if (v === "+") return enregistrerVue();
+    if (v.startsWith("-")) {
+      const nom = v.slice(1);
+      const ok = await dialogue(`Supprimer la vue « ${nom} » ?`, "Seule la vue est oubliée ; les offres ne bougent pas.", null, [["Supprimer", "chaud", () => true]]);
+      if (ok && await ecrire("supprimer_vue", nom)) { delete vuesOffres.vues[nom]; redessiner(); }
+      return;
+    }
+    if (v === "*") Object.assign(filtresOffres, { texte: "", statut: "à traiter", zone: "", domaine: "", contrat: "", pays: "", region: "", fit_min: 0, tri: "fit" });
+    else Object.assign(filtresOffres, vuesOffres.vues[v]);
+    filtresOffres.page = 0;
+    redessiner();
+  } },
+  h("option", { value: "" }, "Vues…"),
+  h("option", { value: "*" }, "Tout réinitialiser"),
+  noms.map((n) => h("option", { value: n }, n)),
+  h("option", { value: "+" }, "Enregistrer la vue…"),
+  noms.length ? h("optgroup", { label: "Supprimer" }, noms.map((n) => h("option", { value: "-" + n }, n))) : null);
+}
 const coches = new Set();  // ticked offers, kept across pages (the desktop's ☐ column)
 ECRANS.offres = {
   titre: "Offres",
@@ -442,7 +507,9 @@ ECRANS.offres = {
     const f = filtresOffres;
     const relancer = () => ECRANS.offres.dessiner(vue);
     const changer = (cle, v) => { f[cle] = v; f.page = 0; relancer(); };
+    if (!vuesOffres) vuesOffres = (await appel("vues")) || { vues: {}, colonnes: ["lieu", "zone", "date", "suivi"] };
     const d = await appel("offres", { ...f });
+    const cols = COLONNES_OFFRES.filter(([c]) => vuesOffres.colonnes.includes(c));
     let minuteur;
     const champ = h("input", { type: "search", placeholder: "Poste, entreprise, ville…", value: f.texte,
       oninput: (e) => { clearTimeout(minuteur); minuteur = setTimeout(() => changer("texte", e.target.value), 250); } });
@@ -464,7 +531,7 @@ ECRANS.offres = {
     const cocher = (id, e) => { e.stopPropagation(); coches.has(id) ? coches.delete(id) : coches.add(id); relancer(); };
     const tous = d.lignes.length && d.lignes.every((o) => coches.has(o.id));
     const tri = h("select", { class: "choix", onchange: (e) => changer("tri", e.target.value) },
-      [["fit", "Meilleur score"], ["date", "Plus récentes"], ["entreprise", "Entreprise A → Z"]].map(([v, l]) =>
+      [["fit", "Meilleur score"], ["date", "Plus récentes"], ["publiee", "Publiées en dernier"], ["verifiee", "Vérifiées en dernier"], ["entreprise", "Entreprise A → Z"]].map(([v, l]) =>
         h("option", { value: v, selected: v === f.tri }, l)));
 
     vue.replaceChildren(h("div", { class: "colonne" },
@@ -472,22 +539,22 @@ ECRANS.offres = {
         h("label", { class: "champ" }, svg("loupe"), champ),
         segment(d.statuts.map((s) => [s, s[0].toUpperCase() + s.slice(1)]), f.statut, (v) => changer("statut", v)),
         segment([[0, "Tous"], [7, "7+"], [8, "8+"], [9, "9+"]], f.fit_min, (v) => changer("fit_min", v)),
-        zone, liste("domaine", "Tous les domaines", d.domaines), liste("contrat", "Tous les contrats", d.contrats), tri),
+        zone, liste("domaine", "Tous les domaines", d.domaines), liste("contrat", "Tous les contrats", d.contrats),
+        liste("region", "Toutes les régions", d.regions), liste("pays", "Tous les pays", d.pays), tri,
+        menuVues(), bouton("Colonnes…", "", choisirColonnes)),
       barreSel,
       h("div", { class: "verre panneau" },
         d.lignes.length ? h("table", {},
-          h("colgroup", {}, h("col", { style: "width:36px" }), h("col", { style: "width:40%" }), h("col", { style: "width:22%" }), h("col", { style: "width:13%" }), h("col", { style: "width:11%" }), h("col", {})),
+          h("colgroup", {}, h("col", { style: "width:36px" }), h("col", { style: `width:${cols.length > 4 ? 30 : 40}%` }), cols.map(() => h("col", {}))),
           h("thead", {}, h("tr", {}, h("th", {}, h("input", { type: "checkbox", class: "coche", checked: tous, title: "Cocher la page",
             onclick: () => { d.lignes.forEach((o) => (tous ? coches.delete(o.id) : coches.add(o.id))); relancer(); } })),
-            ["Offre", "Lieu", "Zone", "Date", "Suivi"].map((t) => h("th", {}, t)))),
+            ["Offre", ...cols.map(([, nom]) => nom)].map((t) => h("th", {}, t)))),
           h("tbody", {}, d.lignes.map((o) => h("tr", { onclick: () => ouvrirOffre(o.id), class: coches.has(o.id) ? "cochee" : "" },
             h("td", { onclick: (e) => cocher(o.id, e) }, h("input", { type: "checkbox", class: "coche", checked: coches.has(o.id) })),
             h("td", {}, h("div", { class: "cellule-offre" }, h("span", { class: classeScore(o.fit) }, nombre(o.fit)),
-              h("div", {}, h("div", { class: "t", title: o.poste }, o.poste), h("div", { class: "s" }, o.entreprise)))),
-            h("td", { title: o.lieu }, o.lieu || "—"),
-            h("td", {}, o.zone ? h("span", { class: "etiq gris" }, o.zone) : "—"),
-            h("td", {}, dateFr(o.date) || "—"),
-            h("td", {}, o.suivi ? h("span", { class: `etiq ${o.suivi}` }, o.suivi) : "")))))
+              h("div", {}, h("div", { class: "t", title: o.poste }, o.alerte ? h("span", { class: "alerte", title: o.signal }, o.alerte + " ") : null, o.poste),
+                h("div", { class: "s" }, o.entreprise)))),
+            cols.map(([, , cellule]) => h("td", {}, cellule(o)))))))
         : h("div", { class: "vide" }, "Aucune offre ne correspond à ces filtres."),
         pagination(d, (p) => { f.page = p; relancer(); vue.scrollTop = 0; }))));
     if (f.texte) { champ.focus(); champ.setSelectionRange(f.texte.length, f.texte.length); }

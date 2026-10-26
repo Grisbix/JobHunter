@@ -17,6 +17,7 @@ import webbrowser
 from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
 from datetime import date, datetime
+from functools import cache
 from pathlib import Path
 from typing import Any
 
@@ -141,8 +142,37 @@ def _date_offre(o: Mapping[str, Any]) -> str:
     return m.group(1) if m else ""
 
 
+@cache
+def _pays(lieu: str) -> str:
+    from jobhunter.scoring import zones
+
+    return zones.pays_lieu(lieu)
+
+
+@cache
+def _region(lieu: str) -> str:
+    from jobhunter.scoring import zones
+
+    return zones.region_pays(_pays(lieu))
+
+
+def _alerte(o: Mapping[str, Any]) -> str:
+    """The desktop's ⚑ column: ⚠ knock-out, ↻ reposted again and again, ≡ same text."""
+    from jobhunter.scoring import ranking
+
+    s = str(o.get("signal") or "")
+    if "⚠" in s:
+        return "⚠"
+    if (o.get("republiee") or 0) >= ranking.reglages()["republiee_des"]:
+        return "↻"
+    if "même texte" in s or "doublon" in s:
+        return "≡"
+    return ""
+
+
 def _ligne(o: Mapping[str, Any], suivi: Mapping[str, Any]) -> dict[str, Any]:
     k = _oid(o)  # type: ignore[arg-type]
+    lieu = str(o.get("localisation") or "")
     return {
         "id": k,
         "poste": o.get("poste") or "",
@@ -154,6 +184,16 @@ def _ligne(o: Mapping[str, Any], suivi: Mapping[str, Any]) -> dict[str, Any]:
         "date": _date_offre(o),
         "suivi": (suivi.get(k) or {}).get("s") or "",
         "url": o.get("url") or "",
+        # the desktop's other columns (app.common.COLS)
+        "domaine": o.get("domaine") or "",
+        "pays": _pays(lieu),
+        "region": _region(lieu),
+        "publiee": str(o.get("date_publication") or "")[:10],
+        "trouvee": str(o.get("process") or "")[:10],
+        # last seen alive: link checked or served again, whichever is later
+        "verifiee": max(str(o.get("ls_check") or "")[:10], str(o.get("vu_le") or "")[:10]),
+        "signal": o.get("signal") or "",
+        "alerte": _alerte(o),
     }
 
 
@@ -168,6 +208,8 @@ def offres(
     contrat: str = "",
     tri: str = "fit",
     page: int = 0,
+    pays: str = "",
+    region: str = "",
 ) -> dict[str, Any]:
     """One page of the offers screen, filtered and sorted, with the filter choices."""
     mots = [m for m in (texte or "").lower().split() if m]
@@ -187,6 +229,10 @@ def offres(
             continue
         if zone and o.get("zone") != zone:
             continue
+        if pays and _pays(str(o.get("localisation") or "")) != pays:
+            continue
+        if region and _region(str(o.get("localisation") or "")) != region:
+            continue
         if fit_min and _fit(o) < fit_min:
             continue
         if mots:
@@ -198,8 +244,10 @@ def offres(
         "fit": lambda o: (-_fit(o), -_fit(o, "fit_fin")),
         "date": lambda o: _date_offre(o),
         "entreprise": lambda o: str(o.get("entreprise") or "").lower(),
+        "publiee": lambda o: str(o.get("date_publication") or "")[:10],
+        "verifiee": lambda o: max(str(o.get("ls_check") or ""), str(o.get("vu_le") or ""))[:10],
     }
-    gardees.sort(key=cles.get(tri, cles["fit"]), reverse=(tri == "date"))
+    gardees.sort(key=cles.get(tri, cles["fit"]), reverse=tri in ("date", "publiee", "verifiee"))
     page = max(0, int(page))
     debut = page * PAR_PAGE
     return {
@@ -210,6 +258,8 @@ def offres(
         "zones": sorted({str(o.get("zone")) for o in offres if o.get("zone")}),
         "domaines": sorted({str(o.get("domaine")) for o in offres if o.get("domaine")}),
         "contrats": sorted({str(o.get("contrat")) for o in offres if o.get("contrat")}),
+        "pays": sorted({p for o in offres if (p := _pays(str(o.get("localisation") or "")))}),
+        "regions": sorted({r for o in offres if (r := _region(str(o.get("localisation") or "")))}),
         "statuts": list(FILTRES_STATUT),
     }
 
@@ -570,6 +620,37 @@ class Api(PanneauxApi, AtelierApi):
         """The home screen data, from the real queue and applications."""
         return tableau(self._file(), self._suivi())
 
+    # Saved views of the offers screen and its columns (web.saved_views).
+    def vues(self) -> dict[str, Any]:
+        """The saved views and the visible columns."""
+        from jobhunter.web import saved_views
+
+        return saved_views.lire()
+
+    def enregistrer_vue(self, nom: str, filtres: dict[str, Any]) -> dict[str, Any]:
+        """Keeps the screen's filters and sort under a name (same name: replaced)."""
+        from jobhunter.web import saved_views
+
+        if not saved_views.enregistrer(nom, filtres):
+            return {"ok": False, "erreur": "donne un nom à la vue"}
+        return {"ok": True}
+
+    def supprimer_vue(self, nom: str) -> dict[str, Any]:
+        """Forgets a saved view (the offers are not touched)."""
+        from jobhunter.web import saved_views
+
+        if not saved_views.supprimer(nom):
+            return {"ok": False, "erreur": "vue inconnue"}
+        return {"ok": True}
+
+    def memoriser_colonnes(self, colonnes: list[str]) -> dict[str, Any]:
+        """Remembers the visible columns for the next start."""
+        from jobhunter.web import saved_views
+
+        if not saved_views.memoriser_colonnes(colonnes):
+            return {"ok": False, "erreur": "garde au moins une colonne"}
+        return {"ok": True}
+
     def offres(self, filtres: dict[str, Any] | None = None) -> dict[str, Any]:
         """One page of the offers screen; filtres: texte, zone, fit_min, statut, tri, page."""
         f = filtres or {}
@@ -582,6 +663,8 @@ class Api(PanneauxApi, AtelierApi):
             statut=str(f.get("statut") or "à traiter"),
             domaine=str(f.get("domaine") or ""),
             contrat=str(f.get("contrat") or ""),
+            pays=str(f.get("pays") or ""),
+            region=str(f.get("region") or ""),
             tri=str(f.get("tri") or "fit"),
             page=int(f.get("page") or 0),
         )
