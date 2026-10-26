@@ -28,8 +28,10 @@ jamais de candidature.
 | Les offres, triées pour ton profil | La lettre préparée pour une offre |
 |---|---|
 | ![Liste des offres](docs/screenshots/offers.png) | ![Une offre en entier et sa lettre](docs/screenshots/letter.png) |
+| **La nouvelle interface : l'accueil** | **…et les offres, en mode sombre** |
+| ![Accueil de la nouvelle interface](docs/screenshots/web_home.png) | ![Offres de la nouvelle interface en mode sombre](docs/screenshots/web_offers_dark.png) |
 
-<sub>Captures de l'interface en anglais, avec un profil et des entreprises **fictifs** (Camille Exemple, junior en finance durable — `profile/example_finance_esg.json`), refaites par `python tools/screenshots.py`. L'application parle **français**, anglais, allemand et espagnol : Paramètres → Langue de l'interface.</sub>
+<sub>Captures de l'application classique en anglais et de la [nouvelle interface](#la-nouvelle-interface-aperçu-depuis-le-code-source) (en français pour l'instant), avec un profil et des entreprises **fictifs** (Camille Exemple, junior en finance durable — `profile/example_finance_esg.json`), refaites par `python tools/screenshots.py`. L'application parle **français**, anglais, allemand et espagnol : Paramètres → Langue de l'interface.</sub>
 
 - [Pourquoi](#pourquoi-jobhunter) · [Comment ça marche](#comment-ça-marche) · [Sources](#sources)
 - [Installer (Windows)](#installer-windows) · [Depuis le code source](#depuis-le-code-source-windows) · [macOS / Linux](#macos--linux)

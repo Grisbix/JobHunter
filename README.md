@@ -27,8 +27,10 @@ short message for each one. It runs on your computer. It never sends an applicat
 | Offers, ranked for your profile | An offer in full: why it fits, where it was found, its letter |
 |---|---|
 | ![Offer list](docs/screenshots/offers.png) | ![Generated letter](docs/screenshots/letter.png) |
+| **The new interface: home** | **…and the offers, in dark mode** |
+| ![Home screen of the new interface](docs/screenshots/web_home.png) | ![Offers of the new interface in dark mode](docs/screenshots/web_offers_dark.png) |
 
-<sub>Screenshots of the English interface, with a **fictitious** profile and invented companies (Camille Exemple, junior in sustainable finance — `profile/example_finance_esg.json`). Rebuilt by `python tools/screenshots.py`. The app also speaks **French, German and Spanish**: Settings → Interface language.</sub>
+<sub>Screenshots of the classic app in English and of the [new interface](#the-new-interface-preview-from-source) (French only for now), with a **fictitious** profile and invented companies (Camille Exemple, junior in sustainable finance — `profile/example_finance_esg.json`). Rebuilt by `python tools/screenshots.py`. The app also speaks **French, German and Spanish**: Settings → Interface language.</sub>
 
 - [Why](#why-jobhunter) · [How it works](#how-it-works) · [Sources](#sources)
 - [Install (Windows)](#install-windows) · [From source](#from-source) · [macOS / Linux](#macos--linux)

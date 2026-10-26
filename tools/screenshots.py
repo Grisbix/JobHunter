@@ -9,7 +9,11 @@ chosen language and captures the window:
 
 - `offers.png`: the ranked offers, the first one selected (an application with its
   status history and its kept posting; one offer with a knock-out ⚠);
-- `letter.png`: an offer opened in full, its letter on the right.
+- `letter.png`: an offer opened in full, its letter on the right;
+- `web_home.png`, `web_offers_dark.png`: the web interface (3.27), its home screen in
+  light mode and its offers in dark mode. The page runs in Playwright's Chromium, its
+  calls answered by the real `jobhunter.web.api.Api` on the same fictitious folder:
+  nothing of the screen behind is captured.
 
 Nothing of the user's own data is read: the folder is created in a temporary
 directory and `JOBHUNTER_RACINE` points to it. Windows only (screen capture by PIL).
@@ -221,6 +225,52 @@ def capturer(racine: Path, langue: str, sortie: Path) -> None:
     root.destroy()
 
 
+# Stands in for pywebview: window.pywebview.api.<name>(...) goes to the Python Api.
+_PONT = """
+window.pywebview = { api: new Proxy({}, { get: (_, nom) => (...args) => window.__jh(nom, args) }) };
+"""
+
+
+def capturer_web(racine: Path, sortie: Path) -> None:
+    """The web interface's two screenshots, rendered headless (see the module's doc)."""
+    os.environ.update(JOBHUNTER_RACINE=str(racine))
+    os.environ.pop("JOBHUNTER_PRINCIPALE", None)
+    from playwright.sync_api import sync_playwright
+
+    from jobhunter.web.__main__ import STATIC
+    from jobhunter.web.api import Api
+
+    api = Api()
+
+    def pont(nom: str, args: list) -> object:
+        # JSON round trip: what pywebview would hand the page.
+        return json.loads(json.dumps(getattr(api, nom)(*args), default=str))
+
+    with sync_playwright() as p:
+        nav = p.chromium.launch()
+        page = nav.new_page(viewport={"width": 1440, "height": 900})
+        page.expose_function("__jh", pont)
+        page.add_init_script(_PONT)
+        page.goto((STATIC / "index.html").as_uri())
+        page.wait_for_timeout(1500)
+        # No see-through window here: the page paints its own background.
+        page.evaluate("document.body.classList.remove('natif')")
+
+        def photo(nom: str, mode: str, ecran: str) -> None:
+            page.evaluate(
+                f"(async () => {{ modeAffiche = '{mode}'; appliquerMode();"
+                f" await aller('{ecran}'); }})()"
+            )
+            page.wait_for_timeout(1200)
+            page.evaluate("window.scrollTo(0, 0)")  # a focused field may scroll it
+            page.screenshot(path=str(sortie / nom))
+            print("  ", sortie / nom)
+
+        photo("web_home.png", "clair", "accueil")
+        photo("web_offers_dark.png", "sombre", "offres")
+        nav.close()
+
+
 def main() -> int:
     a = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     a.add_argument("--lang", default="en", help="interface language: en, fr, de, es")
@@ -237,6 +287,7 @@ def main() -> int:
         jobhunter(racine, "documents", "--top", "1")
         jobhunter(racine, "reposts")  # the Signal column: knock-outs
         jobhunter(racine, "postings")  # the posting kept for the application
+        capturer_web(racine, sortie)
         capturer(racine, args.lang, sortie)
     finally:
         if args.garder:
