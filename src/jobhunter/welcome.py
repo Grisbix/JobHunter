@@ -85,6 +85,9 @@ SURVOL = "#EFEAE7"  # a secondary button under the mouse
 BRUN = "#5C3C2E"  # --brun: ticks and radio buttons
 BRUN_H = "#7A5242"
 C1B = "#E39A6C"  # --c1b: the logo
+TERRE = "#B96D49"  # --terre: the close button under the mouse
+BARRE = "#FCFBFA"  # the white bar on top of the window
+FEU = "#F3F0EE"  # its round-cornered buttons
 BAD = "#A33A2B"
 RAD_BOUTON = 12
 RAD_CHAMP = 10
@@ -111,7 +114,11 @@ def _police(taille: int = 13, gras: bool = False) -> Any:
 
 
 def fenetre_accueil() -> Any:
-    """The hidden root of the welcome windows: the warm background and JobHunter's icon."""
+    """The hidden root of the welcome windows: frameless, rounded, with the white bar.
+
+    As the web interface's window: no Windows title bar, rounded corners (Windows 11),
+    and a white bar on top carrying the brand, "reduce" and "close"; drag it to move.
+    """
     import customtkinter as ctk
 
     ctk.set_appearance_mode("light")
@@ -125,12 +132,120 @@ def fenetre_accueil() -> Any:
         r._icone = image  # Tk only holds a name
     except (tk.TclError, OSError):
         pass
+    r._fermer = lambda: None
+    r._sans_cadre = _sans_cadre(r)
+    _barre(r)
     r.withdraw()
     return r
 
 
+# Win32: a frameless window that keeps its taskbar button, with rounded corners.
+_GWL_EXSTYLE = -20
+_WS_EX_TOOLWINDOW = 0x00000080
+_WS_EX_APPWINDOW = 0x00040000
+_DWMWA_WINDOW_CORNER_PREFERENCE = 33
+_DWMWCP_ROUND = 2
+_SW_MINIMIZE = 6
+
+
+def _hwnd(fenetre: Any) -> int:
+    return int(fenetre.wm_frame(), 16)
+
+
+def _sans_cadre(fenetre: Any) -> bool:
+    """Removes the system frame on Windows; False elsewhere or on failure (frame kept)."""
+    if sys.platform != "win32":
+        return False
+    try:
+        import ctypes
+
+        fenetre.overrideredirect(True)
+        fenetre.update_idletasks()
+        hwnd = _hwnd(fenetre)
+        u32 = ctypes.windll.user32  # type: ignore[attr-defined,unused-ignore]
+        # Tk makes a frameless window a tool window, without a taskbar button.
+        style = u32.GetWindowLongW(hwnd, _GWL_EXSTYLE)
+        u32.SetWindowLongW(hwnd, _GWL_EXSTYLE, (style & ~_WS_EX_TOOLWINDOW) | _WS_EX_APPWINDOW)
+        coin = ctypes.c_int(_DWMWCP_ROUND)
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(  # type: ignore[attr-defined,unused-ignore]
+            hwnd, _DWMWA_WINDOW_CORNER_PREFERENCE, ctypes.byref(coin), ctypes.sizeof(coin)
+        )
+        return True
+    except Exception:  # noqa: BLE001 — cosmetic only: the system frame stays
+        try:
+            fenetre.overrideredirect(False)
+        except tk.TclError:
+            pass
+        return False
+
+
+def _barre(fenetre: Any) -> None:
+    """The white bar on top: brand on the left, reduce and close on the right, draggable."""
+    import customtkinter as ctk
+
+    barre = ctk.CTkFrame(fenetre, fg_color=BARRE, corner_radius=0, height=46)
+    barre.pack(side="top", fill="x")
+    barre.pack_propagate(False)
+    marque = ctk.CTkFrame(barre, fg_color="transparent")
+    marque.pack(side="left", padx=16)
+    ctk.CTkFrame(marque, width=22, height=22, corner_radius=7, fg_color=C1B).pack(side="left")
+    nom = _texte(marque, "JobHunter", taille=13, gras=True)
+    nom.pack(side="left", padx=9)
+
+    def reduire() -> None:
+        if getattr(fenetre, "_sans_cadre", False):
+            import ctypes
+
+            ctypes.windll.user32.ShowWindow(_hwnd(fenetre), _SW_MINIMIZE)  # type: ignore[attr-defined,unused-ignore]
+        else:
+            fenetre.iconify()
+
+    feux = ctk.CTkFrame(barre, fg_color="transparent")
+    feux.pack(side="right", padx=12)
+    for signe, action, survol, fermer in (
+        ("—", reduire, SURVOL, False),
+        ("✕", lambda: fenetre._fermer(), TERRE, True),
+    ):
+        b = ctk.CTkButton(
+            feux,
+            text=signe,
+            command=action,
+            width=30,
+            height=30,
+            corner_radius=10,
+            fg_color=FEU,
+            hover_color=survol,
+            border_width=1,
+            border_color=FILET,
+            text_color=ENCRE,
+            font=_police(11),
+        )
+        b.pack(side="left", padx=(8, 0))
+        if fermer:  # white cross on the warm hover, as in the web bar
+            b.bind("<Enter>", lambda e, b=b: b.configure(text_color="#FFFFFF"), add="+")
+            b.bind("<Leave>", lambda e, b=b: b.configure(text_color=ENCRE), add="+")
+
+    depart = {"x": 0, "y": 0}
+
+    def saisir(e: Any) -> None:
+        depart["x"], depart["y"] = e.x_root - fenetre.winfo_x(), e.y_root - fenetre.winfo_y()
+
+    def glisser(e: Any) -> None:
+        fenetre.geometry(f"+{e.x_root - depart['x']}+{e.y_root - depart['y']}")
+
+    for w in (barre, marque, nom):
+        w.bind("<ButtonPress-1>", saisir, add="+")
+        w.bind("<B1-Motion>", glisser, add="+")
+
+
+def _fermeture(fenetre: Any, action: Callable[[], None]) -> None:
+    """What closing does now: the bar's cross and, with a system frame, its own."""
+    fenetre._fermer = action
+    fenetre.protocol("WM_DELETE_WINDOW", action)
+
+
 def _carte(fenetre: Any) -> Any:
-    """The panel, with the brand row of the web interface at its top."""
+    """The panel under the bar."""
     import customtkinter as ctk
 
     carte = ctk.CTkFrame(
@@ -140,11 +255,7 @@ def _carte(fenetre: Any) -> Any:
         border_width=1,
         border_color=FILET,
     )
-    carte.pack(fill="both", expand=True, padx=22, pady=22)
-    marque = ctk.CTkFrame(carte, fg_color="transparent")
-    marque.pack(fill="x", padx=26, pady=(22, 0))
-    ctk.CTkFrame(marque, width=28, height=28, corner_radius=9, fg_color=C1B).pack(side="left")
-    _texte(marque, "JobHunter", taille=15, gras=True).pack(side="left", padx=10)
+    carte.pack(fill="both", expand=True, padx=18, pady=(14, 18))
     return carte
 
 
@@ -270,7 +381,7 @@ def demander_cv(fenetre: Any) -> str:
     boutons.pack(fill="x")
     _bouton(boutons, "Choisir mon CV…", choisir, principal=True).pack(side="left")
     _bouton(boutons, "Plus tard", lambda: fin("")).pack(side="right")
-    fenetre.protocol("WM_DELETE_WINDOW", lambda: fin(""))
+    _fermeture(fenetre, lambda: fin(""))
     _montrer(fenetre)
     fenetre.mainloop()
     carte.destroy()
@@ -345,7 +456,7 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
     pied = ctk.CTkFrame(carte, fg_color="transparent")
     pied.pack(side="bottom", fill="x", padx=24, pady=(4, 18))
     echelle = ctk.ScalingTracker.get_window_scaling(fenetre) or 1
-    hauteur = int(min(820, fenetre.winfo_screenheight() / echelle - 320))
+    hauteur = int(min(820, fenetre.winfo_screenheight() / echelle - 300))
     cadre = ctk.CTkScrollableFrame(
         carte,
         fg_color="transparent",
@@ -511,7 +622,7 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
     _bouton(boutons, "Créer mon profil", valider, principal=True).pack(side="left")
     _bouton(boutons, "Choisir un autre CV…", lambda: fin("autre")).pack(side="left", padx=8)
     _bouton(boutons, "Plus tard", lambda: fin(None)).pack(side="right")
-    fenetre.protocol("WM_DELETE_WINDOW", lambda: fin(None))
+    _fermeture(fenetre, lambda: fin(None))
     _montrer(fenetre)
     fenetre.mainloop()
     carte.destroy()
@@ -523,6 +634,7 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
 def _attente(fenetre: Any) -> Any:
     """The "Création du profil…" card while first_launch writes the profile."""
     carte = _carte(fenetre)
+    _fermeture(fenetre, lambda: None)  # the profile is being written: no closing
     _texte(carte, "Création du profil…", taille=15, gras=True).pack(padx=48, pady=32)
     fenetre.title("JobHunter")
     _montrer(fenetre)

@@ -23,8 +23,10 @@ recent at the top.
     gets its own advice.
   - Measured on 10 real PDF CVs: name, e-mail, phone and jobs read identically.
 - **The welcome windows take the new interface's design**: warm background, pale panel,
-  dark main button, brown ticks, Inter font, instead of Tk's grey default. The form
-  scrolls on a short screen, and its buttons stay visible at the bottom.
+  dark main button, brown ticks, Inter font, instead of Tk's grey default. As in that
+  window, there is no Windows title bar: the corners are rounded, and a white bar on top
+  carries the brand, “reduce” and “close” (drag it to move the window). The form scrolls
+  on a short screen, and its buttons stay visible at the bottom.
 - “New profile” (desktop and web interface) uses the same window.
 
 ## 3.27.1 — 2026-10-26
