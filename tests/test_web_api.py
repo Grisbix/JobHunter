@@ -243,6 +243,11 @@ def test_reglages_teinte_et_police():
     assert (r["teinte"], r["police"]) == ("terre", "segoe")
 
 
+def test_reglages_mode_clair_ou_sombre():
+    assert web_api.reglages({"mode": "sombre"})["mode"] == "sombre"
+    assert web_api.reglages({"mode": "nuit"})["mode"] == "auto"
+
+
 def _api_sur(file, suivi):
     api = Api()
     api._file = lambda: file
