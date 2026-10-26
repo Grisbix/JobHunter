@@ -4,6 +4,25 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.27.0 — 2026-10-26
+
+- **A new interface, in a web window** (`python -m jobhunter.web`, extra `web`:
+  `pip install "jobhunter[web]"`). It does what the desktop application does, with
+  another design: home, offers (filters, saved views, chosen columns, ticked offers,
+  status, notes, set aside, recycle bin, undo), applications, follow-ups, documents,
+  statistics, profile (identity, search, skills, fit weights, base CV), sources
+  (keywords, followed companies and their directory, job boards, access and API keys),
+  settings (look, language, update, daily collection, profiles) and the tools menu
+  (cleaning recipes, documents to compare, CV and letters in bulk, replies read from
+  mail). The desktop application stays the default; nothing is sent from the web
+  window: applying is done from the desktop one, the final click being yours.
+- An API key typed in the web window goes straight to the file its source reads; it is
+  never shown again. Logins are made by you, in the browser: no password is handled.
+- The skills editor keeps the space at the edge of a synonym: « ia » no longer finds
+  « social » once the skill is saved.
+- Development: logic shared by both interfaces moves out of the desktop package
+  (`inventory`, `base_cv`, `tools_catalog`); the old module names still import.
+
 ## 3.26.2 — 2026-10-26
 
 - Development: `tools/release.py` makes a release in two commands (`preparer X.Y.Z`,
