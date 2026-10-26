@@ -10,6 +10,10 @@ recent at the top.
   Windows” (follows the Windows setting, live), light or dark.
 - **Narrow window**: below 1100 px the offers' filters stay on one line that scrolls
   sideways, instead of five lines pushing the table down.
+- **Fewer cut words, no false hovers**: titles, companies and table cells wrap on two
+  lines instead of ending in “…”; a text still cut shows in full in its tooltip. Only the
+  rows that open something light up under the mouse (offers, documents, recent
+  applications), not the tables of Sources, Statistics or recipes.
 - **README**: the screenshots are rebuilt, and the new interface is shown (home in light
   mode, offers in dark mode) with how to install and open it. `tools/screenshots.py`
   captures it headless, on the fictitious profile only.

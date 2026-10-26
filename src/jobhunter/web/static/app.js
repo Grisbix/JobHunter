@@ -45,8 +45,17 @@ function h(tag, attrs, ...enfants) {
     else e.setAttribute(k, v === true ? "" : v);
   }
   for (const c of enfants.flat(Infinity)) if (c != null && c !== false) e.append(c instanceof Node ? c : String(c));
+  if (tag === "tr" && attrs && attrs.onclick) e.classList.add("cliquable");  // hover only where a click does something
   return e;
 }
+
+// A text cut by the layout shows in full in its tooltip.
+document.addEventListener("mouseover", (ev) => {
+  const el = ev.target.closest && ev.target.closest("td, .t, .s, .nom, dd");
+  if (el && !el.title && (el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1)) {
+    el.title = el.textContent.trim();
+  }
+});
 
 const $ = (id) => document.getElementById(id);
 const nombre = (n) => Number(n || 0).toLocaleString("fr-FR");
@@ -877,7 +886,7 @@ ONGLETS_SOURCES.recherche = async (vue) => {
         s.rendement.length ? h("table", {},
           h("colgroup", {}, h("col", { style: "width:20%" }), h("col", { style: "width:14%" }), h("col", { style: "width:14%" }), h("col", { style: "width:30%" }), h("col", {})),
           h("thead", {}, h("tr", {}, ["Source", "Ramenées", "Nouvelles", "", "Dernier passage"].map((t) => h("th", {}, t)))),
-          h("tbody", {}, s.rendement.map((r) => h("tr", { style: "cursor:default" },
+          h("tbody", {}, s.rendement.map((r) => h("tr", {},
             h("td", { style: "text-transform:capitalize" }, r.source), h("td", {}, nombre(r.ramenees)), h("td", {}, nombre(r.nouvelles)),
             h("td", {}, h("div", { class: "prog" }, h("i", { style: `width:${100 * r.nouvelles / max}%` }))),
             h("td", {}, `${dateFr(r.dernier)} `, r.verdict ? h("span", { class: r.verdict === "ok" ? "etiq gris" : "etiq" }, r.verdict) : null)))))

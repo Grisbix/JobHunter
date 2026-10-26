@@ -196,8 +196,10 @@ h3 { font-size: 15px; font-weight: 500; }
 .liste-meilleures ol { list-style: none; margin-top: 16px; display: flex; flex-direction: column; gap: 16px; }
 .liste-meilleures li { display: flex; gap: 12px; align-items: center; cursor: pointer; min-width: 0; }
 .liste-meilleures li:hover .t { color: var(--terre); }
-.t { font-size: 13px; font-weight: 500; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.s { font-size: 11.5px; color: var(--gris); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Titles and subtitles wrap on two lines before being cut; the full text is in the tooltip. */
+.t, .s { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.t { font-size: 13px; font-weight: 500; line-height: 1.25; }
+.s { font-size: 11.5px; color: var(--gris); margin-top: 2px; }
 
 /* Dark card */
 .sombre {
@@ -216,6 +218,7 @@ h3 { font-size: 15px; font-weight: 500; }
 .sombre h2 { font-size: 22px; }
 .fil { list-style: none; margin-top: 22px; display: flex; flex-direction: column; gap: 20px; }
 .fil li { position: relative; padding-left: 26px; cursor: pointer; min-width: 0; }
+.fil li.vide { cursor: default; }
 .fil li::before { content: ""; position: absolute; left: 0; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--surface); }
 .fil li:not(:last-child)::after { content: ""; position: absolute; left: 3.5px; top: 18px; bottom: -16px; width: 1px; background: rgba(var(--blanc-rgb),.14); }
 .fil .t { font-size: 15px; font-weight: 400; }
@@ -239,10 +242,12 @@ h3 { font-size: 15px; font-weight: 500; }
 /* Tables */
 table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
 th { text-align: left; font-weight: 400; color: var(--gris); font-size: 12.5px; padding: 0 14px 12px 0; white-space: nowrap; }
-td { padding: 10px 14px 10px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
-tbody tr { cursor: pointer; transition: background .12s; }
-tbody tr:hover { background: rgba(var(--blanc-rgb),.45); }
-tbody tr:hover td:first-child { border-radius: 10px 0 0 10px; }
+/* Cells wrap instead of cutting words. Only rows that open something (h() marks them
+   "cliquable") light up under the mouse. */
+td { padding: 10px 14px 10px 0; overflow: hidden; overflow-wrap: anywhere; vertical-align: middle; }
+tbody tr.cliquable { cursor: pointer; transition: background .12s; }
+tbody tr.cliquable:hover { background: rgba(var(--blanc-rgb),.45); }
+tbody tr.cliquable:hover td:first-child { border-radius: 10px 0 0 10px; }
 tbody tr td:first-child { padding-left: 6px; }
 .prog { height: 6px; border-radius: 3px; background: var(--piste); overflow: hidden; min-width: 50px; }
 .prog i { display: block; height: 6px; border-radius: 3px; background: var(--degrade-h); }
@@ -397,7 +402,7 @@ body[data-teinte="noir"] {
 }
 .tache[hidden] { display: none; }
 .tache-tete { display: flex; align-items: center; gap: 12px; }
-.tache-tete .t { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tache-tete .t { display: block; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tache-tete .s { font-size: 12px; color: #a39a95; margin-top: 2px; }
 .tache-tete .bouton { height: 32px; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.14); color: #f4efec; }
 .tache .point { width: 9px; height: 9px; border-radius: 50%; background: var(--c1); flex: none; animation: battre 1.2s ease-in-out infinite; }
@@ -500,7 +505,7 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
 .dialogue .boutons { justify-content: flex-end; }
 .motifs { display: grid; gap: 6px; margin-bottom: 10px; }
 .motif { text-align: left; padding: 9px 14px; border-radius: 10px; background: rgba(var(--blanc-rgb), .5); font-size: 13.5px; }
-.motif:hover { background: rgba(var(--c1-rgb), .16); }
+.motif:not([disabled]):hover { background: rgba(var(--c1-rgb), .16); }
 .motif.on { background: var(--degrade-h); color: #fff; }
 
 /* Settings: daily collection, profiles. */
