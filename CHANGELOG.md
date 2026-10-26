@@ -4,6 +4,31 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.28.0 — 2026-10-27
+
+- **An update shows as a button at the top of the window**: “Mettre à jour (X)”, at
+  the right of the title bar, on every page, until it is installed. One click (and a
+  confirmation) runs it. Before, a dialog at start-up: a hurried “Non” hid it for a
+  day. The web interface has the same button in its title bar.
+- **A version is announced only once it is signed.** It used to be offered as soon as
+  it was published, before the author signed it, and the click only got “pas encore
+  signée”.
+- **A PDF CV is adapted to each offer too.** A PDF cannot be edited, so it went out
+  identical for every offer. At the first launch, JobHunter now rebuilds it as a plain
+  Word file:
+  - same text and order;
+  - headings, bold job lines with their dates, bullets;
+  - contact details under the name;
+  - skills on one line, the ones each posting asks for first.
+
+  Measured on 10 real PDF CVs: every word kept, the name found, one page each. The form
+  offers a preview (“Voir la version Word”). Untick the box to send the PDF as is. The
+  PDF stays next to the Word file either way.
+- **Your letters speak in your words**: the form shows the background paragraph of
+  your letters, to correct. “Reprendre celui de ma lettre…” takes it from a letter you
+  already wrote (.pdf or .docx): the paragraph about your studies and experience, not
+  the one about the company. Found in 30 letters out of 30 in a test.
+
 ## 3.27.2 — 2026-10-26
 
 - **The CV is read whatever its template**: text boxes (Canva and Word “design”
