@@ -1422,7 +1422,15 @@ ONGLETS_SOURCES.vues = async (vue) => {
   };
   dessiner();
   vue.replaceChildren(h("div", { class: "verre panneau" },
-    h("div", { class: "titre-ligne" }, h("h2", {}, "Entreprises vues"), compte),
+    h("div", { class: "titre-ligne" }, h("h2", {}, "Entreprises vues"), compte,
+      bouton("Suivre les bien notées (fit ≥ 7)", "etoile", async () => {
+        const n = d.lignes.filter((l) => l.url_flux && !l.suivie && (l.fit || 0) >= 7).length;
+        if (!n) return toast("Aucune entreprise bien notée à suivre.");
+        const ok = await dialogue(`Suivre ${n} entreprise(s) ?`, "Chacune est d'abord vérifiée : une requête à son outil de recrutement, suivie seulement si elle a des offres ouvertes.", null, [["Suivre", "", () => true]]);
+        if (!ok) return;
+        const r = await ecrire("suivre_vues", 7);
+        if (r) { toast(r.message); ONGLETS_SOURCES.vues(vue); }
+      })),
     h("div", { class: "sous", style: "margin:4px 0 12px" }, "Chaque collecte note les entreprises de ses offres, même écartées ou fermées depuis. « Suivre » lit ensuite ses offres à la source, quand son lien d'offre donne son outil de recrutement."),
     h("label", { class: "champ", style: "margin:12px 0" }, svg("loupe"), h("input", { type: "search", placeholder: "Filtrer : entreprise, site ou outil", oninput: (e) => { filtre = e.target.value; dessiner(); } })),
     h("div", { class: "defile" }, h("table", { class: "tableau-simple" },
@@ -1439,11 +1447,13 @@ async function ouvrirAnnuaire(texte, apres) {
     liste.replaceChildren(...(r.length ? r.map((e) => h("button", { class: "motif", disabled: e.suivi, onclick: async () => {
       const x = await ecrire("suivre_annuaire", e.outil, e.jeton);
       if (x) { toast(x.message); e.suivi = true; chercher(); apres && apres(); }
-    } }, `${e.nom} · ${e.outil_nom}${e.suivi ? " (déjà suivie)" : ""}`)) : [h("div", { class: "sous" }, "Aucune entreprise de ce nom dans les annuaires Lever, Ashby, Greenhouse.")]));
+    } }, `${e.nom} · ${e.outil_nom}${e.suivi ? " (déjà suivie)" : ""}`)) : [h("div", { class: "sous" }, "Aucune entreprise de ce nom dans les annuaires Lever, Ashby, Greenhouse, Workday.")]));
   };
   champ.addEventListener("input", () => { clearTimeout(minuteur); minuteur = setTimeout(chercher, 250); });
   chercher();
-  await dialogue("Annuaire des entreprises", "Lever, Ashby et Greenhouse : clique une entreprise pour la suivre.", h("div", {}, champ, liste), []);
+  const workday = h("div", { class: "sous", style: "margin-top:12px" }, "Workday : son annuaire se construit sur ton PC, depuis Common Crawl (archive publique du web).",
+    bouton("Construire l'annuaire Workday", "fleche", () => lancer("annuaire_workday")));
+  await dialogue("Annuaire des entreprises", "Lever, Ashby, Greenhouse et Workday : clique une entreprise pour la suivre.", h("div", {}, champ, liste, workday), []);
 }
 
 ONGLETS_SOURCES.sites = async (vue) => {

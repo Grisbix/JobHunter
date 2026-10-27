@@ -4,6 +4,19 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.39.0 — 2026-10-27
+
+- **Follow the well-rated companies in one click**: Sources → « Entreprises vues »,
+  « Suivre les bien notées (fit ≥ 7) ». Each company whose offer link gives its
+  recruiting tool is checked first — one request to the tool's public API — and
+  followed only if it has open offers (up to 25 per click).
+- **Workday directory**: Workday publishes no list of its career sites; Common Crawl,
+  the public archive of the web, has seen them. « Construire l'annuaire Workday »
+  (in the company directory) builds it on your PC, resumes where it stopped when the
+  index is overloaded, and makes Workday companies searchable by name. A Workday
+  site is followed only if it has open offers. The directory is never shipped with
+  JobHunter: each installation builds its own.
+
 ## 3.38.0 — 2026-10-27
 
 - **New source: freehire** (freehire.me, open source, MIT), a search engine over

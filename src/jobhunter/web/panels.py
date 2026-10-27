@@ -565,6 +565,43 @@ class PanneauxApi:
         lignes.sort(key=lambda x: (-x["offres"], -(x["fit"] or 0), x["nom"].lower()))
         return {"lignes": lignes}
 
+    def suivre_vues(self, fit_min: int = 7, maxi: int = 25) -> dict[str, Any]:
+        """Follows the well-rated companies seen, whose feed answers with open offers.
+
+        One request per company to its tool's public API (sources.discovery): a feed
+        that gives nothing is not followed. At most `maxi` checks per click.
+        """
+        from jobhunter import inventory
+        from jobhunter.sources import discovery
+
+        a_voir = [
+            x
+            for x in self.entreprises_vues()["lignes"]
+            if x["url_flux"] and not x["suivie"] and (x["fit"] or 0) >= int(fit_min)
+        ]
+        f, c = self._cfg_sources()
+        suivies, vides = [], []
+        for x in a_voir[:maxi]:
+            trouve = inventory.flux_depuis_url(x["url_flux"])
+            if not trouve:
+                continue
+            n = discovery.offres_ouvertes(trouve)
+            if n == 0:
+                vides.append(x["nom"])
+                continue
+            inventory.ajouter_flux(c, self._defauts(), trouve)
+            suivies.append(x["nom"])
+        if suivies:
+            _ecrire_json(f, c)
+        reste = max(0, len(a_voir) - maxi)
+        return {
+            "ok": True,
+            "suivies": suivies,
+            "vides": vides,
+            "message": f"{len(suivies)} entreprise(s) suivie(s), {len(vides)} sans offre ouverte"
+            + (f", {reste} à vérifier au prochain clic" if reste else ""),
+        }
+
     def suivre_entreprise(self, texte: str) -> dict[str, Any]:
         """Follows a company by its career page URL.
 
@@ -594,13 +631,14 @@ class PanneauxApi:
         return {"ok": True, "message": f"site carrière ajouté, lu par le navigateur : {v}"}
 
     def annuaire(self, texte: str) -> list[dict[str, Any]]:
-        """Companies of the Lever, Ashby and Greenhouse directories matching a name."""
+        """Companies of the directories (Lever, Ashby, Greenhouse; Workday if built) matching a name."""
         from jobhunter import inventory
         from jobhunter.sources import common as src
         from jobhunter.sources import directory
 
         src._load_cfg()
         suivis = {(o, str(s).lower()) for o, slugs in src.ATS_SLUGS.items() for s in slugs}
+        suivis |= {("workday", f"{x[0]}.{x[1]}/{x[2]}".lower()) for x in src.WORKDAY_FLUX}
         return [
             {
                 "nom": e.nom,
@@ -617,10 +655,19 @@ class PanneauxApi:
         from jobhunter import inventory
         from jobhunter.sources import directory
 
-        if outil not in directory.OUTILS or not re.fullmatch(r"[\w.-]+", str(jeton or "")):
+        trouve: tuple[str, Any]
+        if outil == "workday" and directory.workday_de_jeton(jeton):
+            from jobhunter.sources import discovery
+
+            trouve = ("workday", directory.workday_de_jeton(jeton))
+            if discovery.offres_ouvertes(trouve) == 0:
+                return {"ok": False, "erreur": "ce site Workday n'a aucune offre ouverte"}
+        elif outil in directory.OUTILS and re.fullmatch(r"[\w.-]+", str(jeton or "")):
+            trouve = (outil, jeton)
+        else:
             return {"ok": False, "erreur": "entrée d'annuaire invalide"}
         f, c = self._cfg_sources()
-        msg = inventory.ajouter_flux(c, self._defauts(), (outil, jeton))
+        msg = inventory.ajouter_flux(c, self._defauts(), trouve)
         _ecrire_json(f, c)
         return {"ok": True, "message": msg}
 

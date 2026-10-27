@@ -1046,15 +1046,15 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "{nom} · {outil} (bereits verfolgt)",
         "{nom} · {outil} (ya seguida)",
     ),
-    "Aucune entreprise de ce nom dans les annuaires Lever, Ashby, Greenhouse.": (
-        "No company of this name in the Lever, Ashby and Greenhouse directories.",
-        "Kein Unternehmen dieses Namens in den Verzeichnissen von Lever, Ashby, Greenhouse.",
-        "Ninguna empresa con este nombre en los directorios de Lever, Ashby y Greenhouse.",
+    "Aucune entreprise de ce nom dans les annuaires Lever, Ashby, Greenhouse, Workday.": (
+        "No company of this name in the Lever, Ashby, Greenhouse and Workday directories.",
+        "Kein Unternehmen dieses Namens in den Verzeichnissen von Lever, Ashby, Greenhouse, Workday.",
+        "Ninguna empresa con este nombre en los directorios de Lever, Ashby, Greenhouse y Workday.",
     ),
-    "Lever, Ashby et Greenhouse : clique une entreprise pour la suivre.": (
-        "Lever, Ashby and Greenhouse: click a company to follow it.",
-        "Lever, Ashby und Greenhouse: klicke ein Unternehmen an, um es zu verfolgen.",
-        "Lever, Ashby y Greenhouse: haz clic en una empresa para seguirla.",
+    "Lever, Ashby, Greenhouse et Workday : clique une entreprise pour la suivre.": (
+        "Lever, Ashby, Greenhouse and Workday: click a company to follow it.",
+        "Lever, Ashby, Greenhouse und Workday: klicke ein Unternehmen an, um es zu verfolgen.",
+        "Lever, Ashby, Greenhouse y Workday: haz clic en una empresa para seguirla.",
     ),
     "site d'offres (adresse)": (
         "job site (address)",
@@ -1261,6 +1261,42 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Each collection notes the companies of its offers, even set aside or closed since. « Follow » then reads its offers at the source, when its offer link gives its recruiting tool.",
         "Jede Sammlung notiert die Unternehmen ihrer Angebote, auch aussortierte oder inzwischen geschlossene. « Verfolgen » liest dann ihre Angebote an der Quelle, wenn ihr Angebotslink ihr Recruiting-Tool verrät.",
         "Cada recogida anota las empresas de sus ofertas, incluso descartadas o cerradas desde entonces. « Seguir » lee luego sus ofertas en la fuente, cuando su enlace de oferta indica su herramienta de selección.",
+    ),
+    "Suivre les bien notées (fit ≥ 7)": (
+        "Follow the well-rated ones (fit ≥ 7)",
+        "Gut bewertete verfolgen (Fit ≥ 7)",
+        "Seguir las bien valoradas (fit ≥ 7)",
+    ),
+    "Aucune entreprise bien notée à suivre.": (
+        "No well-rated company to follow.",
+        "Kein gut bewertetes Unternehmen zu verfolgen.",
+        "Ninguna empresa bien valorada que seguir.",
+    ),
+    "Suivre {n} entreprise(s) ?": (
+        "Follow {n} company(ies)?",
+        "{n} Unternehmen verfolgen?",
+        "¿Seguir {n} empresa(s)?",
+    ),
+    "Chacune est d'abord vérifiée : une requête à son outil de recrutement, suivie seulement si elle a des offres ouvertes.": (
+        "Each is checked first: one request to its recruiting tool, followed only if it has open offers.",
+        "Jedes wird zuerst geprüft: eine Anfrage an sein Recruiting-Tool, verfolgt nur bei offenen Angeboten.",
+        "Cada una se comprueba antes: una petición a su herramienta de selección, seguida solo si tiene ofertas abiertas.",
+    ),
+    "Suivre": ("Follow", "Verfolgen", "Seguir"),
+    "Workday : son annuaire se construit sur ton PC, depuis Common Crawl (archive publique du web).": (
+        "Workday: its directory is built on your PC, from Common Crawl (a public archive of the web).",
+        "Workday: sein Verzeichnis wird auf deinem PC erstellt, aus Common Crawl (öffentliches Webarchiv).",
+        "Workday: su directorio se construye en tu PC, desde Common Crawl (archivo público de la web).",
+    ),
+    "Construire l'annuaire Workday": (
+        "Build the Workday directory",
+        "Workday-Verzeichnis erstellen",
+        "Construir el directorio Workday",
+    ),
+    "Annuaire Workday (Common Crawl)": (
+        "Workday directory (Common Crawl)",
+        "Workday-Verzeichnis (Common Crawl)",
+        "Directorio Workday (Common Crawl)",
     ),
     "{a} / {b} entreprises": ("{a} / {b} companies", "{a} / {b} Unternehmen", "{a} / {b} empresas"),
     "Dossier des lettres": ("Letters folder", "Anschreiben-Ordner", "Carpeta de cartas"),
