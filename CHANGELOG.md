@@ -4,6 +4,13 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.37.0 — 2026-10-27
+
+- **The page stays put, the list scrolls**: in Offres, Documents and the Sources tabs
+  with a long table, the filters and buttons stay on screen; only the list scrolls,
+  inside its panel, with its header row kept in view. In Candidatures each column
+  scrolls on its own.
+
 ## 3.36.0 — 2026-10-27
 
 - **Every company seen is noted**: each collection writes the companies of its offers

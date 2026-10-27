@@ -811,6 +811,7 @@ function menuVues() {
 const coches = new Set();  // ticked offers, kept across pages (the desktop's ☐ column)
 ECRANS.offres = {
   titre: "Offres",
+  plein: true,
   actions: () => [
     bouton("Annuler", "fleche", annulerGeste),
     bouton("Ajouter une offre", "sortie", ajouterOffre),
@@ -863,8 +864,8 @@ ECRANS.offres = {
         liste("region", "Toutes les régions", d.regions), liste("pays", "Tous les pays", d.pays), tri,
         menuVues(), bouton("Colonnes…", "", choisirColonnes)),
       barreSel,
-      h("div", { class: "verre panneau" },
-        d.lignes.length ? h("table", {},
+      h("div", { class: "verre panneau remplit" },
+        d.lignes.length ? h("div", { class: "defile" }, h("table", {},
           h("colgroup", {}, h("col", { style: "width:36px" }), h("col", { style: "width:64px" }), h("col", { style: `width:${cols.length > 4 ? 30 : 40}%` }), cols.map(() => h("col", {}))),
           h("thead", {}, h("tr", {}, h("th", {}, h("input", { type: "checkbox", class: "coche", checked: tous, title: "Cocher la page",
             onclick: () => { d.lignes.forEach((o) => (tous ? coches.delete(o.id) : coches.add(o.id))); relancer(); } })),
@@ -875,7 +876,7 @@ ECRANS.offres = {
             h("td", {}, h("div", { class: "cellule-offre" },
               h("div", {}, h("div", { class: "t", title: o.poste }, o.alerte ? h("span", { class: "alerte", title: o.signal }, o.alerte + " ") : null, o.poste),
                 h("div", { class: "s" }, o.entreprise)))),
-            cols.map(([, , cellule]) => h("td", {}, cellule(o)))))))
+            cols.map(([, , cellule]) => h("td", {}, cellule(o))))))))
         : h("div", { class: "vide" }, "Aucune offre ne correspond à ces filtres."),
         pagination(d, (p) => { f.page = p; relancer(); vue.scrollTop = 0; },
           h("select", { class: "choix", onchange: (e) => { changer("par_page", Number(e.target.value)); garderReglage({ par_page: f.par_page }); } },
@@ -890,6 +891,7 @@ const CARTES_K = 6;
 const deroulees = new Set();
 ECRANS.candidatures = {
   titre: "Candidatures",
+  plein: true,
   actions: () => [bouton("Lire les réponses par mail", "cloche", ouvrirCourriels)],
   async dessiner(vue) {
     const d = await appel("candidatures");
@@ -970,6 +972,7 @@ ECRANS.relances = {
 const filtresDocs = { texte: "", genre: "", page: 0 };
 ECRANS.documents = {
   titre: "Documents",
+  plein: true,
   // After a change of template, the documents already made are made again (the user,
   // 2026-10-27: the letters need the same tool as the CVs).
   actions: () => [action("Refaire les CV", "fleche", "regenerer_cv"), action("Refaire les lettres", "fleche", "regenerer_lettres")],
@@ -989,13 +992,13 @@ ECRANS.documents = {
       h("div", { class: "barre-outils" }, h("label", { class: "champ", style: "max-width:460px" }, svg("loupe"), champ),
         segment([["", "Tous"], ["CV", "CV"], ["Lettre", "Lettres"]], f.genre, (v) => { f.genre = v; f.page = 0; relancer(); }), ...dossiers,
         h("span", { class: "sous", title: (d.dossiers || []).map((x) => x.chemin).join(" · ") }, `${nombre(d.total)} documents`)),
-      h("div", { class: "verre panneau" },
-        d.fichiers.length ? h("table", {},
+      h("div", { class: "verre panneau remplit" },
+        d.fichiers.length ? h("div", { class: "defile" }, h("table", {},
           h("colgroup", {}, h("col", { style: "width:12%" }), h("col", {}), h("col", { style: "width:14%" })),
           h("thead", {}, h("tr", {}, ["Type", "Document", "Le"].map((t) => h("th", {}, t)))),
           h("tbody", {}, d.fichiers.map((x) => h("tr", { onclick: () => voir(x), title: x.modifiable ? "Voir et modifier" : "Ouvrir" },
             h("td", {}, h("span", { class: x.genre === "CV" ? "etiq" : "etiq gris" }, x.genre)),
-            h("td", { title: x.nom }, x.nom), h("td", {}, dateFr(x.date))))))
+            h("td", { title: x.nom }, x.nom), h("td", {}, dateFr(x.date)))))))
         : h("div", { class: "vide" }, "Aucun document."),
         pagination(d, (p) => { f.page = p; relancer(); vue.scrollTop = 0; }))));
     if (f.texte) { champ.focus(); champ.setSelectionRange(f.texte.length, f.texte.length); }
@@ -1203,11 +1206,13 @@ ECRANS.profil = {
 let ongletSources = "recherche";
 ECRANS.sources = {
   titre: "Sources",
+  plein: () => ongletSources !== "recherche",
   actions: () => [action("Collecter maintenant", "eclair", "collecte", "plein")],
   async dessiner(vue) {
     const tete = segment([["recherche", "Mots-clés et rendement"], ["entreprises", "Entreprises suivies"], ["vues", "Entreprises vues"],
       ["sites", "Sites d'offres"], ["acces", "Accès et clés"]], ongletSources, (v) => { ongletSources = v; ECRANS.sources.dessiner(vue); });
-    const corps = h("div");
+    const corps = h("div", { class: "corps-onglet" });
+    vue.classList.toggle("plein", ECRANS.sources.plein());
     vue.replaceChildren(h("div", { class: "colonne" }, h("div", { class: "barre-outils" }, tete), corps));
     await ONGLETS_SOURCES[ongletSources](corps);
   },
@@ -1985,6 +1990,9 @@ async function aller(nom) {
   $("actions").replaceChildren(...e.actions());
   const vue = $("vue");
   vue.scrollTop = 0;
+  // A list screen keeps its filters in place: its list scrolls inside its panel, not the
+  // page (the user, 2026-10-27). style.css: .vue.plein.
+  vue.classList.toggle("plein", typeof e.plein === "function" ? e.plein() : !!e.plein);
   try { localStorage.setItem("jh-ecran", nom); } catch (_) { /* no storage: fine */ }
   try {
     await e.dessiner(vue);

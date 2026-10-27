@@ -178,6 +178,18 @@ h3 { font-size: 15px; font-weight: 500; }
 .vue { min-height: 0; overflow-y: auto; padding-bottom: 28px; scrollbar-width: thin; scrollbar-color: rgba(120,114,110,.25) transparent; }
 .colonne { display: flex; flex-direction: column; gap: 20px; }
 .colonne > * { flex: none; }
+/* List screens (Offres, Documents, Candidatures, Sources' tables): the page stays put,
+   filters on top, and the list scrolls inside its panel, its header row kept in view. */
+.vue.plein { overflow-y: auto; display: flex; flex-direction: column; padding-bottom: 16px; }
+.vue.plein > .colonne, .vue.plein .corps-onglet, .vue.plein .corps-onglet > .colonne { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.vue.plein .colonne > .remplit, .vue.plein .colonne > .panneau:has(> .defile), .vue.plein .corps-onglet > .panneau:has(> .defile) { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.vue.plein .remplit > .defile, .vue.plein .panneau > .defile { flex: 1 1 auto; min-height: 260px; max-height: none; overflow: auto; scrollbar-width: thin; }
+.vue.plein .defile thead th { position: sticky; top: 0; z-index: 1; background: rgba(var(--blanc-rgb), .94); }
+.vue.plein .remplit > .pagination { flex: none; }
+.vue.plein .tableau-kanban { flex: 1 1 auto; min-height: 0; align-items: stretch; }
+.vue.plein .colonne-k { overflow-y: auto; scrollbar-width: thin; }
+.vue.plein .colonne-k > * { flex: none; }
+.vue.plein .colonne-k.vide-k { align-self: flex-start; }
 .barre-outils { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
 /* In a column the column's gap already separates it: 18px more made 38px. */
 .colonne > .barre-outils { margin-bottom: 0; }
