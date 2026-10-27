@@ -36,3 +36,15 @@ def test_variable_vide_prend_l_identite_d_essai(monkeypatch):
     ident = ET.fromstring(msix.manifeste()).find("m:Identity", NS)
     assert ident.get("Name") == "JobHunter.Essai"
     assert ident.get("Publisher") == "CN=JobHunter Essai"
+
+
+def test_noms_reserves_du_paquet_ecartes(tmp_path):
+    """python-docx's unzipped template holds a [Content_Types].xml: makeappx refuses it."""
+    app = tmp_path / "app"
+    (app / "docx").mkdir(parents=True)
+    (app / "docx" / "[Content_Types].xml").write_text("x", encoding="utf-8")
+    (app / "docx" / "default.docx").write_text("x", encoding="utf-8")
+    import shutil
+
+    shutil.copytree(app, tmp_path / "msix", ignore=msix._reserves)
+    assert [p.name for p in (tmp_path / "msix" / "docx").iterdir()] == ["default.docx"]
