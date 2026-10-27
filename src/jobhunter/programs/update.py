@@ -75,6 +75,7 @@ VERSION_URL = f"https://raw.githubusercontent.com/{DEPOT}/main/VERSION"
 # Files attached to the release v<version>: the signature and the installer.
 ASSET_URL = f"https://github.com/{DEPOT}/releases/download/v{{}}/{{}}"
 SETUP = "JobHunterSetup.exe"
+STORE_MISES_A_JOUR = "ms-windows-store://downloadsandupdates"  # the Store's updates page
 MANIFESTE = RACINE / ".maj_manifeste.json"
 SAUVEGARDES = RACINE / "_sauvegarde_maj"
 DERNIERE_VERIF = RACINE / ".maj_derniere_verif"
@@ -605,6 +606,13 @@ def maj_application(verifier_seulement):
         f"Version installée : {version_locale()}"
         + (f" · disponible : {v}" if v else " · c'est la plus récente.")
     )
+    if _gele.paquet_msix():
+        print("Installée par le Microsoft Store : c'est le Store qui la met à jour.")
+        if v and not verifier_seulement:
+            import webbrowser
+
+            webbrowser.open(STORE_MISES_A_JOUR)
+        return 0
     if not v or verifier_seulement:
         return 0
     # The installer closes JobHunter, including a morning collection running in the

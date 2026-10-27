@@ -49,6 +49,17 @@ jobs:
         env:
           PYTHONIOENCODING: utf-8
         run: python tools/installer/build.py
+      # Microsoft Store package (tools/installer/msix.py): unsigned, Partner Center
+      # signs it. makeappx checks the manifest against its schema while packing.
+      - name: Paquet MSIX
+        env:
+          PYTHONIOENCODING: utf-8
+          MSIX_NOM: ${{ vars.MSIX_NOM }}
+          MSIX_EDITEUR: ${{ vars.MSIX_EDITEUR }}
+          MSIX_EDITEUR_NOM: ${{ vars.MSIX_EDITEUR_NOM }}
+        run: |
+          python -m pip install "pillow>=10,<13"
+          python tools/installer/msix.py
       - name: Installation silencieuse et premier lancement
         shell: pwsh
         run: |
@@ -112,6 +123,11 @@ jobs:
           name: JobHunterSetup
           path: dist/JobHunterSetup.exe
           if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: JobHunterMsix
+          path: dist/JobHunter.msix
+          if-no-files-found: error
 
   publier:
     # The only job that writes: it attaches the installer already built and checked.
@@ -127,11 +143,16 @@ jobs:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
           name: JobHunterSetup
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: JobHunterMsix
       # Verifiable proof that the executable comes from THIS repository and THIS workflow:
       #   gh attestation verify JobHunterSetup.exe --repo Grisbix/JobHunter
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
         with:
-          subject-path: JobHunterSetup.exe
+          subject-path: |
+            JobHunterSetup.exe
+            JobHunter.msix
       - name: Empreinte SHA-256
         run: sha256sum JobHunterSetup.exe > JobHunterSetup.exe.sha256
       - name: Attacher a la release
@@ -140,5 +161,5 @@ jobs:
           # Never a ${{ }} expression in the script: the name comes from the environment.
           TAG: ${{ github.event.release.tag_name }}
         run: >-
-          gh release upload "$TAG" JobHunterSetup.exe JobHunterSetup.exe.sha256
+          gh release upload "$TAG" JobHunterSetup.exe JobHunterSetup.exe.sha256 JobHunter.msix
           --clobber --repo "$GITHUB_REPOSITORY"

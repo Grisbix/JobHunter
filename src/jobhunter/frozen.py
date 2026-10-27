@@ -34,6 +34,25 @@ def est_gele() -> bool:
     return bool(getattr(sys, "frozen", False))
 
 
+def paquet_msix() -> bool:
+    """True in the Microsoft Store package (MSIX): Windows installs its updates.
+
+    Its folder is read-only, and an installer it downloaded would install a second
+    copy beside it. Windows says so through GetCurrentPackageFullName: 15700
+    (APPMODEL_ERROR_NO_PACKAGE) outside a package, 122 (buffer too small) inside.
+    """
+    if sys.platform != "win32":
+        return False
+    import ctypes
+
+    longueur = ctypes.c_uint32(0)
+    try:
+        code = ctypes.windll.kernel32.GetCurrentPackageFullName(ctypes.byref(longueur), None)
+    except (AttributeError, OSError):
+        return False
+    return code == 122
+
+
 def interpreteur() -> str:
     """The executable that runs `-m module` in a console.
 

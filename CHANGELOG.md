@@ -4,6 +4,14 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.33.0 — 2026-10-27
+
+- **A package for the Microsoft Store** (`JobHunter.msix`, attached to each release):
+  once JobHunter is listed there, installing it from the Store skips SmartScreen's
+  « Windows a protégé votre ordinateur », since the Store signs the package. Installed
+  that way, the update button opens the Store's updates page instead of downloading
+  the installer. The installer and the ZIP do not change.
+
 ## 3.32.1 — 2026-10-27
 
 - **Four more companies in the sector lists**, each feed checked on its public API:

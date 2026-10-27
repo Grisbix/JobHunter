@@ -160,6 +160,18 @@ def test_appli_pas_encore_signee_rien_ouvert(appli, capsys, monkeypatch):
     assert "pas encore signée" in capsys.readouterr().out
 
 
+def test_appli_du_store_laisse_le_store_mettre_a_jour(appli, monkeypatch, capsys):
+    lances = appli({})  # nothing served: a download would raise KeyError
+    monkeypatch.setattr(maj._gele, "paquet_msix", lambda: True)
+    assert maj.maj_application(False) == 0
+    assert lances == [["navigateur", maj.STORE_MISES_A_JOUR]]
+    assert "Microsoft Store" in capsys.readouterr().out
+
+
+def test_hors_paquet_msix():
+    assert maj._gele.paquet_msix() is False  # the tests never run inside a package
+
+
 def test_appli_verifier_ne_telecharge_rien(appli):
     lances = appli({})
     assert maj.maj_application(True) == 0

@@ -32,3 +32,5 @@ unless you prefer otherwise.
   ```
 
   The installer is not code-signed yet, so Windows SmartScreen may warn on first run.
+  Each release also carries `JobHunter.msix`, the package meant for the Microsoft
+  Store, which signs it (docs/adr/0015-microsoft-store-package.md).
