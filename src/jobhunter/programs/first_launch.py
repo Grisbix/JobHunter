@@ -1329,6 +1329,8 @@ def main():
     cfg["keywords"] = profil["collecte"]["mots_cles"]
     if not garder:
         cfg["ats_slugs"], cfg["workday_flux"], cfg["autres_flux"] = {}, [], []
+        # The sector lists (3.32) are ticked in the app: Sources → Entreprises suivies.
+        cfg["listes"] = []
     else:
         # A new profile starts from the main one's settings, whose lists may have been
         # emptied (a non-finance main profile): "keep" then gave a finance profile no
@@ -1336,6 +1338,10 @@ def main():
         for cle in ("ats_slugs", "workday_flux", "autres_flux"):
             if cle in cfg and not cfg[cle]:
                 del cfg[cle]
+        if "listes" in cfg:  # settings with sector lists: "keep" ticks the finance one
+            from jobhunter.sources import company_lists
+
+            company_lists.activer(cfg, company_lists.FINANCE)
     cfg_p.write_text(json.dumps(cfg, ensure_ascii=False, indent=1), encoding="utf-8")
     print(
         f"  recherche     : {len(cfg['keywords'])} mot(s)-cle(s)"

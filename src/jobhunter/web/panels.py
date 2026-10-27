@@ -558,6 +558,17 @@ class PanneauxApi:
         else:
             f, c = self._cfg_sources()
             if not inventory.retirer_flux(c, self._defauts(), fl):
+                from jobhunter.sources import company_lists
+
+                if ids := company_lists.origine(c, fl.outil, fl.cle):
+                    titres = ", ".join(
+                        f"« {x.titre} »" for i in ids if (x := company_lists.par_ident(i))
+                    )
+                    return {
+                        "ok": False,
+                        "erreur": f"{fl.nom} vient de la liste {titres} : décoche-la dans la "
+                        "liste, ou suspends-la.",
+                    }
                 return {
                     "ok": False,
                     "erreur": f"{fl.nom} : flux introuvable dans sources_config.json",
@@ -587,6 +598,45 @@ class PanneauxApi:
             "suspendue": oui,
             "message": f"{fl.nom} {'suspendue' if oui else 'reprise'}",
         }
+
+    # --- Company lists by sector (sources.company_lists) -------------------------------
+    def listes_entreprises(self) -> list[dict[str, Any]]:
+        """Each sector's list: ticked or not, and its companies, unticked when suspended."""
+        from jobhunter.sources import company_lists, feeds
+
+        _, c = self._cfg_sources()
+        suspendus = feeds.suspendus(c)
+        listes = company_lists.resume(c)
+        for liste in listes:
+            for e in liste["entreprises"]:
+                e["suivie"] = feeds.cle(e["outil"], e["cle"]) not in suspendus
+        return listes
+
+    def activer_liste(self, ident: str, oui: bool) -> dict[str, Any]:
+        """Ticks or unticks a whole list: its companies join or leave the collection."""
+        from jobhunter.sources import company_lists
+
+        liste = company_lists.par_ident(str(ident or ""))
+        if liste is None:
+            return {"ok": False, "erreur": "liste inconnue"}
+        f, c = self._cfg_sources()
+        company_lists.activer(c, liste.ident, bool(oui))
+        _ecrire_json(f, c)
+        etat = "collectée dès la prochaine collecte" if oui else "n'est plus collectée"
+        return {"ok": True, "message": f"« {liste.titre} » {etat}"}
+
+    def suivre_dans_liste(self, outil: str, cle: str, oui: bool) -> dict[str, Any]:
+        """Ticks or unticks one company of a list (suspends its feed; offers stay)."""
+        from jobhunter.sources import feeds
+
+        if not re.fullmatch(r"[\w.|-]+", str(outil or "")) or not re.fullmatch(
+            r"[\w.|-]+", str(cle or "")
+        ):
+            return {"ok": False, "erreur": "entreprise invalide"}
+        f, c = self._cfg_sources()
+        feeds.suspendre(c, feeds.cle(outil, cle), not oui)
+        _ecrire_json(f, c)
+        return {"ok": True}
 
     # --- Job boards and ATS slugs (the desktop's "Sites d'offres") ---------------------
     def sites_offres(self) -> dict[str, Any]:

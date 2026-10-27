@@ -1,0 +1,18 @@
+{
+ "titre": "Commerce, luxe et grande consommation",
+ "description": "Luxe, mode, cosmétique, agroalimentaire, hôtellerie et commerce en ligne.",
+ "verifie_le": "2026-10-27",
+ "entreprises": [
+  {"nom": "Accor", "outil": "smartrecruiters", "cle": "AccorHotel"},
+  {"nom": "Back Market", "outil": "ashby", "cle": "backmarket"},
+  {"nom": "Chanel", "outil": "workday", "cle": "cc/wd3/ChanelCareers"},
+  {"nom": "Deliveroo", "outil": "ashby", "cle": "deliveroo"},
+  {"nom": "Fielmann", "outil": "workday", "cle": "fielmann/wd3/External"},
+  {"nom": "Mondelez", "outil": "workday", "cle": "mdlz/wd3/External"},
+  {"nom": "Pernod Ricard", "outil": "workday", "cle": "pernodricard/wd3/pernod-ricard"},
+  {"nom": "Red Bull", "outil": "smartrecruiters", "cle": "redbull"},
+  {"nom": "Richemont", "outil": "workday", "cle": "richemont/wd3/richemont"},
+  {"nom": "Unilever", "outil": "workday", "cle": "unilever/wd3/Unilever_Experienced_Professionals"},
+  {"nom": "Vestiaire Collective", "outil": "lever", "cle": "vestiairecollective"}
+ ]
+}

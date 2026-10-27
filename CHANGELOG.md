@@ -4,6 +4,26 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.32.0 — 2026-10-27
+
+- **Company lists by sector**: Sources → Entreprises suivies now starts with « Listes
+  par secteur ». Tick a sector to collect its companies; open it to untick one company
+  (its offers already in the queue stay). Besides the engine's original finance and ESG
+  list: tech and digital (36 companies), health and life sciences (23), industry,
+  energy and engineering (21), retail, luxury and consumer goods (11). Every feed was
+  checked on its public ATS API on 2026-10-27 (Greenhouse, Lever, Ashby,
+  SmartRecruiters, Workday). Before, the built-in companies only suited finance: any
+  other profession started with none and added each one by hand.
+- Nothing changes until a list is ticked. The first tick converts the settings without
+  changing what is collected: the finance list stays ticked when it was in use, and its
+  companies the settings had left out show unticked instead of coming back (checked on
+  real settings: same 69 ATS, 49 Workday and 54 other feeds).
+- Lists with many Workday feeds (health, industry) add a few minutes to the morning
+  collection: each Workday feed is read keyword by keyword.
+- A new profile that does not keep finance starts with no list ticked, and picks its
+  sectors in the app.
+- Removing a company that comes from a list says so, and points to unticking it.
+
 ## 3.31.0 — 2026-10-27
 
 - **Window backdrops work in full size**: with the taskbar hidden, the full-size window

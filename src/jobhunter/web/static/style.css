@@ -688,6 +688,17 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
 .grille-cases { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 16px; margin: 6px 0 12px; }
 .case-colonne { display: flex; align-items: center; gap: 8px; font-size: 13.5px; cursor: pointer; }
 .case-colonne input { accent-color: rgb(var(--c1-rgb)); }
+/* Sector lists (Sources → Entreprises suivies): a tick per list, its companies below. */
+.liste-secteur { padding: 12px 0; border-top: 1px solid var(--filet); display: grid; gap: 4px; }
+.liste-secteur:first-of-type { border-top: 0; }
+.tete-liste { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.tete-liste .case { flex: 1; min-width: 200px; }
+.tete-liste .t { font-weight: 500; }
+label.case { display: flex; align-items: center; gap: 8px; font-size: 13.5px; cursor: pointer; }
+label.case input { accent-color: rgb(var(--c1-rgb)); }
+label.case.pale { color: var(--gris); cursor: default; }
+.entreprises-liste { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px 14px; margin-top: 8px; }
+.entreprises-liste[hidden] { display: none; }
 .cellule-offre .alerte { color: #b2432f; font-weight: 600; }
 
 /* Dark mode (Réglages → Mode). Not ".sombre", the dark card's class: on <html> it added

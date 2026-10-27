@@ -1275,8 +1275,38 @@ function ouvrirCourriels() {
 
 // --- Companies, job boards, access and keys (the desktop's panels) ------------------
 
+// Sector lists (sources.company_lists): tick a sector to collect its companies, then
+// untick one company inside it if needed. Any profession gets companies in two clicks,
+// not only finance (the user, 2026-10-27).
+function carteListes(listes, rafraichir) {
+  const lignes = listes.map((l) => {
+    const suivies = l.entreprises.filter((e) => e.suivie).length;
+    const detail = h("div", { class: "entreprises-liste", hidden: true },
+      l.entreprises.map((e) => h("label", { class: `case${l.active ? "" : " pale"}` },
+        h("input", { type: "checkbox", checked: e.suivie, disabled: !l.active, onchange: async (ev) => {
+          const r = await ecrire("suivre_dans_liste", e.outil, e.cle, ev.target.checked);
+          if (r) rafraichir(); else ev.target.checked = !ev.target.checked;
+        } }), e.nom)));
+    return h("div", { class: `liste-secteur${l.active ? " active" : ""}` },
+      h("div", { class: "tete-liste" },
+        h("label", { class: "case" },
+          h("input", { type: "checkbox", checked: l.active, onchange: async (ev) => {
+            const r = await ecrire("activer_liste", l.id, ev.target.checked);
+            if (r) { toast(r.message); rafraichir(); } else ev.target.checked = !ev.target.checked;
+          } }),
+          h("span", { class: "t" }, l.titre)),
+        h("span", { class: "sous" }, l.active ? `${suivies} sur ${l.entreprises.length} entreprises` : `${l.entreprises.length} entreprises`),
+        bouton("Voir les entreprises", "", () => { detail.hidden = !detail.hidden; })),
+      h("div", { class: "sous" }, l.description), detail);
+  });
+  return h("div", { class: "verre panneau" },
+    h("div", { class: "titre-ligne" }, h("h2", {}, "Listes par secteur")),
+    h("div", { class: "sous", style: "margin:4px 0 12px" }, "Coche les secteurs à collecter. Dans une liste, décoche une entreprise pour la laisser de côté ; ses offres déjà en file restent."),
+    ...lignes);
+}
+
 ONGLETS_SOURCES.entreprises = async (vue) => {
-  const d = await appel("entreprises");
+  const [d, listes] = await Promise.all([appel("entreprises"), appel("listes_entreprises")]);
   if (!d) return vue.replaceChildren(h("div", { class: "vide" }, HORS_APPLI));
   let filtre = "";
   const corps = h("tbody");
@@ -1316,14 +1346,14 @@ ONGLETS_SOURCES.entreprises = async (vue) => {
   };
   champ.addEventListener("keydown", (e) => { if (e.key === "Enter") ajouter(); });
   dessiner();
-  vue.replaceChildren(h("div", { class: "verre panneau" },
+  vue.replaceChildren(h("div", { class: "colonne" }, listes ? carteListes(listes, () => ONGLETS_SOURCES.entreprises(vue)) : null, h("div", { class: "verre panneau" },
     h("div", { class: "titre-ligne" }, h("h2", {}, "Entreprises suivies"), compte),
     h("div", { class: "sous", style: "margin:4px 0 12px" }, "Chaque entreprise est lue par son outil de recrutement (API publique) ou, à défaut, par son site carrière. Les sites d'offres généraux (LinkedIn, WTJ…) sont dans « Sites d'offres »."),
     h("div", { class: "ligne-ajout" }, champ, bouton("Ajouter", "", ajouter, "plein"), bouton("Annuaire…", "loupe", () => ouvrirAnnuaire(champ.value.trim(), () => ONGLETS_SOURCES.entreprises(vue)))),
     h("label", { class: "champ", style: "margin:12px 0" }, svg("loupe"), h("input", { type: "search", placeholder: "Filtrer : entreprise, outil ou adresse", oninput: (e) => { filtre = e.target.value; dessiner(); } })),
     h("div", { class: "defile" }, h("table", { class: "tableau-simple" },
       h("thead", {}, h("tr", {}, ["Entreprise", "Lue par", "Dernière collecte", "Offres", "Fit max", "Dernière", ""].map((t) => h("th", {}, t)))),
-      corps))));
+      corps)))));
 };
 
 async function ouvrirAnnuaire(texte, apres) {

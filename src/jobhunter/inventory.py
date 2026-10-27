@@ -116,11 +116,15 @@ def flux_suivis(
         autres: [(tool, key, name)]; the key may carry "a|b" variants.
         sites: career sites read by the browser (`unique_domains.txt`).
     """
+    from jobhunter.sources.company_lists import noms_connus
+
+    noms = noms_connus()  # a list's slug has its real name: "realtimeboardglobal" is Miro
     sortie: list[Flux] = []
     for outil, slugs in (ats_slugs or {}).items():
         gabarit = URL_FLUX.get(outil, "")
         for slug in slugs or []:
-            sortie.append(Flux(_nom_de_slug(slug), outil, slug, gabarit.format(slug)))
+            nom = noms.get((outil, str(slug).lower())) or _nom_de_slug(slug)
+            sortie.append(Flux(nom, outil, slug, gabarit.format(slug)))
     for tenant, hote, site, nom in (tuple(f) for f in workday):
         lien = f"https://{tenant}.{hote}.myworkdayjobs.com/{site}"
         sortie.append(Flux(nom or _nom_de_slug(tenant), "workday", tenant, lien))

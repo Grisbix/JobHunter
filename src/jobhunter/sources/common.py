@@ -136,10 +136,20 @@ SOURCES_CFG = HERE / "sources_config.json"
 def _load_cfg() -> None:
     """sources_config.json — overrides the defaults: keywords      [keywords] ats_slugs     {ats: [slugs]} workday_flux  [[tenant, host, site, name], ...]   [] = no Workday feed autres_flux   [[type, key, name], ...]            [] = no other ATS. The shipped company lists target finance and ESG: a profile in another profession empties them (first_launch.py) and adds its own."""
     global KEYWORDS, ATS_SLUGS, WORKDAY_FLUX, AUTRES_FLUX
+    from jobhunter.sources import company_lists
+
+    # From the shipped lists each time: a second call (the web panels reload) used to
+    # keep what the first one had set when a key had since left the file.
+    ATS_SLUGS = {k: list(v) for k, v in DEFAUTS_FLUX[0].items()}
+    WORKDAY_FLUX, AUTRES_FLUX = list(DEFAUTS_FLUX[1]), list(DEFAUTS_FLUX[2])
     try:
         cfg = json.loads(SOURCES_CFG.read_text(encoding="utf-8"))
         if cfg.get("keywords"):
             KEYWORDS = cfg["keywords"]  # type: ignore[name-defined]  # valeur paresseuse (_PARESSEUX)
+        # Ticked company lists (3.32): hand-added feeds plus each list's.
+        if (effectifs := company_lists.flux_effectifs(cfg)) is not None:
+            ATS_SLUGS, WORKDAY_FLUX, AUTRES_FLUX = effectifs
+            return
         if "ats_slugs" in cfg:
             ATS_SLUGS = cfg["ats_slugs"] or {}
         if "workday_flux" in cfg:
@@ -704,6 +714,14 @@ WORKDAY_FLUX = [
     ("ocbc", "wd102", "External", "OCBC"),
     ("bis", "wd3", "External", "BRI (BIS)"),
 ]
+
+# The engine's lists as shipped, before sources_config.json replaces them: the "finance"
+# company list (sources.company_lists), and the base _load_cfg starts again from.
+DEFAUTS_FLUX: tuple[dict[str, list[str]], list[tuple[str, ...]], list[tuple[str, ...]]] = (
+    {k: list(v) for k, v in ATS_SLUGS.items()},
+    list(WORKDAY_FLUX),
+    list(AUTRES_FLUX),
+)
 
 # Tracking parameters: present or not depending on where the link comes from, they do
 # NOT change the offer. Without removing them, dedup by exact URL does not work

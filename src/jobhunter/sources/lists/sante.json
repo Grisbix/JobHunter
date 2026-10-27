@@ -1,0 +1,30 @@
+{
+ "titre": "Santé et sciences de la vie",
+ "description": "Laboratoires pharmaceutiques, dispositifs médicaux, analyses et e-santé.",
+ "verifie_le": "2026-10-27",
+ "entreprises": [
+  {"nom": "Abbott", "outil": "workday", "cle": "abbott/wd5/abbottCareers"},
+  {"nom": "Alan", "outil": "ashby", "cle": "alan"},
+  {"nom": "AstraZeneca", "outil": "workday", "cle": "astrazeneca/wd3/Careers"},
+  {"nom": "Biogen", "outil": "workday", "cle": "biibhr/wd3/external"},
+  {"nom": "Dexcom", "outil": "workday", "cle": "dexcom/wd1/Dexcom"},
+  {"nom": "Doctolib", "outil": "greenhouse", "cle": "doctolib"},
+  {"nom": "Eurofins", "outil": "smartrecruiters", "cle": "eurofins"},
+  {"nom": "Flo Health", "outil": "greenhouse", "cle": "flohealth"},
+  {"nom": "GSK", "outil": "workday", "cle": "gsk/wd5/gskCareers"},
+  {"nom": "Inato", "outil": "ashby", "cle": "inato"},
+  {"nom": "Lonza", "outil": "workday", "cle": "lonza/wd3/lonza_Careers"},
+  {"nom": "Medtronic", "outil": "workday", "cle": "medtronic/wd1/MedtronicCareers"},
+  {"nom": "Moderna", "outil": "workday", "cle": "modernatx/wd1/M_tx"},
+  {"nom": "Nabla", "outil": "ashby", "cle": "nabla"},
+  {"nom": "Novartis", "outil": "workday", "cle": "novartis/wd3/Novartis_Careers"},
+  {"nom": "Oura", "outil": "greenhouse", "cle": "oura"},
+  {"nom": "Owkin", "outil": "ashby", "cle": "owkin"},
+  {"nom": "Pfizer", "outil": "workday", "cle": "pfizer/wd1/PfizerCareers"},
+  {"nom": "Philips", "outil": "workday", "cle": "philips/wd3/jobs-and-careers"},
+  {"nom": "Roche", "outil": "workday", "cle": "roche/wd3/roche-ext"},
+  {"nom": "Sandoz", "outil": "workday", "cle": "sandoz/wd103/sandoz_Careers"},
+  {"nom": "Sanofi", "outil": "workday", "cle": "sanofi/wd3/SanofiCareers"},
+  {"nom": "Thermo Fisher Scientific", "outil": "workday", "cle": "thermofisher/wd5/thermofisherCareers"}
+ ]
+}

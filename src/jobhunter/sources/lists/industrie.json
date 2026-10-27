@@ -1,0 +1,28 @@
+{
+ "titre": "Industrie, énergie et ingénierie",
+ "description": "Aéronautique, automobile, matériaux, énergies renouvelables, BTP et sociétés d'ingénierie.",
+ "verifie_le": "2026-10-27",
+ "entreprises": [
+  {"nom": "Air Liquide", "outil": "workday", "cle": "airliquidehr/wd3/AirLiquideExternalCareer"},
+  {"nom": "Airbus", "outil": "workday", "cle": "ag/wd3/Airbus"},
+  {"nom": "Alten", "outil": "smartrecruiters", "cle": "alten"},
+  {"nom": "Assystem", "outil": "smartrecruiters", "cle": "Assystem"},
+  {"nom": "Bosch", "outil": "smartrecruiters", "cle": "BoschGroup"},
+  {"nom": "Continental", "outil": "smartrecruiters", "cle": "continental"},
+  {"nom": "Copenhagen Infrastructure Partners", "outil": "workday", "cle": "cip/wd103/CIP_Careers"},
+  {"nom": "Eiffage", "outil": "workday", "cle": "eiffage/wd3/Eiffage_Careers"},
+  {"nom": "ENVEA", "outil": "workday", "cle": "envea/wd103/ExternalCareerSite"},
+  {"nom": "Hitachi Energy", "outil": "workday", "cle": "hitachi/wd1/hitachi"},
+  {"nom": "Loft Orbital", "outil": "lever", "cle": "loftorbital"},
+  {"nom": "Magna", "outil": "workday", "cle": "magna/wd3/magna"},
+  {"nom": "Masdar", "outil": "smartrecruiters", "cle": "masdar"},
+  {"nom": "Nadara", "outil": "workday", "cle": "nadara/wd3/External"},
+  {"nom": "Recurrent Energy", "outil": "workday", "cle": "recurrentenergy/wd12/recurrentenergy"},
+  {"nom": "Saint-Gobain", "outil": "smartrecruiters", "cle": "saintgobain"},
+  {"nom": "Scalian", "outil": "smartrecruiters", "cle": "scalian"},
+  {"nom": "SOCOTEC", "outil": "smartrecruiters", "cle": "socotec"},
+  {"nom": "Thales", "outil": "workday", "cle": "thales/wd3/Careers"},
+  {"nom": "Valeo", "outil": "workday", "cle": "valeo/wd3/valeo_Jobs"},
+  {"nom": "Verkor", "outil": "lever", "cle": "verkor"}
+ ]
+}

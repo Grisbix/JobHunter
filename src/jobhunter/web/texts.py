@@ -535,6 +535,86 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "Stage": ("Internship", "Praktikum", "Prácticas"),
     "Alternance": ("Work-study", "Duales Studium", "Formación dual"),
     "{n} entreprises": ("{n} companies", "{n} Unternehmen", "{n} empresas"),
+    # Sector lists (Sources → Entreprises suivies), and the lists' own texts.
+    "{n} sur {m} entreprises": (
+        "{n} of {m} companies",
+        "{n} von {m} Unternehmen",
+        "{n} de {m} empresas",
+    ),
+    "Listes par secteur": ("Lists by sector", "Listen nach Branche", "Listas por sector"),
+    "Voir les entreprises": ("See the companies", "Unternehmen anzeigen", "Ver las empresas"),
+    "Coche les secteurs à collecter. Dans une liste, décoche une entreprise pour la laisser de côté ; ses offres déjà en file restent.": (
+        "Tick the sectors to collect. In a list, untick a company to leave it aside; its "
+        "offers already in the queue stay.",
+        "Hake die Branchen an, die gesammelt werden sollen. In einer Liste entferne den "
+        "Haken bei einem Unternehmen, um es auszulassen; seine Angebote in der Liste "
+        "bleiben.",
+        "Marca los sectores que quieres recoger. En una lista, desmarca una empresa para "
+        "dejarla de lado; sus ofertas ya en la cola se quedan.",
+    ),
+    "« {liste} » collectée dès la prochaine collecte": (
+        "« {liste} » collected from the next collection",
+        "« {liste} » wird ab der nächsten Sammlung gesammelt",
+        "« {liste} » se recoge desde la próxima recogida",
+    ),
+    "« {liste} » n'est plus collectée": (
+        "« {liste} » is no longer collected",
+        "« {liste} » wird nicht mehr gesammelt",
+        "« {liste} » ya no se recoge",
+    ),
+    "{nom} vient de la liste {listes} : décoche-la dans la liste, ou suspends-la.": (
+        "{nom} comes from the list {listes}: untick it in the list, or suspend it.",
+        "{nom} stammt aus der Liste {listes}: Haken in der Liste entfernen oder pausieren.",
+        "{nom} viene de la lista {listes}: desmárcala en la lista o suspéndela.",
+    ),
+    "Finance et ESG": ("Finance and ESG", "Finanzen und ESG", "Finanzas y ESG"),
+    "Banques, gestion d'actifs, assurance, conseil et acteurs de la finance durable (la liste d'origine du moteur).": (
+        "Banks, asset management, insurance, consulting and sustainable finance players "
+        "(the engine's original list).",
+        "Banken, Vermögensverwaltung, Versicherungen, Beratung und Akteure der "
+        "nachhaltigen Finanzen (die ursprüngliche Liste).",
+        "Bancos, gestión de activos, seguros, consultoría y actores de las finanzas "
+        "sostenibles (la lista original del motor).",
+    ),
+    "Tech et numérique": ("Tech and digital", "Tech und Digitales", "Tecnología y digital"),
+    "Éditeurs de logiciels, start-up et scale-up, ESN et conseil numérique, surtout en France et en Europe.": (
+        "Software companies, start-ups and scale-ups, IT services and digital consulting, "
+        "mostly in France and Europe.",
+        "Softwarehäuser, Start-ups und Scale-ups, IT-Dienstleister und Digitalberatung, "
+        "vor allem in Frankreich und Europa.",
+        "Editores de software, start-ups y scale-ups, servicios informáticos y "
+        "consultoría digital, sobre todo en Francia y Europa.",
+    ),
+    "Santé et sciences de la vie": (
+        "Health and life sciences",
+        "Gesundheit und Life Sciences",
+        "Salud y ciencias de la vida",
+    ),
+    "Laboratoires pharmaceutiques, dispositifs médicaux, analyses et e-santé.": (
+        "Pharmaceutical companies, medical devices, testing and e-health.",
+        "Pharmaunternehmen, Medizinprodukte, Analytik und E-Health.",
+        "Laboratorios farmacéuticos, dispositivos médicos, análisis y salud digital.",
+    ),
+    "Industrie, énergie et ingénierie": (
+        "Industry, energy and engineering",
+        "Industrie, Energie und Ingenieurwesen",
+        "Industria, energía e ingeniería",
+    ),
+    "Aéronautique, automobile, matériaux, énergies renouvelables, BTP et sociétés d'ingénierie.": (
+        "Aerospace, automotive, materials, renewable energy, construction and engineering firms.",
+        "Luft- und Raumfahrt, Automobil, Werkstoffe, erneuerbare Energien, Bau und Ingenieurbüros.",
+        "Aeronáutica, automoción, materiales, energías renovables, construcción e ingenierías.",
+    ),
+    "Commerce, luxe et grande consommation": (
+        "Retail, luxury and consumer goods",
+        "Handel, Luxus und Konsumgüter",
+        "Comercio, lujo y gran consumo",
+    ),
+    "Luxe, mode, cosmétique, agroalimentaire, hôtellerie et commerce en ligne.": (
+        "Luxury, fashion, cosmetics, food, hospitality and e-commerce.",
+        "Luxus, Mode, Kosmetik, Lebensmittel, Hotellerie und Onlinehandel.",
+        "Lujo, moda, cosmética, alimentación, hostelería y comercio en línea.",
+    ),
     "MORT": ("DEAD", "TOT", "MUERTO"),
     "FERMEE": ("CLOSED", "GESCHLOSSEN", "CERRADA"),
     "EXPIREE": ("EXPIRED", "ABGELAUFEN", "CADUCADA"),
