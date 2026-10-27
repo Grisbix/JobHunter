@@ -64,8 +64,9 @@ Data kept on your computer
 - Price: free. Markets: all.
 - Age rating questionnaire: no user-generated content shared, no purchases, no
   location sharing → 3+.
-- Screenshots: `docs/screenshots/web_home.png`, `web_offers_dark.png`, `offers.png`,
-  `letter.png` (at least 1366×768 recommended).
+- Screenshots (1440×900, fictitious profile, `tools/screenshots.py --web-seul`):
+  French listing → `docs/store/screenshots_fr/`, English listing → `docs/screenshots/`
+  (`web_home.png`, `web_offers.png`, `web_offers_dark.png`, `web_applications.png`).
 - Capability `runFullTrust` justification: « Desktop application packaged from a
   Win32 program; it runs its own browser engine to read job sites and writes
   documents in the user's folder. »

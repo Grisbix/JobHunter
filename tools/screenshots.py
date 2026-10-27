@@ -10,10 +10,12 @@ chosen language and captures the window:
 - `offers.png`: the ranked offers, the first one selected (an application with its
   status history and its kept posting; one offer with a knock-out ⚠);
 - `letter.png`: an offer opened in full, its letter on the right;
-- `web_home.png`, `web_offers_dark.png`: the web interface (3.27), its home screen in
-  light mode and its offers in dark mode. The page runs in Playwright's Chromium, its
-  calls answered by the real `jobhunter.web.api.Api` on the same fictitious folder:
-  nothing of the screen behind is captured.
+- `web_home.png`, `web_offers_dark.png`, `web_offers.png`, `web_applications.png`:
+  the web interface — the application's window
+  since 3.27, and what the Microsoft Store shows — its screens in light mode, the
+  offers in dark mode too. The page runs in Playwright's Chromium, its calls answered
+  by the real `jobhunter.web.api.Api` on the same fictitious folder: nothing of the
+  screen behind is captured. `--web-seul` takes only these, without opening a window.
 
 Nothing of the user's own data is read: the folder is created in a temporary
 directory and `JOBHUNTER_RACINE` points to it. Windows only (screen capture by PIL).
@@ -231,9 +233,18 @@ window.pywebview = { api: new Proxy({}, { get: (_, nom) => (...args) => window._
 """
 
 
-def capturer_web(racine: Path, sortie: Path) -> None:
-    """The web interface's two screenshots, rendered headless (see the module's doc)."""
-    os.environ.update(JOBHUNTER_RACINE=str(racine))
+# (file, light or dark mode, screen) of the web interface's screenshots.
+ECRANS_WEB = (
+    ("web_home.png", "clair", "accueil"),
+    ("web_offers_dark.png", "sombre", "offres"),
+    ("web_offers.png", "clair", "offres"),
+    ("web_applications.png", "clair", "candidatures"),
+)
+
+
+def capturer_web(racine: Path, sortie: Path, langue: str = "en") -> None:
+    """The web interface's screenshots, rendered headless (see the module's doc)."""
+    os.environ.update(JOBHUNTER_RACINE=str(racine), JOBHUNTER_LANGUE=langue)
     os.environ.pop("JOBHUNTER_PRINCIPALE", None)
     from playwright.sync_api import sync_playwright
 
@@ -266,8 +277,8 @@ def capturer_web(racine: Path, sortie: Path) -> None:
             page.screenshot(path=str(sortie / nom))
             print("  ", sortie / nom)
 
-        photo("web_home.png", "clair", "accueil")
-        photo("web_offers_dark.png", "sombre", "offres")
+        for nom, mode, ecran in ECRANS_WEB:
+            photo(nom, mode, ecran)
         nav.close()
 
 
@@ -276,6 +287,7 @@ def main() -> int:
     a.add_argument("--lang", default="en", help="interface language: en, fr, de, es")
     a.add_argument("--out", default=str(REPO / "docs" / "screenshots"))
     a.add_argument("--garder", action="store_true", help="keep the fictitious folder")
+    a.add_argument("--web-seul", action="store_true", help="web screens only, no window")
     args = a.parse_args()
     sortie = Path(args.out).resolve()
     sortie.mkdir(parents=True, exist_ok=True)
@@ -287,8 +299,9 @@ def main() -> int:
         jobhunter(racine, "documents", "--top", "1")
         jobhunter(racine, "reposts")  # the Signal column: knock-outs
         jobhunter(racine, "postings")  # the posting kept for the application
-        capturer_web(racine, sortie)
-        capturer(racine, args.lang, sortie)
+        capturer_web(racine, sortie, args.lang)
+        if not args.web_seul:
+            capturer(racine, args.lang, sortie)
     finally:
         if args.garder:
             print("dossier fictif :", racine)
