@@ -9,6 +9,7 @@ requires-python = ">=3.12"
 # Same bounds as requirements.txt, which install.bat / install.sh keep.
 dependencies = [
     "customtkinter>=5.2.2,<7",
+    "pywebview>=6.2,<7",
     "tkinterdnd2>=0.4.3,<1",
     "playwright>=1.60,<2",
     "python-docx>=1.2,<2",
@@ -29,7 +30,8 @@ jobhunter = "jobhunter.cli:main"
 # export does not need it.
 [project.optional-dependencies]
 gmail = ["google-auth-oauthlib>=1.2,<2"]
-# The web interface prototype (python -m jobhunter.web): a native window drawing HTML.
+# The application's window has been the web interface since 3.29: pywebview is a
+# dependency; this extra stays so that `jobhunter[web]` still installs.
 web = ["pywebview>=6.2,<7"]
 
 [dependency-groups]

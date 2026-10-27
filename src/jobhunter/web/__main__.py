@@ -143,6 +143,8 @@ def main() -> int:
         easy_drag=False,
         transparent=True,
     )
+    if fenetre is None:  # pywebview gives no window: the desktop one opens instead
+        return 1
     cadre = _Cadre(fenetre)
     api._fenetre = fenetre
     api._basculer = cadre.basculer

@@ -119,9 +119,10 @@ def aiguiller(argv: Sequence[str]) -> int:
 
         return commande(args)
     # By its name, like `jobhunter app`: the engine does not import the interface.
-    # jobhunter.app.__main__ ensures the profile, then opens the window.
-    runpy.run_module("jobhunter.app", run_name="__main__", alter_sys=True)
-    return 0
+    # jobhunter.launch ensures the profile, then opens the web window (3.29).
+    from jobhunter.launch import main as ouvrir
+
+    return ouvrir()
 
 
 def main() -> int:

@@ -150,6 +150,8 @@ MODULES_CENTRAUX = (
     "jobhunter.programs.update",
     # the application itself (without opening a window): an update that breaks it
     # would be cancelled instead of leaving a double-click without effect.
+    "jobhunter.launch",
+    "jobhunter.web.api",
     "jobhunter.app",
 )
 

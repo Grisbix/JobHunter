@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""JobHunter — the desktop application. Double-click JobHunter.pyw.
+"""JobHunter — the application. Double-click JobHunter.pyw.
 
 The code lives in src/jobhunter; this file is only the launcher, with no installation:
   double-click / `python JobHunter.pyw`        the application
@@ -31,9 +31,6 @@ if __name__ == "__main__":
         from jobhunter.cli import main as _commande
 
         sys.exit(_commande(sys.argv[1:]))
-    from jobhunter.welcome import assurer_profil
+    from jobhunter.launch import main  # the web window, the desktop one as fallback
 
-    assurer_profil()
-    from jobhunter.app.window import main
-
-    main()
+    sys.exit(main())

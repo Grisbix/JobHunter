@@ -77,7 +77,8 @@ def controler(dossier: Path) -> None:
         "    try: importlib.import_module('jobhunter.programs.' + m.name)\n"
         "    except SystemExit: pass\n"
         "    except Exception as e: ko.append(f'{m.name}: {type(e).__name__}: {e}')\n"
-        "import jobhunter.app.window, jobhunter.sources.cli\n"
+        "import jobhunter.app.window, jobhunter.sources.cli, jobhunter.launch\n"
+        "import jobhunter.web.api, webview  # the application's window since 3.29\n"
         "print('KO', ko) if ko else print('programmes charges')\n"
         "raise SystemExit(1 if ko else 0)\n"
     )

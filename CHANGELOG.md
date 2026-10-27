@@ -4,6 +4,16 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.29.0 — 2026-10-27
+
+- **The application opens in the new design**: double-clicking JobHunter (the installed
+  app, `JobHunter.pyw` or `jobhunter app`) now opens the web window, which has every page
+  of the classic one. pywebview becomes a dependency and ships with the installer.
+- The classic window still opens by itself when the new one cannot (no web view on the
+  machine), and on purpose with `jobhunter bureau`: it keeps the guided panel that
+  applies to several offers in a row, the one thing the new window does not do.
+- Switching profile, from either window, reopens the application in the new design.
+
 ## 3.28.0 — 2026-10-27
 
 - **An update shows as a button at the top of the window**: “Mettre à jour (X)”, at

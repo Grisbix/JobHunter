@@ -186,18 +186,13 @@ no facts**: whatever is not in your CV, it asks you.
 `jobhunter` alone lists every command (from source: `python JobHunter.pyw <command>`).
 Release notes: [`CHANGELOG.md`](CHANGELOG.md).
 
-### The new interface (preview, from source)
+### The window
 
-Since 3.27 the same app also exists as a modern window drawn in HTML: same screens, same
-data, light or dark mode (Settings → Mode, or follow Windows). It needs one extra library:
-
-```
-python -m pip install "jobhunter[web]"
-python -m jobhunter.web
-```
-
-It does everything the classic app does except applying to several offers in a row, which
-stays in the classic app. It never sends an application either.
+Since 3.29 the application opens in its modern window drawn in HTML (pywebview, installed
+with JobHunter): light or dark mode (Settings → Mode, or follow Windows). The classic
+window only opens when this one cannot (no web view on the machine), or on purpose with
+`jobhunter bureau`: it keeps the guided panel that applies to several offers in a row, the
+one thing the new window does not do. Neither window ever sends an application.
 
 ## The profile
 

@@ -224,7 +224,7 @@ class ProfilsMixin:
         elif (principale / "JobHunter.pyw").exists():
             cmd = [sys.executable, str(principale / "JobHunter.pyw")]
         else:
-            cmd = [sys.executable, "-m", "jobhunter.app"]
+            cmd = [sys.executable, "-m", "jobhunter.launch"]
         subprocess.Popen(cmd, cwd=str(principale), env=env)  # nosec B603 : our own program
         self.root.destroy()
 

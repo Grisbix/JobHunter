@@ -804,6 +804,7 @@ dependencies = [
     { name = "playwright" },
     { name = "pymupdf" },
     { name = "python-docx" },
+    { name = "pywebview" },
     { name = "requests" },
     { name = "tkinterdnd2" },
 ]
@@ -836,6 +837,7 @@ requires-dist = [
     { name = "playwright", specifier = ">=1.60,<2" },
     { name = "pymupdf", specifier = ">=1.27,<2" },
     { name = "python-docx", specifier = ">=1.2,<2" },
+    { name = "pywebview", specifier = ">=6.2,<7" },
     { name = "pywebview", marker = "extra == 'web'", specifier = ">=6.2,<7" },
     { name = "requests", specifier = ">=2.34,<3" },
     { name = "tkinterdnd2", specifier = ">=0.4.3,<1" },

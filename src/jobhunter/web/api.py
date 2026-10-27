@@ -1544,14 +1544,19 @@ class Api(PanneauxApi, AtelierApi):
 
     def _relancer(self) -> None:
         """Starts the web interface again on the active profile, then closes this window."""
-        from jobhunter import profiles
+        from jobhunter import frozen, profiles
 
         principale = profiles.principale()
         env = {k: v for k, v in os.environ.items() if k != profiles.ENV_PRINCIPALE}
         env["JOBHUNTER_RACINE"] = str(principale)
-        subprocess.Popen(  # nosec B603 : our own program
-            [sys.executable, "-m", "jobhunter.web"], cwd=str(principale), env=env
-        )
+        # As the desktop's _relancer: the compiled app, else the folder's launcher.
+        if frozen.est_gele():
+            cmd = [sys.executable]
+        elif (principale / "JobHunter.pyw").exists():
+            cmd = [sys.executable, str(principale / "JobHunter.pyw")]
+        else:
+            cmd = [sys.executable, "-m", "jobhunter.launch"]
+        subprocess.Popen(cmd, cwd=str(principale), env=env)  # nosec B603 : our own program
         if self._fenetre is not None:
             self._fenetre.destroy()
 

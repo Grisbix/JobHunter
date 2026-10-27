@@ -20,7 +20,7 @@ import pytest
 
 SRC = Path(__file__).resolve().parent.parent / "src" / "jobhunter"
 INTERFACE = ("tkinter", "customtkinter", "jobhunter.app")
-DROIT_A_L_INTERFACE = ("app", "welcome", "welcome_tour")
+DROIT_A_L_INTERFACE = ("app", "welcome", "welcome_tour", "launch")
 
 
 def modules():

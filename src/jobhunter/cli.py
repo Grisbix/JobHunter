@@ -28,7 +28,11 @@ from jobhunter import root as racine
 
 # command -> (module, what it does). The programs live in jobhunter.programs.
 COMMANDES = {
-    "app": ("jobhunter.app", "ouvre l'application (comme JobHunter.pyw)"),
+    "app": ("jobhunter.launch", "ouvre l'application (comme JobHunter.pyw)"),
+    "bureau": (
+        "jobhunter.app",
+        "l'ancienne fenêtre de bureau (panneau de candidature guidée)",
+    ),
     "collect": ("jobhunter.sources", "collecte les offres et les fusionne dans la file"),
     "sort": ("jobhunter.scoring.sorting", "retire de la file ce qui ne colle pas au profil"),
     "documents": ("jobhunter.programs.generate_docs", "CV et lettre par offre"),
@@ -165,11 +169,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     if module is None:
         print(f"jobhunter : commande inconnue « {cmd} »\n\n{aide()}", file=sys.stderr)
         return 2
-    if module == "jobhunter.app":
+    if module in ("jobhunter.launch", "jobhunter.app"):
         # The window has no options: `app --help` opened it, and its background
         # collection outlived a caller that closed it (22/10/2026).
         if any(a in ("-h", "--help") for a in reste):
-            print(f"jobhunter app — {COMMANDES['app'][1]}. Aucune option.")
+            print(f"jobhunter {cmd} — {COMMANDES[cmd][1]}. Aucune option.")
             return 0
         from jobhunter.welcome import assurer_profil
 
