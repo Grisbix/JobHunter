@@ -48,6 +48,7 @@ _SOUS_MODULES = (
     "francetravail",
     "aggregators",
     "freehire",
+    "arbeitsagentur",
     "cli",
 )
 _MODULES = _facade.installer(__name__, _SOUS_MODULES)

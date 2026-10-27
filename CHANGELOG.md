@@ -4,6 +4,19 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.40.0 — 2026-10-27
+
+- **New source: Bundesagentur für Arbeit**, Germany's public employment service, by
+  the search API arbeitsagentur.de itself uses (no account). ESG, Nachhaltigkeit,
+  CSRD, sustainable finance and analyst keywords, last 30 days: about 250 offers in
+  Germany and Austria on a first try. `collect --arbeitsagentur`; collected every
+  morning with eFinancialCareers and EURES.
+- **freehire is no longer limited to France**: every country by default, or the ones
+  listed in `freehire_pays` of `sources_config.json` (e.g. `["fr", "de", "ch"]`).
+  The countries your profile excludes are still set aside.
+- **The company directory knows 56 more companies**, from the career-ops project
+  (MIT licence), including Workable and Recruitee job boards.
+
 ## 3.39.0 — 2026-10-27
 
 - **Follow the well-rated companies in one click**: Sources → « Entreprises vues »,

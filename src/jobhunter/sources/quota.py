@@ -27,6 +27,7 @@ PLAFONDS: dict[str, int | None] = {
     "jooble": None,
     "francetravail": None,
     "freehire": 1500,
+    "arbeitsagentur": None,
 }
 
 

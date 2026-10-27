@@ -14,6 +14,8 @@ or two requests; the daily ceiling is shared by all profiles (sources.quota).
 The descriptions are the index's preview: `desc_partielle`, as for Adzuna.
 """
 
+import json
+import re
 import time
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
@@ -34,7 +36,7 @@ API = "https://freehire.me/api/v1/jobs/search"
 # freehire asks callers to name their project, to warn them before a limit changes.
 UA = {"User-Agent": "Grisbix/JobHunter (+https://github.com/Grisbix/JobHunter)"}
 PAR_PAGE = 50  # the API's maximum
-PAGES = 2
+PAGES = 3
 JOURS = 30
 # Its own words, the telling one first. Its search requires the first words and drops
 # the last ones when too few postings match: « analyste ESG » brought back every
@@ -59,6 +61,24 @@ MOTS = (
 )
 
 
+def pays() -> list[str]:
+    """The countries searched: `freehire_pays` in sources_config.json, all if absent or empty.
+
+    The user, 2026-10-27: « ne te limite pas à la France ». The countries the profile
+    excludes (`pays_exclus`) are still set aside by the merge, like every source's.
+    """
+    try:
+        cfg = json.loads(_commun.SOURCES_CFG.read_text(encoding="utf-8"))
+    except (OSError, ValueError, AttributeError):
+        return []
+    v = cfg.get("freehire_pays") if isinstance(cfg, dict) else None
+    return (
+        [str(c).lower() for c in v if re.fullmatch(r"[A-Za-z]{2}", str(c))]
+        if isinstance(v, list)
+        else []
+    )
+
+
 def lien_d_origine(url: str) -> str:
     """The company's own link, without the `utm_source=freehire.me` freehire adds."""
     p = urlsplit(url)
@@ -72,7 +92,7 @@ def _entreprise(nom: str | None) -> str:
 
 
 def scan_freehire() -> list[dict[str, Any]]:
-    """The collection keywords, in France, posted in the last 30 days.
+    """The collection keywords, posted in the last 30 days, in every country by default.
 
     Returns:
         The offers, with the company's own links.
@@ -82,6 +102,7 @@ def scan_freehire() -> list[dict[str, Any]]:
     _EX = _commun.contrats_exclus()
     garde, out, vus = _Garde("freehire"), [], set()
     faites = 0
+    les_pays = pays()
     for mot in MOTS:
         for page in range(PAGES):
             if garde.fini or _quota_atteint("freehire"):
@@ -97,7 +118,7 @@ def scan_freehire() -> list[dict[str, Any]]:
                     headers=UA,
                     params={
                         "q": mot,
-                        "countries": "fr",
+                        **({"countries": les_pays} if les_pays else {}),
                         "posted_within_days": JOURS,
                         "limit": PAR_PAGE,
                         "offset": page * PAR_PAGE,

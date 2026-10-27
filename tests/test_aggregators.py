@@ -259,11 +259,70 @@ def test_freehire_offre_et_provenance(freehire):
     assert o.get("desc_partielle")
 
 
-def test_freehire_france_30_jours_et_projet_nomme(freehire):
-    url, kw = freehire[2][0]
+@pytest.fixture
+def sans_config(monkeypatch, tmp_path):
+    from jobhunter.sources import common
+
+    monkeypatch.setattr(common, "SOURCES_CFG", tmp_path / "sources_config.json")
+    return common.SOURCES_CFG
+
+
+def test_freehire_monde_30_jours_et_projet_nomme(sans_config, agreg):
+    _, _, appels, _ = agreg(js.scan_freehire, [R(200, PAGE_FREEHIRE)])
+    url, kw = appels[0]
     assert url == js.freehire.API
-    assert kw["params"]["countries"] == "fr" and kw["params"]["posted_within_days"] == 30
+    assert "countries" not in kw["params"] and kw["params"]["posted_within_days"] == 30
     assert "JobHunter" in kw["headers"]["User-Agent"]
+
+
+def test_freehire_pays_choisis(sans_config, agreg):
+    sans_config.write_text(
+        json.dumps({"freehire_pays": ["DE", "ch", "x", "fra"]}), encoding="utf-8"
+    )
+    _, _, appels, _ = agreg(js.scan_freehire, [R(200, PAGE_FREEHIRE)])
+    assert appels[0][1]["params"]["countries"] == ["de", "ch"]
+
+
+# ── Bundesagentur für Arbeit (public Jobsuche API, v6) ───────────────────────
+PAGE_BA = {
+    "ergebnisliste": [
+        {
+            "stellenangebotsTitel": "Senior Manager ESG (m/w/d)",
+            "firma": "Alpha Wohnen GmbH",
+            "referenznummer": "14012-ABC/1-S",
+            "hauptberuf": "ESG-Manager/in",
+            "datumErsteVeroeffentlichung": "2026-10-20",
+            "stellenlokationen": [{"adresse": {"ort": "Frankfurt am Main", "land": "DEUTSCHLAND"}}],
+        },
+        {
+            "stellenangebotsTitel": "ESG Specialist (m/w/d)",
+            "firma": "Beta AG",
+            "referenznummer": "10001-2-S",
+            "stellenlokationen": [{"adresse": {"ort": "Salzburg", "land": "OESTERREICH"}}],
+        },
+        {"stellenangebotsTitel": "Sans référence", "firma": "Gamma"},
+    ]
+}
+
+
+def test_arbeitsagentur_offres_lien_et_lieu(agreg):
+    offres, _, appels, _ = agreg(js.scan_arbeitsagentur, [R(200, PAGE_BA)])
+    assert [o["entreprise"] for o in offres] == ["Alpha Wohnen GmbH", "Beta AG"]
+    assert offres[0]["url"] == js.arbeitsagentur.FICHE + "14012-ABC%2F1-S"
+    assert offres[0]["location"] == "Frankfurt am Main, Deutschland"
+    assert offres[1]["location"] == "Salzburg, Österreich"
+    url, kw = appels[0]
+    assert url == js.arbeitsagentur.API and kw["params"]["angebotsart"] == 1
+    assert (
+        kw["headers"]["X-API-Key"] == "jobboerse-jobsuche"
+        and "JobHunter" in kw["headers"]["User-Agent"]
+    )
+    assert len(appels) == len(js.arbeitsagentur.MOTS)  # one request per keyword
+
+
+def test_arbeitsagentur_refus_arrete(agreg):
+    offres, _, appels, _ = agreg(js.scan_arbeitsagentur, [R(403)] * 20)
+    assert offres == [] and len(appels) < len(js.arbeitsagentur.MOTS)
 
 
 def test_freehire_page_courte_pas_de_page_suivante(freehire):

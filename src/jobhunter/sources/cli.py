@@ -15,6 +15,7 @@ from jobhunter.sources import common as _commun
 from jobhunter.sources import source_yield as _rendement
 from jobhunter.sources.aggregators import scan_adzuna, scan_jooble
 from jobhunter.sources.apec import scan_apec
+from jobhunter.sources.arbeitsagentur import scan_arbeitsagentur
 from jobhunter.sources.ats import scan_ats
 from jobhunter.sources.common import FRESH, INCIDENTS, _load_cfg, incidents_resume
 from jobhunter.sources.efc import EFC_SITES, scan_efc
@@ -133,6 +134,11 @@ def main() -> int:
         help="freehire.me (API publique sans cle, sites carrieres des entreprises)",
     )
     ap.add_argument(
+        "--arbeitsagentur",
+        action="store_true",
+        help="Bundesagentur fur Arbeit (API publique Jobsuche, Allemagne)",
+    )
+    ap.add_argument(
         "--efc", action="store_true", help="eFinancialCareers (sitemap public, crawl-delay 10 s)"
     )
     ap.add_argument(
@@ -238,6 +244,7 @@ def main() -> int:
         or a.adzuna
         or a.jooble
         or a.freehire
+        or a.arbeitsagentur
     ):
         a.all = True
 
@@ -379,6 +386,15 @@ def main() -> int:
         etapes.append(("── Jooble (API officielle) ──", "jooble", scan_jooble, {}))
     if a.all or a.freehire:
         etapes.append(("── freehire (API publique) ──", "freehire", scan_freehire, {}))
+    if a.all or a.arbeitsagentur:
+        etapes.append(
+            (
+                "── Arbeitsagentur (API publique, Allemagne) ──",
+                "arbeitsagentur",
+                scan_arbeitsagentur,
+                {},
+            )
+        )
     if a.all or a.wtj:
         etapes.append(
             (

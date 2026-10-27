@@ -1,8 +1,13 @@
-"""Regenerates the package's Lever, Ashby and Greenhouse company directories.
+"""Regenerates the package's company directories.
 
 Source: the jobsync project (github.com/Gsync/jobsync, MIT licence), at a pinned commit
 so that a regeneration gives the same file. Each entry is validated (non-empty name,
 job board identifier safe for a URL); a doubtful entry is dropped.
+
+Second source: the companies career-ops tracks (github.com/career-ops-hq/career-ops, MIT
+licence, `templates/portals.example.yml`), also at a pinned commit, kept when their
+careers or API link gives a feed JobHunter reads (inventory.flux_depuis_url):
+`career-ops.json`, [name, tool, identifier].
 
     uv run python tools/directories.py            # regenerates src/jobhunter/sources/directories/
     uv run python tools/directories.py --verifier # fails if the files differ
@@ -18,6 +23,8 @@ from pathlib import Path
 COMMIT = "2bd2284879d2037883cbd21ee3283cf27138a671"
 OUTILS = ("lever", "ashby", "greenhouse")
 SOURCE = "https://raw.githubusercontent.com/Gsync/jobsync/{commit}/src/lib/scraper/{outil}/companies.json"
+COMMIT_CO = "b5e4c26f21efee31559296495d794c9a9564a714"
+SOURCE_CO = "https://raw.githubusercontent.com/career-ops-hq/career-ops/{commit}/templates/portals.example.yml"
 DEST = Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "sources" / "directories"
 _RX_JETON = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$")
 
@@ -47,6 +54,36 @@ def nettoyer(brut: object) -> list[list[str]]:
     return sorted(sortie, key=lambda x: (x[0].casefold(), x[1]))
 
 
+def depuis_career_ops(portails: object) -> list[list[str]]:
+    """The tracked companies whose link gives a feed, [[name, tool, identifier], ...].
+
+    Args:
+        portails: career-ops' portals.yml, read as YAML.
+    """
+    sys.path.insert(0, str(DEST.parents[2]))
+    from jobhunter import inventory
+
+    if not isinstance(portails, dict):
+        raise ValueError("career-ops : un dictionnaire était attendu")
+    vus: set[tuple[str, str]] = set()
+    sortie = []
+    for e in portails.get("tracked_companies") or []:
+        if not isinstance(e, dict):
+            continue
+        nom = " ".join(str(e.get("name") or "").split())
+        trouve = None
+        for cle in ("api", "careers_url"):
+            trouve = trouve or inventory.flux_depuis_url(str(e.get(cle) or ""))
+        if not nom or len(nom) > 120 or not trouve or trouve[0] == "workday":
+            continue
+        outil, jeton = trouve[0], str(trouve[1])
+        if not _RX_JETON.match(jeton) or (outil, jeton.lower()) in vus:
+            continue
+        vus.add((outil, jeton.lower()))
+        sortie.append([nom, outil, jeton])
+    return sorted(sortie, key=lambda x: (x[0].casefold(), x[1], x[2]))
+
+
 def texte(entrees: list[list[str]]) -> str:
     """One entry per line: readable in a diff, compact."""
     lignes = ",\n".join(json.dumps(e, ensure_ascii=False) for e in entrees)
@@ -74,6 +111,18 @@ def main() -> int:
         cible.parent.mkdir(parents=True, exist_ok=True)
         cible.write_bytes(neuf.encode("utf-8"))
         print(f"✓ {outil:<11} {len(entrees):>5} entreprises → {cible.name}")
+    import yaml
+
+    with urllib.request.urlopen(SOURCE_CO.format(commit=COMMIT_CO), timeout=30) as r:  # nosec B310
+        entrees = depuis_career_ops(yaml.safe_load(r.read().decode("utf-8")))
+    cible, neuf = DEST / "career-ops.json", texte(entrees)
+    if a.verifier:
+        if not cible.exists() or cible.read_text(encoding="utf-8") != neuf:
+            print(f"✗ {cible.name} diffère de career-ops@{COMMIT_CO[:7]}")
+            ecarts += 1
+    else:
+        cible.write_bytes(neuf.encode("utf-8"))
+        print(f"✓ career-ops  {len(entrees):>5} entreprises → {cible.name}")
     return 1 if ecarts else 0
 
 

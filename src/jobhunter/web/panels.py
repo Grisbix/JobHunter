@@ -107,6 +107,7 @@ _SITES = {
     "adzuna": "Adzuna",
     "jooble": "Jooble",
     "freehire": "freehire",
+    "arbeitsagentur": "Arbeitsagentur",
     "vie": "Business France (V.I.E)",
     "oracle": "Oracle",
     "francetravail": "France Travail",
@@ -639,6 +640,7 @@ class PanneauxApi:
         src._load_cfg()
         suivis = {(o, str(s).lower()) for o, slugs in src.ATS_SLUGS.items() for s in slugs}
         suivis |= {("workday", f"{x[0]}.{x[1]}/{x[2]}".lower()) for x in src.WORKDAY_FLUX}
+        suivis |= {(str(x[0]), str(x[1]).lower()) for x in src.AUTRES_FLUX}
         return [
             {
                 "nom": e.nom,
@@ -662,7 +664,7 @@ class PanneauxApi:
             trouve = ("workday", directory.workday_de_jeton(jeton))
             if discovery.offres_ouvertes(trouve) == 0:
                 return {"ok": False, "erreur": "ce site Workday n'a aucune offre ouverte"}
-        elif outil in directory.OUTILS and re.fullmatch(r"[\w.-]+", str(jeton or "")):
+        elif outil in directory.SUIVABLES and re.fullmatch(r"[\w.-]+", str(jeton or "")):
             trouve = (outil, jeton)
         else:
             return {"ok": False, "erreur": "entrée d'annuaire invalide"}

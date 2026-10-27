@@ -398,8 +398,17 @@ def _executer(a, journal):
             ),
             ("1b/5 Collecte — LinkedIn", ["--linkedin"], 3600),
             (
-                "1c/5 Collecte — eFinancialCareers x9, EURES, makesense",
-                ["--efc", "--efc-sites", "monde", "--efc-limite", "30", "--eures", "--makesense"],
+                "1c/5 Collecte — eFinancialCareers x9, EURES, Arbeitsagentur, makesense",
+                [
+                    "--efc",
+                    "--efc-sites",
+                    "monde",
+                    "--efc-limite",
+                    "30",
+                    "--eures",
+                    "--arbeitsagentur",
+                    "--makesense",
+                ],
                 1800,
             ),
             # Talent and Indeed removed on 2026-10-03 (0 offers, 403 since

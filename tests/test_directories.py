@@ -26,7 +26,7 @@ def test_trois_annuaires_valides_et_attribues():
         assert len(entrees) > 500, nom
         assert outil.nettoyer([{"name": n, "token": j} for n, j in entrees]) == entrees
         total += len(entrees)
-    assert total == len(annuaire.entrees()) > 3000
+    assert len(annuaire.entrees()) > total > 3000  # + career-ops, without duplicates
     licence = (DOSSIER / "LICENSE-jobsync.txt").read_text(encoding="utf-8")
     assert "MIT License" in licence and outil.COMMIT in licence
 
@@ -99,3 +99,36 @@ def test_suivre_depuis_l_annuaire_ajoute_le_flux():
     assert cfg["ats_slugs"]["ashby"] == ["alan"]
     assert "Ashby" in msg
     assert "déjà suivi" in inventaire.ajouter_flux(cfg, {"ats_slugs": {}}, ("ashby", "Alan"))
+
+
+def test_career_ops_annuaire_valide_et_attribue():
+    brut = (DOSSIER / "career-ops.json").read_text(encoding="utf-8")
+    entrees = json.loads(brut)
+    assert len(entrees) > 50
+    assert all(o in annuaire.SUIVABLES for _, o, _ in entrees)
+    licence = (DOSSIER / "LICENSE-career-ops.txt").read_text(encoding="utf-8")
+    assert "MIT License" in licence and outil.COMMIT_CO in licence
+
+
+def test_career_ops_sans_doublon_avec_jobsync():
+    vus = [(e.outil, e.jeton.lower()) for e in annuaire.entrees()]
+    assert len(vus) == len(set(vus))
+
+
+def test_depuis_career_ops_garde_les_flux_lisibles():
+    sortie = outil.depuis_career_ops(
+        {
+            "tracked_companies": [
+                {"name": "Alpha", "careers_url": "https://jobs.ashbyhq.com/alpha"},
+                {
+                    "name": "Beta",
+                    "careers_url": "https://beta.com/careers",
+                    "api": "https://jobs.lever.co/beta",
+                },
+                {"name": "Gamma", "careers_url": "https://gamma.com/careers"},
+                {"name": "Delta", "careers_url": "https://x.wd3.myworkdayjobs.com/Delta"},
+                {"name": "Alpha bis", "careers_url": "https://jobs.ashbyhq.com/alpha"},
+            ]
+        }
+    )
+    assert sortie == [["Alpha", "ashby", "alpha"], ["Beta", "lever", "beta"]]
