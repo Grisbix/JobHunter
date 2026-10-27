@@ -1001,7 +1001,10 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         r = rs.lire(p)
 
         def lieux(v: list[Any] | None) -> list[dict[str, Any]]:
-            return [{"entree": e, "libelle": rs.libelle_lieu(e)} for e in v or []]
+            return [
+                {"entree": e, "libelle": rs.libelle_lieu(e), "genre": rs.genre_lieu(e)}
+                for e in v or []
+            ]
 
         return {
             "mots_cles": rs.mots_cles_collecte(p),
@@ -1015,7 +1018,10 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         """Places matching what is typed: the catalogue, then the text as a free place."""
         from jobhunter import search_settings as rs
 
-        return [{"entree": e, "libelle": lib} for e, lib in rs.chercher_lieux(str(texte or ""))]
+        return [
+            {"entree": e, "libelle": lib, "genre": rs.genre_lieu(e)}
+            for e, lib in rs.chercher_lieux(str(texte or ""))
+        ]
 
     def enregistrer_recherche(self, d: dict[str, Any]) -> dict[str, Any]:
         """Saves the search (profile + sources_config keywords); new places re-zone the queue."""

@@ -747,3 +747,4 @@ label.case.pale { color: var(--gris); cursor: default; }
   .barre-outils.suite { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); }
 }
 :root.mode-sombre .score b { color: var(--fond-page); }
+.genre-lieu { margin-left: 6px; font-size: 11px; opacity: .65; }

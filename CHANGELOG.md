@@ -4,6 +4,16 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.34.0 — 2026-10-27
+
+- **Areas say what they are**: in Ma recherche, each priority or secondary area reads
+  « ville et alentours » (Toulouse: the city and its towns) or « région » (Occitanie,
+  which holds Toulouse, Montpellier, Perpignan…). « Paris » is now « Île-de-France »,
+  which it always covered (75, 77, 78, 91–95).
+- **A department named without its number is recognised**: « Muret, Haute-Garonne »
+  counts as « Muret (31) » instead of « elsewhere in France ». Names that are also a
+  city or a region's piece (Loire, Nord, Var, Vienne…) are left out.
+
 ## 3.33.0 — 2026-10-27
 
 - **A package for the Microsoft Store** (`JobHunter.msix`, attached to each release):

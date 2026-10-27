@@ -902,6 +902,8 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "nouveau mot-clé…": ("new keyword…", "neues Schlüsselwort…", "nueva palabra clave…"),
     "Zones prioritaires": ("Priority areas", "Vorrangige Zonen", "Zonas prioritarias"),
     "Zones secondaires": ("Secondary areas", "Nachrangige Zonen", "Zonas secundarias"),
+    "ville et alentours": ("city and surroundings", "Stadt und Umland", "ciudad y alrededores"),
+    "région": ("region", "Region", "región"),
     "Ville, région, pays…": (
         "Town, region, country…",
         "Ort, Region, Land…",

@@ -79,6 +79,15 @@ def libelle_lieu(entree: Any) -> str:
     return str(CATALOGUE.get(str(entree), {}).get("libelle") or entree)
 
 
+def genre_lieu(entree: Any) -> str:
+    """What kind of zone an entry is: "region", "ville" (and its towns) or "libre"."""
+    from jobhunter.scoring.zones import CATALOGUE, genre_secteur
+
+    if isinstance(entree, str) and entree in CATALOGUE:
+        return genre_secteur(entree)
+    return "libre"  # a place typed by the user, or a sector declared in the profile
+
+
 def cle_lieu(entree: Any) -> str:
     """The identity of a zone entry, to avoid choosing a place twice."""
     return str(entree.get("cle") if isinstance(entree, dict) else entree).lower()
@@ -96,7 +105,7 @@ def chercher_lieux(texte: str, limite: int = 8) -> list[tuple[Any, str]]:
     """The places matching what the user typed: [(entry, label shown)].
 
     The catalogue first — by name, then by a town it contains ("Mérignac" gives
-    Bordeaux, "Courbevoie" gives Paris) — then the typed text itself as a free
+    Bordeaux, "Courbevoie" gives Île-de-France) — then the typed text itself as a free
     place, so that any city of the world can be chosen.
     """
     from jobhunter.scoring.zones import CATALOGUE

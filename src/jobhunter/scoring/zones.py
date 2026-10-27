@@ -600,6 +600,38 @@ _RX_DEP = re.compile(
     r"(?:\s-\s*|\()(9[78]\d|\d{2}|2[ab])\)?\s*(?:·|$)"
     r"|(?<!\d)(?:(9[78]\d)\d{2}|(\d{2})\d{3})(?!\d)"
 )
+# « Muret, Haute-Garonne » names its department without its number. Normalised
+# names (_n). Left out, because they are also a city, a region's piece or a common
+# word: Ain, Aube, Cher, Eure, Gers, Indre, Loire, Lot, Manche, Marne, Nord, Oise,
+# Orne, Paris, Rhône, Savoie, Somme, Var, Vienne (Austria).
+_DEPARTEMENTS_NOMMES = {
+    "aisne": "02", "allier": "03", "alpes-de-haute-provence": "04", "hautes-alpes": "05",
+    "alpes-maritimes": "06", "ardeche": "07", "ardennes": "08", "ariege": "09",
+    "aude": "11", "aveyron": "12", "bouches-du-rhone": "13", "calvados": "14",
+    "cantal": "15", "charente": "16", "charente-maritime": "17", "correze": "19",
+    "corse-du-sud": "2a", "haute-corse": "2b", "cote-d'or": "21", "cotes-d'armor": "22",
+    "creuse": "23", "dordogne": "24", "doubs": "25", "drome": "26", "eure-et-loir": "28",
+    "finistere": "29", "gard": "30", "haute-garonne": "31", "gironde": "33",
+    "herault": "34", "ille-et-vilaine": "35", "indre-et-loire": "37", "isere": "38",
+    "jura": "39", "landes": "40", "loir-et-cher": "41", "haute-loire": "43",
+    "loire-atlantique": "44", "loiret": "45", "lot-et-garonne": "47", "lozere": "48",
+    "maine-et-loire": "49", "haute-marne": "52", "mayenne": "53",
+    "meurthe-et-moselle": "54", "meuse": "55", "morbihan": "56", "moselle": "57",
+    "nievre": "58", "pas-de-calais": "62", "puy-de-dome": "63",
+    "pyrenees-atlantiques": "64", "hautes-pyrenees": "65", "pyrenees-orientales": "66",
+    "bas-rhin": "67", "haut-rhin": "68", "haute-saone": "70", "saone-et-loire": "71",
+    "sarthe": "72", "haute-savoie": "74", "seine-maritime": "76", "seine-et-marne": "77",
+    "yvelines": "78", "deux-sevres": "79", "tarn": "81", "tarn-et-garonne": "82",
+    "vaucluse": "84", "vendee": "85", "haute-vienne": "87", "vosges": "88", "yonne": "89",
+    "territoire de belfort": "90", "essonne": "91", "hauts-de-seine": "92",
+    "seine-saint-denis": "93", "val-de-marne": "94", "val-d'oise": "95",
+}  # fmt: skip
+# Longest first: « haute-garonne » before a shorter name it contains.
+_RX_DEP_NOMME = re.compile(
+    r"(?<![a-z0-9-])("
+    + "|".join(re.escape(k) for k in sorted(_DEPARTEMENTS_NOMMES, key=len, reverse=True))
+    + r")(?![a-z0-9-])"
+)
 # Code de region WTJ : « Saint-Ouen, A8, FR », « Biot, B8, FR », « …, ARA, FR ».
 _RX_REGION_WTJ = re.compile(r",\s*([a-z0-9]{1,3})\s*,\s*([a-z]{2})\b")
 
@@ -670,7 +702,7 @@ _IDF = (
 
 CATALOGUE = {
     "idf": {
-        "libelle": "Paris",
+        "libelle": "Île-de-France",
         "lieux": _IDF,
         "communes": _IDF_COMMUNES,
         "departements": {"75", "77", "78", "91", "92", "93", "94", "95"},
@@ -981,6 +1013,31 @@ CATALOGUE = {
         "lieux": ("bourgogne", "franche-comte", "dijon", "besancon"),
     },
 }
+# The catalogue holds two kinds of sector: a whole region, or a city with the towns
+# around it. Toulouse is in Occitanie, Occitanie is not in Toulouse: the screen says
+# which kind each one is (genre_secteur).
+REGIONS = frozenset(
+    {
+        "idf",
+        "paca",
+        "auvergne-rhone-alpes",
+        "occitanie",
+        "corse",
+        "hauts-de-france",
+        "bretagne",
+        "pays-de-la-loire",
+        "grand-est",
+        "normandie",
+        "nouvelle-aquitaine",
+        "centre-val-de-loire",
+        "bourgogne-franche-comte",
+    }
+)
+
+
+def genre_secteur(cle: str) -> str:
+    """Kind of sector: "region" for a whole region, "ville" for a city and its towns."""
+    return "region" if cle in REGIONS else "ville"
 
 
 def _secteur(x: object) -> Secteur | None:
@@ -1064,7 +1121,8 @@ def _departement(t: str) -> str | None:
     """Department number read in the normalised place, or None."""
     m = _RX_DEP.search(t)
     if not m:
-        return None
+        nomme = _RX_DEP_NOMME.search(t)
+        return _DEPARTEMENTS_NOMMES[nomme.group(1)] if nomme else None
     d = next(g for g in m.groups() if g)
     # A 5-digit postcode does not start with 00; "20xxx" is Corsica.
     return None if d == "00" else d

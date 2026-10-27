@@ -794,7 +794,7 @@ wheels = [
 
 [[package]]
 name = "jobhunter"
-version = "3.33.0"
+version = "3.34.0"
 source = { editable = "." }
 dependencies = [
     { name = "certifi" },

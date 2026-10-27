@@ -169,7 +169,7 @@ def test_chercher_lieux_catalogue_ville_et_monde():
 def test_libelle_et_cle_lieu():
     libre = R.lieu_libre("  genève ")
     assert libre == {"cle": "geneve", "libelle": "Genève", "lieux": ["Genève"]}
-    assert R.libelle_lieu("idf") == "Paris" and R.libelle_lieu(libre) == "Genève"
+    assert R.libelle_lieu("idf") == "Île-de-France" and R.libelle_lieu(libre) == "Genève"
     assert R.cle_lieu("IDF") == "idf" and R.cle_lieu(libre) == "geneve"
 
 

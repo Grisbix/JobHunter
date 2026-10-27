@@ -324,3 +324,37 @@ def test_reparer_lieu_met_la_zone_a_jour():
     assert o["localisation"] == "Paris 15"
     assert o["zone"] == zone_lieu("Paris 15") != U
     assert reparer_lieu(o) is False
+
+
+# « Muret, Haute-Garonne » names its department without its number.
+@pytest.mark.parametrize(
+    ("nomme", "numero"),
+    [
+        ("Muret, Haute-Garonne", "Muret (31)"),
+        ("Arcueil, Val-de-Marne, France", "Arcueil - 94"),
+        ("Annecy, Haute-Savoie", "Annecy (74)"),
+        ("Rodez, Aveyron", "Rodez (12)"),
+    ],
+)
+def test_departement_nomme_comme_son_numero(nomme, numero):
+    assert zone_lieu(nomme) == zone_lieu(numero) != A
+
+
+def test_departement_nomme_sans_faux_ami():
+    from jobhunter.scoring.zones import _departement, _n
+
+    assert _departement(_n("Muret, Haute-Garonne")) == "31"
+    assert _departement(_n("Saintes, Charente-Maritime")) == "17"  # not Charente (16)
+    assert _departement(_n("Nantes, Pays de la Loire")) is None  # Loire left out: a region's piece
+    assert _departement(_n("Garonne Partners")) is None
+
+
+def test_genre_des_secteurs():
+    from jobhunter import search_settings as rs
+    from jobhunter.scoring.zones import CATALOGUE, REGIONS, genre_secteur
+
+    assert REGIONS <= CATALOGUE.keys()
+    assert genre_secteur("occitanie") == "region" and genre_secteur("toulouse") == "ville"
+    assert CATALOGUE["idf"]["libelle"] == "Île-de-France"
+    assert rs.genre_lieu("idf") == "region"
+    assert rs.genre_lieu({"cle": "londres", "libelle": "Londres"}) == "libre"

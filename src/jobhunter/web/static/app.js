@@ -1011,7 +1011,10 @@ function editeurPuces(liste, sale, placeholder = "Ajouter…") {
 }
 
 // Places: chips of {entree, libelle}, and a field that suggests places as you type.
+const GENRES_LIEU = { ville: "ville et alentours", region: "région" };
 function editeurLieux(liste, sale) {
+  // A region holds its cities, a city does not hold its region: each choice says which.
+  const genre = (x) => (GENRES_LIEU[x.genre] ? h("span", { class: "genre-lieu" }, GENRES_LIEU[x.genre]) : null);
   const boite = h("div", { class: "puces-edit lieux" });
   const suggestions = h("div", { class: "suggestions" });
   let minuteur;
@@ -1030,7 +1033,7 @@ function editeurLieux(liste, sale) {
               suggestions.replaceChildren();
               dessiner(true);
             },
-          }, s.libelle)));
+          }, s.libelle, genre(s))));
         }, 200);
       },
       onkeydown: (e) => {
@@ -1038,7 +1041,7 @@ function editeurLieux(liste, sale) {
         if (e.key === "Escape") suggestions.replaceChildren();
       },
     });
-    boite.replaceChildren(...liste.map((x, i) => h("span", { class: "puce modifiable chaude" }, x.libelle,
+    boite.replaceChildren(...liste.map((x, i) => h("span", { class: "puce modifiable chaude" }, x.libelle, genre(x),
       h("button", { title: "Retirer", onclick: () => { liste.splice(i, 1); sale(); dessiner(); } }, "×"))), champ);
     if (focus) champ.focus();
   };
