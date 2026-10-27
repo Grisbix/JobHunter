@@ -132,6 +132,17 @@ def makeappx() -> str:
     return str(candidats[-1])
 
 
+# Names the package format keeps for itself: one of them anywhere in the payload stops
+# makeappx with 0x8007007b. python-docx ships an unzipped template holding a
+# [Content_Types].xml; it reads templates/default.docx, never that folder.
+RESERVES = {"[content_types].xml", "appxmanifest.xml", "appxblockmap.xml", "appxsignature.p7x"}
+
+
+def _reserves(dossier: str, noms: list[str]) -> set[str]:
+    """For copytree: the reserved names of `noms`, left out of the package."""
+    return {n for n in noms if n.lower() in RESERVES}
+
+
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
@@ -143,7 +154,7 @@ def main() -> int:
         raise SystemExit(f"{app} ne contient pas JobHunter.exe : lancer build.py d'abord.")
     disposition = DIST / "msix"
     shutil.rmtree(disposition, ignore_errors=True)
-    shutil.copytree(app, disposition)
+    shutil.copytree(app, disposition, ignore=_reserves)
     logos(disposition / "Assets")
     (disposition / "AppxManifest.xml").write_text(manifeste(), encoding="utf-8")
     sortie = Path(a.sortie)
