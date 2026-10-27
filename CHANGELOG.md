@@ -4,6 +4,11 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.32.1 — 2026-10-27
+
+- **Four more companies in the sector lists**, each feed checked on its public API:
+  Ipsen, Pierre Fabre and EssilorLuxottica in Health, Michelin in Industry.
+
 ## 3.32.0 — 2026-10-27
 
 - **Company lists by sector**: Sources → Entreprises suivies now starts with « Listes

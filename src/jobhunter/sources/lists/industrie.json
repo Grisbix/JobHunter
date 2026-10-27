@@ -16,6 +16,7 @@
   {"nom": "Loft Orbital", "outil": "lever", "cle": "loftorbital"},
   {"nom": "Magna", "outil": "workday", "cle": "magna/wd3/magna"},
   {"nom": "Masdar", "outil": "smartrecruiters", "cle": "masdar"},
+  {"nom": "Michelin", "outil": "workday", "cle": "michelinhr/wd3/Michelin"},
   {"nom": "Nadara", "outil": "workday", "cle": "nadara/wd3/External"},
   {"nom": "Recurrent Energy", "outil": "workday", "cle": "recurrentenergy/wd12/recurrentenergy"},
   {"nom": "Saint-Gobain", "outil": "smartrecruiters", "cle": "saintgobain"},
