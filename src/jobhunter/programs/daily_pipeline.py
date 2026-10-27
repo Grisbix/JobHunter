@@ -406,8 +406,8 @@ def _executer(a, journal):
             # 24/09); APEC and Glassdoor on 2026-10-21 (DataDome, Cloudflare: refused at
             # every collection). Adzuna and Jooble, official APIs, cover their pool.
             (
-                "1d/5 Collecte — France Travail, Adzuna, Jooble",
-                ["--ft", "--adzuna", "--jooble"],
+                "1d/5 Collecte — France Travail, Adzuna, Jooble, freehire",
+                ["--ft", "--adzuna", "--jooble", "--freehire"],
                 2700,
             ),
             ("1e/5 Collecte — WTJ", ["--wtj"], 2400),

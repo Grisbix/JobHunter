@@ -4,6 +4,16 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.38.0 — 2026-10-27
+
+- **New source: freehire** (freehire.me, open source, MIT), a search engine over
+  companies' own career pages (Workday, Teamtailor, SmartRecruiters… for 470,000
+  companies). Its public API needs no key for personal use; JobHunter names itself,
+  keeps to its limits (120 requests a minute, 2,000 a day, a pause on `429`) and
+  stores the company's own link, without freehire's tracking marker. France, last
+  30 days, ESG / sustainability / finance keywords. `collect --freehire`; collected
+  every morning with France Travail, Adzuna and Jooble.
+
 ## 3.37.0 — 2026-10-27
 
 - **The page stays put, the list scrolls**: in Offres, Documents and the Sources tabs

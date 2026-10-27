@@ -215,3 +215,63 @@ def test_jooble_post_avec_france(jooble):
 
 def test_jooble_cle_absente_de_la_sortie(jooble):
     assert CLE not in jooble[1]
+
+
+# ── freehire (public API, no key) ─────────────────────────────────────────────
+PAGE_FREEHIRE = {
+    "data": [
+        {
+            "title": "Analyste ESG",
+            "url": "https://boards.greenhouse.io/alpha/jobs/1?gh_jid=1&utm_source=freehire.me",
+            "company": "Alpha",
+            "location": "Paris, FR",
+            "description": "<p>Analyse ESG des émetteurs</p>",
+            "posted_at": "2026-10-20T08:00:00Z",
+            "source": "greenhouse",
+        },
+        {
+            "title": "Chargé RSE",
+            "url": "https://x.wd3.myworkdayjobs.com/fr/job/2?utm_source=freehire.me",
+            "company": "x.wd3.myworkdayjobs.com/",
+            "location": "Lyon",
+            "description": "",
+            "source": "workday",
+        },
+    ]
+}
+
+
+@pytest.fixture
+def freehire(agreg):
+    return agreg(js.scan_freehire, [R(200, PAGE_FREEHIRE)])
+
+
+def test_freehire_lien_de_l_entreprise_sans_marqueur(freehire):
+    urls = [o["url"] for o in freehire[0]]
+    assert urls[0] == "https://boards.greenhouse.io/alpha/jobs/1?gh_jid=1"
+    assert all("utm_source" not in u for u in urls)
+
+
+def test_freehire_offre_et_provenance(freehire):
+    o = freehire[0][0]
+    assert (o["entreprise"], o["source"]) == ("Alpha", "freehire:greenhouse")
+    assert freehire[0][1]["entreprise"] == "x.wd3.myworkdayjobs.com"
+    assert o.get("desc_partielle")
+
+
+def test_freehire_france_30_jours_et_projet_nomme(freehire):
+    url, kw = freehire[2][0]
+    assert url == js.freehire.API
+    assert kw["params"]["countries"] == "fr" and kw["params"]["posted_within_days"] == 30
+    assert "JobHunter" in kw["headers"]["User-Agent"]
+
+
+def test_freehire_page_courte_pas_de_page_suivante(freehire):
+    # 2 offers < 50: one request per word, never a second page
+    assert len(freehire[2]) == len(js.freehire.MOTS)
+
+
+def test_freehire_429_attend_puis_s_arrete(agreg):
+    offres, _, appels, pauses = agreg(js.scan_freehire, [R(429)] * 5)
+    assert offres == [] and len(pauses) >= 2
+    assert js.INCIDENTS["freehire"]["HTTP 429"] == 3

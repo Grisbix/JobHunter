@@ -21,7 +21,13 @@ from jobhunter.storage import lock as _verrou
 FICHIER = "_api_quota.json"
 # Adzuna's free access: 250 calls a day. Jooble and France Travail publish no daily
 # figure for these keys: counted only.
-PLAFONDS: dict[str, int | None] = {"adzuna": 250, "jooble": None, "francetravail": None}
+# freehire: 2,000 requests a day per address without a key (its OpenAPI), kept clear of.
+PLAFONDS: dict[str, int | None] = {
+    "adzuna": 250,
+    "jooble": None,
+    "francetravail": None,
+    "freehire": 1500,
+}
 
 
 def _fichier() -> Path:

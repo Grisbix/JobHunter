@@ -21,6 +21,7 @@ from jobhunter.sources.efc import EFC_SITES, scan_efc
 from jobhunter.sources.eures import scan_eures
 from jobhunter.sources.fir import scan_fir
 from jobhunter.sources.francetravail import scan_france_travail
+from jobhunter.sources.freehire import scan_freehire
 from jobhunter.sources.glassdoor import scan_glassdoor
 from jobhunter.sources.hellowork import scan_hellowork
 from jobhunter.sources.indeed import scan_indeed
@@ -127,6 +128,11 @@ def main() -> int:
         help="Jooble (API officielle, cle dans Scripts/jooble.json)",
     )
     ap.add_argument(
+        "--freehire",
+        action="store_true",
+        help="freehire.me (API publique sans cle, sites carrieres des entreprises)",
+    )
+    ap.add_argument(
         "--efc", action="store_true", help="eFinancialCareers (sitemap public, crawl-delay 10 s)"
     )
     ap.add_argument(
@@ -231,6 +237,7 @@ def main() -> int:
         or a.eures
         or a.adzuna
         or a.jooble
+        or a.freehire
     ):
         a.all = True
 
@@ -370,6 +377,8 @@ def main() -> int:
         etapes.append(("── Adzuna (API officielle, France + 7 pays) ──", "adzuna", scan_adzuna, {}))
     if a.all or a.jooble:
         etapes.append(("── Jooble (API officielle) ──", "jooble", scan_jooble, {}))
+    if a.all or a.freehire:
+        etapes.append(("── freehire (API publique) ──", "freehire", scan_freehire, {}))
     if a.all or a.wtj:
         etapes.append(
             (

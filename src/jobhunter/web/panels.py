@@ -106,6 +106,7 @@ _SITES = {
     "apec": "APEC",
     "adzuna": "Adzuna",
     "jooble": "Jooble",
+    "freehire": "freehire",
     "vie": "Business France (V.I.E)",
     "oracle": "Oracle",
     "francetravail": "France Travail",
