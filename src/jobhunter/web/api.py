@@ -126,7 +126,7 @@ def tableau(
             {
                 "poste": o.get("poste") or "",
                 "entreprise": o.get("entreprise") or "",
-                "lieu": o.get("localisation") or "",
+                "lieu": _lieu_propre(str(o.get("localisation") or "")),
                 "fit": _fit(o),
                 "url": o.get("url") or "",
             }
@@ -168,6 +168,20 @@ def _pays(lieu: str) -> str:
 
 
 @cache
+def _lieu_propre(lieu: str) -> str:
+    from jobhunter.scoring import zones as _zones
+
+    return _zones.lieu_propre(lieu)
+
+
+def _cle_tri(nom: str) -> str:
+    """Alphabetical order without accents: "Égypte" among the E, not after "Viêt Nam"."""
+    from jobhunter.text import sans_accent
+
+    return sans_accent(nom).lower()
+
+
+@cache
 def _region(lieu: str) -> str:
     from jobhunter.scoring import zones as _zones
 
@@ -195,7 +209,7 @@ def _ligne(o: Mapping[str, Any], suivi: Mapping[str, Any]) -> dict[str, Any]:
         "id": k,
         "poste": o.get("poste") or "",
         "entreprise": o.get("entreprise") or "",
-        "lieu": o.get("localisation") or "",
+        "lieu": _lieu_propre(lieu),
         "fit": _fit(o),  # type: ignore[arg-type]
         "zone": o.get("zone") or "",
         "contrat": o.get("contrat") or "",
@@ -204,8 +218,8 @@ def _ligne(o: Mapping[str, Any], suivi: Mapping[str, Any]) -> dict[str, Any]:
         "url": o.get("url") or "",
         # the desktop's other columns (app.common.COLS)
         "domaine": o.get("domaine") or "",
-        "pays": _pays(lieu),
-        "region": _region(lieu),
+        "pays": _pays(lieu).replace("?", ""),
+        "region": _region(lieu).replace("?", ""),
         "publiee": str(o.get("date_publication") or "")[:10],
         "trouvee": str(o.get("process") or "")[:10],
         # last seen alive: link checked or served again, whichever is later
@@ -276,8 +290,16 @@ def offres(
         "zones": sorted({str(o.get("zone")) for o in offres if o.get("zone")}),
         "domaines": sorted({str(o.get("domaine")) for o in offres if o.get("domaine")}),
         "contrats": sorted({str(o.get("contrat")) for o in offres if o.get("contrat")}),
-        "pays": sorted({p for o in offres if (p := _pays(str(o.get("localisation") or "")))}),
-        "regions": sorted({r for o in offres if (r := _region(str(o.get("localisation") or "")))}),
+        # "?" is no choice: the offers it groups have no place (zones.lieu_deduit
+        # finds most of them); "Tous les pays" still shows them.
+        "pays": sorted(
+            {p for o in offres if (p := _pays(str(o.get("localisation") or ""))) != "?"},
+            key=_cle_tri,
+        ),
+        "regions": sorted(
+            {r for o in offres if (r := _region(str(o.get("localisation") or ""))) != "?"},
+            key=_cle_tri,
+        ),
         "statuts": list(FILTRES_STATUT),
     }
 

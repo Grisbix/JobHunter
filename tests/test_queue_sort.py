@@ -200,6 +200,19 @@ def test_le_suivi_garde_son_offre():
         ("https://jobs.smartrecruiters.com/scalian/744000139977123", None),
         ("https://recrutement.natixis.com/job/analyste-impact-et-esg-f", None),
         ("https://fr.indeed.com/viewjob?jk=9c0aac3268fdc4c2", None),
+        # listing pages stored as offers (2026-10-27)
+        ("https://www.jobijoba.com/fr/emploi/Comptable", "pas_une_offre:recherche"),
+        ("https://www.linkfinance.fr/emploi?societe_ids=777", "pas_une_offre:recherche"),
+        ("https://www.efinancialcareers.fr/jobs/analyste", "pas_une_offre:recherche"),
+        (
+            "https://www.wizbii.com/emploi/comptabilite-controle-de-gestion",
+            "pas_une_offre:recherche",
+        ),
+        (
+            "https://www.efinancialcareers.fr/emploi-France-Paris-Consultant_DataOps.id24697735",
+            None,
+        ),
+        ("https://www.wizbii.com/company/bnp-paribas/job/analyste-esg", None),
     ],
 )
 def test_pas_une_offre(url, attendu):

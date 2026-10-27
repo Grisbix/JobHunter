@@ -76,7 +76,9 @@ def changements(
         (
             "localisation",
             x.get("localisation"),
-            _zones.lieu_effectif(o.get("location") or "", o.get("titre") or ""),
+            _zones.lieu_effectif(
+                o.get("location") or "", o.get("titre") or "", o.get("url"), o.get("description")
+            ),
         ),
     ):
         a, b = _valeur(avant), _valeur(apres)
@@ -390,6 +392,7 @@ def _merge_into_queue(
             continue
         # scoring on title + DESCRIPTION (the ATS APIs provide it at scan time)
         fit, yrs, fin = fit_detail(f"{o['titre']} {desc}", o["titre"])
+        lieu = _zones.lieu_effectif(o.get("location", ""), o.get("titre", ""), o["url"], desc)
         try:
             ats = score_offer(
                 dict(role=o["titre"], missions=desc, profil="", domaine=o["domaine"])
@@ -415,13 +418,12 @@ def _merge_into_queue(
             "contrat": _ctr,
             # Place of the TITLE if it names a foreign city (zones.lieu_effectif):
             # Talent and Glassdoor sometimes give the head office, "Paris", to a New York V.I.E.
-            "localisation": _zones.lieu_effectif(o.get("location", ""), o.get("titre", "")),
+            # Without a place from the source, the posting's text or address gives it (lieu_deduit).
+            "localisation": lieu,
             # Geographic zone, computed on adding: without it, each new
             # offer would arrive without a zone and the app's column would fill with
             # gaps until the next run of zones.py.
-            "zone": _zones.zone_lieu(
-                _zones.lieu_effectif(o.get("location", ""), o.get("titre", ""))
-            ),
+            "zone": _zones.zone_lieu(lieu),
             "teletravail": o.get("teletravail", ""),
             "salaire": o.get("salaire", ""),
             "profil": "",

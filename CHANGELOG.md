@@ -14,6 +14,22 @@ recent at the top.
 - **The score has its own column** in Offres, titled « Score », with a tooltip.
 - **JobHunter's icon instead of Python's**: on the new window and its taskbar entry, and
   on the compiled app's executables (they had none, so PyInstaller's showed).
+- **No more « ? » in the Country and Region filters.** Offers without a place get one
+  from their posting: a « Location / Ville / City » field, a postal address, or the
+  address of the page (Workday, Welcome to the Jungle, career sites). Only a recognised
+  place is kept, never a guess. The daily sort applies it to the offers already in the
+  queue. Measured on a real queue: 234 offers without a country → 92, and those left
+  no longer appear as a choice.
+- **More countries recognised**: Milano, Köln, München, Warszawa…, the codes « PT »,
+  « RO », « MY » as a segment, Kuwait. Workday's « 3 Locations » no longer counts as
+  France.
+- **« Luxembourg, Luxembourg, Luxembourg » becomes « Luxembourg »**: a place segment
+  repeating the previous one is dropped (« Geneva, Geneva, Switzerland » → « Geneva,
+  Switzerland »).
+- **Listing pages are no longer kept as offers** (jobijoba, linkfinance,
+  efinancialcareers « /jobs/… », wizbii « /emploi/… »): the daily sort removes them.
+- **Offer drawer**: the Follow-up card has inner margins and visible fields; the
+  « non precise » contract chip is gone; countries sorted ignoring accents.
 
 ## 3.29.0 — 2026-10-27
 

@@ -459,7 +459,10 @@ _RX_PORTAIL = re.compile(
 _RX_PAGE_RECHERCHE = re.compile(
     r"indeed\.[a-z.]+/q-|indeed\.[a-z.]+/jobs\?|linkedin\.com/jobs/[a-z0-9-]+-emplois"
     r"|linkedin\.com/jobs/search|linkedin\.com/search/|glassdoor\.[a-z.]+/emploi/.*srch"
-    r"|welcometothejungle\.com/[a-z]{2}/jobs(?:\?|$)|/jobs/search",
+    r"|welcometothejungle\.com/[a-z]{2}/jobs(?:\?|$)|/jobs/search"
+    # Listing pages kept as offers (2026-10-27): no place, no posting behind them.
+    r"|jobijoba\.com/[a-z]{2}/(?:emploi|dossiers)/|linkfinance\.fr/emploi\?"
+    r"|efinancialcareers\.[a-z.]+/jobs/[a-z-]+/?$|wizbii\.com/emploi/",
     re.I,
 )
 
@@ -619,6 +622,7 @@ def main() -> int:
         except OSError:
             pass
 
+    from jobhunter.scoring import zones as _zones
     from jobhunter.storage import queue as queue_io
 
     # THE REASON IS RECOMPUTED HERE, inside the lock, on the RE-READ queue. The objects
@@ -628,6 +632,9 @@ def main() -> int:
     try:
         with queue_io.transaction() as file:
             avant = len(file)
+            # The places first: a place found or cleaned today (zones.reparer_lieu),
+            # now that the descriptions are fetched.
+            lieux = sum(_zones.reparer_lieu(o) for o in file)
             retires = {}
             gardes = []
             for o in file:
@@ -651,6 +658,7 @@ def main() -> int:
         print(f"! {e}")
         return 3
     print(f"file purgee : {avant} → {restant} offres ({avant - restant} supprimees)")
+    print(f"lieux trouves ou nettoyes : {lieux}")
     # The collection must not take them back tomorrow: see rejets_tri.py.
     from jobhunter.programs import sort_rejections as rejets_tri
 

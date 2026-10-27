@@ -105,6 +105,21 @@ def test_offres_a_traiter_filtres_et_tri():
     ]
 
 
+def test_filtres_pays_sans_point_d_interrogation():
+    file = [
+        _offre("A", "a", 8, localisation="Cairo, Egypt"),
+        _offre("B", "b", 8, localisation="Vienna, Austria"),
+        _offre("C", "c", 8, localisation=""),
+        _offre("D", "d", 8, localisation="Luxembourg, Luxembourg, Luxembourg"),
+    ]
+    d = offres(file, {}, statut="toutes")
+    assert d["pays"] == ["Autriche", "Égypte", "Luxembourg"]  # "?" is no choice
+    assert "?" not in d["regions"]
+    lignes = {l["entreprise"]: l for l in d["lignes"]}
+    assert (lignes["C"]["pays"], lignes["C"]["region"]) == ("", "")
+    assert lignes["D"]["lieu"] == "Luxembourg"
+
+
 def test_offres_pagination():
     file = [_offre("A", str(i), 5) for i in range(web_api.PAR_PAGE + 3)]
     d = offres(file, {}, page=1)

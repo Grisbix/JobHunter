@@ -560,7 +560,11 @@ body[data-teinte="noir"] {
 tr.cochee td { background: rgba(var(--c1-rgb), .12); }
 .barre-selection { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-radius: 14px; }
 .boutons.secondaires .bouton { height: 32px; font-size: 12.5px; background: rgba(var(--blanc-rgb), .4); }
-.suivi-fiche { display: grid; gap: 10px; }
+/* The drawer's cards: the same inner margin as the description's. */
+.suivi-fiche { display: grid; gap: 12px; padding: 18px 22px 20px; }
+.description h3 { white-space: normal; margin-bottom: 8px; }
+/* On the white card the glass fields vanished: a tinted fill shows them. */
+.suivi-fiche .choix, .suivi-fiche .champ-texte { background-color: rgba(var(--fond-rgb), .45); }
 .champs-suivi { display: flex; gap: 14px; flex-wrap: wrap; }
 .champs-suivi label { display: grid; gap: 4px; font-size: 12px; color: var(--gris); }
 .champ-texte {

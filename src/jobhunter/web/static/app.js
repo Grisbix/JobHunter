@@ -504,8 +504,8 @@ async function ouvrirOffre(id) {
       h("span", { class: `${classeScore(o.fit)} grand-score` }, nombre(o.fit)),
       h("div", { style: "min-width:0" }, h("h2", {}, o.poste), h("div", { class: "sous" }, o.entreprise))),
     h("div", { class: "puces" },
-      [o.lieu, o.contrat, o.zone, o.date && `publiée le ${dateFr(o.date)}`, o.suivi]
-        .filter(Boolean).map((t, i) => h("span", { class: i === 4 ? "puce chaude" : "puce" }, t))),
+      [o.lieu, o.contrat !== "non precise" && o.contrat, o.zone, o.date && `publiée le ${dateFr(o.date)}`, o.suivi]
+        .map((t, i) => t && h("span", { class: i === 4 ? "puce chaude" : "puce" }, t)).filter(Boolean)),
     h("div", { class: "boutons" },
       bouton("Voir l'annonce", "sortie", () => ouvrir(o.url), "plein"),
       o.cv ? bouton("CV", "doc", () => ouvrirFichier(o.cv)) : null,

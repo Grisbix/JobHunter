@@ -34,6 +34,7 @@ from typing import Any
 
 from jobhunter import lazy as _paresseux
 from jobhunter.text import sans_accent
+from jobhunter.types import Offre
 
 _ici = sys.modules[__name__]
 # Values taken from the profile: computed on first read, not at import
@@ -1093,6 +1094,9 @@ def _code_etranger(job_sources: Any, lieu: str) -> bool:
     return False
 
 
+_RX_N_LIEUX = re.compile(r"\d+ (?:locations?|lieux|sites|standorte)")
+
+
 def zone_lieu(lieu: str | None) -> str:
     """Zone of a place: prioritaire / sud-est / ailleurs / international / inconnu.
 
@@ -1101,7 +1105,8 @@ def zone_lieu(lieu: str | None) -> str:
     department would give "Seine-et-Marne".
     """
     t = _n(lieu)
-    if t in _VAGUE or not t:
+    # Workday's "3 Locations" names no place: it was read as the rest of France.
+    if t in _VAGUE or not t or _RX_N_LIEUX.fullmatch(t):
         return INCONNU
     # American "City, ST" BEFORE the French names: "New Orleans, LA"
     # was stored in France because of "Orleans" (2026-10-07).
@@ -1277,6 +1282,7 @@ _PAYS_CANON = {
     "Philippines": ("philippines",),
     "Nouvelle-Zélande": ("new zealand", "nouvelle-zelande"),
     "Qatar": ("qatar",),
+    "Koweït": ("kuwait", "koweit"),
     "Arabie saoudite": ("saudi arabia", "arabie saoudite"),
     "Égypte": ("egypt", "egypte"),
     "Kenya": ("kenya",),
@@ -1395,7 +1401,7 @@ _VILLE_PAYS = {
     "Suède": ("stockholm", "umea", "gothenburg"),
     "Norvège": ("oslo",),
     "Finlande": ("helsinki",),
-    "Brésil": ("sao paulo", "rio de janeiro"),
+    "Brésil": ("sao paulo", "rio de janeiro", "belo horizonte", "florianopolis"),
     "Inde": (
         "mumbai",
         "pune",
@@ -1410,9 +1416,15 @@ _VILLE_PAYS = {
     ),
     "Italie": (
         "turin",
+        "torino",
         "milan",
+        "milano",
         "rome",
+        "roma",
         "naples",
+        "napoli",
+        "firenze",
+        "padova",
         "bologna",
         "reggio emilia",
         "bolzano",
@@ -1433,7 +1445,7 @@ _VILLE_PAYS = {
     "Malaisie": ("kuala lumpur", "malacca"),
     "Indonésie": ("jakarta", "surabaya"),
     "Thaïlande": ("bangkok",),
-    "Philippines": ("manila", "cebu"),
+    "Philippines": ("manila", "cebu", "taguig"),
     "Corée du Sud": ("seoul",),
     "Japon": ("tokyo",),
     "Chine": ("shanghai", "beijing", "shenzhen"),
@@ -1441,9 +1453,19 @@ _VILLE_PAYS = {
     "Qatar": ("doha",),
     "Arabie saoudite": ("riyadh",),
     "Égypte": ("cairo",),
-    "Canada": ("montreal", "ottawa", "vancouver", "calgary", "toronto", "winnipeg", "st. john's"),
+    "Canada": (
+        "montreal",
+        "ottawa",
+        "vancouver",
+        "calgary",
+        "edmonton",
+        "toronto",
+        "winnipeg",
+        "st. john's",
+    ),
     "États-Unis": (
         "houston",
+        "philadelphia",
         "chicago",
         "boston",
         "los angeles",
@@ -1503,9 +1525,9 @@ _VILLE_PAYS = {
         "manchester",
         "belfast",
     ),
-    "Autriche": ("vienna",),
+    "Autriche": ("vienna", "wien", "salzburg", "innsbruck", "graz", "linz"),
     "Tchéquie": ("prague",),
-    "Pologne": ("warsaw", "krakow", "cracow", "lodz", "wroclaw", "poznan"),
+    "Pologne": ("warsaw", "warszawa", "krakow", "cracow", "lodz", "wroclaw", "poznan"),
     "Hongrie": ("budapest",),
     "Roumanie": ("bucharest",),
     "Bulgarie": ("sofia",),
@@ -1514,10 +1536,15 @@ _VILLE_PAYS = {
     "Lituanie": ("vilnius",),
     "Lettonie": ("riga",),
     "Estonie": ("tallinn",),
-    "Grèce": ("athens",),
+    "Grèce": ("athens", "thessaloniki"),
     "Turquie": ("istanbul",),
     "Allemagne": (
         "cologne",
+        "koln",
+        "munchen",
+        "dusseldorf",
+        "nuremberg",
+        "nurnberg",
         "karlsruhe",
         "berlin",
         "munich",
@@ -1565,6 +1592,12 @@ _ISO_PAYS = {
     "za": "Afrique du Sud",
     "ma": "Maroc",
     "cz": "Tchéquie",
+    "ro": "Roumanie",
+    "hu": "Hongrie",
+    "gr": "Grèce",
+    "ph": "Philippines",
+    "my": "Malaisie",
+    "kw": "Koweït",
 }
 
 
@@ -1592,6 +1625,11 @@ def pays_lieu(lieu: str | None) -> str:
     fin = re.search(r"\s([A-Z]{2})\s*$", lieu or "")
     if fin and fin.group(1).lower() in _ISO_PAYS:
         return _ISO_PAYS[fin.group(1).lower()]
+    # ISO code as a segment of its own, before the postcode: "Paço de Arcos, PT,
+    # 2770-131", "Timisoara, RO", or "US" alone.
+    for seg in reversed((lieu or "").split(",")):
+        if re.fullmatch(r"\s*[A-Z]{2}\s*", seg) and seg.strip().lower() in _ISO_PAYS:
+            return _ISO_PAYS[seg.strip().lower()]
     # The LAST segment, if it is a country, wins: "La Cañada, Querétaro,
     # Mexico" is not Canada, "Mexicali, Baja California, Mexico" is not
     # California.
@@ -1672,6 +1710,7 @@ _REGIONS = {
         "Jordanie",
         "Irak",
         "Bahreïn",
+        "Koweït",
         "Oman",
         "Turquie",
     ),
@@ -1739,12 +1778,169 @@ def lieu_du_titre(titre: str | None) -> str | None:
     return None
 
 
-def lieu_effectif(lieu: str | None, titre: str | None) -> str | None:
-    """The place to keep: the posting's, unless it is French (or empty) while the title names a foreign city."""
+def lieu_propre(lieu: str | None) -> str:
+    """The place without its repeated segments: "Luxembourg, Luxembourg, Luxembourg" -> "Luxembourg".
+
+    LinkedIn writes city, region, country, and for a city-state the three are the
+    same word (the user, 2026-10-27: "pas faux mais moche"). Only a segment equal to
+    the one BEFORE it goes: "Geneva, Geneva, Switzerland" keeps its country.
+    """
+    gardes: list[str] = []
+    for seg in (lieu or "").split(","):
+        seg = " ".join(seg.split())
+        if seg and (not gardes or _n(seg) != _n(gardes[-1])):
+            gardes.append(seg)
+    return ", ".join(gardes)
+
+
+def _lieu_sur(lieu: str) -> bool:
+    """Is this a place we KNOW? In France, one of the catalogue's; abroad, one that names its country.
+
+    zone_lieu classes any unknown word "ailleurs" (the rest of France): "Vodafone"
+    or "Effacer tous les filtres" would pass for French towns.
+    """
+    z = zone_lieu(lieu)
+    if z == INTERNATIONAL:
+        return pays_lieu(lieu) not in ("?", "étranger (autre)")
+    if z == INCONNU:
+        return False
+    t = _n(lieu)
+    return any((s := _secteur(c)) is not None and _dans_secteur(t, s) for c in CATALOGUE)
+
+
+# A place the posting states in its text, as a label then a value: "Localisation du
+# poste : Paris (75007)", "Ville : Paris 15", or Avature's "City\nVienna" and
+# "Country\nAustria" on two lines. A line that goes on after the value ("Lieu : Brest,
+# France Construisons ensemble…") is prose, not a field.
+_RX_LIEU_TEXTE = re.compile(
+    r"(?im)^[ \t]*(localisation du poste|lieu de travail|localisation|lieu|location|ville"
+    r"|city|country|pays)(?:[ \t]*:[ \t]*(?:\r?\n[ \t\r\n]*)?|[ \t]*\r?\n[ \t\r\n]*)"
+    r"([^\n:]{2,60}?)[ \t\r]*$"
+)
+# A country written on a line of its own, in any of its spellings.
+_PAYS_ALIAS = frozenset(a for alias in _PAYS_CANON.values() for a in alias)
+# A postal address: "…, 75008 Paris, France" -> ("Paris", "France").
+_RX_ADRESSE = re.compile(
+    r"\b\d{5}\s+([^\W\d][\w' -]{1,40}?)(?:\s+cedex\b[^,]*)?(?:,\s*([^\W\d][\w -]{1,30}))?\s*$"
+)
+# Workday puts the place in the address: …/job/Blagnac/Consultant-junior_R00347347.
+_RX_WORKDAY_LIEU = re.compile(r"myworkdayjobs\.com/(?:[^/?#]+/)*job/([^/?#]+)/[^/?#]+/?$")
+# What ends a slug without being a place: "-f-h", "-2", "_1326".
+_FIN_SLUG = {"h", "f", "m", "x", "fh", "hf", "mf", "fm", "hfx"}
+
+
+def _lieu_du_texte(description: str) -> str:
+    villes: list[str] = []
+    pays: list[str] = []
+    for cle, valeur in _RX_LIEU_TEXTE.findall(description or ""):
+        v = valeur.strip(" .;-")
+        if len(v.split()) > 5:
+            continue  # a sentence, not a place
+        if v.isupper():
+            v = v.title()  # "MILANO" -> "Milano"
+        (pays if cle.lower() in ("country", "pays") else villes).append(v)
+    for v in villes:
+        lieu = f"{v}, {pays[0]}" if pays else v
+        if _lieu_sur(lieu):
+            return lieu
+    p = next((p for p in pays if _lieu_sur(p)), "")
+    if p:
+        return p
+    # No label, but a line of its own at the top of the page: Sia Partners' address
+    # "21 Rue de Berri, 75008 Paris, France", ABN AMRO's "Nederland" then "Amersfoort".
+    lignes = [" ".join(x.split()) for x in (description or "")[:2000].splitlines()]
+    for i, ligne in enumerate(lignes):
+        adr = _RX_ADRESSE.search(ligne) if len(ligne) <= 80 else None
+        if adr:
+            lieu = ", ".join(x for x in adr.groups() if x)
+            if _lieu_sur(lieu):
+                return lieu
+        suite = lignes[i + 1] if i + 1 < len(lignes) else ""
+        if (
+            _n(ligne) in _PAYS_ALIAS
+            and 1 < len(suite) <= 40
+            and not re.search(r"\d", suite)
+            and _lieu_sur(f"{suite}, {ligne}")
+        ):
+            return f"{suite}, {ligne}"
+    return ""
+
+
+def _lieu_de_l_url(url: str) -> str:
+    u = (url or "").split("?")[0].split("#")[0]
+    wd = _RX_WORKDAY_LIEU.search(u)
+    if wd:
+        lieu = " ".join(wd.group(1).replace("-", " ").split())
+        return lieu if _lieu_sur(lieu) else ""
+    # The city ends the slug: "…-chef-de-projet-fh-paris-2/", "…-bureau-de-lyon",
+    # WTJ's "conseiller-clientele-premium_strasbourg_SG_NblzLwP". The shortest
+    # ending first: "lyon" before "de-lyon"; "fontenay-sous-bois" needs all three.
+    dernier = re.sub(r"\.(aspx|html?|php)$", "", u.rstrip("/").rsplit("/", 1)[-1])
+    # LinkedIn ends with the employer: "…-analyst-at-zurich-insurance-4440748821".
+    dernier = dernier.rsplit("-at-", 1)[0]
+    for morceau in reversed(dernier.split("_")):
+        mots = [m for m in morceau.lower().split("-") if m]
+        while mots and (mots[-1].isdigit() or mots[-1] in _FIN_SLUG):
+            mots.pop()
+        for n in (1, 2, 3):
+            if len(mots) < n:
+                break
+            lieu = "-".join(mots[-n:])
+            # "paris-consultant" names Paris through its FIRST word: the city
+            # does not end this slug.
+            if _lieu_sur(lieu) and (n == 1 or not _lieu_sur("-".join(mots[-n:-1]))):
+                return lieu.title()
+    return ""
+
+
+def lieu_deduit(url: str | None, description: str | None) -> str:
+    """The place of an offer whose source gave none: from its text, else its address; "" if neither says.
+
+    WHY. 178 offers of the queue had no place (2026-10-27): Workday, Avature, Sia
+    Partners, ABN AMRO. The country filter showed them as "?". Their text or
+    their address says where they are; only a recognised place is kept, never a guess.
+    """
+    return _lieu_du_texte(description or "") or _lieu_de_l_url(url or "")
+
+
+def lieu_effectif(
+    lieu: str | None, titre: str | None, url: str | None = None, description: str | None = None
+) -> str | None:
+    """The place to keep: the posting's, unless it is French (or empty) while the title names a foreign city.
+
+    Cleaned of its repeated segments; when it names no country ("", "Télétravail"),
+    completed from the posting's text or address (lieu_deduit).
+    """
+    if lieu:
+        lieu = lieu_propre(lieu)
+    if pays_lieu(lieu) == "?":
+        d = lieu_deduit(url, description)
+        if d:
+            lieu = f"{d} ({lieu})" if lieu else d
     t = lieu_du_titre(titre)
     if t and zone_lieu(lieu) != INTERNATIONAL:
         return t
     return lieu
+
+
+def reparer_lieu(o: Offre) -> bool:
+    """Bring an offer of the queue to lieu_effectif, with its zone; True when it changed.
+
+    The offers stored before a rule existed: the sorting runs it each day, after the
+    descriptions are fetched — most sources give the text after the merge.
+    """
+    avant = o.get("localisation") or ""
+    apres = (
+        lieu_effectif(
+            avant, o.get("poste"), o.get("url"), o.get("description") or o.get("missions")
+        )
+        or ""
+    )
+    if apres == avant:
+        return False
+    o["localisation"] = apres
+    o["zone"] = zone_lieu(apres)
+    return True
 
 
 def ville_affichee(lieu: str | None) -> str:

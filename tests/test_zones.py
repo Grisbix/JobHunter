@@ -23,9 +23,12 @@ from jobhunter.scoring.zones import (
     SECONDAIRE as S,
 )
 from jobhunter.scoring.zones import (
+    lieu_deduit,
     lieu_effectif,
+    lieu_propre,
     pays_lieu,
     region_pays,
+    reparer_lieu,
     sous_zone,
     ville_affichee,
     zone_lieu,
@@ -219,3 +222,105 @@ def test_lieu_effectif(titre, lieu, attendu):
 )
 def test_region_pays(pays, attendu):
     assert region_pays(pays) == attendu
+
+
+# Repeated segments (the user, 2026-10-27: "Luxembourg, Luxembourg, Luxembourg").
+@pytest.mark.parametrize(
+    ("lieu", "attendu"),
+    [
+        ("Luxembourg, Luxembourg, Luxembourg", "Luxembourg"),
+        ("Kirchberg, Luxembourg, Luxembourg", "Kirchberg, Luxembourg"),
+        ("Geneva, Geneva, Switzerland", "Geneva, Switzerland"),
+        ("Singapore,  singapore", "Singapore"),
+        ("Paris, Île-de-France, France", "Paris, Île-de-France, France"),
+        ("", ""),
+    ],
+)
+def test_lieu_propre(lieu, attendu):
+    assert lieu_propre(lieu) == attendu
+
+
+# Countries the filter showed as "étranger (autre)" (2026-10-27).
+@pytest.mark.parametrize(
+    ("lieu", "attendu"),
+    [
+        ("Milano, Provincia di Milano", "Italie"),
+        ("Köln", "Allemagne"),
+        ("Paço de Arcos, PT, 2770-131", "Portugal"),
+        ("Timisoara, RO", "Roumanie"),
+        ("Iskandar Puteri, 01, MY, 79250", "Malaisie"),
+        ("US", "États-Unis"),
+        ("Kuwait", "Koweït"),
+        ("Toronto, ON, CA", "Canada"),
+        ("Birmingham, AL", "États-Unis"),
+        ("3 Locations", "?"),
+    ],
+)
+def test_pays_lieu_codes_et_villes(lieu, attendu):
+    assert pays_lieu(lieu) == attendu
+
+
+def test_plusieurs_lieux_workday_inconnu():
+    assert zone_lieu("3 Locations") == U
+
+
+# A place the source did not give: from the text, else the address; never a guess.
+@pytest.mark.parametrize(
+    ("url", "description", "attendu"),
+    [
+        (
+            "https://x.fr/offre/1",
+            "Intro\nLocalisation du poste : Paris (75007)\nSuite",
+            "Paris (75007)",
+        ),
+        ("https://x.eu/j/1", "Country\nItaly\nCity\nMILANO\n", "Milano, Italy"),
+        ("https://x.eu/j/1", "City\nVienna\nCountry\nAustria", "Vienna, Austria"),
+        (
+            "https://x.com/c/1",
+            "Consultant\n\n21 Rue de Berri, 75008 Paris, France\n\nI'm interested",
+            "Paris, France",
+        ),
+        ("https://x.nl/v/1", "FEC Analyst\nNederland\nAmersfoort\n36-40", "Amersfoort, Nederland"),
+        ("https://a.wd103.myworkdayjobs.com/acc/job/Lyon/Consultant_R1", "", "Lyon"),
+        ("https://a.wd3.myworkdayjobs.com/acc/job/Analyst_Req1", "", ""),
+        (
+            "https://www.welcometothejungle.com/fr/companies/sg/jobs/conseiller_strasbourg_SG_Nb",
+            "",
+            "Strasbourg",
+        ),
+        ("https://recrute.fr/offre/data-analyst-fh-paris-2/", "", "Paris"),
+        ("https://www.sia-partners.com/en/career/consultant-bureau-de-lyon", "", "Lyon"),
+        ("https://www.efinancialcareers.fr/emploi-France-Paris-Consultant_DataOps.id1", "", ""),
+        ("https://es.linkedin.com/jobs/view/analyst-at-zurich-insurance-4440748821", "", ""),
+        (
+            "https://www.linkfinance.fr/emploi?x=1",
+            "Localisation\nEffacer tous les filtres\nPays de la Loire, Rezé",
+            "",
+        ),
+        ("https://x.com/j/1", "Lieu : Brest, France Construisons ensemble un avenir", ""),
+        ("https://lu.linkedin.com/jobs/view/supply-chain-esg-specialist-at-vodafone-1", "", ""),
+    ],
+)
+def test_lieu_deduit(url, description, attendu):
+    assert lieu_deduit(url, description) == attendu
+
+
+def test_lieu_effectif_complete_le_lieu_absent():
+    url = "https://a.wd103.myworkdayjobs.com/acc/job/Milano/Consultant_R1"
+    assert lieu_effectif("", "Consultant", url, "") == "Milano"
+    assert lieu_effectif("3 Locations", "Consultant", url, "") == "Milano (3 Locations)"
+    assert lieu_effectif("Luxembourg, Luxembourg", "Analyst", url, "") == "Luxembourg"
+
+
+def test_reparer_lieu_met_la_zone_a_jour():
+    o = {
+        "poste": "Analyste",
+        "localisation": "",
+        "zone": U,
+        "url": "https://x.fr/o/1",
+        "description": "Ville : Paris 15",
+    }
+    assert reparer_lieu(o) is True
+    assert o["localisation"] == "Paris 15"
+    assert o["zone"] == zone_lieu("Paris 15") != U
+    assert reparer_lieu(o) is False
