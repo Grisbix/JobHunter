@@ -30,6 +30,10 @@ recent at the top.
 - Workday directory (`python -m jobhunter.sources.discovery --workday`): measured on
   real data, six Common Crawl index pages gave 2,228 career sites of 1,117 tenants
   (five pages left for the next run).
+- **The Microsoft Store package builds**: makeappx's « 0x8007007b » came from the
+  `_rels` folders of python-docx's unzipped template (reserved names in a package,
+  found by bisecting the 1,337 files). They are left out; python-docx reads its
+  `default.docx`, not that folder. `JobHunter.msix` is attached to the release again.
 - Tests: pytest 9.2 undoes some monkeypatches by deleting the name; the package facade
   no longer fails when a profile value was already recomputed in between.
 

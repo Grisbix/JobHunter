@@ -39,12 +39,18 @@ def test_variable_vide_prend_l_identite_d_essai(monkeypatch):
 
 
 def test_noms_reserves_du_paquet_ecartes(tmp_path):
-    """python-docx's unzipped template holds a [Content_Types].xml: makeappx refuses it."""
+    """python-docx's unzipped template holds a [Content_Types].xml and `_rels` folders:
+    makeappx refuses both."""
     app = tmp_path / "app"
-    (app / "docx").mkdir(parents=True)
+    (app / "docx" / "word" / "_rels").mkdir(parents=True)
+    (app / "docx" / "word" / "_rels" / "document.xml.rels").write_text("x", encoding="utf-8")
     (app / "docx" / "[Content_Types].xml").write_text("x", encoding="utf-8")
     (app / "docx" / "default.docx").write_text("x", encoding="utf-8")
     import shutil
 
     shutil.copytree(app, tmp_path / "msix", ignore=msix._reserves)
-    assert [p.name for p in (tmp_path / "msix" / "docx").iterdir()] == ["default.docx"]
+    assert sorted(p.name for p in (tmp_path / "msix" / "docx").iterdir()) == [
+        "default.docx",
+        "word",
+    ]
+    assert list((tmp_path / "msix" / "docx" / "word").iterdir()) == []

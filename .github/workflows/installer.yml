@@ -51,8 +51,9 @@ jobs:
         run: python tools/installer/build.py
       # Microsoft Store package (tools/installer/msix.py): unsigned, Partner Center
       # signs it. makeappx checks the manifest against its schema while packing.
-      # Not blocking until a first package passes (makeappx 0x8007007b on the PyInstaller
-      # folder): the installer, which users get, must not wait for the Store one.
+      # Not blocking until a first package passes on CI (makeappx 0x8007007b came from
+      # python-docx's `_rels` folders, left out since 3.44.0): the installer, which users
+      # get, must not wait for the Store one.
       - name: Paquet MSIX
         continue-on-error: true
         env:

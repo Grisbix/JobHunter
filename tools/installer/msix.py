@@ -132,10 +132,17 @@ def makeappx() -> str:
     return str(candidats[-1])
 
 
-# Names the package format keeps for itself: one of them anywhere in the payload stops
-# makeappx with 0x8007007b. python-docx ships an unzipped template holding a
-# [Content_Types].xml; it reads templates/default.docx, never that folder.
-RESERVES = {"[content_types].xml", "appxmanifest.xml", "appxblockmap.xml", "appxsignature.p7x"}
+# Names the package format (OPC) keeps for itself: one of them anywhere in the payload
+# stops makeappx with 0x8007007b — a `_rels` folder too, at any depth (found by bisecting
+# the payload, 2026-10-27). python-docx ships an unzipped template holding both
+# ([Content_Types].xml, _rels/.rels); it reads templates/default.docx, never that folder.
+RESERVES = {
+    "[content_types].xml",
+    "appxmanifest.xml",
+    "appxblockmap.xml",
+    "appxsignature.p7x",
+    "_rels",
+}
 
 
 def _reserves(dossier: str, noms: list[str]) -> set[str]:
