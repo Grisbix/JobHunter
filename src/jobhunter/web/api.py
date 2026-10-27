@@ -1534,7 +1534,16 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
             },
             "profils": [{"slug": x.slug, "nom": x.nom or "Principal"} for x in liste],
             "actif": actif,
+            "titulaire": self._titulaire(),
         }
+
+    def _titulaire(self) -> str:
+        """The open profile's "Prénom Nom" (the menu's badge), "" when unknown."""
+        try:
+            ident = self._profil_brut().get("identite") or {}
+        except (OSError, ValueError, AttributeError):
+            return ""
+        return " ".join(str(ident.get(k) or "").strip() for k in ("prenom", "nom")).strip()
 
     def choisir_langue(self, code: str) -> dict[str, Any]:
         """The interface language, both windows' (same file and key as the desktop).

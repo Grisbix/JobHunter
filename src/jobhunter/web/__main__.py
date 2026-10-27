@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Any
 
 STATIC = Path(__file__).parent / "static"
+# The desktop's icon file (a path only: jobhunter.web never imports jobhunter.app).
+ICONE = Path(__file__).parents[1] / "app" / "assets" / "jobhunter.ico"
 
 # DwmSetWindowAttribute codes (Windows 11).
 _DWMWA_USE_IMMERSIVE_DARK_MODE = 20
@@ -65,6 +67,17 @@ class _Cadre:
         )
         self.plein = plein
 
+    def icone(self) -> None:
+        """JobHunter's icon on the window and its taskbar entry, not Python's."""
+        try:
+            from System import Action
+            from System.Drawing import Icon
+
+            forme = self.fenetre.native
+            forme.Invoke(Action(lambda: setattr(forme, "Icon", Icon(str(ICONE)))))
+        except Exception as e:  # noqa: BLE001 — cosmetic only
+            print(f"icône : {e}")
+
     def installer(self) -> None:
         """The saved backdrop behind the transparent page, then the full size.
 
@@ -73,6 +86,7 @@ class _Cadre:
         """
         if sys.platform != "win32":
             return
+        self.icone()
         try:
             import ctypes
 

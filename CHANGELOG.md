@@ -4,6 +4,17 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.30.0 — 2026-10-27
+
+- **The open profile at the top left**: a round badge with its initials and its name
+  (the holder's name for the main profile) replaces « JobHunter ». A click lists the
+  profiles: pick one to switch (the window restarts on it), or « Gérer les profils… ».
+- **Long filters can be typed in**: past a dozen choices (countries…), the filter is a
+  field; type part of a name (accents optional), Enter takes the first match.
+- **The score has its own column** in Offres, titled « Score », with a tooltip.
+- **JobHunter's icon instead of Python's**: on the new window and its taskbar entry, and
+  on the compiled app's executables (they had none, so PyInstaller's showed).
+
 ## 3.29.0 — 2026-10-27
 
 - **The application opens in the new design**: double-clicking JobHunter (the installed

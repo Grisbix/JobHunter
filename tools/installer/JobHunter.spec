@@ -10,13 +10,15 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 ICI = SPECPATH
 RACINE = os.path.dirname(os.path.dirname(ICI))
 SQUELETTE = os.path.join(ICI, "build", "squelette")
+# The executables, the windows and the taskbar wear it (no icon: PyInstaller's own).
+ICONE = os.path.join(RACINE, "src", "jobhunter", "app", "assets", "jobhunter.ico")
 
 cachees = collect_submodules("jobhunter")  # dispatched by name (-m module, jobhunter <command>)
 donnees = (
     collect_data_files("customtkinter")
     + collect_data_files("tkinterdnd2")  # the native tkdnd library (drag-and-drop)
     + collect_data_files("docx")
-    + collect_data_files("jobhunter", includes=["sources/directories/*", "web/static/*"])
+    + collect_data_files("jobhunter", includes=["sources/directories/*", "web/static/*", "app/assets/*"])
     + collect_data_files("webview")  # the web view's own scripts and DLLs (3.29)
     + [
         (SQUELETTE, "squelette"),
@@ -42,7 +44,7 @@ app = EXE(
     exclude_binaries=True,
     name="JobHunter",
     console=False,
-    icon=None,
+    icon=ICONE,
 )
 cli = EXE(
     pyz,
@@ -51,6 +53,6 @@ cli = EXE(
     exclude_binaries=True,
     name="jobhunter-cli",
     console=True,
-    icon=None,
+    icon=ICONE,
 )
 COLLECT(app, cli, a.binaries, a.datas, name="JobHunter")

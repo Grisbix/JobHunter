@@ -25,6 +25,11 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "Maintenance": ("Maintenance", "Wartung", "Mantenimiento"),
     "Réglages": ("Settings", "Einstellungen", "Ajustes"),
     "Réduire": ("Minimise", "Minimieren", "Minimizar"),
+    "Changer de profil": ("Switch profile", "Profil wechseln", "Cambiar de perfil"),
+    "Profils": ("Profiles", "Profile", "Perfiles"),
+    "Gérer les profils…": ("Manage profiles…", "Profile verwalten…", "Gestionar perfiles…"),
+    "Score {n} sur 10": ("Score {n} out of 10", "Punktzahl {n} von 10", "Puntuación {n} sobre 10"),
+    "Aucun résultat": ("No result", "Kein Ergebnis", "Ningún resultado"),
     "Plein écran ou fenêtre": (
         "Full screen or window",
         "Vollbild oder Fenster",

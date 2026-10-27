@@ -634,6 +634,42 @@ function tableCandidatures(lignes) {
         h("td", {}, c.fit == null ? "—" : h("div", { class: "prog", title: `${c.fit}/10` }, h("i", { style: `width:${c.fit * 10}%` })))))));
 }
 
+// A long list (countries, regions…): a field to type in, its matches under it. The list
+// hangs on <body>: inside the filter bar, its scrolling and fade (mask) would clip it.
+const sansAccent = (t) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+function listeCherchable(valeur, tous, valeurs, choisir) {
+  const champ = h("input", { type: "search", class: "choix cherchable", placeholder: tous, value: valeur, autocomplete: "off" });
+  const menu = h("div", { class: "menu-cherchable" });
+  let actifs = [];
+  const prendre = (v) => { menu.remove(); if (v !== valeur) choisir(v); else champ.value = valeur; champ.blur(); };
+  const montrer = () => {
+    const q = sansAccent(champ.value.trim());
+    actifs = valeurs.filter((v) => sansAccent(v).includes(q));
+    // mousedown, not click: the field's blur would close the list first.
+    const ligne = (v, lib) => h("button", { class: v === valeur ? "actif" : "", onmousedown: (e) => { e.preventDefault(); prendre(v); } }, lib);
+    menu.replaceChildren(ligne("", tous), ...(actifs.length
+      ? actifs.slice(0, 100).map((v) => ligne(v, v)) : [h("div", { class: "sous" }, "Aucun résultat")]));
+    placer();
+    document.body.append(menu);
+    document.addEventListener("scroll", placer, true);
+  };
+  // Under its field, again whenever the page or the filter bar scrolls (focusing the
+  // field scrolls the narrow window's bar to it).
+  const placer = (e) => {
+    if (e && menu.contains(e.target)) return;
+    const r = champ.getBoundingClientRect();
+    Object.assign(menu.style, { left: `${r.left}px`, top: `${r.bottom + 6}px`, minWidth: `${r.width}px` });
+  };
+  champ.addEventListener("focus", () => { champ.select(); montrer(); });
+  champ.addEventListener("input", montrer);
+  champ.addEventListener("blur", () => { menu.remove(); document.removeEventListener("scroll", placer, true); champ.value = valeur; });
+  champ.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") prendre(champ.value.trim() ? (actifs[0] ?? valeur) : "");
+    else if (e.key === "Escape") champ.blur();
+  });
+  return champ;
+}
+
 const filtresOffres = { texte: "", statut: "à traiter", zone: "", domaine: "", contrat: "", pays: "", region: "", fit_min: 0, tri: "fit", page: 0 };
 // The table's optional columns (the desktop's COLS); the offer itself is always shown.
 const COLONNES_OFFRES = [
@@ -720,8 +756,11 @@ ECRANS.offres = {
     const zone = h("select", { class: "choix", onchange: (e) => changer("zone", e.target.value) },
       h("option", { value: "" }, "Toutes les zones"),
       d.zones.map((z) => h("option", { value: z, selected: z === f.zone }, z)));
-    const liste = (cle, tous, valeurs) => h("select", { class: "choix", onchange: (e) => changer(cle, e.target.value) },
-      h("option", { value: "" }, tous), (valeurs || []).map((v) => h("option", { value: v, selected: v === f[cle] }, v)));
+    // Past a dozen choices, typing beats scrolling.
+    const liste = (cle, tous, valeurs) => ((valeurs || []).length > 12
+      ? listeCherchable(f[cle], tous, valeurs, (v) => changer(cle, v))
+      : h("select", { class: "choix", onchange: (e) => changer(cle, e.target.value) },
+        h("option", { value: "" }, tous), (valeurs || []).map((v) => h("option", { value: v, selected: v === f[cle] }, v))));
     const ids = () => [...coches];
     const barreSel = coches.size ? h("div", { class: "barre-selection verre" },
       h("strong", {}, `${coches.size} cochée${coches.size > 1 ? "s" : ""}`),
@@ -750,13 +789,14 @@ ECRANS.offres = {
       barreSel,
       h("div", { class: "verre panneau" },
         d.lignes.length ? h("table", {},
-          h("colgroup", {}, h("col", { style: "width:36px" }), h("col", { style: `width:${cols.length > 4 ? 30 : 40}%` }), cols.map(() => h("col", {}))),
+          h("colgroup", {}, h("col", { style: "width:36px" }), h("col", { style: "width:64px" }), h("col", { style: `width:${cols.length > 4 ? 30 : 40}%` }), cols.map(() => h("col", {}))),
           h("thead", {}, h("tr", {}, h("th", {}, h("input", { type: "checkbox", class: "coche", checked: tous, title: "Cocher la page",
             onclick: () => { d.lignes.forEach((o) => (tous ? coches.delete(o.id) : coches.add(o.id))); relancer(); } })),
-            ["Offre", ...cols.map(([, nom]) => nom)].map((t) => h("th", {}, t)))),
+            ["Score", "Offre", ...cols.map(([, nom]) => nom)].map((t) => h("th", {}, t)))),
           h("tbody", {}, d.lignes.map((o) => h("tr", { onclick: () => ouvrirOffre(o.id), class: coches.has(o.id) ? "cochee" : "" },
             h("td", { onclick: (e) => cocher(o.id, e) }, h("input", { type: "checkbox", class: "coche", checked: coches.has(o.id) })),
-            h("td", {}, h("div", { class: "cellule-offre" }, h("span", { class: classeScore(o.fit) }, nombre(o.fit)),
+            h("td", {}, h("span", { class: classeScore(o.fit), title: `Score ${nombre(o.fit)} sur 10` }, nombre(o.fit))),
+            h("td", {}, h("div", { class: "cellule-offre" },
               h("div", {}, h("div", { class: "t", title: o.poste }, o.alerte ? h("span", { class: "alerte", title: o.signal }, o.alerte + " ") : null, o.poste),
                 h("div", { class: "s" }, o.entreprise)))),
             cols.map(([, , cellule]) => h("td", {}, cellule(o)))))))
@@ -1729,6 +1769,37 @@ async function aller(nom) {
   }
 }
 
+// Top left: the open profile, a round badge and its name; a click lists the others.
+// The main profile shows its holder's name ("Principal" says little).
+async function marqueProfil() {
+  let p;
+  try { p = await appel("parametres"); } catch (_) { return; }  // preview: "JobHunter" stays
+  if (!p) return;
+  const liste = p.profils.length ? p.profils : [{ slug: "", nom: "Principal" }];
+  const ouvert = liste.find((x) => x.slug === p.actif) || liste[0];
+  const nom = (!ouvert.slug && p.titulaire) || ouvert.nom;
+  const initiales = (n) => n.split(/[\s\-_]+/).filter(Boolean).slice(0, 2).map((m) => m[0].toUpperCase()).join("");
+  const rond = (n) => h("span", { class: "rond-profil", translate: "no" }, initiales(n));
+  const menu = h("div", { class: "menu-profils" });
+  const fermer = (e) => { if (!e || !marque.contains(e.target)) { menu.remove(); document.removeEventListener("mousedown", fermer); } };
+  const marque = h("button", { class: "marque", title: "Changer de profil", onclick: () => {
+    if (menu.isConnected) return fermer();
+    menu.replaceChildren(
+      h("div", { class: "titre-profils" }, "Profils"),
+      ...liste.map((x) => {
+        const n = (!x.slug && p.titulaire) || x.nom;
+        return h("button", { class: x.slug === p.actif ? "on" : "", onclick: () => {
+          fermer();
+          if (x.slug !== p.actif) ecrire("changer_profil", x.slug);
+        } }, rond(n), h("span", { translate: "no" }, n), x.slug === p.actif ? h("span", { class: "etiq gris" }, "ouvert") : null);
+      }),
+      h("button", { class: "gerer", onclick: () => { fermer(); aller("reglages"); } }, "Gérer les profils…"));
+    marque.after(menu);
+    document.addEventListener("mousedown", fermer);
+  } }, rond(nom), h("span", { class: "nom-profil", translate: "no" }, nom));
+  document.querySelector(".menu .marque").replaceWith(marque);
+}
+
 async function demarrer() {
   // The language first: the first screen is drawn already translated.
   await appel("textes").then(chargerCatalogue).catch(() => { /* French */ });
@@ -1736,6 +1807,7 @@ async function demarrer() {
     a.prepend(svg(a.dataset.icone));
     a.addEventListener("click", () => aller(a.dataset.ecran));
   }
+  marqueProfil();
   $("voile").addEventListener("click", fermerTiroir);
   $("fermer-tiroir").addEventListener("click", fermerTiroir);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") fermerTiroir(); });

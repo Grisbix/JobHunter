@@ -442,3 +442,25 @@ def test_appliquer_une_proposition_de_courriel(monkeypatch):
     assert not api.appliquer_proposition(5)["ok"]
     assert not api.appliquer_proposition(0)["ok"]  # the tracking moved: nothing written
     assert api.appliquer_proposition(1)["ok"] and vus == ["a", "b"]
+
+
+def test_titulaire_du_profil_ouvert(monkeypatch):
+    api = Api()
+    monkeypatch.setattr(
+        api, "_profil_brut", lambda: {"identite": {"prenom": "Ada", "nom": "Lovelace"}}
+    )
+    assert api._titulaire() == "Ada Lovelace"
+    monkeypatch.setattr(api, "_profil_brut", lambda: {})
+    assert api._titulaire() == ""
+
+    def illisible():
+        raise ValueError
+
+    monkeypatch.setattr(api, "_profil_brut", illisible)
+    assert api._titulaire() == ""
+
+
+def test_icone_de_la_fenetre_livree():
+    from jobhunter.web.__main__ import ICONE
+
+    assert ICONE.is_file()
