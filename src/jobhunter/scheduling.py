@@ -52,8 +52,14 @@ def commande() -> str:
 
 
 def _schtasks(*args: str) -> subprocess.CompletedProcess[str]:
+    # No console: from the window (pythonw), schtasks flashed a terminal each time a
+    # screen asked whether the collection is scheduled (the user, 2026-10-27).
     return subprocess.run(  # nosec B603 B607 : schtasks, fixed or validated arguments
-        ["schtasks", *args], capture_output=True, text=True, timeout=30
+        ["schtasks", *args],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
     )
 
 

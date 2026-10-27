@@ -283,8 +283,37 @@ tbody tr td:first-child, thead th:first-child { padding-left: 6px; }
 .prog i { display: block; height: 6px; border-radius: 3px; background: var(--degrade-h); }
 .cellule-offre { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .cellule-offre > div { min-width: 0; }
-.choix.cherchable { width: 190px; flex: none; cursor: text; }
-.choix.cherchable::-webkit-search-cancel-button { display: none; }
+button.choix.multi {
+  color: var(--encre); font-family: inherit; text-align: left; max-width: 220px; flex: none;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+button.choix.multi.pris { border-color: var(--c2); font-weight: 500; }
+.menu-multi { display: grid; gap: 6px; width: 260px; max-height: none; overflow: visible; }
+.menu-multi .champ-texte { height: 34px; }
+.menu-multi .cases { max-height: 300px; overflow-y: auto; }
+.menu-multi label {
+  display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px;
+  font-size: 13px; color: var(--encre); cursor: pointer;
+}
+.menu-multi label:hover { background: var(--piste); }
+.menu-multi label span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu-multi input[type="checkbox"] { accent-color: var(--c2); flex: none; }
+.pied-multi { display: flex; justify-content: space-between; gap: 8px; padding-top: 6px; border-top: 1px solid var(--filet); }
+.pied-multi .bouton { height: 32px; }
+/* A CV or a letter in the drawer: wider, its PDF, its paragraphs to edit. */
+.tiroir.document { width: min(860px, 72vw); }
+.apercu-doc { width: 100%; height: calc(100vh - 230px); border: 0; border-radius: 12px; background: #fff; }
+.edition-doc { display: grid; gap: 8px; }
+.champ-texte.para-doc { width: 100%; resize: none; overflow: hidden; min-height: 0; padding: 8px 10px; line-height: 1.45; font: inherit; font-size: 13px; }
+.champ-texte.para-doc[readonly] { opacity: .6; cursor: not-allowed; }
+/* Applications board: a card dragged to another column changes status. */
+.fiche-k[draggable="true"] { cursor: grab; }
+.fiche-k.tiree { opacity: .45; }
+.colonne-k.survol { outline: 2px dashed var(--c2); outline-offset: -4px; }
+.lien-multi {
+  border: 0; background: none; padding: 4px 8px; text-align: left; font: inherit; font-size: 12.5px;
+  color: var(--c2); cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
+}
 .menu-cherchable {
   position: fixed; z-index: 30; max-height: 320px; overflow-y: auto; padding: 6px;
   border-radius: 12px; background: var(--surface); border: 1px solid var(--filet);
@@ -300,6 +329,8 @@ td > .score { width: 34px; height: 34px; font-size: 13px; }
 
 .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; font-size: 12.5px; color: var(--gris); }
 .pagination .seg button[disabled] { opacity: .35; cursor: default; }
+.pagination > span { flex: 1; }
+.pagination .choix { height: 32px; margin-right: 12px; }
 
 /* Applications board */
 .tableau-kanban { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(196px, 1fr); gap: 16px; align-items: start; }
@@ -395,15 +426,32 @@ body.natif .tiroir { top: 52px; }
   .grand { font-size: 40px; }
   .relances { grid-template-columns: 270px minmax(0, 1fr); }
 }
+/* Fold the menu (Replier le menu), at the menu's foot. */
+.menu .replier {
+  margin-top: auto; display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px;
+  border: 0; border-radius: 12px; background: none; color: var(--gris); font: inherit; font-size: 13px; cursor: pointer;
+}
+.menu .replier:hover { background: rgba(var(--blanc-rgb),.35); color: var(--encre); }
+.menu .replier svg { width: 18px; height: 18px; fill: var(--icone); flex: none; }
 @media (max-width: 1100px) {
   .fenetre { grid-template-columns: 64px minmax(0, 1fr); }
   .menu a { font-size: 0; justify-content: center; gap: 0; }
+  .menu .replier { display: none; }  /* already narrow */
   .marque, .groupe { font-size: 0; }
   .menu .nom-profil { display: none; }
   button.marque { padding: 0; justify-content: center; }
   .menu-profils { right: auto; width: 250px; }
   .accueil { grid-template-columns: 1fr; }
 }
+/* The menu folded by hand (Replier le menu): the narrow window's menu, at any width. */
+body.menu-replie .fenetre { grid-template-columns: 64px minmax(0, 1fr); }
+body.menu-replie .menu a { font-size: 0; justify-content: center; gap: 0; }
+body.menu-replie .menu .replier { justify-content: center; padding: 0; }
+body.menu-replie .menu .replier span { display: none; }
+body.menu-replie .marque, body.menu-replie .groupe { font-size: 0; }
+body.menu-replie .menu .nom-profil { display: none; }
+body.menu-replie button.marque { padding: 0; justify-content: center; }
+body.menu-replie .menu-profils { right: auto; width: 250px; }
 
 /* Settings screen. */
 .reglage { display: grid; gap: 12px; padding: 16px 0; border-top: 1px solid rgba(28, 25, 23, .06); }

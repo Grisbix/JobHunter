@@ -4,6 +4,38 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.31.0 — 2026-10-27
+
+- **Several values per filter**: zone, field, contract, region and country now open a
+  list of boxes. Tick as many as you want, then « Appliquer » (or click elsewhere,
+  or Enter); Escape cancels. Past a dozen values, a field narrows the list. Saved
+  views keep their single value as a list of one.
+- **The countries follow the regions**: once regions are chosen, the country filter
+  only offers their countries, and a country ticked outside them is dropped.
+- **More offers per page**: 20, 40, 100 or 200, under the table; the choice is kept.
+- **A folding menu**: « Replier le menu » at the foot of the side menu leaves only its
+  icons, for more room for the filters; the choice is kept. A narrow window already
+  folds it.
+- **See and edit the CV and the letter in the window**: « CV » and « Lettre » in an
+  offer's panel show the PDF; « Modifier le texte » lists its paragraphs. Only the
+  ones changed are written into the .docx, in place (bold and italics stay), then the
+  PDF is made again (LibreOffice). The generated version is kept once as `.docx.orig`;
+  a paragraph holding a link stays for Word (« Ouvrir dans Word »).
+- **Fewer columns**: « Trouvée », « Vérifiée » and « Signal » are gone, with the sort
+  « Vérifiées en dernier »: checking that offers are still open is the application's
+  job (closed ones leave the list), not a column to read. A saved view sorted that way
+  falls back to the best score.
+- **Drag an application to another column** of « Candidatures » to change its status,
+  with the same undo as the status list.
+- **No more terminal flashing** when opening some screens: the scheduled-task check
+  (`schtasks`), git and the PDF conversion now run without a console window.
+- **Where the priority areas are set**: the zone filter ends with « Régler les zones… »,
+  which opens Profil on « Zones prioritaires » / « Zones secondaires ».
+- **« Lire les réponses par mail »** no longer stays stuck on « Lecture des courriels… »
+  when the reading fails: the reason shows in the panel. Gmail not linked yet says
+  what to do (an OAuth client file, then `pip install "jobhunter[gmail]"`); a .mbox
+  export or a .eml folder works without anything.
+
 ## 3.30.0 — 2026-10-27
 
 - **The open profile at the top left**: a round badge with its initials and its name

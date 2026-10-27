@@ -19,7 +19,14 @@ def test_lire_illisible(tmp_path):
 def test_enregistrer_garde_seulement_les_filtres_connus(tmp_path):
     f = tmp_path / V.FICHIER
     assert V.enregistrer("ESG 8+", {"zone": "prioritaire", "fit_min": "8", "page": 3, "x": 1}, f)
-    assert V.lire(f)["vues"] == {"ESG 8+": {"zone": "prioritaire", "fit_min": 8.0}}
+    # a view saved before 3.31 held one value: it becomes a list of one
+    assert V.lire(f)["vues"] == {"ESG 8+": {"zone": ["prioritaire"], "fit_min": 8.0}}
+
+
+def test_filtres_a_plusieurs_valeurs(tmp_path):
+    f = tmp_path / V.FICHIER
+    assert V.enregistrer("Europe", {"region": ["Europe", "Asie", ""], "pays": 3}, f)
+    assert V.lire(f)["vues"] == {"Europe": {"region": ["Europe", "Asie"]}}
     assert not V.enregistrer("  ", {}, f)
 
 
@@ -74,5 +81,6 @@ def test_ligne_porte_les_colonnes_du_bureau():
         ],
         {},
     )["lignes"][0]
-    assert lig["publiee"] == "2026-10-20" and lig["verifiee"] == "2026-10-24"
+    # found / checked dates are the app's business, not columns (the user, 2026-10-27)
+    assert lig["publiee"] == "2026-10-20" and "verifiee" not in lig
     assert lig["alerte"] == "⚠" and lig["pays"] == "France"

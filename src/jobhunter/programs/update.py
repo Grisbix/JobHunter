@@ -912,6 +912,7 @@ def _git(*a, **kw):
         text=True,
         encoding="utf-8",
         errors="replace",
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),  # output captured
         **kw,
     )
 

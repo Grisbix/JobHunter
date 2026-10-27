@@ -54,6 +54,7 @@ def to_pdf(docx_path: Path) -> Path | None:
             check=True,
             capture_output=True,
             timeout=90,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),  # no console flash
         )
         return docx_path.with_suffix(".pdf")
     except Exception as e:

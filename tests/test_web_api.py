@@ -126,6 +126,47 @@ def test_offres_pagination():
     assert (d["total"], d["pages"], len(d["lignes"])) == (web_api.PAR_PAGE + 3, 2, 3)
 
 
+def test_offres_taille_de_page():
+    file = [_offre("A", str(i), 5) for i in range(130)]
+    d = offres(file, {}, par_page=100)
+    assert (d["par_page"], d["pages"], len(d["lignes"])) == (100, 2, 100)
+    d = offres(file, {}, par_page=7)  # not offered: the default
+    assert (d["par_page"], len(d["lignes"])) == (web_api.PAR_PAGE, web_api.PAR_PAGE)
+
+
+def test_filtres_a_plusieurs_valeurs():
+    file = [
+        _offre("A", "a", 8, domaine="ESG", contrat="CDI"),
+        _offre("B", "b", 8, domaine="Finance", contrat="CDD"),
+        _offre("C", "c", 8, domaine="IA", contrat="CDI"),
+    ]
+    d = offres(file, {}, domaine=["ESG", "IA"])
+    assert sorted(l["entreprise"] for l in d["lignes"]) == ["A", "C"]
+    d = offres(file, {}, domaine=["ESG", "Finance"], contrat="CDD")  # AND across fields
+    assert [l["entreprise"] for l in d["lignes"]] == ["B"]
+    assert offres(file, {}, domaine=[])["total"] == 3
+
+
+def test_la_region_limite_les_pays():
+    file = [
+        _offre("A", "a", 8, localisation="Cairo, Egypt"),
+        _offre("B", "b", 8, localisation="Vienna, Austria"),
+        _offre("C", "c", 8, localisation="Paris, France"),
+    ]
+    d = offres(file, {}, region=["Europe"], pays=["Égypte", "Autriche"])
+    assert d["pays"] == ["Autriche", "France"]  # Egypt is not offered under Europe
+    assert d["choisis"]["pays"] == ["Autriche"]  # and its choice is dropped
+    assert [l["entreprise"] for l in d["lignes"]] == ["B"]
+    assert offres(file, {}, pays=["Égypte"])["pays"] == ["Autriche", "Égypte", "France"]
+
+
+def test_reglages_menu_et_taille_de_page():
+    r = web_api.reglages({"menu": "etroit", "par_page": 100})
+    assert (r["menu"], r["par_page"]) == ("etroit", 100)
+    r = web_api.reglages({"menu": "x", "par_page": 13})
+    assert (r["menu"], r["par_page"]) == ("large", web_api.PAR_PAGE)
+
+
 def test_fiche_reprend_le_suivi_et_la_description():
     o = _offre("A", "a", 8, fit_fin="8.4", source="linkedin", cv="file:///C:/x.pdf")
     f = fiche(o, {"A|a": {"s": "postulé", "d": "2026-10-20", "n": "relu"}}, "Texte")
@@ -479,3 +520,12 @@ def test_icone_de_la_fenetre_livree():
     from jobhunter.web.__main__ import ICONE
 
     assert ICONE.is_file()
+
+
+def test_gmail_pas_relie_dit_quoi_faire(monkeypatch, tmp_path):
+    from jobhunter import root
+
+    monkeypatch.setattr(root, "dossier_cles", lambda: tmp_path)
+    r = Api().lire_courriels("gmail")
+    assert r["ok"] is False and "pas encore relié" in r["erreur"]
+    assert str(tmp_path / "gmail_client.json") in r["erreur"]

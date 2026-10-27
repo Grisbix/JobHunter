@@ -148,6 +148,7 @@ def tableau(
 # "écartées": the offers the desktop hides (pas intéressé, expiré, mauvaise).
 FILTRES_STATUT = ("à traiter", "postulées", "écartées", "toutes")
 PAR_PAGE = 40
+PAR_PAGE_CHOIX = (20, 40, 100, 200)
 
 
 def _date_offre(o: Mapping[str, Any]) -> str:
@@ -179,6 +180,13 @@ def _cle_tri(nom: str) -> str:
     from jobhunter.text import sans_accent
 
     return sans_accent(nom).lower()
+
+
+@cache
+def _region_du_pays(pays: str) -> str:
+    from jobhunter.scoring import zones as _zones
+
+    return _zones.region_pays(pays)
 
 
 @cache
@@ -221,30 +229,56 @@ def _ligne(o: Mapping[str, Any], suivi: Mapping[str, Any]) -> dict[str, Any]:
         "pays": _pays(lieu).replace("?", ""),
         "region": _region(lieu).replace("?", ""),
         "publiee": str(o.get("date_publication") or "")[:10],
-        "trouvee": str(o.get("process") or "")[:10],
         # last seen alive: link checked or served again, whichever is later
-        "verifiee": max(str(o.get("ls_check") or "")[:10], str(o.get("vu_le") or "")[:10]),
         "signal": o.get("signal") or "",
         "alerte": _alerte(o),
     }
+
+
+def _choix(v: Any) -> set[str]:
+    """A filter's chosen values: one value or several (the user, 2026-10-27); empty = all."""
+    if isinstance(v, str):
+        return {v} if v else set()
+    if isinstance(v, (list, tuple, set)):
+        return {str(x) for x in v if x}
+    return set()
+
+
+def _par_page(n: Any) -> int:
+    try:
+        n = int(n)
+    except (TypeError, ValueError):
+        return PAR_PAGE
+    return n if n in PAR_PAGE_CHOIX else PAR_PAGE
 
 
 def offres(
     offres: Sequence[Any],
     suivi: Mapping[str, Any],
     texte: str = "",
-    zone: str = "",
+    zone: str | Sequence[str] = "",
     fit_min: float = 0,
     statut: str = "à traiter",
-    domaine: str = "",
-    contrat: str = "",
+    domaine: str | Sequence[str] = "",
+    contrat: str | Sequence[str] = "",
     tri: str = "fit",
     page: int = 0,
-    pays: str = "",
-    region: str = "",
+    pays: str | Sequence[str] = "",
+    region: str | Sequence[str] = "",
+    par_page: int = PAR_PAGE,
 ) -> dict[str, Any]:
-    """One page of the offers screen, filtered and sorted, with the filter choices."""
+    """One page of the offers screen, filtered and sorted, with the filter choices.
+
+    Each list filter takes one value or several (any of them matches). The countries
+    offered are those of the chosen regions; a chosen country outside them is dropped.
+    """
     mots = [m for m in (texte or "").lower().split() if m]
+    zones_, domaines, contrats = _choix(zone), _choix(domaine), _choix(contrat)
+    regions = _choix(region)
+    tous_pays = {p for o in offres if (p := _pays(str(o.get("localisation") or ""))) != "?"}
+    proposes = {p for p in tous_pays if not regions or _region_du_pays(p) in regions}
+    pays_ = _choix(pays) & proposes if regions else _choix(pays)
+    par_page = _par_page(par_page)
     gardees = []
     for o in offres:
         st = str(o.get("statut") or "")
@@ -255,15 +289,15 @@ def offres(
             continue
         if statut == "écartées" and (suivi.get(k) or {}).get("s") not in ECARTEES:
             continue
-        if domaine and o.get("domaine") != domaine:
+        if domaines and o.get("domaine") not in domaines:
             continue
-        if contrat and o.get("contrat") != contrat:
+        if contrats and o.get("contrat") not in contrats:
             continue
-        if zone and o.get("zone") != zone:
+        if zones_ and o.get("zone") not in zones_:
             continue
-        if pays and _pays(str(o.get("localisation") or "")) != pays:
+        if pays_ and _pays(str(o.get("localisation") or "")) not in pays_:
             continue
-        if region and _region(str(o.get("localisation") or "")) != region:
+        if regions and _region(str(o.get("localisation") or "")) not in regions:
             continue
         if fit_min and _fit(o) < fit_min:
             continue
@@ -277,25 +311,24 @@ def offres(
         "date": lambda o: _date_offre(o),
         "entreprise": lambda o: str(o.get("entreprise") or "").lower(),
         "publiee": lambda o: str(o.get("date_publication") or "")[:10],
-        "verifiee": lambda o: max(str(o.get("ls_check") or ""), str(o.get("vu_le") or ""))[:10],
     }
-    gardees.sort(key=cles.get(tri, cles["fit"]), reverse=tri in ("date", "publiee", "verifiee"))
+    gardees.sort(key=cles.get(tri, cles["fit"]), reverse=tri in ("date", "publiee"))
     page = max(0, int(page))
-    debut = page * PAR_PAGE
+    debut = page * par_page
     return {
         "total": len(gardees),
         "page": page,
-        "pages": max(1, -(-len(gardees) // PAR_PAGE)),
-        "lignes": [_ligne(o, suivi) for o in gardees[debut : debut + PAR_PAGE]],
+        "pages": max(1, -(-len(gardees) // par_page)),
+        "par_page": par_page,
+        "lignes": [_ligne(o, suivi) for o in gardees[debut : debut + par_page]],
+        # what the filters really applied: the countries left once the regions chosen
+        "choisis": {"pays": sorted(pays_, key=_cle_tri)},
         "zones": sorted({str(o.get("zone")) for o in offres if o.get("zone")}),
         "domaines": sorted({str(o.get("domaine")) for o in offres if o.get("domaine")}),
         "contrats": sorted({str(o.get("contrat")) for o in offres if o.get("contrat")}),
         # "?" is no choice: the offers it groups have no place (zones.lieu_deduit
         # finds most of them); "Tous les pays" still shows them.
-        "pays": sorted(
-            {p for o in offres if (p := _pays(str(o.get("localisation") or ""))) != "?"},
-            key=_cle_tri,
-        ),
+        "pays": sorted(proposes, key=_cle_tri),
         "regions": sorted(
             {r for o in offres if (r := _region(str(o.get("localisation") or ""))) != "?"},
             key=_cle_tri,
@@ -405,6 +438,8 @@ REGLAGES: dict[str, Any] = {
     "teinte": "terre",
     "police": "segoe",
     "mode": "auto",
+    "menu": "large",
+    "par_page": PAR_PAGE,
 }
 
 
@@ -426,6 +461,9 @@ def reglages(brut: Any) -> dict[str, Any]:
         "teinte": teinte if teinte in TEINTES else REGLAGES["teinte"],
         "police": police if police in POLICES else REGLAGES["police"],
         "mode": d.get("mode") if d.get("mode") in MODES else REGLAGES["mode"],
+        # the side menu folded to its icons, for more room (the user, 2026-10-27)
+        "menu": d.get("menu") if d.get("menu") in ("large", "etroit") else REGLAGES["menu"],
+        "par_page": _par_page(d.get("par_page")),
     }
 
 
@@ -729,21 +767,22 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         return {"ok": True}
 
     def offres(self, filtres: dict[str, Any] | None = None) -> dict[str, Any]:
-        """One page of the offers screen; filtres: texte, zone, fit_min, statut, tri, page."""
+        """One page of the offers screen; filtres: texte, zone, fit_min, statut, tri, page, par_page."""
         f = filtres or {}
         return offres(
             self._file(),
             self._suivi(),
             texte=str(f.get("texte") or ""),
-            zone=str(f.get("zone") or ""),
+            zone=sorted(_choix(f.get("zone"))),
             fit_min=float(f.get("fit_min") or 0),
             statut=str(f.get("statut") or "à traiter"),
-            domaine=str(f.get("domaine") or ""),
-            contrat=str(f.get("contrat") or ""),
-            pays=str(f.get("pays") or ""),
-            region=str(f.get("region") or ""),
+            domaine=sorted(_choix(f.get("domaine"))),
+            contrat=sorted(_choix(f.get("contrat"))),
+            pays=sorted(_choix(f.get("pays"))),
+            region=sorted(_choix(f.get("region"))),
             tri=str(f.get("tri") or "fit"),
             page=int(f.get("page") or 0),
+            par_page=_par_page(f.get("par_page")),
         )
 
     def offre(self, ident: str) -> dict[str, Any] | None:
@@ -1096,7 +1135,20 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         from jobhunter.storage import applications
 
         if source == "gmail":
-            lot: Callable[[], Any] = lambda: reading.depuis_gmail(root.dossier_cles())  # noqa: E731
+            cles = root.dossier_cles()
+            if not (cles / reading.CLIENT).exists():
+                # Gmail is not linked yet: say what to do, not a FileNotFoundError.
+                return {
+                    "ok": False,
+                    "erreur": (
+                        f"Gmail n'est pas encore relié. Crée un client OAuth « application de "
+                        f"bureau » (API Gmail activée) dans ta console Google Cloud, enregistre "
+                        f"son fichier sous {cles / reading.CLIENT}, puis installe la "
+                        f'bibliothèque : pip install "jobhunter[gmail]". En attendant, un '
+                        f"export .mbox (Google Takeout) ou un dossier .eml marche sans rien."
+                    ),
+                }
+            lot: Callable[[], Any] = lambda: reading.depuis_gmail(cles)  # noqa: E731
         elif source in ("mbox", "eml"):
             if self._fenetre is None:
                 return {"ok": False, "erreur": "il faut l'application pour choisir un fichier"}
@@ -1732,16 +1784,62 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
 
     def ouvrir_fichier(self, chemin: str) -> bool:
         """Opens a CV or a letter with its program; only files under CV/ or Letters/."""
-        from jobhunter import root
-
-        p = _chemin_local(chemin)
-        if p is None or not p.is_file() or p.suffix.lower() not in DOCUMENTS:
-            return False  # a document only: never a program dropped in those folders
-        permis = (root.racine() / "CV", root.dossier("Lettres"))
-        if not any(p.is_relative_to(d.resolve()) for d in permis):
+        p = _document_permis(chemin)
+        if p is None:
             return False
         os.startfile(p)  # type: ignore[attr-defined,unused-ignore]  # Windows only
         return True
+
+    # A CV or a letter seen and edited in the window (the user, 2026-10-27): its PDF to
+    # look at, the text of its .docx to change; the PDF is made again after a change.
+    def document(self, chemin: str) -> dict[str, Any]:
+        """The PDF (base64) and the paragraphs of the .docx next to `chemin`."""
+        import base64
+
+        from jobhunter.documents import editing
+
+        p = _document_permis(chemin)
+        docx = p.with_suffix(".docx") if p else None
+        if docx is None or not docx.is_file():
+            return {"ok": False, "erreur": "document introuvable (seul un .docx se modifie)"}
+        pdf = docx.with_suffix(".pdf")
+        try:
+            return {
+                "ok": True,
+                "nom": docx.stem,
+                "docx": str(docx),
+                "paragraphes": editing.lire(docx),
+                "modifiables": editing.modifiables(docx),
+                "pdf": base64.b64encode(pdf.read_bytes()).decode("ascii") if pdf.is_file() else "",
+            }
+        except Exception as e:  # noqa: BLE001 — a damaged file is said, not hidden
+            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+
+    def enregistrer_document(
+        self, chemin: str, avant: list[str], apres: list[str]
+    ) -> dict[str, Any]:
+        """Writes the changed paragraphs into the .docx (first copy kept), remakes the PDF."""
+        import shutil
+
+        from jobhunter.documents import editing, rendering
+
+        p = _document_permis(chemin)
+        docx = p.with_suffix(".docx") if p else None
+        if docx is None or not docx.is_file():
+            return {"ok": False, "erreur": "document introuvable"}
+        if not isinstance(avant, list) or not isinstance(apres, list) or len(avant) != len(apres):
+            return {"ok": False, "erreur": "texte reçu incomplet"}
+        origine = docx.with_name(docx.name + ".orig")
+        if not origine.exists():
+            shutil.copy2(docx, origine)  # the generated version, kept once
+        try:
+            faits, refus = editing.modifier(docx, [str(x) for x in avant], [str(x) for x in apres])
+        except PermissionError:
+            return {"ok": False, "erreur": "le fichier est ouvert ailleurs (Word ?) : ferme-le"}
+        except Exception as e:  # noqa: BLE001
+            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+        pdf = rendering.to_pdf(docx) if faits else None
+        return {"ok": True, "modifies": faits, "refuses": refus, "pdf": pdf is not None}
 
     def fenetre(self, action: str) -> None:
         """The title bar buttons of the frameless window: reduire, agrandir, fermer."""
@@ -1762,6 +1860,19 @@ def _dossier_relances() -> Path:
     from jobhunter import root
 
     return root.dans(root.dossier("Lettres"), "Relances")
+
+
+def _document_permis(chemin: str) -> Path | None:
+    """`chemin` if it is a document under CV/ or Letters/; never a program dropped there."""
+    from jobhunter import root
+
+    p = _chemin_local(chemin)
+    if p is None or not p.is_file() or p.suffix.lower() not in DOCUMENTS:
+        return None
+    permis = (root.racine() / "CV", root.dossier("Lettres"))
+    if not any(p.is_relative_to(d.resolve()) for d in permis):
+        return None
+    return p
 
 
 def _chemin_local(chemin: str) -> Path | None:

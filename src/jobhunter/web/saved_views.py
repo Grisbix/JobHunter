@@ -15,15 +15,16 @@ from jobhunter import root
 
 FICHIER = "_vues_web.json"
 
-# The filters a view may keep, with their type (anything else is dropped).
+# The filters a view may keep, with their type (anything else is dropped). A list
+# filter holds several values (3.31); a view saved before keeps its one value.
 FILTRES: dict[str, type] = {
     "texte": str,
     "statut": str,
-    "zone": str,
-    "domaine": str,
-    "contrat": str,
-    "pays": str,
-    "region": str,
+    "zone": list,
+    "domaine": list,
+    "contrat": list,
+    "pays": list,
+    "region": list,
     "fit_min": float,
     "tri": str,
 }
@@ -39,9 +40,6 @@ COLONNES = (
     "pays",
     "region",
     "publiee",
-    "trouvee",
-    "verifiee",
-    "signal",
 )
 PAR_DEFAUT = ["lieu", "zone", "date", "suivi"]
 
@@ -79,6 +77,12 @@ def filtres(v: Any) -> dict[str, Any]:
     out: dict[str, Any] = {}
     for cle, genre in FILTRES.items():
         if not isinstance(v, dict) or cle not in v:
+            continue
+        if genre is list:
+            brut = v[cle]
+            brut = [brut] if isinstance(brut, str) else brut
+            if isinstance(brut, (list, tuple)):
+                out[cle] = [str(x) for x in brut if x]
             continue
         try:
             out[cle] = genre(v[cle] or (0 if genre is float else ""))

@@ -21,6 +21,7 @@ const ICONES = {
   dossier: "M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2h8.5A1.5 1.5 0 0 1 21 8.5v10a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z",
   clavier: "M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm1 3v2h2V9zm4 0v2h2V9zm4 0v2h2V9zm4 0v2h2V9zM7 13v2h10v-2z",
   fenetre: "M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 5v9h14V9z",
+  panneau: "M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm5 2v12h9V6z",
   reglage: "M3 6h9v2H3zm14 0h4v2h-4zM3 16h4v2H3zm8 0h10v2H11zM12 4h4v6h-4zM7 14h4v6H7z",
 };
 
@@ -477,9 +478,10 @@ function segment(options, valeur, onchange) {
     h("button", { class: v === valeur ? "on" : "", onclick: () => onchange(v) }, lib)));
 }
 
-function pagination(d, aller) {
+function pagination(d, aller, taille = null) {
   return h("div", { class: "pagination" },
     h("span", {}, `${nombre(d.total)} résultat${d.total > 1 ? "s" : ""} · page ${d.page + 1} sur ${d.pages}`),
+    taille,
     h("div", { class: "seg" },
       h("button", { disabled: d.page <= 0, onclick: () => aller(d.page - 1) }, "Précédente"),
       h("button", { disabled: d.page + 1 >= d.pages, onclick: () => aller(d.page + 1) }, "Suivante")));
@@ -488,12 +490,62 @@ function pagination(d, aller) {
 // --- Drawer: one offer --------------------------------------------------------------
 
 function fermerTiroir() {
-  $("tiroir").classList.remove("ouvert");
+  $("tiroir").classList.remove("ouvert", "document");
   $("voile").classList.remove("ouvert");
+}
+
+// A CV or a letter in the drawer (the user, 2026-10-27): its PDF to look at, the text of
+// its .docx to change. Only the paragraphs changed are written, in place (their bold and
+// italics stay); the PDF is made again from the .docx.
+async function voirDocument(o, chemin, titre, mode = "apercu") {
+  const corps = $("tiroir-corps");
+  $("tiroir").classList.add("document");
+  const retour = h("button", { class: "bouton", onclick: () => ouvrirOffre(o.id) }, svg("fleche"), "Retour à l'offre");
+  corps.replaceChildren(h("div", { class: "vide" }, "Chargement…"));
+  if (!window.pywebview) return corps.replaceChildren(retour, h("div", { class: "vide" }, HORS_APPLI));
+  const d = await window.pywebview.api.document(chemin);
+  if (!d || !d.ok) return corps.replaceChildren(retour, h("div", { class: "vide" }, d ? d.erreur : "Lecture impossible."));
+  const textes = [...d.paragraphes];
+  const place = h("div");
+  const montrer = (m) => {
+    mode = m;
+    onglets.replaceChildren(segment([["apercu", "Aperçu"], ["texte", "Modifier le texte"]], mode, montrer));
+    if (mode === "apercu") {
+      if (!d.pdf) return place.replaceChildren(h("div", { class: "vide" }, "Pas de PDF : il sera fait au prochain enregistrement."));
+      const octets = Uint8Array.from(atob(d.pdf), (c) => c.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([octets], { type: "application/pdf" }));
+      return place.replaceChildren(h("iframe", { class: "apercu-doc", src: url, title: titre }));
+    }
+    const ajuster = (t) => { t.style.height = "auto"; t.style.height = `${t.scrollHeight + 2}px`; };
+    const zones = textes.map((t, i) => (t.trim() ? h("textarea", {
+      class: "champ-texte para-doc", rows: 1, readonly: !d.modifiables[i],
+      title: d.modifiables[i] ? null : "Contient un lien : à modifier dans Word.",
+      oninput: (e) => { textes[i] = e.target.value.replace(/\n/g, " "); ajuster(e.target); },
+    }, t) : null)).filter(Boolean);
+    place.replaceChildren(h("div", { class: "edition-doc" }, zones),
+      h("div", { class: "boutons", style: "margin-top:12px" },
+        bouton("Enregistrer", "doc", enregistrer, "plein"),
+        bouton("Annuler les changements", "", () => voirDocument(o, chemin, titre, "texte"))));
+    requestAnimationFrame(() => zones.forEach(ajuster));
+  };
+  const enregistrer = async () => {
+    const r = await window.pywebview.api.enregistrer_document(chemin, d.paragraphes, textes);
+    if (!r || !r.ok) return toast(r ? r.erreur : "Lecture impossible.", true);
+    if (!r.modifies) return toast(r.refuses ? "Rien n'a pu être écrit : le fichier a changé, recharge-le." : "Rien n'a changé.", !!r.refuses);
+    toast(`${r.modifies} paragraphe(s) modifié(s)${r.pdf ? ", PDF refait" : ", PDF non refait (LibreOffice ?)"}.`);
+    voirDocument(o, chemin, titre, "apercu");
+  };
+  const onglets = h("div");
+  corps.replaceChildren(
+    h("div", { class: "fiche-tete" }, h("div", { style: "min-width:0" }, h("h2", {}, titre), h("div", { class: "sous" }, `${o.poste} · ${o.entreprise}`))),
+    h("div", { class: "boutons" }, retour, onglets, bouton("Ouvrir dans Word", "sortie", () => ouvrirFichier(d.docx))),
+    place);
+  montrer(mode);
 }
 
 async function ouvrirOffre(id) {
   const corps = $("tiroir-corps");
+  $("tiroir").classList.remove("document");
   corps.replaceChildren(h("div", { class: "vide" }, "Chargement…"));
   $("tiroir").classList.add("ouvert");
   $("voile").classList.add("ouvert");
@@ -508,8 +560,8 @@ async function ouvrirOffre(id) {
         .map((t, i) => t && h("span", { class: i === 4 ? "puce chaude" : "puce" }, t)).filter(Boolean)),
     h("div", { class: "boutons" },
       bouton("Voir l'annonce", "sortie", () => ouvrir(o.url), "plein"),
-      o.cv ? bouton("CV", "doc", () => ouvrirFichier(o.cv)) : null,
-      o.lettre ? bouton("Lettre", "doc", () => ouvrirFichier(o.lettre)) : null,
+      o.cv ? bouton("CV", "doc", () => voirDocument(o, o.cv, "CV")) : null,
+      o.lettre ? bouton("Lettre", "doc", () => voirDocument(o, o.lettre, "Lettre")) : null,
       bouton(o.cv ? "Refaire CV et lettre" : "Préparer CV et lettre", "eclair", () => lancer("documents", o.id)),
       ["postulé", "relancé", "entretien", "refus"].includes(o.suivi) ? null
         : bouton("J'ai envoyé cette candidature", "avion", () => declarerEnvoi(o.id), "chaud")),
@@ -634,43 +686,62 @@ function tableCandidatures(lignes) {
         h("td", {}, c.fit == null ? "—" : h("div", { class: "prog", title: `${c.fit}/10` }, h("i", { style: `width:${c.fit * 10}%` })))))));
 }
 
-// A long list (countries, regions…): a field to type in, its matches under it. The list
-// hangs on <body>: inside the filter bar, its scrolling and fade (mask) would clip it.
 const sansAccent = (t) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-function listeCherchable(valeur, tous, valeurs, choisir) {
-  const champ = h("input", { type: "search", class: "choix cherchable", placeholder: tous, value: valeur, autocomplete: "off" });
-  const menu = h("div", { class: "menu-cherchable" });
-  let actifs = [];
-  const prendre = (v) => { menu.remove(); if (v !== valeur) choisir(v); else champ.value = valeur; champ.blur(); };
-  const montrer = () => {
-    const q = sansAccent(champ.value.trim());
-    actifs = valeurs.filter((v) => sansAccent(v).includes(q));
-    // mousedown, not click: the field's blur would close the list first.
-    const ligne = (v, lib) => h("button", { class: v === valeur ? "actif" : "", onmousedown: (e) => { e.preventDefault(); prendre(v); } }, lib);
-    menu.replaceChildren(ligne("", tous), ...(actifs.length
-      ? actifs.slice(0, 100).map((v) => ligne(v, v)) : [h("div", { class: "sous" }, "Aucun résultat")]));
-    placer();
-    document.body.append(menu);
-    document.addEventListener("scroll", placer, true);
+// A filter of several values (the user, 2026-10-27): a button that says what is chosen,
+// and a list of boxes with Apply. The list hangs on <body>: inside the filter bar, its
+// scrolling and fade (mask) would clip it. Past a dozen values, a field narrows it.
+const enListe = (v) => (Array.isArray(v) ? v : v ? [v] : []);
+function listeMulti(choisis, tous, valeurs, appliquer, lien = null) {
+  const garde = new Set(choisis);
+  const libelle = !choisis.length ? tous
+    : choisis.length <= 2 ? choisis.join(", ") : `${choisis[0]} + ${choisis.length - 1}`;
+  const bouton_ = h("button", { class: `choix multi${choisis.length ? " pris" : ""}`, title: choisis.join(", ") || tous }, libelle);
+  const menu = h("div", { class: "menu-cherchable menu-multi" });
+  const cherche = valeurs.length > 12 ? h("input", { type: "search", class: "champ-texte", placeholder: "Chercher…", autocomplete: "off" }) : null;
+  const cases = h("div", { class: "cases" });
+  const remplir = () => {
+    const q = cherche ? sansAccent(cherche.value.trim()) : "";
+    const vus = valeurs.filter((v) => sansAccent(v).includes(q));
+    cases.replaceChildren(...(vus.length ? vus.slice(0, 300).map((v) => h("label", {},
+      h("input", { type: "checkbox", checked: garde.has(v), onchange: (e) => { e.target.checked ? garde.add(v) : garde.delete(v); } }),
+      h("span", {}, v))) : [h("div", { class: "sous" }, "Aucun résultat")]));
   };
-  // Under its field, again whenever the page or the filter bar scrolls (focusing the
-  // field scrolls the narrow window's bar to it).
   const placer = (e) => {
     if (e && menu.contains(e.target)) return;
-    const r = champ.getBoundingClientRect();
-    Object.assign(menu.style, { left: `${r.left}px`, top: `${r.bottom + 6}px`, minWidth: `${r.width}px` });
+    const r = bouton_.getBoundingClientRect();
+    Object.assign(menu.style, { left: `${Math.max(12, Math.min(r.left, innerWidth - menu.offsetWidth - 12))}px`, top: `${r.bottom + 6}px`, minWidth: `${Math.max(r.width, 220)}px` });
   };
-  champ.addEventListener("focus", () => { champ.select(); montrer(); });
-  champ.addEventListener("input", montrer);
-  champ.addEventListener("blur", () => { menu.remove(); document.removeEventListener("scroll", placer, true); champ.value = valeur; });
-  champ.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") prendre(champ.value.trim() ? (actifs[0] ?? valeur) : "");
-    else if (e.key === "Escape") champ.blur();
+  const dehors = (e) => { if (!menu.contains(e.target) && !bouton_.contains(e.target)) finir(true); };
+  const clavier = (e) => {
+    if (e.key === "Enter") { e.preventDefault(); finir(true); } else if (e.key === "Escape") { e.stopPropagation(); finir(false); }
+  };
+  const finir = (garder) => {
+    menu.remove();
+    document.removeEventListener("scroll", placer, true);
+    document.removeEventListener("mousedown", dehors, true);
+    document.removeEventListener("keydown", clavier, true);
+    const choix = valeurs.filter((v) => garde.has(v));
+    if (garder && (choix.length !== choisis.length || choix.some((v) => !choisis.includes(v)))) appliquer(choix);
+    else { garde.clear(); choisis.forEach((v) => garde.add(v)); }
+  };
+  if (cherche) cherche.addEventListener("input", remplir);
+  menu.append(...(cherche ? [cherche] : []), cases, ...(lien ? [h("button", { class: "lien-multi", onclick: () => { finir(false); lien[1](); } }, lien[0])] : []), h("div", { class: "pied-multi" },
+    h("button", { class: "bouton", onclick: () => { garde.clear(); remplir(); } }, "Tout effacer"),
+    h("button", { class: "bouton plein", onclick: () => finir(true) }, "Appliquer")));
+  bouton_.addEventListener("click", () => {
+    if (menu.isConnected) return finir(true);
+    remplir();
+    document.body.append(menu);
+    placer();
+    document.addEventListener("scroll", placer, true);
+    document.addEventListener("mousedown", dehors, true);
+    document.addEventListener("keydown", clavier, true);
+    (cherche || bouton_).focus();
   });
-  return champ;
+  return bouton_;
 }
 
-const filtresOffres = { texte: "", statut: "à traiter", zone: "", domaine: "", contrat: "", pays: "", region: "", fit_min: 0, tri: "fit", page: 0 };
+const filtresOffres = { texte: "", statut: "à traiter", zone: [], domaine: [], contrat: [], pays: [], region: [], fit_min: 0, tri: "fit", page: 0, par_page: 40 };
 // The table's optional columns (the desktop's COLS); the offer itself is always shown.
 const COLONNES_OFFRES = [
   ["lieu", "Lieu", (o) => h("span", { title: o.lieu }, o.lieu || "—")],
@@ -682,9 +753,6 @@ const COLONNES_OFFRES = [
   ["pays", "Pays", (o) => o.pays || "—"],
   ["region", "Région", (o) => o.region || "—"],
   ["publiee", "Publiée", (o) => dateFr(o.publiee) || "—"],
-  ["trouvee", "Trouvée", (o) => dateFr(o.trouvee) || "—"],
-  ["verifiee", "Vérifiée", (o) => dateFr(o.verifiee) || "—"],
-  ["signal", "Signal", (o) => h("span", { title: o.signal }, o.signal || "")],
 ];
 let vuesOffres = null;  // {vues: {name: filters}, colonnes: [...]}, read once
 
@@ -725,7 +793,7 @@ function menuVues() {
       if (ok && await ecrire("supprimer_vue", nom)) { delete vuesOffres.vues[nom]; redessiner(); }
       return;
     }
-    if (v === "*") Object.assign(filtresOffres, { texte: "", statut: "à traiter", zone: "", domaine: "", contrat: "", pays: "", region: "", fit_min: 0, tri: "fit" });
+    if (v === "*") Object.assign(filtresOffres, { texte: "", statut: "à traiter", zone: [], domaine: [], contrat: [], pays: [], region: [], fit_min: 0, tri: "fit" });
     else Object.assign(filtresOffres, vuesOffres.vues[v]);
     filtresOffres.page = 0;
     redessiner();
@@ -749,18 +817,18 @@ ECRANS.offres = {
     const changer = (cle, v) => { f[cle] = v; f.page = 0; relancer(); };
     if (!vuesOffres) vuesOffres = (await appel("vues")) || { vues: {}, colonnes: ["lieu", "zone", "date", "suivi"] };
     const d = await appel("offres", { ...f });
+    if (d.choisis) f.pays = d.choisis.pays;  // a country outside the chosen regions is dropped
     const cols = COLONNES_OFFRES.filter(([c]) => vuesOffres.colonnes.includes(c));
     let minuteur;
     const champ = h("input", { type: "search", placeholder: "Poste, entreprise, ville…", value: f.texte,
       oninput: (e) => { clearTimeout(minuteur); minuteur = setTimeout(() => changer("texte", e.target.value), 250); } });
-    const zone = h("select", { class: "choix", onchange: (e) => changer("zone", e.target.value) },
-      h("option", { value: "" }, "Toutes les zones"),
-      d.zones.map((z) => h("option", { value: z, selected: z === f.zone }, z)));
-    // Past a dozen choices, typing beats scrolling.
-    const liste = (cle, tous, valeurs) => ((valeurs || []).length > 12
-      ? listeCherchable(f[cle], tous, valeurs, (v) => changer(cle, v))
-      : h("select", { class: "choix", onchange: (e) => changer(cle, e.target.value) },
-        h("option", { value: "" }, tous), (valeurs || []).map((v) => h("option", { value: v, selected: v === f[cle] }, v))));
+    const liste = (cle, tous, valeurs, lien) => listeMulti(enListe(f[cle]), tous, valeurs || [], (v) => changer(cle, v), lien);
+    // Which places are priority or secondary is the profile's search (the user could not
+    // find it, 2026-10-27): the zone list leads there.
+    const reglerZones = ["Régler les zones…", () => aller("profil").then(() => {
+      const c = document.getElementById("zones-profil");
+      if (c) c.scrollIntoView({ behavior: "smooth", block: "start" });
+    })];
     const ids = () => [...coches];
     const barreSel = coches.size ? h("div", { class: "barre-selection verre" },
       h("strong", {}, `${coches.size} cochée${coches.size > 1 ? "s" : ""}`),
@@ -775,7 +843,7 @@ ECRANS.offres = {
     const cocher = (id, e) => { e.stopPropagation(); coches.has(id) ? coches.delete(id) : coches.add(id); relancer(); };
     const tous = d.lignes.length && d.lignes.every((o) => coches.has(o.id));
     const tri = h("select", { class: "choix", onchange: (e) => changer("tri", e.target.value) },
-      [["fit", "Meilleur score"], ["date", "Plus récentes"], ["publiee", "Publiées en dernier"], ["verifiee", "Vérifiées en dernier"], ["entreprise", "Entreprise A → Z"]].map(([v, l]) =>
+      [["fit", "Meilleur score"], ["date", "Plus récentes"], ["publiee", "Publiées en dernier"], ["entreprise", "Entreprise A → Z"]].map(([v, l]) =>
         h("option", { value: v, selected: v === f.tri }, l)));
 
     vue.replaceChildren(h("div", { class: "colonne" },
@@ -783,7 +851,7 @@ ECRANS.offres = {
         h("label", { class: "champ" }, svg("loupe"), champ),
         segment(d.statuts.map((s) => [s, s[0].toUpperCase() + s.slice(1)]), f.statut, (v) => changer("statut", v)),
         segment([[0, "Tous"], [7, "7+"], [8, "8+"], [9, "9+"]], f.fit_min, (v) => changer("fit_min", v)),
-        zone, liste("domaine", "Tous les domaines", d.domaines), liste("contrat", "Tous les contrats", d.contrats),
+        liste("zone", "Toutes les zones", d.zones, reglerZones), liste("domaine", "Tous les domaines", d.domaines), liste("contrat", "Tous les contrats", d.contrats),
         liste("region", "Toutes les régions", d.regions), liste("pays", "Tous les pays", d.pays), tri,
         menuVues(), bouton("Colonnes…", "", choisirColonnes)),
       barreSel,
@@ -801,7 +869,9 @@ ECRANS.offres = {
                 h("div", { class: "s" }, o.entreprise)))),
             cols.map(([, , cellule]) => h("td", {}, cellule(o)))))))
         : h("div", { class: "vide" }, "Aucune offre ne correspond à ces filtres."),
-        pagination(d, (p) => { f.page = p; relancer(); vue.scrollTop = 0; }))));
+        pagination(d, (p) => { f.page = p; relancer(); vue.scrollTop = 0; },
+          h("select", { class: "choix", onchange: (e) => { changer("par_page", Number(e.target.value)); garderReglage({ par_page: f.par_page }); } },
+            [20, 40, 100, 200].map((n) => h("option", { value: n, selected: n === (d.par_page || f.par_page) }, `${n} par page`)))))));
     if (f.texte) { champ.focus(); champ.setSelectionRange(f.texte.length, f.texte.length); }
   },
 };
@@ -811,11 +881,26 @@ ECRANS.candidatures = {
   actions: () => [bouton("Lire les réponses par mail", "cloche", ouvrirCourriels)],
   async dessiner(vue) {
     const d = await appel("candidatures");
+    // A card dragged to another column takes its status (the user, 2026-10-27), as the
+    // drawer's status list would: same undo, same date of change.
+    let tiree = null;
+    const cible = (c) => STATUTS.includes(c.statut) ? {
+      ondragover: (ev) => { if (tiree && tiree.statut !== c.statut) { ev.preventDefault(); ev.currentTarget.classList.add("survol"); } },
+      ondragleave: (ev) => { if (!ev.currentTarget.contains(ev.relatedTarget)) ev.currentTarget.classList.remove("survol"); },
+      ondrop: (ev) => {
+        ev.preventDefault();
+        ev.currentTarget.classList.remove("survol");
+        if (tiree && tiree.statut !== c.statut) marquer(tiree.id, c.statut, false);
+        tiree = null;
+      },
+    } : {};
     vue.replaceChildren(h("div", { class: "colonne" },
       h("div", { class: "tableau-kanban" }, d.colonnes.map((c) =>
-        h("div", { class: "verre colonne-k" },
+        h("div", { class: "verre colonne-k", ...cible(c) },
           h("div", { class: "entete" }, h("h3", {}, c.statut[0].toUpperCase() + c.statut.slice(1)),h("span", { class: "compte" }, c.entrees.length)),
-          c.entrees.length ? c.entrees.map((e) => h("div", { class: "carte fiche-k", onclick: () => ouvrirOffre(e.id) },
+          c.entrees.length ? c.entrees.map((e) => h("div", { class: "carte fiche-k", draggable: "true", onclick: () => ouvrirOffre(e.id),
+            ondragstart: (ev) => { tiree = e; ev.dataTransfer.effectAllowed = "move"; ev.dataTransfer.setData("text/plain", e.id); ev.currentTarget.classList.add("tiree"); },
+            ondragend: (ev) => { ev.currentTarget.classList.remove("tiree"); } },
             h("div", { class: "t", title: e.poste }, e.poste), h("div", { class: "s" }, e.entreprise),
             h("div", { class: "bas" }, h("span", {}, dateFr(e.date) || "—"),
               e.fit == null ? null : h("div", { class: "prog", title: `${e.fit}/10` }, h("i", { style: `width:${e.fit * 10}%` })))))
@@ -1024,7 +1109,7 @@ ECRANS.profil = {
       h("div", { class: "deux-colonnes" },
         h("div", {},
           sousTitre(`Mots-clés de collecte · ${r.mots_cles.length}`, "0 0 8px"), editeurPuces(r.mots_cles, bR.sale, "nouveau mot-clé…"),
-          sousTitre("Zones prioritaires"), editeurLieux(r.prioritaires, bR.sale),
+          Object.assign(sousTitre("Zones prioritaires"), { id: "zones-profil" }), editeurLieux(r.prioritaires, bR.sale),
           sousTitre("Zones secondaires"), editeurLieux(r.secondaires, bR.sale)),
         h("div", {},
           sousTitre("Intitulés à garder (un mot du titre suffit ; * = début de mot ; re: = motif)", "0 0 8px"), editeurPuces(r.garder, bR.sale, "mot d'intitulé…"),
@@ -1148,9 +1233,11 @@ function ouvrirCourriels() {
   const lire = async (source) => {
     info.textContent = "Lecture des courriels…";
     liste.replaceChildren();
-    const r = await ecrire("lire_courriels", source);
-    if (!r) return;
-    if (!r.ok) { info.textContent = r.annule ? "Aucun fichier choisi." : r.erreur; return; }
+    // Not ecrire(): its toast would leave "Lecture des courriels…" standing, as if the
+    // reading never ended (the user, 2026-10-27). The reason stays here, in full.
+    if (!window.pywebview) { info.textContent = HORS_APPLI; return; }
+    const r = await window.pywebview.api.lire_courriels(source);
+    if (!r || !r.ok) { info.textContent = !r ? "Lecture impossible." : r.annule ? "Aucun fichier choisi." : r.erreur; return; }
     info.textContent = `${nombre(r.lus)} courriels lus · ${r.propositions.length} statut(s) proposé(s).`;
     liste.replaceChildren(...r.propositions.map((p, i) => {
       const [entreprise, poste] = p.oid.split("|");
@@ -1553,14 +1640,32 @@ ECRANS.maintenance = {
 
 let courant = null;
 // Display settings: --t drives every see-through surface of the native window (style.css).
+let reglagesCourants = null;
 function appliquerReglages(r) {
   if (!r) return;
+  reglagesCourants = r;
+  document.body.classList.toggle("menu-replie", r.menu === "etroit");
+  if (r.par_page) filtresOffres.par_page = r.par_page;
   document.body.style.setProperty("--t", String(r.verre / 100));
   document.body.classList.toggle("sans-fond", r.fond === "aucun");
   document.body.dataset.teinte = r.teinte || "terre";
   modeAffiche = r.mode || "auto";
   appliquerMode();
   document.body.style.setProperty("--police", (POLICES.find(([v]) => v === r.police) || POLICES[0])[2]);
+}
+
+// One display setting changed outside the settings screen (menu, page size): the whole
+// set goes back, since a missing key would be reset to its default.
+async function garderReglage(maj) {
+  if (!reglagesCourants || !window.pywebview) return;
+  reglagesCourants = { ...reglagesCourants, ...maj };
+  reglagesCourants = (await window.pywebview.api.regler(reglagesCourants)) || reglagesCourants;
+}
+
+// The side menu folded to its icons, for more room (the user, 2026-10-27).
+function basculerMenu() {
+  const replie = document.body.classList.toggle("menu-replie");
+  garderReglage({ menu: replie ? "etroit" : "large" });
 }
 
 // Light or dark: "auto" follows Windows (WebView2 passes its setting to the page).
@@ -1808,6 +1913,8 @@ async function demarrer() {
     a.addEventListener("click", () => aller(a.dataset.ecran));
   }
   marqueProfil();
+  $("menu").append(h("button", { class: "replier", title: "Replier ou déplier le menu", onclick: basculerMenu },
+    svg("panneau"), h("span", {}, "Replier le menu")));
   $("voile").addEventListener("click", fermerTiroir);
   $("fermer-tiroir").addEventListener("click", fermerTiroir);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") fermerTiroir(); });
