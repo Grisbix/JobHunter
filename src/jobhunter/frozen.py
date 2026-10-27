@@ -40,6 +40,7 @@ def paquet_msix() -> bool:
     Its folder is read-only, and an installer it downloaded would install a second
     copy beside it. Windows says so through GetCurrentPackageFullName: 15700
     (APPMODEL_ERROR_NO_PACKAGE) outside a package, 122 (buffer too small) inside.
+    Decision: docs/adr/0015-microsoft-store-package.md
     """
     if sys.platform != "win32":
         return False

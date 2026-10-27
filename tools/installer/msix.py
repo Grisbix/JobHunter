@@ -21,6 +21,8 @@ Without them, placeholders: enough to check the packing, refused by the Store.
 
 Needs makeappx.exe (Windows SDK, present on the GitHub Windows runners) and, for
 logos at the sizes Windows asks for, Pillow (else the icon is copied unscaled).
+
+Decision: docs/adr/0015-microsoft-store-package.md
 """
 
 import argparse
