@@ -58,12 +58,130 @@ document.addEventListener("mouseover", (ev) => {
 });
 
 const $ = (id) => document.getElementById(id);
-const nombre = (n) => Number(n || 0).toLocaleString("fr-FR");
-const taille = (o) => (o < 1e6 ? `${Math.max(1, Math.round(o / 1024))} Ko` : `${(o / 1e6).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} Mo`);
+
+// --- Interface language (jobhunter.web.i18n) ----------------------------------------
+// The page is written in French. In another language, what it shows is translated as it
+// appears: text nodes, placeholders and tooltips, by exact text or by template ("{n}
+// offre{s}"), the programs' output line by line. Free text (descriptions, letters, CVs)
+// sits under translate="no" and is never touched.
+let LANGUE = "fr";
+let LOCALE = "fr-FR";
+let TEXTES = new Map();
+let MODELES = [];
+let FIT = [];  // the fit explanation's own templates (too general for the rest)
+
+function chargerCatalogue(c) {
+  if (!c || c.langue === "fr") return;
+  LANGUE = c.langue;
+  LOCALE = { en: "en-GB", de: "de-DE", es: "es-ES" }[c.langue] || "fr-FR";
+  document.documentElement.lang = c.langue;
+  TEXTES = new Map(Object.entries(c.textes));
+  const compiler = ([fr, cible]) => {
+    const morceaux = fr.split(/\{(\w+)\}/);
+    const noms = morceaux.filter((_, i) => i % 2);
+    const fixes = morceaux.filter((_, i) => i % 2 === 0);
+    const motif = new RegExp("^" + morceaux.map((m, i) => (i % 2 ? "([\\s\\S]*?)" : m.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))).join("") + "$");
+    // A cheap test before the regex: the longest fixed piece must be in the text.
+    return { motif, noms, cible, fixe: fixes.join("").length, lettres: /[A-Za-zÀ-ÿ]/.test(fixes.join("")), indice: fixes.reduce((a, b) => (b.length > a.length ? b : a), "") };
+  };
+  // Most fixed text first: "fit {n}" would also match "fit 1 : 0 (enregistré : 0)".
+  const precis = (a, b) => b.fixe - a.fixe;
+  // A template with no letter of its own ("{a} : {b}") would only copy its holes.
+  MODELES = c.modeles.map(compiler).filter((m) => m.lettres).sort(precis);
+  FIT = (c.fit || []).map(compiler).sort(precis);
+  traduireSous(document.body);
+  new MutationObserver(observerTraduction).observe(document.body,
+    { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "title"] });
+}
+
+// One text (without its edge spaces) in the interface language, or null if unknown.
+function traduction(s, modeles = MODELES) {
+  const exact = TEXTES.get(s);
+  if (exact !== undefined) return exact;
+  for (const m of modeles) {
+    if (!s.includes(m.indice)) continue;
+    const r = m.motif.exec(s);
+    if (!r) continue;
+    const vals = Object.fromEntries(m.noms.map((n, i) => [n, r[i + 1]]));
+    return m.cible.replace(/\{(\w+)\}/g, (_, n) => (n in vals ? (TEXTES.get(vals[n].trim()) ?? vals[n]) : ""));
+  }
+  return null;
+}
+
+// The fit explanation (scoring.fit.expliquer), line by line, as the desktop's.
+const traduireFit = (texte) => (LANGUE === "fr" ? texte
+  : texte.split("\n").map((l) => {
+    const c = l.trim();
+    const t = c ? traduction(c, FIT) : null;
+    return t == null ? l : l.replace(c, t);
+  }).join("\n"));
+
+function traduire(s) {
+  const coeur = s.trim();
+  if (!coeur || !/[A-Za-zÀ-ÿ]/.test(coeur)) return s;
+  const t = traduction(coeur);
+  return t == null ? s : s.slice(0, s.indexOf(coeur)) + t + s.slice(s.indexOf(coeur) + coeur.length);
+}
+
+const ecrits = new WeakMap();  // node → the text we wrote: our own change is not redone
+function traduireNoeud(n) {
+  if (ecrits.get(n) === n.data) return;
+  const parent = n.parentElement;
+  if (!parent || parent.closest("[translate=no], script, style, textarea")) return;
+  // Programs' output: one line at a time (the task panel's <pre>).
+  const t = parent.closest("pre") ? n.data.split("\n").map(traduire).join("\n") : traduire(n.data);
+  if (t !== n.data) n.data = t;
+  ecrits.set(n, n.data);
+}
+
+function traduireAttributs(e) {
+  if (e.closest("[translate=no]")) return;
+  for (const a of ["placeholder", "title"]) {
+    const v = e.getAttribute(a);
+    if (v) { const t = traduire(v); if (t !== v) e.setAttribute(a, t); }
+  }
+}
+
+function traduireSous(racine) {
+  if (racine.nodeType === Node.TEXT_NODE) return traduireNoeud(racine);
+  if (racine.nodeType !== Node.ELEMENT_NODE) return;
+  traduireAttributs(racine);
+  for (const e of racine.querySelectorAll("[placeholder], [title]")) traduireAttributs(e);
+  const w = document.createTreeWalker(racine, NodeFilter.SHOW_TEXT);
+  for (let n = w.nextNode(); n; n = w.nextNode()) traduireNoeud(n);
+}
+
+function observerTraduction(changes) {
+  for (const c of changes) {
+    if (c.type === "characterData") traduireNoeud(c.target);
+    else if (c.type === "attributes") traduireAttributs(c.target);
+    else c.addedNodes.forEach(traduireSous);
+  }
+}
+
+// Narrow window: the filter bar is one scrolling line (style.css). The wheel scrolls it
+// sideways, and it fades on the right while more filters follow.
+document.addEventListener("wheel", (ev) => {
+  const b = ev.target.closest && ev.target.closest(".barre-outils");
+  if (!b || b.scrollWidth <= b.clientWidth || Math.abs(ev.deltaX) > Math.abs(ev.deltaY)) return;
+  ev.preventDefault();
+  b.scrollLeft += ev.deltaY;
+}, { passive: false });
+const marquerSuite = (b) => b.classList.toggle("suite", b.scrollLeft + b.clientWidth < b.scrollWidth - 4);
+const barresDefilantes = () => document.querySelectorAll(".barre-outils").forEach(marquerSuite);
+document.addEventListener("scroll", (ev) => {
+  if (ev.target.classList && ev.target.classList.contains("barre-outils")) marquerSuite(ev.target);
+}, true);
+window.addEventListener("resize", barresDefilantes);
+new MutationObserver(barresDefilantes).observe(document.getElementById("vue") || document.body, { childList: true });
+const nombre = (n) => Number(n || 0).toLocaleString(LOCALE);
+const taille = (o) => (o < 1e6 ? `${Math.max(1, Math.round(o / 1024))} Ko` : `${(o / 1e6).toLocaleString(LOCALE, { maximumFractionDigits: 1 })} Mo`);
 const JOURS = ["di", "lu", "ma", "me", "je", "ve", "sa"];
 const jourCourt = (iso) => {
   const d = new Date(iso + "T12:00:00");
-  return isNaN(d) ? iso : `${JOURS[d.getDay()]} ${d.getDate()}`;
+  if (isNaN(d)) return iso;
+  const jour = LANGUE === "fr" ? JOURS[d.getDay()] : d.toLocaleDateString(LOCALE, { weekday: "short" }).replace(".", "");
+  return `${jour} ${d.getDate()}`;
 };
 const dateFr = (iso) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "");
 const classeScore = (f) => (f >= 8 ? "score" : f >= 5 ? "score moyen" : "score faible");
@@ -421,9 +539,10 @@ async function ouvrirOffre(id) {
           if (r) { toast("Suivi enregistré."); ouvrirOffre(o.id); redessiner(); }
         }, "plein"), o.envoi ? h("span", { class: "sous" }, `envoi ${o.envoi}`) : null));
     })(),
-    o.pourquoi ? h("div", { class: "carte description" }, h("h3", {}, "Pourquoi ce score"), o.pourquoi) : null,
+    o.pourquoi ? h("div", { class: "carte description" }, h("h3", {}, "Pourquoi ce score"),
+      h("div", { translate: "no" }, traduireFit(o.pourquoi))) : null,
     h("div", { class: "carte description" },
-      o.description || "Pas de description enregistrée pour cette offre."),
+      o.description ? h("div", { translate: "no" }, o.description) : "Pas de description enregistrée pour cette offre."),
     h("dl", { class: "paires" },
       h("dt", {}, "Domaine"), h("dd", {}, o.domaine || "—"),
       h("dt", {}, "Source"), h("dd", { title: o.source }, o.source || "—"),
@@ -683,7 +802,7 @@ ECRANS.relances = {
         lignes.forEach((x) => x.classList.remove("on"));
         l.classList.add("on");
         texte = (await appel("brouillon", b.nom)) || "";
-        apercu.replaceChildren(texte || h("div", { class: "vide" }, "Brouillon vide ou illisible."));
+        apercu.replaceChildren(texte ? h("div", { translate: "no" }, texte) : h("div", { class: "vide" }, "Brouillon vide ou illisible."));
         copier.disabled = !texte;
         copier.lastChild.textContent = "Copier le texte";
       };
@@ -1182,13 +1301,13 @@ ECRANS.stats = {
         h("div", { class: "chiffre" }, nombre(c.n)), h("div", { class: "sous" }, c.nom)))),
       e ? h("div", { class: "verre panneau" },
         h("div", { class: "titre-ligne" }, h("h2", {}, "Candidatures envoyées"), h("span", { class: "compte" }, e.envoyees)),
-        h("dl", { class: "paires" },
+        h("dl", { class: "paires alignees" },
           h("dt", {}, "Réponses (entretien ou refus)"), h("dd", {}, `${e.reponses} ${e.taux != null ? "· " + pc(e.taux) : ""}`),
           h("dt", {}, "Entretiens"), h("dd", {}, String(e.entretiens)),
           h("dt", {}, "Sans réponse depuis 30 jours"), h("dd", {}, String(e.silence)),
           h("dt", {}, "Délai médian de réponse"), h("dd", {}, e.delai_median == null ? "—" : `${Math.round(e.delai_median)} j (sur ${e.n_delais} réponse(s) datée(s))`)),
         ["contrat", "domaine"].map((ch) => e.par[ch].length < 2 ? null : [h("h3", {}, `Réponses par ${ch}`),
-          h("dl", { class: "paires" }, e.par[ch].map((x) => [h("dt", {}, x.val), h("dd", {}, `${x.env} envoyée(s) · ${x.rep} réponse(s), ${x.ent} entretien(s) · ${pc(x.rep / x.env)}`)]))])) : null,
+          h("dl", { class: "paires alignees" }, e.par[ch].map((x) => [h("dt", {}, x.val), h("dd", {}, `${x.env} envoyée(s) · ${x.rep} réponse(s), ${x.ent} entretien(s) · ${pc(x.rep / x.env)}`)]))])) : null,
       h("div", { class: "grille" }, d.sections.map((s) => {
         const max = Math.max(1, ...s.lignes.map((l) => (typeof l.n === "number" ? l.n : 0)));
         return h("div", { class: "verre panneau" }, h("div", { class: "titre-ligne" }, h("h2", {}, s.titre)),
@@ -1531,7 +1650,7 @@ async function cartesParametres() {
   if (!p) return null;
   const relire = () => redessiner();
   const langue = h("select", { class: "choix", onchange: async (e) => {
-    if (await ecrire("choisir_langue", e.target.value)) toast("Langue des programmes enregistrée (lettres, messages, journaux).");
+    if (await ecrire("choisir_langue", e.target.value)) location.reload();  // the page redraws in it
   } }, Object.entries(p.langues).map(([c, n]) => h("option", { value: c, selected: c === p.langue }, n)));
   const heure = h("input", { class: "champ-texte", type: "time", value: "08:00", style: "width:120px" });
   const planif = !p.planif.disponible
@@ -1553,7 +1672,7 @@ async function cartesParametres() {
         : bouton("Ouvrir", "sortie", () => ecrire("changer_profil", x.slug)))));
   return [
     carte("Langue",
-      h("div", { class: "sous", style: "margin-bottom:10px" }, "Langue des lettres, des messages et des journaux des programmes."), langue),
+      h("div", { class: "sous", style: "margin-bottom:10px" }, "Langue de l'interface, dans les deux fenêtres. Les lettres et les messages gardent la leur."), langue),
     carte("Mise à jour",
       h("div", { class: "sous", style: "margin-bottom:10px" }, "Les mises à jour viennent de GitHub ; chacune est vérifiée avant d'être installée."),
       bouton("Vérifier les mises à jour", "fleche", verifierMaj, "plein")),
@@ -1610,7 +1729,9 @@ async function aller(nom) {
   }
 }
 
-function demarrer() {
+async function demarrer() {
+  // The language first: the first screen is drawn already translated.
+  await appel("textes").then(chargerCatalogue).catch(() => { /* French */ });
   for (const a of document.querySelectorAll(".menu a[data-icone]")) {
     a.prepend(svg(a.dataset.icone));
     a.addEventListener("click", () => aller(a.dataset.ecran));

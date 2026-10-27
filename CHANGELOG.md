@@ -19,6 +19,16 @@ recent at the top.
   minutes after start then every 3 hours; news shown as a message, the page follows
   the queue when another program writes it. An update that did not start its version
   is said at start-up again.
+- **The new design speaks English, German and Spanish**: the language chosen in
+  Réglages → Langue now applies to both windows (it was French only in the new one).
+  Texts, placeholders, tooltips, dialogs, the guided application and the output of the
+  programs it runs are translated; offers, profile entries, letters and drafts keep
+  their own language. The catalogues move to `jobhunter.locales` (the old
+  `jobhunter.app.texts_*` names still import).
+- **Spacing in the new design**: no more double gap under the filter bar; the header
+  checkbox lines up with the rows; Statistiques' sections line up; the dark Moteur card
+  has a visible button; in a narrow window the one-line filter bar scrolls with the
+  wheel and fades on the right while more filters follow.
 - The update button of the title bar says « Mise à jour en cours… » once clicked.
 - The classic window only opens when the new one cannot (no web view on the machine),
   or on purpose with `jobhunter bureau`. Switching profile reopens the new design.

@@ -154,6 +154,8 @@ h3 { font-size: 15px; font-weight: 500; }
 .colonne { display: flex; flex-direction: column; gap: 20px; }
 .colonne > * { flex: none; }
 .barre-outils { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+/* In a column the column's gap already separates it: 18px more made 38px. */
+.colonne > .barre-outils { margin-bottom: 0; }
 .vide { color: var(--gris); font-size: 13.5px; padding: 24px 0; text-align: center; }
 
 /* Tags and chips */
@@ -216,6 +218,9 @@ h3 { font-size: 15px; font-weight: 500; }
 .sombre::after { content: ""; position: absolute; right: -90px; top: 40px; width: 240px; height: 240px; border-radius: 50%; border: 1px solid rgba(var(--blanc-rgb),.06); pointer-events: none; }
 .sombre > * { position: relative; }
 .sombre h2 { font-size: 22px; }
+/* A dark button on the dark card had no visible edge. */
+.sombre .bouton.plein { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.16); }
+.sombre .bouton.plein:hover { background: rgba(255,255,255,.18); }
 .fil { list-style: none; margin-top: 22px; display: flex; flex-direction: column; gap: 20px; }
 .fil li { position: relative; padding-left: 26px; cursor: pointer; min-width: 0; }
 .fil li.vide { cursor: default; }
@@ -248,7 +253,7 @@ td { padding: 10px 14px 10px 0; overflow: hidden; overflow-wrap: anywhere; verti
 tbody tr.cliquable { cursor: pointer; transition: background .12s; }
 tbody tr.cliquable:hover { background: rgba(var(--blanc-rgb),.45); }
 tbody tr.cliquable:hover td:first-child { border-radius: 10px 0 0 10px; }
-tbody tr td:first-child { padding-left: 6px; }
+tbody tr td:first-child, thead th:first-child { padding-left: 6px; }
 .prog { height: 6px; border-radius: 3px; background: var(--piste); overflow: hidden; min-width: 50px; }
 .prog i { display: block; height: 6px; border-radius: 3px; background: var(--degrade-h); }
 .cellule-offre { display: flex; align-items: center; gap: 12px; min-width: 0; }
@@ -286,6 +291,9 @@ tbody tr td:first-child { padding-left: 6px; }
 .paires { display: grid; grid-template-columns: auto 1fr; gap: 10px 18px; font-size: 13.5px; margin-top: 4px; }
 .paires dt { color: var(--gris); }
 .paires dd { font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Several lists under one title (Statistiques): same label column, a title that breathes. */
+.paires.alignees { grid-template-columns: minmax(220px, max-content) 1fr; }
+.paires + h3 { margin: 22px 0 8px; }
 .chiffre { font-size: 34px; font-weight: 400; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .etat { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
 .etat::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--terre); }
@@ -621,10 +629,12 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
 :root.mode-sombre .zone-code { background: rgba(0, 0, 0, .25); }
 :root.mode-sombre select option { background: #2c2725; color: #f1ece8; }
 
-/* Narrow window: the offers' filters stay on one scrolling line instead of five. */
+/* Narrow window: the offers' filters stay on one scrolling line instead of five. The
+   wheel scrolls it (barreDefilante) and a fade says more filters follow. */
 @media (max-width: 1100px) {
   .barre-outils { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
   .barre-outils > * { flex: none; }
   .barre-outils .champ { min-width: 220px; }
+  .barre-outils.suite { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); }
 }
 :root.mode-sombre .score b { color: var(--fond-page); }

@@ -905,6 +905,12 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         """The display settings: window backdrop and glass strength."""
         return lire_reglages()
 
+    def textes(self) -> dict[str, Any]:
+        """The interface language and its catalogue, for app.js (jobhunter.web.i18n)."""
+        from jobhunter.web import i18n
+
+        return i18n.catalogue(i18n.langue())
+
     def regler(self, valeurs: dict[str, Any]) -> dict[str, Any]:
         """Saves the display settings; a new backdrop applies at once."""
         r = ecrire_reglages(valeurs)
@@ -1531,7 +1537,10 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         }
 
     def choisir_langue(self, code: str) -> dict[str, Any]:
-        """The programs' language (letters, messages, logs): same file and key as the desktop."""
+        """The interface language, both windows' (same file and key as the desktop).
+
+        Only the interface: letters, messages and the profile keep their language.
+        """
         if code not in LANGUES:
             return {"ok": False, "erreur": f"langue inconnue : {code}"}
         f = _fichier_reglages()

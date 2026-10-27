@@ -2,12 +2,12 @@
 
 Part of jobhunter.app (step F5). The French text written in the code stays the
 reference; in another language, `t()` replaces it with its translation from that
-language's catalogue (`texts_<code>.py`), then from the English one, and leaves it
+language's catalogue (`jobhunter.locales.<code>`), then from the English one, and leaves it
 in French if neither has it. The buttons and labels of `theme` all go through `t()`:
 translating a text means adding it to the catalogues, without touching the place
 where it is displayed.
 
-A language is a module `jobhunter.app.texts_<code>` with `NOM` (its own name, as
+A language is a module `jobhunter.locales.<code>` with `NOM` (its own name, as
 shown in the language menu), `RELANCER` (the restart message, in that language) and
 three catalogues: `TEXTES` (buttons, labels), `JOURNAL` (the app's log lines) and
 `SORTIE` (the reports of the programs it launches). Adding a language = adding its
@@ -40,7 +40,7 @@ def module(code: str) -> ModuleType | None:
     """The catalogue module of a language; None for French, the source."""
     if code == "fr":
         return None
-    return importlib.import_module(f"jobhunter.app.texts_{code}")
+    return importlib.import_module(f"jobhunter.locales.{code}")
 
 
 def noms() -> dict[str, str]:

@@ -103,7 +103,7 @@ def test_chaque_cle_courte_existe_dans_l_app():
 
 @pytest.mark.parametrize("code", AUTRES)
 def test_catalogue_sans_doublon_de_cle(code):
-    texte = (APP / f"texts_{code}.py").read_text(encoding="utf-8")
+    texte = (APP.parent / "locales" / f"{code}.py").read_text(encoding="utf-8")
     cles = re.findall(r'^    "((?:[^"\\]|\\.)*)": ', texte, re.M)
     assert len(cles) == len(set(cles))
 
