@@ -420,6 +420,7 @@ def _executer(a, journal):
                 2700,
             ),
             ("1e/5 Collecte — WTJ", ["--wtj"], 2400),
+            ("1f/5 Collecte — sites carrières des entreprises vues", ["--entreprises-vues"], 2400),
         ]
     ajoutees = 0
     for nom, drapeaux, duree in collectes:

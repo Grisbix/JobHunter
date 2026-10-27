@@ -1257,10 +1257,16 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Filtern: Unternehmen, Website oder Tool",
         "Filtrar: empresa, sitio o herramienta",
     ),
-    "Chaque collecte note les entreprises de ses offres, même écartées ou fermées depuis. « Suivre » lit ensuite ses offres à la source, quand son lien d'offre donne son outil de recrutement.": (
-        "Each collection notes the companies of its offers, even set aside or closed since. « Follow » then reads its offers at the source, when its offer link gives its recruiting tool.",
-        "Jede Sammlung notiert die Unternehmen ihrer Angebote, auch aussortierte oder inzwischen geschlossene. « Verfolgen » liest dann ihre Angebote an der Quelle, wenn ihr Angebotslink ihr Recruiting-Tool verrät.",
-        "Cada recogida anota las empresas de sus ofertas, incluso descartadas o cerradas desde entonces. « Seguir » lee luego sus ofertas en la fuente, cuando su enlace de oferta indica su herramienta de selección.",
+    "Chaque collecte note les entreprises de ses offres, même écartées ou fermées depuis. « Chercher leurs offres » demande à 150 d'entre elles, chaque matin aussi, ce qu'elles ont d'ouvert sur leur site carrière. « Suivre » lit ensuite ses offres à chaque collecte, quand son lien d'offre donne son outil de recrutement.": (
+        "Each collection notes the companies of its offers, even set aside or closed since. « Search their offers » asks 150 of them, every morning too, what they have open on their careers site. « Follow » then reads its offers at every collection, when its offer link gives its recruiting tool.",
+        "Jede Sammlung notiert die Unternehmen ihrer Angebote, auch aussortierte oder inzwischen geschlossene. « Ihre Angebote suchen » fragt 150 von ihnen, auch jeden Morgen, was auf ihrer Karriereseite offen ist. « Verfolgen » liest dann ihre Angebote bei jeder Sammlung, wenn ihr Angebotslink ihr Recruiting-Tool verrät.",
+        "Cada recogida anota las empresas de sus ofertas, incluso descartadas o cerradas desde entonces. « Buscar sus ofertas » pregunta a 150 de ellas, también cada mañana, qué tienen abierto en su web de empleo. « Seguir » lee luego sus ofertas en cada recogida, cuando su enlace de oferta indica su herramienta de selección.",
+    ),
+    "Chercher leurs offres": ("Search their offers", "Ihre Angebote suchen", "Buscar sus ofertas"),
+    "Offres des entreprises vues": (
+        "Offers of the companies seen",
+        "Angebote der gesehenen Unternehmen",
+        "Ofertas de las empresas vistas",
     ),
     "Suivre les bien notées (fit ≥ 7)": (
         "Follow the well-rated ones (fit ≥ 7)",

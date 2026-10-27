@@ -1423,6 +1423,7 @@ ONGLETS_SOURCES.vues = async (vue) => {
   dessiner();
   vue.replaceChildren(h("div", { class: "verre panneau" },
     h("div", { class: "titre-ligne" }, h("h2", {}, "Entreprises vues"), compte,
+      bouton("Chercher leurs offres", "loupe", () => lancer("sites_carrieres")),
       bouton("Suivre les bien notées (fit ≥ 7)", "etoile", async () => {
         const n = d.lignes.filter((l) => l.url_flux && !l.suivie && (l.fit || 0) >= 7).length;
         if (!n) return toast("Aucune entreprise bien notée à suivre.");
@@ -1431,7 +1432,7 @@ ONGLETS_SOURCES.vues = async (vue) => {
         const r = await ecrire("suivre_vues", 7);
         if (r) { toast(r.message); ONGLETS_SOURCES.vues(vue); }
       })),
-    h("div", { class: "sous", style: "margin:4px 0 12px" }, "Chaque collecte note les entreprises de ses offres, même écartées ou fermées depuis. « Suivre » lit ensuite ses offres à la source, quand son lien d'offre donne son outil de recrutement."),
+    h("div", { class: "sous", style: "margin:4px 0 12px" }, "Chaque collecte note les entreprises de ses offres, même écartées ou fermées depuis. « Chercher leurs offres » demande à 150 d'entre elles, chaque matin aussi, ce qu'elles ont d'ouvert sur leur site carrière. « Suivre » lit ensuite ses offres à chaque collecte, quand son lien d'offre donne son outil de recrutement."),
     h("label", { class: "champ", style: "margin:12px 0" }, svg("loupe"), h("input", { type: "search", placeholder: "Filtrer : entreprise, site ou outil", oninput: (e) => { filtre = e.target.value; dessiner(); } })),
     h("div", { class: "defile" }, h("table", { class: "tableau-simple" },
       h("thead", {}, h("tr", {}, ["Entreprise", "Offres", "Fit max", "Vue sur", "Dernière fois", ""].map((t) => h("th", {}, t)))),

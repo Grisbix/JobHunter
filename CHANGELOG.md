@@ -4,6 +4,19 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.41.0 — 2026-10-27
+
+- **The companies already seen, asked on their own career sites.** Every collection
+  notes the companies it meets (Sources → Entreprises vues, some 5,000 names); a new
+  source now asks 150 of them per run what they have open: by their recruiting
+  tool's public API when an offer link gave it (Greenhouse, Workday…), otherwise
+  through freehire's company search, under the company's exact name (« Mirova » is
+  not « Mirvac »). Followed companies are skipped; a company is asked again after 7
+  days, the most recently seen first. On a first try, 30 companies gave 269 offers,
+  231 not in the queue. `collect --entreprises-vues`; collected every morning (pass
+  1f), and the « Chercher leurs offres » button in Entreprises vues. The freehire
+  requests count against its daily quota.
+
 ## 3.40.0 — 2026-10-27
 
 - **New source: Bundesagentur für Arbeit**, Germany's public employment service, by

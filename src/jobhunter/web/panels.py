@@ -108,6 +108,7 @@ _SITES = {
     "jooble": "Jooble",
     "freehire": "freehire",
     "arbeitsagentur": "Arbeitsagentur",
+    "sites-carrieres": "Sites carrières",
     "vie": "Business France (V.I.E)",
     "oracle": "Oracle",
     "francetravail": "France Travail",

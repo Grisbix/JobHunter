@@ -532,6 +532,10 @@ TACHES: dict[str, tuple[str, list[str]]] = {
         "Contrôle des offres fermées",
         ["jobhunter.programs.availability_audit", "--supprime"],
     ),
+    "sites_carrieres": (
+        "Offres des entreprises vues",
+        ["jobhunter.sources", "--entreprises-vues"],
+    ),
     "annuaire_workday": (
         "Annuaire Workday (Common Crawl)",
         ["jobhunter.sources.discovery", "--workday"],
