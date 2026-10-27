@@ -1423,10 +1423,52 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "Score pour 10": ("Score for 10", "Punkte für 10", "Puntos para 10"),
     "Bonus junior": ("Junior bonus", "Junior-Bonus", "Bono junior"),
     "Malus senior": ("Senior penalty", "Senior-Abzug", "Penalización sénior"),
-    "Le CV d'où partent tous les CV préparés. L'ancien est gardé à côté, en .bak.": (
-        "The CV all prepared CVs start from. The old one is kept next to it, as .bak.",
-        "Der Lebenslauf, von dem alle vorbereiteten ausgehen. Der alte bleibt daneben als .bak.",
-        "El CV del que parten todos los CV preparados. El antiguo se guarda al lado, en .bak.",
+    "Le CV d'où partent tous les CV préparés. « Voir » l'ouvre pour le lire ou modifier son texte ; l'ancien est gardé à côté, en .bak.": (
+        "The CV every prepared CV starts from. « View » opens it to read it or edit its text; the old one is kept alongside, as .bak.",
+        "Der Lebenslauf, von dem alle vorbereiteten ausgehen. « Ansehen » öffnet ihn zum Lesen oder Bearbeiten; der alte bleibt daneben als .bak.",
+        "El CV del que parten todos los CV preparados. « Ver » lo abre para leerlo o modificar su texto; el anterior se guarda al lado, en .bak.",
+    ),
+    "offres notées 8 et plus": (
+        "offers scored 8 and more",
+        "Angebote mit 8 und mehr",
+        "ofertas con 8 o más",
+    ),
+    "Prêtes": ("Ready", "Fertig", "Listas"),
+    "À préparer": ("To prepare", "Vorzubereiten", "Por preparar"),
+    "Voir": ("View", "Ansehen", "Ver"),
+    "absent": ("missing", "fehlt", "ausente"),
+    "Aucun CV de base dans le profil.": (
+        "No base CV in the profile.",
+        "Kein Basis-Lebenslauf im Profil.",
+        "Ningún CV base en el perfil.",
+    ),
+    "Lettre de motivation": ("Cover letter", "Anschreiben", "Carta de motivación"),
+    "Chaque lettre est écrite pour son offre ; ce paragraphe sur toi est repris dans toutes. Modifie-le ici, puis refais les lettres.": (
+        "Each letter is written for its offer; this paragraph about you goes into all of them. Edit it here, then remake the letters.",
+        "Jedes Anschreiben wird für sein Angebot geschrieben; dieser Absatz über dich steht in allen. Ändere ihn hier und erstelle die Anschreiben dann neu.",
+        "Cada carta se escribe para su oferta; este párrafo sobre ti aparece en todas. Modifícalo aquí y luego rehaz las cartas.",
+    ),
+    "En français": ("In French", "Auf Französisch", "En francés"),
+    "En anglais": ("In English", "Auf Englisch", "En inglés"),
+    "Refaire les lettres ?": (
+        "Remake the letters?",
+        "Anschreiben neu erstellen?",
+        "¿Rehacer las cartas?",
+    ),
+    "Refaire maintenant les lettres déjà préparées pour les offres ?": (
+        "Remake now the letters already prepared for the offers?",
+        "Die bereits vorbereiteten Anschreiben jetzt neu erstellen?",
+        "¿Rehacer ahora las cartas ya preparadas para las ofertas?",
+    ),
+    "Voir la dernière lettre": (
+        "View the latest letter",
+        "Letztes Anschreiben ansehen",
+        "Ver la última carta",
+    ),
+    "Un profil = une recherche à part : un autre métier, une autre ville, ou une autre personne.": (
+        "A profile = a separate search: another job, another city, or another person.",
+        "Ein Profil = eine eigene Suche: ein anderer Beruf, eine andere Stadt oder eine andere Person.",
+        "Un perfil = una búsqueda aparte: otro oficio, otra ciudad u otra persona.",
     ),
     "Remplacer le CV de base ?": (
         "Replace the base CV?",

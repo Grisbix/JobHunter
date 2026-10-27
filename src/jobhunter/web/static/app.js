@@ -616,7 +616,7 @@ const ECRANS = {};
 
 ECRANS.accueil = {
   titre: "Accueil",
-  actions: () => [action("Lancer la collecte", "eclair", "collecte", "plein")],
+  actions: () => [],
   async dessiner(vue) {
     const d = await appel("tableau");
     const col = d.collecte;
@@ -673,10 +673,28 @@ ECRANS.accueil = {
         h("div", { class: "zones" }, h("h2", {}, "Par zone"), h("div", { class: "sous", style: "margin-bottom:16px" }, "offres notées 7 et plus"),
           d.zones.map((z) => h("div", { class: "zone" },
             h("div", {}, h("div", { class: "lab" }, z.zone), h("div", { class: "val" }, nombre(z.n))),
-            h("div", { class: "tuile" }, h("i", { style: `width:${z.pct}%` }), h("span", {}, `${z.pct} %`))))))));
+            h("div", { class: "tuile" }, h("i", { style: `width:${z.pct}%` }), h("span", {}, `${z.pct} %`))))),
+        carteDocumentsAccueil(d.documents))));
     requestAnimationFrame(() => requestAnimationFrame(() => pleins.forEach(([e, p]) => { e.style.height = `${p}%`; })));
   },
 };
+
+// Bottom right of the home screen (the user, 2026-10-27: « remplissons le bas droit »):
+// how many well-scored offers have their CV and letter, and the button to prepare more.
+function carteDocumentsAccueil(d) {
+  if (!d) return null;
+  const pct = d.bonnes ? Math.round(100 * d.prets / d.bonnes) : 0;
+  return h("div", { class: "zones documents-accueil" }, h("h2", {}, "CV et lettres"),
+    h("div", { class: "sous", style: "margin-bottom:16px" }, "offres notées 8 et plus"),
+    h("div", { class: "zone" },
+      h("div", {}, h("div", { class: "lab" }, "Prêtes"), h("div", { class: "val" }, nombre(d.prets))),
+      h("div", { class: "tuile" }, h("i", { style: `width:${pct}%` }), h("span", {}, `${pct} %`))),
+    h("div", { class: "zone" },
+      h("div", {}, h("div", { class: "lab" }, "À préparer"), h("div", { class: "val" }, nombre(d.a_preparer)))),
+    h("div", { class: "boutons", style: "margin-top:14px" },
+      d.a_preparer ? action("Préparer les 30 meilleures", "eclair", "documents_top", "plein") : null,
+      bouton("Documents", "doc", () => aller("documents"))));
+}
 
 function tableCandidatures(lignes) {
   if (!lignes.length) return h("div", { class: "vide" }, "Aucune candidature pour l'instant.");
@@ -748,7 +766,7 @@ function listeMulti(choisis, tous, valeurs, appliquer, lien = null) {
 const filtresOffres = { texte: "", statut: "à traiter", zone: [], domaine: [], contrat: [], pays: [], region: [], fit_min: 0, tri: "fit", page: 0, par_page: 40 };
 // The table's optional columns (the desktop's COLS); the offer itself is always shown.
 const COLONNES_OFFRES = [
-  ["lieu", "Lieu", (o) => h("span", { title: o.lieu }, o.lieu || "—")],
+  ["lieu", "Lieu", (o) => h("span", { class: "cellule-lieu", title: o.lieu }, o.lieu || "—")],
   ["zone", "Zone", (o) => (o.zone ? h("span", { class: "etiq gris" }, o.zone) : "—")],
   ["date", "Date", (o) => dateFr(o.date) || "—"],
   ["suivi", "Suivi", (o) => (o.suivi ? h("span", { class: `etiq ${o.suivi}` }, o.suivi) : "")],
@@ -815,7 +833,7 @@ ECRANS.offres = {
   actions: () => [
     bouton("Annuler", "fleche", annulerGeste),
     bouton("Ajouter une offre", "sortie", ajouterOffre),
-    action("Préparer les 30 meilleures", "eclair", "documents_top", "plein")],
+    action("Lancer la collecte", "eclair", "collecte", "plein")],
   async dessiner(vue) {
     const f = filtresOffres;
     // No score or date filter any more (the user, 2026-10-27): the queue keeps only fresh
@@ -857,12 +875,16 @@ ECRANS.offres = {
         h("option", { value: v, selected: v === f.tri }, l)));
 
     vue.replaceChildren(h("div", { class: "colonne" },
-      h("div", { class: "barre-outils" },
-        h("label", { class: "champ" }, svg("loupe"), champ),
-        segment(d.statuts.map((s) => [s, s[0].toUpperCase() + s.slice(1)]), f.statut, (v) => changer("statut", v)),
-        liste("zone", "Toutes les zones", d.zones, reglerZones), liste("domaine", "Tous les domaines", d.domaines), liste("contrat", "Tous les contrats", d.contrats),
-        liste("region", "Toutes les régions", d.regions), liste("pays", "Tous les pays", d.pays), tri,
-        menuVues(), bouton("Colonnes…", "", choisirColonnes)),
+      // Two aligned rows (audit 2026-10-27: ten controls wrapped into two ragged rows):
+      // search and display on top, the five filters on a grid of equal columns.
+      h("div", { class: "filtres-offres" },
+        h("div", { class: "barre-outils" },
+          h("label", { class: "champ" }, svg("loupe"), champ),
+          segment(d.statuts.map((s) => [s, s[0].toUpperCase() + s.slice(1)]), f.statut, (v) => changer("statut", v)),
+          tri, menuVues(), bouton("Colonnes…", "", choisirColonnes)),
+        h("div", { class: "grille-filtres" },
+          liste("zone", "Toutes les zones", d.zones, reglerZones), liste("domaine", "Tous les domaines", d.domaines), liste("contrat", "Tous les contrats", d.contrats),
+          liste("region", "Toutes les régions", d.regions), liste("pays", "Tous les pays", d.pays))),
       barreSel,
       h("div", { class: "verre panneau remplit" },
         d.lignes.length ? h("div", { class: "defile" }, h("table", {},
@@ -1198,7 +1220,7 @@ ECRANS.profil = {
       carteRech,
       carteComp,
       await cartePoids(),
-      carteCvBase(),
+      ...(await cartesDocumentsBase()),
       carte("Outils", puces(p.outils))));
   },
 };
@@ -1658,10 +1680,32 @@ async function cartePoids() {
       bouton("Relire la file", "fleche", async () => { if (await ecrire("relire_composantes")) { essais = 0; resume.textContent = "Lecture de la file…"; setTimeout(recalculer, 1500); } })));
 }
 
-function carteCvBase() {
-  return carte("CV de base",
-    h("div", { class: "sous", style: "margin-bottom:10px" }, "Le CV d'où partent tous les CV préparés. L'ancien est gardé à côté, en .bak."),
-    bouton("Remplacer mon CV de base…", "doc", remplacerCvBase, "plein"));
+// The base CV and the base letter: seen, edited, replaced (the user, 2026-10-27).
+async function cartesDocumentsBase() {
+  const d = (await appel("documents_de_base")) || { cvs: [], exemple: "", phrase_fr: "", phrase_en: "" };
+  const cv = carte("CV de base",
+    h("div", { class: "sous", style: "margin-bottom:10px" }, "Le CV d'où partent tous les CV préparés. « Voir » l'ouvre pour le lire ou modifier son texte ; l'ancien est gardé à côté, en .bak."),
+    h("div", { class: "liste-profils" }, d.cvs.length ? d.cvs.map((c) => h("div", { class: "ligne-profil" },
+      h("span", { class: "t", title: c.nom }, c.nom),
+      c.chemin ? bouton("Voir", "doc", () => voirDocument(null, c.chemin, c.nom)) : h("span", { class: "etiq gris" }, "absent")))
+      : h("div", { class: "sous" }, "Aucun CV de base dans le profil.")),
+    h("div", { class: "boutons" }, bouton("Remplacer mon CV de base…", "doc", remplacerCvBase, "plein")));
+  const fr = h("textarea", { class: "champ-texte", rows: 4 }, d.phrase_fr);
+  const en = h("textarea", { class: "champ-texte", rows: 4 }, d.phrase_en);
+  const lettre = carte("Lettre de motivation",
+    h("div", { class: "sous", style: "margin-bottom:10px" }, "Chaque lettre est écrite pour son offre ; ce paragraphe sur toi est repris dans toutes. Modifie-le ici, puis refais les lettres."),
+    h("label", { class: "champ-bloc" }, h("span", { class: "sous" }, "En français"), fr),
+    h("label", { class: "champ-bloc" }, h("span", { class: "sous" }, "En anglais"), en),
+    h("div", { class: "boutons" },
+      bouton("Enregistrer", "", async () => {
+        const r = await ecrire("enregistrer_phrases_lettre", fr.value, en.value);
+        if (!r) return;
+        toast(`Enregistré (profil d'avant gardé : ${r.bak}).`);
+        const refaire = await dialogue("Refaire les lettres ?", "Refaire maintenant les lettres déjà préparées pour les offres ?", null, [["Refaire les lettres", "plein", () => true]]);
+        if (refaire) lancer("regenerer_lettres");
+      }, "plein"),
+      d.exemple ? bouton("Voir la dernière lettre", "doc", () => voirDocument(null, d.exemple, "Lettre")) : null));
+  return [cv, lettre];
 }
 
 async function remplacerCvBase() {
@@ -1677,7 +1721,7 @@ async function remplacerCvBase() {
   if (refaire) lancer("regenerer_cv");
 }
 
-ACTIONS_OUTILS.profils = () => aller("reglages");
+ACTIONS_OUTILS.profils = gererProfils;
 
 ACTIONS_OUTILS.documents = async () => {
   const reste = await ecrire("documents_restants");
@@ -1960,10 +2004,6 @@ async function cartesParametres() {
             const r = await ecrire("planifier", heure.value);
             if (r) { toast(r.message || "Collecte planifiée."); relire(); }
           }, "plein"));
-  const profils = h("div", { class: "liste-profils" }, (p.profils.length ? p.profils : [{ slug: "", nom: "Principal" }]).map((x) =>
-    h("div", { class: `ligne-profil ${x.slug === p.actif ? "on" : ""}` }, h("span", {}, x.nom),
-      x.slug === p.actif ? h("span", { class: "etiq gris" }, "ouvert")
-        : bouton("Ouvrir", "sortie", () => ecrire("changer_profil", x.slug)))));
   return [
     h("div", { class: "pile" },
       carte("Langue",
@@ -1974,29 +2014,41 @@ async function cartesParametres() {
     carte("Collecte automatique",
       h("div", { class: "sous", style: "margin-bottom:10px" }, "Chaque jour à l'heure choisie, l'ordinateur collecte les offres de tous tes profils, même si JobHunter est fermé."),
       planif),
-    Object.assign(carte("Profils",
-      h("div", { class: "sous", style: "margin-bottom:10px" }, "Un profil = une recherche à part : un autre métier, une autre ville, ou une autre personne. Chacun a ses offres, ses CV et ses lettres ; les clés des sites restent communes. Changer de profil relance la fenêtre."),
-      profils,
-      h("div", { class: "boutons" },
-        bouton("Nouveau profil depuis un CV…", "profil", nouveauProfil, "plein"),
-        p.actif ? bouton("Renommer", "", async () => {
-          const champ = h("input", { class: "champ-texte", value: (p.profils.find((x) => x.slug === p.actif) || {}).nom || "" });
-          const nom = await dialogue("Renommer le profil", "Seul le nom affiché change ; son dossier reste le même.", champ, [["Renommer", "plein", () => champ.value.trim() || undefined]]);
-          if (nom && await ecrire("renommer_profil", nom)) relire();
-        }) : null,
-        p.actif ? bouton("Archiver ce profil", "", async () => {
-          const ok = await dialogue("Archiver ce profil ?", "Il est déplacé dans profiles/_archives (rien n'est supprimé), puis le profil principal s'ouvre.", null, [["Archiver", "chaud", () => true]]);
-          if (ok) ecrire("archiver_profil");
-        }) : null)), { id: "carte-profils" }),
+    carte("Profils",
+      h("div", { class: "sous", style: "margin-bottom:10px" }, "Un profil = une recherche à part : un autre métier, une autre ville, ou une autre personne."),
+      bouton("Gérer les profils", "profil", gererProfils, "plein")),
   ];
 }
 
-// Settings, on the Profiles card.
-function gererProfils() {
-  return aller("reglages").then(() => {
-    const c = document.getElementById("carte-profils");
-    if (c) c.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
+// The Profiles panel (the user, 2026-10-27: « gérer les profils doit mener au panneau
+// profils pour en changer un ou en rajouter un »): open one, add one, rename, archive.
+async function gererProfils() {
+  const corps = $("tiroir-corps");
+  $("tiroir").classList.add("ouvert");
+  $("voile").classList.add("ouvert");
+  const p = await appel("parametres");
+  if (!p) return corps.replaceChildren(h("div", { class: "vide" }, HORS_APPLI));
+  const liste = p.profils.length ? p.profils : [{ slug: "", nom: "Principal" }];
+  const nomDe = (x) => (!x.slug && p.titulaire) || x.nom;
+  corps.replaceChildren(
+    h("div", { class: "fiche-tete" }, h("div", {}, h("h2", {}, "Profils"),
+      h("div", { class: "sous" }, "Un profil = une recherche à part : un autre métier, une autre ville, ou une autre personne. Chacun a ses offres, ses CV et ses lettres ; les clés des sites restent communes. Changer de profil relance la fenêtre."))),
+    h("div", { class: "liste-profils" }, liste.map((x) =>
+      h("div", { class: `ligne-profil ${x.slug === p.actif ? "on" : ""}` },
+        h("span", { class: "t", translate: "no" }, nomDe(x)),
+        x.slug === p.actif ? h("span", { class: "etiq gris" }, "ouvert")
+          : bouton("Ouvrir", "sortie", () => ecrire("changer_profil", x.slug))))),
+    h("div", { class: "boutons" },
+      bouton("Nouveau profil depuis un CV…", "profil", () => { fermerTiroir(); nouveauProfil(); }, "plein"),
+      p.actif ? bouton("Renommer", "", async () => {
+        const champ = h("input", { class: "champ-texte", value: (p.profils.find((x) => x.slug === p.actif) || {}).nom || "" });
+        const nom = await dialogue("Renommer le profil", "Seul le nom affiché change ; son dossier reste le même.", champ, [["Renommer", "plein", () => champ.value.trim() || undefined]]);
+        if (nom && await ecrire("renommer_profil", nom)) gererProfils();
+      }) : null,
+      p.actif ? bouton("Archiver ce profil", "", async () => {
+        const ok = await dialogue("Archiver ce profil ?", "Il est déplacé dans profiles/_archives (rien n'est supprimé), puis le profil principal s'ouvre.", null, [["Archiver", "chaud", () => true]]);
+        if (ok) ecrire("archiver_profil");
+      }) : null));
 }
 
 async function nouveauProfil() {

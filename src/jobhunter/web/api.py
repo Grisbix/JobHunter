@@ -742,7 +742,13 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
     # Screens.
     def tableau(self) -> dict[str, Any]:
         """The home screen data, from the real queue and applications."""
-        return tableau(self._file(), self._suivi())
+        from jobhunter.links import existe
+
+        d = tableau(self._file(), self._suivi())
+        bonnes = [o for o in self._file() if (o.get("fit") or 0) >= 8]
+        prets = sum(1 for o in bonnes if existe(o.get("cv")) and existe(o.get("lettre")))
+        d["documents"] = {"bonnes": len(bonnes), "prets": prets, "a_preparer": len(bonnes) - prets}
+        return d
 
     # Saved views of the offers screen and its columns (web.saved_views).
     def vues(self) -> dict[str, Any]:

@@ -382,3 +382,46 @@ class AtelierApi:
             return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
         profile.recharger()
         return {"ok": True, "neuf": neuf}
+
+    # --- The base CV and the base letter, seen and edited (the user, 2026-10-27) -------
+    def documents_de_base(self) -> dict[str, Any]:
+        """The base CVs, and what the letter is made from: its profile sentences, an example.
+
+        A letter is written for each offer from the profile's texts, not copied from a
+        file: its « base » is `lettre.phrase_profil_fr` / `_en`, and the latest letter
+        made shows what they give.
+        """
+        from jobhunter import base_cv, paths, profile
+        from jobhunter.documents import common
+
+        try:
+            p = profile.charger()
+        except (profile.ProfilAbsent, ValueError):
+            p = {}
+        cvs = []
+        for nom in base_cv.cvs_de_base(p):
+            f = paths.CV_MODELES / nom
+            cvs.append({"nom": nom, "chemin": str(f) if f.is_file() else ""})
+        lettres = [f for f in Path(common.LT_OUT).glob("*.docx") if not f.name.startswith("~$")]
+        exemple = max(lettres, key=lambda f: f.stat().st_mtime, default=None)
+        brut = p.get("lettre")
+        l: dict[str, Any] = brut if isinstance(brut, dict) else {}
+        return {
+            "cvs": cvs,
+            "exemple": str(exemple) if exemple else "",
+            "phrase_fr": str(l.get("phrase_profil_fr") or ""),
+            "phrase_en": str(l.get("phrase_profil_en") or ""),
+        }
+
+    def enregistrer_phrases_lettre(self, fr: str, en: str) -> dict[str, Any]:
+        """Saves the letter's profile sentences; the previous profile is kept as .bak."""
+        nouveau = self._profil_brut()
+        lettre = dict(nouveau.get("lettre") or {})
+        lettre["phrase_profil_fr"] = str(fr or "").strip()
+        lettre["phrase_profil_en"] = str(en or "").strip()
+        nouveau["lettre"] = lettre
+        try:
+            bak = self._ecrire_profil(nouveau)  # type: ignore[attr-defined]
+        except (OSError, ValueError) as e:
+            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+        return {"ok": True, "bak": bak}

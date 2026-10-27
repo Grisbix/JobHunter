@@ -4,6 +4,28 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.43.0 — 2026-10-27
+
+- **« Lancer la collecte » moves to Offres**, in place of « Préparer les 30
+  meilleures »; the home screen has no header button any more.
+- **Home screen, bottom right: CV and letters.** How many offers scored 8 and more
+  have their CV and letter, how many wait, and « Préparer les 30 meilleures » there.
+- **A Profiles panel.** « Gérer les profils » (the badge menu, the Profile screen,
+  Maintenance → Profils…) opens its own panel: open another profile, add one from a
+  CV, rename, archive. Settings keep a short card pointing to it.
+- **Base CV and base letter, seen and edited** (Profile screen). Each base CV has
+  « Voir » to read it or edit its text; « Remplacer mon CV de base… » stays. The
+  letter is written for each offer, so its base is the paragraph about you it
+  always carries: edit it in French and English, then remake the letters; « Voir la
+  dernière lettre » shows what it gives.
+- **Layout audit**, every screen at 1100, 1280 and 1440 px wide, overlaps and
+  overflows measured in the page:
+  - Offres: the list's header row was see-through, the rows scrolled under it showed
+    through; it is opaque now. The place column is kept to two lines.
+  - Offres: the ten filters wrapped into two ragged rows; search and display on top,
+    the five filters on a grid of equal columns below.
+  - Candidatures: on narrow cards the date and the score bar went past the card.
+
 ## 3.42.0 — 2026-10-27
 
 - **Followed companies: one row per company.** A company read by several feeds

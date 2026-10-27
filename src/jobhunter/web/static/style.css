@@ -184,7 +184,9 @@ h3 { font-size: 15px; font-weight: 500; }
 .vue.plein > .colonne, .vue.plein .corps-onglet, .vue.plein .corps-onglet > .colonne { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .vue.plein .colonne > .remplit, .vue.plein .colonne > .panneau:has(> .defile), .vue.plein .corps-onglet > .panneau:has(> .defile) { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .vue.plein .remplit > .defile, .vue.plein .panneau > .defile { flex: 1 1 auto; min-height: 260px; max-height: none; overflow: auto; scrollbar-width: thin; }
-.vue.plein .defile thead th { position: sticky; top: 0; z-index: 1; background: rgba(var(--blanc-rgb), .94); }
+/* Opaque: the rows scrolled under the header showed through it (audit 2026-10-27). */
+.vue.plein .defile thead th { position: sticky; top: 0; z-index: 2; background: rgb(var(--blanc-rgb)); box-shadow: 0 1px 0 var(--filet); }
+.cellule-lieu { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .vue.plein .remplit > .pagination { flex: none; }
 .vue.plein .tableau-kanban { flex: 1 1 auto; min-height: 0; align-items: stretch; }
 .vue.plein .colonne-k { overflow-y: auto; scrollbar-width: thin; }
@@ -193,6 +195,10 @@ h3 { font-size: 15px; font-weight: 500; }
 .barre-outils { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
 /* In a column the column's gap already separates it: 18px more made 38px. */
 .colonne > .barre-outils { margin-bottom: 0; }
+.filtres-offres { display: grid; gap: 10px; }
+.filtres-offres > .barre-outils { margin-bottom: 0; flex-wrap: nowrap; }
+.grille-filtres { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.grille-filtres button.choix.multi { max-width: none; width: 100%; }
 .vide { color: var(--gris); font-size: 13.5px; padding: 24px 0; text-align: center; }
 
 /* Tags and chips */
@@ -352,10 +358,11 @@ td > .score { width: 34px; height: 34px; font-size: 13px; }
 .colonne-k.vide-k .vide { padding: 8px 0; font-size: 12.5px; }
 .colonne-k .entete { display: flex; justify-content: space-between; align-items: center; padding: 2px 4px 6px; }
 .compte { font-size: 12px; min-width: 24px; height: 22px; padding: 0 7px; border-radius: 11px; display: grid; place-items: center; background: var(--piste); color: var(--gris); }
-.fiche-k { padding: 14px; cursor: pointer; transition: transform .12s, box-shadow .12s; }
+.fiche-k { padding: 14px; overflow-wrap: anywhere; cursor: pointer; transition: transform .12s, box-shadow .12s; }
 .fiche-k:hover { transform: translateY(-1px); box-shadow: 0 8px 20px -10px rgba(92,60,46,.25); }
 .fiche-k .bas { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; gap: 10px; font-size: 11.5px; color: var(--gris); }
-.fiche-k .prog { flex: 1; }
+.fiche-k .prog { flex: 1; min-width: 0; }
+.fiche-k .bas > span { white-space: nowrap; }
 
 /* Follow-ups */
 .relances { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 22px; align-items: stretch; }
@@ -654,10 +661,13 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
 
 /* Settings: daily collection, profiles. */
 .ligne-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.liste-profils { display: grid; gap: 6px; margin-bottom: 12px; }
+.liste-profils { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin-bottom: 12px; }
 .ligne-profil { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; border-radius: 12px; background: rgba(var(--blanc-rgb), .35); }
 .ligne-profil.on { background: rgba(var(--c1-rgb), .18); font-weight: 500; }
 .ligne-profil .bouton { height: 30px; }
+.ligne-profil .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.champ-bloc { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.champ-bloc textarea { width: 100%; resize: vertical; }
 
 /* Panels: companies, boards, access, statistics. */
 .tableau-simple { width: 100%; border-collapse: collapse; font-size: 13px; }
