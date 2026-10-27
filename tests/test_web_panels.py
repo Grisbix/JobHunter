@@ -37,6 +37,24 @@ def test_statistiques_cartes_et_entonnoir():
     assert e is None or e["envoyees"] >= e["entretiens"]
 
 
+def test_statistiques_lisent_les_descriptions_a_part(tmp_path):
+    """The screen's queue has no descriptions: they come from their own file."""
+    cv, lettre = tmp_path / "cv.pdf", tmp_path / "lettre.pdf"
+    cv.write_bytes(b"%PDF"), lettre.write_bytes(b"%PDF")
+    o = _offre("Alpha", "Analyste ESG", 9, cv=str(cv), lettre=str(lettre), ls_check="2026-10-27")
+    o["source"] = "linkedin-search:analyste isr"
+    sans = statistiques([o], {})
+    assert sans["sections"][0]["lignes"][0]["n"] == 1  # not checked: counted ready
+    avec = statistiques([o], {}, {"Alpha|Analyste ESG": "court"})
+    assert dict((c["nom"], c["n"]) for c in avec["cartes"])["Dossiers prêts"] == 0
+    avec = statistiques([o], {}, {"Alpha|Analyste ESG": "x" * 300})
+    assert dict((c["nom"], c["n"]) for c in avec["cartes"])["Dossiers prêts"] == 1
+    titres = {x["titre"]: x for x in avec["sections"]}
+    assert titres["Sites d'où viennent les offres"]["lignes"][0]["nom"] == "LinkedIn"
+    assert titres["Mots-clés qui rapportent le plus"]["lignes"][0]["nom"] == "analyste isr"
+    assert not {"Canal", "État des liens"} & titres.keys()
+
+
 def test_cle_champs_ne_rend_jamais_la_valeur(donnees):
     api, _ = donnees
     nom = next(iter(api_keys.CLES))
@@ -92,3 +110,22 @@ def test_suivre_entreprise_refuse_un_nom_et_un_site_general(donnees):
 def test_ouvrir_lien_seulement_web(donnees):
     api, _ = donnees
     assert api.ouvrir_lien("file:///C:/Windows") is False
+
+
+def test_documents_une_ligne_par_document(donnees, monkeypatch):
+    """A CV's .docx and .pdf are one document; the .docx is the one to edit."""
+    from jobhunter.web import api as api_mod
+
+    api, dossier = donnees
+    cv, lettres = dossier / "cv", dossier / "lettres"
+    cv.mkdir(), lettres.mkdir()
+    (cv / "CV_Alpha_Analyste.docx").write_bytes(b"x")
+    (cv / "cv_alpha_analyste.pdf").write_bytes(b"x")
+    (lettres / "Lettre_Beta.pdf").write_bytes(b"x")
+    monkeypatch.setattr(api_mod, "_dossiers_documents", lambda: {"CV": cv, "Lettre": lettres})
+    d = api.documents()
+    assert d["total"] == 2
+    lignes = {x["genre"]: x for x in d["fichiers"]}
+    assert lignes["CV"]["chemin"].endswith(".docx") and lignes["CV"]["modifiable"]
+    assert lignes["Lettre"]["chemin"].endswith(".pdf") and not lignes["Lettre"]["modifiable"]
+    assert api.documents({"texte": "beta"})["total"] == 1

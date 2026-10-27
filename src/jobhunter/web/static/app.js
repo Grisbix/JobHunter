@@ -497,10 +497,14 @@ function fermerTiroir() {
 // A CV or a letter in the drawer (the user, 2026-10-27): its PDF to look at, the text of
 // its .docx to change. Only the paragraphs changed are written, in place (their bold and
 // italics stay); the PDF is made again from the .docx.
+// `o` is the offer it was made for, or null when opened from the Documents screen.
 async function voirDocument(o, chemin, titre, mode = "apercu") {
   const corps = $("tiroir-corps");
-  $("tiroir").classList.add("document");
-  const retour = h("button", { class: "bouton", onclick: () => ouvrirOffre(o.id) }, svg("fleche"), "Retour à l'offre");
+  $("tiroir").classList.add("ouvert", "document");
+  $("voile").classList.add("ouvert");
+  const retour = o
+    ? h("button", { class: "bouton", onclick: () => ouvrirOffre(o.id) }, svg("fleche"), "Retour à l'offre")
+    : h("button", { class: "bouton", onclick: fermerTiroir }, svg("fleche"), "Fermer");
   corps.replaceChildren(h("div", { class: "vide" }, "Chargement…"));
   if (!window.pywebview) return corps.replaceChildren(retour, h("div", { class: "vide" }, HORS_APPLI));
   const d = await window.pywebview.api.document(chemin);
@@ -537,7 +541,7 @@ async function voirDocument(o, chemin, titre, mode = "apercu") {
   };
   const onglets = h("div");
   corps.replaceChildren(
-    h("div", { class: "fiche-tete" }, h("div", { style: "min-width:0" }, h("h2", {}, titre), h("div", { class: "sous" }, `${o.poste} · ${o.entreprise}`))),
+    h("div", { class: "fiche-tete" }, h("div", { style: "min-width:0" }, h("h2", {}, titre), o ? h("div", { class: "sous" }, `${o.poste} · ${o.entreprise}`) : null)),
     h("div", { class: "boutons" }, retour, onglets, bouton("Ouvrir dans Word", "sortie", () => ouvrirFichier(d.docx))),
     place);
   montrer(mode);
@@ -752,8 +756,8 @@ const COLONNES_OFFRES = [
   ["contrat", "Contrat", (o) => o.contrat || "—"],
   ["pays", "Pays", (o) => o.pays || "—"],
   ["region", "Région", (o) => o.region || "—"],
-  ["publiee", "Publiée", (o) => dateFr(o.publiee) || "—"],
 ];
+const TRIS_OFFRES = [["fit", "Meilleur score"], ["entreprise", "Entreprise A → Z"]];
 let vuesOffres = null;  // {vues: {name: filters}, colonnes: [...]}, read once
 
 async function choisirColonnes() {
@@ -813,6 +817,11 @@ ECRANS.offres = {
     action("Préparer les 30 meilleures", "eclair", "documents_top", "plein")],
   async dessiner(vue) {
     const f = filtresOffres;
+    // No score or date filter any more (the user, 2026-10-27): the queue keeps only fresh
+    // offers, and sorted by score the 7+ / 8+ buttons showed the same list. A saved view
+    // that still carries them is read without them.
+    f.fit_min = 0;
+    if (!TRIS_OFFRES.some(([v]) => v === f.tri)) f.tri = "fit";
     const relancer = () => ECRANS.offres.dessiner(vue);
     const changer = (cle, v) => { f[cle] = v; f.page = 0; relancer(); };
     if (!vuesOffres) vuesOffres = (await appel("vues")) || { vues: {}, colonnes: ["lieu", "zone", "date", "suivi"] };
@@ -843,14 +852,13 @@ ECRANS.offres = {
     const cocher = (id, e) => { e.stopPropagation(); coches.has(id) ? coches.delete(id) : coches.add(id); relancer(); };
     const tous = d.lignes.length && d.lignes.every((o) => coches.has(o.id));
     const tri = h("select", { class: "choix", onchange: (e) => changer("tri", e.target.value) },
-      [["fit", "Meilleur score"], ["date", "Plus récentes"], ["publiee", "Publiées en dernier"], ["entreprise", "Entreprise A → Z"]].map(([v, l]) =>
+      TRIS_OFFRES.map(([v, l]) =>
         h("option", { value: v, selected: v === f.tri }, l)));
 
     vue.replaceChildren(h("div", { class: "colonne" },
       h("div", { class: "barre-outils" },
         h("label", { class: "champ" }, svg("loupe"), champ),
         segment(d.statuts.map((s) => [s, s[0].toUpperCase() + s.slice(1)]), f.statut, (v) => changer("statut", v)),
-        segment([[0, "Tous"], [7, "7+"], [8, "8+"], [9, "9+"]], f.fit_min, (v) => changer("fit_min", v)),
         liste("zone", "Toutes les zones", d.zones, reglerZones), liste("domaine", "Tous les domaines", d.domaines), liste("contrat", "Tous les contrats", d.contrats),
         liste("region", "Toutes les régions", d.regions), liste("pays", "Tous les pays", d.pays), tri,
         menuVues(), bouton("Colonnes…", "", choisirColonnes)),
@@ -876,6 +884,10 @@ ECRANS.offres = {
   },
 };
 
+// A column shows its first cards; the rest unfold on demand, so that no column has to be
+// scrolled to find an offer (the user, 2026-10-27). Unfolded columns stay so while the app is open.
+const CARTES_K = 6;
+const deroulees = new Set();
 ECRANS.candidatures = {
   titre: "Candidatures",
   actions: () => [bouton("Lire les réponses par mail", "cloche", ouvrirCourriels)],
@@ -896,14 +908,18 @@ ECRANS.candidatures = {
     } : {};
     vue.replaceChildren(h("div", { class: "colonne" },
       h("div", { class: "tableau-kanban" }, d.colonnes.map((c) =>
-        h("div", { class: "verre colonne-k", ...cible(c) },
+        h("div", { class: c.entrees.length ? "verre colonne-k" : "verre colonne-k vide-k", ...cible(c) },
           h("div", { class: "entete" }, h("h3", {}, c.statut[0].toUpperCase() + c.statut.slice(1)),h("span", { class: "compte" }, c.entrees.length)),
-          c.entrees.length ? c.entrees.map((e) => h("div", { class: "carte fiche-k", draggable: "true", onclick: () => ouvrirOffre(e.id),
+          c.entrees.length ? [...(deroulees.has(c.statut) ? c.entrees : c.entrees.slice(0, CARTES_K)).map((e) => h("div", { class: "carte fiche-k", draggable: "true", onclick: () => ouvrirOffre(e.id),
             ondragstart: (ev) => { tiree = e; ev.dataTransfer.effectAllowed = "move"; ev.dataTransfer.setData("text/plain", e.id); ev.currentTarget.classList.add("tiree"); },
             ondragend: (ev) => { ev.currentTarget.classList.remove("tiree"); } },
             h("div", { class: "t", title: e.poste }, e.poste), h("div", { class: "s" }, e.entreprise),
             h("div", { class: "bas" }, h("span", {}, dateFr(e.date) || "—"),
-              e.fit == null ? null : h("div", { class: "prog", title: `${e.fit}/10` }, h("i", { style: `width:${e.fit * 10}%` })))))
+              e.fit == null ? null : h("div", { class: "prog", title: `${e.fit}/10` }, h("i", { style: `width:${e.fit * 10}%` }))))),
+            c.entrees.length > CARTES_K ? h("button", { class: "bouton deplier-k", onclick: () => {
+              deroulees.has(c.statut) ? deroulees.delete(c.statut) : deroulees.add(c.statut);
+              ECRANS.candidatures.dessiner(vue);
+            } }, deroulees.has(c.statut) ? "Replier" : `Voir les ${c.entrees.length - CARTES_K} autres`) : null]
           : h("div", { class: "vide" }, "Vide")))),
       d.ecartees ? h("div", { class: "sous" }, `${d.ecartees} offres écartées (mauvaise, pas intéressé, expirée) ne sont pas montrées.`) : null));
   },
@@ -962,15 +978,21 @@ ECRANS.documents = {
     let minuteur;
     const champ = h("input", { type: "search", placeholder: "Entreprise, poste…", value: f.texte,
       oninput: (e) => { clearTimeout(minuteur); minuteur = setTimeout(() => { f.texte = e.target.value; f.page = 0; relancer(); }, 250); } });
+    // A click shows the document and lets its text be changed, as from an offer; the PDF
+    // is made again from the .docx, which stays the file to edit (the user, 2026-10-27).
+    const voir = (x) => (x.modifiable ? voirDocument(null, x.chemin, `${x.genre} · ${x.nom}`) : ouvrirFichier(x.chemin));
+    const dossiers = (d.dossiers || []).map((x) => bouton(x.genre === "CV" ? "Dossier des CV" : "Dossier des lettres", "sortie",
+      () => ecrire("ouvrir_dossier_documents", x.genre)));
     vue.replaceChildren(h("div", { class: "colonne" },
-      h("div", { class: "barre-outils" }, h("label", { class: "champ", style: "max-width:460px" }, svg("loupe"), champ)),
+      h("div", { class: "barre-outils" }, h("label", { class: "champ", style: "max-width:460px" }, svg("loupe"), champ), ...dossiers,
+        h("span", { class: "sous", title: (d.dossiers || []).map((x) => x.chemin).join(" · ") }, `${nombre(d.total)} documents`)),
       h("div", { class: "verre panneau" },
         d.fichiers.length ? h("table", {},
-          h("colgroup", {}, h("col", { style: "width:11%" }), h("col", { style: "width:59%" }), h("col", { style: "width:10%" }), h("col", { style: "width:11%" }), h("col", {})),
-          h("thead", {}, h("tr", {}, ["Type", "Document", "Format", "Le", "Taille"].map((t) => h("th", {}, t)))),
-          h("tbody", {}, d.fichiers.map((x) => h("tr", { onclick: () => ouvrirFichier(x.chemin), title: "Ouvrir" },
+          h("colgroup", {}, h("col", { style: "width:12%" }), h("col", {}), h("col", { style: "width:14%" })),
+          h("thead", {}, h("tr", {}, ["Type", "Document", "Le"].map((t) => h("th", {}, t)))),
+          h("tbody", {}, d.fichiers.map((x) => h("tr", { onclick: () => voir(x), title: x.modifiable ? "Voir et modifier" : "Ouvrir" },
             h("td", {}, h("span", { class: x.genre === "CV" ? "etiq" : "etiq gris" }, x.genre)),
-            h("td", { title: x.nom }, x.nom), h("td", {}, x.format), h("td", {}, dateFr(x.date)), h("td", {}, `${nombre(x.ko)} Ko`)))))
+            h("td", { title: x.nom }, x.nom), h("td", {}, dateFr(x.date))))))
         : h("div", { class: "vide" }, "Aucun document."),
         pagination(d, (p) => { f.page = p; relancer(); vue.scrollTop = 0; }))));
     if (f.texte) { champ.focus(); champ.setSelectionRange(f.texte.length, f.texte.length); }
@@ -1162,10 +1184,11 @@ ECRANS.profil = {
 
     vue.replaceChildren(h("div", { class: "grille" },
       carteId,
-      carte("Domaines visés", puces(p.domaines.map((d) => d.libelle), "puce chaude"),
-        h("div", { class: "sous", style: "margin-top:12px" }, "Leur définition reste dans profile.json.")),
-      carte("Notation", h("dl", { class: "paires" }, Object.entries(p.scoring).map(([k, v]) =>
-        [h("dt", {}, k.replaceAll("_", " ")), h("dd", {}, String(v))]))),
+      h("div", { class: "pile" },
+        carte("Domaines visés", puces(p.domaines.map((d) => d.libelle), "puce chaude"),
+          h("div", { class: "sous", style: "margin-top:12px" }, "Leur définition reste dans profile.json.")),
+        carte("Notation", h("dl", { class: "paires" }, Object.entries(p.scoring).map(([k, v]) =>
+          [h("dt", {}, k.replaceAll("_", " ")), h("dd", {}, String(v))])))),
       carteRech,
       carteComp,
       await cartePoids(),
@@ -1459,26 +1482,34 @@ ECRANS.stats = {
     if (!d) return vue.replaceChildren(h("div", { class: "vide" }, HORS_APPLI));
     const pc = (p) => (p == null ? "" : `${Math.round(p * 100)} %`);
     const e = d.entonnoir;
+    const barres = (s) => {
+      const max = Math.max(1, ...s.lignes.map((l) => (typeof l.n === "number" ? l.n : 0)));
+      return h("div", { class: "verre panneau" }, h("div", { class: "titre-ligne" }, h("h2", {}, s.titre)),
+        s.lignes.map((l) => h("div", { class: "ligne-barre" },
+          h("span", { class: "nom", title: l.nom }, l.nom),
+          h("span", { class: "piste" }, h("span", { class: "rempli", style: `width:${100 * l.n / max}%` })),
+          h("span", { class: "num" }, `${nombre(l.n)} ${pc(l.part)}`))));
+    };
+    // No hole between panels (the user, 2026-10-27): the sections go into three stacks of
+    // about the same height, the longest first, and the last panel of each stack grows.
+    const piles = [[], [], []];
+    const hauteur = (pile) => pile.reduce((n, s) => n + s.lignes.length + 3, 0);
+    [...d.sections].sort((a, b) => b.lignes.length - a.lignes.length)
+      .forEach((s) => piles.reduce((m, p) => (hauteur(p) < hauteur(m) ? p : m)).push(s));
+    const parChamp = (ch, titre) => (e.par[ch].length < 2 ? null : h("div", {}, h("h3", {}, titre),
+      h("dl", { class: "paires alignees" }, e.par[ch].map((x) => [h("dt", {}, x.val),
+        h("dd", {}, `${x.env} envoyée(s) · ${x.rep} réponse(s), ${x.ent} entretien(s) · ${pc(x.rep / x.env)}`)]))));
     vue.replaceChildren(h("div", { class: "colonne" },
       h("div", { class: "cartes-stats" }, d.cartes.map((c) => h("div", { class: "verre carte-stat" },
         h("div", { class: "chiffre" }, nombre(c.n)), h("div", { class: "sous" }, c.nom)))),
-      e ? h("div", { class: "verre panneau" },
-        h("div", { class: "titre-ligne" }, h("h2", {}, "Candidatures envoyées"), h("span", { class: "compte" }, e.envoyees)),
-        h("dl", { class: "paires alignees" },
-          h("dt", {}, "Réponses (entretien ou refus)"), h("dd", {}, `${e.reponses} ${e.taux != null ? "· " + pc(e.taux) : ""}`),
-          h("dt", {}, "Entretiens"), h("dd", {}, String(e.entretiens)),
-          h("dt", {}, "Sans réponse depuis 30 jours"), h("dd", {}, String(e.silence)),
-          h("dt", {}, "Délai médian de réponse"), h("dd", {}, e.delai_median == null ? "—" : `${Math.round(e.delai_median)} j (sur ${e.n_delais} réponse(s) datée(s))`)),
-        ["contrat", "domaine"].map((ch) => e.par[ch].length < 2 ? null : [h("h3", {}, `Réponses par ${ch}`),
-          h("dl", { class: "paires alignees" }, e.par[ch].map((x) => [h("dt", {}, x.val), h("dd", {}, `${x.env} envoyée(s) · ${x.rep} réponse(s), ${x.ent} entretien(s) · ${pc(x.rep / x.env)}`)]))])) : null,
-      h("div", { class: "grille" }, d.sections.map((s) => {
-        const max = Math.max(1, ...s.lignes.map((l) => (typeof l.n === "number" ? l.n : 0)));
-        return h("div", { class: "verre panneau" }, h("div", { class: "titre-ligne" }, h("h2", {}, s.titre)),
-          s.lignes.map((l) => h("div", { class: "ligne-barre" },
-            h("span", { class: "nom", title: l.nom }, l.nom),
-            h("span", { class: "piste" }, h("span", { class: "rempli", style: `width:${100 * l.n / max}%` })),
-            h("span", { class: "num" }, `${nombre(l.n)} ${pc(l.part)}`))));
-      }))));
+      e ? h("div", { class: "verre panneau envoyees" },
+        h("div", {}, h("h2", {}, "Candidatures envoyées"),
+          h("dl", { class: "paires alignees" },
+            h("dt", {}, "Taux de réponse"), h("dd", {}, e.taux != null ? pc(e.taux) : "—"),
+            h("dt", {}, "Sans réponse depuis 30 jours"), h("dd", {}, String(e.silence)),
+            h("dt", {}, "Délai médian de réponse"), h("dd", {}, e.delai_median == null ? "—" : `${Math.round(e.delai_median)} j (sur ${e.n_delais} réponse(s) datée(s))`))),
+        parChamp("contrat", "Par contrat"), parChamp("domaine", "Par domaine")) : null,
+      h("div", { class: "piles-stats" }, piles.filter((p) => p.length).map((p) => h("div", { class: "pile" }, p.map(barres))))));
   },
 };
 
@@ -1653,9 +1684,11 @@ ECRANS.maintenance = {
     const m = await appel("maintenance");
     const c = m.collecte;
     vue.replaceChildren(h("div", { class: "grille" },
-      h("div", { class: "sombre" }, h("h2", {}, "Moteur"), h("div", { class: "chiffre", style: "margin-top:14px" }, m.version),
-        h("div", { class: "sous", style: "color:#8f8783" }, "version installée"),
-        h("div", { class: "actions-col" }, bouton("Chercher une mise à jour", "fleche", verifierMaj, "plein"))),
+      h("div", { class: "pile" },
+        h("div", { class: "sombre" }, h("h2", {}, "Moteur"), h("div", { class: "chiffre", style: "margin-top:14px" }, m.version),
+          h("div", { class: "sous", style: "color:#8f8783" }, "version installée"),
+          h("div", { class: "actions-col" }, bouton("Chercher une mise à jour", "fleche", verifierMaj, "plein"))),
+        carte("Sauvegardes", h("div", { class: "sous", style: "margin:0 0 10px" }, "une par jour, sept jours glissants"), puces(m.sauvegardes))),
       carte("Dernière collecte",
         h("div", { class: c.etat === "ok" ? "etat ok" : "etat" }, c.etat === "ok" ? "Réussie" : (c.etat || "inconnue")),
         h("dl", { class: "paires", style: "margin-top:14px" },
@@ -1667,7 +1700,6 @@ ECRANS.maintenance = {
           h("dt", {}, "Offres"), h("dd", {}, nombre(m.offres)), h("dt", {}, "Candidatures"), h("dd", {}, nombre(m.candidatures)),
           m.tailles.map((t) => [h("dt", {}, t.nom), h("dd", {}, taille(t.octets))])),
         h("div", { class: "actions-col" }, action("Contrôler les offres fermées", "loupe", "disponibilite"))),
-      carte("Sauvegardes", h("div", { class: "sous", style: "margin:0 0 10px" }, "une par jour, sept jours glissants"), puces(m.sauvegardes)),
       carteOutils(await appel("outils"))));
   },
 };
@@ -1852,11 +1884,12 @@ async function cartesParametres() {
       x.slug === p.actif ? h("span", { class: "etiq gris" }, "ouvert")
         : bouton("Ouvrir", "sortie", () => ecrire("changer_profil", x.slug)))));
   return [
-    carte("Langue",
-      h("div", { class: "sous", style: "margin-bottom:10px" }, "Langue de l'interface, dans les deux fenêtres. Les lettres et les messages gardent la leur."), langue),
-    carte("Mise à jour",
-      h("div", { class: "sous", style: "margin-bottom:10px" }, "Les mises à jour viennent de GitHub ; chacune est vérifiée avant d'être installée."),
-      bouton("Vérifier les mises à jour", "fleche", verifierMaj, "plein")),
+    h("div", { class: "pile" },
+      carte("Langue",
+        h("div", { class: "sous", style: "margin-bottom:10px" }, "Langue de l'interface, dans les deux fenêtres. Les lettres et les messages gardent la leur."), langue),
+      carte("Mise à jour",
+        h("div", { class: "sous", style: "margin-bottom:10px" }, "Les mises à jour viennent de GitHub ; chacune est vérifiée avant d'être installée."),
+        bouton("Vérifier les mises à jour", "fleche", verifierMaj, "plein"))),
     carte("Collecte automatique",
       h("div", { class: "sous", style: "margin-bottom:10px" }, "Chaque jour à l'heure choisie, l'ordinateur collecte les offres de tous tes profils, même si JobHunter est fermé."),
       planif),

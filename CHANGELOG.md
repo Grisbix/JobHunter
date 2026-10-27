@@ -4,6 +4,24 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.35.0 — 2026-10-27
+
+- **Documents: see and edit a CV or a letter in the app**, as from an offer: a click
+  opens it in the side panel. One line per document (the .docx and its PDF were listed
+  twice). « Dossier des CV » / « Dossier des lettres » open CV/By_offer and
+  Letters/By_offer.
+- **Statistics tell the truth**: « dossiers prêts » now reads the descriptions, which
+  live in their own file (it said 0, every offer looked « description trop courte »).
+  Gone: link states, channel, ATS share and the status cards that repeated the board.
+  New: the sites and the collection keywords the offers come from, and answers by
+  contract and by field next to the application funnel.
+- **Offers**: the 7+ / 8+ / 9+ buttons and the publication-date sorts are gone (every
+  offer shown is current and above the profile's threshold).
+- **Applications**: each column shows its first 6 cards, then « Voir les N autres »;
+  empty columns shrink, so the whole board fits without scrolling sideways.
+- **No more holes in the screens**: cards in a row share its height, short cards stack
+  (Maintenance, Profil, Réglages), Relances' reader fills its column.
+
 ## 3.34.0 — 2026-10-27
 
 - **Areas say what they are**: in Ma recherche, each priority or secondary area reads

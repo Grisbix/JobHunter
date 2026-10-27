@@ -13,6 +13,7 @@ import json
 import re
 import subprocess
 import webbrowser
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -96,13 +97,41 @@ def _session(session: Any, verification: Any) -> tuple[str, str]:
     )
 
 
-def statistiques(q: list[Any], sv: Any) -> dict[str, Any]:
-    """The desktop's Stats panel: cards, then sections of (label, n, share)."""
+# Collection tools named as the user knows them (« sfrss » is SAP SuccessFactors).
+_SITES = {
+    "linkedin": "LinkedIn",
+    "workday": "Workday",
+    "sfrss": "SuccessFactors",
+    "glassdoor": "Glassdoor",
+    "apec": "APEC",
+    "adzuna": "Adzuna",
+    "jooble": "Jooble",
+    "vie": "Business France (V.I.E)",
+    "oracle": "Oracle",
+    "francetravail": "France Travail",
+    "efc": "eFinancialCareers",
+    "eures": "EURES",
+    "wtj": "Welcome to the Jungle",
+    "greenhouse": "Greenhouse",
+    "lever": "Lever",
+    "smartrecruiters": "SmartRecruiters",
+}
+
+
+def statistiques(
+    q: list[Any], sv: Any, descriptions: Mapping[str, str] | None = None
+) -> dict[str, Any]:
+    """The Statistics screen: cards, the sent applications, then sections of (label, n, share).
+
+    `descriptions` (oid → text) is the queue's texts, kept in their own file: the
+    queue read for this screen has none, and every prepared offer counted as
+    "description too short" (2026-10-27). Without it, the description is not checked.
+    Sections that told nothing (channel, link state, ATS score) were removed then.
+    """
     from jobhunter import funnel, profile
     from jobhunter.links import existe
     from jobhunter.storage import queue as queue_io
 
-    st = [str((v or {}).get("s") or "").lower() for v in sv.values()]
     ok = [o for o in q if str(o.get("link_status") or "").upper() not in ("MORT", "EXPIREE")]
 
     def fichier(u: Any) -> bool:
@@ -111,28 +140,30 @@ def statistiques(q: list[Any], sv: Any) -> dict[str, Any]:
         except Exception:  # noqa: BLE001 — an unreadable path counts as absent
             return False
 
+    def description(o: Any) -> str:
+        if descriptions is None:
+            return str(o.get("description") or "x" * 200)
+        return str(descriptions.get(queue_io.oid(o)) or o.get("description") or "")
+
     top = [o for o in ok if (o.get("fit") or 0) >= 8]
     pretes, sans_doc, sans_desc, douteux = [], [], [], []
     for o in top:
         if not (fichier(o.get("cv")) and fichier(o.get("lettre"))):
             sans_doc.append(o)
-        elif len(str(o.get("description") or "")) < 200:
+        elif len(description(o)) < 200:
             sans_desc.append(o)
         elif not o.get("ls_check"):
             douteux.append(o)
         else:
             pretes.append(o)
+    e = funnel.entonnoir(sv, {queue_io.oid(o): o for o in q})
     cartes = [
-        ("Offres", len(q)),
-        ("Liens OK", len(ok)),
-        ("Avec description", sum(1 for o in q if str(o.get("description") or "").strip())),
+        ("Offres en ligne", len(ok)),
         ("Fit ≥ 8", len(top)),
-        ("Dossiers préparés", len(pretes)),
-        ("Postulé", st.count("postulé")),
-        ("Relancé", st.count("relancé")),
-        ("Entretien", st.count("entretien")),
-        ("Refus", st.count("refus")),
-        ("Pas intéressé", st.count("pas intéressé")),
+        ("Dossiers prêts", len(pretes)),
+        ("Candidatures envoyées", e["envoyees"]),
+        ("Réponses", e["reponses"]),
+        ("Entretiens", e["entretiens"]),
     ]
     sections: list[dict[str, Any]] = []
 
@@ -164,14 +195,13 @@ def statistiques(q: list[Any], sv: Any) -> dict[str, Any]:
     section(
         "Sur les offres à fit ≥ 8",
         [
-            ("dossiers préparés (envoi à vérifier)", len(pretes)),
-            ("bloquées : CV ou lettre absent du disque", len(sans_doc)),
-            ("bloquées : description trop courte", len(sans_desc)),
-            ("bloquées : lien jamais vérifié", len(douteux)),
+            ("dossiers prêts (CV, lettre, lien vérifié)", len(pretes)),
+            ("sans CV ou lettre", len(sans_doc)),
+            ("description trop courte", len(sans_desc)),
+            ("lien jamais vérifié", len(douteux)),
         ],
         base=len(top),
     )
-    e = funnel.entonnoir(sv, {queue_io.oid(o): o for o in q})
     entonnoir = None
     if e["envoyees"]:
         entonnoir = {
@@ -190,35 +220,33 @@ def statistiques(q: list[Any], sv: Any) -> dict[str, Any]:
                 for champ in ("contrat", "domaine")
             },
         }
+    fits = [(f"fit {i}", sum(1 for o in ok if (o.get("fit") or 0) == i)) for i in range(10, 0, -1)]
+    section("Fit des offres en ligne", [p for p in fits if p[1]], base=len(ok))
     libelles = {d["cle"]: str(d.get("libelle") or d["cle"]) for d in profile.domaines()}
     par_domaine: dict[str, int] = {}
-    for v, n in compte("domaine"):
+    for v, n in compte("domaine", ok):
         lib = libelles.get(v, v)
         par_domaine[lib] = par_domaine.get(lib, 0) + n
-    section("Domaine", sorted(par_domaine.items(), key=lambda x: -x[1])[:8])
-    section("Canal", compte("canal"))
-    section("État des liens", compte("link_status"))
-    fits = [(f"fit {i}", sum(1 for o in ok if (o.get("fit") or 0) == i)) for i in range(10, 0, -1)]
-    section("Fit (offres vivantes)", [p for p in fits if p[1]], base=len(ok))
-    tranches = {"100 %": 0, "80-99 %": 0, "60-79 %": 0, "40-59 %": 0, "< 40 %": 0, "non scoré": 0}
-    for o in ok:
-        a = o.get("ats_pct")
-        cle = (
-            "non scoré"
-            if a is None
-            else "100 %"
-            if a >= 100
-            else "80-99 %"
-            if a >= 80
-            else "60-79 %"
-            if a >= 60
-            else "40-59 %"
-            if a >= 40
-            else "< 40 %"
-        )
-        tranches[cle] += 1
-    section("ATS % (offres vivantes)", [(k, v) for k, v in tranches.items() if v], base=len(ok))
-    section("Sources (top 10)", [(s[:46], n) for s, n in compte("source")[:10]])
+    section("Domaine", sorted(par_domaine.items(), key=lambda x: -x[1])[:8], base=len(ok))
+    # « linkedin-search:analyste isr » → the site, then the collection keyword.
+    sites: dict[str, int] = {}
+    mots: dict[str, int] = {}
+    for s, n in compte("source", ok):
+        site, _, mot = s.partition(":")
+        site = _SITES.get(site.removesuffix("-search"), site.removesuffix("-search"))
+        sites[site] = sites.get(site, 0) + n
+        if mot:
+            mots[mot] = mots.get(mot, 0) + n
+    section(
+        "Sites d'où viennent les offres",
+        sorted(sites.items(), key=lambda x: -x[1])[:8],
+        base=len(ok),
+    )
+    section(
+        "Mots-clés qui rapportent le plus",
+        [(m[:46], n) for m, n in sorted(mots.items(), key=lambda x: -x[1])[:8]],
+        base=len(ok),
+    )
     return {
         "cartes": [{"nom": n, "n": v} for n, v in cartes],
         "sections": sections,
@@ -233,11 +261,12 @@ class PanneauxApi:
     _suivi: Any
     _tache: Any
     _demarrer: Any
+    _descriptions: Any
 
     # --- Statistics ---------------------------------------------------------------
     def stats(self) -> dict[str, Any]:
         """The desktop's Stats panel, from the disk."""
-        return statistiques(list(self._file()), dict(self._suivi()))
+        return statistiques(list(self._file()), dict(self._suivi()), self._descriptions())
 
     # --- Access: collection sources and their keys, logins for applying ---------------
     def acces(self) -> dict[str, Any]:

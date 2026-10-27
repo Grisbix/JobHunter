@@ -333,8 +333,11 @@ td > .score { width: 34px; height: 34px; font-size: 13px; }
 .pagination .choix { height: 32px; margin-right: 12px; }
 
 /* Applications board */
-.tableau-kanban { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(196px, 1fr); gap: 16px; align-items: start; }
-.colonne-k { padding: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 200px; }
+.tableau-kanban { display: flex; gap: 16px; align-items: flex-start; }
+.colonne-k { flex: 1 1 196px; min-width: 0; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 200px; }
+/* An empty column stays a drop target but gives its width to the full ones. */
+.colonne-k.vide-k { flex: 0 0 132px; min-height: 120px; }
+.colonne-k.vide-k .vide { padding: 8px 0; font-size: 12.5px; }
 .colonne-k .entete { display: flex; justify-content: space-between; align-items: center; padding: 2px 4px 6px; }
 .compte { font-size: 12px; min-width: 24px; height: 22px; padding: 0 7px; border-radius: 11px; display: grid; place-items: center; background: var(--piste); color: var(--gris); }
 .fiche-k { padding: 14px; cursor: pointer; transition: transform .12s, box-shadow .12s; }
@@ -343,16 +346,20 @@ td > .score { width: 34px; height: 34px; font-size: 13px; }
 .fiche-k .prog { flex: 1; }
 
 /* Follow-ups */
-.relances { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 22px; align-items: start; }
-.relances-droite { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 20px; align-items: start; }
+.relances { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 22px; align-items: stretch; }
+.relances-droite { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 20px; align-items: stretch; }
 .liste-brouillons { max-height: calc(100vh - 260px); overflow-y: auto; margin: 0 -8px; padding: 0 8px; }
 .ligne-brouillon { display: flex; justify-content: space-between; gap: 12px; padding: 11px 12px; border-radius: 12px; cursor: pointer; }
 .ligne-brouillon:hover { background: rgba(var(--blanc-rgb),.5); }
 .ligne-brouillon.on { background: var(--surface); }
-.apercu { padding: 26px 28px; white-space: pre-wrap; font-size: 13.5px; line-height: 1.6; min-height: 260px; max-height: calc(100vh - 300px); overflow-y: auto; }
+.apercu { padding: 26px 28px; white-space: pre-wrap; font-size: 13.5px; line-height: 1.6; height: calc(100vh - 300px); min-height: 260px; overflow-y: auto; }
 
 /* Profile, sources, maintenance: card grids */
-.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; align-items: start; }
+.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; align-items: stretch; grid-auto-flow: row dense; }
+/* Cards stacked in one grid cell: the last one takes what is left, so the cell has no hole. */
+.grille .pile { display: flex; flex-direction: column; gap: 20px; }
+.grille .pile > :last-child { flex: 1; }
+@media (min-width: 1000px) { #carte-profils { grid-column: span 2; } }
 .grille .large { grid-column: 1 / -1; }
 .identite { display: flex; gap: 18px; align-items: center; }
 .identite .avatar { width: 64px; height: 64px; font-size: 24px; }
@@ -748,3 +755,10 @@ label.case.pale { color: var(--gris); cursor: default; }
 }
 :root.mode-sombre .score b { color: var(--fond-page); }
 .genre-lieu { margin-left: 6px; font-size: 11px; opacity: .65; }
+/* Statistics: three stacks, the last panel of each grows, so no hole is left. */
+.piles-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: stretch; }
+.piles-stats .pile { display: flex; flex-direction: column; gap: 16px; }
+.piles-stats .pile > :last-child { flex: 1; }
+.panneau.envoyees { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px 32px; align-items: start; }
+.panneau.envoyees h3 { margin-top: 4px; }
+.deplier-k { align-self: center; }

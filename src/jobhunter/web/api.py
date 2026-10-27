@@ -822,16 +822,15 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
             return ""
 
     def documents(self, filtres: dict[str, Any] | None = None) -> dict[str, Any]:
-        """CVs and letters made per offer, most recent first, filtered by text."""
-        from jobhunter import root
+        """CVs and letters made per offer, most recent first, filtered by text.
 
+        One line per document: its .docx (the text to change) and its .pdf (what is
+        sent) are the same CV, listed twice before 3.35. `dossiers` says where they are.
+        """
         f = filtres or {}
         mots = [m for m in str(f.get("texte") or "").lower().split() if m]
-        fichiers: list[dict[str, Any]] = []
-        for genre, dossier in (
-            ("CV", root.dans(root.racine() / "CV", "Par_offre")),
-            ("Lettre", root.dans(root.dossier("Lettres"), "Par_offre")),
-        ):
+        par_doc: dict[tuple[str, str], dict[str, Any]] = {}
+        for genre, dossier in _dossiers_documents().items():
             if not dossier.is_dir():
                 continue
             for p in dossier.iterdir():
@@ -840,16 +839,22 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
                 if mots and not all(m in p.stem.lower() for m in mots):
                     continue
                 st = p.stat()
-                fichiers.append(
-                    {
-                        "genre": genre,
-                        "nom": p.stem.replace("_", " "),
-                        "chemin": str(p),
-                        "format": p.suffix[1:].upper(),
-                        "date": datetime.fromtimestamp(st.st_mtime).date().isoformat(),
-                        "ko": round(st.st_size / 1024),
-                    }
+                date = datetime.fromtimestamp(st.st_mtime).date().isoformat()
+                # Windows ignores case: « CV_X.pdf » and « cv_x.docx » are one document.
+                d = par_doc.setdefault(
+                    (genre, p.stem.lower()),
+                    {"genre": genre, "nom": p.stem.replace("_", " "), "date": date},
                 )
+                d["date"] = max(d["date"], date)
+                d[p.suffix[1:].lower()] = str(p)
+        fichiers = [
+            {
+                **{k: v for k, v in d.items() if k not in ("docx", "pdf")},
+                "chemin": d.get("docx") or d["pdf"],
+                "modifiable": "docx" in d,
+            }
+            for d in par_doc.values()
+        ]
         fichiers.sort(key=lambda x: x["date"], reverse=True)
         page = max(0, int(f.get("page") or 0))
         return {
@@ -857,7 +862,16 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
             "page": page,
             "pages": max(1, -(-len(fichiers) // PAR_PAGE)),
             "fichiers": fichiers[page * PAR_PAGE : (page + 1) * PAR_PAGE],
+            "dossiers": [{"genre": g, "chemin": str(d)} for g, d in _dossiers_documents().items()],
         }
+
+    def ouvrir_dossier_documents(self, genre: str) -> bool:
+        """Opens the folder of the CVs or of the letters made per offer in the Explorer."""
+        d = _dossiers_documents().get(genre)
+        if d is None or not d.is_dir():
+            return False
+        os.startfile(d)  # type: ignore[attr-defined,unused-ignore]  # nosec B606
+        return True
 
     def profil(self) -> dict[str, Any]:
         """What the profile says, without the application form fields."""
@@ -1866,6 +1880,16 @@ def _dossier_relances() -> Path:
     from jobhunter import root
 
     return root.dans(root.dossier("Lettres"), "Relances")
+
+
+def _dossiers_documents() -> dict[str, Path]:
+    """Where the CVs and letters made per offer are: CV/By_offer, Letters/By_offer."""
+    from jobhunter import root
+
+    return {
+        "CV": root.dans(root.racine() / "CV", "Par_offre"),
+        "Lettre": root.dans(root.dossier("Lettres"), "Par_offre"),
+    }
 
 
 def _document_permis(chemin: str) -> Path | None:

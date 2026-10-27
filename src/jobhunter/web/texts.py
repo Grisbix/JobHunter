@@ -1202,21 +1202,50 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Bei Angeboten mit Fit ≥ 8",
         "En ofertas con fit ≥ 8",
     ),
-    "bloquées : CV ou lettre absent du disque": (
-        "blocked: CV or letter missing from disk",
-        "blockiert: Lebenslauf oder Anschreiben fehlt auf der Festplatte",
-        "bloqueadas: falta el CV o la carta en el disco",
+    "dossiers prêts (CV, lettre, lien vérifié)": (
+        "ready files (CV, letter, checked link)",
+        "fertige Unterlagen (Lebenslauf, Anschreiben, geprüfter Link)",
+        "expedientes listos (CV, carta, enlace comprobado)",
     ),
-    "bloquées : description trop courte": (
-        "blocked: description too short",
-        "blockiert: Beschreibung zu kurz",
-        "bloqueadas: descripción demasiado corta",
+    "sans CV ou lettre": (
+        "without CV or letter",
+        "ohne Lebenslauf oder Anschreiben",
+        "sin CV o carta",
     ),
-    "bloquées : lien jamais vérifié": (
-        "blocked: link never checked",
-        "blockiert: Link nie geprüft",
-        "bloqueadas: enlace nunca comprobado",
+    "description trop courte": (
+        "description too short",
+        "Beschreibung zu kurz",
+        "descripción demasiado corta",
     ),
+    "lien jamais vérifié": ("link never checked", "Link nie geprüft", "enlace nunca comprobado"),
+    "Offres en ligne": ("Offers online", "Angebote online", "Ofertas en línea"),
+    "Dossiers prêts": ("Ready files", "Fertige Unterlagen", "Expedientes listos"),
+    "Réponses": ("Answers", "Antworten", "Respuestas"),
+    "Fit des offres en ligne": (
+        "Fit of the offers online",
+        "Fit der Angebote online",
+        "Fit de las ofertas en línea",
+    ),
+    "Sites d'où viennent les offres": (
+        "Sites the offers come from",
+        "Websites, von denen die Angebote stammen",
+        "Sitios de donde vienen las ofertas",
+    ),
+    "Mots-clés qui rapportent le plus": (
+        "Keywords that bring the most",
+        "Suchbegriffe mit dem meisten Ertrag",
+        "Palabras clave que más aportan",
+    ),
+    "Taux de réponse": ("Answer rate", "Antwortquote", "Tasa de respuesta"),
+    "Par contrat": ("By contract", "Nach Vertrag", "Por contrato"),
+    "Par domaine": ("By field", "Nach Bereich", "Por área"),
+    "Voir les {n} autres": ("See the other {n}", "Die anderen {n} zeigen", "Ver los otros {n}"),
+    "Replier": ("Fold", "Einklappen", "Plegar"),
+    # --- Documents ---
+    "Dossier des CV": ("CV folder", "Lebenslauf-Ordner", "Carpeta de CV"),
+    "Dossier des lettres": ("Letters folder", "Anschreiben-Ordner", "Carpeta de cartas"),
+    "{n} documents": ("{n} documents", "{n} Dokumente", "{n} documentos"),
+    "Voir et modifier": ("View and edit", "Ansehen und bearbeiten", "Ver y editar"),
     "Collecte {nom}": ("{nom} collection", "{nom}-Sammlung", "Recogida {nom}"),
     "accès libre, aucune clé à saisir.": (
         "open access, no key needed.",
