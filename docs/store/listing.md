@@ -64,7 +64,7 @@ Data kept on your computer
 - Price: free. Markets: all.
 - Age rating questionnaire: no user-generated content shared, no purchases, no
   location sharing → 3+.
-- Screenshots (1440×900, fictitious profile, `tools/screenshots.py --web-seul`):
+- Screenshots (1440×900, fictitious profile, `tools/screenshots.py`):
   French listing → `docs/store/screenshots_fr/`, English listing → `docs/screenshots/`
   (`web_home.png`, `web_offers.png`, `web_offers_dark.png`, `web_applications.png`).
 - Capability `runFullTrust` justification: « Desktop application packaged from a
