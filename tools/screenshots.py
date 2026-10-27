@@ -1,26 +1,22 @@
-"""The README screenshots, on a fictitious profile and fictitious offers.
+"""The README and Store screenshots, on a fictitious profile and fictitious offers.
 
     uv run python tools/screenshots.py [--lang en] [--out docs/screenshots]
+    # the Store's French set: --lang fr --out docs/store/screenshots_fr
 
 Builds a throwaway data folder (the example profile, "Camille Exemple", and eight
 invented companies), prepares the CV and letter of the best offer with the real
-engine (`jobhunter documents`, LibreOffice for the PDF), opens the application in the
-chosen language and captures the window:
-
-- `offers.png`: the ranked offers, the first one selected (an application with its
-  status history and its kept posting; one offer with a knock-out ⚠);
-- `letter.png`: an offer opened in full, its letter on the right;
-- `web_home.png`, `web_offers_dark.png`: the web interface (3.27), its home screen in
-  light mode and its offers in dark mode. The page runs in Playwright's Chromium, its
-  calls answered by the real `jobhunter.web.api.Api` on the same fictitious folder:
-  nothing of the screen behind is captured.
+engine (`jobhunter documents`, LibreOffice for the PDF), then captures the web
+interface — the application's window since 3.27, and what the Microsoft Store shows:
+`web_home.png`, `web_offers.png`, `web_applications.png` in light mode and
+`web_offers_dark.png` in dark mode. The page runs in Playwright's Chromium, its calls
+answered by the real `jobhunter.web.api.Api` on the same fictitious folder: no window
+opens, nothing of the screen behind is captured.
 
 Nothing of the user's own data is read: the folder is created in a temporary
-directory and `JOBHUNTER_RACINE` points to it. Windows only (screen capture by PIL).
+directory and `JOBHUNTER_RACINE` points to it.
 """
 
 import argparse
-import ctypes
 import json
 import os
 import shutil
@@ -182,58 +178,24 @@ def jobhunter(racine: Path, *args: str) -> None:
     )
 
 
-def capturer(racine: Path, langue: str, sortie: Path) -> None:
-    """Opens the app on `racine` in `langue` and saves the two screenshots."""
-    ctypes.windll.shcore.SetProcessDpiAwareness(2)  # sharp, unscaled capture
-    os.environ.update(
-        JOBHUNTER_RACINE=str(racine), JOBHUNTER_LANGUE=langue, JOBHUNTER_SANS_FOND="1"
-    )
-    os.environ.pop("JOBHUNTER_PRINCIPALE", None)
-    os.environ.pop("JOBHUNTER_ACTION", None)
-    import customtkinter as ctk
-    from PIL import ImageGrab
-
-    import jobhunter.app as ui
-
-    root = ctk.CTk()
-    app = ui.App(root)
-    root.state("normal")
-    root.geometry("1440x900+0+0")
-    root.attributes("-topmost", True)
-
-    def attendre(n: int = 30) -> None:
-        for _ in range(n):
-            root.update()
-            time.sleep(0.02)
-
-    def photo(nom: str) -> None:
-        attendre()
-        x, y = root.winfo_rootx(), root.winfo_rooty()
-        w, h = root.winfo_width(), root.winfo_height()
-        ImageGrab.grab(bbox=(x, y, x + w, y + h), all_screens=True).save(sortie / nom)
-        print("  ", sortie / nom)
-
-    attendre()
-    premier = app.tree.get_children()[0]
-    app.tree.selection_set(premier)
-    app.tree.focus(premier)
-    app._load_edit()
-    photo("offers.png")
-    app._detail_full(app.rowmap[premier])
-    attendre(80)  # the PDF preview renders in the background
-    photo("letter.png")
-    root.destroy()
-
-
 # Stands in for pywebview: window.pywebview.api.<name>(...) goes to the Python Api.
 _PONT = """
 window.pywebview = { api: new Proxy({}, { get: (_, nom) => (...args) => window.__jh(nom, args) }) };
 """
 
 
-def capturer_web(racine: Path, sortie: Path) -> None:
-    """The web interface's two screenshots, rendered headless (see the module's doc)."""
-    os.environ.update(JOBHUNTER_RACINE=str(racine))
+# (file, light or dark mode, screen) of the web interface's screenshots.
+ECRANS_WEB = (
+    ("web_home.png", "clair", "accueil"),
+    ("web_offers_dark.png", "sombre", "offres"),
+    ("web_offers.png", "clair", "offres"),
+    ("web_applications.png", "clair", "candidatures"),
+)
+
+
+def capturer_web(racine: Path, sortie: Path, langue: str = "en") -> None:
+    """The web interface's screenshots, rendered headless (see the module's doc)."""
+    os.environ.update(JOBHUNTER_RACINE=str(racine), JOBHUNTER_LANGUE=langue)
     os.environ.pop("JOBHUNTER_PRINCIPALE", None)
     from playwright.sync_api import sync_playwright
 
@@ -266,8 +228,8 @@ def capturer_web(racine: Path, sortie: Path) -> None:
             page.screenshot(path=str(sortie / nom))
             print("  ", sortie / nom)
 
-        photo("web_home.png", "clair", "accueil")
-        photo("web_offers_dark.png", "sombre", "offres")
+        for nom, mode, ecran in ECRANS_WEB:
+            photo(nom, mode, ecran)
         nav.close()
 
 
@@ -287,8 +249,7 @@ def main() -> int:
         jobhunter(racine, "documents", "--top", "1")
         jobhunter(racine, "reposts")  # the Signal column: knock-outs
         jobhunter(racine, "postings")  # the posting kept for the application
-        capturer_web(racine, sortie)
-        capturer(racine, args.lang, sortie)
+        capturer_web(racine, sortie, args.lang)
     finally:
         if args.garder:
             print("dossier fictif :", racine)

@@ -56,7 +56,7 @@ def test_refuse(chemin):
         "profile/example_Facts.json",
         "data/sources_config.json",
         "My_CV/README.txt",
-        "docs/screenshots/offers.png",
+        "docs/screenshots/web_home.png",
         "src/jobhunter/storage/applications.py",
         "tests/reponses/lever.json",
     ],

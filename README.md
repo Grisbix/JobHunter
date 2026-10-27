@@ -24,13 +24,13 @@ short message for each one. It runs on your computer. It never sends an applicat
 
 </div>
 
-| Offers, ranked for your profile | An offer in full: why it fits, where it was found, its letter |
+| Home: the morning's collection, the best offers, what to do | Offers, ranked for your profile |
 |---|---|
-| ![Offer list](docs/screenshots/offers.png) | ![Generated letter](docs/screenshots/letter.png) |
-| **The new interface: home** | **…and the offers, in dark mode** |
-| ![Home screen of the new interface](docs/screenshots/web_home.png) | ![Offers of the new interface in dark mode](docs/screenshots/web_offers_dark.png) |
+| ![Home screen](docs/screenshots/web_home.png) | ![Offer list](docs/screenshots/web_offers.png) |
+| **Applications, from « to apply » to the interview** | **…and the offers, in dark mode** |
+| ![Applications](docs/screenshots/web_applications.png) | ![Offers in dark mode](docs/screenshots/web_offers_dark.png) |
 
-<sub>Screenshots of the classic app in English and of the [new interface](#the-new-interface-preview-from-source) (French only for now), with a **fictitious** profile and invented companies (Camille Exemple, junior in sustainable finance — `profile/example_finance_esg.json`). Rebuilt by `python tools/screenshots.py`. The app also speaks **French, German and Spanish**: Settings → Interface language.</sub>
+<sub>Screenshots in English, with a **fictitious** profile and invented companies (Camille Exemple, junior in sustainable finance — `profile/example_finance_esg.json`). Rebuilt by `python tools/screenshots.py`. The app also speaks **French, German and Spanish**: Settings → Interface language.</sub>
 
 - [Why](#why-jobhunter) · [How it works](#how-it-works) · [Sources](#sources)
 - [Install (Windows)](#install-windows) · [From source](#from-source) · [macOS / Linux](#macos--linux)
