@@ -1752,7 +1752,7 @@ ECRANS.reglages = {
         h("div", { class: "reglage" },
           h("div", { class: "titre-ligne" }, h("div", { class: "nom-reglage" }, "Transparence"), valeur),
           h("div", { class: "ligne-curseur" }, h("span", {}, "Opaque"), curseur, h("span", {}, "Verre")),
-          h("div", { class: "sous" }, "Combien le bureau transparaît. La force du flou acrylique est fixée par Windows."))),
+          h("div", { class: "sous" }, "Combien le bureau transparaît derrière le fond de la fenêtre ; les cartes et les textes restent nets. La force du flou acrylique est fixée par Windows."))),
       h("div", { class: "verre panneau" },
         h("div", { class: "titre-ligne" }, h("h2", {}, "Couleurs et police")),
         h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Mode"), placeMode),

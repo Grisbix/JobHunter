@@ -1411,10 +1411,13 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "Transparence": ("Transparency", "Transparenz", "Transparencia"),
     "Opaque": ("Opaque", "Deckend", "Opaco"),
     "Verre": ("Glass", "Glas", "Cristal"),
-    "Combien le bureau transparaît. La force du flou acrylique est fixée par Windows.": (
-        "How much the desktop shows through. The strength of the acrylic blur is set by Windows.",
-        "Wie stark der Desktop durchscheint. Die Stärke der Acryl-Unschärfe legt Windows fest.",
-        "Cuánto se transparenta el escritorio. La intensidad del difuminado acrílico la fija Windows.",
+    "Combien le bureau transparaît derrière le fond de la fenêtre ; les cartes et les textes restent nets. La force du flou acrylique est fixée par Windows.": (
+        "How much the desktop shows through the window's background; cards and text "
+        "stay sharp. The strength of the acrylic blur is set by Windows.",
+        "Wie stark der Desktop durch den Fensterhintergrund scheint; Karten und Texte "
+        "bleiben scharf. Die Stärke der Acryl-Unschärfe legt Windows fest.",
+        "Cuánto se transparenta el escritorio tras el fondo de la ventana; las tarjetas "
+        "y los textos siguen nítidos. La intensidad del difuminado acrílico la fija Windows.",
     ),
     "Couleurs et police": ("Colours and font", "Farben und Schrift", "Colores y fuente"),
     "Mode": ("Mode", "Modus", "Modo"),

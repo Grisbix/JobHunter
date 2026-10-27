@@ -391,8 +391,12 @@ td > .score { width: 34px; height: 34px; font-size: 13px; }
 
 /* Title bar of the frameless native window: only shown there. Drag anywhere on it. */
 .barre { display: none; }
-/* --t (0 fully opaque … 1 glass) comes from the settings screen. */
-body.natif { background: transparent; --t: .5; --verre: rgba(var(--blanc-rgb), calc(.66 - .4 * var(--t))); }
+/* --t (0 fully opaque … 1 glass) comes from the settings screen. It thins the window's
+   background only: the panels keep their glass, so their text stays readable, and the
+   text drawn straight on the background (menu, page title) gets a halo as it thins
+   (the user, 2026-10-27: "le fond transparent, pas les écritures"). */
+body.natif { background: transparent; --t: .5; --verre: rgba(var(--blanc-rgb), .72); }
+body.natif .menu, body.natif .tete { text-shadow: 0 0 6px rgba(var(--blanc-rgb), calc(.95 * var(--t))), 0 0 14px rgba(var(--blanc-rgb), calc(.7 * var(--t))); }
 body.natif .fond { background: rgba(var(--fond-rgb), calc(1 - var(--t))); }
 body.natif .fond i { opacity: calc(.85 - .85 * var(--t)); }
 body.natif.sans-fond { --verre: rgba(var(--blanc-rgb), 0.46); }
@@ -711,7 +715,8 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
   --ombre-rgb: 0, 0, 0;
   --blob2: #3a3330;
 }
-:root.mode-sombre body.natif { --verre: rgba(44, 39, 37, calc(.72 - .4 * var(--t))); }
+:root.mode-sombre body.natif { --verre: rgba(44, 39, 37, .8); }
+:root.mode-sombre body.natif .menu, :root.mode-sombre body.natif .tete { text-shadow: 0 0 6px rgba(0, 0, 0, calc(.9 * var(--t))), 0 0 14px rgba(0, 0, 0, calc(.6 * var(--t))); }
 :root.mode-sombre .fond i { opacity: .22; }
 :root.mode-sombre body.natif .fond i { opacity: calc(.22 - .22 * var(--t)); }
 :root.mode-sombre .diff-moins { background: #4a2423; color: #f3b7b0; }

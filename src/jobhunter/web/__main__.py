@@ -56,6 +56,15 @@ class _Cadre:
         lz, hz = zone.right - zone.left, zone.bottom - zone.top
         if plein:
             x, y, lg, ht = zone.left, zone.top, lz, hz
+            # A window exactly the size of the monitor (taskbar hidden: the work area
+            # is the whole screen) counts as full screen for DWM, which then drops
+            # acrylic and mica for a flat grey: every backdrop looked the same. One
+            # pixel short keeps them (the user, 2026-10-27).
+            if (lz, hz) == (
+                ctypes.windll.user32.GetSystemMetrics(0),  # type: ignore[attr-defined,unused-ignore]
+                ctypes.windll.user32.GetSystemMetrics(1),  # type: ignore[attr-defined,unused-ignore]
+            ):
+                ht -= 1
         else:
             lg, ht = int(lz * 0.9), int(hz * 0.9)
             x, y = zone.left + (lz - lg) // 2, zone.top + (hz - ht) // 2

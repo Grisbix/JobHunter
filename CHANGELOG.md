@@ -6,6 +6,14 @@ recent at the top.
 
 ## 3.31.0 — 2026-10-27
 
+- **Window backdrops work in full size**: with the taskbar hidden, the full-size window
+  was exactly the monitor's size, which Windows treats as full screen and so drops
+  acrylic and mica for a flat grey — every backdrop looked the same. It is now one pixel
+  short.
+- **Transparency thins the background, not the text**: the slider used to fade the
+  panels too, leaving their text floating over the desktop. Panels now keep their glass;
+  only the window's background thins, and the text drawn straight on it (menu, page
+  title) gets a soft halo as it does.
 - **Several values per filter**: zone, field, contract, region and country now open a
   list of boxes. Tick as many as you want, then « Appliquer » (or click elsewhere,
   or Enter); Escape cancels. Past a dozen values, a field narrows the list. Saved
