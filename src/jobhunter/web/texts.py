@@ -1511,10 +1511,23 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Programación disponible solo en Windows.",
     ),
     "heure au format 08:00": ("time as 08:00", "Uhrzeit im Format 08:00", "hora con formato 08:00"),
-    "Plusieurs recherches, un dossier chacune. Changer de profil relance la fenêtre.": (
-        "Several searches, one folder each. Switching profile restarts the window.",
-        "Mehrere Suchen, je ein Ordner. Ein Profilwechsel startet das Fenster neu.",
-        "Varias búsquedas, una carpeta cada una. Cambiar de perfil reinicia la ventana.",
+    "Un profil = une recherche à part : un autre métier, une autre ville, ou une autre personne. Chacun a ses offres, ses CV et ses lettres ; les clés des sites restent communes. Changer de profil relance la fenêtre.": (
+        "A profile = a separate search: another job, another city, or another person. "
+        "Each has its offers, CVs and letters; the site keys stay shared. Switching "
+        "profile restarts the window.",
+        "Ein Profil = eine eigene Suche: ein anderer Beruf, eine andere Stadt oder eine "
+        "andere Person. Jedes hat seine Angebote, Lebensläufe und Briefe; die Schlüssel "
+        "der Seiten bleiben gemeinsam. Ein Profilwechsel startet das Fenster neu.",
+        "Un perfil = una búsqueda aparte: otro oficio, otra ciudad u otra persona. Cada "
+        "uno tiene sus ofertas, CV y cartas; las claves de los sitios son comunes. "
+        "Cambiar de perfil reinicia la ventana.",
+    ),
+    "Gérer les profils": ("Manage profiles", "Profile verwalten", "Gestionar perfiles"),
+    "Nouveau profil…": ("New profile…", "Neues Profil…", "Nuevo perfil…"),
+    "Fichier du profil (avancé)": (
+        "Profile file (advanced)",
+        "Profildatei (fortgeschritten)",
+        "Archivo del perfil (avanzado)",
     ),
     "ouvert": ("open", "offen", "abierto"),
     "Nouveau profil depuis un CV…": (
@@ -1551,21 +1564,30 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "por ejemplo: responsable de RSC en Lyon",
     ),
     "Nouveau profil": ("New profile", "Neues Profil", "Nuevo perfil"),
-    "Donne-lui un nom, puis choisis son CV. Les questions se posent dans une fenêtre de commande.": (
-        "Give it a name, then choose its CV. The questions are asked in a command window.",
-        "Gib ihm einen Namen und wähle dann seinen Lebenslauf. Die Fragen kommen in einem Befehlsfenster.",
-        "Dale un nombre y elige su CV. Las preguntas se hacen en una ventana de comandos.",
+    "1. Donne-lui un nom. 2. Choisis le CV de cette recherche (.docx ou .pdf). 3. Un formulaire rempli d'après le CV s'ouvre : vérifie, complète, valide. Ton profil actuel ne change pas.": (
+        "1. Give it a name. 2. Choose the CV for this search (.docx or .pdf). 3. A form "
+        "filled from the CV opens: check, complete, confirm. Your current profile does "
+        "not change.",
+        "1. Gib ihm einen Namen. 2. Wähle den Lebenslauf für diese Suche (.docx oder "
+        ".pdf). 3. Ein aus dem Lebenslauf ausgefülltes Formular öffnet sich: prüfen, "
+        "ergänzen, bestätigen. Dein aktuelles Profil bleibt unverändert.",
+        "1. Dale un nombre. 2. Elige el CV de esta búsqueda (.docx o .pdf). 3. Se abre "
+        "un formulario rellenado a partir del CV: revisa, completa, valida. Tu perfil "
+        "actual no cambia.",
     ),
     "Choisir le CV…": ("Choose the CV…", "Lebenslauf wählen…", "Elegir el CV…"),
-    "Réponds aux questions": (
-        "Answer the questions",
-        "Beantworte die Fragen",
-        "Responde a las preguntas",
+    "Complète le formulaire": (
+        "Complete the form",
+        "Fülle das Formular aus",
+        "Completa el formulario",
     ),
-    "Une fenêtre de commande s'est ouverte. Quand elle a fini, clique ci-dessous.": (
-        "A command window opened. When it has finished, click below.",
-        "Ein Befehlsfenster hat sich geöffnet. Wenn es fertig ist, klicke unten.",
-        "Se abrió una ventana de comandos. Cuando termine, haz clic abajo.",
+    "Une fenêtre « JobHunter » s'est ouverte avec ce que ton CV dit de toi. Vérifie-la et valide-la, puis clique ci-dessous.": (
+        "A « JobHunter » window opened with what your CV says about you. Check and "
+        "confirm it, then click below.",
+        "Ein Fenster « JobHunter » hat sich mit dem geöffnet, was dein Lebenslauf über "
+        "dich sagt. Prüfe und bestätige es, dann klicke unten.",
+        "Se abrió una ventana « JobHunter » con lo que tu CV dice de ti. Revísala y "
+        "valídala, luego haz clic abajo.",
     ),
     "C'est fait, ouvrir le profil": (
         "Done, open the profile",

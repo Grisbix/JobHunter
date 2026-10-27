@@ -1073,10 +1073,13 @@ const avecBak = (r) => r && r.ok ? { ...r, message: `Enregistré (profil d'avant
 
 ECRANS.profil = {
   titre: "Profil",
-  actions: () => [bouton("Ouvrir profile.json", "doc", async () => {
-    const r = await ecrire("ouvrir_profil");
-    if (r === false) toast("profile.json introuvable", true);
-  })],
+  actions: () => [
+    bouton("Gérer les profils", "profil", gererProfils),
+    bouton("Nouveau profil…", "profil", nouveauProfil, "plein"),
+    bouton("Fichier du profil (avancé)", "doc", async () => {
+      const r = await ecrire("ouvrir_profil");
+      if (r === false) toast("profile.json introuvable", true);
+    })],
   async dessiner(vue) {
     const [p, rech, comp] = await Promise.all([appel("profil"), appel("recherche"), appel("competences")]);
 
@@ -1824,8 +1827,8 @@ async function cartesParametres() {
     carte("Collecte automatique",
       h("div", { class: "sous", style: "margin-bottom:10px" }, "Chaque jour à l'heure choisie, l'ordinateur collecte les offres de tous tes profils, même si JobHunter est fermé."),
       planif),
-    carte("Profils",
-      h("div", { class: "sous", style: "margin-bottom:10px" }, "Plusieurs recherches, un dossier chacune. Changer de profil relance la fenêtre."),
+    Object.assign(carte("Profils",
+      h("div", { class: "sous", style: "margin-bottom:10px" }, "Un profil = une recherche à part : un autre métier, une autre ville, ou une autre personne. Chacun a ses offres, ses CV et ses lettres ; les clés des sites restent communes. Changer de profil relance la fenêtre."),
       profils,
       h("div", { class: "boutons" },
         bouton("Nouveau profil depuis un CV…", "profil", nouveauProfil, "plein"),
@@ -1837,18 +1840,26 @@ async function cartesParametres() {
         p.actif ? bouton("Archiver ce profil", "", async () => {
           const ok = await dialogue("Archiver ce profil ?", "Il est déplacé dans profiles/_archives (rien n'est supprimé), puis le profil principal s'ouvre.", null, [["Archiver", "chaud", () => true]]);
           if (ok) ecrire("archiver_profil");
-        }) : null)),
+        }) : null)), { id: "carte-profils" }),
   ];
+}
+
+// Settings, on the Profiles card.
+function gererProfils() {
+  return aller("reglages").then(() => {
+    const c = document.getElementById("carte-profils");
+    if (c) c.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 }
 
 async function nouveauProfil() {
   const champ = h("input", { class: "champ-texte", placeholder: "par exemple : Chargée RSE à Lyon" });
-  const nom = await dialogue("Nouveau profil", "Donne-lui un nom, puis choisis son CV. Les questions se posent dans une fenêtre de commande.",
+  const nom = await dialogue("Nouveau profil", "1. Donne-lui un nom. 2. Choisis le CV de cette recherche (.docx ou .pdf). 3. Un formulaire rempli d'après le CV s'ouvre : vérifie, complète, valide. Ton profil actuel ne change pas.",
     champ, [["Choisir le CV…", "plein", () => champ.value.trim() || undefined]]);
   if (!nom) return;
   const r = await ecrire("nouveau_profil", nom);
   if (!r || !r.slug) return;
-  const fini = await dialogue("Réponds aux questions", "Une fenêtre de commande s'est ouverte. Quand elle a fini, clique ci-dessous.",
+  const fini = await dialogue("Complète le formulaire", "Une fenêtre « JobHunter » s'est ouverte avec ce que ton CV dit de toi. Vérifie-la et valide-la, puis clique ci-dessous.",
     null, [["C'est fait, ouvrir le profil", "plein", () => "ouvrir"], ["C'est fait", "", () => "garder"]]);
   if (!fini) return;
   const c = await ecrire("profil_cree", r.slug, fini === "ouvrir");
@@ -1886,7 +1897,13 @@ async function marqueProfil() {
   const initiales = (n) => n.split(/[\s\-_]+/).filter(Boolean).slice(0, 2).map((m) => m[0].toUpperCase()).join("");
   const rond = (n) => h("span", { class: "rond-profil", translate: "no" }, initiales(n));
   const menu = h("div", { class: "menu-profils" });
-  const fermer = (e) => { if (!e || !marque.contains(e.target)) { menu.remove(); document.removeEventListener("mousedown", fermer); } };
+  // A press inside the badge or the list keeps it open: closing on it removed the list
+  // before its click, and « Gérer les profils… » did nothing (the user, 2026-10-27).
+  const fermer = (e) => {
+    if (e && (marque.contains(e.target) || menu.contains(e.target))) return;
+    menu.remove();
+    document.removeEventListener("mousedown", fermer);
+  };
   const marque = h("button", { class: "marque", title: "Changer de profil", onclick: () => {
     if (menu.isConnected) return fermer();
     menu.replaceChildren(
@@ -1898,7 +1915,7 @@ async function marqueProfil() {
           if (x.slug !== p.actif) ecrire("changer_profil", x.slug);
         } }, rond(n), h("span", { translate: "no" }, n), x.slug === p.actif ? h("span", { class: "etiq gris" }, "ouvert") : null);
       }),
-      h("button", { class: "gerer", onclick: () => { fermer(); aller("reglages"); } }, "Gérer les profils…"));
+      h("button", { class: "gerer", onclick: () => { fermer(); gererProfils(); } }, "Gérer les profils…"));
     marque.after(menu);
     document.addEventListener("mousedown", fermer);
   } }, rond(nom), h("span", { class: "nom-profil", translate: "no" }, nom));

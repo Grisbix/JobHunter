@@ -25,6 +25,15 @@ recent at the top.
   « Vérifiées en dernier »: checking that offers are still open is the application's
   job (closed ones leave the list), not a column to read. A saved view sorted that way
   falls back to the best score.
+- **« Gérer les profils… » works**: a press inside the profiles list closed it before
+  the click arrived, so neither that entry nor another profile could be picked. It now
+  opens Réglages on the Profils card.
+- **Adding a profile, said plainly**: the Profil screen has « Nouveau profil… » and
+  « Gérer les profils »; the file is only « Fichier du profil (avancé) ». The steps are
+  spelled out (name, CV, a form filled from the CV), and what a profile is (another
+  job, city or person, with its own offers, CVs and letters).
+- **The update button sits in the middle of the title bar**, clear of the window
+  buttons.
 - **Drag an application to another column** of « Candidatures » to change its status,
   with the same undo as the status list.
 - **No more terminal flashing** when opening some screens: the scheduled-task check

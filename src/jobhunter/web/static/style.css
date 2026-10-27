@@ -406,7 +406,7 @@ body.natif .fenetre { inset: 0; border: 0; border-radius: 0; padding-top: 44px; 
 body.natif .tiroir { top: 52px; }
 .feux { display: flex; gap: 8px; }
 /* A newer signed version: one click updates (annonceMaj). */
-.barre .maj { height: 30px; padding: 0 14px; margin-right: 12px; font-size: 13px; }
+.barre .maj { position: absolute; left: 50%; transform: translateX(-50%); height: 30px; padding: 0 14px; font-size: 13px; }
 .barre .maj[hidden] { display: none; }
 .feux button {
   width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center;
