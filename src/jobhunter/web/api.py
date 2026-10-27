@@ -21,6 +21,8 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
+from jobhunter.web.background import FondApi
+from jobhunter.web.guided import CandidatureApi
 from jobhunter.web.panels import PanneauxApi
 from jobhunter.web.workshop import AtelierApi
 
@@ -38,6 +40,22 @@ def _fit(o: dict[str, Any], champ: str = "fit") -> float:
         return float(o.get(champ) or 0)
     except (TypeError, ValueError):
         return 0.0
+
+
+# What ouvrir_fichier opens with its program: CVs, letters, drafts.
+DOCUMENTS = frozenset({".docx", ".doc", ".pdf", ".txt", ".odt", ".rtf", ".md"})
+
+
+def _python() -> str:
+    """The interpreter of the programs the page starts: a console one (frozen.interpreteur).
+
+    Not sys.executable: the window runs under pythonw.exe (the desktop shortcut) or the
+    compiled JobHunter.exe, neither of which gets a console. A program that reads the
+    keyboard opened in a new console without any window (login pages, tools).
+    """
+    from jobhunter import frozen
+
+    return frozen.interpreteur()
 
 
 def _oid(o: dict[str, Any]) -> str:
@@ -605,7 +623,7 @@ def _plus_recente(a: str, b: str) -> bool:
     return bool(a) and cle(a) > cle(b)
 
 
-class Api(PanneauxApi, AtelierApi):
+class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
     """Methods the page calls through `window.pywebview.api`.
 
     Nothing here writes to the queue, the applications or the profile; only the
@@ -1387,7 +1405,7 @@ class Api(PanneauxApi, AtelierApi):
         from jobhunter import root
 
         try:
-            self._tache = Tache(cle, libelle, [sys.executable, "-m", *args], root.scripts())
+            self._tache = Tache(cle, libelle, [_python(), "-m", *args], root.scripts())
         except OSError as e:
             return {"ok": False, "erreur": str(e)}
         return {"ok": True}
@@ -1429,7 +1447,7 @@ class Api(PanneauxApi, AtelierApi):
         if cat.interactif(args):
             try:
                 subprocess.Popen(  # nosec B603 : a program of tools_catalog
-                    [sys.executable, "-m", *args],
+                    [_python(), "-m", *args],
                     cwd=str(root.scripts()),
                     creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0x10),
                 )
@@ -1677,8 +1695,8 @@ class Api(PanneauxApi, AtelierApi):
         from jobhunter import root
 
         p = _chemin_local(chemin)
-        if p is None or not p.is_file():
-            return False
+        if p is None or not p.is_file() or p.suffix.lower() not in DOCUMENTS:
+            return False  # a document only: never a program dropped in those folders
         permis = (root.racine() / "CV", root.dossier("Lettres"))
         if not any(p.is_relative_to(d.resolve()) for d in permis):
             return False
@@ -1696,6 +1714,7 @@ class Api(PanneauxApi, AtelierApi):
             if self._basculer:
                 self._basculer()
         elif action == "fermer":
+            self._fermer_seance()  # a guided application running: stopped, Chrome closed
             f.destroy()
 
 

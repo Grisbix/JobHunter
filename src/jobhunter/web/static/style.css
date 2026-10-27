@@ -416,6 +416,23 @@ body[data-teinte="noir"] {
   margin-top: 12px; max-height: 150px; overflow: auto; font: 11.5px/1.5 "Cascadia Mono", Consolas, monospace;
   color: #cfc6c1; white-space: pre-wrap; word-break: break-word;
 }
+/* Guided application: the task panel's look, wider; the task panel goes above it. */
+.guidee { width: 460px; display: grid; gap: 10px; }
+.guidee:not([hidden]) ~ .tache { bottom: auto; top: 96px; }
+.guidee.a-toi .point { animation: none; background: var(--c1); }
+.guidee .zone-offre { font-size: 15px; font-weight: 600; }
+.guidee .zone-dossier, .guidee .zone-etat, .guidee .zone-resultat { font-size: 13px; line-height: 1.45; white-space: pre-line; }
+.guidee .ton-mut { color: #a39a95; }
+.guidee .ton-acc { color: var(--c1); }
+.guidee .ton-ok { color: #8fbf8f; }
+.guidee .ton-ambre { color: #e8b85c; }
+.guidee .ton-bad { color: #e07a6a; }
+.guidee .boutons { display: flex; flex-wrap: wrap; gap: 8px; }
+.guidee .boutons .bouton { height: 32px; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.14); color: #f4efec; }
+.guidee .boutons .bouton.plein { background: #f4efec; color: var(--sombre); }
+.guidee .boutons .bouton:disabled { opacity: .45; cursor: default; }
+.guidee pre { margin-top: 0; max-height: 90px; }
+@media (max-width: 640px) { .guidee { left: 16px; right: 16px; width: auto; } }
 .toast {
   position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 20; max-width: 560px;
   background: var(--sombre); color: #f4efec; padding: 11px 18px; border-radius: 12px; font-size: 13px;

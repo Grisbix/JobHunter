@@ -50,7 +50,8 @@ choice has its own ADR in [`docs/adr/`](adr/); the plan that led here is
 | `jobhunter.sources` | collection per source, merge into the queue | reseau, scoring, stockage |
 | `jobhunter.documents` | CV, letter, short message, PDF | profil, scoring.lexique, chemins |
 | `jobhunter.navigation` | Playwright: from the company's site to the filled-in form | racine |
-| `jobhunter.web` | the application's window since 3.29 (pywebview, HTML) | everything above |
+| `jobhunter.web` | the application's window since 3.29 (pywebview, HTML), its guided application and background work | everything above |
+| `jobhunter.guided_apply` | the guided application's events and texts, shared by both windows | — |
 | `jobhunter.app` | the classic window (customtkinter): fallback, and `jobhunter bureau` | everything above |
 | `jobhunter.launch` | opens the web window, the classic one when it cannot | web, app |
 | `jobhunter.programs` | the programs (pipeline, documents, application, audits, probes) | everything above |

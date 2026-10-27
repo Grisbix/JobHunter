@@ -14,6 +14,7 @@ from urllib.parse import quote
 
 import customtkinter as ctk
 
+from jobhunter import guided_apply as _guidee
 from jobhunter.app import common as _commun
 from jobhunter.app import theme as _theme
 from jobhunter.app._app_type import AppTypee
@@ -189,7 +190,7 @@ class ActionsMixin:
         if not oids:
             self._log("Coche d'abord des offres (colonne ☐).\n")
             return
-        sel = [{"entreprise": o.get("entreprise", ""), "poste": o.get("poste", "")} for o in oids]
+        sel = _guidee.selection(oids)
         SEL = SCRIPTS / "apply_selection.json"
         try:
             SEL.write_text(json.dumps(sel, ensure_ascii=False, indent=1), encoding="utf-8")

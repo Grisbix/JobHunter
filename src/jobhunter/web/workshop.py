@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import json
 import subprocess
-import sys
 import threading
 from dataclasses import asdict
 from pathlib import Path
@@ -131,12 +130,12 @@ class AtelierApi:
         self._composantes_en_cours = True
 
         def tache() -> None:
-            from jobhunter import root
+            from jobhunter import frozen, root
             from jobhunter.programs.fit_components import depuis_ligne
 
             try:
                 r = subprocess.run(  # nosec B603 : our own program, arguments built here
-                    [sys.executable, "-m", "jobhunter.programs.fit_components"],
+                    [frozen.interpreteur(), "-m", "jobhunter.programs.fit_components"],
                     capture_output=True,
                     text=True,
                     encoding="utf-8",

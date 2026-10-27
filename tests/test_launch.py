@@ -56,3 +56,10 @@ def test_les_commandes_app_et_bureau():
     assert cli.COMMANDES["app"][0] == "jobhunter.launch"
     assert cli.COMMANDES["bureau"][0] == "jobhunter.app"
     assert cli.main(["bureau", "--help"]) == 0
+
+
+def test_repli_interdit_en_ci(monkeypatch, ouvertures):
+    monkeypatch.setenv("JOBHUNTER_EXIGER_WEB", "1")
+    _web(monkeypatch, ouvertures, lambda: 1)
+    assert launch.main() == 2
+    assert "bureau" not in ouvertures

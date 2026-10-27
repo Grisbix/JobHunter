@@ -191,8 +191,8 @@ Release notes: [`CHANGELOG.md`](CHANGELOG.md).
 Since 3.29 the application opens in its modern window drawn in HTML (pywebview, installed
 with JobHunter): light or dark mode (Settings → Mode, or follow Windows). The classic
 window only opens when this one cannot (no web view on the machine), or on purpose with
-`jobhunter bureau`: it keeps the guided panel that applies to several offers in a row, the
-one thing the new window does not do. Neither window ever sends an application.
+`jobhunter bureau`. The guided application (tick offers, « Candidature guidée… ») fills
+each form in Chrome and stops before sending: the Send click is always yours.
 
 ## The profile
 

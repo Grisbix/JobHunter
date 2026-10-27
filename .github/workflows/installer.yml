@@ -16,6 +16,9 @@ on:
     paths:
       - "tools/installer/**"
       - "src/jobhunter/frozen.py"
+      - "src/jobhunter/launch.py"
+      - "src/jobhunter/web/**"
+      - "requirements.txt"
       - ".github/workflows/installer.yml"
 
 permissions:
@@ -78,6 +81,7 @@ jobs:
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notmatch '(?i)python' }) -join ';'
           $env:JOBHUNTER_RACINE = "$env:RUNNER_TEMP\JobHunterEssai"
           $env:JOBHUNTER_SANS_FOND = "1"   # no background work: nothing goes out on the web
+          $env:JOBHUNTER_EXIGER_WEB = "1"  # the web window (3.29), never the classic one instead
           $p = Start-Process "$env:RUNNER_TEMP\JobHunterInstall\JobHunter.exe" -PassThru
           $titre = ""
           for ($i = 0; $i -lt 60 -and -not $titre; $i++) {

@@ -9,10 +9,25 @@ recent at the top.
 - **The application opens in the new design**: double-clicking JobHunter (the installed
   app, `JobHunter.pyw` or `jobhunter app`) now opens the web window, which has every page
   of the classic one. pywebview becomes a dependency and ships with the installer.
-- The classic window still opens by itself when the new one cannot (no web view on the
-  machine), and on purpose with `jobhunter bureau`: it keeps the guided panel that
-  applies to several offers in a row, the one thing the new window does not do.
-- Switching profile, from either window, reopens the application in the new design.
+- **Guided application in the new design**: tick offers, then « Candidature guidée… ».
+  Chrome opens each offer, fills in the form, attaches CV and letter and stops before
+  sending; you check and click Send in Chrome, then « J'ai envoyé » (or Ctrl+Enter) in
+  the panel at the bottom right. Nothing is ever sent by JobHunter. Closing the window
+  stops it and closes Chrome.
+- **The background work of the classic window runs in the new one**: missing
+  descriptions fetched in batches, docx → pdf sync, a scan of the company sites 2
+  minutes after start then every 3 hours; news shown as a message, the page follows
+  the queue when another program writes it. An update that did not start its version
+  is said at start-up again.
+- The update button of the title bar says « Mise à jour en cours… » once clicked.
+- The classic window only opens when the new one cannot (no web view on the machine),
+  or on purpose with `jobhunter bureau`. Switching profile reopens the new design.
+- Fixed while auditing the new window: the compiled app could not open it (no console,
+  so no standard output) and fell back to the classic one without a word; login pages
+  and console tools opened in no window under `pythonw.exe` or the compiled app; a file
+  under CV/ or Letters/ is opened only when it is a document; the home chart showed
+  « 1, 1, 1, 0, 0 » on an empty week; the classic window's sync logged every 10 minutes
+  even when nothing changed (the new one says only real changes).
 
 ## 3.28.0 — 2026-10-27
 

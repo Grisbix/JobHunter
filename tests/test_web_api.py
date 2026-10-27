@@ -197,6 +197,10 @@ def test_ouvrir_fichier_seulement_sous_cv_ou_lettres(monkeypatch, tmp_path):
     assert api.ouvrir_fichier("https://example.org/cv.pdf") is False
     assert api.ouvrir_fichier(cv.as_uri()) is True
     assert ouverts == [cv.resolve()]
+    programme = tmp_path / "CV" / "lancer.bat"  # under CV/, but not a document
+    programme.write_bytes(b"x")
+    assert api.ouvrir_fichier(str(programme)) is False
+    assert ouverts == [cv.resolve()]
 
 
 def _fv(r):

@@ -101,8 +101,9 @@ let tacheEnCours = false;
 async function lancer(cle, ident = "") {
   if (!window.pywebview) return toast(HORS_APPLI, true);
   const r = await window.pywebview.api.lancer(cle, ident);
-  if (!r.ok) return toast(r.erreur, true);
+  if (!r.ok) { toast(r.erreur, true); return false; }
   suivreTache();
+  return true;
 }
 const action = (texte, icone, cle, classe = "") => bouton(texte, icone, () => lancer(cle), classe);
 
@@ -164,9 +165,83 @@ async function suivreTache() {
   }
 }
 
+// --- Guided application (the desktop's Candidatures panel, web.guided) ---------------
+// The program opens each ticked offer in Chrome, fills it in and stops before sending:
+// the user clicks Send in Chrome, then « J'ai envoyé » here. Nothing is sent from here.
+let minuteurGuidee = null;
+let envoisGuidee = 0;
+
+async function candidatureGuidee(ids) {
+  if (!window.pywebview) { toast("Disponible dans l'application seulement.", true); return; }
+  const n = ids.length;
+  const ok = await dialogue("Candidature guidée",
+    `${n} offre${n > 1 ? "s" : ""}. Chrome ouvre chaque offre, remplit le formulaire, joint CV et lettre, puis s'arrête avant l'envoi. ` +
+    "Tu vérifies et cliques « Envoyer » toi-même dans Chrome, puis « J'ai envoyé » ici. JobHunter n'envoie rien.",
+    null, [["Commencer", "plein", () => true]]);
+  if (!ok) return;
+  const r = await window.pywebview.api.candidature_guidee(ids);
+  if (!r || !r.ok) { toast((r && r.erreur) || "Lancement impossible.", true); return; }
+  coches.clear();
+  envoisGuidee = 0;
+  redessiner();
+  suivreGuidee();
+}
+
+async function commandeGuidee(cmd) {
+  const r = await window.pywebview.api.candidature_commande(cmd);
+  if (r && !r.ok && r.erreur) toast(r.erreur, true);
+  suivreGuidee();
+}
+
+async function suivreGuidee() {
+  clearTimeout(minuteurGuidee);
+  if (!window.pywebview) return;
+  const e = await window.pywebview.api.candidature_etat();
+  const p = $("guidee");
+  if (!e) { p.hidden = true; return; }
+  const actif = e.attente && !e.fini;
+  p.hidden = false;
+  p.classList.toggle("fini", e.fini);
+  p.classList.toggle("a-toi", actif);
+  const zone = (z) => (e.zones[z].texte ? h("div", { class: `zone-${z} ton-${e.zones[z].ton}` }, e.zones[z].texte) : null);
+  const commande = (texte, cmd, classe = "") =>
+    h("button", { class: `bouton ${classe}`, disabled: !actif, onclick: () => commandeGuidee(cmd) }, texte);
+  p.replaceChildren(...[  // replaceChildren writes null as text: filtered below
+    h("div", { class: "tache-tete" },
+      h("span", { class: "point" }),
+      h("div", { style: "min-width:0;flex:1" },
+        h("div", { class: "t" }, `Candidature guidée · ${e.n} offre${e.n > 1 ? "s" : ""}`),
+        h("div", { class: "s" }, e.fini ? "terminée" : actif ? "à toi : vérifie dans Chrome" : "le programme travaille…")),
+      e.fini
+        ? h("button", { class: "bouton", onclick: () => { p.hidden = true; } }, "Fermer")
+        : h("button", { class: "bouton", onclick: async () => { await window.pywebview.api.candidature_arreter(); suivreGuidee(); } }, "Arrêter")),
+    zone("offre"), zone("dossier"), zone("etat"), zone("resultat"),
+    e.fini ? null : h("div", { class: "boutons" },
+      commande("J'ai envoyé", "envoye", "plein"), commande("Sauter", "saute"),
+      commande("Re-remplir", "reremplir"), commande("Rouvrir l'offre", "rouvrir")),
+    e.journal.length ? h("pre", {}, e.journal.join("\n")) : null].filter(Boolean));
+  if (e.envois !== envoisGuidee) { envoisGuidee = e.envois; redessinerDonnees(); }  // the tracking was written
+  if (!e.fini) minuteurGuidee = setTimeout(suivreGuidee, 800);
+}
+
+// Ctrl+Enter = « J'ai envoyé », as on the desktop panel.
+document.addEventListener("keydown", (e) => {
+  const p = $("guidee");
+  if (e.ctrlKey && e.key === "Enter" && p && !p.hidden && p.classList.contains("a-toi")) {
+    e.preventDefault();
+    commandeGuidee("envoye");
+  }
+});
+
 // Redraws the current screen without leaving it (the drawer stays open).
 function redessiner() {
   if (courant && ECRANS[courant]) ECRANS[courant].dessiner($("vue")).catch(console.error);
+}
+
+// Redraws after a change made in the background: only the screens that show data, so
+// a form being typed in (profile, sources, settings) never loses what was typed.
+function redessinerDonnees() {
+  if (["accueil", "offres", "candidatures", "relances", "documents", "stats"].includes(courant)) redessiner();
 }
 
 // --- Application status ---------------------------------------------------------------
@@ -373,7 +448,8 @@ ECRANS.accueil = {
     const dernier = col.length ? col[col.length - 1] : { n: 0 };
     const avant = col.slice(0, -1);
     const moyenne = avant.length ? avant.reduce((s, c) => s + c.n, 0) / avant.length : 0;
-    const max = Math.max(1, ...col.map((c) => c.n));
+    // A multiple of 4: five distinct whole ticks (an empty week showed 1, 1, 1, 0, 0).
+    const max = Math.max(4, Math.ceil(Math.max(0, ...col.map((c) => c.n)) / 4) * 4);
     const pleins = [];
     const barres = h("div", { class: "barres" },
       [100, 75, 50, 25, 0].map((p) => h("div", { class: "axe", style: `top:${(1 - p / 100) * 168}px` },
@@ -530,6 +606,7 @@ ECRANS.offres = {
     const ids = () => [...coches];
     const barreSel = coches.size ? h("div", { class: "barre-selection verre" },
       h("strong", {}, `${coches.size} cochée${coches.size > 1 ? "s" : ""}`),
+      bouton("Candidature guidée…", "avion", () => candidatureGuidee(ids()), "plein"),
       bouton("Pas intéressé", "", () => { marquer(ids(), "pas intéressé", false); coches.clear(); }),
       bouton("Écarter…", "", () => ecarter(ids())),
       h("select", { class: "choix", onchange: (e) => { if (e.target.value) { marquer(ids(), e.target.value === "—" ? "" : e.target.value, false); coches.clear(); } } },
@@ -1432,7 +1509,10 @@ async function verifierMaj(ev) {
   if (!v.signee) return toast(`La version ${v.derniere} attend la signature de son auteur : réessaie plus tard.`);
   const ok = await dialogue(`Version ${v.derniere} disponible`, `Installée : ${v.installee}. Elle est vérifiée (signature) avant d'être installée ; relance JobHunter ensuite.`,
     null, [["Installer", "plein", () => true]]);
-  if (ok) lancer("maj");
+  if (!ok) return;
+  if (!(await lancer("maj"))) return;
+  const m = $("maj");  // the title bar's button, as on the desktop: it says it runs
+  if (m && !m.hidden) { m.textContent = "Mise à jour en cours…"; m.disabled = true; }
 }
 
 // At start-up: a newer signed version shows as a button in the title bar.
@@ -1556,6 +1636,25 @@ function natif() {
   });
   demarrer();
   annonceMaj();
+  window.pywebview.api.demarrage().then((m) => { if (m) toast(m, m.startsWith("!")); });
+  suivreFond();
+}
+
+// The background work (web.background): its news as toasts, the screen redrawn when
+// it changed the data (descriptions, synced documents, new offers).
+let versionFond = null;  // null until the first poll: no redraw at start
+let vuFond = null;  // the last message seen; null until the first poll (no old news)
+async function suivreFond() {
+  const e = await window.pywebview.api.fond_etat().catch(() => null);
+  if (e) {
+    const m = e.messages[e.messages.length - 1];
+    const cle = m ? m.heure + m.texte : "";
+    if (vuFond !== null && cle && cle !== vuFond) toast(m.texte, m.texte.startsWith("!"));
+    vuFond = cle;
+    if (versionFond !== null && e.version !== versionFond) redessinerDonnees();
+    versionFond = e.version;
+  }
+  setTimeout(suivreFond, 20000);
 }
 
 if (window.pywebview) natif();

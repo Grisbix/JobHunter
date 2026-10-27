@@ -13,12 +13,12 @@ rouvrir, quitter. None of them clicks anything.
 Decision: docs/adr/0009-proof-distinct-from-declaration.md
 """
 
-import json
 import subprocess
 import threading
 import tkinter as tk
 from typing import Any
 
+from jobhunter import guided_apply as _guidee
 from jobhunter.app import common as _commun
 from jobhunter.app import theme as _theme
 from jobhunter.app._app_type import AppTypee
@@ -42,80 +42,20 @@ from jobhunter.app.theme import (
 )
 from jobhunter.storage import applications as suivi_io
 
-PREFIXE = "@JH "
-
-# What the panel says after each offer, depending on the state of the proof (ADR 0009).
-RESULTATS = {
-    "confirmé": ("✅ Envoi confirmé par le site.", OK),
-    "incertain": (
-        "⚠ Envoi enregistré, mais le site ne l'a pas confirmé : vérifie ta boîte mail ou "
-        "ton espace candidat. Rien ne sera renvoyé automatiquement.",
-        AMBRE,
-    ),
-    "sauté": ("Offre sautée.", MUT),
-    "erreur": ("✗ Le suivi n'a pas pu être écrit : confirme la candidature dans la fiche.", BAD),
-}
-
-
-def lire_evenement(ligne: str) -> dict[str, Any] | None:
-    """The event of a program line `@JH {json}`, or None (log line)."""
-    if not ligne.startswith(PREFIXE):
-        return None
-    try:
-        ev = json.loads(ligne[len(PREFIXE) :])
-    except ValueError:
-        return None
-    return ev if isinstance(ev, dict) and isinstance(ev.get("type"), str) else None
+# The events and their texts are shared with the web window (jobhunter.guided_apply).
+PREFIXE = _guidee.PREFIXE
+lire_evenement = _guidee.lire_evenement
+TONS = {"tx": TX, "acc": ACC, "ok": OK, "ambre": AMBRE, "bad": BAD, "mut": MUT}
+RESULTATS = {k: (texte, TONS[ton]) for k, (texte, ton) in _guidee.RESULTATS.items()}
 
 
 def texte_evenement(ev: dict[str, Any]) -> tuple[str, str, str] | None:
-    """(zone, text, colour) to display for an event, or None if it displays nothing.
-
-    Zones: "offre" (the current offer), "dossier" (CV and letter checked), "etat"
-    (what is happening), "resultat" (the outcome of the previous offer).
-    """
-    t = ev.get("type")
-    if t == "offre":
-        return (
-            "offre",
-            f"{ev.get('i')}/{ev.get('total')} · {ev.get('entreprise', '')} — {ev.get('poste', '')}",
-            TX,
-        )
-    if t == "pret":
-        details = []
-        if ev.get("couverture") is not None:
-            details.append(f"{ev['couverture']} % des champs")
-        if ev.get("documents"):
-            details.append(f"documents : {ev['documents']}")
-        bouton = ev.get("bouton") or "le bouton d'envoi"
-        texte = "Formulaire prêt" + (f" ({' · '.join(details)})" if details else "") + ". "
-        texte += f"Vérifie dans Chrome, clique « {bouton} » toi-même, puis « J'ai envoyé »."
-        return "etat", texte, ACC
-    if t == "bloque":
-        return (
-            "etat",
-            f"À toi dans Chrome : {ev.get('raison', 'action requise')}. "
-            "Le programme ne contourne rien. Puis « Re-remplir ».",
-            AMBRE,
-        )
-    if t == "resultat":
-        texte, couleur = RESULTATS.get(str(ev.get("etat")), (str(ev.get("etat")), MUT))
-        extrait = str(ev.get("texte") or "")
-        if ev.get("etat") in ("confirmé", "incertain") and extrait:
-            texte += f"\n« {extrait[:120]} »"
-        return "resultat", texte, couleur
-    if t == "fin":
-        return "etat", "Toutes les offres sont passées. « Arrêter » ferme Chrome.", MUT
-    if t == "dossier":
-        problemes = [str(p) for p in ev.get("problemes") or []]
-        if not problemes:
-            return "dossier", "Dossier vérifié : CV et lettre lisibles, une page, coordonnées.", OK
-        return (
-            "dossier",
-            "Dossier à revoir avant d'envoyer : " + " ; ".join(problemes),
-            BAD,
-        )
-    return None
+    """(zone, text, colour) to display for an event, or None if it displays nothing."""
+    aff = _guidee.texte_evenement(ev)
+    if aff is None:
+        return None
+    zone, texte, ton = aff
+    return zone, texte, TONS[ton]
 
 
 class CandidatureMixin:

@@ -12,7 +12,6 @@ from __future__ import annotations
 import json
 import re
 import subprocess
-import sys
 import webbrowser
 from pathlib import Path
 from typing import Any
@@ -384,14 +383,14 @@ class PanneauxApi:
 
         The user logs in himself; passwords stay in the browser's manager.
         """
-        from jobhunter import root
+        from jobhunter import frozen, root
         from jobhunter.programs import access
 
         if not verifier and site not in access.SITES_CONNEXION:
             return {"ok": False, "erreur": "site inconnu"}
         args = ["--check"] if verifier else ["--open", site]
         subprocess.Popen(  # nosec B603 : our own program, arguments from a fixed list
-            [sys.executable, "-m", "jobhunter.programs.access", *args],
+            [frozen.interpreteur(), "-m", "jobhunter.programs.access", *args],
             cwd=str(root.scripts()),
             creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0x10),
         )

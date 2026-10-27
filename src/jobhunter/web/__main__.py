@@ -5,6 +5,7 @@ Needs the optional dependency: pip install "jobhunter[web]" (pywebview).
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -120,7 +121,24 @@ class _Cadre:
 
 def main() -> int:
     """Opens the window; returns 1 when pywebview is missing."""
+    # Without a console (pythonw.exe, the windowed JobHunter.exe) sys.stdout is None:
+    # reconfiguring it failed, and the compiled app fell back to the classic window.
+    # A null sink, as the desktop's main(), for every module that writes to it.
+    for nom in ("stdout", "stderr"):
+        if getattr(sys, nom) is None:
+            setattr(sys, nom, open(os.devnull, "w", encoding="utf-8"))  # noqa: SIM115
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
+    from jobhunter import root
+
+    root.exporter_paquet()  # the programs it starts run `python -m jobhunter...` (as the desktop)
+    if sys.platform == "win32":
+        # Its own taskbar entry, under JobHunter's icon, not python(w).exe's (as the desktop).
+        try:
+            import ctypes
+
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Grisbix.JobHunter")
+        except (AttributeError, OSError):
+            pass
     try:
         import webview
     except ImportError:
@@ -132,6 +150,7 @@ def main() -> int:
     from jobhunter.web.api import Api
 
     api = Api()
+    api.demarrer_fond()  # the desktop's background work (web.background)
     fenetre = webview.create_window(
         "JobHunter",
         str(STATIC / "index.html"),
