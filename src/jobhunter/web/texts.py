@@ -1012,15 +1012,17 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "unbekannter Vorschlag",
         "propuesta desconocida",
     ),
-    "{n} / {t} entreprises · {o} offres en file": (
-        "{n} / {t} companies · {o} offers in queue",
-        "{n} / {t} Unternehmen · {o} Angebote in der Liste",
-        "{n} / {t} empresas · {o} ofertas en la lista",
+    "{n} flux ▾": ("{n} feeds ▾", "{n} Feeds ▾", "{n} fuentes ▾"),
+    "{n} flux ▴": ("{n} feeds ▴", "{n} Feeds ▴", "{n} fuentes ▴"),
+    "{n} / {t} entreprises ({f} flux) · {o} offres en file": (
+        "{n} / {t} companies ({f} feeds) · {o} offers in queue",
+        "{n} / {t} Unternehmen ({f} Feeds) · {o} Angebote in der Liste",
+        "{n} / {t} empresas ({f} fuentes) · {o} ofertas en la lista",
     ),
-    "{n} / {t} entreprises · {o} offres en file · {m} muette(s) depuis {j} j": (
-        "{n} / {t} companies · {o} offers in queue · {m} silent for {j} d",
-        "{n} / {t} Unternehmen · {o} Angebote in der Liste · {m} still seit {j} T.",
-        "{n} / {t} empresas · {o} ofertas en la lista · {m} sin ofertas desde hace {j} d",
+    "{n} / {t} entreprises ({f} flux) · {o} offres en file · {m} muette(s) depuis {j} j": (
+        "{n} / {t} companies ({f} feeds) · {o} offers in queue · {m} silent for {j} d",
+        "{n} / {t} Unternehmen ({f} Feeds) · {o} Angebote in der Liste · {m} still seit {j} T.",
+        "{n} / {t} empresas ({f} fuentes) · {o} ofertas en la lista · {m} sin ofertas desde hace {j} d",
     ),
     "Reprendre": ("Resume", "Fortsetzen", "Reanudar"),
     "Suspendre": ("Suspend", "Pausieren", "Suspender"),

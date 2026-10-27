@@ -665,6 +665,8 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
 .tableau-simple td { padding: 8px 10px; border-bottom: 1px solid var(--filet); vertical-align: middle; }
 .tableau-simple td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .tableau-simple tr.pale td { color: var(--gris); }
+.tableau-simple tr.sous-ligne td { padding-top: 4px; padding-bottom: 4px; font-size: 0.92em; }
+.tableau-simple tr.sous-ligne td:first-child { padding-left: 22px; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .defile { max-height: 60vh; overflow: auto; }
 .actions-ligne { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
 .actions-ligne .bouton { height: 30px; font-size: 12.5px; padding: 0 10px; }

@@ -4,6 +4,18 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.42.0 — 2026-10-27
+
+- **Followed companies: one row per company.** A company read by several feeds
+  (its recruiting tool, its career site, an old empty one) showed one row per feed:
+  Amundi three times, Sweep three times, 235 rows for 210 companies. Each company is
+  now one row with its offers summed and its tools listed; « n flux » opens its feeds
+  underneath, each with its own Suspend / Remove.
+- **Their real names.** A feed named from its slug or its site's host showed
+  « Societegenerale », « Bnpparibas », « Rejoindre »; the row now takes a written
+  name — the feed's, else the one its offers in the queue carry (« BNP Paribas »,
+  « Covéa Finance »).
+
 ## 3.41.0 — 2026-10-27
 
 - **The companies already seen, asked on their own career sites.** Every collection

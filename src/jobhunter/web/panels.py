@@ -12,7 +12,9 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+import unicodedata
 import webbrowser
+from collections import Counter
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -63,6 +65,39 @@ def _ecrire_json(f: Path, donnees: Any) -> None:
     tmp = f.with_name(f.name + ".tmp")
     tmp.write_text(json.dumps(donnees, ensure_ascii=False, indent=1), encoding="utf-8")
     tmp.replace(f)
+
+
+def _cle_nom(nom: str) -> str:
+    """« Société Générale », « Societegenerale » and « societe-generale » are one company."""
+    n = unicodedata.normalize("NFKD", str(nom).casefold())
+    return "".join(c for c in n if c.isalnum() and not unicodedata.combining(c))
+
+
+def _beau_nom(
+    noms: list[str], dans_la_file: Counter[str] | None, d_un_site: tuple[str, ...] | list[str] = ()
+) -> str:
+    """The company's real name: its feed's, unless that one only came from a slug.
+
+    A name with a space or an accent first (« Société Générale », a feed's or the
+    queue's), then one with capitals inside (« EY », « SocieteGenerale »), then the
+    queue's commonest spelling, then the feed's (« Societegenerale »). A name made
+    from a career site's host (« Caissedesdepots Recrute ») comes only when nothing
+    else does.
+    """
+    file = [n for n, _ in dans_la_file.most_common()] if dans_la_file else []
+
+    def rang(n: str) -> int:
+        if " " in n.strip() or not n.isascii():
+            return 0
+        return 1 if any(c.isupper() for c in n[1:]) else 2
+
+    tous = noms + file
+    if not tous:
+        return d_un_site[0] if d_un_site else ""
+    meilleur = min(rang(n) for n in tous)
+    if meilleur == 2 and file:
+        return file[0]
+    return next(n for n in tous if rang(n) == meilleur)
 
 
 def _date_fr(iso: Any) -> str:
@@ -494,21 +529,60 @@ class PanneauxApi:
                 return f"ok {_date_fr(str(e['succes'])[:10])} · {e.get('offres', 0)}"
             return "—"
 
-        lignes = [
-            {
+        def ligne(f: Any) -> dict[str, Any]:
+            return {
                 "id": f"{f.outil}|{f.cle}",
                 "nom": f.nom,
                 "outil": inventory.NOMS_OUTILS.get(f.outil, f.outil),
                 "collecte": collecte(f),
                 "offres": comptes[f].offres,
                 "fit": comptes[f].meilleur_fit if comptes[f].offres else None,
-                "derniere": _date_fr(comptes[f].derniere),
+                "derniere": comptes[f].derniere,
                 "lien": f.lien,
                 "suspendue": f.outil != "site" and feeds.cle(f.outil, f.cle) in suspendus,
                 "site": f.outil == "site",
             }
-            for f in sorted(flux, key=lambda f: (-comptes[f].offres, f.nom.lower()))
-        ]
+
+        # One row per company: « Amundi » followed by Talentsoft, SmartRecruiters and its
+        # site was three rows, two of them « Amundi » and one « Societegenerale »-like.
+        groupes: dict[str, list[dict[str, Any]]] = {}
+        for f in flux:
+            groupes.setdefault(_cle_nom(f.nom), []).append(ligne(f))
+        # The queue's spellings, by name and, for a career site named from its host
+        # (« Rejoindre », « Im »), by the host of the offers it brought.
+        par_hote = {inventory._hote(f.cle): _cle_nom(f.nom) for f in flux if f.outil == "site"}
+        noms_file: dict[str, Counter[str]] = {}
+        for o in self._file():
+            n = str(o.get("entreprise") or "").strip()
+            if n:
+                noms_file.setdefault(_cle_nom(n), Counter())[n] += 1
+                k = par_hote.get(inventory._hote(str(o.get("url") or "")))
+                if k:
+                    noms_file.setdefault("site:" + k, Counter())[n] += 1
+        lignes = []
+        for k, fl in groupes.items():
+            fl.sort(key=lambda x: (-x["offres"], x["site"], x["suspendue"]))
+            vus = [x for x in fl if x["offres"]]
+            meilleur = max((x["fit"] or 0 for x in vus), default=0)
+            lignes.append(
+                {
+                    **fl[0],
+                    "nom": _beau_nom(
+                        [x["nom"] for x in fl if not x["site"]],
+                        noms_file.get(k) or noms_file.get("site:" + k),
+                        [x["nom"] for x in fl if x["site"]],
+                    ),
+                    "outil": " + ".join(dict.fromkeys(x["outil"] for x in fl)),
+                    "offres": sum(x["offres"] for x in fl),
+                    "collecte": next((x["collecte"] for x in fl if not x["site"]), "—"),
+                    "fit": meilleur if vus else None,
+                    "derniere": _date_fr(max((x["derniere"] for x in fl), default="")),
+                    "suspendue": all(x["suspendue"] for x in fl if not x["site"])
+                    and any(not x["site"] for x in fl),
+                    "flux": [{**x, "derniere": _date_fr(x["derniere"])} for x in fl],
+                }
+            )
+        lignes.sort(key=lambda x: (-x["offres"], x["nom"].lower()))
         return {
             "lignes": lignes,
             "muettes": len(feeds.muets(etat, suspendus)),

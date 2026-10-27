@@ -144,3 +144,39 @@ def test_retirer_une_entreprise_de_liste_dit_quoi_faire(api):
     ident = next(x["id"] for x in a.entreprises()["lignes"] if x["nom"] == "Miro")
     r = a.retirer_entreprise(ident)
     assert r["ok"] is False and "Tech et numérique" in r["erreur"]
+
+
+def test_une_ligne_par_entreprise_et_son_vrai_nom(api):
+    from jobhunter.inventory import Flux
+
+    a, _ = api
+    a._flux = lambda: [
+        Flux(
+            "Societegenerale", "site", "https://careers.example.com", "https://careers.example.com"
+        ),
+        Flux("SocieteGenerale", "smartrecruiters", "SocieteGenerale", "https://x.example/sg"),
+        Flux("Alpha", "greenhouse", "alpha", "https://x.example/alpha"),
+    ]
+    a._file = lambda: [
+        {"entreprise": "Société Générale", "source": "smartrecruiters:SocieteGenerale", "fit": 8},
+        {"entreprise": "Société Générale", "url": "https://careers.example.com/1", "fit": 6},
+    ]
+    lignes = {x["nom"]: x for x in a.entreprises()["lignes"]}
+    assert set(lignes) == {"Société Générale", "Alpha"}
+    sg = lignes["Société Générale"]
+    assert sg["offres"] == 2 and sg["fit"] == 8 and len(sg["flux"]) == 2
+    assert sg["outil"] == "SmartRecruiters + site (navigateur)"
+    assert len(lignes["Alpha"]["flux"]) == 1
+
+
+def test_beau_nom():
+    from collections import Counter
+
+    from jobhunter.web.panels import _beau_nom
+
+    assert _beau_nom(["Bnpparibas"], Counter({"BNP Paribas": 3, "BNP": 1})) == "BNP Paribas"
+    assert _beau_nom(["Ey", "EY"], None) == "EY"
+    assert _beau_nom(["Swiss Re", "Swissre"], Counter({"x": 1})) == "Swiss Re"
+    assert _beau_nom(["Alpha"], None) == "Alpha"
+    assert _beau_nom([], Counter({"CDC": 2}), ["Caissedesdepots Recrute"]) == "CDC"
+    assert _beau_nom([], None, ["Rejoindre"]) == "Rejoindre"

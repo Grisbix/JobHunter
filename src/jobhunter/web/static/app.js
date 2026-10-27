@@ -1343,32 +1343,54 @@ ONGLETS_SOURCES.entreprises = async (vue) => {
   const [d, listes] = await Promise.all([appel("entreprises"), appel("listes_entreprises")]);
   if (!d) return vue.replaceChildren(h("div", { class: "vide" }, HORS_APPLI));
   let filtre = "";
+  const ouverts = new Set();
   const corps = h("tbody");
   const compte = h("span", { class: "sous" });
   const dessiner = () => {
     const f = filtre.toLowerCase();
-    const lignes = d.lignes.filter((l) => !f || `${l.nom} ${l.outil} ${l.lien}`.toLowerCase().includes(f));
-    compte.textContent = `${lignes.length} / ${d.lignes.length} entreprises · ${nombre(d.lignes.reduce((s, l) => s + l.offres, 0))} offres en file`
+    const lignes = d.lignes.filter((l) => !f || `${l.nom} ${l.outil} ${(l.flux || [l]).map((x) => x.lien).join(" ")}`.toLowerCase().includes(f));
+    compte.textContent = `${lignes.length} / ${d.lignes.length} entreprises (${nombre(d.lignes.reduce((s, l) => s + (l.flux || [l]).length, 0))} flux) · ${nombre(d.lignes.reduce((s, l) => s + l.offres, 0))} offres en file`
       + (d.muettes ? ` · ${d.muettes} muette(s) depuis ${d.muet_jours} j` : "");
-    corps.replaceChildren(...lignes.map((l) => h("tr", { class: l.offres ? "" : "pale" },
-      h("td", {}, h("div", { class: "t" }, l.nom)),
-      h("td", {}, l.outil),
-      h("td", {}, l.suspendue ? h("span", { class: "etiq gris" }, "suspendue") : l.collecte),
-      h("td", { class: "num" }, nombre(l.offres)),
-      h("td", { class: "num" }, l.fit ?? "—"),
-      h("td", {}, l.derniere || "—"),
-      h("td", { class: "actions-ligne" },
-        bouton("", "sortie", () => ecrire("ouvrir_lien", l.lien), "icone"),
-        l.site ? null : bouton(l.suspendue ? "Reprendre" : "Suspendre", "", async () => {
-          const r = await ecrire("suspendre_entreprise", l.id);
-          if (r) { toast(r.message); ONGLETS_SOURCES.entreprises(vue); }
-        }),
-        bouton("Retirer", "", async () => {
-          const ok = await dialogue(`Ne plus suivre « ${l.nom} » ?`, "Son adresse de flux sera retirée ; « Suspendre » la garde.", null, [["Retirer", "chaud", () => true]]);
-          if (!ok) return;
-          const r = await ecrire("retirer_entreprise", l.id);
-          if (r) { toast(r.message); ONGLETS_SOURCES.entreprises(vue); }
-        })))));
+    // One row per company; its feeds (API, site…) open under it when it has several.
+    const actions = (x, nom) => [
+      bouton("", "sortie", () => ecrire("ouvrir_lien", x.lien), "icone"),
+      x.site ? null : bouton(x.suspendue ? "Reprendre" : "Suspendre", "", async () => {
+        const r = await ecrire("suspendre_entreprise", x.id);
+        if (r) { toast(r.message); ONGLETS_SOURCES.entreprises(vue); }
+      }),
+      bouton("Retirer", "", async () => {
+        const ok = await dialogue(`Ne plus suivre « ${nom} » ?`, "Son adresse de flux sera retirée ; « Suspendre » la garde.", null, [["Retirer", "chaud", () => true]]);
+        if (!ok) return;
+        const r = await ecrire("retirer_entreprise", x.id);
+        if (r) { toast(r.message); ONGLETS_SOURCES.entreprises(vue); }
+      })];
+    const etat = (x) => x.suspendue ? h("span", { class: "etiq gris" }, "suspendue") : x.collecte;
+    corps.replaceChildren(...lignes.flatMap((l) => {
+      const plusieurs = (l.flux || []).length > 1;
+      const tete = h("tr", { class: l.offres ? "" : "pale" },
+        h("td", {}, h("div", { class: "t" }, l.nom)),
+        h("td", {}, l.outil),
+        h("td", {}, etat(l)),
+        h("td", { class: "num" }, nombre(l.offres)),
+        h("td", { class: "num" }, l.fit ?? "—"),
+        h("td", {}, l.derniere || "—"),
+        h("td", { class: "actions-ligne" }, ...(plusieurs
+          ? [bouton("", "sortie", () => ecrire("ouvrir_lien", l.lien), "icone"),
+            bouton(`${l.flux.length} flux ${ouverts.has(l.id) ? "▴" : "▾"}`, "", () => {
+              ouverts.has(l.id) ? ouverts.delete(l.id) : ouverts.add(l.id);
+              dessiner();
+            })]
+          : actions(l, l.nom))));
+      if (!plusieurs || !ouverts.has(l.id)) return [tete];
+      return [tete, ...l.flux.map((x) => h("tr", { class: `sous-ligne${x.offres ? "" : " pale"}` },
+        h("td", {}, h("div", { class: "sous" }, "↳ ", x.lien || x.id)),
+        h("td", {}, x.outil),
+        h("td", {}, etat(x)),
+        h("td", { class: "num" }, nombre(x.offres)),
+        h("td", { class: "num" }, x.fit ?? "—"),
+        h("td", {}, x.derniere || "—"),
+        h("td", { class: "actions-ligne" }, ...actions(x, l.nom))))];
+    }));
   };
   const champ = h("input", { class: "champ-texte", placeholder: "Adresse de sa page carrière, ou nom de l'entreprise (annuaire)" });
   const ajouter = async () => {
