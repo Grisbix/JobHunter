@@ -78,7 +78,7 @@ def _remplacer(par: Paragraph, ancien: str, nouveau: str) -> bool:
         garde = t[:g] + (insere if i == hote else "") + t[d:]
         if garde != t:
             runs[i].text = garde
-    return par.text == nouveau
+    return str(par.text) == nouveau
 
 
 def modifier(docx: Path, avant: Sequence[str], apres: Sequence[str]) -> tuple[int, int]:
