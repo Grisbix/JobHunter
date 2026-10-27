@@ -511,6 +511,7 @@ class PanneauxApi:
 
         etat = feeds.lire(root.scripts() / feeds.FICHIER)
         suspendus = feeds.suspendus()
+        auto = self._cfg_sources()[1].get(feeds.CLE_AUTO) or {}  # suspended by the engine
         flux = self._flux()
         comptes = inventory.compter(self._file(), flux)
 
@@ -519,7 +520,7 @@ class PanneauxApi:
                 return "—"
             ident = feeds.cle(f.outil, f.cle)
             if ident in suspendus:
-                return "suspendue"
+                return f"suspendue par le moteur : {auto[ident]}" if ident in auto else "suspendue"
             e = etat.get(ident) or {}
             if m := feeds.muet(e):
                 return f"muette : {m}"
@@ -540,6 +541,7 @@ class PanneauxApi:
                 "derniere": comptes[f].derniere,
                 "lien": f.lien,
                 "suspendue": f.outil != "site" and feeds.cle(f.outil, f.cle) in suspendus,
+                "auto": f.outil != "site" and feeds.cle(f.outil, f.cle) in auto,
                 "site": f.outil == "site",
             }
 
@@ -579,6 +581,7 @@ class PanneauxApi:
                     "derniere": _date_fr(max((x["derniere"] for x in fl), default="")),
                     "suspendue": all(x["suspendue"] for x in fl if not x["site"])
                     and any(not x["site"] for x in fl),
+                    "auto": any(x["auto"] for x in fl),
                     "flux": [{**x, "derniere": _date_fr(x["derniere"])} for x in fl],
                 }
             )
@@ -798,6 +801,8 @@ class PanneauxApi:
         cle = feeds.cle(fl.outil, fl.cle)
         oui = cle not in feeds.suspendus(c)
         feeds.suspendre(c, cle, oui)
+        if not oui and cle in (c.get(feeds.CLE_AUTO) or {}):
+            del c[feeds.CLE_AUTO][cle]  # taken back by the user: no longer the engine's
         _ecrire_json(f, c)
         return {
             "ok": True,

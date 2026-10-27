@@ -1386,7 +1386,9 @@ ONGLETS_SOURCES.entreprises = async (vue) => {
         const r = await ecrire("retirer_entreprise", x.id);
         if (r) { toast(r.message); ONGLETS_SOURCES.entreprises(vue); }
       })];
-    const etat = (x) => x.suspendue ? h("span", { class: "etiq gris" }, "suspendue") : x.collecte;
+    const etat = (x) => x.suspendue
+      ? h("span", { class: "etiq gris", title: x.collecte }, x.auto ? "suspendue auto" : "suspendue")
+      : x.collecte;
     corps.replaceChildren(...lignes.flatMap((l) => {
       const plusieurs = (l.flux || []).length > 1;
       const tete = h("tr", { class: l.offres ? "" : "pale" },
@@ -1476,7 +1478,7 @@ ONGLETS_SOURCES.vues = async (vue) => {
         const r = await ecrire("suivre_vues", 7);
         if (r) { toast(r.message); ONGLETS_SOURCES.vues(vue); }
       })),
-    h("div", { class: "sous", style: "margin:4px 0 12px" }, "Chaque collecte note les entreprises de ses offres, même écartées ou fermées depuis. « Chercher leurs offres » demande à 150 d'entre elles, chaque matin aussi, ce qu'elles ont d'ouvert sur leur site carrière. « Suivre » lit ensuite ses offres à chaque collecte, quand son lien d'offre donne son outil de recrutement."),
+    h("div", { class: "sous", style: "margin:4px 0 12px" }, "Chaque collecte note les entreprises de ses offres, même écartées ou fermées depuis. « Chercher leurs offres » demande à 150 d'entre elles, chaque matin aussi, ce qu'elles ont d'ouvert sur leur site carrière : par leur outil de recrutement, par freehire, sinon en devinant leur outil par leur nom (annuaire Workday compris) ou en lisant leur page carrière. L'outil trouvé est retenu pour la fois suivante. « Suivre » lit ensuite ses offres à chaque collecte, quand son lien d'offre donne son outil de recrutement."),
     h("label", { class: "champ", style: "margin:12px 0" }, svg("loupe"), h("input", { type: "search", placeholder: "Filtrer : entreprise, site ou outil", oninput: (e) => { filtre = e.target.value; dessiner(); } })),
     h("div", { class: "defile" }, h("table", { class: "tableau-simple" },
       h("thead", {}, h("tr", {}, ["Entreprise", "Offres", "Fit max", "Vue sur", "Dernière fois", ""].map((t) => h("th", {}, t)))),

@@ -1025,6 +1025,12 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "{n} / {t} empresas ({f} fuentes) · {o} ofertas en la lista · {m} sin ofertas desde hace {j} d",
     ),
     "Reprendre": ("Resume", "Fortsetzen", "Reanudar"),
+    "suspendue auto": ("auto-suspended", "automatisch pausiert", "suspendida auto"),
+    "suspendue par le moteur : {r}": (
+        "suspended by the engine: {r}",
+        "von der Engine pausiert: {r}",
+        "suspendida por el motor: {r}",
+    ),
     "Suspendre": ("Suspend", "Pausieren", "Suspender"),
     "Ne plus suivre « {nom} » ?": (
         "Stop following “{nom}”?",
@@ -1259,10 +1265,10 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Filtern: Unternehmen, Website oder Tool",
         "Filtrar: empresa, sitio o herramienta",
     ),
-    "Chaque collecte note les entreprises de ses offres, même écartées ou fermées depuis. « Chercher leurs offres » demande à 150 d'entre elles, chaque matin aussi, ce qu'elles ont d'ouvert sur leur site carrière. « Suivre » lit ensuite ses offres à chaque collecte, quand son lien d'offre donne son outil de recrutement.": (
-        "Each collection notes the companies of its offers, even set aside or closed since. « Search their offers » asks 150 of them, every morning too, what they have open on their careers site. « Follow » then reads its offers at every collection, when its offer link gives its recruiting tool.",
-        "Jede Sammlung notiert die Unternehmen ihrer Angebote, auch aussortierte oder inzwischen geschlossene. « Ihre Angebote suchen » fragt 150 von ihnen, auch jeden Morgen, was auf ihrer Karriereseite offen ist. « Verfolgen » liest dann ihre Angebote bei jeder Sammlung, wenn ihr Angebotslink ihr Recruiting-Tool verrät.",
-        "Cada recogida anota las empresas de sus ofertas, incluso descartadas o cerradas desde entonces. « Buscar sus ofertas » pregunta a 150 de ellas, también cada mañana, qué tienen abierto en su web de empleo. « Seguir » lee luego sus ofertas en cada recogida, cuando su enlace de oferta indica su herramienta de selección.",
+    "Chaque collecte note les entreprises de ses offres, même écartées ou fermées depuis. « Chercher leurs offres » demande à 150 d'entre elles, chaque matin aussi, ce qu'elles ont d'ouvert sur leur site carrière : par leur outil de recrutement, par freehire, sinon en devinant leur outil par leur nom (annuaire Workday compris) ou en lisant leur page carrière. L'outil trouvé est retenu pour la fois suivante. « Suivre » lit ensuite ses offres à chaque collecte, quand son lien d'offre donne son outil de recrutement.": (
+        "Each collection notes the companies of its offers, even set aside or closed since. « Search their offers » asks 150 of them, every morning too, what they have open on their careers site: through their recruiting tool, through freehire, otherwise by guessing their tool from their name (Workday directory included) or by reading their careers page. The tool found is kept for next time. « Follow » then reads its offers at every collection, when its offer link gives its recruiting tool.",
+        "Jede Sammlung notiert die Unternehmen ihrer Angebote, auch aussortierte oder inzwischen geschlossene. « Ihre Angebote suchen » fragt 150 von ihnen, auch jeden Morgen, was auf ihrer Karriereseite offen ist: über ihr Recruiting-Tool, über freehire, sonst indem ihr Tool aus dem Namen erraten wird (Workday-Verzeichnis inbegriffen) oder ihre Karriereseite gelesen wird. Das gefundene Tool wird für das nächste Mal behalten. « Verfolgen » liest dann ihre Angebote bei jeder Sammlung, wenn ihr Angebotslink ihr Recruiting-Tool verrät.",
+        "Cada recogida anota las empresas de sus ofertas, incluso descartadas o cerradas desde entonces. « Buscar sus ofertas » pregunta a 150 de ellas, también cada mañana, qué tienen abierto en su web de empleo: por su herramienta de selección, por freehire, si no adivinando su herramienta por su nombre (directorio Workday incluido) o leyendo su página de empleo. La herramienta encontrada se guarda para la próxima vez. « Seguir » lee luego sus ofertas en cada recogida, cuando su enlace de oferta indica su herramienta de selección.",
     ),
     "Chercher leurs offres": ("Search their offers", "Ihre Angebote suchen", "Buscar sus ofertas"),
     "Offres des entreprises vues": (

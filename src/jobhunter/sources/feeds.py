@@ -183,3 +183,60 @@ def muets(
         if r:
             out[ident] = r
     return out
+
+
+# ── Dead feeds, suspended on their own (the user, 2026-10-27) ──────────────────────
+MORT_JOURS = 60
+CLE_AUTO = "flux_suspendus_auto"  # {feed: "reason (date)"}: why the engine suspended it
+
+
+def morts(
+    etat: dict[str, dict[str, Any]],
+    suspendus: set[str] | None = None,
+    maintenant: datetime.datetime | None = None,
+    jours: int = MORT_JOURS,
+) -> dict[str, str]:
+    """{feed: reason} of the followed feeds dead for `jours` days.
+
+    Dead: failing, never reached, or answering with an empty page. A feed that serves
+    offers none of which suits the profile is not dead: its next offer may.
+    """
+    suspendus = suspendus or set()
+    out = {}
+    for ident, e in etat.items():
+        if ident in suspendus or not isinstance(e, dict):
+            continue
+        r = muet(e, maintenant, jours)
+        if r and not r.startswith("rien pour"):
+            out[ident] = r
+    return out
+
+
+def suspendre_morts(
+    fichier_cfg: Path, fichier_etat: Path, jours: int = MORT_JOURS
+) -> dict[str, str]:
+    """Suspends the dead feeds in sources_config.json; returns {feed: reason}.
+
+    Suspended, never removed: « Reprendre » in Entreprises suivies brings one back,
+    and `flux_suspendus_auto` says why the engine did it.
+    """
+    try:
+        cfg = json.loads(fichier_cfg.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(cfg, dict):
+        return {}
+    trouves = morts(lire(fichier_etat), suspendus(cfg), jours=jours)
+    if not trouves:
+        return {}
+    le = datetime.date.today().isoformat()
+    auto = dict(cfg.get(CLE_AUTO) or {})
+    for ident, raison in trouves.items():
+        suspendre(cfg, ident)
+        auto[ident] = f"{raison} ({le})"
+    cfg[CLE_AUTO] = auto
+    tmp = fichier_cfg.with_name(fichier_cfg.name + ".tmp")
+    # LF, as the app writes it (write_text would turn every line into CRLF on Windows).
+    tmp.write_bytes(json.dumps(cfg, ensure_ascii=False, indent=1).encode("utf-8"))
+    tmp.replace(fichier_cfg)
+    return trouves

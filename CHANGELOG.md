@@ -4,6 +4,33 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.44.0 — 2026-10-27
+
+- **Finding the companies' career sites, better** (Sources → Entreprises vues, and
+  the morning pass 1f). Each company of the register is asked, by the first way that
+  works:
+  - its recruiting tool's public API, when an offer link gave it — or when an
+    earlier run learned it;
+  - freehire, whose job links are the company's own: **the tool they show is now
+    learned** (any job, before the title filter), and read directly next time;
+  - **the tool guessed from its name**: the tenant of that name in your Workday
+    directory, then the account of that name on Greenhouse, Lever, Ashby,
+    SmartRecruiters and Recruitee (40 companies a run). Kept only with open offers;
+    Greenhouse and SmartRecruiters must also give the same company name. Short names
+    (« AXA », « EY ») are never guessed: they would be anyone's;
+  - **its career page**: one of its offer pages already in the queue, read once for
+    the link or frame of the tool behind it (30 a run).
+- **A company with nothing open is asked less often**: after 7 days, then 14, 28,
+  56. `_company_sites.json` keeps each ask (date, offers, empty answers in a row) and
+  the tools learned; the old file is read as is.
+- **Dead followed feeds are suspended on their own**: failing, never reached, or an
+  empty page for 60 days. Suspended, never removed; Entreprises suivies shows them
+  « suspendue auto » with the reason, and « Reprendre » brings one back. A feed whose
+  offers just do not suit the profile is not dead.
+- Workday directory (`python -m jobhunter.sources.discovery --workday`): measured on
+  real data, six Common Crawl index pages gave 2,228 career sites of 1,117 tenants
+  (five pages left for the next run).
+
 ## 3.43.0 — 2026-10-27
 
 - **« Lancer la collecte » moves to Offres**, in place of « Préparer les 30
