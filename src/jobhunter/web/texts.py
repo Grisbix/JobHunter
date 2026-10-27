@@ -1243,6 +1243,26 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "Replier": ("Fold", "Einklappen", "Plegar"),
     # --- Documents ---
     "Dossier des CV": ("CV folder", "Lebenslauf-Ordner", "Carpeta de CV"),
+    "Lettres": ("Letters", "Anschreiben", "Cartas"),
+    "Refaire les lettres": ("Redo the letters", "Anschreiben neu erstellen", "Rehacer las cartas"),
+    # --- Companies seen ---
+    "Entreprises vues": ("Companies seen", "Gesehene Unternehmen", "Empresas vistas"),
+    "Ses offres": ("Its offers", "Ihre Angebote", "Sus ofertas"),
+    "suivie": ("followed", "verfolgt", "seguida"),
+    "Suivre ({o})": ("Follow ({o})", "Verfolgen ({o})", "Seguir ({o})"),
+    "Vue sur": ("Seen on", "Gesehen auf", "Vista en"),
+    "Dernière fois": ("Last time", "Zuletzt", "Última vez"),
+    "Filtrer : entreprise, site ou outil": (
+        "Filter: company, site or tool",
+        "Filtern: Unternehmen, Website oder Tool",
+        "Filtrar: empresa, sitio o herramienta",
+    ),
+    "Chaque collecte note les entreprises de ses offres, même écartées ou fermées depuis. « Suivre » lit ensuite ses offres à la source, quand son lien d'offre donne son outil de recrutement.": (
+        "Each collection notes the companies of its offers, even set aside or closed since. « Follow » then reads its offers at the source, when its offer link gives its recruiting tool.",
+        "Jede Sammlung notiert die Unternehmen ihrer Angebote, auch aussortierte oder inzwischen geschlossene. « Verfolgen » liest dann ihre Angebote an der Quelle, wenn ihr Angebotslink ihr Recruiting-Tool verrät.",
+        "Cada recogida anota las empresas de sus ofertas, incluso descartadas o cerradas desde entonces. « Seguir » lee luego sus ofertas en la fuente, cuando su enlace de oferta indica su herramienta de selección.",
+    ),
+    "{a} / {b} entreprises": ("{a} / {b} companies", "{a} / {b} Unternehmen", "{a} / {b} empresas"),
     "Dossier des lettres": ("Letters folder", "Anschreiben-Ordner", "Carpeta de cartas"),
     "{n} documents": ("{n} documents", "{n} Dokumente", "{n} documentos"),
     "Voir et modifier": ("View and edit", "Ansehen und bearbeiten", "Ver y editar"),

@@ -129,3 +129,4 @@ def test_documents_une_ligne_par_document(donnees, monkeypatch):
     assert lignes["CV"]["chemin"].endswith(".docx") and lignes["CV"]["modifiable"]
     assert lignes["Lettre"]["chemin"].endswith(".pdf") and not lignes["Lettre"]["modifiable"]
     assert api.documents({"texte": "beta"})["total"] == 1
+    assert [x["genre"] for x in api.documents({"genre": "Lettre"})["fichiers"]] == ["Lettre"]

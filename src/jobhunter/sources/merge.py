@@ -466,6 +466,15 @@ def _merge_into_queue(
         compte["pertinentes"] += int(fit >= 8)
     if not dry:
         importlib.import_module("jobhunter.programs.util").jwrite(_commun.QUEUE, q)
+        # Every company seen is noted, even set aside or out of zone (the user,
+        # 2026-10-27); the first time, the queue's companies too. Never blocks the merge.
+        from jobhunter.storage import companies
+
+        try:
+            deja = companies.chemin(_commun.QUEUE).exists()
+            companies.noter(_commun.QUEUE, [*fresh, *([] if deja else q)])
+        except Exception as e:  # noqa: BLE001
+            print(f"  ⚠ registre des entreprises non écrit : {e}")
     return dict(
         added=added,
         updated=updated,

@@ -4,6 +4,19 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.36.0 — 2026-10-27
+
+- **Every company seen is noted**: each collection writes the companies of its offers
+  to `companies_seen.json` (next to the queue, saved with it each day), even offers set
+  aside, out of zone or closed since. Sources → « Entreprises vues » lists them with
+  their offers now, best fit and the sites they came from; « Ses offres » opens them
+  in Offres, « Suivre » follows the company at the source when one of its offer links
+  gives its recruiting tool (Workday, Greenhouse, Lever…).
+- **Documents: a tool for the cover letters too**: « Refaire les lettres » next to
+  « Refaire les CV », and a Tous / CV / Lettres filter.
+- **Microsoft Store package**: an unset repository variable no longer empties the
+  package name (the windows build failed since 3.33.0).
+
 ## 3.35.0 — 2026-10-27
 
 - **Documents: see and edit a CV or a letter in the app**, as from an offer: a click

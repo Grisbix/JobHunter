@@ -124,7 +124,12 @@ class _Journal:
         self.fichier.flush()
 
 
-_A_SAUVER = ("apply_queue.json", "descriptions.json", _racine.nom("suivi.json"))
+_A_SAUVER = (
+    "apply_queue.json",
+    "descriptions.json",
+    _racine.nom("suivi.json"),
+    "companies_seen.json",
+)
 
 
 def sauvegarder(garder=7):

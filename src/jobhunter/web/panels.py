@@ -512,6 +512,58 @@ class PanneauxApi:
             "muet_jours": feeds.MUET_JOURS,
         }
 
+    def entreprises_vues(self) -> dict[str, Any]:
+        """Every company a collection has seen (storage.companies), with its offers now.
+
+        `suivie`: already followed, by name or by its feed. `flux`: the feed its offer
+        links give, to follow it in one click.
+        """
+        from jobhunter import inventory
+        from jobhunter.sources import common
+        from jobhunter.storage import companies
+
+        q = self._file()
+        reg = companies.charger(common.QUEUE)
+        if not reg and q:  # register not written yet: the queue's companies, unsaved
+            reg = {}
+            for o in q:
+                k = companies.cle(o.get("entreprise"))
+                if k:
+                    e = reg.setdefault(k, {"nom": str(o["entreprise"]).strip(), "sites": []})
+                    s = companies.site(o.get("source"))
+                    if s and s not in e["sites"]:
+                        e["sites"].append(s)
+        par: dict[str, list[int]] = {}
+        for o in q:
+            par.setdefault(companies.cle(o.get("entreprise")), []).append(int(o.get("fit") or 0))
+        suivis = self._flux()
+        noms = {companies.cle(f.nom) for f in suivis}
+        flux_suivis = {(f.outil, str(f.cle).lower()) for f in suivis}
+        lignes: list[dict[str, Any]] = []
+        for k, e in reg.items():
+            fl = e.get("flux") or None
+            ident = None
+            if fl:
+                c = fl["cle"]  # Workday: [tenant, host, site], followed by its tenant
+                ident = (fl["outil"], str(c[0] if isinstance(c, list) else c).lower())
+            fits = par.get(k, [])
+            lignes.append(
+                {
+                    "nom": e.get("nom") or k,
+                    "offres": len(fits),
+                    "fit": max(fits) if fits else None,
+                    "sites": [_SITES.get(s, s) for s in e.get("sites", [])],
+                    "premiere": _date_fr(str(e.get("premiere_vue") or "")),
+                    "derniere": _date_fr(str(e.get("derniere_vue") or "")),
+                    "tri": str(e.get("derniere_vue") or ""),
+                    "outil": inventory.NOMS_OUTILS.get(fl["outil"], fl["outil"]) if fl else None,
+                    "url_flux": fl["url"] if fl else None,
+                    "suivie": k in noms or (ident in flux_suivis),
+                }
+            )
+        lignes.sort(key=lambda x: (-x["offres"], -(x["fit"] or 0), x["nom"].lower()))
+        return {"lignes": lignes}
+
     def suivre_entreprise(self, texte: str) -> dict[str, Any]:
         """Follows a company by its career page URL.
 

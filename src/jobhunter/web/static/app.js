@@ -967,10 +967,12 @@ ECRANS.relances = {
   },
 };
 
-const filtresDocs = { texte: "", page: 0 };
+const filtresDocs = { texte: "", genre: "", page: 0 };
 ECRANS.documents = {
   titre: "Documents",
-  actions: () => [action("Refaire les CV après un changement de modèle", "fleche", "regenerer_cv")],
+  // After a change of template, the documents already made are made again (the user,
+  // 2026-10-27: the letters need the same tool as the CVs).
+  actions: () => [action("Refaire les CV", "fleche", "regenerer_cv"), action("Refaire les lettres", "fleche", "regenerer_lettres")],
   async dessiner(vue) {
     const f = filtresDocs;
     const relancer = () => ECRANS.documents.dessiner(vue);
@@ -984,7 +986,8 @@ ECRANS.documents = {
     const dossiers = (d.dossiers || []).map((x) => bouton(x.genre === "CV" ? "Dossier des CV" : "Dossier des lettres", "sortie",
       () => ecrire("ouvrir_dossier_documents", x.genre)));
     vue.replaceChildren(h("div", { class: "colonne" },
-      h("div", { class: "barre-outils" }, h("label", { class: "champ", style: "max-width:460px" }, svg("loupe"), champ), ...dossiers,
+      h("div", { class: "barre-outils" }, h("label", { class: "champ", style: "max-width:460px" }, svg("loupe"), champ),
+        segment([["", "Tous"], ["CV", "CV"], ["Lettre", "Lettres"]], f.genre, (v) => { f.genre = v; f.page = 0; relancer(); }), ...dossiers,
         h("span", { class: "sous", title: (d.dossiers || []).map((x) => x.chemin).join(" · ") }, `${nombre(d.total)} documents`)),
       h("div", { class: "verre panneau" },
         d.fichiers.length ? h("table", {},
@@ -1202,7 +1205,7 @@ ECRANS.sources = {
   titre: "Sources",
   actions: () => [action("Collecter maintenant", "eclair", "collecte", "plein")],
   async dessiner(vue) {
-    const tete = segment([["recherche", "Mots-clés et rendement"], ["entreprises", "Entreprises suivies"],
+    const tete = segment([["recherche", "Mots-clés et rendement"], ["entreprises", "Entreprises suivies"], ["vues", "Entreprises vues"],
       ["sites", "Sites d'offres"], ["acces", "Accès et clés"]], ongletSources, (v) => { ongletSources = v; ECRANS.sources.dessiner(vue); });
     const corps = h("div");
     vue.replaceChildren(h("div", { class: "colonne" }, h("div", { class: "barre-outils" }, tete), corps));
@@ -1380,6 +1383,46 @@ ONGLETS_SOURCES.entreprises = async (vue) => {
     h("div", { class: "defile" }, h("table", { class: "tableau-simple" },
       h("thead", {}, h("tr", {}, ["Entreprise", "Lue par", "Dernière collecte", "Offres", "Fit max", "Dernière", ""].map((t) => h("th", {}, t)))),
       corps)))));
+};
+
+// Every company a collection has seen, kept after its offers leave the queue (the user,
+// 2026-10-27: « note l'entreprise quelque part pour trouver ses offres »).
+ONGLETS_SOURCES.vues = async (vue) => {
+  const d = await appel("entreprises_vues");
+  if (!d) return vue.replaceChildren(h("div", { class: "vide" }, HORS_APPLI));
+  let filtre = "";
+  const corps = h("tbody");
+  const compte = h("span", { class: "sous" });
+  const offres = (l) => {
+    Object.assign(filtresOffres, { texte: l.nom, statut: "toutes", page: 0 });
+    aller("offres");
+  };
+  const dessiner = () => {
+    const f = filtre.toLowerCase();
+    const lignes = d.lignes.filter((l) => !f || `${l.nom} ${l.sites.join(" ")} ${l.outil || ""}`.toLowerCase().includes(f));
+    compte.textContent = `${nombre(lignes.length)} / ${nombre(d.lignes.length)} entreprises`;
+    corps.replaceChildren(...lignes.slice(0, 300).map((l) => h("tr", { class: l.offres ? "" : "pale" },
+      h("td", {}, h("div", { class: "t" }, l.nom)),
+      h("td", { class: "num" }, nombre(l.offres)),
+      h("td", { class: "num" }, l.fit ?? "—"),
+      h("td", {}, l.sites.join(", ") || "—"),
+      h("td", {}, l.derniere || "—"),
+      h("td", { class: "actions-ligne" },
+        l.offres ? bouton("Ses offres", "loupe", () => offres(l)) : null,
+        l.suivie ? h("span", { class: "etiq gris" }, "suivie")
+          : l.url_flux ? bouton(`Suivre (${l.outil})`, "", async () => {
+            const r = await ecrire("suivre_entreprise", l.url_flux);
+            if (r) { toast(r.message); ONGLETS_SOURCES.vues(vue); }
+          }) : null))));
+  };
+  dessiner();
+  vue.replaceChildren(h("div", { class: "verre panneau" },
+    h("div", { class: "titre-ligne" }, h("h2", {}, "Entreprises vues"), compte),
+    h("div", { class: "sous", style: "margin:4px 0 12px" }, "Chaque collecte note les entreprises de ses offres, même écartées ou fermées depuis. « Suivre » lit ensuite ses offres à la source, quand son lien d'offre donne son outil de recrutement."),
+    h("label", { class: "champ", style: "margin:12px 0" }, svg("loupe"), h("input", { type: "search", placeholder: "Filtrer : entreprise, site ou outil", oninput: (e) => { filtre = e.target.value; dessiner(); } })),
+    h("div", { class: "defile" }, h("table", { class: "tableau-simple" },
+      h("thead", {}, h("tr", {}, ["Entreprise", "Offres", "Fit max", "Vue sur", "Dernière fois", ""].map((t) => h("th", {}, t)))),
+      corps))));
 };
 
 async function ouvrirAnnuaire(texte, apres) {

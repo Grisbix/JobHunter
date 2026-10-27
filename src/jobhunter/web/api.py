@@ -527,6 +527,7 @@ TACHES: dict[str, tuple[str, list[str]]] = {
     "scan": ("Scan offres", ["jobhunter.sources", "--all"]),  # the desktop's first step
     "brouillons": ("Brouillons de relance", ["jobhunter.programs.follow_ups", "--brouillons"]),
     "regenerer_cv": ("Refaire les CV", ["jobhunter.programs.regenerate_docs", "--cv"]),
+    "regenerer_lettres": ("Refaire les lettres", ["jobhunter.programs.regenerate_docs"]),
     "disponibilite": (
         "Contrôle des offres fermées",
         ["jobhunter.programs.availability_audit", "--supprime"],
@@ -829,9 +830,10 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         """
         f = filtres or {}
         mots = [m for m in str(f.get("texte") or "").lower().split() if m]
+        seul = f.get("genre")  # "CV" or "Lettre"; anything else: both
         par_doc: dict[tuple[str, str], dict[str, Any]] = {}
         for genre, dossier in _dossiers_documents().items():
-            if not dossier.is_dir():
+            if seul in ("CV", "Lettre") and genre != seul or not dossier.is_dir():
                 continue
             for p in dossier.iterdir():
                 if p.suffix.lower() not in (".pdf", ".docx"):
