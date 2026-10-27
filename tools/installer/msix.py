@@ -96,9 +96,9 @@ def version_msix() -> str:
 def manifeste() -> str:
     """The AppxManifest.xml text, identity taken from the environment."""
     return MANIFESTE.format(
-        nom=escape(os.environ.get("MSIX_NOM", "JobHunter.Essai"), {'"': "&quot;"}),
-        editeur=escape(os.environ.get("MSIX_EDITEUR", "CN=JobHunter Essai"), {'"': "&quot;"}),
-        editeur_nom=escape(os.environ.get("MSIX_EDITEUR_NOM", "Grisbix")),
+        nom=escape((os.environ.get("MSIX_NOM") or "JobHunter.Essai"), {'"': "&quot;"}),
+        editeur=escape((os.environ.get("MSIX_EDITEUR") or "CN=JobHunter Essai"), {'"': "&quot;"}),
+        editeur_nom=escape(os.environ.get("MSIX_EDITEUR_NOM") or "Grisbix"),
         version=version_msix(),
         description=escape(DESCRIPTION, {'"': "&quot;"}),
     )
