@@ -30,6 +30,8 @@ recent at the top.
 - Workday directory (`python -m jobhunter.sources.discovery --workday`): measured on
   real data, six Common Crawl index pages gave 2,228 career sites of 1,117 tenants
   (five pages left for the next run).
+- Tests: pytest 9.2 undoes some monkeypatches by deleting the name; the package facade
+  no longer fails when a profile value was already recomputed in between.
 
 ## 3.43.0 — 2026-10-27
 

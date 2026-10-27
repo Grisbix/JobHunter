@@ -56,6 +56,18 @@ def test_un_monkeypatch_remplace_la_valeur(monkeypatch):
     assert commun.KEYWORDS == ["remplace"]
 
 
+def test_retirer_par_la_facade_une_valeur_deja_oubliee():
+    """pytest 9.2 undoes a monkeypatch of a name absent from the facade's own dict by
+    `delattr`; a profile change in between has already forgotten the value."""
+    import jobhunter.sources as J
+
+    J.KEYWORDS = ["remplace"]
+    paresseux.oublier()
+    del J.KEYWORDS  # no AttributeError
+    profil.recharger()
+    assert commun.KEYWORDS == list(profil.get("collecte.mots_cles", []))
+
+
 def test_oublier_refait_la_valeur():
     avant = commun._DOMAIN_RX
     paresseux.oublier()

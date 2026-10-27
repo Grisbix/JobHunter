@@ -71,7 +71,8 @@ def installer(paquet: str, sous_modules: Sequence[str]) -> list[types.ModuleType
             for m in t:
                 if nom in origine[m]:
                     setattr(m, nom, origine[m][nom])
-                else:
+                elif nom in vars(m):
+                    # A lazy value (jobhunter.lazy) may already be forgotten: gone is gone.
                     delattr(m, nom)
 
         def __dir__(self) -> list[str]:
