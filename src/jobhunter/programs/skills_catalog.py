@@ -594,7 +594,14 @@ _C = [
     (
         "Simulation numérique",
         "ingenierie",
-        ["matlab", "simulink", "simulation numérique", "numerical simulation", "cfd", "fluent"],
+        [
+            "matlab",
+            "simulink",
+            "simulation numérique",
+            "numerical simulation",
+            "cfd",
+            "ansys fluent",
+        ],
         "numerical simulation",
         "la simulation numérique",
         "numerical simulation",

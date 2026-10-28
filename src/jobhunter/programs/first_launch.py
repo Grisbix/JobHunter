@@ -89,6 +89,11 @@ def _t(texte: str) -> str:
     return texte if i18n.langue() == "fr" else _EN.get(texte, texte)
 
 
+def _t_comp(libelle: str, v: dict) -> str:
+    """A skill's label in the interface's language (the catalogue's `en` outside French)."""
+    return libelle if _t("Prénom") == "Prénom" else (v.get("en") or libelle)
+
+
 def _oui(r: str) -> bool:
     """« o » / « oui » or « y » / « yes »."""
     return r.strip().lower().startswith(("o", "y"))
@@ -212,7 +217,8 @@ def lieu_du_cv(lignes):
             if iso == "fr" and not zones._lieu_sur(m):
                 continue  # an unknown word, not a French place
             region = parts[1] if len(parts) > 2 or (len(parts) == 2 and iso != "fr") else ""
-            if _sans_accent(region).lower() == _sans_accent(pays).lower():
+            noms_du_pays = {_sans_accent(pays).lower(), *zones._PAYS_CANON.get(pays, ())}
+            if _sans_accent(region).lower() in noms_du_pays:
                 region = ""
             if iso == "us" and region.lower() in zones.ETATS_US_CODES:
                 region = zones.ETATS_US_CODES[region.lower()]
@@ -445,6 +451,7 @@ def diplome_du_cv(texte):
 
 
 _LANGUES_EN = {
+    "français": "French",
     "anglais": "English",
     "espagnol": "Spanish",
     "allemand": "German",
@@ -472,7 +479,37 @@ _LANGUES_FR = {
     "dutch": "néerlandais",
     "polish": "polonais",
 }
-_RX_SECTION_LANGUES = re.compile(r"^\s*(?:langues?|languages?)\s*(?::\s*(.*))?$", re.I)
+_RX_SECTION_LANGUES = re.compile(
+    r"^\s*(?:langues?|languages?|sprachen|sprachkenntnisse|idiomas|idiomi|lingue)\s*(?::\s*(.*))?$",
+    re.I,
+)
+# A language's name in English, French, German or Spanish → its ISO code.
+_ISO_LANGUE = {
+    nom: iso
+    for iso, noms in {
+        "fr": "french français francais französisch franzosisch francés frances",
+        "en": "english anglais englisch inglés ingles",
+        "de": "german allemand deutsch alemán aleman",
+        "es": "spanish espagnol spanisch español espanol castellano",
+        "it": "italian italien italienisch italiano",
+        "pt": "portuguese portugais portugiesisch portugués portugues",
+        "nl": "dutch néerlandais niederländisch neerlandés",
+        "pl": "polish polonais polnisch polaco",
+        "ru": "russian russe russisch ruso",
+        "ar": "arabic arabe arabisch árabe",
+        "zh": "chinese mandarin chinois chinesisch chino",
+        "ja": "japanese japonais japanisch japonés japones",
+        "ko": "korean coréen koreanisch coreano",
+        "hi": "hindi",
+    }.items()
+    for nom in noms.split()
+}
+_NOM_FR = {
+    "fr": "français", "en": "anglais", "de": "allemand", "es": "espagnol", "it": "italien",
+    "pt": "portugais",
+    "nl": "néerlandais", "pl": "polonais", "ru": "russe", "ar": "arabe", "zh": "chinois",
+    "ja": "japonais", "ko": "coréen", "hi": "hindi",
+}  # fmt: skip
 
 
 def _et(items, et):
@@ -489,41 +526,74 @@ def _lignes_de_section(suite):
             if out:
                 break
             continue
-        if len(x) > 40 or (x.isupper() and len(x) > 3) or _RX_AUTRE_SECTION.match(x):
+        liste = len(x) <= 100 and ("," in x or ";" in x)
+        if (
+            (len(x) > 40 and not liste)
+            or (x.isupper() and len(x) > 3)
+            or _RX_AUTRE_SECTION.match(x)
+        ):
             break
         out.append(x)
     return out
 
 
-def langues_du_cv(texte):
-    """("Je parle anglais (C1) et espagnol (B2).", "I speak English (C1) and Spanish
-    (B2).") from the CV's Languages section, French left out; ("", "") if none."""
+def _bloc_langues(texte):
+    """The items of the CV's Languages section ("Anglais (C1)", "Deutsch (Muttersprache)")."""
     lignes = texte.splitlines()
     for i, l in enumerate(lignes):
         m = _RX_SECTION_LANGUES.match(l)
-        if not m:
+        if m:
+            bloc = m.group(1) or ", ".join(_lignes_de_section(lignes[i + 1 : i + 8]))
+            return [x.strip() for x in _RX_SEPARATEUR.split(bloc.strip(" .")) if x.strip()]
+    return []
+
+
+def _nom_langue(item):
+    return item.split("(")[0].split(":")[0].strip().lower()
+
+
+def isos_du_cv(texte):
+    """The ISO codes of the languages the CV's Languages section names, in any of four
+    languages: « Deutsch, Englisch » → ["de", "en"]."""
+    return [_ISO_LANGUE[n] for n in map(_nom_langue, _bloc_langues(texte)) if n in _ISO_LANGUE]
+
+
+def langues_du_cv(texte):
+    """("Je parle anglais (C1) et espagnol (B2).", "I speak English (C1) and Spanish
+    (B2).") from the CV's Languages section, the CV's own language left out (a French
+    CV's French, a London CV's English); ("", "") if none."""
+    propre = langue_du_cv(texte)
+    fr, en = [], []
+    for it in _bloc_langues(texte):
+        nom = _nom_langue(it)
+        iso = _ISO_LANGUE.get(nom)
+        if not nom or iso == propre:
             continue
-        bloc = m.group(1) or ", ".join(_lignes_de_section(lignes[i + 1 : i + 8]))
-        fr, en = [], []
-        for it in _RX_SEPARATEUR.split(bloc.strip(" .")):
-            it = it.strip()
-            nom = it.split("(")[0].split(":")[0].strip().lower()
-            if not nom or nom in ("français", "francais", "french"):
-                continue
-            niveau = it[len(it.split("(")[0]) :].strip() if "(" in it else ""
-            nom = _LANGUES_FR.get(nom, nom)
-            fr.append(f"{nom} {niveau}".strip())
-            en.append(f"{_LANGUES_EN.get(nom, nom.capitalize())} {niveau}".strip())
-        if fr:
-            return f"Je parle {_et(fr, 'et')}.", f"I speak {_et(en, 'and')}."
-        return "", ""
+        niveau = it[len(it.split("(")[0]) :].strip() if "(" in it else ""
+        nom_fr = _NOM_FR.get(iso or "", _LANGUES_FR.get(nom, nom))
+        fr.append(f"{nom_fr} {niveau}".strip())
+        en.append(f"{_LANGUES_EN.get(nom_fr, nom.capitalize())} {niveau}".strip())
+    if fr:
+        return f"Je parle {_et(fr, 'et')}.", f"I speak {_et(en, 'and')}."
     return "", ""
 
 
 def langue_du_cv(texte):
+    """The language the CV is written in: "fr", "en", "de" or "es"."""
     t = texte.lower()
     fr = len(re.findall(r"\b(et|les|des|une|pour|avec|exp[ée]rience|comp[ée]tences)\b", t))
     en = len(re.findall(r"\b(and|the|with|for|experience|skills)\b", t))
+    de = len(
+        re.findall(
+            r"\b(und|der|die|das|mit|für|bei|berufserfahrung|kenntnisse|sprachen|heute)\b", t
+        )
+    )
+    es = len(
+        re.findall(r"\b(y|los|las|del|con|para|experiencia|competencias|idiomas|actualidad)\b", t)
+    )
+    autre, n = max((("de", de), ("es", es)), key=lambda x: x[1])
+    if n >= 3 and n > max(fr, en) * 1.3:
+        return autre
     return "en" if en > fr * 1.3 else "fr"
 
 
@@ -759,8 +829,9 @@ def annees_du_cv(texte):
 
 # "2018-2026", "2019 – aujourd'hui", "2021 - present": a job's span on a CV line.
 _RX_PERIODE = re.compile(
-    r"\b((?:19|20)\d{2})\s*[-–—à]+\s*((?:19|20)\d{2}|aujourd.hui|ce jour|pr[ée]sent|present|now"
-    r"|en cours|actuel(?:lement)?)\b",
+    r"\b((?:19|20)\d{2})\s*(?:[-–—à]+|bis|hasta)\s*((?:19|20)\d{2}|aujourd.hui|ce jour|pr[ée]sent|present|now"
+    r"|en cours|actuel(?:lement)?|current(?:ly)?|heute|jetzt|aktuell|actualidad|actualmente"
+    r"|presente|hoy|oggi|attuale)\b",
     re.I,
 )
 
@@ -920,11 +991,13 @@ def construire(cv_txt, cv_nom, rep):
     metiers = rep["metiers"]
     resume = resume_du_cv(cv_txt)
     # The summary goes in its own language: an English CV wrote English in parcours_fr.
-    en = langue_du_cv(cv_txt) == "en"
+    langue = langue_du_cv(cv_txt)
     resume_fr, resume_en = (
         ("", a_la_premiere_personne(resume, "en", metiers))
-        if en
+        if langue == "en"
         else (a_la_premiere_personne(resume, "fr", metiers), "")
+        if langue == "fr"
+        else ("", "")  # a German or Spanish CV: the letters are written in French or English
     )
     # A paragraph checked in the welcome form (often taken from the owner's own
     # letter) comes before the one drawn from the CV, in its own language.
@@ -932,7 +1005,7 @@ def construire(cv_txt, cv_nom, rep):
     if parcours:
         if langue_du_cv(parcours) == "en":
             resume_en = parcours
-        else:
+        elif langue_du_cv(parcours) == "fr":
             resume_fr = parcours
     ordre, score = familles_visees(metiers, comps)
     coeur = ordre[0] if ordre else ""
@@ -1105,6 +1178,7 @@ def construire(cv_txt, cv_nom, rep):
                     )
                     if nom in comps
                 ]
+                + isos_du_cv(cv_txt)
             )
         ),
         **({"pays": ident["pays"]} if ident.get("pays") else {}),
@@ -1232,7 +1306,9 @@ def propositions(txt):
             resume_du_cv(txt),
             langue_du_cv(txt),
             [m.strip() for m in metiers.split(",") if m.strip()],
-        ),
+        )
+        if langue_du_cv(txt) in ("fr", "en")
+        else "",
     }
 
 
@@ -1302,7 +1378,9 @@ def main():
         )
     )
     print(
-        _t("  {} competence(s) reconnue(s) : {}").format(len(comps), ", ".join(sorted(comps))[:300])
+        _t("  {} competence(s) reconnue(s) : {}").format(
+            len(comps), ", ".join(sorted(_t_comp(c, v) for c, v in comps.items()))[:300]
+        )
     )
 
     print(_t("\n2. Quelques questions (Entree = valeur proposee)"))
@@ -1365,6 +1443,8 @@ def main():
     ]
     secteur_ville = min(candidats)[1] if candidats else ""
     a_l_etranger = ident.get("pays") not in ("", "fr")
+    from jobhunter.sources import countries as _pays_src
+
     if a_l_etranger:
         secteur_ville = ident["ville"]
     else:
@@ -1383,7 +1463,7 @@ def main():
         x.strip()
         for x in demander(
             _t("Secteurs secondaires (vide = aucun)"),
-            ident.get("region", "") if a_l_etranger else "",
+            (ident.get("region") or _pays_src.nom(ident.get("pays"))) if a_l_etranger else "",
             a.auto,
             a.secondaires,
         ).split(",")
@@ -1399,6 +1479,10 @@ def main():
         etat = next((k for k, v in zones.ETATS_US_CODES.items() if v.lower() == x.lower()), "")
         if etat:
             libre["lieux"] = [x, etat.upper()]
+        # The home country: also under the names the CV and the postings may use.
+        if a_l_etranger and x == _pays_src.nom(ident.get("pays")):
+            canon = next((k for k, v in zones._PAYS_CANON.items() if x.lower() in v), "")
+            libre["lieux"] = list(dict.fromkeys([x, *zones._PAYS_CANON.get(canon, ())]))
         return libre
 
     prio = [secteur(x) for x in prio]
@@ -1519,7 +1603,8 @@ def main():
     manque = []
     if A_COMPLETER in json.dumps(profil["identite"], ensure_ascii=False):
         manque.append(_t("identite : champs « A COMPLETER »"))
-    if not profil["domaines"][0]["parcours_fr"]:
+    # An English CV fills parcours_en: the letters have their paragraph.
+    if not (profil["domaines"][0]["parcours_fr"] or profil["domaines"][0].get("parcours_en")):
         manque.append(
             _t(
                 "domaines[].parcours_fr : le paragraphe de parcours de tes lettres (3-4 phrases "
