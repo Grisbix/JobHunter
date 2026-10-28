@@ -19,7 +19,7 @@ a reproduced failure or a measured gain. No dependency installed "in bulk".
 
 | # | What | Who | Done when |
 |---|---|---|---|
-| A1 | Real trial of the Candidatures panel on one offer; add to the confirmation detector the real phrasings it would have missed | Gabriel, then code | a real application recorded as `confirmé`, or an unrecognised page added to the patterns and tested |
+| A1 | Real trial of the Candidatures panel on one offer; add to the confirmation detector the real phrasings it would have missed | the user, then code | a real application recorded as `confirmé`, or an unrecognised page added to the patterns and tested |
 | A2 | Sunday 25/10: first weekly availability check | reading the summary | the ~143 closed offers found are removed, step under 110 min |
 | A3 | After one to two weeks of log: `jobhunter yield` | reading + decision | each source has a stable verdict; decide (by hand) the fate of a source refused every time |
 
@@ -53,12 +53,12 @@ on a throwaway queue) and the screenshots taken from Python. Consequence for E3:
 a screen reader does not see the application either. Fixing it would require
 leaving CustomTkinter, or adding an accessibility layer to it.
 
-## Step E — Distribution beyond Gabriel (when the friend's PC and the Mac are back)
+## Step E — Distribution beyond the first user (when the friend's PC and the Mac are back)
 
 | # | What | Done when |
 |---|---|---|
 | E1 ✅ (v2.17.0 `.venv`; v2.18.0 "installation" workflow: `install.bat` and `install.sh` on fresh GitHub machines, Windows and Linux) | Dedicated Python environment created by `install.bat` (postponed from phase 1) | a fresh installation on a blank Windows launches the app without touching the system Python |
-| E2 ✅ (v2.18.0, ADR 0012: Ed25519 in pure Python, private key outside GitHub, `tools/signature.py`; the app downloads, checks and opens the installer. Active as soon as Gabriel creates his key) | **Signed** updates: WinSparkle or tufup (Codex P2), to be chosen on a prototype. Caution: tufup's destination purge is incompatible with a folder that contains the profile. | a tampered package is refused; the profile survives an interrupted update |
+| E2 ✅ (v2.18.0, ADR 0012: Ed25519 in pure Python, private key outside GitHub, `tools/signature.py`; the app downloads, checks and opens the installer. Active as soon as the maintainer creates the key) | **Signed** updates: WinSparkle or tufup (Codex P2), to be chosen on a prototype. Caution: tufup's destination purge is incompatible with a folder that contains the profile. | a tampered package is refused; the profile survives an interrupted update |
 | E3 ◐ (v2.20.0: every button can be operated by keyboard — Tab, Enter, Space — with a visible focus ring on every background; field outline at 3:1; text contrasts checked in tests, WCAG AA. Still impossible without leaving CustomTkinter: giving the controls a name for a screen reader, and keyboard focus on the segmented tabs) | Accessibility (axe-windows, Accessibility Insights) | the main controls have a name; tabbing follows the visual order |
 
 ## Set aside or deferred, with the reason
@@ -124,7 +124,7 @@ have stabilised.
 | G1 ✅ (v2.13.0) | **Company directories** Lever, Ashby, Greenhouse (jobsync, MIT) in the Entreprises panel | type a name, choose, follow; `tools/directories.py --verifier` reproduces the files |
 | G2 ✅ (v2.14.0) | **Letter reviewer**: a second pass, without the context of the drafting, that checks the letter against the style guide and the facts; the job posting is an untrusted input (injection) | each flaw reported is reproduced by a test; no letter rewritten without agreement |
 | G3 ◐ (v2.15.0: each fit explained in the sheet; remaining: rank better, once there are enough judgements) | **Justified fit score** (C1 bis): each point of the fit cites the passage of the posting that gives it | `jobhunter evaluation` does better than the 0.46 AUC of 2.5.0, on the same judgements |
-| G4 ✅ (v2.20.0: `jobhunter mail-statuses`, .mbox/.eml export or read-only Gmail API; window in the app) | **Statuses from Gmail**, read-only, proposals validated one by one — only if Gabriel asks | — |
+| G4 ✅ (v2.20.0: `jobhunter mail-statuses`, .mbox/.eml export or read-only Gmail API; window in the app) | **Statuses from Gmail**, read-only, proposals validated one by one — only if a user asks | — |
 
 ## Step H — Ideas from the architecture watch (20/10), sorted
 

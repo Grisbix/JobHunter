@@ -790,7 +790,7 @@ SORTIE = {
     "{a} ramenées · {b} nouvelles · {c} pertinentes · {d} s": "{a} geholt · {b} neu · {c} "
     "relevant · {d} s",
     "Merge {a}: +{b} nouvelles, {c} enrichies (desc), {d} liens promus (LinkedIn -> vrai "
-    "site), {e} hors de France, {f} écartées à la main, {g} déjà rejetées par le tri, {h} "
+    "site), {e} hors zone, {f} écartées à la main, {g} déjà rejetées par le tri, {h} "
     "pays écartés, {i} bruits purgés — {j} total": "Zusammenführung {a}: +{b} neu, {c} "
     "ergänzt (Beschr.), {d} Links hochgestuft (LinkedIn -> echte Seite), {e} außerhalb "
     "Frankreichs, {f} von Hand aussortiert, {g} schon vom Sortieren abgelehnt, {h} Länder "

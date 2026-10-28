@@ -788,7 +788,7 @@ SORTIE = {
     "{a} ramenées · {b} nouvelles · {c} pertinentes · {d} s": "{a} obtenidas · {b} nuevas · "
     "{c} pertinentes · {d} s",
     "Merge {a}: +{b} nouvelles, {c} enrichies (desc), {d} liens promus (LinkedIn -> vrai "
-    "site), {e} hors de France, {f} écartées à la main, {g} déjà rejetées par le tri, {h} "
+    "site), {e} hors zone, {f} écartées à la main, {g} déjà rejetées par le tri, {h} "
     "pays écartés, {i} bruits purgés — {j} total": "Fusión {a}: +{b} nuevas, {c} "
     "enriquecidas (desc), {d} enlaces promovidos (LinkedIn -> sitio real), {e} fuera de "
     "Francia, {f} descartadas a mano, {g} ya rechazadas por la clasificación, {h} países "

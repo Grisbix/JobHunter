@@ -352,7 +352,7 @@ class TableauMixin:
                 self._colonnes_reglees = True
 
         self.tree.bind("<ButtonPress-1>", _regle_a_la_main, add="+")
-        # The ⚑ column says nothing by itself (Gabriel, 3.19.1): hovering its header
+        # The ⚑ column says nothing by itself (3.19.1): hovering its header
         # explains its three signs.
         bulle: dict[str, Any] = {"w": None}
 

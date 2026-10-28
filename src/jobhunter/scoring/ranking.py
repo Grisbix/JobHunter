@@ -5,8 +5,8 @@ Two things outside the text change how worth applying an offer is:
 
 - REPOSTED again and again (programs/reposts, `republiee`): an offer taken down and
   put back three times in 90 days is often a "ghost" posting, not a vacancy;
-- the CONTRACT, when the user's own choices say so: Gabriel applied to V.I.E. offers
-  the fit scored 6 (`jobhunter evaluation --analyse` measures it).
+- the CONTRACT, when the user's own choices say so: a user who applies to V.I.E.
+  offers the fit scored 6 wants them higher (`jobhunter evaluation --analyse` measures it).
 
 `rang` is the fit_fin minus a small penalty, plus a bonus per contract: it moves an
 offer within its fit, rarely past a whole point. The fit displayed does not change;

@@ -787,9 +787,9 @@ SORTIE = {
     "{a} ramenées · {b} nouvelles · {c} pertinentes · {d} s": "{a} fetched · {b} new · {c} "
     "relevant · {d} s",
     "Merge {a}: +{b} nouvelles, {c} enrichies (desc), {d} liens promus (LinkedIn -> vrai "
-    "site), {e} hors de France, {f} écartées à la main, {g} déjà rejetées par le tri, {h} "
+    "site), {e} hors zone, {f} écartées à la main, {g} déjà rejetées par le tri, {h} "
     "pays écartés, {i} bruits purgés — {j} total": "Merge {a}: +{b} new, {c} enriched "
-    "(desc), {d} links promoted (LinkedIn -> real site), {e} outside France, {f} set aside "
+    "(desc), {d} links promoted (LinkedIn -> real site), {e} outside the area, {f} set aside "
     "by hand, {g} already rejected by sorting, {h} countries set aside, {i} noise purged — "
     "{j} total",
     "→ re-score + descriptions manquantes : automatiques au prochain lancement de l'app.": "→ "

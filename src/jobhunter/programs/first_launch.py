@@ -41,6 +41,59 @@ from jobhunter.programs.skills_catalog import FAMILLES, catalogue  # noqa: E402
 
 A_COMPLETER = "A COMPLETER"
 
+
+# The questions and messages, in English when the interface is not in French (the
+# system's language by default): a user in Ohio reads « First name », not « Prénom ».
+_EN = {
+    "\n1. Lecture du CV : {}": "\n1. Reading the CV: {}",
+    "  ! Presque aucun texte lu. Un CV scanne (image) ne se lit pas : fournis un PDF texte ou un .docx.": "  ! Almost no text read. A scanned CV (image) cannot be read: give a text PDF or a .docx.",
+    "  Rien n'est écrit. Relance avec le CV en .docx, ou donne --metiers.": "  Nothing written. Run again with the CV as .docx, or give --metiers.",
+    "  nom : {} · email : {} · tel : {} · ville : {}": "  name: {} · email: {} · phone: {} · city: {}",
+    "  {} competence(s) reconnue(s) : {}": "  {} skill(s) recognised: {}",
+    "\n2. Quelques questions (Entree = valeur proposee)": "\n2. A few questions (Enter = proposed value)",
+    "Prénom": "First name",
+    "Nom": "Last name",
+    "Email": "Email",
+    "Téléphone": "Phone",
+    "Ville": "City",
+    "Métiers visés, séparés par des virgules (ex. : Chargé de communication, Community manager)": "Target jobs, separated by commas (e.g. Communications officer, Community manager)",
+    "Années d'expérience professionnelle (stages compris)": "Years of work experience (internships included)",
+    "Secteurs PRIORITAIRES (séparés par des virgules)": "PRIORITY places (separated by commas)",
+    "Secteurs secondaires (vide = aucun)": "Secondary places (empty = none)",
+    "Garder les ~90 entreprises de finance / ESG suivies par défaut ? (o/n)": "Keep the ~90 finance / ESG companies followed by default? (y/n)",
+    "\n3. Ecriture": "\n3. Writing",
+    "  ! Version Word impossible ({}) : le PDF part tel quel.": "  ! No Word version ({}): the PDF goes out as is.",
+    "  CV modele     : {}": "  CV template   : {}",
+    "  profil        : {}": "  profile       : {}",
+    "  offres        : {} rangée(s) dans les domaines du nouveau profil": "  offers        : {} sorted into the new profile's fields",
+    "  faits du CV   : {} (vide)": "  CV facts      : {} (empty)",
+    "  recherche     : {} mot(s)-cle(s)": "  search        : {} keyword(s)",
+    " · listes d'entreprises finance/ESG videes": " · finance/ESG company lists emptied",
+    "\n4. A relire dans {}": "\n4. To read over in {}",
+    "identite : champs « A COMPLETER »": "identite: fields « A COMPLETER »",
+    "domaines[].parcours_fr : le paragraphe de parcours de tes lettres (3-4 phrases factuelles : formation, experiences, ce que tu apportes) — VIDE pour l'instant": "domaines[].parcours_fr: your letters' background paragraph (3-4 factual sentences: education, experience, what you bring) — EMPTY for now",
+    "competences : seulement {} reconnue(s) — ajoute les tiennes (libelle + synonymes que les annonces emploient)": "competences: only {} recognised — add yours (label + the synonyms postings use)",
+    "message.{} : une phrase chacun (pas trouvé dans le CV)": "message.{}: one sentence each (not found in the CV)",
+    "CV en PDF : il partira tel quel. Fournis un .docx pour des CV adaptes a chaque offre": "CV as PDF: it goes out as is. Give a .docx for a CV adapted to each offer",
+    "  rien d'obligatoire : tout ce qu'il faut a été lu dans le CV": "  nothing required: everything needed was read in the CV",
+    "\nVerifier : python JobHunter.pyw show-profile   ·   Lancer l'app : python JobHunter.pyw": "\nCheck: python JobHunter.pyw show-profile   ·   Start the app: python JobHunter.pyw",
+    "(renseigné)": "(filled in)",
+    "(à compléter)": "(to fill in)",
+}
+
+
+def _t(texte: str) -> str:
+    """`texte` in the interface's language: French, or English otherwise."""
+    from jobhunter.web import i18n
+
+    return texte if i18n.langue() == "fr" else _EN.get(texte, texte)
+
+
+def _oui(r: str) -> bool:
+    """« o » / « oui » or « y » / « yes »."""
+    return r.strip().lower().startswith(("o", "y"))
+
+
 # ── 1. Reading the CV ────────────────────────────────────────────────────────
 
 
@@ -500,12 +553,12 @@ def demander_prive(question, defaut, auto, impose=None):
     The first launch's output often goes to a log; only the console prompt shows it.
     """
     if impose is not None:
-        print(f"  {question} -> (renseigné)")
+        print(f"  {question} -> {_t('(renseigné)')}")
         return impose
     if auto or not sys.stdin.isatty():
         print(
             f"  {question} -> "
-            + ("(à compléter)" if defaut in ("", A_COMPLETER) else "(renseigné)")
+            + (_t("(à compléter)") if defaut in ("", A_COMPLETER) else _t("(renseigné)"))
         )
         return defaut
     try:
@@ -1184,31 +1237,31 @@ def propositions(txt):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Cree profil/profil.json a partir de ton CV.")
-    ap.add_argument("cv", help="ton CV, .pdf ou .docx")
-    ap.add_argument("--auto", action="store_true", help="accepter toutes les reponses proposees")
-    ap.add_argument("--force", action="store_true", help="remplacer un profil existant")
+    ap = argparse.ArgumentParser(description="Creates the profile (profile.json) from your CV.")
+    ap.add_argument("cv", help="your CV, .pdf or .docx")
+    ap.add_argument("--auto", action="store_true", help="accept every proposed answer")
+    ap.add_argument("--force", action="store_true", help="replace an existing profile")
     ap.add_argument("--profil", default=str(_racine.dossier("profil") / _racine.nom("profil.json")))
     # The identity, when the welcome window has asked for it (jobhunter.welcome).
     for champ in ("prenom", "nom", "email", "telephone", "ville"):
         ap.add_argument(f"--{champ}")
-    ap.add_argument("--metiers", help="metiers vises, separes par des virgules")
-    ap.add_argument("--annees", help="annees d'experience, stages compris")
-    ap.add_argument("--genre", choices=["m", "f"], help="accords des lettres")
-    ap.add_argument("--prioritaires", help="secteurs prioritaires (zones.CATALOGUE), virgules")
-    ap.add_argument("--secondaires", help="secteurs secondaires, virgules (vide = aucun)")
+    ap.add_argument("--metiers", help="target jobs, separated by commas")
+    ap.add_argument("--annees", help="years of experience, internships included")
+    ap.add_argument("--genre", choices=["m", "f"], help="agreement of French letters")
+    ap.add_argument("--prioritaires", help="priority places, separated by commas")
+    ap.add_argument("--secondaires", help="secondary places, separated by commas (empty = none)")
     ap.add_argument(
         "--entreprises",
         choices=["o", "n"],
-        help="garder (o) ou vider (n) les entreprises finance/ESG suivies",
+        help="keep (o) or empty (n) the finance/ESG companies followed by default",
     )
     ap.add_argument(
         "--word",
         choices=["o", "n"],
         default="n",
-        help="CV en PDF : en refaire un .docx adapte a chaque offre (o), ou l'envoyer tel quel (n)",
+        help="CV as PDF: rebuild a .docx adapted to each offer (o), or send it as is (n)",
     )
-    ap.add_argument("--parcours", help="paragraphe de parcours des lettres (sinon tire du CV)")
+    ap.add_argument("--parcours", help="the letters' background paragraph (else read in the CV)")
     a = ap.parse_args()
 
     sortie = Path(a.profil)
@@ -1223,39 +1276,53 @@ def main():
     if not cv.exists():
         print(f"CV introuvable : {cv}")
         return 1
-    print(f"\n1. Lecture du CV : {cv.name}")
+    print(_t("\n1. Lecture du CV : {}").format(cv.name))
     txt = lire_cv(cv)
     if len(txt.strip()) < 200:
         print(
-            "  ! Presque aucun texte lu. Un CV scanne (image) ne se lit pas : fournis un PDF texte ou un .docx."
+            _t(
+                "  ! Presque aucun texte lu. Un CV scanne (image) ne se lit pas : fournis un PDF texte ou un .docx."
+            )
         )
         # Without text the profile would collect "a completer" postings: nothing written,
         # unless the jobs are given (--metiers).
         if not a.metiers:
-            print("  Rien n'est écrit. Relance avec le CV en .docx, ou donne --metiers.")
+            print(_t("  Rien n'est écrit. Relance avec le CV en .docx, ou donne --metiers."))
             return 1
     ident = identite_du_cv(txt)
     comps = competences_du_cv(txt)
     comps.update(competences_libres(txt, comps))
     print(
-        f"  nom : {ident['prenom']} {ident['nom']} · email : {ident['email'] or '?'} · "
-        f"tel : {ident['telephone'] or '?'} · ville : {ident['ville'] or '?'}"
+        _t("  nom : {} · email : {} · tel : {} · ville : {}").format(
+            f"{ident['prenom']} {ident['nom']}",
+            ident["email"] or "?",
+            ident["telephone"] or "?",
+            ident["ville"] or "?",
+        )
     )
-    print(f"  {len(comps)} competence(s) reconnue(s) : {', '.join(sorted(comps))[:300]}")
+    print(
+        _t("  {} competence(s) reconnue(s) : {}").format(len(comps), ", ".join(sorted(comps))[:300])
+    )
 
-    print("\n2. Quelques questions (Entree = valeur proposee)")
-    ident["prenom"] = demander("Prénom", ident["prenom"] or A_COMPLETER, a.auto, a.prenom or None)
-    ident["nom"] = demander("Nom", ident["nom"] or A_COMPLETER, a.auto, a.nom or None)
-    ident["email"] = demander_prive("Email", ident["email"] or A_COMPLETER, a.auto, a.email or None)
-    ident["telephone"] = demander_prive("Téléphone", ident["telephone"], a.auto, a.telephone)
-    ident["ville"] = demander("Ville", ident["ville"], a.auto, a.ville)
+    print(_t("\n2. Quelques questions (Entree = valeur proposee)"))
+    ident["prenom"] = demander(
+        _t("Prénom"), ident["prenom"] or A_COMPLETER, a.auto, a.prenom or None
+    )
+    ident["nom"] = demander(_t("Nom"), ident["nom"] or A_COMPLETER, a.auto, a.nom or None)
+    ident["email"] = demander_prive(
+        _t("Email"), ident["email"] or A_COMPLETER, a.auto, a.email or None
+    )
+    ident["telephone"] = demander_prive(_t("Téléphone"), ident["telephone"], a.auto, a.telephone)
+    ident["ville"] = demander(_t("Ville"), ident["ville"], a.auto, a.ville)
     # Job: the line under the name is often the CV's title.
     lignes = [l.strip() for l in txt.splitlines() if l.strip()]
     propose = titre_du_cv(lignes, ident)
     metiers = [
         m.strip()
         for m in demander(
-            "Métiers visés, séparés par des virgules (ex. : Chargé de communication, Community manager)",
+            _t(
+                "Métiers visés, séparés par des virgules (ex. : Chargé de communication, Community manager)"
+            ),
             propose or A_COMPLETER,
             a.auto,
             a.metiers,
@@ -1265,7 +1332,7 @@ def main():
     try:
         annees = int(
             demander(
-                "Années d'expérience professionnelle (stages compris)",
+                _t("Années d'expérience professionnelle (stages compris)"),
                 str(annees_du_cv(txt)),
                 a.auto,
                 a.annees,
@@ -1304,7 +1371,7 @@ def main():
     prio = [
         x.strip()
         for x in demander(
-            "Secteurs PRIORITAIRES (séparés par des virgules)",
+            _t("Secteurs PRIORITAIRES (séparés par des virgules)"),
             secteur_ville or ("" if a_l_etranger else "idf"),
             a.auto,
             a.prioritaires,
@@ -1314,7 +1381,7 @@ def main():
     sec = [
         x.strip()
         for x in demander(
-            "Secteurs secondaires (vide = aucun)",
+            _t("Secteurs secondaires (vide = aucun)"),
             ident.get("region", "") if a_l_etranger else "",
             a.auto,
             a.secondaires,
@@ -1337,15 +1404,18 @@ def main():
     sec = [secteur(x) for x in sec]
     ordre, _ = familles_visees(metiers, comps)
     finance = bool(ordre) and ordre[0] in ("finance", "rse", "conseil")
+    # Asked only of a finance profile: the default companies are banks and asset managers.
     garder = (
-        demander(
-            "Garder les ~90 entreprises de finance / ESG suivies par défaut ? (o/n)",
-            "o" if finance else "n",
-            a.auto,
-            a.entreprises,
+        _oui(
+            demander(
+                _t("Garder les ~90 entreprises de finance / ESG suivies par défaut ? (o/n)"),
+                "o",
+                a.auto,
+                a.entreprises,
+            )
         )
-        .lower()
-        .startswith("o")
+        if finance
+        else _oui(a.entreprises or "n")
     )
 
     rep = {
@@ -1359,7 +1429,7 @@ def main():
         "parcours": a.parcours or "",
     }
 
-    print("\n3. Ecriture")
+    print(_t("\n3. Ecriture"))
     cv_dir = RACINE / "CV" / _racine.nom("Modèles")
     cv_dir.mkdir(parents=True, exist_ok=True)
     prefixe = slug(f"{ident['prenom']} {ident['nom']}")
@@ -1374,8 +1444,8 @@ def main():
             cv_word.pdf_en_docx(cv, cv_dir / f"CV_{prefixe}.docx")
             cv_nom = f"CV_{prefixe}.docx"
         except ValueError as e:
-            print(f"  ! Version Word impossible ({e}) : le PDF part tel quel.")
-    print(f"  CV modele     : {(cv_dir / cv_nom).relative_to(RACINE).as_posix()}")
+            print(_t("  ! Version Word impossible ({}) : le PDF part tel quel.").format(e))
+    print(_t("  CV modele     : {}").format((cv_dir / cv_nom).relative_to(RACINE).as_posix()))
 
     profil = construire(txt, cv_nom, rep)
     sortie.parent.mkdir(parents=True, exist_ok=True)
@@ -1391,7 +1461,7 @@ def main():
     _profil.recharger(sortie)
     profil["tri"]["metiers_exclus"] = familles_tri_a_exclure(metiers)
     sortie.write_text(json.dumps(profil, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"  profil        : {sortie.relative_to(RACINE).as_posix()}")
+    print(_t("  profil        : {}").format(sortie.relative_to(RACINE).as_posix()))
 
     # Empty data files: the queue of offers and the application tracking.
     # The app finds its root through Scripts/apply_queue.json.
@@ -1400,7 +1470,7 @@ def main():
             (HERE / nom).write_text(vide, encoding="utf-8")
     n = reclasser_domaines()
     if n:
-        print(f"  offres        : {n} rangée(s) dans les domaines du nouveau profil")
+        print(_t("  offres        : {} rangée(s) dans les domaines du nouveau profil").format(n))
     faits = RACINE / "CV" / _racine.nom("Faits.json")
     if not faits.exists():
         faits.write_text(
@@ -1418,7 +1488,7 @@ def main():
             ),
             encoding="utf-8",
         )
-        print(f"  faits du CV   : {faits.relative_to(RACINE).as_posix()} (vide)")
+        print(_t("  faits du CV   : {} (vide)").format(faits.relative_to(RACINE).as_posix()))
 
     cfg_p = HERE / "sources_config.json"
     cfg = json.loads(cfg_p.read_text(encoding="utf-8")) if cfg_p.exists() else {}
@@ -1440,37 +1510,47 @@ def main():
             company_lists.activer(cfg, company_lists.FINANCE)
     cfg_p.write_text(json.dumps(cfg, ensure_ascii=False, indent=1), encoding="utf-8")
     print(
-        f"  recherche     : {len(cfg['keywords'])} mot(s)-cle(s)"
-        + ("" if garder else " · listes d'entreprises finance/ESG videes")
+        _t("  recherche     : {} mot(s)-cle(s)").format(len(cfg["keywords"]))
+        + ("" if garder or not finance else _t(" · listes d'entreprises finance/ESG videes"))
     )
 
-    print(f"\n4. A relire dans {sortie.relative_to(RACINE).as_posix()}")
+    print(_t("\n4. A relire dans {}").format(sortie.relative_to(RACINE).as_posix()))
     manque = []
     if A_COMPLETER in json.dumps(profil["identite"], ensure_ascii=False):
-        manque.append("identite : champs « A COMPLETER »")
+        manque.append(_t("identite : champs « A COMPLETER »"))
     if not profil["domaines"][0]["parcours_fr"]:
         manque.append(
-            "domaines[].parcours_fr : le paragraphe de parcours de tes lettres (3-4 phrases "
-            "factuelles : formation, experiences, ce que tu apportes) — VIDE pour l'instant"
+            _t(
+                "domaines[].parcours_fr : le paragraphe de parcours de tes lettres (3-4 phrases "
+                "factuelles : formation, experiences, ce que tu apportes) — VIDE pour l'instant"
+            )
         )
     if len(comps) < 5:
         manque.append(
-            f"competences : seulement {len(comps)} reconnue(s) — ajoute les tiennes "
-            "(libelle + synonymes que les annonces emploient)"
+            _t(
+                "competences : seulement {} reconnue(s) — ajoute les tiennes "
+                "(libelle + synonymes que les annonces emploient)"
+            ).format(len(comps))
         )
     vides = [k for k in ("diplome_fr", "langues_fr") if not profil["message"][k]]
     if vides:
-        manque.append(f"message.{' / '.join(vides)} : une phrase chacun (pas trouvé dans le CV)")
+        manque.append(
+            _t("message.{} : une phrase chacun (pas trouvé dans le CV)").format(" / ".join(vides))
+        )
     if cv.suffix.lower() == ".pdf":
         manque.append(
-            "CV en PDF : il partira tel quel. Fournis un .docx pour des CV adaptes a chaque offre"
+            _t(
+                "CV en PDF : il partira tel quel. Fournis un .docx pour des CV adaptes a chaque offre"
+            )
         )
     for m in manque:
         print(f"  - {m}")
     if not manque:
-        print("  rien d'obligatoire : tout ce qu'il faut a été lu dans le CV")
+        print(_t("  rien d'obligatoire : tout ce qu'il faut a été lu dans le CV"))
     print(
-        "\nVerifier : python JobHunter.pyw show-profile   ·   Lancer l'app : python JobHunter.pyw"
+        _t(
+            "\nVerifier : python JobHunter.pyw show-profile   ·   Lancer l'app : python JobHunter.pyw"
+        )
     )
     return 0
 

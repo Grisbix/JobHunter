@@ -64,6 +64,14 @@ def _vise_finance() -> bool:
     return any(_commun.title_ok(t) for t in _TITRES_FINANCE)
 
 
+def _vise_esg() -> bool:
+    """Do the profile's core title words (scoring.intitules_coeur) cover ESG?"""
+    from jobhunter import profile as _P
+
+    rx = _P.motif(_P.get("scoring.intitules_coeur"))
+    return bool(rx and rx.search("ESG analyst"))
+
+
 _PARESSEUX["INDEED_LIEUX"] = lambda: (
     importlib.import_module("jobhunter.sources.indeed").INDEED_LIEUX
 )
@@ -358,7 +366,7 @@ def main() -> int:
                 {},
             )
         )
-    # eFC in --all, but BOUNDED: ESG filter, the nine sites, 30 postings at
+    # eFC in --all, but BOUNDED: ESG filter (the profile's titles if not ESG), the nine sites, 30 postings at
     # most (the postings already in the queue are skipped, so each day moves forward in
     # the rest). Nine sitemaps + 30 postings at 10 s make ~6 min. The wide
     # filters (--efc-metier, --efc-tout) are still run separately, in passes.
@@ -369,7 +377,7 @@ def main() -> int:
             else "graduate"
             if a.efc_graduate
             else "metier"
-            if a.efc_metier
+            if a.efc_metier or not _vise_esg()
             else "esg"
         )
         sites = (
@@ -583,7 +591,7 @@ def _fusionner(uniq: Any, dry: bool) -> int:
     print(
         f"Merge {'[DRY] ' if dry else ''}: +{r['added']} nouvelles, {r['updated']} enrichies (desc), "
         f"{r['promus']} liens promus (LinkedIn -> vrai site), "
-        f"{r['hors_zone']} hors de France, "
+        f"{r['hors_zone']} hors zone, "
         f"{r['ecartees']} écartées à la main, {r.get('rejetees_tri', 0)} déjà rejetées par le tri, "
         f"{r['pays_ecartes']} pays écartés, "
         f"{r['purged']} bruits purgés — {r['total']} total"

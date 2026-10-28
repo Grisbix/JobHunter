@@ -193,11 +193,19 @@ def main():
             par_poste[k] = o
     uniques = list(par_poste.values())
 
+    # The profile's core title words (scoring.intitules_coeur); RX_ESG for a profile
+    # written before they existed.
+    from jobhunter import profile as _P
+
+    coeur = (
+        _P.motif(_P.get("scoring.intitules_coeur")) if _P.get("scoring.intitules_coeur") else RX_ESG
+    )
+
     def note(o):
         t = o.get("poste") or ""
         s = rang(o) * 10  # fit_fin with reposts and contract (scoring.ranking)
-        if RX_ESG.search(t):
-            s += 30  # ESG in the TITLE, not only in the text
+        if coeur and coeur.search(t):
+            s += 30  # the core profession in the TITLE, not only in the text
         if RX_JUNIOR.search(t):
             s += 12
         if o.get("zone") == "prioritaire":

@@ -480,7 +480,7 @@ class App(
         """The "Outils" menu at the bottom left: every second-rank feature, by intent.
 
         Before 3.19.1 they filled the left menu (three steps, a folded Maintenance
-        list, Recharger, Dossier); Gabriel kept only the two daily actions in view.
+        list, Recharger, Dossier); only the two daily actions stay in view.
         Settings (language, update, daily collection) live in the "Paramètres" page
         only: a ⚙ wheel next to a "Paramètres" entry made two places to look.
         """

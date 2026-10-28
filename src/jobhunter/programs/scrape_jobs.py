@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-scrape_jobs.py — Scrapes the FRESH offers of the 65 career sites of ESG/Finance companies.
+scrape_jobs.py — Scrapes the FRESH offers of the followed companies' career sites.
 
-Uses Playwright to navigate each career site, detect the lists of offers and filter by
-ESG/Finance keywords.
+Uses Playwright to navigate each career site, detect the lists of offers and keep those
+the profile's title filter keeps.
 
 Usage:
     python JobHunter.pyw scrape_jobs                         # scrape all the sites
@@ -538,7 +538,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                                 }
                             )
                     print(
-                        f"  ✓ {len([x for x in data.get('content', []) if offre_retenue(x.get('name', ''))])} offres ESG/Finance sur {company_name} (API SmartRecruiters)"
+                        f"  ✓ {len([x for x in data.get('content', []) if offre_retenue(x.get('name', ''))])} offres retenues sur {company_name} (API SmartRecruiters)"
                     )
                 else:
                     print(f"  ~ API SmartRecruiters {slug}: HTTP {resp.status_code}")
@@ -677,7 +677,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                             }
                         )
                 if offers:
-                    print(f"  ✓ {len(offers)} offres ESG/Finance Breezy")
+                    print(f"  ✓ {len(offers)} offres retenues Breezy")
                     break
             except Exception as e:
                 print(f"  ! Breezy {url}: {type(e).__name__}")
@@ -721,7 +721,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                                 }
                             )
                     if offers:
-                        print(f"  ✓ {len(offers)} offres ESG/Finance TalentSoft")
+                        print(f"  ✓ {len(offers)} offres retenues TalentSoft")
                         break
                 except Exception as e:
                     continue
@@ -778,7 +778,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                             }
                         )
                 if offers:
-                    print(f"  ✓ {len(offers)} offres ESG/Finance trouvées sur {url.split('/')[2]}")
+                    print(f"  ✓ {len(offers)} offres retenues trouvées sur {url.split('/')[2]}")
                     break  # Found offers on this URL, stop trying others
             else:
                 job_links = info.get("jobLinks", 0)
@@ -822,7 +822,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                             }
                         )
                 if offers:
-                    print(f"  ✓ {len(offers)} offres ESG/Finance (via careers)")
+                    print(f"  ✓ {len(offers)} offres retenues (via careers)")
         except Exception as e:
             pass
 
@@ -908,9 +908,9 @@ def scrape_all_sites(
                         importlib.import_module("jobhunter.programs.util").jwrite(
                             output_path, all_offers
                         )
-                        print(f"  ✅ {len(offers)} offres ESG/Finance — total: {total_offers}")
+                        print(f"  ✅ {len(offers)} offres retenues — total: {total_offers}")
                     else:
-                        print("  ⚠️ Aucune offre ESG/Finance trouvée")
+                        print("  ⚠️ Aucune offre retenue")
                 except Exception as e:
                     print(f"  ❌ Erreur site: {type(e).__name__}: {str(e)[:100]}")
                 # Pause between the sites
@@ -978,7 +978,7 @@ def merger(offres, dry=False):
     print(
         f"\n🔗 Merge {'[DRY] ' if dry else ''}: +{r['added']} nouvelles, "
         f"{r['updated']} enrichies, {r['promus']} liens promus, "
-        f"{r['hors_zone']} hors de France, {r['ecartees']} écartées à la main, "
+        f"{r['hors_zone']} hors zone, {r['ecartees']} écartées à la main, "
         f"{r['purged']} bruits purgés — {r['total']} offres en file"
     )
     return r
@@ -986,7 +986,7 @@ def merger(offres, dry=False):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Scrape les offres fraîches des sites carrière ESG/Finance"
+        description="Scrapes the fresh offers of the followed companies' career sites"
     )
     parser.add_argument("--sites", type=str, default=None, help="Plage de sites ex: 1-10, 20-30")
     parser.add_argument(
