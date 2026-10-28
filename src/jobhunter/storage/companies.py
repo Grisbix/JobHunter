@@ -81,3 +81,37 @@ def noter(
                 e["flux"] = f
     ecrire_json(chemin(queue), reg)
     return reg
+
+
+def ajouter_annuaire(
+    queue: Path, entreprises: list[dict[str, Any]], jour: str | None = None
+) -> int:
+    """Adds a directory's companies (sources.directories) to the register.
+
+    A company already there only gains its website and headcount; a new one has no
+    « dernière vue »: the career-site pass asks the companies really seen first.
+
+    Returns:
+        How many companies are new in the register.
+    """
+    jour = jour or time.strftime("%Y-%m-%d")
+    reg = charger(queue)
+    nouveaux = 0
+    for x in entreprises:
+        nom = str(x.get("nom") or "").strip()
+        k = cle(nom)
+        if not k:
+            continue
+        if k not in reg:
+            reg[k] = {"nom": nom, "premiere_vue": jour, "sites": []}
+            nouveaux += 1
+        e = reg[k]
+        s = str(x.get("source") or "annuaire")
+        if s not in e.setdefault("sites", []):
+            e["sites"] = sorted([*e["sites"], s])
+        if x.get("site_web") and not e.get("site_web"):
+            e["site_web"] = x["site_web"]
+        if x.get("effectif"):
+            e["effectif"] = int(x["effectif"])
+    ecrire_json(chemin(queue), reg)
+    return nouveaux

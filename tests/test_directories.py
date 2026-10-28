@@ -1,134 +1,90 @@
-"""Annuaires d'entreprises Lever, Ashby, Greenhouse (sources.annuaire, tools/directories.py)."""
+"""3.51: the country's large employers from open directories (Wikidata, SIRENE)."""
 
-import importlib.util
-import json
-import re
-
-import pytest
-from conftest import SRC
-
-from jobhunter import inventory as inventaire
-from jobhunter.sources import directory as annuaire
-
-DOSSIER = SRC / "jobhunter" / "sources" / "directories"
-_spec = importlib.util.spec_from_file_location(
-    "annuaires_outil", SRC.parent / "tools" / "directories.py"
-)
-assert _spec and _spec.loader
-outil = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(outil)
+from jobhunter.sources import directories as d
+from jobhunter.storage import companies
 
 
-def test_trois_annuaires_valides_et_attribues():
-    total = 0
-    for nom in annuaire.OUTILS:
-        entrees = json.loads((DOSSIER / f"{nom}.json").read_text(encoding="utf-8"))
-        assert len(entrees) > 500, nom
-        assert outil.nettoyer([{"name": n, "token": j} for n, j in entrees]) == entrees
-        total += len(entrees)
-    assert len(annuaire.entrees()) > total > 3000  # + career-ops, without duplicates
-    licence = (DOSSIER / "LICENSE-jobsync.txt").read_text(encoding="utf-8")
-    assert "MIT License" in licence and outil.COMMIT in licence
+def _b(nom, emp, site="", ind=""):
+    x = {"cLabel": {"value": nom}, "emp": {"value": str(emp)}}
+    if site:
+        x["site"] = {"value": site}
+    if ind:
+        x["ind"] = {"value": ind}
+    return x
 
 
-def test_chaque_outil_est_un_flux_connu():
-    assert set(annuaire.OUTILS) <= set(inventaire.NOMS_OUTILS)
-
-
-def test_identifiants_surs_pour_une_url():
-    rx = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
-    assert all(rx.match(e.jeton) for e in annuaire.entrees())
-
-
-def test_nettoyer_ecarte_le_douteux():
-    brut = [
-        {"name": "Bonne", "token": "bonne"},
-        {"name": "Doublon", "token": "BONNE"},
-        {"name": "", "token": "vide"},
-        {"name": "Piège", "token": "../etc"},
-        {"name": "Espace", "token": "a b"},
-        "pas un objet",
-        {"name": "  Alan   SAS ", "token": "alan"},
-    ]
-    assert outil.nettoyer(brut) == [["Alan SAS", "alan"], ["Bonne", "bonne"]]
-    with pytest.raises(ValueError):
-        outil.nettoyer({"name": "x"})
-
-
-@pytest.fixture
-def petit(monkeypatch):
-    E = annuaire.Entree
-    donnees = (
-        E("L'Oréal", "lever", "loreal"),
-        E("Alan", "ashby", "alan"),
-        E("Alanine Labs", "greenhouse", "alaninelabs"),
-        E("Super Alan", "lever", "superalan"),
-        E("Catalan Bank", "ashby", "catalanbank"),
-        E("Central and Co", "lever", "centralandco"),
-    )
-    monkeypatch.setattr(annuaire, "entrees", lambda: donnees)
-
-
-def test_chercher_ordre(petit):
-    noms = [e.nom for e in annuaire.chercher("alan")]
-    assert noms == ["Alan", "Alanine Labs", "Super Alan", "Catalan Bank"]
-
-
-def test_pas_a_cheval_sur_deux_mots(petit):
-    """ "Central and" contains "alan" once the spaces are removed: not a result."""
-    assert "Central and Co" not in [e.nom for e in annuaire.chercher("alan")]
-
-
-def test_chercher_sans_accents_ni_ponctuation(petit):
-    assert [e.jeton for e in annuaire.chercher("loreal")] == ["loreal"]
-    assert [e.jeton for e in annuaire.chercher("L’oréal")] == ["loreal"]
-
-
-def test_chercher_trop_court_et_limite(petit):
-    assert annuaire.chercher("a") == []
-    assert len(annuaire.chercher("al", limite=2)) == 2
-
-
-def test_un_nom_reel_se_trouve():
-    assert annuaire.chercher("15five")[0].jeton == "15five"
-
-
-def test_suivre_depuis_l_annuaire_ajoute_le_flux():
-    cfg: dict = {}
-    msg = inventaire.ajouter_flux(cfg, {"ats_slugs": {}}, ("ashby", "alan"))
-    assert cfg["ats_slugs"]["ashby"] == ["alan"]
-    assert "Ashby" in msg
-    assert "déjà suivi" in inventaire.ajouter_flux(cfg, {"ats_slugs": {}}, ("ashby", "Alan"))
-
-
-def test_career_ops_annuaire_valide_et_attribue():
-    brut = (DOSSIER / "career-ops.json").read_text(encoding="utf-8")
-    entrees = json.loads(brut)
-    assert len(entrees) > 50
-    assert all(o in annuaire.SUIVABLES for _, o, _ in entrees)
-    licence = (DOSSIER / "LICENSE-career-ops.txt").read_text(encoding="utf-8")
-    assert "MIT License" in licence and outil.COMMIT_CO in licence
-
-
-def test_career_ops_sans_doublon_avec_jobsync():
-    vus = [(e.outil, e.jeton.lower()) for e in annuaire.entrees()]
-    assert len(vus) == len(set(vus))
-
-
-def test_depuis_career_ops_garde_les_flux_lisibles():
-    sortie = outil.depuis_career_ops(
-        {
-            "tracked_companies": [
-                {"name": "Alpha", "careers_url": "https://jobs.ashbyhq.com/alpha"},
-                {
-                    "name": "Beta",
-                    "careers_url": "https://beta.com/careers",
-                    "api": "https://jobs.lever.co/beta",
-                },
-                {"name": "Gamma", "careers_url": "https://gamma.com/careers"},
-                {"name": "Delta", "careers_url": "https://x.wd3.myworkdayjobs.com/Delta"},
-                {"name": "Alpha bis", "careers_url": "https://jobs.ashbyhq.com/alpha"},
+def test_lignes_wikidata():
+    rep = {
+        "results": {
+            "bindings": [
+                _b("Example Bank", 50000, "https://bank.example", "banking|financial services"),
+                _b("Example Bank", 50000, "https://bank.example/de"),  # same company again
+                _b("Q123456", 900),  # no label in these languages
+                _b("Sample Hospital", 8000, ind="hospitals and rehabilitation"),
             ]
         }
+    }
+    out = d.lignes_wikidata(rep)
+    assert [e["nom"] for e in out] == ["Example Bank", "Sample Hospital"]
+    assert out[0]["effectif"] == 50000 and out[0]["site_web"] == "https://bank.example"
+    assert out[0]["secteurs"] == ["banking", "financial services"]
+
+
+def test_lignes_sirene():
+    rep = {"results": [{"nom_raison_sociale": "EXEMPLE SA", "activite_principale": "64.19Z"}]}
+    assert d.lignes_sirene(rep)[0]["nom"] == "EXEMPLE SA"
+
+
+def test_filtre_des_familles():
+    mots, sections = d.filtre(["finance", "rse"])
+    assert "bank" in mots and "energy" in mots
+    assert sections == "KDEM"
+    # A legal or sales profile works in every industry.
+    assert d.filtre(["juridique"]) is None
+    assert d.filtre([]) is None
+
+
+def test_du_secteur_garde_le_metier_puis_l_inconnu():
+    entreprises = [
+        {"nom": "Inconnue", "secteurs": [], "source": "wikidata"},
+        {"nom": "Carmaker", "secteurs": ["automotive industry"], "source": "wikidata"},
+        {"nom": "Hospital", "secteurs": ["hospitals and rehabilitation"], "source": "wikidata"},
+        {"nom": "SIRENE SA", "secteurs": ["86.10Z"], "source": "sirene"},
+    ]
+    f = d.filtre(["sante"])
+    assert [e["nom"] for e in d.du_secteur(entreprises, f)] == ["Hospital", "SIRENE SA", "Inconnue"]
+    assert len(d.du_secteur(entreprises, None)) == 4
+
+
+def test_ajouter_annuaire(tmp_path):
+    q = tmp_path / "apply_queue.json"
+    companies.noter(
+        q, [{"entreprise": "Example Bank", "source": "linkedin-search:x"}], "2026-10-01"
     )
-    assert sortie == [["Alpha", "ashby", "alpha"], ["Beta", "lever", "beta"]]
+    n = companies.ajouter_annuaire(
+        q,
+        [
+            {"nom": "example bank", "site_web": "https://bank.example", "effectif": 50000,
+             "source": "wikidata"},
+            {"nom": "Sample Hospital", "site_web": "", "effectif": 8000, "source": "wikidata"},
+        ],
+        "2026-10-28",
+    )  # fmt: skip
+    reg = companies.charger(q)
+    assert n == 1
+    assert reg["example bank"]["site_web"] == "https://bank.example"
+    assert reg["example bank"]["sites"] == ["linkedin", "wikidata"]
+    # Never seen in a collection: no « dernière vue », asked after the companies seen.
+    assert "derniere_vue" not in reg["sample hospital"]
+
+
+def test_les_entreprises_vues_d_abord(monkeypatch):
+    from jobhunter.sources import company_sites as cs
+
+    monkeypatch.setattr(cs, "_suivis", lambda: (set(), set()))
+    reg = {
+        "annuaire": {"nom": "Annuaire", "premiere_vue": "2026-10-28", "sites": ["wikidata"]},
+        "vue": {"nom": "Vue", "premiere_vue": "2026-10-20", "derniere_vue": "2026-10-27"},
+    }
+    lot = cs.a_demander(reg, {}, "2026-10-28", 2, {})
+    assert [e["_cle"] for e in lot] == ["vue", "annuaire"]

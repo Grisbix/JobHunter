@@ -190,7 +190,8 @@ def a_demander(
         if vu and vu > (aujourd_hui - timedelta(days=delai(vides))).isoformat():
             continue
         candidates.append((vu, "" if not e.get("derniere_vue") else e["derniere_vue"], k, e))
-    candidates.sort(key=lambda x: (x[0], _inverse(x[1])))
+    # A directory's company was never seen in a collection: after the companies seen.
+    candidates.sort(key=lambda x: (x[0], not x[1], _inverse(x[1])))
     return [{**e, "_cle": k} for _, _, k, e in candidates[:n]]
 
 
@@ -567,9 +568,11 @@ def scan_company_sites(n: int = PAR_PASSE) -> list[dict[str, Any]]:
                     if devines < DEVINES:
                         devines += 1
                         trouve = deviner(httpx, str(e.get("nom") or k), workday)
-                    if trouve is None and lues < PAGES and pages.get(k):
+                    # Its offer page in the queue, else its website (a directory's).
+                    page = (pages.get(k) or [str(e.get("site_web") or "")])[0]
+                    if trouve is None and lues < PAGES and page:
                         lues += 1
-                        trouve = lire_la_page(httpx, pages[k][0])
+                        trouve = lire_la_page(httpx, str(page))
                     if trouve:
                         appris[k] = trouve
                         vu[trouve["par"]] += 1

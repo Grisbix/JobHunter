@@ -34,6 +34,10 @@ COMMANDES = {
         "l'ancienne fenêtre de bureau (panneau de candidature guidée)",
     ),
     "collect": ("jobhunter.sources", "collecte les offres et les fusionne dans la file"),
+    "companies-import": (
+        "jobhunter.sources.directories",
+        "ajoute les grands employeurs du pays du profil (Wikidata, SIRENE) au registre",
+    ),
     "sort": ("jobhunter.scoring.sorting", "retire de la file ce qui ne colle pas au profil"),
     "documents": ("jobhunter.programs.generate_docs", "CV et lettre par offre"),
     "regenerate": (
