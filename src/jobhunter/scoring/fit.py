@@ -93,8 +93,7 @@ def skills_in(text: str | None) -> set[str]:
     long phrases = substring. Avoids the false positives 'ges' in "GEStion", 'gri' in
     "aGRIcole", 'pai' in "PAIement".
     """
-    t = (text or "").lower()
-    return {label for label in _ici.SKILL_LEX if has_skill(label, t)}
+    return _lexique.skills_present((text or "").lower())
 
 
 # ── Required experience detector ──

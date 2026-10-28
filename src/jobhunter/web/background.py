@@ -76,6 +76,7 @@ class Fond:
         self.messages: list[dict[str, Any]] = []
         self.version = 0  # grows when the data may have changed: the page redraws
         self.lots = 0
+        self.eues = 0  # descriptions fetched since the last ATS re-scoring
         self.scans = 0
         debut = time.time()
         self.prochain = {
@@ -118,11 +119,18 @@ class Fond:
             return
         self.lots += 1
         _lancer(["jobhunter.programs.scrape_desc", "--all", "--limit", "40"], 900)
-        _lancer(["jobhunter.programs.rescore_ats"], 300)
         reste = descriptions_manquantes()
         eu = avant - reste
+        self.eues += eu
+        suite = bool(reste and eu > 0 and self.lots < LOT_DESCRIPTIONS)
+        # The ATS re-scoring reads the whole queue (a minute for 12 000 offers): once,
+        # after the last batch, not after each (the user, 2026-10-28: « je trouve ça
+        # lent » — three batches kept a core busy for four minutes after opening).
+        if not suite and self.eues:
+            _lancer(["jobhunter.programs.rescore_ats"], 300)
+            self.eues = 0
         self.dire(f"Descriptions : +{eu} récupérées ({reste} restantes).", change=eu > 0)
-        if reste and eu > 0:
+        if suite:
             self.prochain["descriptions"] = time.time() + 1.5
 
     def sync(self) -> None:

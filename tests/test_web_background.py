@@ -29,11 +29,23 @@ def test_les_descriptions_par_lots_tant_que_ca_avance(monkeypatch, lances):
     monkeypatch.setattr(bg, "descriptions_manquantes", lambda: next(restes))
     f = bg.Fond(lambda: False)
     f.descriptions()
-    assert lances == ["jobhunter.programs.scrape_desc", "jobhunter.programs.rescore_ats"]
+    assert lances == ["jobhunter.programs.scrape_desc"]  # re-scored after the last batch only
     assert f.version == 1 and "+6 récupérées (4 restantes)" in f.messages[-1]["texte"]
     assert "descriptions" in f.prochain  # it helped: another batch
     f.descriptions()
     assert f.version == 1 and "descriptions" not in f.prochain  # nothing gained: stop
+    assert lances == [
+        "jobhunter.programs.scrape_desc",
+        "jobhunter.programs.scrape_desc",
+        "jobhunter.programs.rescore_ats",  # once, for the six of the whole run
+    ]
+
+
+def test_rien_de_recupere_pas_de_rescore(monkeypatch, lances):
+    restes = iter([5, 5])
+    monkeypatch.setattr(bg, "descriptions_manquantes", lambda: next(restes))
+    bg.Fond(lambda: False).descriptions()
+    assert lances == ["jobhunter.programs.scrape_desc"]
 
 
 def test_plafond_de_lots(monkeypatch, lances):

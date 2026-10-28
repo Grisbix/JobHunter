@@ -59,10 +59,15 @@ _PARESSEUX["SKILL_LEX"] = lambda: (
 # 'pai' "PAIement", 'var' "VARiable". Here the stake goes beyond the scoring: these
 # labels are PRINTED on the CV sent to the recruiter.
 _SHORT = 4
+# Each short name keeps its text: the regex runs only when the name is in the text at
+# all (a whole-word match implies a substring). Rescoring a queue of 11 754 offers spent
+# 44 s in 1.3 million regex searches, almost all for absent names (2026-10-28).
 _PARESSEUX["_RX_SKILL"] = lambda: (
     {
         lab: [
-            re.compile(r"\b" + re.escape(n.strip()) + r"\b") for n in ns if len(n.strip()) <= _SHORT
+            (n.strip(), re.compile(r"\b" + re.escape(n.strip()) + r"\b"))
+            for n in ns
+            if len(n.strip()) <= _SHORT
         ]
         for lab, ns in _ici.SKILL_LEX.items()
     }
@@ -70,6 +75,12 @@ _PARESSEUX["_RX_SKILL"] = lambda: (
 _PARESSEUX["_SUB_SKILL"] = lambda: (
     {lab: [n for n in ns if len(n.strip()) > _SHORT] for lab, ns in _ici.SKILL_LEX.items()}
 )
+# Every (label, name, regex or None) in one flat list: skills_present walks it once
+# instead of one generator per label (17 s of the same rescoring).
+_PARESSEUX["_PAIRES_SKILL"] = lambda: [
+    *((lab, n, None) for lab, ns in _ici._SUB_SKILL.items() for n in ns),
+    *((lab, n, r) for lab, rs in _ici._RX_SKILL.items() for n, r in rs),
+]
 
 
 def contient(noms: list[str], t: str) -> bool:
@@ -81,8 +92,29 @@ def contient(noms: list[str], t: str) -> bool:
     return False
 
 
+# The last texts read: scoring one offer asks for the same text three times (its
+# components, its tie-break, its reasons). Emptied when the lexicon is rebuilt.
+_VUS: dict[str, frozenset[str]] = {}
+_VUS_DE: list[object] = [None]
+
+
+def skills_present(t: str) -> set[str]:
+    """The labels present in the text (already lowercase): has_skill for every label."""
+    paires = _ici._PAIRES_SKILL
+    if _VUS_DE[0] is not paires:
+        _VUS.clear()
+        _VUS_DE[0] = paires
+    vu = _VUS.get(t)
+    if vu is None:
+        vu = frozenset(lab for lab, n, r in paires if n in t and (r is None or r.search(t)))
+        if len(_VUS) >= 8:
+            _VUS.clear()
+        _VUS[t] = vu
+    return set(vu)
+
+
 def has_skill(label: str, t: str) -> bool:
     """Is the label present in the text (already lowercase)?"""
     return any(n in t for n in _ici._SUB_SKILL[label]) or any(
-        r.search(t) for r in _ici._RX_SKILL[label]
+        n in t and r.search(t) for n, r in _ici._RX_SKILL[label]
     )
