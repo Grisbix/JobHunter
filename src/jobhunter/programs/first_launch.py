@@ -1295,8 +1295,9 @@ def main():
     print(
         _t("  nom : {} · email : {} · tel : {} · ville : {}").format(
             f"{ident['prenom']} {ident['nom']}",
-            ident["email"] or "?",
-            ident["telephone"] or "?",
+            # Like demander_prive: the e-mail and phone are never echoed, only whether read.
+            _t("(renseigné)") if ident["email"] else "?",
+            _t("(renseigné)") if ident["telephone"] else "?",
             ident["ville"] or "?",
         )
     )

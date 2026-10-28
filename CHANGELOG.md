@@ -20,6 +20,8 @@ Nothing assumes a French user or a finance profile any more.
 - **Merge counts say « hors zone »** (« outside the area »), not « hors de France ».
 - Comments and the roadmap no longer name a user; the career-sites scan's messages say
   « offres retenues ».
+- **The first launch no longer prints the e-mail and phone read in the CV**: it says
+  « (filled in) », as the questions already did. Its output often goes to a log.
 
 ## 3.48.0 — 2026-10-28
 
