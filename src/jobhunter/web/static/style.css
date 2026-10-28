@@ -191,7 +191,8 @@ h3 { font-size: var(--t-xl); font-weight: 500; }
 .colonne > * { flex: none; }
 /* List screens (Offres, Documents, Candidatures, Sources' tables): the page stays put,
    filters on top, and the list scrolls inside its panel, its header row kept in view. */
-.vue.plein { overflow-y: auto; display: flex; flex-direction: column; padding-bottom: 16px; }
+/* 24 px at the bottom: the same margin as at the top and on the sides (audit 2026-10-28). */
+.vue.plein { overflow-y: auto; display: flex; flex-direction: column; padding-bottom: 24px; }
 .vue.plein > .colonne, .vue.plein .corps-onglet, .vue.plein .corps-onglet > .colonne { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 /* The panel keeps room for a few rows, the page scrolls below that: with the list's own
    minimum, a low window pushed its rows out under the panel (audit 2026-10-28). */
@@ -216,6 +217,9 @@ h3 { font-size: var(--t-xl); font-weight: 500; }
 .cellule-lieu { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .vue.plein .remplit > .pagination { flex: none; }
 .vue.plein .tableau-kanban { flex: 1 1 auto; min-height: 0; align-items: stretch; }
+/* On one line the columns take the board's height, and ajusterKanban (app.js) keeps the
+   cards that fit; a narrower window wraps them again and the page scrolls. */
+@media (min-width: 1100px) { .vue.plein .tableau-kanban { flex-wrap: nowrap; } }
 .vue.plein .colonne-k { overflow-y: auto; scrollbar-width: thin; }
 .vue.plein .colonne-k > * { flex: none; }
 .vue.plein .colonne-k.vide-k { align-self: flex-start; }
@@ -383,10 +387,14 @@ td > .score { width: 34px; height: 34px; font-size: var(--t-m); }
 /* A narrow window wraps the columns onto a second line instead of crushing the one with
    cards; nothing scrolls sideways. */
 .tableau-kanban { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
-.colonne-k { flex: 1 1 196px; min-width: 196px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 200px; }
+/* 156 px: the six columns hold on one line in a 1280 px window; on two lines the board
+   ran out under the window and over the note below it (audit 2026-10-28). */
+.colonne-k { flex: 1 1 156px; min-width: 156px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 200px; }
 /* An empty column stays a drop target but gives its width to the full ones. */
 /* Its width is its title's: "À postuler" wrapped on two lines at a fixed 132 px. */
-.colonne-k.vide-k { flex: 0 0 auto; min-width: 132px; min-height: 120px; }
+.colonne-k.vide-k { flex: 0 0 auto; min-width: 112px; min-height: 120px; }
+.colonne-k [hidden] { display: none; }
+.vue.plein .colonne-k > .deplier-k { position: sticky; bottom: 0; }  /* « Replier » in reach in an unfolded column */  /* cards beyond the window's height, and their button */
 .colonne-k .entete { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 2px 4px 8px; }
 .colonne-k .entete > :first-child { white-space: nowrap; }
 .colonne-k .entete > .compte { flex: none; }

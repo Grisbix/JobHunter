@@ -4,6 +4,13 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.64.0 — 2026-10-28
+
+The Applications board holds in the window when it opens.
+
+- **No more board cut at the bottom.** In a 1280 × 720 window the six columns went onto two lines: the board ran out under the window, and the note « N offres écartées… » showed through the cards. The columns now stay on one line (narrower: 156 px, 112 px when empty), take the window's height, and each shows the cards that fit; « Voir les N autres » unfolds the rest, which scroll inside the column, with « Replier » kept in view. The count follows the window when it is resized. Below 1100 px wide the columns wrap again and the page scrolls.
+- **Same margin at the bottom as at the top and on the sides** (24 px) on the list screens: Offres, Candidatures, Documents.
+
 ## 3.63.0 — 2026-10-28
 
 The Microsoft Store package contains Node.js again.

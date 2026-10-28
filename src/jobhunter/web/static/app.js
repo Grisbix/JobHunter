@@ -966,10 +966,27 @@ ECRANS.offres = {
   },
 };
 
-// A column shows its first cards; the rest unfold on demand, so that no column has to be
-// scrolled to find an offer (the user, 2026-10-27). Unfolded columns stay so while the app is open.
-const CARTES_K = 6;
+// A column shows the cards that fit in the window; the rest unfold on demand, so that no
+// column has to be scrolled to find an offer (the user, 2026-10-27) and the board is not
+// cut at the bottom when the screen opens (2026-10-28). Unfolded columns stay so while
+// the app is open, and scroll inside themselves.
 const deroulees = new Set();
+function ajusterKanban(vue) {
+  for (const col of vue.querySelectorAll(".colonne-k")) {
+    const bouton = col.querySelector(".deplier-k");
+    if (!bouton || deroulees.has(col.dataset.statut)) continue;
+    const cartes = [...col.querySelectorAll(".fiche-k")];
+    cartes.forEach((c) => { c.hidden = false; });
+    bouton.hidden = true;
+    let n = cartes.length;
+    while (n > 1 && col.scrollHeight > col.clientHeight + 1) {
+      cartes[--n].hidden = true;
+      bouton.hidden = false;
+      bouton.textContent = `Voir les ${cartes.length - n} autres`;
+    }
+  }
+}
+window.addEventListener("resize", () => { if (courant === "candidatures") ajusterKanban($("vue")); });
 ECRANS.candidatures = {
   titre: "Candidatures",
   plein: true,
@@ -991,20 +1008,21 @@ ECRANS.candidatures = {
     } : {};
     vue.replaceChildren(h("div", { class: "colonne" },
       h("div", { class: "tableau-kanban" }, d.colonnes.map((c) =>
-        h("div", { class: c.entrees.length ? "verre colonne-k" : "verre colonne-k vide-k", ...cible(c) },
+        h("div", { class: c.entrees.length ? "verre colonne-k" : "verre colonne-k vide-k", "data-statut": c.statut, ...cible(c) },
           h("div", { class: "entete" }, h("h3", {}, c.statut[0].toUpperCase() + c.statut.slice(1)),h("span", { class: "compte" }, c.entrees.length)),
-          c.entrees.length ? [...(deroulees.has(c.statut) ? c.entrees : c.entrees.slice(0, CARTES_K)).map((e) => h("div", { class: "carte fiche-k", draggable: "true", onclick: () => ouvrirOffre(e.id),
+          c.entrees.length ? [...c.entrees.map((e) => h("div", { class: "carte fiche-k", draggable: "true", onclick: () => ouvrirOffre(e.id),
             ondragstart: (ev) => { tiree = e; ev.dataTransfer.effectAllowed = "move"; ev.dataTransfer.setData("text/plain", e.id); ev.currentTarget.classList.add("tiree"); },
             ondragend: (ev) => { ev.currentTarget.classList.remove("tiree"); } },
             h("div", { class: "t", title: e.poste }, e.poste), h("div", { class: "s" }, e.entreprise),
             h("div", { class: "bas" }, h("span", {}, dateFr(e.date) || "—"),
               e.fit == null ? null : h("div", { class: "prog", title: `${e.fit}/10` }, h("i", { style: `width:${e.fit * 10}%` }))))),
-            c.entrees.length > CARTES_K ? h("button", { class: "bouton deplier-k", onclick: () => {
+            c.entrees.length > 1 ? h("button", { class: "bouton deplier-k", onclick: () => {
               deroulees.has(c.statut) ? deroulees.delete(c.statut) : deroulees.add(c.statut);
               ECRANS.candidatures.dessiner(vue);
-            } }, deroulees.has(c.statut) ? "Replier" : `Voir les ${c.entrees.length - CARTES_K} autres`) : null]
+            } }, "Replier") : null]
           : h("div", { class: "vide" }, "Vide")))),
       d.ecartees ? h("div", { class: "sous" }, `${d.ecartees} offres écartées (mauvaise, pas intéressé, expirée) ne sont pas montrées.`) : null));
+    ajusterKanban(vue);
   },
 };
 
