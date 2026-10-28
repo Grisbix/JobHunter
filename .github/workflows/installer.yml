@@ -183,3 +183,35 @@ jobs:
           fichiers=(JobHunterSetup.exe JobHunterSetup.exe.sha256 playwright-node-win64.zip)
           if [ -f JobHunter.msix ]; then fichiers+=(JobHunter.msix); fi
           gh release upload "$TAG" "${fichiers[@]}" --clobber --repo "$GITHUB_REPOSITORY"
+
+  store:
+    # Sends the release's MSIX to the Microsoft Store as a new submission (ADR 0015).
+    # Off until the author sets the repository variable MSSTORE_PRODUCT_ID (the Store
+    # ID, 9N…) and the four secrets of the Partner Center Entra application: the
+    # first submission is made by hand, Microsoft's API only updates a live app.
+    # The Store still certifies each update before users get it.
+    if: github.event_name == 'release' && vars.MSSTORE_PRODUCT_ID != ''
+    needs: windows
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: JobHunterMsix
+      - uses: microsoft/microsoft-store-apppublisher@cc9910a8d59f2eb55cbb83df0a3800cf3b5300e0  # v1.4
+        with:
+          version: v0.4.3
+      - name: Envoi au Store
+        shell: pwsh
+        env:
+          # Never a ${{ }} expression in the script: the values come from the environment.
+          TENANT: ${{ secrets.AZURE_AD_TENANT_ID }}
+          SELLER: ${{ secrets.SELLER_ID }}
+          CLIENT: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+          SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+          PRODUIT: ${{ vars.MSSTORE_PRODUCT_ID }}
+        run: |
+          msstore reconfigure --tenantId $env:TENANT --sellerId $env:SELLER --clientId $env:CLIENT --clientSecret $env:SECRET
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          msstore publish (Resolve-Path JobHunter.msix).Path -id $env:PRODUIT
+          if ($LASTEXITCODE -ne 0) { exit 1 }

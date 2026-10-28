@@ -43,3 +43,18 @@ from a file of the repository. Without them the package carries placeholders.
 - Steps left to the author: create the Partner Center account, reserve the name
   « JobHunter », copy the identity into the three variables, upload the release's
   `JobHunter.msix` and fill the listing (description, screenshots, privacy policy).
+- **Updates sent by the CI** (job `store` of `installer.yml`): once the app is live,
+  each release sends its `JobHunter.msix` as a new submission
+  (`microsoft/microsoft-store-apppublisher`, Microsoft Store Developer CLI
+  `msstore publish`). Microsoft's API only updates a published, free app; the
+  first submission stays manual, and the Store certifies each update. The job stays
+  off until the author, once:
+  1. associates a Microsoft Entra ID tenant with the Partner Center account
+     (Account settings → Tenants; free);
+  2. registers an application in Entra ID, creates a client secret, and adds the
+     application under Partner Center → User management → Microsoft Entra
+     applications, role Manager;
+  3. sets the repository secrets `AZURE_AD_TENANT_ID`, `SELLER_ID`,
+     `AZURE_AD_APPLICATION_CLIENT_ID`, `AZURE_AD_APPLICATION_SECRET`, and the
+     variable `MSSTORE_PRODUCT_ID` (the Store ID, 9N…), which turns the job on.
+  Guide: https://learn.microsoft.com/windows/apps/publish/msstore-dev-cli/github-actions
