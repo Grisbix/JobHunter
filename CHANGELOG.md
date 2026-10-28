@@ -4,6 +4,15 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.50.1 — 2026-10-28
+
+- **The morning collection starts again.** Since 3.47 it stopped one second after it
+  began, on « NameError: name '_pays_usajobs' is not defined »: the function was
+  written below the block that starts the program, so it did not exist yet when the
+  scheduled task ran it. Nothing was collected on 28 October.
+- The same mistake is corrected in the message, fit and applications modules, and a
+  test now refuses any definition written after a module's starting block.
+
 ## 3.50.0 — 2026-10-28
 
 The first launch reads CVs from London, Berlin, Tokyo and Madrid as well as from France.
