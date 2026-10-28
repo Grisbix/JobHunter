@@ -4,6 +4,17 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.57.0 — 2026-10-28
+
+Smoother window: lighter over Remote Desktop, a home screen that fits 1280×720, and a background loop that no longer redoes the same scoring.
+
+- **Remote Desktop: light display.** `Api.session()` tells the page whether the window is seen through Remote Desktop (Windows' `SM_REMOTESESSION`); the page then drops the frosted blurs, the blurred backdrop and the animations (`body.leger`). There every frame is encoded and sent at about 30 per second; on the profile screen this cuts the GPU work while scrolling by about a third. Windows' "reduce motion" setting now also stops transitions and animations.
+- **The background's news reach the page again.** `Api._fond` (the backdrop setter) overwrote the background loop of the same name: every `fond_etat` call failed. It is now `Api._toile`.
+- **Skill matching is faster.** `skills_in` tests each skill's phrases through one flat list of precompiled patterns, with a cheap substring check first and a small memo of recent texts.
+- **ATS rescoring runs once per series of description batches**, after the last batch, and only when a description was actually fetched (it took over a minute per batch on a real queue of 11 000 offers).
+- **Refreshing keeps your place.** A data refresh restores the scroll position of the screen and of its scrolling lists.
+- **Low windows (760 px and less)** tighten the home screen's spacing so its panels fit without being cut.
+
 ## 3.56.0 — 2026-10-28
 
 No priority zone means the whole country.
