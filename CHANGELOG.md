@@ -6,12 +6,16 @@ recent at the top.
 
 ## 3.55.0 — 2026-10-28
 
-Nothing overlaps in a small window.
+Nothing overlaps, nothing scrolls sideways, and the home screen fits the window it opens in.
+
+### Changed
+- **Nothing scrolls sideways any more.** The offers' filters wrap onto a second line in a narrow window instead of one line scrolled with the wheel, and the applications' columns wrap onto a second row instead of crushing the one holding cards (its title, count and date overlapped at 900 px).
+- **The home screen fits the window it opens in (1280 × 800), no panel cut by its edge.** It is more compact (one line per best offer, the title in full on hover; « À préparer » joins the line under « CV et lettres »; lower bars), and when room still lacks, whole items are put away, the least useful first, each column for itself: best offers beyond three, recent applications beyond one, zones beyond one, tasks beyond two, then the Documents button (also in the menu). Every item stays one click away. In one column (window under 1100 px) the page scrolls as before.
 
 ### Fixed
 - **A low window no longer pushes the list out of its panel.** At the window's minimum size (900 × 560), the offers' and documents' lists kept 260 px of their own while their panel shrank: rows showed under the panel's edge. The panel now keeps room for a few rows and the page scrolls below that.
-- **The applications' columns scroll sideways in a narrow window** instead of crushing the one holding cards (its title, count and date overlapped at 900 px).
-- Checked on every screen at 900 × 560, 1024 × 640, 1280 × 720, 1280 × 800 and 1440 × 900, in French and English: no element overlaps another or leaves its panel. The filters' line keeps scrolling sideways under 1100 px, as designed.
+- The date of a recent application no longer breaks over two lines.
+- Checked on every screen at 900 × 560, 1024 × 640, 1280 × 720, 1280 × 800 and 1440 × 900, in French and English: no element overlaps another, leaves its panel or goes past the window's right edge; the home screen at 1280 × 800 and 1440 × 900 with five best offers, five applications, five zones and five tasks holds without a cut.
 
 ## 3.54.0 — 2026-10-28
 

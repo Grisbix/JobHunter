@@ -10,6 +10,9 @@ from pathlib import Path
 CSS = (
     Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "web" / "static" / "style.css"
 ).read_text(encoding="utf-8")
+JS = (
+    Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "web" / "static" / "app.js"
+).read_text(encoding="utf-8")
 
 ESPACEMENTS = {0, 1, 2, 4, 8, 12, 16, 20, 24, 32, 40, 48}
 
@@ -61,6 +64,20 @@ def test_une_fenetre_basse_ne_pousse_pas_les_lignes_hors_du_panneau():
     assert re.search(r"min-height: [1-9]\d+px", panneau)
 
 
-def test_le_kanban_defile_au_lieu_d_ecraser_ses_colonnes():
-    assert re.search(r"\.tableau-kanban \{[^}]*overflow-x: auto", CSS)
+def test_le_kanban_passe_a_la_ligne_au_lieu_d_ecraser_ses_colonnes():
+    assert re.search(r"\.tableau-kanban \{[^}]*flex-wrap: wrap", CSS)
     assert re.search(r"\n\.colonne-k \{[^}]*min-width: [1-9]\d+px", CSS)
+
+
+def test_rien_ne_defile_vers_la_droite():
+    # The user, 2026-10-28: « pas de défilement vers la droite ». Bars and boards wrap;
+    # only a table may scroll sideways inside its own panel.
+    for regle in re.findall(r"([^{}]+)\{([^}]*overflow-x: (?:auto|scroll)[^}]*)\}", CSS):
+        assert "barre-outils" not in regle[0] and "kanban" not in regle[0], regle[0]
+    assert not re.search(r"\.barre-outils[^{]*\{[^}]*flex-wrap: nowrap", CSS)
+
+
+def test_l_accueil_range_des_elements_entiers_pour_tenir_dans_la_fenetre():
+    # The user, 2026-10-28: « éviter de couper les widgets quand on ouvre l'app ».
+    assert "function ajusterAccueil(vue)" in JS
+    assert re.search(r"\.accueil \.range \{[^}]*display: none", CSS)

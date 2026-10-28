@@ -160,21 +160,6 @@ function observerTraduction(changes) {
   }
 }
 
-// Narrow window: the filter bar is one scrolling line (style.css). The wheel scrolls it
-// sideways, and it fades on the right while more filters follow.
-document.addEventListener("wheel", (ev) => {
-  const b = ev.target.closest && ev.target.closest(".barre-outils");
-  if (!b || b.scrollWidth <= b.clientWidth || Math.abs(ev.deltaX) > Math.abs(ev.deltaY)) return;
-  ev.preventDefault();
-  b.scrollLeft += ev.deltaY;
-}, { passive: false });
-const marquerSuite = (b) => b.classList.toggle("suite", b.scrollLeft + b.clientWidth < b.scrollWidth - 4);
-const barresDefilantes = () => document.querySelectorAll(".barre-outils").forEach(marquerSuite);
-document.addEventListener("scroll", (ev) => {
-  if (ev.target.classList && ev.target.classList.contains("barre-outils")) marquerSuite(ev.target);
-}, true);
-window.addEventListener("resize", barresDefilantes);
-new MutationObserver(barresDefilantes).observe(document.getElementById("vue") || document.body, { childList: true });
 const nombre = (n) => Number(n || 0).toLocaleString(LOCALE);
 const taille = (o) => (o < 1e6 ? `${Math.max(1, Math.round(o / 1024))} Ko` : `${(o / 1e6).toLocaleString(LOCALE, { maximumFractionDigits: 1 })} Mo`);
 const JOURS = ["di", "lu", "ma", "me", "je", "ve", "sa"];
@@ -682,8 +667,37 @@ ECRANS.accueil = {
             h("div", { class: "tuile" }, h("i", { style: `width:${z.pct}%` }), h("span", {}, `${z.pct} %`))))),
         carteDocumentsAccueil(d.documents))));
     requestAnimationFrame(() => requestAnimationFrame(() => pleins.forEach(([e, p]) => { e.style.height = `${p}%`; })));
+    ajusterAccueil(vue);
   },
 };
+
+// The home screen fits the window it opens in (the user, 2026-10-28: « éviter de couper
+// les widgets quand on ouvre l'app »): whole items are put away, the least useful first —
+// best offers beyond three, recent applications beyond one; on the right, zones beyond
+// one, tasks beyond two, then the Documents button (also in the menu) — never a panel cut
+// by the window's edge. Each column for itself. In one column (narrow window) the page
+// scrolls.
+function ajusterAccueil(vue) {
+  const accueil = vue.querySelector(".accueil");
+  if (!accueil) return;
+  accueil.querySelectorAll(".range").forEach((e) => e.classList.remove("range"));
+  if (getComputedStyle(accueil).gridTemplateColumns.split(" ").length < 2) return;
+  const bas = vue.getBoundingClientRect().bottom - 8 + vue.scrollTop;  // the visible edge, not the padding
+  const apres = (col, sel, garder) => [...col.querySelectorAll(sel)].slice(garder).reverse();
+  const [gauche, droite] = accueil.querySelectorAll(":scope > .colonne");
+  const etapes = [
+    [gauche, [...apres(gauche, ".liste-meilleures li", 3), ...apres(gauche, "tbody tr", 1)]],
+    [droite, [...apres(droite, ".zones:not(.documents-accueil) .zone", 1), ...apres(droite, ".fil > li", 2),
+              ...droite.querySelectorAll(".documents-accueil .boutons > :last-child")]],
+  ];
+  for (const [col, elements] of etapes) {
+    for (const e of elements) {
+      if (col.getBoundingClientRect().bottom <= bas + 1) break;
+      e.classList.add("range");
+    }
+  }
+}
+window.addEventListener("resize", () => { if (courant === "accueil") ajusterAccueil($("vue")); });
 
 // Bottom right of the home screen (the user, 2026-10-27: « remplissons le bas droit »):
 // how many well-scored offers have their CV and letter, and the button to prepare more.
@@ -691,12 +705,10 @@ function carteDocumentsAccueil(d) {
   if (!d) return null;
   const pct = d.bonnes ? Math.round(100 * d.prets / d.bonnes) : 0;
   return h("div", { class: "zones documents-accueil" }, h("h2", {}, "CV et lettres"),
-    h("div", { class: "sous", style: "margin-bottom:16px" }, "offres notées 8 et plus"),
+    h("div", { class: "sous", style: "margin-bottom:16px" }, `offres notées 8 et plus · ${nombre(d.a_preparer)} à préparer`),
     h("div", { class: "zone" },
       h("div", {}, h("div", { class: "lab" }, "Prêtes"), h("div", { class: "val" }, nombre(d.prets))),
       h("div", { class: "tuile" }, h("i", { style: `width:${pct}%` }), h("span", {}, `${pct} %`))),
-    h("div", { class: "zone" },
-      h("div", {}, h("div", { class: "lab" }, "À préparer"), h("div", { class: "val" }, nombre(d.a_preparer)))),
     h("div", { class: "boutons", style: "margin-top:14px" },
       d.a_preparer ? action("Préparer les 30 meilleures", "eclair", "documents_top", "plein") : null,
       bouton("Documents", "doc", () => aller("documents"))));
@@ -705,12 +717,12 @@ function carteDocumentsAccueil(d) {
 function tableCandidatures(lignes) {
   if (!lignes.length) return h("div", { class: "vide" }, "Aucune candidature pour l'instant.");
   return h("table", {},
-    h("colgroup", {}, h("col", { style: "width:24%" }), h("col", { style: "width:38%" }), h("col", { style: "width:14%" }), h("col", { style: "width:11%" }), h("col", {})),
+    h("colgroup", {}, h("col", { style: "width:22%" }), h("col", { style: "width:34%" }), h("col", { style: "width:14%" }), h("col", { style: "width:15%" }), h("col", {})),
     h("thead", {}, h("tr", {}, ["Entreprise", "Poste", "Statut", "Le", "Score"].map((t) => h("th", {}, t)))),
     h("tbody", {}, lignes.map((c) =>
       h("tr", { onclick: () => ouvrirOffre(`${c.entreprise}|${c.poste}`) },
         h("td", {}, c.entreprise), h("td", { title: c.poste }, c.poste),
-        h("td", {}, h("span", { class: `etiq ${c.statut}` }, c.statut)), h("td", {}, dateFr(c.date)),
+        h("td", {}, h("span", { class: `etiq ${c.statut}` }, c.statut)), h("td", { style: "white-space:nowrap" }, dateFr(c.date)),
         h("td", {}, c.fit == null ? "—" : h("div", { class: "prog", title: `${c.fit}/10` }, h("i", { style: `width:${c.fit * 10}%` })))))));
 }
 

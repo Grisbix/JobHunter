@@ -208,7 +208,7 @@ h3 { font-size: var(--t-xl); font-weight: 500; }
 /* In a column the column's gap already separates it: 18px more made 38px. */
 .colonne > .barre-outils { margin-bottom: 0; }
 .filtres-offres { display: grid; gap: 12px; }
-.filtres-offres > .barre-outils { margin-bottom: 0; flex-wrap: nowrap; }
+.filtres-offres > .barre-outils { margin-bottom: 0; }
 .grille-filtres { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
 .grille-filtres button.choix.multi { max-width: none; width: 100%; }
 .vide { color: var(--gris); font-size: var(--t-l); padding: 24px 0; text-align: center; }
@@ -249,7 +249,8 @@ h3 { font-size: var(--t-xl); font-weight: 500; }
 .col .jour { position: absolute; bottom: -22px; font-size: var(--t-s); color: var(--gris); white-space: nowrap; }
 
 .liste-meilleures { padding: 20px; }
-.liste-meilleures ol { list-style: none; margin-top: 16px; display: flex; flex-direction: column; gap: 16px; }
+.liste-meilleures ol { list-style: none; margin-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+.liste-meilleures .t { -webkit-line-clamp: 1; }  /* the full title is in the tooltip */
 .liste-meilleures li { display: flex; gap: 12px; align-items: center; cursor: pointer; min-width: 0; }
 .liste-meilleures li:hover .t { color: var(--terre); }
 /* Titles and subtitles wrap on two lines before being cut; the full text is in the tooltip. */
@@ -290,13 +291,15 @@ h3 { font-size: var(--t-xl); font-weight: 500; }
 .zone .lab { font-size: var(--t-m); color: var(--gris); text-transform: capitalize; }
 .zone .val { font-size: var(--t-2xl); font-weight: 500; margin-top: 2px; font-variant-numeric: tabular-nums; }
 .tuile {
-  position: relative; height: 60px; border-radius: 14px; overflow: hidden;
+  position: relative; height: 48px; border-radius: 14px; overflow: hidden;
   background: var(--verre); border: 1px solid var(--filet); backdrop-filter: blur(20px);
   display: flex; align-items: center; justify-content: flex-end; padding: 0 20px;
   font-size: var(--t-2xl); color: var(--terre); font-variant-numeric: tabular-nums;
 }
 .tuile i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, rgba(var(--c1-rgb),.08), rgba(var(--c2-rgb),.42)); border-right: 1px solid rgba(var(--blanc-rgb),.8); border-radius: 0 12px 12px 0; }
 .tuile span { position: relative; }
+/* Put away by ajusterAccueil: whole items, so that no panel is cut by the window. */
+.accueil .range { display: none !important; }
 
 /* Tables */
 table { width: 100%; border-collapse: collapse; font-size: var(--t-m); table-layout: fixed; }
@@ -362,8 +365,9 @@ td > .score { width: 34px; height: 34px; font-size: var(--t-m); }
 .pagination .choix { height: 32px; margin-right: 12px; }
 
 /* Applications board */
-/* A narrow window scrolls the columns sideways instead of crushing the one with cards. */
-.tableau-kanban { display: flex; gap: 16px; align-items: flex-start; overflow-x: auto; scrollbar-width: thin; }
+/* A narrow window wraps the columns onto a second line instead of crushing the one with
+   cards; nothing scrolls sideways. */
+.tableau-kanban { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
 .colonne-k { flex: 1 1 196px; min-width: 196px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 200px; }
 /* An empty column stays a drop target but gives its width to the full ones. */
 /* Its width is its title's: "À postuler" wrapped on two lines at a fixed 132 px. */
@@ -784,14 +788,8 @@ label.case.pale { color: var(--gris); cursor: default; }
 :root.mode-sombre .zone-code { background: rgba(0, 0, 0, .25); }
 :root.mode-sombre select option { background: #2c2725; color: #f1ece8; }
 
-/* Narrow window: the offers' filters stay on one scrolling line instead of five. The
-   wheel scrolls it (barreDefilante) and a fade says more filters follow. */
-@media (max-width: 1100px) {
-  .barre-outils { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 8px; scrollbar-width: thin; }
-  .barre-outils > * { flex: none; }
-  .barre-outils .champ { min-width: 220px; }
-  .barre-outils.suite { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); }
-}
+/* Narrow window: the filters wrap onto more lines; nothing scrolls sideways (the user,
+   2026-10-28). */
 .genre-lieu { margin-left: 8px; font-size: var(--t-xs); opacity: .65; }
 /* Statistics: three stacks, the last panel of each grows, so no hole is left. */
 .piles-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: stretch; }

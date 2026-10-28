@@ -1452,6 +1452,11 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "ofertas con 8 o más",
     ),
     "Prêtes": ("Ready", "Fertig", "Listas"),
+    "offres notées 8 et plus · {n} à préparer": (
+        "offers scored 8 and more · {n} to prepare",
+        "Angebote ab 8 · {n} vorzubereiten",
+        "ofertas con 8 o más · {n} por preparar",
+    ),
     "À préparer": ("To prepare", "Vorzubereiten", "Por preparar"),
     "Voir": ("View", "Ansehen", "Ver"),
     "absent": ("missing", "fehlt", "ausente"),
