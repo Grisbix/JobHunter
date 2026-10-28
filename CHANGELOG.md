@@ -4,6 +4,28 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.51.0 — 2026-10-28
+
+The large employers of your country, from open directories.
+
+- **`python -m jobhunter companies-import`** adds your country's large employers to
+  the register of companies seen, which the career-site pass asks every morning:
+  - **Wikidata**, for any country: companies of 500 employees or more, largest first,
+    with their website and industry (2,330 for the United States, 1,760 for Germany,
+    253 for Japan, measured on 28 October);
+  - **SIRENE** in France (recherche-entreprises.api.gouv.fr): companies of 1,000
+    employees or more, by activity section.
+- **Only your fields' industries are kept**: banks and insurers for a finance profile,
+  hospitals for a nurse, software for a developer; a company whose industry is unknown
+  comes after them. Legal, HR, sales and project profiles work in every industry:
+  nothing is filtered. `--tous-secteurs` keeps every industry, `--n` sets how many
+  (300), `--dry` only counts.
+- **The companies really seen in a collection are asked first**; a directory's come
+  after them. With no offer page in the queue, the career-site pass reads the
+  company's website to find its recruiting tool.
+- Both directories are public and free, asked one request at a time with a pause and
+  the project's name; a refusal stops the import.
+
 ## 3.50.1 — 2026-10-28
 
 - **The morning collection starts again.** Since 3.47 it stopped one second after it
