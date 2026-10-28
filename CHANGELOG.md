@@ -4,6 +4,13 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.54.0 — 2026-10-28
+
+Sites are recognised by the URL's host, not by a piece of text.
+
+### Fixed
+- **A site is told by its host.** Eleven places tested « linkedin.com in url » (or Indeed, Welcome to the Jungle, Talent, SmartRecruiters): an address such as `https://example.org/?ref=linkedin.com` or `linkedin.com.example.org` passed for LinkedIn. They now go through `links.sur_site`, which reads the host (`fr.linkedin.com` passes, `notlinkedin.com` does not; « indeed. » matches every extension). Closes eleven CodeQL alerts (py/incomplete-url-substring-sanitization). No offer of a real queue changes.
+
 ## 3.53.0 — 2026-10-28
 
 A new profile finds its trade and its country, and asks where to search.

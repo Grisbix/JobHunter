@@ -7,6 +7,7 @@ import importlib
 import time
 from typing import Any
 
+from jobhunter import links as _liens
 from jobhunter import run_id as _execution
 from jobhunter.scoring import history as _historique
 from jobhunter.scoring import zones as _zones
@@ -165,7 +166,7 @@ def rang_source(url: str | None) -> int:
     u = (url or "").lower()
     if not u:
         return -1
-    if "linkedin.com" in u:
+    if _liens.sur_site(u, "linkedin.com"):
         return 0
     if any(k in u for k in _AGREGATEURS):
         return 1
@@ -291,7 +292,7 @@ def _merge_into_queue(
                 u_ = o["url"].lower()
                 x["canal"] = (
                     "manuel"
-                    if ("linkedin.com" in u_ or "indeed." in u_ or "welcometothejungle" in u_)
+                    if _liens.sur_site(u_, "linkedin.com", "indeed.", "welcometothejungle.com")
                     else "auto"
                 )
                 x["site_kind"] = "board" if x["canal"] == "manuel" else "entreprise"
@@ -371,7 +372,7 @@ def _merge_into_queue(
         u = o["url"].lower()
         canal = (
             "manuel"
-            if ("linkedin.com" in u or "indeed." in u or "welcometothejungle" in u)
+            if _liens.sur_site(u, "linkedin.com", "indeed.", "welcometothejungle.com")
             else "auto"
         )
         # Excluded contract: we do not even add. The user is not a student;

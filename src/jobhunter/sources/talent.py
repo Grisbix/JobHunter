@@ -8,6 +8,7 @@ import re
 import time
 from typing import Any
 
+from jobhunter import links as _liens
 from jobhunter import log as _journal
 from jobhunter.sources import common as _commun
 from jobhunter.sources.common import UA, _mk, title_ok
@@ -87,7 +88,7 @@ def fetch_talent(max_days: int = 60, per_kw: int = 20) -> list[dict[str, Any]]:
         seen = {
             str(o.get("url") or "")
             for o in queue_io.charger(descriptions=False)
-            if "talent.com" in str(o.get("url") or "")
+            if _liens.sur_site(o.get("url"), "talent.com")
         }
     except Exception:
         seen = set()

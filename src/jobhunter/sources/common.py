@@ -800,7 +800,7 @@ def _norm_url(u: str | None) -> str:
     host = s.netloc.lower()
     if host.startswith("www."):
         host = host[4:]
-    if host.endswith("linkedin.com"):  # fr./be./lu. linkedin = same site
+    if host == "linkedin.com" or host.endswith(".linkedin.com"):  # fr./be./lu. = same site
         host = "linkedin.com"
     qs = [(k, v) for k, v in parse_qsl(s.query) if k.lower() not in _URL_JUNK]
     tail = "?" + urlencode(sorted(qs)) if qs else ""

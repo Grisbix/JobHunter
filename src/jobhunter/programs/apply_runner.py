@@ -41,6 +41,7 @@ import sys
 import time
 from pathlib import Path
 
+from jobhunter import links as _liens
 from jobhunter import root as _racine
 
 # Windows console = cp1252 → the emoji/accent prints (describe_page, fill…) raised
@@ -743,7 +744,7 @@ def main():
                     _fast = getattr(args, "fast", False)
                     time.sleep(0.5 if _fast else 1.5)
                     # ── LinkedIn Easy Apply SEMI-AUTOMATIC: session reused, fills in, STOP before Send ──
-                    if "linkedin.com" in (d.get("url") or ""):
+                    if _liens.sur_site(d.get("url"), "linkedin.com"):
                         try:
                             from jobhunter.navigation import dismiss_cookies, linkedin_easy_apply
 

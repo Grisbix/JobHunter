@@ -39,6 +39,7 @@ import sys
 import time
 import unicodedata
 
+from jobhunter import links as _liens
 from jobhunter import root as _racine
 
 HERE = _racine.scripts()
@@ -445,7 +446,7 @@ def main():
     cibles = [
         o
         for o in q
-        if "linkedin.com" in str(o.get("url") or "").lower()
+        if _liens.sur_site(o.get("url"), "linkedin.com")
         and (o.get("fit") or 0) >= a.fit
         and (o.get("entreprise") or "").strip()
     ]
@@ -526,7 +527,7 @@ def main():
         with queue_io.transaction(descriptions=False) as file_:
             for o in file_:
                 k = queue_io.oid(o)
-                if k in trouvees and "linkedin.com" in str(o.get("url") or "").lower():
+                if k in trouvees and _liens.sur_site(o.get("url"), "linkedin.com"):
                     u, src = trouvees[k]
                     o["url_linkedin"] = o["url"]
                     o["url"], o["source"] = u, src

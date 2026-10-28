@@ -11,6 +11,7 @@ from typing import Any, NoReturn
 from urllib.parse import quote
 
 from jobhunter import lazy as _paresseux
+from jobhunter import links as _liens
 from jobhunter import log as _journal
 from jobhunter.network import exiger_http
 from jobhunter.scoring import zones as _zones
@@ -205,7 +206,7 @@ def _indeed_cartes(mot: str, lieu: str) -> list[Any]:
             with urllib.request.urlopen(  # nosec B310: scheme checked by exiger_http
                 urllib.request.Request(exiger_http(url), headers=INDEED_UA), timeout=25
             ) as f:
-                if "secure.indeed.com" in f.geturl():
+                if _liens.sur_site(f.geturl(), "secure.indeed.com"):
                     bloque("connexion requise")
                 if f.headers.get("cf-mitigated", "").lower() == "challenge":
                     bloque("challenge anti-bot")

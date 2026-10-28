@@ -57,6 +57,7 @@ import sys
 import time
 from pathlib import Path  # noqa: F401  (annotations and callers)
 
+from jobhunter import links as _liens
 from jobhunter import root as _racine
 from jobhunter.types import Offre
 
@@ -477,7 +478,7 @@ def pas_une_offre(o: Offre) -> str | None:
     if _RX_PAGE_RECHERCHE.search(u):
         return "pas_une_offre:recherche"
     s = urlsplit(u)
-    if "smartrecruiters.com" in s.netloc and s.path.strip("/").count("/") == 0:
+    if _liens.sur_site(u, "smartrecruiters.com") and s.path.strip("/").count("/") == 0:
         return "pas_une_offre:portail"
     if _RX_PORTAIL.match(s.path or "/") and not s.query:
         return "pas_une_offre:accueil_ou_portail"

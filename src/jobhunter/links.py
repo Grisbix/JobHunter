@@ -7,9 +7,42 @@ A single implementation: the six previous copies diverged (case, accents, forgot
 import re
 from os import PathLike
 from pathlib import Path
-from urllib.parse import quote, unquote
+from urllib.parse import quote, unquote, urlsplit
 
 _LECTEUR = re.compile(r"^/*[A-Za-z]:(?:/|$)")
+
+
+# ── Sites ────────────────────────────────────────────────────────────────────
+def hote(url: object) -> str:
+    """The URL's host, in lower case ("" if none); a URL without scheme is read too."""
+    u = str(url or "").strip()
+    if "//" not in u:
+        u = "//" + u
+    try:
+        return (urlsplit(u).hostname or "").rstrip(".")
+    except ValueError:
+        return ""
+
+
+def sur_site(url: object, *domaines: str) -> bool:
+    """Is `url` on one of `domaines`, or one of their subdomains?
+
+    By the host, never by a substring: « linkedin.com » matches fr.linkedin.com, not
+    linkedin.com.example.org nor a « ?ref=linkedin.com » (CodeQL,
+    py/incomplete-url-substring-sanitization). A domain ending in a dot (« indeed. »)
+    matches every extension: indeed.fr, de.indeed.com, indeed.co.uk.
+    """
+    h = hote(url)
+    if not h:
+        return False
+    for d in domaines:
+        d = d.lower()
+        if d.endswith("."):
+            if d[:-1] in h.split(".")[:-1]:
+                return True
+        elif h == d or h.endswith("." + d):
+            return True
+    return False
 
 
 # ── Chemins ↔ URL file:/// ───────────────────────────────────────────────────

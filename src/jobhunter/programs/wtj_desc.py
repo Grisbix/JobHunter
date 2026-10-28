@@ -103,7 +103,9 @@ def _cible(u):
     The /fr/jobs?query=… URLs of the queue come from the scan: they have no
     description to read, counting them as failures would skew the summary.
     """
-    return "welcometothejungle.com" in u and "/jobs/" in u and "?query=" not in u
+    from jobhunter import links
+
+    return links.sur_site(u, "welcometothejungle.com") and "/jobs/" in u and "?query=" not in u
 
 
 def main():
