@@ -4,6 +4,23 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.49.0 — 2026-10-28
+
+Nothing assumes a French user or a finance profile any more.
+
+- **The first launch speaks the interface's language** — the system's by default:
+  « First name », « Target jobs », « PRIORITY places »… for a user whose system is in
+  English, French otherwise. Yes/no answers take « y » as well as « o », and the
+  command line's help is in English.
+- **The default finance / ESG companies are offered only to a finance profile.** A nurse
+  in Ohio is no longer asked whether to keep ninety banks and asset managers.
+- **eFC's default filter follows the profile**: ESG titles for a profile whose core
+  title words are ESG's, the profile's own titles otherwise. **The top offers' title
+  bonus** uses the profile's core title words (`scoring.intitules_coeur`).
+- **Merge counts say « hors zone »** (« outside the area »), not « hors de France ».
+- Comments and the roadmap no longer name a user; the career-sites scan's messages say
+  « offres retenues ».
+
 ## 3.48.0 — 2026-10-28
 
 Letters, messages and contract types follow the offer's country.
