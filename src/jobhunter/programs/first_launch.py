@@ -45,6 +45,10 @@ A_COMPLETER = "A COMPLETER"
 # The questions and messages, in English when the interface is not in French (the
 # system's language by default): a user in Ohio reads « First name », not « Prénom ».
 _EN = {
+    "\n5. Plus d'offres : la clé {} (gratuite, 5 minutes)": "\n5. More offers: the {} key (free, 5 minutes)",
+    "  créer un compte et une application sur {}, puis :": "  create an account and an application on {}, then:",
+    "  app : Sources → Accès et clés → Saisir la clé": "  app: Sources → Access and keys → Enter the key",
+    "  y abonner l'application à « Offres d'emploi v2 »": "  subscribe the application to « Offres d'emploi v2 » there",
     "\n1. Lecture du CV : {}": "\n1. Reading the CV: {}",
     "  ! Presque aucun texte lu. Un CV scanne (image) ne se lit pas : fournis un PDF texte ou un .docx.": "  ! Almost no text read. A scanned CV (image) cannot be read: give a text PDF or a .docx.",
     "  Rien n'est écrit. Relance avec le CV en .docx, ou donne --metiers.": "  Nothing written. Run again with the CV as .docx, or give --metiers.",
@@ -761,6 +765,8 @@ _TRADUCTIONS = (
     ("consultant",),
     ("teacher", "enseignant", "professeur"),
     ("technician", "technicien"),
+    ("mechanical", "mécanique", "mecanique"),
+    ("electrical", "électrique", "electrique"),
     ("lawyer", "avocat", "juriste"),
     ("buyer", "acheteur", "acheteuse"),
     ("sales", "commercial"),
@@ -773,6 +779,23 @@ def _traductions(forme):
         if forme in groupe:
             return (forme, *(g for g in groupe if g != forme))
     return (forme,)
+
+
+# Heads that name no job on their own: an « ingénieur » is DevOps, civil or mechanical.
+# With a specialty in the CV's title, the title filter asks for both.
+_TETES_LARGES = {"engineer", "ingénieur", "ingenieur", "technician", "technicien", "consultant"}
+
+
+def filtre_metier(mots_cibles, mots_famille):
+    """The title filter's words: "ingénieur / engineer + mécanique / mechanical" and the
+    specialty for a broad head, the words themselves otherwise; then the family's words."""
+    tetes = [m for m in mots_cibles if m in _TETES_LARGES]
+    autres = [m for m in mots_cibles if m not in _TETES_LARGES]
+    famille = [m for m in mots_famille if m not in _TETES_LARGES]
+    if not tetes or not autres:
+        return list(dict.fromkeys(mots_cibles + list(mots_famille)))
+    # The specialty alone still passes: « Chargé d'études mécanique ».
+    return list(dict.fromkeys([" / ".join(tetes) + " + " + " / ".join(autres), *autres, *famille]))
 
 
 def mots_significatifs(titre):
@@ -1140,8 +1163,11 @@ def construire(cv_txt, cv_nom, rep):
             "intitules_hors_metier": [],
         },
         "niveau": niv,
+        # LinkedIn "Worldwide" and freehire's other countries: 126 of a Lyon engineer's
+        # 375 offers were abroad (2026-10-28). True, or `collect --monde`, to ask for them.
+        "monde": False,
         "filtre_titre": {
-            "metier": list(dict.fromkeys(mots_cibles + list(FAMILLES.get(coeur, ("", []))[1]))),
+            "metier": filtre_metier(mots_cibles, FAMILLES.get(coeur, ("", []))[1]),
             "exclus": exclus,
             "exclus_sauf_complement": [],
             "complement": [],
@@ -1633,6 +1659,17 @@ def main():
         print(f"  - {m}")
     if not manque:
         print(_t("  rien d'obligatoire : tout ce qu'il faut a été lu dans le CV"))
+    from jobhunter import api_keys
+    from jobhunter import root as _root
+
+    cle = api_keys.conseillee(_root.dossier_cles(), ident.get("pays") or "fr")
+    if cle:
+        c = api_keys.CLES[cle]
+        print(_t("\n5. Plus d'offres : la clé {} (gratuite, 5 minutes)").format(c.libelle))
+        print(_t("  créer un compte et une application sur {}, puis :").format(c.obtenir))
+        if cle == "francetravail":  # without it the key gets a token and no offer
+            print(_t("  y abonner l'application à « Offres d'emploi v2 »"))
+        print(_t("  app : Sources → Accès et clés → Saisir la clé"))
     print(
         _t(
             "\nVerifier : python JobHunter.pyw show-profile   ·   Lancer l'app : python JobHunter.pyw"

@@ -61,7 +61,12 @@ def familles_du_profil(n: int = 2) -> list[str]:
     from jobhunter import profile as _P
     from jobhunter.programs.first_launch import familles_visees
 
-    mots = [str(x) for x in (_P.get("filtre_titre.metier", []) or []) if isinstance(x, str)]
+    mots = [
+        p
+        for x in (_P.get("filtre_titre.metier", []) or [])
+        if isinstance(x, str) and not x.startswith("re:")
+        for p in x.replace(" + ", " / ").split(" / ")
+    ]
     mots += [str(d.get("libelle") or "") for d in _P.get("domaines", []) or []]
     mots += [
         x

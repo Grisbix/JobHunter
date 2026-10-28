@@ -83,6 +83,22 @@ def presente(dossier: Path, nom: str) -> bool:
     return all(str(c.get(k) or "").strip() for k in cle.champs)
 
 
+def conseillee(dossier: Path, pays: str) -> str | None:
+    """The free key that would bring the most offers to a profile in `pays`, if missing.
+
+    France Travail in France: most of the offers outside executive jobs (waiters, cooks,
+    nurses, drivers) are there and nowhere else open to us — Indeed refuses us. Adzuna
+    elsewhere, in the countries it covers. None when the key is there or none applies.
+    """
+    from jobhunter.sources.aggregators import ADZUNA_COUVERTS
+
+    pays = (pays or "fr").lower()
+    nom = "francetravail" if pays == "fr" else "adzuna" if pays in ADZUNA_COUVERTS else None
+    if nom is None or presente(dossier, nom):
+        return None
+    return nom
+
+
 def enregistrer(dossier: Path, nom: str, valeurs: dict[str, str]) -> Path:
     """Writes a source's key into the file it reads.
 

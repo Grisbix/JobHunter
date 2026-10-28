@@ -4,6 +4,16 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+### Changed
+- **A broad job title asks for its specialty.** First launch writes « ingénieur / engineer + mécanique / mechanical » in the title filter instead of « ingénieur » alone: a mechanical engineer's collection no longer brings DevOps or civil posts. The filter syntax `a + b` (every part, any order; `a / b` for variants) works in any profile.
+- **A new profile searches its own country.** First launch writes `"monde": false`; `collect` then skips LinkedIn « Worldwide » and foreign offers, as `--france` did. Existing profiles keep their behaviour (no key = the world, as before). On three test CVs (engineer in Lyon, waiter in Bordeaux, lawyer in Paris): 122, 4 and 13 foreign offers fewer.
+
+### Added
+- **The free key that brings the most offers is advised.** France Travail for a profile in France (most offers outside executive jobs are there), Adzuna in the countries it covers: at the end of first launch, with the steps, and as the first line of the home screen's « À faire » until the key is saved.
+
+### Not added
+- Sites tested for new sources and left out, their rule respected: Cadremploi, Monster and Optioncarrière refuse (403 / anti-bot), Jobijoba's robots.txt forbids its search, Meteojob shows a CAPTCHA, L'Hôtellerie-Restauration forbids its `/api/`, JobTeaser requires a login. Choisir le service public was already collected (`--ats`).
+
 ## 3.52.0 — 2026-10-28
 
 A cleaner window: one scale of sizes, no decoration that says nothing.

@@ -160,6 +160,15 @@ def _fragment(mot: object, entier: bool) -> str:
         # Taken as is, except the backspace that "\b" becomes when the profile is
         # edited by hand in JSON: there it can only mean a word boundary.
         return "(?:" + mot[3:].replace("\x08", r"\b") + ")"
+    if " + " in mot:
+        # "ingénieur / engineer + mécanique / mechanical": every part, in any order;
+        # " / " separates a part's variants. "Ingénieur DevOps" passed the filter of a
+        # mechanical engineer on « ingénieur » alone (2026-10-28).
+        parties = [p.strip() for p in mot.split(" + ") if p.strip()]
+        return "".join(
+            "(?=.*?(?:" + "|".join(_fragment(v.strip(), entier) for v in p.split(" / ")) + "))"
+            for p in parties
+        )
     # "*mot": found inside a word too — "*analyst" finds "Nachhaltigkeitsanalyst",
     # where a German compound has no boundary before the job word.
     libre = mot.startswith("*")
@@ -173,7 +182,8 @@ def motif(mots: Iterable[object] | None, entier: bool = False) -> re.Pattern[str
     """A compiled regex that finds one of the `mots`.
 
     Args:
-        mots: words, phrases or regexes prefixed with "re:" (taken as they are).
+        mots: words, phrases, "a + b" (both, in any order; "a / b" for variants), or
+            regexes prefixed with "re:" (taken as they are).
         entier: also bounds the words on the right — short acronyms: "rse" must not
             find "RSEau".
 

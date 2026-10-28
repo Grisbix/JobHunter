@@ -748,6 +748,19 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         bonnes = [o for o in self._file() if (o.get("fit") or 0) >= 8]
         prets = sum(1 for o in bonnes if existe(o.get("cv")) and existe(o.get("lettre")))
         d["documents"] = {"bonnes": len(bonnes), "prets": prets, "a_preparer": len(bonnes) - prets}
+        from jobhunter import api_keys, root
+        from jobhunter.sources import countries
+
+        nom = api_keys.conseillee(root.dossier_cles(), countries.maison())
+        d["cle_conseillee"] = (
+            {
+                "nom": nom,
+                "libelle": api_keys.CLES[nom].libelle,
+                "obtenir": api_keys.CLES[nom].obtenir,
+            }
+            if nom
+            else None
+        )
         return d
 
     # Saved views of the offers screen and its columns (web.saved_views).

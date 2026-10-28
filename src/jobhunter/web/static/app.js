@@ -666,7 +666,12 @@ ECRANS.accueil = {
           tableCandidatures(d.candidatures))),
       h("div", { class: "colonne" },
         h("div", { class: "sombre" }, h("h2", {}, "À faire"),
-          h("ul", { class: "fil" }, d.relances.length
+          h("ul", { class: "fil" },
+            // A free key missing: for a waiter or a nurse, most of the offers.
+            d.cle_conseillee ? h("li", { onclick: () => saisirCle(d.cle_conseillee.nom, () => aller("accueil")) },
+              h("div", { class: "t" }, `Ajouter la clé ${d.cle_conseillee.libelle}`),
+              h("div", { class: "s" }, "Gratuite, 5 minutes : beaucoup plus d'offres")) : null,
+            d.relances.length
             ? d.relances.map((r) => h("li", { onclick: () => aller("relances") },
                 h("div", { class: "t" }, `Relancer ${r.entreprise}`),
                 h("div", { class: "s", title: r.poste }, `${r.jours} j · ${r.poste}`)))

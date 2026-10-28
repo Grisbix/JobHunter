@@ -627,6 +627,12 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "En attente de réponse": ("Awaiting an answer", "Warten auf Antwort", "Esperando respuesta"),
     "Collecte du matin": ("Morning collection", "Morgensammlung", "Recogida matinal"),
     "7 derniers scans": ("last 7 scans", "letzte 7 Scans", "últimos 7 escaneos"),
+    "Ajouter la clé {n}": ("Add the {n} key", "{n}-Schlüssel hinzufügen", "Añadir la clave {n}"),
+    "Gratuite, 5 minutes : beaucoup plus d'offres": (
+        "Free, 5 minutes: many more offers",
+        "Kostenlos, 5 Minuten: viel mehr Angebote",
+        "Gratis, 5 minutos: muchas más ofertas",
+    ),
     "La courbe apparaîtra après trois collectes.": (
         "The curve will appear after three collections.",
         "Die Kurve erscheint nach drei Sammlungen.",
