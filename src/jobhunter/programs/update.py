@@ -182,9 +182,25 @@ def _cle_version(v):
 
 
 def _get(url, timeout):
+    """The bytes at `url`; a download of 1 MB or more prints « Téléchargement : 40 % ».
+
+    The application shows the task's last line on its update button (the user,
+    2026-10-28: « avoir un temps ou un pourcentage »).
+    """
     req = urllib.request.Request(exiger_http(url), headers={"User-Agent": "JobHunter-mise-a-jour"})
     with urllib.request.urlopen(req, timeout=timeout) as r:  # nosec B310 : scheme checked by exiger_http
-        return r.read()
+        total = int(r.headers.get("Content-Length") or 0)
+        if total < 1 << 20:
+            return r.read()
+        morceaux, lu, dit = [], 0, 0
+        while bloc := r.read(1 << 16):
+            morceaux.append(bloc)
+            lu += len(bloc)
+            pct = lu * 100 // total
+            if pct >= dit + 10:
+                dit = pct - pct % 10
+                print(f"Téléchargement : {dit} %", flush=True)
+        return b"".join(morceaux)
 
 
 def _signature(version):
@@ -559,11 +575,105 @@ def apres():
     return 0
 
 
+# ── Paquet pip ──────────────────────────────────────────────────────────────
+
+
+def paquet_pip():
+    """True when the engine is a pip package outside the data folder.
+
+    `pip install "jobhunter @ git+…"`: the data folder holds neither VERSION nor the
+    engine. Before 3.58 the update looked for them there, found the data folder's own
+    git repository and stopped on « ne suit aucune branche distante » (the user,
+    2026-10-28: « je pense qu'il ne fonctionne pas »).
+    """
+    if _gele.est_gele() or (RACINE / "VERSION").exists():
+        return False  # the compiled application, or a published ZIP / git installation
+    ici = _dossier_moteur()
+    if ici.is_relative_to(RACINE.resolve()):
+        return False
+    # Run from a source checkout (src/jobhunter beside pyproject.toml): a development
+    # copy, not to be overwritten by pip.
+    return not any((d / "pyproject.toml").exists() for d in list(ici.parents)[:2])
+
+
+def _dossier_moteur():
+    import jobhunter
+
+    return Path(jobhunter.__file__).resolve().parent
+
+
+def version_paquet():
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return version("jobhunter")
+    except PackageNotFoundError:
+        return "0"
+
+
+def maj_paquet(verifier_seulement):
+    """The signed files of the latest version, written to a temporary folder, then pip.
+
+    pip installs what was checked against the author's signature, never a link it
+    downloads itself.
+    """
+    locale = version_paquet()
+    try:
+        distante = _get(VERSION_URL, 30)[:64].decode("utf-8").strip()
+    except Exception as e:
+        print(f"! GitHub injoignable ({type(e).__name__}) : réessaie plus tard.")
+        return 1
+    print(f"Version installée : {locale} · disponible : {distante}", flush=True)
+    if _cle_version(distante) <= _cle_version(locale):
+        print("Déjà à jour.")
+        return 0
+    if verifier_seulement:
+        return 0
+    if not file_libre():
+        return OCCUPE
+    print("Étape 1/2 : téléchargement et vérification", flush=True)
+    try:
+        fichiers = fichiers_a_installer()
+    except _sig.SignatureInvalide as e:
+        print(f"! Mise à jour refusée : {e}. Rien n'a été installé.")
+        return 1
+    except Exception as e:
+        print(f"! Téléchargement impossible ({type(e).__name__}) : réessaie plus tard.")
+        return 1
+    import tempfile
+
+    print("Étape 2/2 : installation (pip), une à deux minutes", flush=True)
+    with tempfile.TemporaryDirectory(prefix="jobhunter_maj_") as d:
+        for rel, b in fichiers.items():
+            f = Path(d, rel)
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_bytes(b)
+        r = subprocess.run(  # nosec B603 : this interpreter, a folder checked above
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "--upgrade",
+                "--no-input",
+                "--progress-bar",
+                "off",
+                "-q",
+                d,
+            ]
+        )
+    if r.returncode:
+        print(f"! pip a échoué (code {r.returncode}) : la version {locale} reste installée.")
+        return 1
+    print(f"\nJobHunter est à jour (version {version_paquet()}). Relance l'application.")
+    return 0
+
+
 # ── Chemin ZIP ──────────────────────────────────────────────────────────────
 
 
 def telecharger(url=ZIP_URL, timeout=120):
-    print(f"Téléchargement de {url} …")
+    print(f"Téléchargement de {url} …", flush=True)
     return _get(url, timeout)
 
 
@@ -607,11 +717,20 @@ def maj_application(verifier_seulement):
         + (f" · disponible : {v}" if v else " · c'est la plus récente.")
     )
     if _gele.paquet_msix():
-        print("Installée par le Microsoft Store : c'est le Store qui la met à jour.")
-        if v and not verifier_seulement:
-            import webbrowser
+        import webbrowser
 
-            webbrowser.open(STORE_MISES_A_JOUR)
+        if _gele.msix_du_store():
+            print("Installée par le Microsoft Store : c'est le Store qui la met à jour.")
+            if v and not verifier_seulement:
+                webbrowser.open(STORE_MISES_A_JOUR)
+            return 0
+        # Installed from the release's JobHunter.msix: the Store does not know it, and
+        # its page said nothing (the user, 2026-10-28). The new .msix installs over it
+        # and keeps the data (Documents/JobHunter).
+        print("Installée depuis JobHunter.msix (hors Store).")
+        if v and not verifier_seulement:
+            print(f"La page de la {v} s'ouvre : télécharge JobHunter.msix et ouvre-le.")
+            webbrowser.open(PAGE_VERSIONS)
         return 0
     if not v or verifier_seulement:
         return 0
@@ -1040,6 +1159,8 @@ def main():
         # Installed application: no files to replace one by one, the new
         # version is a new installer, which keeps the data (Documents/JobHunter).
         return maj_application(args.verifier)
+    if paquet_pip() and not (args.controler or args.initialiser or args.annuler):
+        return maj_paquet(args.verifier)
     if args.controler:
         if not controler():
             return 1

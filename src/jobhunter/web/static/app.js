@@ -243,6 +243,7 @@ async function suivreTache() {
   clearTimeout(minuteurTache);
   if (!window.pywebview) return;
   const e = await window.pywebview.api.tache();
+  suivreMaj(e);
   const p = $("tache");
   if (!e) { p.hidden = true; return; }
   const etat = !e.fini ? `en cours · ${duree(e.duree)}`
@@ -267,6 +268,34 @@ async function suivreTache() {
     tacheEnCours = false;
     redessiner();  // the data may have changed: show it
   }
+}
+
+// The update, followed on the title bar's button and in the Moteur card: its time or
+// its percentage, the last line as a tooltip, then done or failed (the user,
+// 2026-10-28: « avoir un temps ou un pourcentage quand on passe la souris dessus »).
+// Before, the button said « Mise à jour en cours… » for good, even after a failure.
+function suivreMaj(e) {
+  if (!e || e.cle !== "maj") return;
+  const derniere = e.lignes[e.lignes.length - 1] || "";
+  const pct = (derniere.match(/(\d+) %/) || [])[1];
+  const texte = !e.fini ? (pct ? `Mise à jour… ${pct} %` : `Mise à jour… ${duree(e.duree)}`)
+    : e.code === 0 ? "Mise à jour faite : relance JobHunter"
+    : e.code === 3 ? "Mise à jour reportée : file occupée"
+    : "Mise à jour échouée";
+  const info = (e.fini ? `terminée en ${duree(e.duree)}` : `en cours · ${duree(e.duree)}`) + (derniere ? ` · ${derniere}` : "");
+  const b = $("maj");
+  if (b) {
+    b.hidden = false;
+    b.onclick = clicMaj;
+    b.textContent = texte;
+    b.title = info;
+    b.disabled = !e.fini;
+    b.classList.toggle("echec", e.fini && e.code !== 0);
+    b.dataset.fait = e.fini && e.code === 0 ? "1" : "";
+  }
+  const m = document.querySelector(".etat-maj");
+  if (m) { m.textContent = `${texte} · ${info}`; m.title = info; }
+  document.querySelectorAll(".bouton-maj").forEach((x) => { x.disabled = !e.fini; });
 }
 
 // --- Guided application (the desktop's Candidatures panel, web.guided) ---------------
@@ -504,10 +533,13 @@ async function voirDocument(o, chemin, titre, mode = "apercu") {
   const textes = [...d.paragraphes];
   const place = h("div");
   const montrer = (m) => {
-    mode = m;
-    onglets.replaceChildren(segment([["apercu", "Aperçu"], ["texte", "Modifier le texte"]], mode, montrer));
+    mode = d.docx ? m : "apercu";  // a PDF alone: shown, not edited
+    onglets.replaceChildren(d.docx ? segment([["apercu", "Aperçu"], ["texte", "Modifier le texte"]], mode, montrer) : "");
     if (mode === "apercu") {
-      if (!d.pdf) return place.replaceChildren(h("div", { class: "vide" }, "Pas de PDF : il sera fait au prochain enregistrement."));
+      // No PDF (no LibreOffice): its text, without the layout.
+      if (!d.pdf) return place.replaceChildren(
+        h("div", { class: "sous", style: "margin-bottom:12px" }, "Aperçu du texte, sans la mise en page : installe LibreOffice (libreoffice.org) pour voir le document tel qu'il sera envoyé."),
+        h("div", { class: "texte-doc" }, textes.filter((t) => t.trim()).map((t) => h("p", {}, t))));
       const octets = Uint8Array.from(atob(d.pdf), (c) => c.charCodeAt(0));
       const url = URL.createObjectURL(new Blob([octets], { type: "application/pdf" }));
       return place.replaceChildren(h("iframe", { class: "apercu-doc", src: url, title: titre }));
@@ -1024,11 +1056,17 @@ ECRANS.documents = {
   plein: true,
   // After a change of template, the documents already made are made again (the user,
   // 2026-10-27: the letters need the same tool as the CVs).
-  actions: () => [action("Refaire les CV", "fleche", "regenerer_cv"), action("Refaire les lettres", "fleche", "regenerer_lettres")],
+  // Shown only when there is something to redo (the user, 2026-10-28: the buttons
+  // were there, and did nothing, before the first document).
+  actions: () => [],
   async dessiner(vue) {
     const f = filtresDocs;
     const relancer = () => ECRANS.documents.dessiner(vue);
     const d = await appel("documents", { ...f });
+    const ex = d.existants || {};
+    if (courant === "documents") $("actions").replaceChildren(
+      ex.CV ? action("Refaire les CV", "fleche", "regenerer_cv") : "",
+      ex.Lettre ? action("Refaire les lettres", "fleche", "regenerer_lettres") : "");
     let minuteur;
     const champ = h("input", { type: "search", placeholder: "Entreprise, poste…", value: f.texte,
       oninput: (e) => { clearTimeout(minuteur); minuteur = setTimeout(() => { f.texte = e.target.value; f.page = 0; relancer(); }, 250); } });
@@ -1048,11 +1086,27 @@ ECRANS.documents = {
           h("tbody", {}, d.fichiers.map((x) => h("tr", { onclick: () => voir(x), title: x.modifiable ? "Voir et modifier" : "Ouvrir" },
             h("td", {}, h("span", { class: x.genre === "CV" ? "etiq" : "etiq gris" }, x.genre)),
             h("td", { title: x.nom }, x.nom), h("td", {}, dateFr(x.date)))))))
-        : h("div", { class: "vide" }, "Aucun document."),
-        pagination(d, (p) => { f.page = p; relancer(); vue.scrollTop = 0; }))));
+        : (ex.CV || ex.Lettre) ? h("div", { class: "vide" }, "Aucun document pour cette recherche.")
+        : premiersDocuments(),
+        d.fichiers.length ? pagination(d, (p) => { f.page = p; relancer(); vue.scrollTop = 0; }) : null)));
     if (f.texte) { champ.focus(); champ.setSelectionRange(f.texte.length, f.texte.length); }
   },
 };
+
+// No document yet: what makes them, and the two buttons to get there (the user,
+// 2026-10-28: « si aucun document créé, explique ce qu'il faut faire »).
+function premiersDocuments() {
+  return h("div", { class: "premiers-docs" },
+    h("h2", {}, "Pas encore de CV ni de lettre"),
+    h("p", { class: "sous" }, "JobHunter écrit un CV et une lettre sur mesure pour chaque offre bien notée (8 et plus), à partir de ton CV de base et de ton profil."),
+    h("ol", {},
+      h("li", {}, "Trouve des offres : « Lancer la collecte » (quelques minutes)."),
+      h("li", {}, "Prépare les documents : « Préparer des CV et lettres… », ou depuis une offre."),
+      h("li", {}, "Relis-les ici : un clic ouvre le document pour le lire ou modifier son texte.")),
+    h("div", { class: "boutons" },
+      action("Lancer la collecte", "eclair", "collecte", "plein"),
+      bouton("Préparer des CV et lettres…", "doc", () => ACTIONS_OUTILS.documents())));
+}
 
 const carte = (titre, ...contenu) => h("div", { class: "verre panneau" }, h("div", { class: "titre-ligne" }, h("h2", {}, titre)), ...contenu);
 const puces = (liste, classe = "puce") => liste.length
@@ -1722,8 +1776,34 @@ async function cartesDocumentsBase() {
     h("div", { class: "boutons" }, bouton("Remplacer mon CV de base…", "doc", remplacerCvBase, "plein")));
   const fr = h("textarea", { class: "champ-texte", rows: 4 }, d.phrase_fr);
   const en = h("textarea", { class: "champ-texte", rows: 4 }, d.phrase_en);
+  // The user's own letter, beside the base CV: seen, replaced; its background paragraph
+  // goes into the field below, to check and save (the user, 2026-10-28).
+  const remplacerLettre = async () => {
+    const c = await ecrire("choisir_lettre_base");
+    if (!c) return;
+    if (c.ancienne) {
+      const ok = await dialogue("Remplacer ta lettre de base ?", `Remplacer ${c.ancienne} par ${c.nom} ? L'ancienne est gardée à côté, en .bak.`,
+        null, [["Remplacer", "plein", () => true]]);
+      if (!ok) return;
+    }
+    const r = await ecrire("remplacer_lettre_base");
+    if (!r) return;
+    redessiner();
+    if (!r.parcours) return toast(`Lettre gardée : ${r.nom}. Aucun paragraphe de parcours reconnu : écris-le dans le champ.`);
+    const ok = await dialogue("Reprendre ton paragraphe de parcours ?", r.parcours, null, [["Le reprendre", "plein", () => true]]);
+    if (!ok) return;
+    const [phraseFr, phraseEn] = r.langue === "en" ? [fr.value, r.parcours] : [r.parcours, en.value];
+    const e = await ecrire("enregistrer_phrases_lettre", phraseFr, phraseEn);
+    if (e) { toast("Paragraphe repris dans le profil."); redessiner(); }
+  };
+  const base = d.lettre_base;
   const lettre = carte("Lettre de motivation",
-    h("div", { class: "sous", style: "margin-bottom:10px" }, "Chaque lettre est écrite pour son offre ; ce paragraphe sur toi est repris dans toutes. Modifie-le ici, puis refais les lettres."),
+    h("div", { class: "sous", style: "margin-bottom:10px" }, "Ta lettre de base, si tu en as une : JobHunter en reprend ton paragraphe de parcours. Chaque lettre est ensuite écrite pour son offre ; le paragraphe ci-dessous est repris dans toutes."),
+    h("div", { class: "liste-profils" }, base
+      ? h("div", { class: "ligne-profil" }, h("span", { class: "t", title: base.nom }, base.nom),
+          bouton("Voir", "doc", () => voirDocument(null, base.chemin, base.nom)))
+      : h("div", { class: "sous" }, "Pas encore de lettre de base.")),
+    h("div", { class: "boutons", style: "margin-bottom:12px" }, bouton(base ? "Remplacer ma lettre de base…" : "Ajouter ma lettre de base…", "doc", remplacerLettre)),
     h("label", { class: "champ-bloc" }, h("span", { class: "sous" }, "En français"), fr),
     h("label", { class: "champ-bloc" }, h("span", { class: "sous" }, "En anglais"), en),
     h("div", { class: "boutons" },
@@ -1842,7 +1922,8 @@ ECRANS.maintenance = {
       h("div", { class: "pile" },
         h("div", { class: "sombre" }, h("h2", {}, "Moteur"), h("div", { class: "chiffre", style: "margin-top:14px" }, m.version),
           h("div", { class: "sous", style: "color:#8f8783" }, "version installée"),
-          h("div", { class: "actions-col" }, bouton("Chercher une mise à jour", "fleche", verifierMaj, "plein"))),
+          h("div", { class: "actions-col" }, bouton("Chercher une mise à jour", "fleche", verifierMaj, "plein bouton-maj")),
+          h("div", { class: "sous etat-maj", style: "color:#8f8783;margin-top:8px" })),
         carte("Sauvegardes", h("div", { class: "sous", style: "margin:0 0 10px" }, "une par jour, sept jours glissants"), puces(m.sauvegardes))),
       carte("Dernière collecte",
         h("div", { class: c.etat === "ok" ? "etat ok" : "etat" }, c.etat === "ok" ? "Réussie" : (c.etat || "inconnue")),
@@ -1997,9 +2078,7 @@ async function verifierMaj(ev) {
   const ok = await dialogue(`Version ${v.derniere} disponible`, `Installée : ${v.installee}. Elle est vérifiée (signature) avant d'être installée ; relance JobHunter ensuite.`,
     null, [["Installer", "plein", () => true]]);
   if (!ok) return;
-  if (!(await lancer("maj"))) return;
-  const m = $("maj");  // the title bar's button, as on the desktop: it says it runs
-  if (m && !m.hidden) { m.textContent = "Mise à jour en cours…"; m.disabled = true; }
+  await lancer("maj");  // suivreTache → suivreMaj: the button and the Moteur card follow it
 }
 
 // At start-up: a newer signed version shows as a button in the title bar.
@@ -2010,7 +2089,11 @@ async function annonceMaj() {
   b.textContent = `Mettre à jour (${v.derniere})`;
   b.title = `Version installée : ${v.installee}`;
   b.hidden = false;
-  b.addEventListener("click", verifierMaj);
+  b.onclick = clicMaj;
+}
+function clicMaj(ev) {
+  if (ev.currentTarget.dataset.fait) return toast("Ferme JobHunter puis rouvre-le : la nouvelle version démarre.");
+  return verifierMaj(ev);
 }
 
 async function cartesParametres() {

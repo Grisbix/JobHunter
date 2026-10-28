@@ -434,7 +434,9 @@ POLICES = ("segoe", "bahnschrift", "corbel", "sitka", "georgia")
 MODES = ("auto", "clair", "sombre")
 REGLAGES: dict[str, Any] = {
     "fond": "acrylique",
-    "verre": 50,
+    # Opaque at first: the user chooses how much of the desktop shows through
+    # (the user, 2026-10-28: « à la première ouverture, l'opacité au maximum »).
+    "verre": 0,
     "teinte": "terre",
     "police": "segoe",
     "mode": "auto",
@@ -879,11 +881,17 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         mots = [m for m in str(f.get("texte") or "").lower().split() if m]
         seul = f.get("genre")  # "CV" or "Lettre"; anything else: both
         par_doc: dict[tuple[str, str], dict[str, Any]] = {}
+        # How many exist, whatever the filters: « Refaire » shows only when there is
+        # something to redo (the user, 2026-10-28).
+        existants: dict[str, set[str]] = {"CV": set(), "Lettre": set()}
         for genre, dossier in _dossiers_documents().items():
-            if seul in ("CV", "Lettre") and genre != seul or not dossier.is_dir():
+            if not dossier.is_dir():
                 continue
             for p in dossier.iterdir():
                 if p.suffix.lower() not in (".pdf", ".docx"):
+                    continue
+                existants.setdefault(genre, set()).add(p.stem.lower())
+                if seul in ("CV", "Lettre") and genre != seul:
                     continue
                 if mots and not all(m in p.stem.lower() for m in mots):
                     continue
@@ -908,6 +916,7 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         page = max(0, int(f.get("page") or 0))
         return {
             "total": len(fichiers),
+            "existants": {g: len(s) for g, s in existants.items()},
             "page": page,
             "pages": max(1, -(-len(fichiers) // PAR_PAGE)),
             "fichiers": fichiers[page * PAR_PAGE : (page + 1) * PAR_PAGE],
@@ -1866,16 +1875,33 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
     # A CV or a letter seen and edited in the window (the user, 2026-10-27): its PDF to
     # look at, the text of its .docx to change; the PDF is made again after a change.
     def document(self, chemin: str) -> dict[str, Any]:
-        """The PDF (base64) and the paragraphs of the .docx next to `chemin`."""
+        """The PDF (base64) and the paragraphs of the .docx next to `chemin`.
+
+        A base CV given as a .docx has no PDF yet: it is made here (LibreOffice), else
+        the page shows the paragraphs. A PDF alone is shown, not edited. Before 3.58
+        both showed nothing (the user, 2026-10-28: « si le CV de base est docx, je ne
+        peux pas le voir dans Profil »).
+        """
         import base64
 
-        from jobhunter.documents import editing
+        from jobhunter.documents import editing, rendering
 
         p = _document_permis(chemin)
         docx = p.with_suffix(".docx") if p else None
+        if p is not None and docx is not None and not docx.is_file() and p.suffix.lower() == ".pdf":
+            return {
+                "ok": True,
+                "nom": p.stem,
+                "docx": "",
+                "paragraphes": [],
+                "modifiables": [],
+                "pdf": base64.b64encode(p.read_bytes()).decode("ascii"),
+            }
         if docx is None or not docx.is_file():
             return {"ok": False, "erreur": "document introuvable (seul un .docx se modifie)"}
         pdf = docx.with_suffix(".pdf")
+        if not pdf.is_file():
+            rendering.to_pdf(docx)
         try:
             return {
                 "ok": True,

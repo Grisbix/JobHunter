@@ -163,9 +163,20 @@ def test_appli_pas_encore_signee_rien_ouvert(appli, capsys, monkeypatch):
 def test_appli_du_store_laisse_le_store_mettre_a_jour(appli, monkeypatch, capsys):
     lances = appli({})  # nothing served: a download would raise KeyError
     monkeypatch.setattr(maj._gele, "paquet_msix", lambda: True)
+    monkeypatch.setattr(maj._gele, "msix_du_store", lambda: True)
     assert maj.maj_application(False) == 0
     assert lances == [["navigateur", maj.STORE_MISES_A_JOUR]]
     assert "Microsoft Store" in capsys.readouterr().out
+
+
+def test_msix_hors_store_ouvre_la_page_des_versions(appli, monkeypatch, capsys):
+    # Installed from the release's JobHunter.msix: the Store's page showed nothing.
+    lances = appli({})
+    monkeypatch.setattr(maj._gele, "paquet_msix", lambda: True)
+    monkeypatch.setattr(maj._gele, "msix_du_store", lambda: False)
+    assert maj.maj_application(False) == 0
+    assert lances == [["navigateur", maj.PAGE_VERSIONS]]
+    assert "JobHunter.msix" in capsys.readouterr().out
 
 
 def test_hors_paquet_msix():

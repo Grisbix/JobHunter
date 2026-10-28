@@ -1882,4 +1882,121 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "! Scan der Unternehmensseiten: Code {c}.",
         "! Escaneo de los sitios de empresa: código {c}.",
     ),
+    "Mise à jour… {pct} %": (
+        "Updating… {pct} %",
+        "Aktualisierung… {pct} %",
+        "Actualizando… {pct} %",
+    ),
+    "Mise à jour… {duree}": (
+        "Updating… {duree}",
+        "Aktualisierung… {duree}",
+        "Actualizando… {duree}",
+    ),
+    "Mise à jour faite : relance JobHunter": (
+        "Updated: restart JobHunter",
+        "Aktualisiert: JobHunter neu starten",
+        "Actualizado: reinicia JobHunter",
+    ),
+    "Mise à jour reportée : file occupée": (
+        "Update postponed: queue busy",
+        "Aktualisierung verschoben: Liste belegt",
+        "Actualización aplazada: cola ocupada",
+    ),
+    "Mise à jour échouée": (
+        "Update failed",
+        "Aktualisierung fehlgeschlagen",
+        "Actualización fallida",
+    ),
+    "terminée en {duree}": ("finished in {duree}", "beendet in {duree}", "terminada en {duree}"),
+    "Ferme JobHunter puis rouvre-le : la nouvelle version démarre.": (
+        "Close JobHunter and open it again: the new version starts.",
+        "Schließe JobHunter und öffne es wieder: die neue Version startet.",
+        "Cierra JobHunter y vuelve a abrirlo: arranca la nueva versión.",
+    ),
+    "Aucun document pour cette recherche.": (
+        "No document for this search.",
+        "Kein Dokument für diese Suche.",
+        "Ningún documento para esta búsqueda.",
+    ),
+    "Pas encore de CV ni de lettre": (
+        "No CV or letter yet",
+        "Noch kein Lebenslauf und kein Anschreiben",
+        "Todavía no hay CV ni carta",
+    ),
+    "JobHunter écrit un CV et une lettre sur mesure pour chaque offre bien notée (8 et plus), à partir de ton CV de base et de ton profil.": (
+        "JobHunter writes a tailored CV and letter for each well-rated offer (8 and above), from your base CV and your profile.",
+        "JobHunter schreibt für jedes gut bewertete Angebot (8 und mehr) einen passenden Lebenslauf und ein Anschreiben, aus deinem Basis-Lebenslauf und deinem Profil.",
+        "JobHunter escribe un CV y una carta a medida para cada oferta bien puntuada (8 o más), a partir de tu CV base y de tu perfil.",
+    ),
+    "Trouve des offres : « Lancer la collecte » (quelques minutes).": (
+        "Find offers: “Start the collection” (a few minutes).",
+        "Finde Angebote: „Sammlung starten“ (einige Minuten).",
+        "Encuentra ofertas: «Lanzar la recogida» (unos minutos).",
+    ),
+    "Prépare les documents : « Préparer des CV et lettres… », ou depuis une offre.": (
+        "Prepare the documents: “Prepare CVs and letters…”, or from an offer.",
+        "Bereite die Dokumente vor: „Lebensläufe und Anschreiben vorbereiten…“, oder aus einem Angebot.",
+        "Prepara los documentos: «Preparar CV y cartas…», o desde una oferta.",
+    ),
+    "Relis-les ici : un clic ouvre le document pour le lire ou modifier son texte.": (
+        "Read them here: a click opens the document to read it or change its text.",
+        "Lies sie hier: ein Klick öffnet das Dokument zum Lesen oder Ändern des Textes.",
+        "Reléelos aquí: un clic abre el documento para leerlo o cambiar su texto.",
+    ),
+    "Préparer des CV et lettres…": (
+        "Prepare CVs and letters…",
+        "Lebensläufe und Anschreiben vorbereiten…",
+        "Preparar CV y cartas…",
+    ),
+    "Aperçu du texte, sans la mise en page : installe LibreOffice (libreoffice.org) pour voir le document tel qu'il sera envoyé.": (
+        "Text preview, without the layout: install LibreOffice (libreoffice.org) to see the document as it will be sent.",
+        "Textvorschau ohne Layout: installiere LibreOffice (libreoffice.org), um das Dokument so zu sehen, wie es verschickt wird.",
+        "Vista previa del texto, sin el formato: instala LibreOffice (libreoffice.org) para ver el documento tal como se enviará.",
+    ),
+    "Remplacer ta lettre de base ?": (
+        "Replace your base letter?",
+        "Basis-Anschreiben ersetzen?",
+        "¿Sustituir tu carta base?",
+    ),
+    "Remplacer {a} par {b} ? L'ancienne est gardée à côté, en .bak.": (
+        "Replace {a} with {b}? The old one is kept beside it, as .bak.",
+        "{a} durch {b} ersetzen? Das alte bleibt daneben, als .bak.",
+        "¿Sustituir {a} por {b}? La anterior se guarda al lado, como .bak.",
+    ),
+    "Lettre gardée : {nom}. Aucun paragraphe de parcours reconnu : écris-le dans le champ.": (
+        "Letter kept: {nom}. No background paragraph found: write it in the field.",
+        "Anschreiben gespeichert: {nom}. Kein Werdegang-Absatz erkannt: schreib ihn ins Feld.",
+        "Carta guardada: {nom}. No se reconoció ningún párrafo de trayectoria: escríbelo en el campo.",
+    ),
+    "Reprendre ton paragraphe de parcours ?": (
+        "Use your background paragraph?",
+        "Deinen Werdegang-Absatz übernehmen?",
+        "¿Usar tu párrafo de trayectoria?",
+    ),
+    "Le reprendre": ("Use it", "Übernehmen", "Usarlo"),
+    "Paragraphe repris dans le profil.": (
+        "Paragraph saved in the profile.",
+        "Absatz ins Profil übernommen.",
+        "Párrafo guardado en el perfil.",
+    ),
+    "Ta lettre de base, si tu en as une : JobHunter en reprend ton paragraphe de parcours. Chaque lettre est ensuite écrite pour son offre ; le paragraphe ci-dessous est repris dans toutes.": (
+        "Your base letter, if you have one: JobHunter takes your background paragraph from it. Each letter is then written for its offer; the paragraph below goes into all of them.",
+        "Dein Basis-Anschreiben, falls du eines hast: JobHunter übernimmt daraus deinen Werdegang-Absatz. Jedes Anschreiben wird dann für sein Angebot geschrieben; der Absatz unten steht in allen.",
+        "Tu carta base, si tienes una: JobHunter toma de ella tu párrafo de trayectoria. Cada carta se escribe luego para su oferta; el párrafo de abajo va en todas.",
+    ),
+    "Pas encore de lettre de base.": (
+        "No base letter yet.",
+        "Noch kein Basis-Anschreiben.",
+        "Todavía no hay carta base.",
+    ),
+    "Remplacer ma lettre de base…": (
+        "Replace my base letter…",
+        "Mein Basis-Anschreiben ersetzen…",
+        "Sustituir mi carta base…",
+    ),
+    "Ajouter ma lettre de base…": (
+        "Add my base letter…",
+        "Mein Basis-Anschreiben hinzufügen…",
+        "Añadir mi carta base…",
+    ),
 }

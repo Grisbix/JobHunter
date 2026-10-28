@@ -54,6 +54,45 @@ def paquet_msix() -> bool:
     return code == 122
 
 
+def msix_du_store() -> bool:
+    """In the MSIX package: True when the Store installed it (SignatureKind « Store »).
+
+    A package installed from the release's JobHunter.msix is not the Store's: its
+    updates come from the release, and the Store's page shows nothing for it.
+    """
+    if not paquet_msix():
+        return False
+    import ctypes
+    import re
+    import subprocess
+
+    longueur = ctypes.c_uint32(256)
+    tampon = ctypes.create_unicode_buffer(256)
+    try:
+        code = ctypes.windll.kernel32.GetCurrentPackageFamilyName(ctypes.byref(longueur), tampon)
+    except (AttributeError, OSError):
+        return False
+    famille = tampon.value
+    if code != 0 or not re.fullmatch(r"[A-Za-z0-9._-]+", famille):
+        return False
+    try:
+        r = subprocess.run(  # nosec B603 B607 : fixed command, the family name checked above
+            [
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                f"(Get-AppxPackage | Where-Object PackageFamilyName -eq '{famille}').SignatureKind",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return r.stdout.strip() == "Store"
+
+
 def interpreteur() -> str:
     """The executable that runs `-m module` in a console.
 

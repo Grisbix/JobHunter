@@ -127,6 +127,15 @@ def fenetre_accueil() -> Any:
     """
     import customtkinter as ctk
 
+    if sys.platform == "win32":
+        # Its own taskbar entry under JobHunter's icon, as the application's windows:
+        # without it the first launch showed Python's (the user, 2026-10-28).
+        try:
+            import ctypes
+
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Grisbix.JobHunter")
+        except (AttributeError, OSError):
+            pass
     ctk.set_appearance_mode("light")
     r = ctk.CTk(fg_color=FOND)
     r.title("JobHunter")
@@ -746,6 +755,17 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
         parcours.delete("1.0", "end")
         parcours.insert("1.0", trouve)
         source.configure(text=f"Repris de {Path(f).name}. Relis-le.", text_color=TEXTE_DOUX)
+        # Kept as the base letter, seen later in Profil (the user, 2026-10-28).
+        try:
+            import shutil
+
+            from jobhunter.web.workshop import _dossier_lettre_base
+
+            base = _dossier_lettre_base()
+            base.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(f, base / Path(f).name)
+        except (OSError, RuntimeError):
+            pass
 
     rang_lettre = ctk.CTkFrame(cadre, fg_color="transparent")
     rang_lettre.grid(row=ligne, column=0, columnspan=2, sticky="we", pady=(8, 0))

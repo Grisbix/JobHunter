@@ -109,7 +109,8 @@ button.marque:hover { background: var(--verre-fort); }
 .menu-profils button .rond-profil { width: 28px; height: 28px; font-size: var(--t-xs); }
 .menu-profils button > span:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .menu-profils .gerer { margin-top: 4px; color: var(--gris); }
-.logo { width: 32px; height: 32px; border-radius: 10px; background: var(--degrade); box-shadow: inset 0 0 0 5px rgba(var(--blanc-rgb),.35); flex: none; }
+/* The application's icon (app/assets/jobhunter.png), the same everywhere (the user, 2026-10-28). */
+.logo { width: 32px; height: 32px; background: url("logo.png") center / contain no-repeat; flex: none; }
 .groupe { font-size: var(--t-m); color: var(--gris-clair); padding: 20px 12px 8px; }
 .menu a {
   display: flex; align-items: center; gap: 12px;
@@ -198,6 +199,20 @@ h3 { font-size: var(--t-xl); font-weight: 500; }
 .vue.plein .remplit > .defile, .vue.plein .panneau > .defile { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; scrollbar-width: thin; }
 /* Opaque: the rows scrolled under the header showed through it (audit 2026-10-27). */
 .vue.plein .defile thead th { position: sticky; top: 0; z-index: 2; background: rgb(var(--blanc-rgb)); box-shadow: 0 1px 0 var(--filet); }
+/* The header's band runs from edge to edge of its panel, in line with the filters above
+   (the user, 2026-10-28: « la barre blanche n'est pas alignée avec les filtres »): the
+   list takes the panel's side padding back as its own, and the header's end cells paint
+   their band over it; the rows keep their places. */
+.vue.plein .remplit > .defile, .vue.plein .panneau > .defile { margin: 0 -24px; padding: 0 24px; }
+.vue.plein .defile thead th:first-child::before, .vue.plein .defile thead th:last-child::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 24px; background: inherit; box-shadow: inherit;
+}
+.vue.plein .defile thead th:first-child::before { left: -24px; }
+.vue.plein .defile thead th:last-child::after { right: -24px; }
+.texte-doc { background: rgb(var(--blanc-rgb)); border-radius: 12px; padding: 24px 32px; line-height: 1.5; }
+.texte-doc p { margin: 0 0 8px; }
+.premiers-docs { max-width: 640px; margin: 32px auto; display: flex; flex-direction: column; gap: 12px; }
+.premiers-docs ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
 .cellule-lieu { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .vue.plein .remplit > .pagination { flex: none; }
 .vue.plein .tableau-kanban { flex: 1 1 auto; min-height: 0; align-items: stretch; }
@@ -457,6 +472,7 @@ body.natif .tiroir { top: 52px; }
 /* A newer signed version: one click updates (annonceMaj). */
 .barre .maj { position: absolute; left: 50%; transform: translateX(-50%); height: 30px; padding: 0 16px; font-size: var(--t-m); }
 .barre .maj[hidden] { display: none; }
+.barre .maj.echec { background: #e07a6a; border-color: #e07a6a; }
 .feux button {
   width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center;
   background: rgba(var(--blanc-rgb),.42); border: 1px solid rgba(var(--blanc-rgb),.65); transition: background .15s;

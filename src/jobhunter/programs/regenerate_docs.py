@@ -106,6 +106,15 @@ def main():
         cibles = cibles[: a.limite]
 
     print(f"{len(cibles)} {'CV' if a.cv else 'lettre(s)'} a refaire")
+    if not cibles:
+        # Said, not a silent « 0 » (the user, 2026-10-28: « refaire ne fonctionne pas »).
+        print(
+            "Aucune offre de la file n'a encore de "
+            + ("CV" if a.cv else "lettre")
+            + " préparé(e) : rien à refaire. Prépare d'abord des documents "
+            "(Documents → « Préparer des CV et lettres… »)."
+        )
+        return 0
     if a.dry:
         for o, s in cibles[:8]:
             lg = langue_offre(
@@ -160,13 +169,19 @@ def main():
             print(f"  … {n}/{len(cibles)} ({time.time() - t0:.0f} s)")
     print(f"\n{len(faits)} .docx refaits, {rates} echec(s) — {time.time() - t0:.0f} s")
 
-    if a.sans_pdf or not faits:
+    if not faits:
+        print("! Aucun document refait : voir les erreurs ci-dessus.")
+        return 1
+    if a.sans_pdf:
         print("PDF non regeneres (--sans-pdf) : ils portent encore l'ancien texte.")
         return 0
 
     exe = next((s for s in SOFFICE if Path(s).exists()), None)
     if not exe:
-        print("! LibreOffice introuvable, PDF non regeneres.")
+        print(
+            "! LibreOffice introuvable : les .docx sont refaits, pas les PDF. "
+            "Installe LibreOffice (libreoffice.org), puis relance « Refaire »."
+        )
         return 2
     print(f"\nConversion PDF, par lots de {LOT_PDF} :")
     t1 = time.time()

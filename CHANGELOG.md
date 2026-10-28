@@ -4,6 +4,20 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.58.0 — 2026-10-28
+
+What a user found on a fresh install: the update that never finished, the documents screen with nothing to explain, the base CV and letter.
+
+- **The update works for an engine installed with pip.** The data folder's own git repository was taken for the engine's: the update stopped on "does not track any remote branch". A pip install now downloads the signed files and installs them with pip (two steps, shown).
+- **The update button tells where it is**: percentage of the download or elapsed time, on the button and on hover; then "Updated: restart JobHunter", "postponed" (queue busy) or "failed". The Engine card in Maintenance follows it too, instead of a label that never changed.
+- **An MSIX installed from JobHunter.msix** (not from the Store) opens the releases page, no longer the Store.
+- **Opaque at first opening** (transparency 0 by default).
+- **One logo**: the page uses the application icon; the welcome window has the application's identity in the taskbar.
+- **Offers: the header band lines up with the filters.**
+- **Documents**: "Redo the CVs / letters" show only when there is something to redo; with no document yet, the screen explains the three steps and gives the two buttons. Redo says why when it did nothing.
+- **Base CV as .docx shows in Profile** (PDF made with LibreOffice, else its text); a PDF alone shows too.
+- **Base letter in Profile**: seen, replaced (the old one kept as .bak); its background paragraph is offered for the letters.
+
 ## 3.57.0 — 2026-10-28
 
 Smoother window: lighter over Remote Desktop, a home screen that fits 1280×720, and a background loop that no longer redoes the same scoring.

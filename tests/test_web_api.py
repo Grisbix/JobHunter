@@ -269,7 +269,7 @@ def test_reglages_valeurs_par_defaut_et_bornes():
     assert _fv(web_api.reglages({"fond": "net", "verre": -5})) == {"fond": "net", "verre": 0}
     assert _fv(web_api.reglages({"fond": "autre", "verre": "x"})) == {
         "fond": "acrylique",
-        "verre": 50,
+        "verre": 0,
     }
 
 

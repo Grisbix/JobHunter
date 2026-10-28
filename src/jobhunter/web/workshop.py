@@ -59,6 +59,30 @@ def _bilan(b: Any) -> dict[str, Any]:
     return d
 
 
+def _dossier_lettre_base() -> Path:
+    """Letters/Base: the user's own letter, kept as given (the user, 2026-10-28)."""
+    from jobhunter import root
+
+    return root.dossier("Lettres") / "Base"
+
+
+def _lettres_de_base(dossier: Path) -> list[Path]:
+    if not dossier.is_dir():
+        return []
+    return [
+        f
+        for f in dossier.iterdir()
+        if f.suffix.lower() in (".docx", ".pdf") and not f.name.startswith("~$")
+    ]
+
+
+def lettre_de_base() -> Path | None:
+    """The user's own letter, the newest in Letters/Base; None when none was given."""
+    return max(
+        _lettres_de_base(_dossier_lettre_base()), key=lambda f: f.stat().st_mtime, default=None
+    )
+
+
 class AtelierApi:
     """Mixed into `Api`: uses its `_file`, `_suivi`, `_tache`, `_demarrer`, `_fenetre`, `_profil_brut`."""
 
@@ -406,11 +430,70 @@ class AtelierApi:
         exemple = max(lettres, key=lambda f: f.stat().st_mtime, default=None)
         brut = p.get("lettre")
         l: dict[str, Any] = brut if isinstance(brut, dict) else {}
+        base = lettre_de_base()
         return {
             "cvs": cvs,
+            "lettre_base": {"nom": base.name, "chemin": str(base)} if base else None,
             "exemple": str(exemple) if exemple else "",
             "phrase_fr": str(l.get("phrase_profil_fr") or ""),
             "phrase_en": str(l.get("phrase_profil_en") or ""),
+        }
+
+    _lettre_choisie: Path | None = None
+
+    def choisir_lettre_base(self) -> dict[str, Any]:
+        """Asks for the user's own letter; nothing is copied before `remplacer_lettre_base`."""
+        if self._fenetre is None:
+            return {"ok": False, "erreur": "il faut l'application pour choisir une lettre"}
+        import webview
+
+        choix = self._fenetre.create_file_dialog(
+            webview.FileDialog.OPEN, file_types=("Lettre (*.docx;*.pdf)",)
+        )
+        if not choix:
+            return {"ok": False, "annule": True}
+        f = Path(str(choix[0]))
+        if f.suffix.lower() not in (".docx", ".pdf"):
+            return {"ok": False, "erreur": "une lettre au format .docx ou .pdf"}
+        self._lettre_choisie = f
+        ancienne = lettre_de_base()
+        return {"ok": True, "nom": f.name, "ancienne": ancienne.name if ancienne else ""}
+
+    def remplacer_lettre_base(self) -> dict[str, Any]:
+        """Keeps the chosen letter in Letters/Base, the previous one as .bak.
+
+        Its background paragraph (own_letter) comes back, for the page to offer.
+        The generated letters are written per offer from the profile's paragraphs; the
+        user's own letter is kept to be seen, and lends its background paragraph.
+        """
+        import shutil
+
+        from jobhunter import own_letter
+        from jobhunter.scoring.language import langue_offre
+
+        f, self._lettre_choisie = self._lettre_choisie, None
+        if f is None or not f.is_file():
+            return {"ok": False, "erreur": "aucune lettre choisie"}
+        dossier = _dossier_lettre_base()
+        try:
+            dossier.mkdir(parents=True, exist_ok=True)
+            for ancienne in _lettres_de_base(dossier):
+                ancienne.replace(ancienne.with_name(ancienne.name + ".bak"))
+            neuve = dossier / f.name
+            shutil.copy2(f, neuve)
+        except OSError as e:
+            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+        try:
+            parcours = own_letter.parcours_de_lettre(neuve)
+        except (OSError, ValueError):
+            parcours = ""
+        langue = langue_offre("", parcours, "") if parcours else "fr"
+        return {
+            "ok": True,
+            "nom": neuve.name,
+            "chemin": str(neuve),
+            "parcours": parcours,
+            "langue": langue,
         }
 
     def enregistrer_phrases_lettre(self, fr: str, en: str) -> dict[str, Any]:
