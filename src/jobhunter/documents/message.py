@@ -556,10 +556,10 @@ def main() -> int:
     return 0
 
 
-if __name__ == "__main__":
-    sys.exit(main())
-
-
 def lieu_de(offre: dict[str, Any]) -> str:
     """The offer's place, as the queue (`localisation`) or the documents (`lieu`) name it."""
     return str(offre.get("localisation") or offre.get("lieu") or "")
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -857,9 +857,6 @@ def score_offer(offer: dict[str, Any]) -> dict[str, Any]:
 # ran with its main rule dead, without anything reporting it.
 __import__("jobhunter.text", fromlist=["x"]).verifier_motifs(globals(), minimum=4)
 
-if __name__ == "__main__":
-    print("Module de scoring (score_offer/fit_score). CLI : rescore_ats.py")
-
 
 def expliquer(
     text: str | None, title: str | None = "", poids: "_poids.Ponderation | None" = None
@@ -873,3 +870,7 @@ def expliquer(
     fit, _yrs, _fin = fit_detail(text, title, raisons, poids)
     raisons.append(f"fit {fit}")
     return raisons
+
+
+if __name__ == "__main__":
+    print("Module de scoring (score_offer/fit_score). CLI : rescore_ats.py")

@@ -221,16 +221,6 @@ def poser(
     return modifier(_f, chemin, attente=attente)
 
 
-if __name__ == "__main__":
-    import sys
-
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
-    s = charger()
-    print(f"{len(s)} candidature(s) dans {CHEMIN.name}")
-    for k, v in sorted(s.items())[:10]:
-        print(f"  {k[:52]:52s} {v}")
-
-
 # Statuses that come AFTER sending: declaring the sending does not move them back.
 _APRES_ENVOI = ("relancé", "entretien", "refus")
 
@@ -280,3 +270,13 @@ def declarer_envoi(
         return rec
 
     return modifier(_f, chemin, attente)
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
+    s = charger()
+    print(f"{len(s)} candidature(s) dans {CHEMIN.name}")
+    for k, v in sorted(s.items())[:10]:
+        print(f"  {k[:52]:52s} {v}")

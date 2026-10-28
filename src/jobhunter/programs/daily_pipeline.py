@@ -577,12 +577,12 @@ def _executer(a, journal):
     return (1 if erreurs else 0), erreurs
 
 
-if __name__ == "__main__":
-    sys.exit(main())
-
-
 def _pays_usajobs() -> bool:
     """USAJOBS in the morning collection: for a profile in the United States."""
     from jobhunter.sources import countries as _pays
 
     return _pays.source_du_pays("usajobs")
+
+
+if __name__ == "__main__":
+    sys.exit(main())
