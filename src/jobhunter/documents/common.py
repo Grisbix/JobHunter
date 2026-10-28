@@ -138,6 +138,21 @@ _SIGLES = {
 }
 
 
+def nord_americain(lieu: str | None) -> bool:
+    """Is the offer in the United States or Canada? Unknown place: the profile's country.
+
+    There, a letter opens with « Dear Hiring Manager » and closes with « Sincerely »,
+    and the date reads « October 28, 2026 »; in Britain and elsewhere, « Dear Sir or
+    Madam », « Yours faithfully » and « 28 October 2026 ».
+    """
+    from jobhunter.scoring import zones
+
+    p = zones.pays_lieu(lieu) if str(lieu or "").strip() else "?"
+    if p in ("États-Unis", "Canada"):
+        return True
+    return p == "?" and str(zones.PAYS_MAISON) in ("us", "ca")
+
+
 def minuscule_titre(t: str) -> str:
     """“Contrôleur de Gestion Financier” -> "contrôleur de gestion financier".
 

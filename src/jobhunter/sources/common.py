@@ -335,20 +335,24 @@ def _rx_pays_exclus() -> re.Pattern[str] | None:
 _RX_LABEL = re.compile(
     r"type\s+de\s+(?:contrat|recrutement)s?\s*(?:de\s+travail)?\s*(?:[:\-–]|\s)\s*"
     r"|(?:contrat|recrutement)s?\s*(?:de\s+travail)?\s*[:\-–]\s*"
-    r"|poste\s+(?:propos[\u00e9]\s+)?en\s+",
+    r"|poste\s+(?:propos[\u00e9]\s+)?en\s+"
+    # « Job type: Part-time », « Employment Type: Contract »
+    r"|(?:job|employment|contract|position)\s+type\s*[:\-–]\s*",
     re.I,
 )
 
 # values accepted just after that label
 _RX_VALEUR = re.compile(
-    r"^\W{0,3}(CDI|CDD|alternance|apprentissage|stage|int[e\u00e9]rim|freelance|saisonni|V\.?I\.?E|contrat \u00e0 dur\u00e9e (?:in)?d\u00e9termin\u00e9e)",
+    r"^\W{0,3}(CDI|CDD|alternance|apprentissage|stage|int[e\u00e9]rim|freelance|saisonni|V\.?I\.?E|contrat \u00e0 dur\u00e9e (?:in)?d\u00e9termin\u00e9e"
+    r"|part[- ]time|temps partiel|internship|temporary|fixed[- ]term|contract\b|permanent|seasonal)",
     re.I,
 )
 
 # All the contract types, to spot the ENUMERATIONS (see pass 2).
 _RX_TOUS_CONTRATS = re.compile(
     r"\bCDI\b|\bCDD\b|\balternance\b|\bapprentissage\b|\bstages?\b"
-    r"|\bV\.?I\.?E\b|\bint[eé]rim\b|\bfreelance\b|\bsaisonni",
+    r"|\bV\.?I\.?E\b|\bint[eé]rim\b|\bfreelance\b|\bsaisonni"
+    r"|\bpart[- ]time\b|\btemps\s+partiel\b|\btemporary\b|\bseasonal\b",
     re.I,
 )
 
@@ -469,6 +473,17 @@ def contrat_de_la_description(desc: str, defaut: str = "") -> str:
         v = _RX_VALEUR.search(t[m.end() : m.end() + 40])
         if v:
             mot = v.group(1).lower()
+            # The English values first: « internship » is not « interim ».
+            if mot.startswith(("part", "temps")):
+                return "Temps partiel"
+            if mot.startswith("intern"):
+                return "Stage"
+            if mot.startswith(("temp", "fixed", "contract")):
+                return "CDD"
+            if mot.startswith("perm"):
+                return "CDI"
+            if mot.startswith("seas"):
+                return "Saisonnier"
             if mot.startswith("cdi") or "ind" in mot:
                 return "CDI"
             if mot.startswith("cdd") or "d\u00e9termin" in mot:
@@ -509,6 +524,17 @@ def contrat_de_la_description(desc: str, defaut: str = "") -> str:
 _TITRE_CONTRAT = [
     # « Serveur saisonnier », « Seasonal ski instructor » — before CDD, which the season is.
     ("Saisonnier", re.compile(r"\bsaisonni[eè]re?s?\b|\bseasonal\b", re.I)),
+    # A working pattern, but the one a part-time seeker filters on: « Part-time Nurse ».
+    ("Temps partiel", re.compile(r"\bpart[- ]time\b|\btemps\s+partiel\b|\bmi-temps\b", re.I)),
+    # « (Contract) », « Contract role »: a fixed term, the North American way. Not
+    # « Contract Manager », a job.
+    (
+        "CDD",
+        re.compile(
+            r"\((?:contract|temporary|temp)\)|\b(?:contract|temporary)\s+(?:role|position|assignment)\b",
+            re.I,
+        ),
+    ),
     (
         "CDD",
         re.compile(r"\bCDD\b|contrat\s+[àa]\s+dur[ée]e\s+d[ée]termin[ée]e|\bfixed[- ]term\b", re.I),

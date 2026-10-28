@@ -560,6 +560,7 @@ TEXTES: dict[str, str] = {
     "V.I.E": "V.I.E",
     "Bénévolat": "Volunteer",
     "Saisonnier": "Seasonal",
+    "Temps partiel": "Part-time",
     "CV / lettres": "CVs / letters",
     "Combien d'offres traiter ?\n\n{n} offre(s) a fit ≥ 8 attendent encore leurs documents.": "How many offers to process?\n\n{n} offer(s) at fit ≥ 8 are still waiting for their documents.",
     "Ne plus suivre « {nom} » ? Son adresse de flux sera retirée ; « Suspendre / Reprendre » la garde.": "Stop following “{nom}”? Its feed address will be removed; “Suspend / Resume” keeps it.",

@@ -23,6 +23,7 @@ from jobhunter.documents.common import (
     company_value,
     match_skills,
     minuscule_titre,
+    nord_americain,
     titre_poste,
 )
 from jobhunter.scoring.lexicon import cv_variant_key
@@ -311,7 +312,7 @@ def salutation(offer: dict[str, Any], langue: str = "fr") -> tuple[str, str, boo
     # A recipient the posting does not name is not named (2026-10-07).
     if offer.get("offer_text") is not None:
         rh = nom_dans_offre(rh, offer.get("offer_text"))
-    texte = appel({"rh": rh}, langue)
+    texte = appel({"rh": rh, "lieu": offer.get("lieu")}, langue)
     if texte in GENERIQUES:
         return texte, ("Sir or Madam" if langue == "en" else "Madame, Monsieur"), False
 
@@ -595,8 +596,15 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
         "December",
     ]
     _t = _d.today()
+    # North America writes the month first; Britain and the rest, the day.
+    _na = langue == "en" and nord_americain(offer.get("lieu"))
+    _fin_en = "Sincerely," if _na else None
     para(
-        f"{_MONTHS[_t.month - 1]} {_t.day}, {_t.year}"
+        (
+            f"{_MONTHS[_t.month - 1]} {_t.day}, {_t.year}"
+            if _na
+            else f"{_t.day} {_MONTHS[_t.month - 1]} {_t.year}"
+        )
         if langue == "en"
         else f"Le {_t.day} {_MOIS[_t.month - 1]} {_t.year}",
         WD_ALIGN_PARAGRAPH.RIGHT,
@@ -618,7 +626,7 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
         if _corps:
             for _bloc in _corps:
                 para(_bloc)
-            para("Yours sincerely," if _nomme else "Yours faithfully,", space=12)
+            para(_fin_en or ("Yours sincerely," if _nomme else "Yours faithfully,"), space=12)
             para(_ici.PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
             from jobhunter.programs.rename_docs import new_name
 
@@ -717,7 +725,8 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
         # "Yours faithfully" is the expected formula when the recipient is
         # unknown; "Yours sincerely" assumes they were named. The letter now knows
         # which of the two cases applies.
-        para("Yours sincerely," if _nomme else "Yours faithfully,", space=12)
+        # North America closes with « Sincerely » whoever is addressed.
+        para(_fin_en or ("Yours sincerely," if _nomme else "Yours faithfully,"), space=12)
         para(_ici.PROFILE["nom"], WD_ALIGN_PARAGRAPH.LEFT, 0)
         from jobhunter.programs.rename_docs import new_name
 

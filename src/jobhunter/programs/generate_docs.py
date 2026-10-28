@@ -285,6 +285,7 @@ def main():
             company=x["entreprise"],
             role=x["poste"],
             offer_text=f"{x['poste']} {x.get('description', '')}",
+            lieu=x.get("localisation") or "",
             missions=(x.get("missions") or "")[:400],
             profil=(x.get("profil") or "")[:300],
             domaine=x.get("domaine", ""),

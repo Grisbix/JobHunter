@@ -316,7 +316,7 @@ def _patronyme(nom: str) -> str:
 # read the whole string as a single name and returned "Monsieur Mac
 # Arthur et Monsieur Clement Lebrun" — the conjunction promoted to surname.
 _RX_SEPARE = re.compile(r"\s+(?:et|and)\s+|\s*[&;+/]\s*", re.I)
-GENERIQUES = ("Madame, Monsieur,", "Dear Sir or Madam,", "Bonjour,")
+GENERIQUES = ("Madame, Monsieur,", "Dear Sir or Madam,", "Dear Hiring Manager,", "Bonjour,")
 
 
 _CIVILITES = {"madame", "monsieur", "mme", "mr", "mrs", "ms", "m", "dr", "mlle", "mademoiselle"}
@@ -358,8 +358,10 @@ def appel(offre: dict[str, Any], langue: str = "fr", ton: str = "sobre") -> str:
     # A complete offer (with its text): the name must appear in it.
     if "description" in offre:
         rh = nom_dans_offre(rh, f"{offre.get('poste', '')} {offre.get('description') or ''}")
+    from jobhunter.documents.common import nord_americain
+
     generique = (
-        "Dear Sir or Madam,"
+        ("Dear Hiring Manager," if nord_americain(lieu_de(offre)) else "Dear Sir or Madam,")
         if langue == "en"
         else "Bonjour,"
         if ton == "detente"
@@ -556,3 +558,8 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+def lieu_de(offre: dict[str, Any]) -> str:
+    """The offer's place, as the queue (`localisation`) or the documents (`lieu`) name it."""
+    return str(offre.get("localisation") or offre.get("lieu") or "")

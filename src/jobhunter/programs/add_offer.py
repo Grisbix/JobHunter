@@ -151,6 +151,7 @@ def make_docs(url):
         company=x["entreprise"],
         role=x["poste"],
         offer_text=f"{x['poste']} {x.get('description', '')}",
+        lieu=x.get("localisation") or "",
         missions=(x.get("description") or "")[:400],
         profil="",
         domaine=x.get("domaine", ""),
