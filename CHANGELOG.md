@@ -4,6 +4,25 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.50.0 — 2026-10-28
+
+The first launch reads CVs from London, Berlin, Tokyo and Madrid as well as from France.
+
+- **CVs written in German or Spanish** are recognised as such. They were taken for
+  French: « fr » was added to the spoken languages and the French gender question was
+  asked. Their summary is no longer copied into the French or English letter paragraph.
+- **« 2022–heute », « 2020–actualidad », « bis heute »** count as still in the job: the
+  years of experience of a German or Spanish CV were short by the current job.
+- **Languages named in English, French, German or Spanish** (« Englisch
+  (verhandlungssicher) », « Inglés (C1) », « Japanese (native) ») are added to the
+  spoken languages. The message's language sentence leaves out the CV's own language
+  rather than French: a London CV now says « I speak French (intermediate) ».
+- **The secondary zone abroad is the whole country by the name postings use**
+  (« Spain », with « España » as an alias), when the CV gives no region. « Berlin,
+  Deutschland » no longer made « Deutschland » a region.
+- **Skills are shown under their English label** when the interface is not French.
+- « English (fluent) » no longer gives the skill « Simulation numérique » (Ansys Fluent).
+
 ## 3.49.0 — 2026-10-28
 
 Nothing assumes a French user or a finance profile any more.
