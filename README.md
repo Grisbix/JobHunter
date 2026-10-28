@@ -133,6 +133,9 @@ Then: **`launchers\schedule.bat`** runs the collection every morning at 8:00 (`l
 for another time, `launchers\schedule.bat supprimer` to stop), and **`launchers\update.bat`** fetches
 the latest version, checks that everything loads and rolls back on its own otherwise. Your
 profile, CV, letters and log are **never** touched.
+Downloaded again into a new folder (or on another computer)? At its first start the app
+offers to take back the previous JobHunter folder's data: they are copied, the old folder
+stays as it is.
 
 **What is in the folder**: `launchers/` the double-click tools (Windows `.bat`, macOS/Linux
 `.sh`) · `My_CV/` your CV · `profile/` your settings · `data/` the offers, the log of

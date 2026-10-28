@@ -194,6 +194,20 @@ def _sans_cadre(fenetre: Any) -> bool:
         return False
 
 
+def _petit_logo() -> Any:
+    """The application's logo at 32 px (PyMuPDF averages, Tk's subsample would not)."""
+    try:
+        import base64
+
+        import fitz
+
+        pix = fitz.Pixmap(str(ICONE.with_suffix(".png")))
+        pix.shrink(3)  # 256 -> 32
+        return tk.PhotoImage(data=base64.b64encode(pix.tobytes("png")))
+    except Exception:  # noqa: BLE001 — cosmetic only: the square stays
+        return None
+
+
 def _barre(fenetre: Any) -> None:
     """The white bar on top: brand on the left, reduce and close on the right, draggable."""
     import customtkinter as ctk
@@ -203,7 +217,13 @@ def _barre(fenetre: Any) -> None:
     barre.pack_propagate(False)
     marque = ctk.CTkFrame(barre, fg_color="transparent")
     marque.pack(side="left", padx=16)
-    ctk.CTkFrame(marque, width=22, height=22, corner_radius=7, fg_color=C1B).pack(side="left")
+    logo = _petit_logo()
+    if logo is not None:  # JobHunter's logo, as the web window's bar (not a coloured square)
+        etiquette = tk.Label(marque, image=logo, bg=BARRE, bd=0)  # CTkLabel warns on a PhotoImage
+        etiquette._logo = logo  # type: ignore[attr-defined]  # Tk only holds a name
+        etiquette.pack(side="left")
+    else:
+        ctk.CTkFrame(marque, width=22, height=22, corner_radius=7, fg_color=C1B).pack(side="left")
     nom = _texte(marque, "JobHunter", taille=13, gras=True)
     nom.pack(side="left", padx=8)
 
@@ -911,6 +931,93 @@ def profil_guide(fenetre: Any, cv: str = "") -> bool:
         cv = ""
 
 
+def proposer_reprise(fenetre: Any, candidats: list[Path]) -> Path | None:
+    """The data of a previous JobHunter folder, before asking for the CV (previous_data).
+
+    Returns the folder to take them from, or None for a new profile.
+    """
+    import time
+
+    import customtkinter as ctk
+
+    from jobhunter.previous_data import profil_de
+
+    choix: dict[str, Path | None] = {"d": None}
+    fenetre.title("JobHunter — bienvenue")
+    carte = _carte(fenetre)
+    corps = ctk.CTkFrame(carte, fg_color="transparent")
+    corps.pack(fill="both", expand=True, padx=24, pady=(20, 24))
+    _texte(corps, "Bon retour", taille=44).pack(anchor="w")
+    _texte(
+        corps,
+        "Ce dossier est vide, mais un autre JobHunter a déjà ton profil. Reprends ses "
+        "données (profil, CV, offres, candidatures) : elles sont copiées ici, l'ancien "
+        "dossier ne change pas.",
+        couleur=TEXTE_DOUX,
+        largeur=460,
+    ).pack(anchor="w", pady=(8, 16))
+    message = _texte(corps, "", couleur=TEXTE_DOUX, largeur=460)
+
+    def fin(d: Path | None) -> None:
+        choix["d"] = d
+        fenetre.quit()
+
+    for d in candidats[:3]:
+        f = profil_de(d)
+        quand = time.strftime("%d/%m/%Y", time.localtime(f.stat().st_mtime)) if f else ""
+        ligne = ctk.CTkFrame(corps, fg_color="transparent")
+        ligne.pack(fill="x", pady=4)
+        _texte(ligne, f"{d}\nprofil du {quand}", largeur=320).pack(side="left")
+        _bouton(ligne, "Reprendre", lambda d=d: fin(d), principal=True).pack(side="right")
+
+    def autre() -> None:
+        p = filedialog.askdirectory(parent=fenetre, title="Ancien dossier de JobHunter")
+        if not p:
+            return
+        if profil_de(Path(p)) is None:
+            message.configure(text="Pas de profil dans ce dossier : choisis celui de JobHunter.")
+            message.pack(anchor="w", pady=(8, 0))
+            return
+        fin(Path(p))
+
+    boutons = ctk.CTkFrame(corps, fg_color="transparent")
+    boutons.pack(fill="x", pady=(16, 0))
+    _bouton(boutons, "Autre dossier…", autre).pack(side="left")
+    _bouton(boutons, "Nouveau profil", lambda: fin(None)).pack(side="right")
+    _fermeture(fenetre, lambda: fin(None))
+    _montrer(fenetre)
+    fenetre.mainloop()
+    carte.destroy()
+    fenetre.withdraw()
+    return choix["d"]
+
+
+def _reprise(fenetre: Any) -> bool:
+    """Offers the previous folder's data; True once they are here with their profile."""
+    from jobhunter import previous_data
+
+    ici = _rac.racine()
+    candidats = previous_data.candidats(ici)
+    if not candidats:
+        return False
+    source = proposer_reprise(fenetre, candidats)
+    if source is None:
+        return False
+    try:
+        previous_data.reprendre(source, ici)
+    except OSError as e:
+        messagebox.showerror("JobHunter", f"Copie impossible depuis {source} :\n\n{e}")
+        return False
+    _migrer_si_besoin()  # a 2.x folder takes the 3.0 names
+    try:
+        _profil.recharger(_profil.chemin_par_defaut())
+        _profil.charger()
+    except _profil.ProfilAbsent:
+        messagebox.showerror("JobHunter", f"Aucun profil lisible dans {source}.")
+        return False
+    return True
+
+
 def assurer_profil() -> None:
     """Guarantees a profile before opening the application.
 
@@ -926,6 +1033,9 @@ def assurer_profil() -> None:
     except _profil.ProfilAbsent:
         pass
     _r = fenetre_accueil()
+    if _reprise(_r):  # a new download: the previous folder's data (previous_data)
+        _r.destroy()
+        return
     if not profil_guide(_r):
         messagebox.showinfo(
             "JobHunter",

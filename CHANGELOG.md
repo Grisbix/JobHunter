@@ -4,6 +4,14 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.60.0 — 2026-10-28
+
+Downloaded again, JobHunter no longer starts from zero.
+
+- **The welcome offers the previous folder's data.** Installed from source, the data live in JobHunter's own folder: unzipped elsewhere (a new download, another computer), the welcome asked for the CV again. It now looks for another JobHunter folder with a profile (beside it, in Documents, Downloads, Desktop, and Documents/JobHunter of the installer) and offers to take its data back — profile, CV, offers, applications, documents — or another folder chosen by hand. They are copied: the old folder does not change. Daily backups and logs are not copied.
+- **The welcome window's bar shows JobHunter's logo**, no longer a coloured square.
+- README: what happens on a new download.
+
 ## 3.59.0 — 2026-10-28
 
 One logo everywhere: no more Python, Terminal or Inno Setup logo in front of JobHunter.

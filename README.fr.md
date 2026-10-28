@@ -154,6 +154,9 @@ Pour personnaliser JobHunter ou le développer : le code complet, avec Python.
   que tu as modifié est gardé, la nouvelle version posée à côté en `.nouveau`. Les anciennes
   versions vont dans `_sauvegarde_maj\` ; `launchers\update.bat --annuler` y revient.
   L'application te prévient elle-même au démarrage quand une nouvelle version sort.
+- **Retéléchargé dans un nouveau dossier** (ou sur un autre ordinateur) ? Au premier
+  démarrage, l'application propose de reprendre les données de l'ancien dossier JobHunter :
+  elles sont copiées, l'ancien dossier ne change pas.
 
 **Ce qu'il y a dans le dossier** : `launchers/` les outils en double-clic (`.bat` Windows,
 `.sh` macOS/Linux) · `My_CV/` ton CV · `profile/` tes réglages · `data/` les offres, le
