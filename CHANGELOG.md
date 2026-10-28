@@ -4,6 +4,23 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.52.0 — 2026-10-28
+
+A cleaner window: one scale of sizes, no decoration that says nothing.
+
+- **Nine font sizes instead of twenty, twelve spacings instead of thirty.** Sizes such
+  as 12.5, 13.5 or 9.5 px had crept in one screen at a time; every text size is now a
+  token of one type scale, every margin, padding and gap a step of one spacing scale,
+  and a test keeps it so.
+- **Flat colours where gradients said nothing**: the score circles, the morning
+  collection's bars and the home tiles. The dark "To do" card loses its glow.
+- **The best offers lose the rank badge** sitting on their score: the list is already
+  in order.
+- **The home chart waits for three collections** before drawing a curve, instead of
+  one lone bar.
+- **An offers column empty on the whole page is left out** (no zone set, nothing
+  applied to yet): it showed a dash on every row.
+
 ## 3.51.0 — 2026-10-28
 
 The large employers of your country, from open directories.
