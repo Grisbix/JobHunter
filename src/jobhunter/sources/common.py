@@ -871,6 +871,10 @@ _RX_ETAT_US = re.compile(
 # that they do not mix with the French targets on display.
 # `--france` restricts when the opposite is wanted.
 MONDE = True
+# With MONDE off, the countries also searched (profile `monde: ["Suisse", …]`, 3.53):
+# their ISO codes, let in at merge, and their names, asked of LinkedIn.
+PAYS_EN_PLUS: frozenset[str] = frozenset()
+LIEUX_EN_PLUS: list[str] = []
 
 
 def en_france(lieu: str | None) -> bool:
@@ -895,6 +899,8 @@ def en_france(lieu: str | None) -> bool:
     from jobhunter.scoring import zones as _zones
 
     maison = str(_zones.PAYS_MAISON)
+    if PAYS_EN_PLUS and _zones.code_pays(_zones.pays_lieu(t)) in PAYS_EN_PLUS:
+        return True
     if maison != "fr":  # a profile elsewhere: its own country (`pays`)
         return _zones.pays_lieu(t) in ("?", _zones._ISO_PAYS.get(maison))
     if _RX_FR.search(t):

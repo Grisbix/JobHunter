@@ -45,6 +45,9 @@ A_COMPLETER = "A COMPLETER"
 # The questions and messages, in English when the interface is not in French (the
 # system's language by default): a user in Ohio reads « First name », not « Prénom ».
 _EN = {
+    "Chercher aussi hors de {} ? (o/n)": "Also search outside {}? (y/n)",
+    "Quels pays ou régions ? (ex. : Suisse, Belgique, Europe, monde)": "Which countries or regions? (e.g. Switzerland, Belgium, Europe, world)",
+    "Villes ou secteurs de préférence (séparés par des virgules)": "Preferred cities or areas (comma-separated)",
     "\n5. Plus d'offres : la clé {} (gratuite, 5 minutes)": "\n5. More offers: the {} key (free, 5 minutes)",
     "  créer un compte et une application sur {}, puis :": "  create an account and an application on {}, then:",
     "  app : Sources → Accès et clés → Saisir la clé": "  app: Sources → Access and keys → Enter the key",
@@ -62,7 +65,6 @@ _EN = {
     "Ville": "City",
     "Métiers visés, séparés par des virgules (ex. : Chargé de communication, Community manager)": "Target jobs, separated by commas (e.g. Communications officer, Community manager)",
     "Années d'expérience professionnelle (stages compris)": "Years of work experience (internships included)",
-    "Secteurs PRIORITAIRES (séparés par des virgules)": "PRIORITY places (separated by commas)",
     "Secteurs secondaires (vide = aucun)": "Secondary places (empty = none)",
     "Garder les ~90 entreprises de finance / ESG suivies par défaut ? (o/n)": "Keep the ~90 finance / ESG companies followed by default? (y/n)",
     "\n3. Ecriture": "\n3. Writing",
@@ -786,6 +788,20 @@ def _traductions(forme):
 _TETES_LARGES = {"engineer", "ingénieur", "ingenieur", "technician", "technicien", "consultant"}
 
 
+def reponse_monde(texte):
+    """`monde` for the answer to "which countries?": False (none), True (the world), or
+    the countries and regions named (« Suisse », « Europe »), unknown names left out."""
+    from jobhunter.sources import countries
+
+    noms = [x.strip() for x in str(texte or "").split(",") if x.strip()]
+    if not noms:
+        return False
+    if any(countries._simple(x) in countries.MONDE_MOTS for x in noms):
+        return True
+    gardes = [x for x in noms if countries.code(x) or countries._simple(x) in countries.REGIONS]
+    return gardes or True
+
+
 def filtre_metier(mots_cibles, mots_famille):
     """The title filter's words: "ingénieur / engineer + mécanique / mechanical" and the
     specialty for a broad head, the words themselves otherwise; then the family's words."""
@@ -1163,9 +1179,10 @@ def construire(cv_txt, cv_nom, rep):
             "intitules_hors_metier": [],
         },
         "niveau": niv,
-        # LinkedIn "Worldwide" and freehire's other countries: 126 of a Lyon engineer's
-        # 375 offers were abroad (2026-10-28). True, or `collect --monde`, to ask for them.
-        "monde": False,
+        # Asked at first launch: false = the home country only, a list = it and those
+        # countries, true = the world. LinkedIn "Worldwide" brought 126 foreign offers of
+        # a Lyon engineer's 375, unasked (2026-10-28).
+        "monde": rep.get("monde", False),
         "filtre_titre": {
             "metier": filtre_metier(mots_cibles, FAMILLES.get(coeur, ("", []))[1]),
             "exclus": exclus,
@@ -1352,6 +1369,8 @@ def main():
     ap.add_argument("--genre", choices=["m", "f"], help="agreement of French letters")
     ap.add_argument("--prioritaires", help="priority places, separated by commas")
     ap.add_argument("--secondaires", help="secondary places, separated by commas (empty = none)")
+    ap.add_argument("--etranger", choices=["o", "n"], help="search abroad too (o) or not (n)")
+    ap.add_argument("--pays-etrangers", help="countries or regions abroad, separated by commas")
     ap.add_argument(
         "--entreprises",
         choices=["o", "n"],
@@ -1473,12 +1492,28 @@ def main():
 
     if a_l_etranger:
         secteur_ville = ident["ville"]
-    else:
+    pays_maison = _pays_src.nom(ident.get("pays") or "fr")
+    etranger = _oui(
+        demander(
+            _t("Chercher aussi hors de {} ? (o/n)").format(pays_maison), "n", a.auto, a.etranger
+        )
+    )
+    monde = reponse_monde(
+        demander(
+            _t("Quels pays ou régions ? (ex. : Suisse, Belgique, Europe, monde)"),
+            "monde",
+            a.auto,
+            a.pays_etrangers,
+        )
+        if etranger
+        else ""
+    )
+    if not a_l_etranger:
         print(f"     secteurs connus : {', '.join(zones.CATALOGUE)}")
     prio = [
         x.strip()
         for x in demander(
-            _t("Secteurs PRIORITAIRES (séparés par des virgules)"),
+            _t("Villes ou secteurs de préférence (séparés par des virgules)"),
             secteur_ville or ("" if a_l_etranger else "idf"),
             a.auto,
             a.prioritaires,
@@ -1501,6 +1536,14 @@ def main():
     def secteur(x):
         if x.lower() in zones.CATALOGUE:
             return x.lower()
+        # « Bordeaux », « Mérignac »: the most precise sector that names the city.
+        dans = [
+            (len(s.get("departements", ())), cle)
+            for cle, s in zones.CATALOGUE.items()
+            if _sans_accent(x).lower() in s.get("lieux", ())
+        ]
+        if dans and not a_l_etranger:
+            return min(dans)[1]
         libre = search_settings.lieu_libre(x)
         etat = next((k for k, v in zones.ETATS_US_CODES.items() if v.lower() == x.lower()), "")
         if etat:
@@ -1513,6 +1556,16 @@ def main():
 
     prio = [secteur(x) for x in prio]
     sec = [secteur(x) for x in sec]
+    # Each country asked for: a secondary place under the names postings give it.
+    for iso in [_pays_src.code(x) for x in (monde if isinstance(monde, list) else [])]:
+        if not iso:
+            continue
+        nom_fr = zones._ISO_PAYS.get(iso, _pays_src.nom(iso))
+        noms = [nom_fr, _pays_src.nom(iso), *zones._PAYS_CANON.get(nom_fr, ())]
+        lieu = search_settings.lieu_libre(nom_fr)
+        lieu["lieux"] = list(dict.fromkeys(noms))
+        if lieu["cle"] not in [s.get("cle") for s in sec if isinstance(s, dict)]:
+            sec.append(lieu)
     ordre, _ = familles_visees(metiers, comps)
     finance = bool(ordre) and ordre[0] in ("finance", "rse", "conseil")
     # Asked only of a finance profile: the default companies are banks and asset managers.
@@ -1537,6 +1590,7 @@ def main():
         "genre": "f" if genre.lower().startswith("f") else "m",
         "prioritaires": prio,
         "secondaires": sec,
+        "monde": monde,
         "parcours": a.parcours or "",
     }
 

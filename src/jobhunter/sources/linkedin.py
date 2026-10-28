@@ -196,7 +196,7 @@ def scan_linkedin(
     if lieux is None:
         from jobhunter.sources import countries as _pays
 
-        lieux = lieux_par_defaut() if _commun.MONDE else [_pays.nom()]
+        lieux = lieux_par_defaut() if _commun.MONDE else [_pays.nom(), *_commun.LIEUX_EN_PLUS]
     # A dict gives the depth per place, a list keeps the argument's.
     profondeur = dict(lieux) if isinstance(lieux, dict) else {x: pages for x in lieux}
     offers: list[dict[str, Any]] = []

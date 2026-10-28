@@ -6,7 +6,7 @@ recent at the top.
 
 ### Changed
 - **A broad job title asks for its specialty.** First launch writes « ingénieur / engineer + mécanique / mechanical » in the title filter instead of « ingénieur » alone: a mechanical engineer's collection no longer brings DevOps or civil posts. The filter syntax `a + b` (every part, any order; `a / b` for variants) works in any profile.
-- **A new profile searches its own country.** First launch writes `"monde": false`; `collect` then skips LinkedIn « Worldwide » and foreign offers, as `--france` did. Existing profiles keep their behaviour (no key = the world, as before). On three test CVs (engineer in Lyon, waiter in Bordeaux, lawyer in Paris): 122, 4 and 13 foreign offers fewer.
+- **First launch asks where to search.** The home country only, or abroad too — and then which countries or regions (« Suisse, Belgique », « Europe », « monde »); and the preferred cities, a city of the catalogue standing for its sector (« Mérignac » → Bordeaux). The answer goes to the profile's `monde` (false, a list, or true), which `collect` follows: LinkedIn is asked for the home country and each country named instead of « Worldwide », and the merge lets in those countries' offers only. Same questions in the welcome window. Existing profiles keep their behaviour (no key = the world, as before). On three test CVs (engineer in Lyon, waiter in Bordeaux, lawyer in Paris), the home country only: 122, 4 and 13 foreign offers fewer.
 
 ### Added
 - **The free key that brings the most offers is advised.** France Travail for a profile in France (most offers outside executive jobs are there), Adzuna in the countries it covers: at the end of first launch, with the steps, and as the first line of the home screen's « À faire » until the key is saved.

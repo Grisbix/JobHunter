@@ -8,7 +8,9 @@ def test_questions_en_anglais_hors_interface_francaise(monkeypatch):
 
     monkeypatch.setattr(i18n, "langue", lambda: "en")
     assert fl._t("Prénom") == "First name"
-    assert fl._t("Secteurs PRIORITAIRES (séparés par des virgules)").startswith("PRIORITY")
+    assert fl._t("Villes ou secteurs de préférence (séparés par des virgules)").startswith(
+        "Preferred"
+    )
     # A text without translation stays as it is.
     assert fl._t("texte inconnu") == "texte inconnu"
 

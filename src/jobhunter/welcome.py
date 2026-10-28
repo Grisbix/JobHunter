@@ -434,8 +434,14 @@ def arguments_profil(cv: str, rep: dict[str, Any]) -> list[str]:
         args += [f"--{champ}", str(rep.get(champ) or "").strip()]
     args += ["--annees", str(int(rep.get("annees") or 0))]
     args += ["--genre", "f" if rep.get("genre") == "f" else "m"]
-    if rep.get("prioritaires"):
-        args += ["--prioritaires", ",".join(rep["prioritaires"])]
+    # The sectors ticked, then the cities typed.
+    villes = [v.strip() for v in str(rep.get("villes") or "").split(",") if v.strip()]
+    prio = [*(rep.get("prioritaires") or []), *villes]
+    if prio:
+        args += ["--prioritaires", ",".join(dict.fromkeys(prio))]
+    args += ["--etranger", "o" if rep.get("etranger") else "n"]
+    if rep.get("etranger") and str(rep.get("pays_etrangers") or "").strip():
+        args += ["--pays-etrangers", str(rep["pays_etrangers"]).strip()]
     args += ["--secondaires", ",".join(rep.get("secondaires") or [])]
     args += ["--entreprises", "o" if rep.get("entreprises") else "n"]
     args += ["--word", "o" if rep.get("word") else "n"]
@@ -590,6 +596,49 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
             ).grid(row=i // 3, column=i % 3, sticky="w", padx=8, pady=3)
             coches[cle][s] = v
         ligne += 1
+    _texte(cadre, "Autres villes de préférence (facultatif, séparées par des virgules)").grid(
+        row=ligne, column=0, columnspan=2, sticky="w", pady=(12, 4)
+    )
+    ligne += 1
+    champs["villes"] = champ("", largeur=640)
+    champs["villes"].grid(row=ligne, column=0, columnspan=2, sticky="we", padx=(0, 12))
+    ligne += 1
+
+    # ── Where: the home country only, or abroad too (which countries) ──
+    pays_maison = zones._ISO_PAYS.get(str(prop.get("pays") or "fr"), "ton pays")
+    _texte(cadre, "Où chercher").grid(row=ligne, column=0, columnspan=2, sticky="w", pady=(12, 4))
+    ligne += 1
+    etranger = tk.BooleanVar(value=False)
+    rang_ou = ctk.CTkFrame(cadre, fg_color="transparent")
+    rang_ou.grid(row=ligne, column=0, columnspan=2, sticky="w")
+    ligne += 1
+    lib_pays = _texte(cadre, "Pays ou régions (ex. : Suisse, Belgique, Europe, monde)")
+    lib_pays.grid(row=ligne, column=0, sticky="w", pady=3, padx=(0, 16))
+    pays_etrangers = champ("")
+    pays_etrangers.grid(row=ligne, column=1, sticky="we", pady=3)
+    ligne += 1
+
+    def montrer_pays() -> None:
+        for w in (lib_pays, pays_etrangers):
+            if etranger.get():
+                w.grid()
+            else:
+                w.grid_remove()
+
+    for dehors, lib in ((False, f"Seulement en {pays_maison}"), (True, "Aussi à l'étranger")):
+        ctk.CTkRadioButton(
+            rang_ou,
+            text=lib,
+            variable=etranger,
+            value=dehors,
+            command=montrer_pays,
+            border_color=BORD_CHAMP,
+            fg_color=BRUN,
+            hover_color=BRUN_H,
+            text_color=ENCRE,
+            font=_police(),
+        ).pack(side="left", padx=(0, 16))
+    montrer_pays()
     entreprises = tk.BooleanVar(value=bool(prop["entreprises"]))
     ctk.CTkCheckBox(
         cadre,
@@ -724,6 +773,8 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
             "annees": n,
             "genre": genre.get(),
             "entreprises": entreprises.get(),
+            "etranger": etranger.get(),
+            "pays_etrangers": pays_etrangers.get().strip(),
             "word": word.get(),
             "parcours": parcours.get("1.0", "end").strip(),
             **{k: [s for s, v in c.items() if v.get()] for k, c in coches.items()},

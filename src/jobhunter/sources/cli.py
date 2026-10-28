@@ -235,12 +235,18 @@ def main() -> int:
 
     if a.fusion_seule:
         return _fusionner(json.loads(FRESH.read_text(encoding="utf-8")), a.dry)
-    # `monde: false` in the profile (first launch since 3.53): the home country only.
+    # `monde` in the profile (first launch since 3.53): false = the home country only,
+    # a list = the home country and those countries; absent = the whole world.
     from jobhunter import profile as _prof
 
-    if a.france or _prof.get("monde", True) is False:
+    monde, en_plus, noms = _pays.etranger_vise(_prof.get("monde", None))
+    if a.france or not monde:
         _commun.MONDE = False
-        print("── recherche restreinte au pays du profil ──")
+        if not a.france and en_plus:
+            _commun.PAYS_EN_PLUS, _commun.LIEUX_EN_PLUS = en_plus, noms
+            print(f"── recherche : pays du profil + {', '.join(noms)} ──")
+        else:
+            print("── recherche restreinte au pays du profil ──")
     # --efc and --efc-tout count as a requested source. Without them in
     # this list, `--efc` alone fell back on a.all = True and started the WHOLE
     # daily scan again before reaching eFC.

@@ -31,6 +31,65 @@ FRANCAISES = frozenset(
 )
 
 
+# The regions a profile may name in `monde`, as sets of countries.
+REGIONS = {"europe": EUROPE}
+# The words that mean the whole world.
+MONDE_MOTS = frozenset(("monde", "world", "worldwide", "partout", "international", "welt", "mundo"))
+
+
+def _simple(s: str) -> str:
+    import unicodedata
+
+    s = unicodedata.normalize("NFKD", str(s)).encode("ascii", "ignore").decode()
+    return " ".join(s.lower().split())
+
+
+def code(texte: str) -> str:
+    """The ISO code of a country as typed (« Suisse », « Switzerland », « ch »); "" if unknown."""
+    from jobhunter.scoring import zones
+
+    t = _simple(texte)
+    if t in NOMS:
+        return t
+    for iso, n in NOMS.items():
+        if _simple(n) == t:
+            return iso
+    for iso, n in zones._ISO_PAYS.items():
+        if len(iso) == 2 and _simple(n) == t:
+            return iso
+    for canon, variantes in zones._PAYS_CANON.items():
+        if t == _simple(canon) or t in variantes:
+            return zones.code_pays(canon)
+    return ""
+
+
+def etranger_vise(valeur: Any) -> tuple[bool, frozenset[str], list[str]]:
+    """The profile's `monde`: (the whole world?, ISO codes searched abroad, their names).
+
+    Absent or true: the whole world, as before 3.53. False: the home country only. A
+    list (« Suisse », « Belgique », « Europe »): the home country and those.
+    """
+    if valeur is None or valeur is True:
+        return True, frozenset(), []
+    if not isinstance(valeur, list):
+        return False, frozenset(), []
+    isos: set[str] = set()
+    noms: list[str] = []
+    for x in valeur:
+        t = _simple(str(x))
+        if t in MONDE_MOTS:
+            return True, frozenset(), []
+        if t in REGIONS:
+            isos |= REGIONS[t] - {maison()}
+            noms.append(t.title())
+            continue
+        iso = code(str(x))
+        if iso and iso != maison() and iso not in isos:
+            isos.add(iso)
+            noms.append(nom(iso))
+    return False, frozenset(isos), noms
+
+
 def maison() -> str:
     """The home country's ISO code: `pays` in the profile, "fr" when absent."""
     from jobhunter.scoring import zones
