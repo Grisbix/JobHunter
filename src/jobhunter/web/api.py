@@ -692,6 +692,23 @@ def _plus_recente(a: str, b: str) -> bool:
     return bool(a) and cle(a) > cle(b)
 
 
+def bureau_a_distance() -> bool:
+    """True in a Remote Desktop session (Windows' SM_REMOTESESSION).
+
+    There every frame is encoded and sent over the network, at about 30 per second:
+    the frosted panels and the blurred backdrop are redrawn and sent with each scroll
+    (the user's session, 2026-10-28: « je trouve ça lent »).
+    """
+    if sys.platform != "win32":
+        return False
+    try:
+        import ctypes
+
+        return bool(ctypes.windll.user32.GetSystemMetrics(0x1000))  # type: ignore[attr-defined,unused-ignore]
+    except (AttributeError, OSError):
+        return False
+
+
 class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
     """Methods the page calls through `window.pywebview.api`.
 
@@ -702,7 +719,10 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
     # Set by __main__ once the window exists; private, so pywebview does not expose it.
     _fenetre: Any = None
     _basculer: Any = None  # full screen <-> rounded window
-    _fond: Any = None  # applies a backdrop by name, see FONDS
+    # Applies a backdrop by name, see FONDS. Not `_fond`: that is the background loop
+    # (web.background), which this attribute overwrote — every fond_etat call failed
+    # and the background's news never reached the page (found 2026-10-28).
+    _toile: Any = None
     _tache: Tache | None = None
 
     def __init__(self) -> None:
@@ -1009,6 +1029,10 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         """The display settings: window backdrop and glass strength."""
         return lire_reglages()
 
+    def session(self) -> dict[str, Any]:
+        """Is the window seen through Remote Desktop? Then the page drops its blurs."""
+        return {"distance": bureau_a_distance()}
+
     def textes(self) -> dict[str, Any]:
         """The interface language and its catalogue, for app.js (jobhunter.web.i18n)."""
         from jobhunter.web import i18n
@@ -1018,8 +1042,8 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
     def regler(self, valeurs: dict[str, Any]) -> dict[str, Any]:
         """Saves the display settings; a new backdrop applies at once."""
         r = ecrire_reglages(valeurs)
-        if self._fond:
-            self._fond(r["fond"])
+        if self._toile:
+            self._toile(r["fond"])
         return r
 
     # Profile and search, edited: the same functions as the desktop app's panels

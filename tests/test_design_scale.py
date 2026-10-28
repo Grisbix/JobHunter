@@ -81,3 +81,17 @@ def test_l_accueil_range_des_elements_entiers_pour_tenir_dans_la_fenetre():
     # The user, 2026-10-28: « éviter de couper les widgets quand on ouvre l'app ».
     assert "function ajusterAccueil(vue)" in JS
     assert re.search(r"\.accueil \.range \{[^}]*display: none", CSS)
+
+
+def test_le_bureau_a_distance_retire_flous_et_animations():
+    # The user's session, 2026-10-28 (« je trouve ça lent »): Remote Desktop sends about
+    # 30 frames a second; the blurs cost the most GPU work per frame there.
+    assert 'appel("session")' in JS and '"leger"' in JS
+    leger = re.search(r"body\.leger \*[^{]*\{([^}]*)\}", CSS).group(1)
+    assert "backdrop-filter: none" in leger and "animation: none" in leger
+    assert "prefers-reduced-motion: reduce" in CSS
+
+
+def test_un_rafraichissement_garde_la_position_de_defilement():
+    corps = JS[JS.index("async function redessinerDonnees") :][:1500]
+    assert "scrollTop" in corps

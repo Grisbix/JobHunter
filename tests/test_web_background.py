@@ -111,3 +111,21 @@ def test_demarrage_dit_si_la_mise_a_jour_a_abouti(monkeypatch):
         "jobhunter.programs.update.confirmer_demarrage", lambda: "Mise à jour confirmée"
     )
     assert bg.FondApi().demarrage() == "Mise à jour confirmée"
+
+
+def test_la_toile_de_la_fenetre_n_ecrase_pas_la_boucle_de_fond(monkeypatch):
+    # 2026-10-28: __main__ set `api._fond = cadre.fond`, the very attribute holding the
+    # background loop: every fond_etat call raised and no news reached the page.
+    from pathlib import Path
+
+    from jobhunter.web import api as web_api
+
+    monkeypatch.delenv("JOBHUNTER_SANS_FOND", raising=False)
+    monkeypatch.setattr(bg.Fond, "demarrer", lambda self: None)
+    a = web_api.Api()
+    a.demarrer_fond()
+    a._toile = lambda nom: None
+    assert isinstance(a._fond, bg.Fond)
+    assert "messages" in a.fond_etat()
+    principal = Path(web_api.__file__).with_name("__main__.py").read_text(encoding="utf-8")
+    assert "api._fond =" not in principal

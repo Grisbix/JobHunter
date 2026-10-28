@@ -492,6 +492,30 @@ body.natif .tiroir { top: 52px; }
   .menu-profils { right: auto; width: 250px; }
   .accueil { grid-template-columns: 1fr; }
 }
+/* A low window: a 1080p screen at 150 % gives 1280 × 720, title bar included (the
+   user's, 2026-10-28). The home screen tightens to show its panels whole. */
+@media (max-height: 760px) {
+  .fenetre { grid-template-rows: 64px minmax(0, 1fr); }
+  .colonne { gap: 16px; }
+  .stats { padding: 16px 20px; }
+  .kpi { padding: 20px 20px 20px 24px; }
+  .barres { height: 140px; margin-top: 16px; }
+  .col .tube { height: 118px; }
+  .liste-meilleures { padding: 16px; }
+  .liste-meilleures ol { margin-top: 12px; gap: 8px; }
+  .sombre { padding: 20px; }
+  .fil { margin-top: 16px; gap: 16px; }
+  .accueil .panneau { padding: 20px 24px; }
+  .vue { padding-bottom: 16px; }
+}
+/* Light display: Remote Desktop (body.leger, set from Api.session), or Windows asking for
+   less motion. Each frame there is encoded and sent at about 30 per second: the blurs,
+   the blurred backdrop and the animations cost the most and show the least. */
+body.leger *, body.leger *::before, body.leger *::after { backdrop-filter: none !important; transition: none !important; animation: none !important; }
+body.leger .fond i { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
 /* The menu folded by hand (Replier le menu): the narrow window's menu, at any width. */
 body.menu-replie .fenetre { grid-template-columns: 64px minmax(0, 1fr); }
 body.menu-replie .menu a { font-size: 0; justify-content: center; gap: 0; }

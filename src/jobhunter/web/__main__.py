@@ -190,7 +190,7 @@ def main() -> int:
     cadre = _Cadre(fenetre)
     api._fenetre = fenetre
     api._basculer = cadre.basculer
-    api._fond = cadre.fond
+    api._toile = cadre.fond
     fenetre.events.shown += cadre.installer
     webview.start()
     return 0

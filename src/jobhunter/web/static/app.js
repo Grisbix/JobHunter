@@ -344,8 +344,15 @@ function redessiner() {
 
 // Redraws after a change made in the background: only the screens that show data, so
 // a form being typed in (profile, sources, settings) never loses what was typed.
-function redessinerDonnees() {
-  if (["accueil", "offres", "candidatures", "relances", "documents", "stats"].includes(courant)) redessiner();
+// The lists keep where they were scrolled to: a batch of descriptions landing must not
+// send the offers list back to its top while it is being read.
+async function redessinerDonnees() {
+  if (!["accueil", "offres", "candidatures", "relances", "documents", "stats"].includes(courant)) return;
+  const vue = $("vue");
+  const defilants = () => [vue, ...vue.querySelectorAll(".defile")];
+  const avant = defilants().map((e) => e.scrollTop);
+  await ECRANS[courant].dessiner(vue).catch(console.error);
+  defilants().forEach((e, i) => { if (avant[i]) e.scrollTop = avant[i]; });
 }
 
 // --- Application status ---------------------------------------------------------------
@@ -2169,6 +2176,8 @@ async function demarrer() {
 function natif() {
   document.body.classList.add("natif");
   appel("reglages").then(appliquerReglages).catch(() => { /* defaults from style.css */ });
+  // Remote Desktop: no blur, no motion (style.css, body.leger).
+  appel("session").then((s) => document.body.classList.toggle("leger", !!(s && s.distance))).catch(() => {});
   suivreTache();  // a task started before a reload keeps being followed
   for (const b of document.querySelectorAll(".feux button")) {
     b.addEventListener("click", () => window.pywebview.api.fenetre(b.dataset.action));

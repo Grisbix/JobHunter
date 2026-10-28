@@ -281,7 +281,7 @@ def test_ecrire_reglages_garde_la_langue(monkeypatch, tmp_path):
     monkeypatch.setattr(web_api, "_fichier_reglages", lambda: f)
     fonds = []
     api = Api()
-    api._fond = fonds.append
+    api._toile = fonds.append
     voulu = {**web_api.REGLAGES, "fond": "mica", "verre": 20, "teinte": "bleu"}
     assert api.regler({"fond": "mica", "verre": 20, "teinte": "bleu"}) == voulu
     assert json.loads(f.read_text(encoding="utf-8")) == {"langue": "de", "web": voulu}
@@ -529,3 +529,11 @@ def test_gmail_pas_relie_dit_quoi_faire(monkeypatch, tmp_path):
     r = Api().lire_courriels("gmail")
     assert r["ok"] is False and "pas encore relié" in r["erreur"]
     assert str(tmp_path / "gmail_client.json") in r["erreur"]
+
+
+def test_session_dit_si_la_fenetre_passe_par_le_bureau_a_distance(monkeypatch):
+    vraie = web_api.bureau_a_distance
+    monkeypatch.setattr(web_api, "bureau_a_distance", lambda: True)
+    assert Api().session() == {"distance": True}
+    monkeypatch.setattr(web_api.sys, "platform", "linux")
+    assert vraie() is False
