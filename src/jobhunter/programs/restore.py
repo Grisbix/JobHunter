@@ -33,13 +33,13 @@ THE RULES:
 import argparse
 import datetime
 import json
-import shutil
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 from jobhunter import root as _racine
 from jobhunter.storage import applications as suivi_io
+from jobhunter.storage import backups
 from jobhunter.storage import queue as queue_io
 
 SUFFIXE_TRI = ".avant_tri_"
@@ -70,10 +70,9 @@ def sauvegardes() -> list[Sauvegarde]:
     base = _racine.dans(_dossier(), "_sauvegardes")
     if base.is_dir():
         for d in base.iterdir():
-            f = d / "apply_queue.json"
-            if d.is_dir() and f.is_file():
-                desc = d / "descriptions.json"
-                trouvees.append(Sauvegarde(d.name, f, desc if desc.is_file() else None))
+            f = backups.fichier(d, "apply_queue.json") if d.is_dir() else None
+            if f:
+                trouvees.append(Sauvegarde(d.name, f, backups.fichier(d, "descriptions.json")))
     nom_file = Path(queue_io.CHEMIN).name
     for f in _dossier().glob(nom_file + SUFFIXE_TRI + "*"):
         trouvees.append(Sauvegarde("avant_tri_" + f.name.split(SUFFIXE_TRI, 1)[1], f, None))
@@ -89,7 +88,7 @@ def sauvegardes() -> list[Sauvegarde]:
 
 def _lire(p: Path):
     try:
-        return json.loads(p.read_text(encoding="utf-8"))
+        return json.loads(backups.lire_texte(p))  # compressed since 3.61
     except (OSError, ValueError):
         return None
 
@@ -124,7 +123,7 @@ def _copier_etat_actuel() -> Path:
     cible.mkdir(parents=True, exist_ok=True)
     for src in (Path(queue_io.CHEMIN), Path(queue_io.DESCRIPTIONS)):
         if src.is_file():
-            shutil.copy2(src, cible / src.name)
+            backups.ecrire(src, cible)
     return cible
 
 

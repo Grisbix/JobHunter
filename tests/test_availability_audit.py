@@ -328,7 +328,9 @@ def test_premiere_sauvegarde_du_jour_gagne(tmp_path, monkeypatch):
     copie = pq.sauvegarder()
     (tmp_path / "apply_queue.json").write_text("soir", encoding="utf-8")
     pq.sauvegarder()
-    assert (copie / "apply_queue.json").read_text(encoding="utf-8") == "matin"
+    from jobhunter.storage import backups
+
+    assert backups.lire_texte(copie / "apply_queue.json.gz") == "matin"  # gzip since 3.61
 
 
 # ── duration: stop by itself, to get to the deletion ────────────

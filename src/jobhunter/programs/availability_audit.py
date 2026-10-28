@@ -53,7 +53,6 @@ import datetime
 import json
 import os
 import re
-import shutil
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -482,9 +481,11 @@ def supprimer(etat, age_max, aujourd_hui, copier=True, absente_jours=30):
     if copier:
         copie = _racine.dans(HERE, "_sauvegardes") / f"{aujourd_hui}_avant_audit"
         copie.mkdir(parents=True, exist_ok=True)
+        from jobhunter.storage import backups
+
         for f in ("apply_queue.json", "descriptions.json"):
             if (HERE / f).exists():
-                shutil.copy2(HERE / f, copie / f)
+                backups.ecrire(HERE / f, copie)
     suivi = suivi_io.charger()
     motifs = collections.Counter()
     with queue_io.transaction(descriptions=False) as q:

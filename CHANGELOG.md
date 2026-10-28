@@ -4,6 +4,14 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.61.0 — 2026-10-28
+
+Lighter: compressed backups, two dependencies fewer.
+
+- **The daily backups are gzip-compressed** (`data/_backups/<date>/*.json.gz`). Seven days weighed 416 MB in a real data folder; a day goes from 60 MB to 16 MB, in half a second. The plain backups made before are compressed at the next collection, each one only once its copy reads back whole. `jobhunter restore`, the availability audit's copy and the reposts history read both.
+- **openpyxl removed** (nothing used it) and **requests replaced by httpx** in the two programs that still used it (`link_check`, `enrich_homepages`): two dependencies fewer to install.
+- **`resolve_offer_links` removed**: no screen, step or program called it any more.
+
 ## 3.60.0 — 2026-10-28
 
 Downloaded again, JobHunter no longer starts from zero.

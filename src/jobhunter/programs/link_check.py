@@ -5,7 +5,7 @@ import concurrent.futures as cf
 import re
 import sys
 
-import requests
+import httpx
 
 sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -39,7 +39,7 @@ def check(u):
     """Returns (url, status, soft): HTTP status or exception name;
     soft = 'dead offer' phrase detected in the body despite 200, otherwise None."""
     try:
-        r = requests.get(u, headers=UA, timeout=12, allow_redirects=True)
+        r = httpx.get(u, headers=UA, timeout=12, follow_redirects=True)
         soft = None
         if r.status_code < 400:
             body = (r.text or "")[:60000]
@@ -65,14 +65,14 @@ def quick_check(url: str, timeout: float = 8.0) -> dict:
     Does not block the pipeline if the network is slow (short timeout)."""
     try:
         # HEAD first (light)
-        r = requests.head(url, headers=UA, timeout=timeout, allow_redirects=True)
+        r = httpx.head(url, headers=UA, timeout=timeout, follow_redirects=True)
         if r.status_code >= 500:
             # HEAD may be refused — try GET
-            r = requests.get(url, headers=UA, timeout=timeout, allow_redirects=True)
+            r = httpx.get(url, headers=UA, timeout=timeout, follow_redirects=True)
         status = r.status_code
-    except requests.exceptions.Timeout:
+    except httpx.TimeoutException:
         return {"live": False, "status": 0, "soft_dead": None, "note": "timeout"}
-    except requests.exceptions.ConnectionError:
+    except httpx.ConnectError:
         return {"live": False, "status": 0, "soft_dead": None, "note": "connection_error"}
     except Exception as e:
         return {"live": False, "status": 0, "soft_dead": None, "note": type(e).__name__}

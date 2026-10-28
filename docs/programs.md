@@ -57,7 +57,6 @@ found again by the scan tomorrow; a lost application never comes back.
 | `scrape_desc.py` | Fetches the description from the offer page. Fails on anti-bot sites. |
 | `linkedin_desc.py` | LinkedIn descriptions via the **public guest API**, where `scrape_desc` hits the login wall. Re-scores right away. |
 | `linkedin_closed.py` | Removes the LinkedIn offers that no longer accept applications. Deletes only on a positive signal. |
-| `resolve_offer_links.py` | Replaces a "career page" link with the link of the offer. |
 | `enrich_homepages.py` | Finds the home page of companies without an offer URL. |
 | `link_check.py` | Checks the URLs (live / dead / soft-404). Module. |
 | `recheck_dead.py` | Soft-404s rendered in JavaScript (HTTP 200 but empty body). |

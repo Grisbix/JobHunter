@@ -138,9 +138,11 @@ def sauvegarder(garder=7):
     WHY HERE. Until 2026-09-23, git versioned the queue: it was the de facto backup.
     The generated data left git that day (it mixed with the code commits), and this
     snapshot takes over. It is taken before the collection: if a step damages the
-    queue, the state from before exists. Seven rolling days, ~35 MB each. Returns the
-    folder, or None."""
+    queue, the state from before exists. Seven rolling days, gzip-compressed since
+    3.61 (60 MB a day became 16; storage.backups). Returns the folder, or None."""
     import shutil
+
+    from jobhunter.storage import backups
 
     base = _racine.dans(SCRIPTS, "_sauvegardes")
     cible = base / time.strftime("%Y-%m-%d")
@@ -149,16 +151,20 @@ def sauvegarder(garder=7):
         # trial, a manual rerun) copied the queue already modified over
         # the morning's: on 2026-10-02, the 18:55 trial replaced the state
         # from before the audit that had just removed 1486 offers.
-        if (cible / "apply_queue.json").exists():
+        if backups.fichier(cible, "apply_queue.json"):
             return cible
         cible.mkdir(parents=True, exist_ok=True)
         for nom in _A_SAUVER:
             src = SCRIPTS / nom
             if src.exists():
-                shutil.copy2(src, cible / nom)
+                backups.ecrire(src, cible)
         # The name is an ISO date: alphabetical order is chronological.
         for vieux in sorted(p for p in base.iterdir() if p.is_dir())[:-garder]:
             shutil.rmtree(vieux, ignore_errors=True)
+        # The backups made before 3.61, plain: compressed once, as they are met.
+        for d in base.iterdir():
+            if d.is_dir():
+                backups.compresser(d)
         return cible
     except OSError as e:
         print(f"! sauvegarde impossible : {type(e).__name__}: {e}")

@@ -247,10 +247,13 @@ def main(argv: list[str] | None = None) -> int:
 
     if a.sauvegardes:
         # The daily copies (seven days) date the addresses better than "today".
+        from jobhunter.storage import backups
+
         for d in sorted(p for p in (chemin.parent / "_backups").glob("20??-??-??") if p.is_dir()):
-            f = d / "apply_queue.json"
-            if f.exists():
-                mettre_a_jour(hist, queue_io.charger(f, descriptions=False), d.name)
+            f = backups.fichier(d, "apply_queue.json")
+            if f:
+                with backups.en_clair(f) as clair:
+                    mettre_a_jour(hist, queue_io.charger(clair, descriptions=False), d.name)
     offres = queue_io.charger()
     mettre_a_jour(hist, offres, jour)
     elaguer(hist, jour)

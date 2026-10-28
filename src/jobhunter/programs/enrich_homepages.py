@@ -15,7 +15,7 @@ import re
 import sys
 import unicodedata
 
-import requests
+import httpx
 
 from jobhunter import root as _racine
 
@@ -110,10 +110,10 @@ def valid(url, name):
     'careers' signal (link/text). The signal avoids accepting a generic domain (e.g.
     simc.com by chance) that is not the right employer."""
     try:
-        r = requests.get(url, headers=UA, timeout=8, allow_redirects=True)
+        r = httpx.get(url, headers=UA, timeout=8, follow_redirects=True)
         if r.status_code >= 400:
             return None
-        host = _ascii(r.url).lower()
+        host = _ascii(str(r.url)).lower()
         toks = [
             t
             for t in re.sub(r"[^a-z0-9 ]", " ", _ascii(name).lower()).split()
@@ -130,7 +130,7 @@ def valid(url, name):
         # note: NO "careers visible" guard — too many corporate sites load
         # the careers link in JS (Schneider/Allianz false negatives). The runner (goto_careers
         # + sitemap + robots) finds the careers section itself.
-        return r.url.rstrip("/")
+        return str(r.url).rstrip("/")
     except Exception:
         return None
 
@@ -153,7 +153,7 @@ def _ddg_results(query):
     urls = []
     for ep in ("https://html.duckduckgo.com/html/", "https://lite.duckduckgo.com/lite/"):
         try:
-            r = requests.post(ep, data={"q": query}, headers=UA, timeout=10)
+            r = httpx.post(ep, data={"q": query}, headers=UA, timeout=10)
             if r.status_code >= 400:
                 continue
             for m in re.findall(r'href="(https?://[^"]+)"', r.text):
@@ -189,9 +189,9 @@ def search_homepage(name):
             try:
                 host = _ascii(u).lower()
                 if any(t[:5] in host for t in toks):
-                    rr = requests.get(u, headers=UA, timeout=8, allow_redirects=True)
+                    rr = httpx.get(u, headers=UA, timeout=8, follow_redirects=True)
                     if rr.status_code < 400:
-                        return rr.url.rstrip("/")
+                        return str(rr.url).rstrip("/")
             except Exception:
                 continue
     return None
