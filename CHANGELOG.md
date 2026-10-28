@@ -4,9 +4,14 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.53.0 — 2026-10-28
+
+A new profile finds its trade and its country, and asks where to search.
+
 ### Changed
 - **A broad job title asks for its specialty.** First launch writes « ingénieur / engineer + mécanique / mechanical » in the title filter instead of « ingénieur » alone: a mechanical engineer's collection no longer brings DevOps or civil posts. The filter syntax `a + b` (every part, any order; `a / b` for variants) works in any profile.
 - **First launch asks where to search.** The home country only, or abroad too — and then which countries or regions (« Suisse, Belgique », « Europe », « monde »); and the preferred cities, a city of the catalogue standing for its sector (« Mérignac » → Bordeaux). The answer goes to the profile's `monde` (false, a list, or true), which `collect` follows: LinkedIn is asked for the home country and each country named instead of « Worldwide », and the merge lets in those countries' offers only. Same questions in the welcome window. Existing profiles keep their behaviour (no key = the world, as before). On three test CVs (engineer in Lyon, waiter in Bordeaux, lawyer in Paris), the home country only: 122, 4 and 13 foreign offers fewer.
+- **The welcome windows take the 3.52 design codes.** Every font size and spacing is on style.css's scales (the profile and welcome titles at 44 px like the web pages' titles, sections at 20), ticks and radio buttons in the interface's accent, the sector lists on white cards. A test keeps them on the scales.
 
 ### Added
 - **The free key that brings the most offers is advised.** France Travail for a profile in France (most offers outside executive jobs are there), Adzuna in the countries it covers: at the end of first launch, with the steps, and as the first line of the home screen's « À faire » until the key is saved.

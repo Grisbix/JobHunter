@@ -80,12 +80,12 @@ def _etape(fenetre: Any, numero: int, titre: str, intro: str) -> tuple[Any, Any,
 
     carte = _w._carte(fenetre)
     corps = ctk.CTkFrame(carte, fg_color="transparent")
-    corps.pack(fill="both", expand=True, padx=26, pady=(22, 0))
+    corps.pack(fill="both", expand=True, padx=24, pady=(24, 0))
     _w._texte(corps, f"Étape {numero} sur 3", couleur=_w.TEXTE_DOUX, taille=12).pack(anchor="w")
-    _w._texte(corps, titre, taille=26, gras=True).pack(anchor="w", pady=(2, 0))
-    _w._texte(corps, intro, couleur=_w.TEXTE_DOUX, largeur=600).pack(anchor="w", pady=(6, 12))
+    _w._texte(corps, titre, taille=32).pack(anchor="w", pady=(4, 0))
+    _w._texte(corps, intro, couleur=_w.TEXTE_DOUX, largeur=600).pack(anchor="w", pady=(8, 12))
     bas = ctk.CTkFrame(carte, fg_color="transparent")
-    bas.pack(side="bottom", fill="x", padx=26, pady=(8, 22))
+    bas.pack(side="bottom", fill="x", padx=24, pady=(8, 24))
     return carte, corps, bas
 
 
@@ -120,10 +120,10 @@ def etape_sites(fenetre: Any) -> str:
     )
     for titre, lignes in SITES:
         bloc = ctk.CTkFrame(corps, fg_color=_w.PISTE, corner_radius=_w.RAD_BOUTON)
-        bloc.pack(fill="x", pady=5)
-        _w._texte(bloc, titre, gras=True).pack(anchor="w", padx=14, pady=(10, 2))
+        bloc.pack(fill="x", pady=4)
+        _w._texte(bloc, titre, gras=True).pack(anchor="w", padx=16, pady=(12, 4))
         for l in lignes:
-            _w._texte(bloc, f"·  {l}", couleur=_w.ENCRE, largeur=580).pack(anchor="w", padx=14)
+            _w._texte(bloc, f"·  {l}", couleur=_w.ENCRE, largeur=580).pack(anchor="w", padx=16)
         ctk.CTkFrame(bloc, fg_color="transparent", height=8).pack()
     _w._bouton(bas, "Suivant", lambda: fenetre._choisir("suivant"), principal=True).pack(
         side="left"
@@ -149,28 +149,28 @@ def etape_cles(fenetre: Any) -> str:
     etats: dict[str, Any] = {}
     for nom, cle in cles_du_pays().items():
         bloc = ctk.CTkFrame(corps, fg_color=_w.PISTE, corner_radius=_w.RAD_BOUTON)
-        bloc.pack(fill="x", pady=5)
+        bloc.pack(fill="x", pady=4)
         tete = ctk.CTkFrame(bloc, fg_color="transparent")
-        tete.pack(fill="x", padx=14, pady=(10, 0))
+        tete.pack(fill="x", padx=16, pady=(12, 0))
         _w._texte(tete, cle.libelle, gras=True).pack(side="left")
         _w._texte(tete, f" · {APPORT.get(nom, '')}", couleur=_w.TEXTE_DOUX, taille=12).pack(
             side="left"
         )
         etats[nom] = _w._texte(tete, "", couleur=_w.TEXTE_DOUX, taille=12)
-        etats[nom].pack(side="right", padx=(10, 0))
+        etats[nom].pack(side="right", padx=(12, 0))
         ctk.CTkButton(
             tete,
             text="Obtenir une clé ↗",
             command=lambda u=cle.obtenir: webbrowser.open(u),
             fg_color="transparent",
             hover_color=_w.SURVOL,
-            text_color=_w.BRUN,
+            text_color=_w.ACCENT,
             font=_w._police(12, True),
             width=10,
             height=26,
         ).pack(side="right")
         ligne = ctk.CTkFrame(bloc, fg_color="transparent")
-        ligne.pack(fill="x", padx=14, pady=(4, 10))
+        ligne.pack(fill="x", padx=16, pady=(4, 12))
         champs[nom] = {}
         for champ in cle.champs:
             e = ctk.CTkEntry(
@@ -194,11 +194,11 @@ def etape_cles(fenetre: Any) -> str:
             ok = _cles.presente(dossier, nom)
             etats[nom].configure(
                 text="✓ clé posée" if ok else "pas de clé",
-                text_color=_w.BRUN if ok else _w.TEXTE_DOUX,
+                text_color=_w.ACCENT if ok else _w.TEXTE_DOUX,
             )
 
     retour = _w._texte(corps, "", couleur=_w.BAD, largeur=600)
-    retour.pack(anchor="w", pady=(6, 0))
+    retour.pack(anchor="w", pady=(8, 0))
 
     def enregistrer() -> None:
         erreurs = []
@@ -274,7 +274,7 @@ def etape_scan(fenetre: Any) -> str:
         font=_w._police(11),
         wrap="word",
     )
-    barre = ctk.CTkProgressBar(corps, mode="indeterminate", progress_color=_w.BRUN, height=6)
+    barre = ctk.CTkProgressBar(corps, mode="indeterminate", progress_color=_w.ACCENT, height=6)
     resultat = ctk.CTkFrame(corps, fg_color="transparent")
     etat: dict[str, Any] = {"proc": None, "lignes": queue.Queue()}
 
@@ -367,7 +367,7 @@ def etape_scan(fenetre: Any) -> str:
                 + " Élargis tes mots-clés dans « Ma recherche », puis « Actualiser les offres ».",
                 largeur=600,
             ).pack(anchor="w")
-        _w._texte(resultat, "Ensuite, dans JobHunter", gras=True).pack(anchor="w", pady=(12, 2))
+        _w._texte(resultat, "Ensuite, dans JobHunter", gras=True).pack(anchor="w", pady=(12, 4))
         for l in (
             "1. « Offres » : la liste triée par note ; ouvre une offre pour la lire.",
             "2. « Voir CV » et « Voir lettre » : un CV et une lettre adaptés à l'offre, à relire.",

@@ -69,13 +69,14 @@ def activer_depot(fenetre: Any, rappel: Callable[[list[Path]], None]) -> bool:
 # ── The new interface's look (web/static/style.css), in customtkinter ────────
 # The installed application has no web view (pywebview is an extra), and these
 # windows run before any profile exists: they repeat the web interface's palette —
-# warm background, pale panel, white fields, dark main button, brown ticks.
+# warm background, pale panel, white fields and cards, dark main button, accent ticks;
+# and its two scales (3.52): every font size and every spacing is one of style.css's.
 # tests/test_cv_text.py checks the colours taken from style.css stay equal.
 FOND = "#E3DFDD"  # --fond-rgb: the window
 PANNEAU = "#F6F4F3"  # the frosted panel (--verre-fort over the background), opaque
 FILET = "#FFFFFF"  # --filet: the panel's light edge
 SURFACE = "#FFFFFF"  # --surface: fields and secondary buttons
-PISTE = "#EAE6E3"  # --piste over the panel: drop zone, ticked lists
+PISTE = "#EAE6E3"  # --piste over the panel: the drop zone
 BORD_CHAMP = "#CFC6C1"  # a field's outline, visible on white
 ENCRE = "#1C1917"  # --encre
 TEXTE_DOUX = "#6F6763"  # --texte-doux
@@ -83,16 +84,20 @@ SOMBRE = "#151312"  # --sombre: the main button (.bouton.plein)
 SOMBRE_H = "#2A2421"
 SOMBRE_TX = "#F4EFEC"
 SURVOL = "#EFEAE7"  # a secondary button under the mouse
-BRUN = "#5C3C2E"  # --brun: ticks and radio buttons
-BRUN_H = "#7A5242"
+ACCENT = "#C98366"  # --c2: ticks and radio buttons (.menu-multi's accent-color)
+ACCENT_H = "#A8766B"  # --c3
 C1B = "#E39A6C"  # --c1b: the logo
 TERRE = "#B96D49"  # --terre: the close button under the mouse
 BARRE = "#FCFBFA"  # the white bar on top of the window
 FEU = "#F3F0EE"  # its round-cornered buttons
 BAD = "#A33A2B"
 RAD_BOUTON = 12
-RAD_CHAMP = 10
+RAD_CHAMP = 12  # .champ
+RAD_CARTE = 14  # --r-carte
 RAD_PANNEAU = 18
+# The type scale (--t-xs … --t-5xl) and the spacing scale of style.css.
+TYPO = (11, 12, 13, 14, 16, 20, 24, 32, 44)
+ESPACEMENTS = (0, 4, 8, 12, 16, 20, 24, 32, 40, 48)
 ICONE = Path(__file__).parent / "app" / "assets" / "jobhunter.ico"
 
 
@@ -191,7 +196,7 @@ def _barre(fenetre: Any) -> None:
     marque.pack(side="left", padx=16)
     ctk.CTkFrame(marque, width=22, height=22, corner_radius=7, fg_color=C1B).pack(side="left")
     nom = _texte(marque, "JobHunter", taille=13, gras=True)
-    nom.pack(side="left", padx=9)
+    nom.pack(side="left", padx=8)
 
     def reduire() -> None:
         if getattr(fenetre, "_sans_cadre", False):
@@ -256,7 +261,7 @@ def _carte(fenetre: Any) -> Any:
         border_width=1,
         border_color=FILET,
     )
-    carte.pack(fill="both", expand=True, padx=18, pady=(14, 18))
+    carte.pack(fill="both", expand=True, padx=20, pady=(16, 20))
     return carte
 
 
@@ -333,15 +338,15 @@ def demander_cv(fenetre: Any) -> str:
     fenetre.title("JobHunter — bienvenue")
     carte = _carte(fenetre)
     corps = ctk.CTkFrame(carte, fg_color="transparent")
-    corps.pack(fill="both", expand=True, padx=26, pady=(18, 24))
-    _texte(corps, "Bienvenue", taille=28, gras=True).pack(anchor="w")
+    corps.pack(fill="both", expand=True, padx=24, pady=(20, 24))
+    _texte(corps, "Bienvenue", taille=44).pack(anchor="w")
     _texte(
         corps,
         "Aucun profil pour l'instant. Donne ton CV, en PDF (ou en Word) : JobHunter le "
         "lit puis te pose quelques questions.",
         couleur=TEXTE_DOUX,
         largeur=460,
-    ).pack(anchor="w", pady=(6, 0))
+    ).pack(anchor="w", pady=(8, 0))
     zone = ctk.CTkLabel(
         corps,
         text="Dépose ton CV ici\nPDF ou Word",
@@ -352,7 +357,7 @@ def demander_cv(fenetre: Any) -> str:
         height=130,
         wraplength=420,
     )
-    zone.pack(fill="x", pady=18)
+    zone.pack(fill="x", pady=20)
 
     def fin(p: str) -> None:
         choix["cv"] = p
@@ -474,7 +479,7 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
     # The buttons stay at the bottom; the form scrolls when the screen is short (a
     # laptop at 150 %: about 700 points high).
     pied = ctk.CTkFrame(carte, fg_color="transparent")
-    pied.pack(side="bottom", fill="x", padx=24, pady=(4, 18))
+    pied.pack(side="bottom", fill="x", padx=24, pady=(4, 20))
     echelle = ctk.ScalingTracker.get_window_scaling(fenetre) or 1
     hauteur = int(min(820, fenetre.winfo_screenheight() / echelle - 300))
     cadre = ctk.CTkScrollableFrame(
@@ -487,9 +492,7 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
     )
     cadre.pack(fill="both", expand=True, padx=(24, 8), pady=(20, 0))
     cadre.grid_columnconfigure(1, weight=1)
-    _texte(cadre, "Ton profil", taille=28, gras=True).grid(
-        row=0, column=0, columnspan=2, sticky="w"
-    )
+    _texte(cadre, "Ton profil", taille=44).grid(row=0, column=0, columnspan=2, sticky="w")
     _texte(cadre, f"CV lu : {Path(cv).name}", couleur=TEXTE_DOUX).grid(
         row=1, column=0, columnspan=2, sticky="w"
     )
@@ -537,22 +540,22 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
         ("ville", "Ville"),
         ("metiers", "Métiers visés (séparés par des virgules)"),
     ):
-        _texte(cadre, libelle).grid(row=ligne, column=0, sticky="w", pady=3, padx=(0, 16))
+        _texte(cadre, libelle).grid(row=ligne, column=0, sticky="w", pady=4, padx=(0, 16))
         champs[cle] = champ(str(prop.get(cle) or ""))
-        champs[cle].grid(row=ligne, column=1, sticky="we", pady=3)
+        champs[cle].grid(row=ligne, column=1, sticky="we", pady=4)
         ligne += 1
     _texte(cadre, "Années d'expérience (stages compris)").grid(
-        row=ligne, column=0, sticky="w", pady=3, padx=(0, 16)
+        row=ligne, column=0, sticky="w", pady=4, padx=(0, 16)
     )
     annees = champ(str(prop["annees"]), largeur=70)
-    annees.grid(row=ligne, column=1, sticky="w", pady=3)
+    annees.grid(row=ligne, column=1, sticky="w", pady=4)
     ligne += 1
     genre = tk.StringVar(value=prop["genre"])
     _texte(cadre, "Accords dans les lettres").grid(
-        row=ligne, column=0, sticky="w", pady=3, padx=(0, 16)
+        row=ligne, column=0, sticky="w", pady=4, padx=(0, 16)
     )
     accords = ctk.CTkFrame(cadre, fg_color="transparent")
-    accords.grid(row=ligne, column=1, sticky="w", pady=3)
+    accords.grid(row=ligne, column=1, sticky="w", pady=4)
     for val, lib in (("m", "« diplômé »"), ("f", "« diplômée »")):
         ctk.CTkRadioButton(
             accords,
@@ -560,8 +563,8 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
             variable=genre,
             border_color=BORD_CHAMP,
             value=val,
-            fg_color=BRUN,
-            hover_color=BRUN_H,
+            fg_color=ACCENT,
+            hover_color=ACCENT_H,
             text_color=ENCRE,
             font=_police(),
         ).pack(side="left", padx=(0, 16))
@@ -574,7 +577,7 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
     ):
         _texte(cadre, libelle).grid(row=ligne, column=0, columnspan=2, sticky="w", pady=(12, 4))
         ligne += 1
-        liste = ctk.CTkFrame(cadre, fg_color=PISTE, corner_radius=RAD_BOUTON)
+        liste = ctk.CTkFrame(cadre, fg_color=SURFACE, corner_radius=RAD_CARTE)
         liste.grid(row=ligne, column=0, columnspan=2, sticky="we", padx=(0, 12))
         for c in range(3):
             liste.grid_columnconfigure(c, weight=1, uniform="secteur")
@@ -585,15 +588,15 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
                 liste,
                 text=str(zones.CATALOGUE[s].get("libelle") or s),
                 variable=v,
-                fg_color=BRUN,
-                hover_color=BRUN_H,
+                fg_color=ACCENT,
+                hover_color=ACCENT_H,
                 border_color=BORD_CHAMP,
                 text_color=ENCRE,
                 font=_police(12),
                 corner_radius=4,
                 checkbox_width=18,
                 checkbox_height=18,
-            ).grid(row=i // 3, column=i % 3, sticky="w", padx=8, pady=3)
+            ).grid(row=i // 3, column=i % 3, sticky="w", padx=8, pady=4)
             coches[cle][s] = v
         ligne += 1
     _texte(cadre, "Autres villes de préférence (facultatif, séparées par des virgules)").grid(
@@ -613,9 +616,9 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
     rang_ou.grid(row=ligne, column=0, columnspan=2, sticky="w")
     ligne += 1
     lib_pays = _texte(cadre, "Pays ou régions (ex. : Suisse, Belgique, Europe, monde)")
-    lib_pays.grid(row=ligne, column=0, sticky="w", pady=3, padx=(0, 16))
+    lib_pays.grid(row=ligne, column=0, sticky="w", pady=4, padx=(0, 16))
     pays_etrangers = champ("")
-    pays_etrangers.grid(row=ligne, column=1, sticky="we", pady=3)
+    pays_etrangers.grid(row=ligne, column=1, sticky="we", pady=4)
     ligne += 1
 
     def montrer_pays() -> None:
@@ -633,8 +636,8 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
             value=dehors,
             command=montrer_pays,
             border_color=BORD_CHAMP,
-            fg_color=BRUN,
-            hover_color=BRUN_H,
+            fg_color=ACCENT,
+            hover_color=ACCENT_H,
             text_color=ENCRE,
             font=_police(),
         ).pack(side="left", padx=(0, 16))
@@ -644,8 +647,8 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
         cadre,
         text="Suivre les ~90 entreprises de finance / ESG proposées",
         variable=entreprises,
-        fg_color=BRUN,
-        hover_color=BRUN_H,
+        fg_color=ACCENT,
+        hover_color=ACCENT_H,
         border_color=BORD_CHAMP,
         text_color=ENCRE,
         font=_police(),
@@ -656,7 +659,7 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
     erreur.pack(anchor="w")
 
     # ── The CV sent, and the letters' background paragraph ──
-    _texte(cadre, "Ton CV et tes lettres", taille=16, gras=True).grid(
+    _texte(cadre, "Ton CV et tes lettres", taille=20).grid(
         row=ligne, column=0, columnspan=2, sticky="w", pady=(20, 4)
     )
     ligne += 1
@@ -681,8 +684,8 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
             rang,
             text="Adapter mon CV à chaque offre",
             variable=word,
-            fg_color=BRUN,
-            hover_color=BRUN_H,
+            fg_color=ACCENT,
+            hover_color=ACCENT_H,
             border_color=BORD_CHAMP,
             text_color=ENCRE,
             font=_police(),
@@ -697,10 +700,10 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
             "premier. Ton PDF reste à côté ; décoche pour l'envoyer tel quel.",
             couleur=TEXTE_DOUX,
             largeur=640,
-        ).grid(row=ligne, column=0, columnspan=2, sticky="w", pady=(2, 8))
+        ).grid(row=ligne, column=0, columnspan=2, sticky="w", pady=(4, 8))
         ligne += 1
     _texte(cadre, "Le paragraphe de parcours de tes lettres").grid(
-        row=ligne, column=0, columnspan=2, sticky="w", pady=(6, 2)
+        row=ligne, column=0, columnspan=2, sticky="w", pady=(8, 4)
     )
     ligne += 1
     parcours = ctk.CTkTextbox(
@@ -745,7 +748,7 @@ def demander_reponses(fenetre: Any, cv: str, texte: str) -> dict[str, Any] | str
         source.configure(text=f"Repris de {Path(f).name}. Relis-le.", text_color=TEXTE_DOUX)
 
     rang_lettre = ctk.CTkFrame(cadre, fg_color="transparent")
-    rang_lettre.grid(row=ligne, column=0, columnspan=2, sticky="we", pady=(6, 0))
+    rang_lettre.grid(row=ligne, column=0, columnspan=2, sticky="we", pady=(8, 0))
     _bouton(rang_lettre, "Reprendre celui de ma lettre…", depuis_lettre).pack(side="left")
     source = _texte(
         rang_lettre,
@@ -803,7 +806,7 @@ def _attente(fenetre: Any) -> Any:
     """The "Création du profil…" card while first_launch writes the profile."""
     carte = _carte(fenetre)
     _fermeture(fenetre, lambda: None)  # the profile is being written: no closing
-    _texte(carte, "Création du profil…", taille=15, gras=True).pack(padx=48, pady=32)
+    _texte(carte, "Création du profil…", taille=20).pack(padx=48, pady=32)
     fenetre.title("JobHunter")
     _montrer(fenetre)
     fenetre.update()

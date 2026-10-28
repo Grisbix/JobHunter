@@ -33,3 +33,19 @@ def test_chaque_espacement_est_sur_l_echelle():
 
 def test_pas_de_halo_decoratif():
     assert ".sombre::before, .sombre::after { display: none; }" in CSS
+
+
+def test_les_fenetres_d_accueil_suivent_les_memes_echelles():
+    # The welcome windows (customtkinter) draw what style.css draws: same two scales.
+    from jobhunter import welcome
+
+    src = Path(welcome.__file__).parent
+    for nom in ("welcome.py", "welcome_tour.py"):
+        code = (src / nom).read_text(encoding="utf-8")
+        for t in re.findall(r"(?:taille=|_police\()(\d+)", code):
+            assert int(t) in welcome.TYPO, (nom, t)
+        for pad in re.findall(r"\bpad[xy]=(\(\s*\d+\s*,\s*\d+\s*\)|\d+)", code):
+            for v in re.findall(r"\d+", pad):
+                assert int(v) in ESPACEMENTS, (nom, pad)
+    assert set(welcome.TYPO) == {int(v) for v in re.findall(r"--t-\w+:\s*(\d+)px", CSS)}
+    assert set(welcome.ESPACEMENTS) <= ESPACEMENTS

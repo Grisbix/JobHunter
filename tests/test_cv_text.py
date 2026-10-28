@@ -175,7 +175,8 @@ def test_fenetres_d_accueil_aux_couleurs_de_l_interface_web():
         ("ENCRE", "encre"),
         ("TEXTE_DOUX", "texte-doux"),
         ("SOMBRE", "sombre"),
-        ("BRUN", "brun"),
+        ("ACCENT", "c2"),
+        ("ACCENT_H", "c3"),
         ("C1B", "c1b"),
     ):
         assert getattr(welcome, nom).lower() == var[cle].strip().lower(), nom
