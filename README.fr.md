@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="src/jobhunter/app/assets/jobhunter.png" alt="" width="96">
+
 # JobHunter
 
 **Ta recherche d'emploi, préparée chaque matin — et le clic final reste le tien.**

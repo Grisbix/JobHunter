@@ -419,6 +419,10 @@ def _migrer_si_besoin() -> None:
     code = _migration.migrer(r, bavard=False)
     _r = tk.Tk()
     _r.withdraw()
+    try:  # JobHunter's icon on the message, not Tk's
+        _r.iconbitmap(default=str(ICONE))  # type: ignore[no-untyped-call]
+    except tk.TclError:
+        pass
     if code == 0:
         _profil.recharger(_profil.chemin_par_defaut())
         messagebox.showinfo(

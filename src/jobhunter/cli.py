@@ -100,6 +100,10 @@ COMMANDES = {
         "plusieurs profils : liste, changer, nouveau depuis un CV, renommer, archiver",
     ),
     "update": ("jobhunter.programs.update", "met JobHunter a jour depuis GitHub"),
+    "shortcut": (
+        "jobhunter.programs.shortcut",
+        "raccourci JobHunter dans le menu Demarrer (--bureau : aussi sur le bureau)",
+    ),
     "migrate": (
         "jobhunter.programs.migrate",
         "passe les dossiers de donnees aux noms anglais de la 3.0 (avec sauvegarde)",

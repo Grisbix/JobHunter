@@ -4,6 +4,16 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.59.0 — 2026-10-28
+
+One logo everywhere: no more Python, Terminal or Inno Setup logo in front of JobHunter.
+
+- **Start menu shortcut for installations from source or pip** (`jobhunter shortcut`, `--bureau` for the desktop too; `install.bat` runs it, and the window makes it once when missing). It carries JobHunter's icon and the window's identity: pinned to the taskbar, the window no longer shows pythonw.exe's logo.
+- **Notifications under JobHunter's name and logo**, no longer Windows Terminal's (when the shortcut is there; the Terminal's otherwise).
+- **The window has its icon from its creation**, not after it is shown (the taskbar first showed Python's).
+- **JobHunterSetup.exe carries JobHunter's icon**, and its shortcuts the window's identity.
+- The migration message uses JobHunter's icon; the README shows the logo.
+
 ## 3.58.0 — 2026-10-28
 
 What a user found on a fresh install: the update that never finished, the documents screen with nothing to explain, the base CV and letter.

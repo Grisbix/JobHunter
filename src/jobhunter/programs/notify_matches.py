@@ -33,8 +33,25 @@ QUEUE = HERE / "apply_queue.json"
 SEEN = HERE / "_notified.json"
 
 # A toast is ignored if the AppID is not registered on the machine; the
-# Terminal's always is on Win10/11.
+# Terminal's always is on Win10/11, the fallback when JobHunter's cannot be.
 _APPID = "Microsoft.WindowsTerminal_8wekyb3d8bbwe!App"
+
+
+def appid():
+    """JobHunter's own identity for the toasts, with its name and logo.
+
+    Before 3.59 they came as Windows Terminal's, under its logo (the user, 2026-10-28:
+    « un logo qui soit partout le même »). The identity is the windows' (Grisbix.JobHunter);
+    Windows gives it a name and a logo through the Start menu shortcut that carries it
+    (`jobhunter shortcut`, the installer's). Without it, the toast showed the bare
+    identity: the Terminal's then.
+    """
+    if sys.platform != "win32":
+        return _APPID
+    from jobhunter.programs.shortcut import AUMID, existe
+
+    return AUMID if existe() else _APPID
+
 
 _PS = r"""
 [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime] | Out-Null
@@ -54,7 +71,7 @@ def toast(title, body):
     quotes or $( )."""
     import os
 
-    env = dict(os.environ, JH_TITLE=title, JH_BODY=body, JH_APPID=_APPID)
+    env = dict(os.environ, JH_TITLE=title, JH_BODY=body, JH_APPID=appid())
     try:
         r = subprocess.run(
             [

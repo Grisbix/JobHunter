@@ -31,6 +31,8 @@ WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayIcon={app}\JobHunter.exe
+; JobHunter's icon on JobHunterSetup.exe and its pages, not Inno Setup's.
+SetupIconFile=..\..\src\jobhunter\app\assets\jobhunter.ico
 CloseApplications=yes
 
 [Languages]
@@ -49,8 +51,9 @@ Source: "{#Source}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs cre
 Type: filesandordirs; Name: "{app}\_internal"
 
 [Icons]
-Name: "{autoprograms}\JobHunter"; Filename: "{app}\JobHunter.exe"
-Name: "{autodesktop}\JobHunter"; Filename: "{app}\JobHunter.exe"; Tasks: bureau
+; The windows' identity: pinned, the taskbar keeps the shortcut's icon and entry.
+Name: "{autoprograms}\JobHunter"; Filename: "{app}\JobHunter.exe"; AppUserModelID: "Grisbix.JobHunter"
+Name: "{autodesktop}\JobHunter"; Filename: "{app}\JobHunter.exe"; Tasks: bureau; AppUserModelID: "Grisbix.JobHunter"
 
 [Run]
 Filename: "{app}\JobHunter.exe"; Description: "{cm:LaunchProgram,JobHunter}"; Flags: nowait postinstall skipifsilent

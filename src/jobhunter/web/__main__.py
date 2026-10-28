@@ -174,6 +174,12 @@ def main() -> int:
 
     api = Api()
     api.demarrer_fond()  # the desktop's background work (web.background)
+    # The Start menu shortcut, once: pinned, the window keeps JobHunter's logo (shortcut.py).
+    import threading
+
+    from jobhunter.programs import shortcut
+
+    threading.Thread(target=shortcut.assurer, daemon=True).start()
     fenetre = webview.create_window(
         "JobHunter",
         str(STATIC / "index.html"),
@@ -192,7 +198,9 @@ def main() -> int:
     api._basculer = cadre.basculer
     api._toile = cadre.fond
     fenetre.events.shown += cadre.installer
-    webview.start()
+    # The icon from the window's creation: set at "shown", the taskbar first showed
+    # pythonw.exe's, Python's logo (the user, 2026-10-28).
+    webview.start(icon=str(ICONE if sys.platform == "win32" else ICONE.with_suffix(".png")))
     return 0
 
 
