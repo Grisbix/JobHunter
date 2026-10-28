@@ -8,8 +8,11 @@ Steps:
   1. the data skeleton (example profiles, source settings, CV folder), copied at
      first launch into Documents/JobHunter (jobhunter.frozen);
   2. PyInstaller: JobHunter.exe and jobhunter-cli.exe in dist/JobHunter/;
-  3. check: jobhunter-cli.exe loads each program without error;
-  4. Inno Setup (ISCC): dist/JobHunterSetup.exe, installed without administrator
+  3. Playwright's node.exe (88 MB) leaves the folder for dist/playwright-node-win64.zip,
+     attached to the release and fetched the first time a browser starts
+     (jobhunter.playwright_node): the installer loses about half its weight;
+  4. check: jobhunter-cli.exe loads each program without error;
+  5. Inno Setup (ISCC): dist/JobHunterSetup.exe, installed without administrator
      rights in %LOCALAPPDATA%/Programs/JobHunter.
 
 The CI (.github/workflows/installer.yml) runs it at each release and attaches
@@ -17,10 +20,13 @@ the installer to the release. Decision: docs/adr/0011-standalone-application.md
 """
 
 import argparse
+import hashlib
+import json
 import os
 import shutil
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 
 ICI = Path(__file__).resolve().parent
@@ -33,6 +39,13 @@ SQUELETTE = (
     "data/sources_config.json",
     "My_CV/README.txt",
 )
+NODE_ZIP = "playwright-node-win64.zip"  # same names in jobhunter.playwright_node
+NODE_MANIFESTE = "jobhunter_node.json"
+DEPOT = "https://github.com/Grisbix/JobHunter"
+
+
+def version() -> str:
+    return (RACINE / "VERSION").read_text(encoding="utf-8").strip()
 
 
 def squelette() -> None:
@@ -67,6 +80,36 @@ def pyinstaller() -> Path:
     return DIST / "JobHunter"
 
 
+def sortir_node(dossier: Path) -> Path | None:
+    """Takes node.exe out of the application into dist/playwright-node-win64.zip.
+
+    The zip is reproducible (fixed date, fixed compression): the same Node gives the
+    same file from one version to the next, and the application keeps its copy.
+
+    Returns:
+        The zip, or None when the folder has no node.exe (already taken out).
+    """
+    interne = dossier / "_internal"
+    node = interne / "playwright" / "driver" / "node.exe"
+    if not node.is_file():
+        return None
+    octets = node.read_bytes()
+    z = DIST / NODE_ZIP
+    info = zipfile.ZipInfo("node.exe", date_time=(1980, 1, 1, 0, 0, 0))
+    info.compress_type = zipfile.ZIP_DEFLATED
+    info.external_attr = 0o644 << 16
+    with zipfile.ZipFile(z, "w") as f:
+        f.writestr(info, octets, compresslevel=9)
+    manifeste = {
+        "url": f"{DEPOT}/releases/download/v{version()}/{NODE_ZIP}",
+        "sha256": hashlib.sha256(z.read_bytes()).hexdigest(),
+        "node": hashlib.sha256(octets).hexdigest(),
+    }
+    (interne / NODE_MANIFESTE).write_text(json.dumps(manifeste, indent=2), encoding="utf-8")
+    node.unlink()
+    return z
+
+
 def controler(dossier: Path) -> None:
     """Each program loads inside the compiled executable (a forgotten import breaks here)."""
     code = (
@@ -98,11 +141,10 @@ def iscc() -> str:
 
 
 def installateur() -> Path:
-    version = (RACINE / "VERSION").read_text(encoding="utf-8").strip()
     subprocess.run(
         [
             iscc(),
-            f"/DVersion={version}",
+            f"/DVersion={version()}",
             f"/DSource={DIST / 'JobHunter'}",
             f"/O{DIST}",
             str(ICI / "JobHunter.iss"),
@@ -118,6 +160,7 @@ def main() -> int:
     a = ap.parse_args()
     squelette()
     dossier = pyinstaller()
+    print("Node.js à part :", sortir_node(dossier))
     controler(dossier)
     if not a.sans_iss:
         print("Installateur :", installateur())

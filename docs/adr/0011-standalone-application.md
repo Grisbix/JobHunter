@@ -46,6 +46,9 @@ Constraints:
 - Two audiences, two paths: the installer for use, the source code (ZIP or clone,
   with Python) for customising; the README presents both.
 - The installed application takes up about 245 MB (Python, Playwright, libraries).
+  Since 3.62, Playwright's `node.exe` (88 MB) is not in the installer: attached to
+  the release, it is downloaded and checked (SHA-256 written by the build) the first
+  time a browser starts, into `%LOCALAPPDATA%/JobHunter/node/` (`jobhunter.playwright_node`).
 - The morning scheduled task: `planifier.bat` for the source code; since 2.19,
   the application (installed or not) creates it itself, Maintenance → "Collecte chaque
   matin…" (Collect every morning…) (`jobhunter.planification`, same task name, `jobhunter-cli.exe pipeline`).

@@ -4,6 +4,13 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.62.0 — 2026-10-28
+
+A lighter installer: Node.js is fetched the first time a browser starts.
+
+- **`node.exe` (88 MB) leaves `JobHunterSetup.exe` and the MSIX.** Playwright drives the browser through it, but most launches never open one. The build attaches it to the release as `playwright-node-win64.zip`; the application downloads it the first time a browser starts (applying, a few sources), checks it against the SHA-256 the build wrote inside the application, and keeps it in `%LOCALAPPDATA%/JobHunter/node/`, where the next versions reuse it. Offline, the browser step stops with a clear message; the rest of the application works as before.
+- Installed with Python (`pip`, `install.bat`): nothing changes, Playwright keeps its own `node.exe`.
+
 ## 3.61.0 — 2026-10-28
 
 Lighter: compressed backups, two dependencies fewer.

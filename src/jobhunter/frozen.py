@@ -192,6 +192,9 @@ def main() -> int:
     dest = dossier_donnees()
     preparer_donnees(dest, Path(getattr(sys, "_MEIPASS", ".")) / SQUELETTE)
     os.environ["JOBHUNTER_RACINE"] = str(dest)
+    from jobhunter import playwright_node
+
+    playwright_node.installer()  # node.exe fetched the first time a browser starts (3.62)
     from jobhunter.profiles import appliquer
 
     appliquer()  # the active profile (a workspace inside the data folder)
