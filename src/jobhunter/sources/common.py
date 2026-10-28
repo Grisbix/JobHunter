@@ -352,7 +352,8 @@ _RX_VALEUR = re.compile(
 _RX_TOUS_CONTRATS = re.compile(
     r"\bCDI\b|\bCDD\b|\balternance\b|\bapprentissage\b|\bstages?\b"
     r"|\bV\.?I\.?E\b|\bint[eé]rim\b|\bfreelance\b|\bsaisonni"
-    r"|\bpart[- ]time\b|\btemps\s+partiel\b|\btemporary\b|\bseasonal\b",
+    # Not « temps partiel » / « part-time »: « CDI à temps partiel » is one contract.
+    r"|\btemporary\b|\bseasonal\b",
     re.I,
 )
 

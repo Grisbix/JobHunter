@@ -4,6 +4,23 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.48.0 — 2026-10-28
+
+Letters, messages and contract types follow the offer's country.
+
+- **North American letters.** An English letter for an offer in the United States or
+  Canada (or with no place, for a profile there) opens with « Dear Hiring Manager »,
+  closes with « Sincerely » and is dated « October 28, 2026 ». Elsewhere it keeps
+  the British forms — « Dear Sir or Madam », « Yours faithfully » — and is now dated
+  « 28 October 2026 », as written there. Messages open the same way.
+- **Contracts written in English** are read: « Job type: Part-time », « Employment
+  type: Internship », « Contract Type: Permanent / Fixed Term », a title « (Contract) »
+  or « (Temporary) ». « Contract Manager » stays a job, and « CDI à temps partiel »
+  stays a CDI.
+- **A « Temps partiel » contract type** (Part-time, Teilzeit, Media jornada), read in
+  the title (« Part-time Nurse », « à temps partiel », « mi-temps ») and in the label;
+  it can be set aside in Exclusions like the others.
+
 ## 3.47.0 — 2026-10-28
 
 The collection searches where you live (`pays` in the profile, read from your CV
