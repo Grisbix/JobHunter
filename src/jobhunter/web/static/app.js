@@ -651,12 +651,13 @@ ECRANS.accueil = {
             h("div", { class: "ecart" }, moyenne
               ? `${dernier.n >= moyenne ? "+" : "−"}${Math.abs(Math.round(100 * (dernier.n - moyenne) / moyenne))} % par rapport à la moyenne`
               : ""),
-            barres),
+            // One or two bars draw no trend: say when the curve will come instead.
+            col.length >= 3 ? barres : h("div", { class: "vide" }, "La courbe apparaîtra après trois collectes.")),
           h("div", { class: "carte liste-meilleures" },
             h("div", { class: "titre-ligne", style: "margin:0" }, h("h3", {}, "Meilleures offres")),
-            h("ol", {}, d.meilleures.map((o, i) =>
+            h("ol", {}, d.meilleures.map((o) =>
               h("li", { onclick: () => ouvrirOffre(`${o.entreprise}|${o.poste}`), title: o.poste },
-                h("span", { class: classeScore(o.fit) }, nombre(o.fit), h("b", {}, i + 1)),
+                h("span", { class: classeScore(o.fit) }, nombre(o.fit)),
                 h("div", { style: "min-width:0" }, h("div", { class: "t" }, o.poste), h("div", { class: "s" }, o.entreprise))))),
             h("button", { class: "bouton", style: "margin-top:18px;width:100%;justify-content:center", onclick: () => aller("offres") }, "Toutes les offres"))),
         h("div", { class: "verre panneau" },
@@ -846,7 +847,9 @@ ECRANS.offres = {
     if (!vuesOffres) vuesOffres = (await appel("vues")) || { vues: {}, colonnes: ["lieu", "zone", "date", "suivi"] };
     const d = await appel("offres", { ...f });
     if (d.choisis) f.pays = d.choisis.pays;  // a country outside the chosen regions is dropped
-    const cols = COLONNES_OFFRES.filter(([c]) => vuesOffres.colonnes.includes(c));
+    // A column empty on the whole page (no zone set, nothing applied to) is left out.
+    const cols = COLONNES_OFFRES.filter(([c]) => vuesOffres.colonnes.includes(c)
+      && (!d.lignes.length || d.lignes.some((o) => o[c])));
     let minuteur;
     const champ = h("input", { type: "search", placeholder: "Poste, entreprise, ville…", value: f.texte,
       oninput: (e) => { clearTimeout(minuteur); minuteur = setTimeout(() => changer("texte", e.target.value), 250); } });

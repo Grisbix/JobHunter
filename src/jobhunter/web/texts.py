@@ -627,6 +627,11 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "En attente de réponse": ("Awaiting an answer", "Warten auf Antwort", "Esperando respuesta"),
     "Collecte du matin": ("Morning collection", "Morgensammlung", "Recogida matinal"),
     "7 derniers scans": ("last 7 scans", "letzte 7 Scans", "últimos 7 escaneos"),
+    "La courbe apparaîtra après trois collectes.": (
+        "The curve will appear after three collections.",
+        "Die Kurve erscheint nach drei Sammlungen.",
+        "La curva aparecerá tras tres recogidas.",
+    ),
     "{p} % par rapport à la moyenne": (
         "{p} % compared with the average",
         "{p} % im Vergleich zum Durchschnitt",
