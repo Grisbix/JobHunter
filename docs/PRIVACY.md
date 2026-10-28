@@ -1,6 +1,6 @@
 # JobHunter — Privacy policy / Politique de confidentialité
 
-Last updated / Mise à jour : 2026-10-27
+Last updated / Mise à jour : 2026-10-28
 
 ## English
 
@@ -19,6 +19,10 @@ JobHunter never sends them to its author or to any third party.
   yours, kept in a file on your computer, sent only to that API.
 - **Gmail, read-only, if you connect it**, to recognise replies to your applications.
   The messages are read on your computer and not sent anywhere.
+- **Public company directories** (Wikidata; in France, the SIRENE directory of
+  recherche-entreprises.api.gouv.fr), only when you run `companies-import`, to list
+  your country's large employers. The requests carry a country code and industry
+  codes, nothing about you.
 - **GitHub**, to check for and download updates of JobHunter.
 - **A local language model (Ollama), if you install one**, to rewrite documents. It
   runs on your computer.
@@ -51,6 +55,10 @@ tiers.
   seulement à cette API.
 - **Gmail, en lecture seule, si vous le connectez**, pour reconnaître les réponses à
   vos candidatures. Les messages sont lus sur votre ordinateur et envoyés nulle part.
+- **Annuaires publics d'entreprises** (Wikidata ; en France, l'annuaire SIRENE de
+  recherche-entreprises.api.gouv.fr), seulement quand vous lancez `companies-import`,
+  pour lister les grands employeurs de votre pays. Les requêtes portent un code de pays
+  et des codes de secteur, rien sur vous.
 - **GitHub**, pour chercher et télécharger les mises à jour de JobHunter.
 - **Un modèle de langue local (Ollama), si vous en installez un**, pour reformuler
   des documents. Il fonctionne sur votre ordinateur.
