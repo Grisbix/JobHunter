@@ -31,6 +31,11 @@ from a file of the repository. Without them the package carries placeholders.
 
 ## Consequences
 
+- Since 3.63 the package contains Playwright's `node.exe`, which the installer leaves
+  out since 3.62 and downloads at the first browser: the Store's policy 10.2.2 forbids
+  extending a product with downloaded code. Inside the package nothing is downloaded,
+  neither the update nor Node.js.
+
 - The installer and the ZIP stay: the Store is one more way in, not the only one.
 - To check on a first Store install: the scheduled morning collection (the task
   calls `jobhunter-cli.exe` through the package's execution alias), and the

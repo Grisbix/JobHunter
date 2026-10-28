@@ -4,6 +4,12 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.63.0 — 2026-10-28
+
+The Microsoft Store package contains Node.js again.
+
+- **`JobHunter.msix` ships Playwright's `node.exe`**, put back from the release's zip and checked against the build's SHA-256. Since 3.62 the installer downloads it at the first browser, but the Store's policy 10.2.2 forbids a product to extend itself with downloaded code: inside the Store package, nothing is downloaded, neither Node.js nor the updates (the Store installs those). `JobHunterSetup.exe` stays at 45 MB.
+
 ## 3.62.0 — 2026-10-28
 
 A lighter installer: Node.js is fetched the first time a browser starts.

@@ -19,6 +19,12 @@ page). It comes from the environment, so that nothing personal is written here:
   MSIX_EDITEUR_NOM  Package/Properties/PublisherDisplayName
 Without them, placeholders: enough to check the packing, refused by the Store.
 
+Node.js goes back inside the package: the installer leaves Playwright's node.exe out
+and the application downloads it at the first browser (jobhunter.playwright_node,
+3.62), but the Store's policy 10.2.2 forbids a product to extend itself with code it
+downloads. `remettre_node` puts it back from dist/playwright-node-win64.zip, checked
+against the build's manifest, which it then removes: the package needs no download.
+
 Needs makeappx.exe (Windows SDK, present on the GitHub Windows runners) and, for
 logos at the sizes Windows asks for, Pillow (else the icon is copied unscaled).
 
@@ -26,10 +32,13 @@ Decision: docs/adr/0015-microsoft-store-package.md
 """
 
 import argparse
+import hashlib
+import json
 import os
 import shutil
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -150,6 +159,32 @@ def _reserves(dossier: str, noms: list[str]) -> set[str]:
     return {n for n in noms if n.lower() in RESERVES}
 
 
+def remettre_node(dossier: Path, archive: Path) -> bool:
+    """node.exe back into the package's folder, from the zip the build took it out to.
+
+    Returns:
+        True when put back; False when the folder still had it (no manifest).
+
+    Raises:
+        SystemExit: manifest without its zip, or a node.exe that does not match it.
+    """
+    interne = dossier / "_internal"
+    manifeste_node = interne / "jobhunter_node.json"
+    if not manifeste_node.is_file():
+        return False
+    attendu = json.loads(manifeste_node.read_text(encoding="utf-8"))["node"]
+    if not archive.is_file():
+        raise SystemExit(f"{archive} absent : le paquet du Store doit contenir node.exe.")
+    with zipfile.ZipFile(archive) as z:
+        node = z.read("node.exe")
+    if hashlib.sha256(node).hexdigest() != attendu:
+        raise SystemExit("node.exe du zip différent de celui de la construction.")
+    cible = interne / "playwright" / "driver" / "node.exe"
+    cible.write_bytes(node)
+    manifeste_node.unlink()
+    return True
+
+
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
@@ -162,6 +197,8 @@ def main() -> int:
     disposition = DIST / "msix"
     shutil.rmtree(disposition, ignore_errors=True)
     shutil.copytree(app, disposition, ignore=_reserves)
+    if remettre_node(disposition, DIST / "playwright-node-win64.zip"):
+        print("node.exe remis dans le paquet (règle 10.2.2 du Store)")
     logos(disposition / "Assets")
     (disposition / "AppxManifest.xml").write_text(manifeste(), encoding="utf-8")
     sortie = Path(a.sortie)

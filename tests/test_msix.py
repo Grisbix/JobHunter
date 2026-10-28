@@ -54,3 +54,38 @@ def test_noms_reserves_du_paquet_ecartes(tmp_path):
         "word",
     ]
     assert list((tmp_path / "msix" / "docx" / "word").iterdir()) == []
+
+
+def _app_sans_node(tmp_path, contenu=b"MZ node"):
+    import hashlib
+    import json
+    import zipfile
+
+    interne = tmp_path / "app" / "_internal"
+    (interne / "playwright" / "driver" / "package").mkdir(parents=True)
+    m = {"url": "u", "sha256": "s", "node": hashlib.sha256(b"MZ node").hexdigest()}
+    (interne / "jobhunter_node.json").write_text(json.dumps(m), encoding="utf-8")
+    z = tmp_path / "playwright-node-win64.zip"
+    with zipfile.ZipFile(z, "w") as f:
+        f.writestr("node.exe", contenu)
+    return tmp_path / "app", z
+
+
+def test_le_paquet_du_store_contient_node(tmp_path):
+    # 3.63: Store policy 10.2.2, no downloaded code inside the package
+    app, z = _app_sans_node(tmp_path)
+    assert msix.remettre_node(app, z) is True
+    assert (app / "_internal/playwright/driver/node.exe").read_bytes() == b"MZ node"
+    assert not (app / "_internal/jobhunter_node.json").exists()  # nothing to download
+    assert msix.remettre_node(app, z) is False
+
+
+def test_node_different_refuse(tmp_path):
+    import pytest
+
+    app, z = _app_sans_node(tmp_path, b"autre")
+    with pytest.raises(SystemExit):
+        msix.remettre_node(app, z)
+    z.unlink()
+    with pytest.raises(SystemExit):
+        msix.remettre_node(app, z)
