@@ -1028,6 +1028,8 @@ ECRANS.candidatures = {
 
 ECRANS.relances = {
   titre: "Relances",
+  // Held in the window: the lists and the draft scroll inside their panels (2026-10-28).
+  plein: true,
   actions: () => [action("Écrire les brouillons du jour", "eclair", "brouillons", "plein")],
   async dessiner(vue) {
     const d = await appel("relances");
@@ -1704,17 +1706,20 @@ ECRANS.stats = {
     const parChamp = (ch, titre) => (e.par[ch].length < 2 ? null : h("div", {}, h("h3", {}, titre),
       h("dl", { class: "paires alignees" }, e.par[ch].map((x) => [h("dt", {}, x.val),
         h("dd", {}, `${x.env} envoyée(s) · ${x.rep} réponse(s), ${x.ent} entretien(s) · ${pc(x.rep / x.env)}`)]))));
-    vue.replaceChildren(h("div", { class: "colonne" },
-      h("div", { class: "cartes-stats" }, d.cartes.map((c) => h("div", { class: "verre carte-stat" },
-        h("div", { class: "chiffre" }, nombre(c.n)), h("div", { class: "sous" }, c.nom)))),
-      e ? h("div", { class: "verre panneau envoyees" },
+    // The applications sent make a fourth stack, on the left, instead of a full-width band:
+    // the screen holds in a 1280 × 720 window when it opens (the user, 2026-10-28).
+    const envoyees = e ? h("div", { class: "verre panneau envoyees" },
         h("div", {}, h("h2", {}, "Candidatures envoyées"),
           h("dl", { class: "paires alignees" },
             h("dt", {}, "Taux de réponse"), h("dd", {}, e.taux != null ? pc(e.taux) : "—"),
             h("dt", {}, "Sans réponse depuis 30 jours"), h("dd", {}, String(e.silence)),
             h("dt", {}, "Délai médian de réponse"), h("dd", {}, e.delai_median == null ? "—" : `${Math.round(e.delai_median)} j (sur ${e.n_delais} réponse(s) datée(s))`))),
-        parChamp("contrat", "Par contrat"), parChamp("domaine", "Par domaine")) : null,
-      h("div", { class: "piles-stats" }, piles.filter((p) => p.length).map((p) => h("div", { class: "pile" }, p.map(barres))))));
+        parChamp("contrat", "Par contrat"), parChamp("domaine", "Par domaine")) : null;
+    vue.replaceChildren(h("div", { class: "colonne" },
+      h("div", { class: "cartes-stats" }, d.cartes.map((c) => h("div", { class: "verre carte-stat" },
+        h("div", { class: "chiffre" }, nombre(c.n)), h("div", { class: "sous" }, c.nom)))),
+      h("div", { class: "piles-stats" }, envoyees ? h("div", { class: "pile" }, envoyees) : null,
+        piles.filter((p) => p.length).map((p) => h("div", { class: "pile" }, p.map(barres))))));
   },
 };
 

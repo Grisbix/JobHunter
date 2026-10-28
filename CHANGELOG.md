@@ -4,6 +4,14 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.65.0 — 2026-10-28
+
+Relances and Statistiques hold in the window when they open, like Candidatures.
+
+- **Relances**: the three panels take the screen's height (in a 1280 × 720 window they ran 136 px under it); the follow-ups, the drafts and the open draft scroll inside their own panel.
+- **Statistiques**: the applications sent become a fourth stack beside the three others instead of a full-width band, and a low window tightens the figures and the bars (286 px under a 1280 × 720 window before). A long section title wraps instead of widening the page.
+- **Accueil**: a smaller chart in a low window: with one recent application the left column still ran 17 px under the window.
+
 ## 3.64.0 — 2026-10-28
 
 The Applications board holds in the window when it opens.
