@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from jobhunter.sources import common as _commun
 from jobhunter.sources import quota as _quota
 
-SOURCES = ("adzuna", "jooble", "francetravail")
+SOURCES = ("adzuna", "jooble", "usajobs", "francetravail")
 
 
 @dataclass(frozen=True)
@@ -58,9 +58,10 @@ def tester(nom: str) -> Resultat:
     import httpx
 
     from jobhunter.sources import aggregators as _agreg
+    from jobhunter.sources import countries as _pays
     from jobhunter.sources import francetravail as _ft
 
-    champs = {"adzuna": ("app_id", "app_key"), "jooble": ("key",)}
+    champs = {"adzuna": ("app_id", "app_key"), "jooble": ("key",), "usajobs": ("email", "key")}
     if nom == "francetravail":
         cle = _cle(nom, "client_id", "client_secret")
     elif nom in champs:
@@ -75,13 +76,15 @@ def tester(nom: str) -> Resultat:
         if nom == "adzuna":
             r = _commun._get_borne(
                 httpx,
-                _agreg.ADZUNA_API.format(pays="fr"),
+                _agreg.ADZUNA_API.format(
+                    pays=_pays.maison() if _pays.maison() in _agreg.ADZUNA_COUVERTS else "gb"
+                ),
                 timeout=20,
                 headers=_commun.UA,
                 params={
                     "app_id": cle[0],
                     "app_key": cle[1],
-                    "what": "analyste",
+                    "what": "analyst",
                     "results_per_page": 1,
                 },
             )
@@ -92,7 +95,25 @@ def tester(nom: str) -> Resultat:
                 _agreg.JOOBLE_API.format(cle=cle[0]),
                 timeout=20,
                 headers={**_commun.UA, "Content-Type": "application/json"},
-                json={"keywords": "analyste", "location": "France", "page": "1", "ResultOnPage": 1},
+                json={
+                    "keywords": "analyst",
+                    "location": _pays.nom(),
+                    "page": "1",
+                    "ResultOnPage": 1,
+                },
+            )
+            return _classer(r.status_code)
+        if nom == "usajobs":
+            r = _commun._get_borne(
+                httpx,
+                _agreg.USAJOBS_API,
+                timeout=20,
+                headers={
+                    "Host": "data.usajobs.gov",
+                    "User-Agent": cle[0],
+                    "Authorization-Key": cle[1],
+                },
+                params={"Keyword": "analyst", "ResultsPerPage": 1},
             )
             return _classer(r.status_code)
         jeton = _ft._ft_token()

@@ -565,6 +565,7 @@ class PanneauxMixin:
         for cle_q, libelle in (
             ("adzuna", "Adzuna"),
             ("jooble", "Jooble"),
+            ("usajobs", "USAJOBS"),
             ("francetravail", "France Travail"),
         ):
             n, cap = _quota.usage(cle_q), _quota.plafond(cle_q)

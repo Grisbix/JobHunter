@@ -1009,9 +1009,15 @@ def fetch_service_public() -> list[dict[str, Any]]:
     """
     import httpx
 
+    from jobhunter.sources import keywords as _mots
+
+    mots = _mots.mots("service_public", CSP_MOTS, len(CSP_MOTS))
+    # The public-finance filter goes with the module's own ESG words; the profile's
+    # words keep what passes the title filter.
+    filtre_esg = [m.lower() for m in mots] == [m.lower() for m in CSP_MOTS]
     out, vus = [], set()
     try:
-        for mot in CSP_MOTS:
+        for mot in mots:
             for page in (1, 2):
                 url = f"{CSP}/nos-offres/filtres/mot-cles/{quote(mot)}/" + (
                     f"page/{page}/" if page > 1 else ""
@@ -1046,7 +1052,11 @@ def fetch_service_public() -> list[dict[str, Any]]:
         if o["titre"]
         and o["url"]
         and title_ok(o["titre"])
-        and (_RX_CSP_EMPLOYEUR.search(o["entreprise"]) or _RX_CSP_INTITULE.search(o["titre"]))
+        and (
+            not filtre_esg
+            or _RX_CSP_EMPLOYEUR.search(o["entreprise"])
+            or _RX_CSP_INTITULE.search(o["titre"])
+        )
     ]
 
 
@@ -1136,7 +1146,10 @@ def scan_autres() -> list[dict[str, Any]]:
         _log.info(f"  ✓ {kind}:{cle.split('|')[0]} → {len(got)} offres")
         offres.extend(got)
         time.sleep(ATS_PAUSE)
-    got = fetch_service_public()
-    _log.info(f"  ✓ choisirleservicepublic → {len(got)} offres")
-    offres.extend(got)
+    from jobhunter.sources import countries as _pays
+
+    if _pays.en_france():  # the French civil service: for a profile in France
+        got = fetch_service_public()
+        _log.info(f"  ✓ choisirleservicepublic → {len(got)} offres")
+        offres.extend(got)
     return offres

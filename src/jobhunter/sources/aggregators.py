@@ -1,4 +1,4 @@
-"""Adzuna and Jooble: official APIs (key required).
+"""Adzuna, Jooble and USAJOBS: official APIs (key required).
 
 Part of jobhunter.sources (formerly Scripts/job_sources.py, phase 3.4).
 """
@@ -10,6 +10,8 @@ from typing import Any
 from jobhunter import log as _journal
 from jobhunter import root as _racine
 from jobhunter.sources import common as _commun
+from jobhunter.sources import countries as _pays
+from jobhunter.sources import keywords as _mots
 from jobhunter.sources import quota as _quota
 from jobhunter.sources.common import (
     INCIDENTS,
@@ -78,7 +80,42 @@ AGREG_MOTS_EN = [
     "graduate finance",
 ]
 
+# The other countries searched, for a profile in France (`adzuna_pays` in
+# sources_config.json sets them for any profile; [] = the home country alone).
 ADZUNA_PAYS = ("gb", "es", "de", "nl", "be", "ch", "it")
+
+# The countries Adzuna covers (developer.adzuna.com).
+ADZUNA_COUVERTS = frozenset("at au be br ca ch de es fr gb in it mx nl nz pl sg us za".split())
+
+
+def _adzuna_requetes() -> list[tuple[str, str]]:
+    """(country, word) pairs: the home country with the profile's words, then abroad.
+
+    Abroad, the English words (`adzuna_en` in mots_sources, the profile's otherwise).
+    """
+    maison = _pays.maison()
+    local = AGREG_MOTS_FR if maison == "fr" else AGREG_MOTS_EN
+    requetes = (
+        [(maison, m) for m in _mots.mots("adzuna", local, len(AGREG_MOTS_FR))]
+        if maison in ADZUNA_COUVERTS
+        else []
+    )
+    import json
+
+    cfg: Any = {}
+    try:
+        cfg = json.loads(_commun.SOURCES_CFG.read_text(encoding="utf-8"))
+    except (OSError, ValueError, AttributeError):
+        pass
+    autres = cfg.get("adzuna_pays") if isinstance(cfg, dict) else None
+    if not isinstance(autres, list):
+        autres = list(ADZUNA_PAYS) if maison == "fr" else []
+    autres = [str(p).lower() for p in autres if str(p).lower() in ADZUNA_COUVERTS - {maison}]
+    if autres:
+        mots_en = _mots.mots("adzuna_en", AGREG_MOTS_EN, len(AGREG_MOTS_EN))
+        requetes += [(p, m) for p in autres for m in mots_en]
+    return requetes
+
 
 AGREG_PAUSE = 1.0
 
@@ -186,7 +223,7 @@ def _agreg_offre(
 
 
 def scan_adzuna() -> list[dict[str, Any]]:
-    """Adzuna collection (official API, France and seven countries).
+    """Adzuna collection (official API, the home country, and abroad for a profile in France).
 
     Returns:
         The offers; [] if the key (Scripts/adzuna.json) is missing.
@@ -200,9 +237,7 @@ def scan_adzuna() -> list[dict[str, Any]]:
     app_id, app_key = cle
     _EX = _commun.contrats_exclus()
     garde, out, vus = _Garde("adzuna"), [], set()
-    requetes = [("fr", m) for m in AGREG_MOTS_FR] + [
-        (p, m) for p in ADZUNA_PAYS for m in AGREG_MOTS_EN
-    ]
+    requetes = _adzuna_requetes()
     faites = 0
     for pays, mot in requetes:
         if garde.fini:
@@ -273,7 +308,8 @@ def scan_jooble() -> list[dict[str, Any]]:
     _EX = _commun.contrats_exclus()
     garde, out, vus = _Garde("jooble"), [], set()
     faites = 0
-    for mot in AGREG_MOTS_FR:
+    local = AGREG_MOTS_FR if _pays.en_france() else AGREG_MOTS_EN
+    for mot in _mots.mots("jooble", local, len(AGREG_MOTS_FR)):
         if garde.fini:
             break
         if _quota_atteint("jooble"):
@@ -287,7 +323,7 @@ def scan_jooble() -> list[dict[str, Any]]:
                 JOOBLE_API.format(cle=cle[0]),
                 timeout=25,
                 headers={**UA, "Content-Type": "application/json"},
-                json={"keywords": mot, "location": "France", "page": "1"},
+                json={"keywords": mot, "location": _pays.nom(), "page": "1"},
             )
         except Exception as e:
             INCIDENTS["jooble"][type(e).__name__] += 1
@@ -319,4 +355,80 @@ def scan_jooble() -> list[dict[str, Any]]:
             if o:
                 out.append(o)
     _log.info(f"  ✓ Jooble → {len(out)} offres sur {faites} requetes (extraits, liens Jooble)")
+    return out
+
+
+# ═══════════════ USAJOBS — the US federal government's jobs, official API (key required) ═══
+# For a profile in the United States (`pays: "us"`). The key is free, asked for by the
+# user at https://developer.usajobs.gov/apirequest/ -> usajobs.json
+#     {"email": "...", "key": "..."}
+# The API wants the e-mail the key was issued to as User-Agent: that is its rule for
+# identifying the caller, not a disguise. Neither value is ever displayed.
+USAJOBS_CFG = _racine.dossier_cles() / "usajobs.json"
+
+USAJOBS_API = "https://data.usajobs.gov/api/search"
+
+USAJOBS_MOTS = ["analyst", "program analyst", "management analyst", "specialist"]
+
+
+def _usajobs_offre(j: dict[str, Any], _EX: Any) -> dict[str, Any] | None:
+    d = j.get("MatchedObjectDescriptor") or {}
+    return _agreg_offre(
+        d.get("PositionTitle") or "",
+        d.get("PositionURI") or "",
+        d.get("OrganizationName"),
+        d.get("PositionLocationDisplay"),
+        d.get("PublicationStartDate") or "",
+        "usajobs",
+        ((d.get("UserArea") or {}).get("Details") or {}).get("JobSummary"),
+        "",
+        _EX,
+    )
+
+
+def scan_usajobs() -> list[dict[str, Any]]:
+    """USAJOBS collection (official API): the profile's words, posted in the last 30 days.
+
+    Returns:
+        The offers; [] if the key (usajobs.json) is missing.
+    """
+    import httpx
+
+    cle = _cle(USAJOBS_CFG, "email", "key")
+    if not cle:
+        _log.info("  · USAJOBS ignore (usajobs.json absent — voir le commentaire)")
+        return []
+    email, key = cle
+    _EX = _commun.contrats_exclus()
+    garde, out, vus = _Garde("usajobs"), [], set()
+    faites = 0
+    for mot in _mots.mots("usajobs", USAJOBS_MOTS, 8):
+        if garde.fini or _quota_atteint("usajobs"):
+            break
+        if faites:
+            time.sleep(AGREG_PAUSE)
+        faites += 1
+        try:
+            r = _commun._get_borne(
+                httpx,
+                USAJOBS_API,
+                timeout=25,
+                headers={"Host": "data.usajobs.gov", "User-Agent": email, "Authorization-Key": key},
+                params={"Keyword": mot, "DatePosted": 30, "ResultsPerPage": 250},
+            )
+        except Exception as e:
+            INCIDENTS["usajobs"][type(e).__name__] += 1
+            continue
+        if not garde.reponse(r):
+            continue
+        try:
+            res = (r.json().get("SearchResult") or {}).get("SearchResultItems") or []
+        except ValueError:
+            continue
+        for j in res:
+            o = _usajobs_offre(j, _EX)
+            if o and o["url"] not in vus:
+                vus.add(o["url"])
+                out.append(o)
+    _log.info(f"  ✓ USAJOBS → {len(out)} offres sur {faites} requetes")
     return out

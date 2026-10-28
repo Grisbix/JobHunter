@@ -167,7 +167,7 @@ def test_hors_de_collecte_complete():
     from jobhunter.sources import cli
 
     source = open(cli.__file__, encoding="utf-8").read()
-    assert "if a.hellowork:" in source  # its own flag only, never `a.all or`
+    assert 'if a.hellowork and du_pays("hellowork"):' in source  # its flag, never `a.all or`
 
 
 PAGE_METIER = (

@@ -25,6 +25,7 @@ FICHIER = "_api_quota.json"
 PLAFONDS: dict[str, int | None] = {
     "adzuna": 250,
     "jooble": None,
+    "usajobs": None,
     "francetravail": None,
     "freehire": 1500,
     "arbeitsagentur": None,

@@ -56,9 +56,22 @@ APPORT = {
     "francetravail": "les offres de France Travail (ex-Pôle emploi), toute la France",
     "adzuna": "un agrégateur : des milliers d'offres de sites d'emploi",
     "jooble": "un autre agrégateur, utile hors de France",
+    "usajobs": "les offres de l'administration fédérale américaine",
 }
 SCAN_DE_BASE = ["--linkedin", "--vie", "--makesense", "--pages", "1"]
-SCAN_CLES = {"francetravail": "--ft", "adzuna": "--adzuna", "jooble": "--jooble"}
+SCAN_CLES = {
+    "francetravail": "--ft",
+    "adzuna": "--adzuna",
+    "jooble": "--jooble",
+    "usajobs": "--usajobs",
+}
+
+
+def cles_du_pays() -> dict[str, Any]:
+    """The keys of the sources that cover the profile's country (no France Travail in Ohio)."""
+    from jobhunter.sources import countries as _pays
+
+    return {n: c for n, c in _cles.CLES.items() if _pays.source_du_pays(n)}
 
 
 def _etape(fenetre: Any, numero: int, titre: str, intro: str) -> tuple[Any, Any, Any]:
@@ -134,7 +147,7 @@ def etape_cles(fenetre: Any) -> str:
     dossier = _rac.dossier_cles()
     champs: dict[str, dict[str, Any]] = {}
     etats: dict[str, Any] = {}
-    for nom, cle in _cles.CLES.items():
+    for nom, cle in cles_du_pays().items():
         bloc = ctk.CTkFrame(corps, fg_color=_w.PISTE, corner_radius=_w.RAD_BOUTON)
         bloc.pack(fill="x", pady=5)
         tete = ctk.CTkFrame(bloc, fg_color="transparent")
@@ -177,7 +190,7 @@ def etape_cles(fenetre: Any) -> str:
             champs[nom][champ] = e
 
     def montrer_etats() -> None:
-        for nom in _cles.CLES:
+        for nom in cles_du_pays():
             ok = _cles.presente(dossier, nom)
             etats[nom].configure(
                 text="✓ clé posée" if ok else "pas de clé",

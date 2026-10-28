@@ -865,6 +865,11 @@ def en_france(lieu: str | None) -> bool:
     t = str(lieu or "").strip()
     if not t:
         return True
+    from jobhunter.scoring import zones as _zones
+
+    maison = str(_zones.PAYS_MAISON)
+    if maison != "fr":  # a profile elsewhere: its own country (`pays`)
+        return _zones.pays_lieu(t) in ("?", _zones._ISO_PAYS.get(maison))
     if _RX_FR.search(t):
         return True
     if _RX_ETAT_US.search(t) or _RX_ETRANGER.search(t):

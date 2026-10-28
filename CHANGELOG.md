@@ -4,6 +4,29 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.47.0 — 2026-10-28
+
+The collection searches where you live (`pays` in the profile, read from your CV
+since 3.46). Nothing changes for a profile in France.
+
+- **Each source runs where it covers you.** France Travail, the V.I.E, FIR, Jobs that
+  make sense, Welcome to the Jungle, APEC, Glassdoor, HelloWork and Choisir le service
+  public only list offers in France: they run for a profile in France, and the
+  collection says which ones it skipped and why. EURES runs for a profile in Europe,
+  the Bundesagentur for one in Europe who speaks German.
+- **LinkedIn and Jooble search your country**, then LinkedIn searches the world, as
+  France was before. With `--france`, the collection keeps your own country's offers.
+- **Adzuna searches your country with your words** (the 19 countries it covers). The
+  seven European countries it also searched stay for a profile in France;
+  `adzuna_pays` in `sources_config.json` sets them for anyone (`[]` = home only).
+  Jooble and Choisir le service public take your words too; `mots_sources` (`adzuna`,
+  `adzuna_en`, `jooble`, `service_public`) keeps a hand-tuned list.
+- **USAJOBS**, the US federal government's official job board, for a profile in the
+  United States (`--usajobs` runs it anywhere). Its key is free: ask for it at
+  developer.usajobs.gov, then enter it with the others (Accès → Collecte des offres),
+  e-mail and key. The welcome tour only offers the keys of the sources that cover your
+  country.
+
 ## 3.46.0 — 2026-10-28
 
 JobHunter no longer assumes you live in France. The first launch reads your country

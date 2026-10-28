@@ -52,6 +52,14 @@ CLES = {
             "https://developer.adzuna.com",
         ),
         Cle("jooble", "Jooble", "jooble.json", ("key",), ("key",), "https://jooble.org/api/about"),
+        Cle(
+            "usajobs",
+            "USAJOBS",
+            "usajobs.json",
+            ("email", "key"),
+            ("key",),
+            "https://developer.usajobs.gov/apirequest/",
+        ),
     )
 }
 

@@ -415,8 +415,9 @@ def _executer(a, journal):
             # 24/09); APEC and Glassdoor on 2026-10-21 (DataDome, Cloudflare: refused at
             # every collection). Adzuna and Jooble, official APIs, cover their pool.
             (
-                "1d/5 Collecte — France Travail, Adzuna, Jooble, freehire",
-                ["--ft", "--adzuna", "--jooble", "--freehire"],
+                "1d/5 Collecte — France Travail, Adzuna, Jooble, USAJOBS, freehire",
+                ["--ft", "--adzuna", "--jooble", "--freehire"]
+                + (["--usajobs"] if _pays_usajobs() else []),
                 2700,
             ),
             ("1e/5 Collecte — WTJ", ["--wtj"], 2400),
@@ -578,3 +579,10 @@ def _executer(a, journal):
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+def _pays_usajobs() -> bool:
+    """USAJOBS in the morning collection: for a profile in the United States."""
+    from jobhunter.sources import countries as _pays
+
+    return _pays.source_du_pays("usajobs")

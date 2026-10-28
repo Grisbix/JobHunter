@@ -12,8 +12,9 @@ from typing import Any
 from jobhunter import lazy as _paresseux
 from jobhunter import root as _racine
 from jobhunter.sources import common as _commun
+from jobhunter.sources import countries as _pays
 from jobhunter.sources import source_yield as _rendement
-from jobhunter.sources.aggregators import scan_adzuna, scan_jooble
+from jobhunter.sources.aggregators import scan_adzuna, scan_jooble, scan_usajobs
 from jobhunter.sources.apec import scan_apec
 from jobhunter.sources.arbeitsagentur import scan_arbeitsagentur
 from jobhunter.sources.ats import scan_ats
@@ -128,6 +129,11 @@ def main() -> int:
         "--jooble",
         action="store_true",
         help="Jooble (API officielle, cle dans Scripts/jooble.json)",
+    )
+    ap.add_argument(
+        "--usajobs",
+        action="store_true",
+        help="USAJOBS (API officielle du gouvernement américain, clé dans usajobs.json)",
     )
     ap.add_argument(
         "--freehire",
@@ -250,11 +256,37 @@ def main() -> int:
         or a.adzuna
         or a.jooble
         or a.freehire
+        or a.usajobs
         or a.arbeitsagentur
         or a.entreprises_vues
     ):
         a.all = True
 
+    # A source that only lists another country's offers is skipped (countries.py):
+    # France Travail for a profile in Ohio, USAJOBS for one in Lyon.
+    du_pays = _pays.source_du_pays
+    hors_pays = sorted(
+        n
+        for n, demande in (
+            ("vie", a.all or a.vie),
+            ("fir", a.all or a.fir),
+            ("makesense", a.all or a.makesense),
+            ("francetravail", a.all or a.ft),
+            ("wtj", a.all or a.wtj),
+            ("apec", a.apec),
+            ("glassdoor", a.glassdoor),
+            ("hellowork", a.hellowork),
+            ("eures", a.all or a.eures),
+            ("arbeitsagentur", a.all or a.arbeitsagentur),
+            ("usajobs", a.usajobs),
+        )
+        if demande and not du_pays(n)
+    )
+    if hors_pays:
+        print(
+            f"── sautées, elles ne couvrent pas ton pays ({_pays.nom()}) : "
+            f"{', '.join(hors_pays)} ──"
+        )
     if not _vise_finance() and (a.all or a.fir or a.efc or a.efc_tout or a.efc_metier):
         print(
             "── FIR et eFinancialCareers sautés : ton filtre de titre ne garde aucun métier finance ──"
@@ -285,12 +317,12 @@ def main() -> int:
                 dict(pages=a.pages, days=a.days),
             )
         )
-    if a.all or a.vie:
+    if (a.all or a.vie) and du_pays("vie"):
         etapes.append(("── V.I.E / V.I.A (Business France) ──", "vie", scan_vie, {}))
     # FIR and eFC only list finance and ESG jobs: every one of their offers would fail
     # a title filter that keeps no finance title (an engineer's profile). Skipped then.
     finance = _vise_finance()
-    if (a.all or a.fir) and finance:
+    if (a.all or a.fir) and finance and du_pays("fir"):
         etapes.append(("── FIR / French SIF (100 % ISR-ESG) ──", "fir", scan_fir, {}))
     # TALENT AND INDEED OUT OF --all (2026-10-03). Talent: 0 offers in 30 min on
     # 30/09, 3 on 27/09. Indeed: 403 at the first request since 24/09.
@@ -313,11 +345,11 @@ def main() -> int:
     # APEC (DataDome) and Glassdoor (Cloudflare challenge) out of --all since 3.10.0:
     # every collection measured since 07/10 was refused (403 behind a CAPTCHA page,
     # checked again on 21/10). We do not get around it; their flag still runs them.
-    if a.apec:
+    if a.apec and du_pays("apec"):
         etapes.append(
             ("── APEC (API publique, annonce entière dans la liste) ──", "apec", scan_apec, {})
         )
-    if a.glassdoor:
+    if a.glassdoor and du_pays("glassdoor"):
         etapes.append(
             (
                 "── Glassdoor (page 1 de la recherche, France entière) ──",
@@ -356,7 +388,7 @@ def main() -> int:
             )
         )
     # HelloWork outside --all until a few runs are measured (AGENTS.md, "Sites to try").
-    if a.hellowork:
+    if a.hellowork and du_pays("hellowork"):
         etapes.append(
             (
                 "── HelloWork (pages métier puis offres, sans contournement) ──",
@@ -365,7 +397,7 @@ def main() -> int:
                 {},
             )
         )
-    if a.all or a.makesense:
+    if (a.all or a.makesense) and du_pays("makesense"):
         etapes.append(
             (
                 "── Jobs that make sense (sitemap public, offres à impact) ──",
@@ -374,7 +406,7 @@ def main() -> int:
                 {},
             )
         )
-    if a.all or a.eures:
+    if (a.all or a.eures) and du_pays("eures"):
         etapes.append(
             (
                 "── EURES (portail officiel UE, API publique, crawl-delay 10 s) ──",
@@ -383,14 +415,17 @@ def main() -> int:
                 {},
             )
         )
-    if a.all or a.ft:
+    if (a.all or a.ft) and du_pays("francetravail"):
         etapes.append(
             ("── France Travail (API officielle) ──", "francetravail", scan_france_travail, {})
         )
     if a.all or a.adzuna:
-        etapes.append(("── Adzuna (API officielle, France + 7 pays) ──", "adzuna", scan_adzuna, {}))
+        etapes.append(("── Adzuna (API officielle) ──", "adzuna", scan_adzuna, {}))
     if a.all or a.jooble:
         etapes.append(("── Jooble (API officielle) ──", "jooble", scan_jooble, {}))
+    # USAJOBS in --all for a profile in the United States; its flag runs it anywhere.
+    if a.usajobs or (a.all and du_pays("usajobs")):
+        etapes.append(("── USAJOBS (API officielle, États-Unis) ──", "usajobs", scan_usajobs, {}))
     if a.all or a.freehire:
         etapes.append(("── freehire (API publique) ──", "freehire", scan_freehire, {}))
     if a.all or a.entreprises_vues:
@@ -402,7 +437,7 @@ def main() -> int:
                 {},
             )
         )
-    if a.all or a.arbeitsagentur:
+    if (a.all or a.arbeitsagentur) and du_pays("arbeitsagentur"):
         etapes.append(
             (
                 "── Arbeitsagentur (API publique, Allemagne) ──",
@@ -411,7 +446,7 @@ def main() -> int:
                 {},
             )
         )
-    if a.all or a.wtj:
+    if (a.all or a.wtj) and du_pays("wtj"):
         etapes.append(
             (
                 "── Welcome to the Jungle (sitemap public, débit bridé) ──",

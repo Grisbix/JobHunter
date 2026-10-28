@@ -175,6 +175,13 @@ def _li_pause_429(r: Any) -> bool:
 LIEUX_MONDE = {"France": 3, "Worldwide": 12}
 
 
+def lieux_par_defaut() -> dict[str, int]:
+    """The home country (`pays` in the profile) in depth, then the world."""
+    from jobhunter.sources import countries as _pays
+
+    return {_pays.nom(): LIEUX_MONDE["France"], "Worldwide": LIEUX_MONDE["Worldwide"]}
+
+
 def scan_linkedin(
     pages: int = 2, days: int = 7, lieux: list[str] | dict[str, int] | None = None
 ) -> list[dict[str, Any]]:
@@ -187,7 +194,9 @@ def scan_linkedin(
     remove the entrance filter — the other countries must be ASKED for.
     """
     if lieux is None:
-        lieux = LIEUX_MONDE if _commun.MONDE else ["France"]
+        from jobhunter.sources import countries as _pays
+
+        lieux = lieux_par_defaut() if _commun.MONDE else [_pays.nom()]
     # A dict gives the depth per place, a list keeps the argument's.
     profondeur = dict(lieux) if isinstance(lieux, dict) else {x: pages for x in lieux}
     offers: list[dict[str, Any]] = []
