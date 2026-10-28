@@ -100,7 +100,27 @@ def test_zones_vues_de_l_ohio(maison):
 
 
 def test_zones_vues_de_france_inchangees(maison):
-    maison("fr")
+    maison("fr", ["bordeaux"])
     assert zones.zone_lieu("Angers, Maine-et-Loire") == zones.AILLEURS  # not Maine, USA
     assert zones.zone_lieu("Dayton, Ohio") == zones.INTERNATIONAL
     assert zones.pays_lieu("Dayton, Ohio") == "États-Unis"
+
+
+def test_sans_secteur_prioritaire_tout_le_pays_est_prioritaire(maison):
+    # The user, 2026-10-28: « ne pas avoir de priorité, donc laisser le pays entier ».
+    maison("fr")
+    assert zones.zone_lieu("Angers, Maine-et-Loire") == zones.PRIORITAIRE
+    assert zones.zone_lieu("Bordeaux") == zones.PRIORITAIRE
+    assert zones.zone_lieu("Dayton, Ohio") == zones.INTERNATIONAL
+    assert zones.zone_lieu("Fort-de-France, Martinique") == zones.AILLEURS  # overseas
+    assert zones.zone_lieu("France") == zones.INCONNU
+    assert zones.sous_zone("Angers") == ""  # no sector named, no first-sector bonus
+    maison("us")
+    assert zones.zone_lieu("Austin, TX") == zones.PRIORITAIRE
+    assert zones.zone_lieu("Paris, France") == zones.INTERNATIONAL
+
+
+def test_un_secteur_prioritaire_rend_le_reste_du_pays_ailleurs(maison):
+    maison("fr", ["bordeaux"])
+    assert zones.zone_lieu("Mérignac") == zones.PRIORITAIRE
+    assert zones.zone_lieu("Angers, Maine-et-Loire") == zones.AILLEURS

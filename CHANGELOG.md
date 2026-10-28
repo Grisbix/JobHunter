@@ -4,6 +4,13 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.56.0 — 2026-10-28
+
+No priority zone means the whole country.
+
+### Changed
+- **A profile without priority zones searches its whole country as the priority.** `zones.prioritaires` empty used to leave every offer of the home country « ailleurs »: « Préparer les 30 meilleures » (`documents --top`, priority and secondary zones only) then prepared none of them, and HelloWork read no city page. Now, without any priority sector, every place of the home country is « prioritaire » (overseas excepted; « France » alone stays unknown) and no sector gets the first-sector bonus. With at least one priority sector, nothing changes: the rest of the country stays « ailleurs ». On a real queue of 13 617 offers with an empty list: 3 178 offers go from « ailleurs » to « prioritaire »; scores, sorting, letters and CVs unchanged.
+
 ## 3.55.0 — 2026-10-28
 
 Nothing overlaps, nothing scrolls sideways, and the home screen fits the window it opens in.

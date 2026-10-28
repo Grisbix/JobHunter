@@ -1152,6 +1152,17 @@ def _pays_maison() -> str:
 _PARESSEUX["PAYS_MAISON"] = _pays_maison
 _PARESSEUX["SECTEURS_PRIORITAIRES"] = lambda: _secteurs("prioritaires", [])
 _PARESSEUX["SECTEURS_SECONDAIRES"] = lambda: _secteurs("secondaires", [])
+
+
+# No priority sector = the whole home country is the priority (the user, 2026-10-28:
+# « ne pas avoir de priorité, donc laisser le pays entier »). Without it, an empty list
+# left every home offer « ailleurs »: `documents --top` (priority and secondary zones
+# only) picked none of them, and HelloWork read no city page. Read each time, not kept:
+# it follows the sectors.
+def _pays_entier() -> bool:
+    return not _ici.SECTEURS_PRIORITAIRES
+
+
 _PARESSEUX["_DEP_PRIORITAIRE"] = lambda: set().union(
     *(s["departements"] for s in _ici.SECTEURS_PRIORITAIRES)
 )
@@ -1234,7 +1245,8 @@ _RX_N_LIEUX = re.compile(r"\d+ (?:locations?|lieux|sites|standorte)")
 def zone_lieu(lieu: str | None) -> str:
     """Zone of a place: prioritaire / secondaire / ailleurs / international / inconnu.
 
-    « ailleurs » is the rest of the home country (`pays` in the profile). At home in
+    « ailleurs » is the rest of the home country (`pays` in the profile); without any
+    priority sector, the whole home country is « prioritaire » (overseas excepted). At home in
     France, `zone_france` decides; elsewhere, the profile's sectors first (a place
     typed by the user: « Columbus », « Ohio »), then the place's country.
     """
@@ -1252,7 +1264,9 @@ def zone_lieu(lieu: str | None) -> str:
     # « France » is zone_france's default for any unknown word: from abroad, unknown.
     if p == "?" or (p == "France" and not _lieu_sur(lieu or "") and "france" not in t):
         return INCONNU
-    return AILLEURS if p == _ISO_PAYS.get(maison) else INTERNATIONAL
+    if p != _ISO_PAYS.get(maison):
+        return INTERNATIONAL
+    return PRIORITAIRE if _pays_entier() else AILLEURS
 
 
 def zone_france(lieu: str | None) -> str:
@@ -1339,7 +1353,7 @@ def zone_france(lieu: str | None) -> str:
         return PRIORITAIRE
     if d in _ici._DEP_SUD_EST:
         return SECONDAIRE
-    return AILLEURS
+    return PRIORITAIRE if _pays_entier() else AILLEURS
 
 
 def sous_zone(lieu: str | None) -> str:
