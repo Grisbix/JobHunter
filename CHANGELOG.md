@@ -20,6 +20,10 @@ A cleaner window: one scale of sizes, no decoration that says nothing.
   one lone bar.
 - **An offers column empty on the whole page is left out** (no zone set, nothing
   applied to yet): it showed a dash on every row.
+- **"À postuler" no longer wraps** on the applications board: an empty column is as
+  wide as its title.
+- **The privacy policy names the public company directories** that
+  `companies-import` asks (3.51): a country code and industry codes, nothing about you.
 
 ## 3.51.0 — 2026-10-28
 
