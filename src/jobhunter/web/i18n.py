@@ -29,7 +29,7 @@ COLONNE = {"en": 0, "de": 1, "es": 2}  # position in jobhunter.web.texts.TEXTES'
 
 
 def langue() -> str:
-    """The chosen interface language, French by default (jobhunter.app.language.lire)."""
+    """The chosen interface language, the system's by default (jobhunter.locales.systeme)."""
     env = os.environ.get("JOBHUNTER_LANGUE", "").lower()
     if env in LANGUES:
         return env
@@ -40,7 +40,11 @@ def langue() -> str:
         v = json.loads(f.read_text(encoding="utf-8")).get("langue") if f else None
     except (OSError, ValueError, AttributeError):
         v = None
-    return str(v) if v in LANGUES else "fr"
+    if v in LANGUES:
+        return str(v)
+    from jobhunter.locales import systeme
+
+    return systeme()
 
 
 def _bureau(code: str) -> list[dict[str, str]]:

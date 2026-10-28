@@ -74,9 +74,12 @@ _RX_TEL = re.compile(
 _RX_ESPACE = re.compile(r"(?:\w ){3,}\w")
 # Any other country: "+44 7700 900123", "+1 (415) 555-0100".
 _RX_TEL_INTER = re.compile(r"\+\d{1,3}(?:[\s.-]?\(?\d{2,4}\)?){2,4}\b")
+# North America: « (614) 555-0100 », « 614-555-0100 ».
+_RX_TEL_NANP = re.compile(r"\(\d{3}\)\s?\d{3}[\s.-]\d{4}\b|\b\d{3}[.-]\d{3}[.-]\d{4}\b")
 _RX_LINKEDIN = re.compile(r"(?:https?://)?(?:[a-z]{2,3}\.)?linkedin\.com/in/[\w%-]+/?", re.I)
 _RX_TITRE_SECTION = re.compile(
-    r"^\s*(profil|profile|r[ée]sum[ée]|summary|about( me)?|[àa] propos|objectif|pr[ée]sentation)\s*:?\s*$",
+    r"^\s*(?:(?:professional|career|executive|personal)\s+)?"
+    r"(profil|profile|r[ée]sum[ée]|summary|about( me)?|[àa] propos|objectif|pr[ée]sentation)\s*:?\s*$",
     re.I,
 )
 _RX_DIPLOME = re.compile(
@@ -98,6 +101,8 @@ def titre_du_cv(lignes, ident):
     a contact or a spaced heading ("C O N T A C T")."""
     nom = {w.lower() for w in f"{ident.get('prenom', '')} {ident.get('nom', '')}".split()}
     for l in lignes[:8]:
+        if _RX_SECTION_EXPERIENCE.match(l):
+            break  # the title comes before the jobs: past this, a line is a job's detail
         mots = {w.lower() for w in l.split()}
         if (
             4 < len(l) < 60
@@ -106,15 +111,68 @@ def titre_du_cv(lignes, ident):
             and not (l.isupper() and len(l.split()) == 1)  # a heading: "PROFIL"
             and not (mots and mots <= nom)
             and not re.fullmatch(r"(?:\w ){3,}\w", l)
+            and not _RX_TITRE_SECTION.match(l)  # « PROFESSIONAL SUMMARY »
+            and not lieu_du_cv([l])[2]  # « Columbus, Ohio, United States » is a place
         ):
             return l
+    return poste_recent(lignes)
+
+
+_RX_SECTION_EXPERIENCE = re.compile(
+    r"^\s*(?:exp[ée]riences?(?: professionnelles?)?|(?:professional |work )?experience"
+    r"|employment(?: history)?|parcours professionnel)\s*:?\s*$",
+    re.I,
+)
+
+
+def poste_recent(lignes):
+    """The first job of the Experience section, without its employer: « Registered Nurse (RN) »."""
+    for i, l in enumerate(lignes):
+        if _RX_SECTION_EXPERIENCE.match(l) and i + 1 < len(lignes):
+            poste = re.split(r"\s+[—–-]\s+|\s+(?:at|chez|@)\s+|\s*\|\s*", lignes[i + 1])[0]
+            poste = re.sub(r"\s*\([^)]*\)\s*$", "", poste).strip()
+            return poste if 3 < len(poste) < 60 else ""
     return ""
+
+
+def lieu_du_cv(lignes):
+    """(city, region, country ISO code) read in the CV's header; ("", "", "") if none.
+
+    « Columbus, Ohio, United States », « Austin, TX 78701 », « Paris, France ». A line
+    with an e-mail or a phone is looked at piece by piece (« · », « | »).
+    """
+    from jobhunter.scoring import zones
+
+    for l in lignes[:12]:
+        for morceau in re.split(r"\s*[|·•]\s*", l):
+            m = morceau.strip()
+            if "," not in m or "@" in m or len(m) > 70 or re.search(r"\d{6,}|\(\d{3}\)", m):
+                continue
+            pays = zones.pays_lieu(m)
+            if pays in ("?", "étranger (autre)"):
+                continue
+            iso = zones.code_pays(pays)
+            if not iso:
+                continue
+            parts = [re.sub(r"\s+\d[\d -]*$", "", p).strip() for p in m.split(",")]
+            parts = [p for p in parts if p]
+            if iso == "fr" and not zones._lieu_sur(m):
+                continue  # an unknown word, not a French place
+            region = parts[1] if len(parts) > 2 or (len(parts) == 2 and iso != "fr") else ""
+            if _sans_accent(region).lower() == _sans_accent(pays).lower():
+                region = ""
+            if iso == "us" and region.lower() in zones.ETATS_US_CODES:
+                region = zones.ETATS_US_CODES[region.lower()]
+            return parts[0], region, iso
+    return "", "", ""
 
 
 def identite_du_cv(texte):
     lignes = [l.strip() for l in texte.splitlines() if l.strip()]
     email = (_RX_EMAIL.search(texte) or [""])[0]
-    tel = (_RX_TEL.search(texte) or _RX_TEL_INTER.search(texte) or [""])[0]
+    tel = (
+        _RX_TEL.search(texte) or _RX_TEL_INTER.search(texte) or _RX_TEL_NANP.search(texte) or [""]
+    )[0]
     lk = (_RX_LINKEDIN.search(texte) or [""])[0]
     prenom = nom = ""
     # A Canva CV puts the first name and the surname on two lines ("KARIM" / "BENALI").
@@ -155,6 +213,11 @@ def identite_du_cv(texte):
                 break
         if ville:
             break
+    v_cv, region, pays = lieu_du_cv(lignes)
+    if pays and pays != "fr":
+        ville = v_cv
+    elif ville:
+        pays = "fr"
     return {
         "prenom": prenom,
         "nom": nom,
@@ -162,6 +225,8 @@ def identite_du_cv(texte):
         "telephone": tel,
         "linkedin": lk,
         "ville": ville,
+        "region": region,
+        "pays": pays,
     }
 
 
@@ -970,19 +1035,26 @@ def construire(cv_txt, cv_nom, rep):
             ],
             "outils_max": 0 if coeur in ("dev", "data") else 4,
         },
-        # Languages spoken: French (tool in French), plus those of the CV.
+        # Languages spoken: those of the CV, and the language it is written in.
         # A posting written or required in another language is capped.
-        "langues_parlees": ["fr"]
-        + [
-            c
-            for nom, c in (
-                ("Anglais", "en"),
-                ("Allemand", "de"),
-                ("Espagnol", "es"),
-                ("Italien", "it"),
+        "langues_parlees": list(
+            dict.fromkeys(
+                [langue_du_cv(cv_txt)]
+                + (["fr"] if ident.get("pays", "fr") in ("fr", "") else [])
+                + [
+                    c
+                    for nom, c in (
+                        ("Français", "fr"),
+                        ("Anglais", "en"),
+                        ("Allemand", "de"),
+                        ("Espagnol", "es"),
+                        ("Italien", "it"),
+                    )
+                    if nom in comps
+                ]
             )
-            if nom in comps
-        ],
+        ),
+        **({"pays": ident["pays"]} if ident.get("pays") else {}),
         "zones": {"prioritaires": rep["prioritaires"], "secondaires": rep["secondaires"]},
         "collecte": {"mots_cles": mots_cles},
         "message": {
@@ -1094,7 +1166,13 @@ def propositions(txt):
         "metiers": metiers,
         "annees": annees_du_cv(txt),
         "genre": "f" if _RX_FEMININ.search(metiers) else "m",
-        "prioritaires": [min(candidats)[1]] if candidats else [],
+        "prioritaires": [min(candidats)[1]]
+        if candidats
+        else ([ident["ville"]] if ident.get("pays") not in ("", "fr") and ident["ville"] else []),
+        "secondaires": [ident["region"]]
+        if ident.get("pays") not in ("", "fr") and ident.get("region")
+        else [],
+        "pays": ident.get("pays") or "",
         "entreprises": bool(ordre) and ordre[0] in ("finance", "rse", "conseil"),
         # The letters' background paragraph, as construire() would draw it from the CV.
         "parcours": a_la_premiere_personne(
@@ -1196,12 +1274,17 @@ def main():
     except ValueError:
         annees = 0
     # A title in the feminine ("Chargée", "Directrice", "Ingénieure") suggests "f".
+    # Asked only for a CV in French: no other language agrees « diplômé(e) ».
     fem = bool(_RX_FEMININ.search(" ".join(metiers)))
-    genre = demander(
-        "Accords dans les lettres : « diplômé » (m) ou « diplômée » (f) ?",
-        "f" if fem else "m",
-        a.auto,
-        a.genre,
+    genre = (
+        demander(
+            "Accords dans les lettres : « diplômé » (m) ou « diplômée » (f) ?",
+            "f" if fem else "m",
+            a.auto,
+            a.genre,
+        )
+        if langue_du_cv(txt) == "fr"
+        else (a.genre or "m")
     )
     from jobhunter.scoring import zones
 
@@ -1213,12 +1296,16 @@ def main():
         if v and v in s.get("lieux", ())
     ]
     secteur_ville = min(candidats)[1] if candidats else ""
-    print(f"     secteurs connus : {', '.join(zones.CATALOGUE)}")
+    a_l_etranger = ident.get("pays") not in ("", "fr")
+    if a_l_etranger:
+        secteur_ville = ident["ville"]
+    else:
+        print(f"     secteurs connus : {', '.join(zones.CATALOGUE)}")
     prio = [
         x.strip()
         for x in demander(
             "Secteurs PRIORITAIRES (séparés par des virgules)",
-            secteur_ville or "idf",
+            secteur_ville or ("" if a_l_etranger else "idf"),
             a.auto,
             a.prioritaires,
         ).split(",")
@@ -1226,19 +1313,28 @@ def main():
     ]
     sec = [
         x.strip()
-        for x in demander("Secteurs secondaires (vide = aucun)", "", a.auto, a.secondaires).split(
-            ","
-        )
+        for x in demander(
+            "Secteurs secondaires (vide = aucun)",
+            ident.get("region", "") if a_l_etranger else "",
+            a.auto,
+            a.secondaires,
+        ).split(",")
         if x.strip()
     ]
-    inconnus = [x for x in prio + sec if x not in zones.CATALOGUE]
-    if inconnus:
-        print(
-            f"  ! secteurs inconnus ignores : {inconnus} (voir zones.CATALOGUE, ou les declarer "
-            "a la main dans le profil)"
-        )
-        prio = [x for x in prio if x in zones.CATALOGUE]
-        sec = [x for x in sec if x in zones.CATALOGUE]
+    # A place outside the catalogue (« Columbus », « Chambéry ») is kept as a free place.
+    from jobhunter import search_settings
+
+    def secteur(x):
+        if x.lower() in zones.CATALOGUE:
+            return x.lower()
+        libre = search_settings.lieu_libre(x)
+        etat = next((k for k, v in zones.ETATS_US_CODES.items() if v.lower() == x.lower()), "")
+        if etat:
+            libre["lieux"] = [x, etat.upper()]
+        return libre
+
+    prio = [secteur(x) for x in prio]
+    sec = [secteur(x) for x in sec]
     ordre, _ = familles_visees(metiers, comps)
     finance = bool(ordre) and ordre[0] in ("finance", "rse", "conseil")
     garder = (

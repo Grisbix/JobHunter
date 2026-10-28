@@ -89,9 +89,9 @@ def langue_offre(
         # Deferred import: `zones` imports `job_sources` for its country
         # detector, and this module is imported early by the generators.
         try:
-            from jobhunter.scoring.zones import INCONNU, INTERNATIONAL, zone_lieu
+            from jobhunter.scoring.zones import INCONNU, INTERNATIONAL, zone_france
 
-            z = zone_lieu(L)
+            z = zone_france(L)
         except Exception:
             z = None
         if z is not None and z not in (INTERNATIONAL, INCONNU):

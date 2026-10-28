@@ -4,6 +4,30 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.46.0 — 2026-10-28
+
+JobHunter no longer assumes you live in France. The first launch reads your country
+in the CV and measures every place from there.
+
+- **Your country, from your CV.** The first launch reads the place in the CV's header
+  (« Columbus, Ohio, United States », « Austin, TX 78701 », « Lyon, France ») and
+  writes `pays` (ISO code: `us`, `ca`, `fr`…) into the profile. A profile without it
+  stays in France, as before.
+- **Zones anywhere in the world.** Outside France, « ailleurs » is the rest of your
+  own country and « international » is abroad, France included. The priority zone
+  proposed is your city, the secondary one your state or region (« Ohio » also
+  matches « OH »). A place outside the French catalogue is kept as a free place
+  instead of being dropped, and the French sectors are only listed for a profile in
+  France. A state or province written in full (« Dayton, Ohio », « Dieppe, New
+  Brunswick ») is now read in its country: such offers were counted in France.
+- **The interface speaks your system's language** (French, English, German or
+  Spanish; English otherwise) until you pick one in the settings.
+- **The first launch reads an English CV better**: the job is the first one of the
+  Experience section when the header has no title (a place or « PROFESSIONAL
+  SUMMARY » is not a job), a North American phone number (« (614) 555-0100 ») is
+  read, French is only added to the languages you speak when the CV or your country
+  says so, and the « diplômé / diplômée » question is only asked for a CV in French.
+
 ## 3.45.0 — 2026-10-28
 
 Your target companies now follow from your profile, for any profession: no list of

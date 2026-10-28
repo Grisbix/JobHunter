@@ -51,7 +51,7 @@ Secteur = dict[str, Any]  # cle, libelle, lieux, communes, departements, wtj
 
 PRIORITAIRE = "prioritaire"  # priority sectors of the profile
 SECONDAIRE = "secondaire"  # secondary sectors of the profile
-AILLEURS = "ailleurs"  # rest of FRANCE
+AILLEURS = "ailleurs"  # rest of the home country (`pays` in the profile; France by default)
 INTERNATIONAL = "international"
 INCONNU = "inconnu"
 
@@ -1137,6 +1137,19 @@ def _secteurs(cle_profil: str, defaut: list[Any]) -> list[Secteur]:
     return [s for s in (_secteur(x) for x in (brut or [])) if s]
 
 
+def _pays_maison() -> str:
+    try:
+        from jobhunter import profile as _P
+
+        v = str(_P.get("pays", "") or "").strip().lower()
+    except Exception:
+        v = ""
+    return v if len(v) == 2 and v.isalpha() else "fr"
+
+
+# The home country: ISO code, `pays` in the profile. Absent → "fr": every profile made
+# before 3.46 was made in France. Abroad and at home are measured from it.
+_PARESSEUX["PAYS_MAISON"] = _pays_maison
 _PARESSEUX["SECTEURS_PRIORITAIRES"] = lambda: _secteurs("prioritaires", [])
 _PARESSEUX["SECTEURS_SECONDAIRES"] = lambda: _secteurs("secondaires", [])
 _PARESSEUX["_DEP_PRIORITAIRE"] = lambda: set().union(
@@ -1219,7 +1232,31 @@ _RX_N_LIEUX = re.compile(r"\d+ (?:locations?|lieux|sites|standorte)")
 
 
 def zone_lieu(lieu: str | None) -> str:
-    """Zone of a place: prioritaire / sud-est / ailleurs / international / inconnu.
+    """Zone of a place: prioritaire / secondaire / ailleurs / international / inconnu.
+
+    « ailleurs » is the rest of the home country (`pays` in the profile). At home in
+    France, `zone_france` decides; elsewhere, the profile's sectors first (a place
+    typed by the user: « Columbus », « Ohio »), then the place's country.
+    """
+    maison = _ici.PAYS_MAISON
+    if maison == "fr":
+        return zone_france(lieu)
+    t = _n(lieu)
+    if t in _VAGUE or not t or _RX_N_LIEUX.fullmatch(t):
+        return INCONNU
+    if any(_dans_secteur(t, s) for s in _ici.SECTEURS_PRIORITAIRES):
+        return PRIORITAIRE
+    if any(_dans_secteur(t, s) for s in _ici.SECTEURS_SECONDAIRES):
+        return SECONDAIRE
+    p = pays_lieu(lieu)
+    # « France » is zone_france's default for any unknown word: from abroad, unknown.
+    if p == "?" or (p == "France" and not _lieu_sur(lieu or "") and "france" not in t):
+        return INCONNU
+    return AILLEURS if p == _ISO_PAYS.get(maison) else INTERNATIONAL
+
+
+def zone_france(lieu: str | None) -> str:
+    """Zone of a place seen from France: prioritaire / secondaire / ailleurs / international / inconnu.
 
     Order: target French names, then foreign clues, THEN department. The department
     comes after abroad because an American postcode ("Houston, TX 77002") read as a
@@ -1232,6 +1269,11 @@ def zone_lieu(lieu: str | None) -> str:
     # American "City, ST" BEFORE the French names: "New Orleans, LA"
     # was stored in France because of "Orleans" (2026-10-07).
     if _RX_VILLE_ETAT.match(lieu or ""):
+        return INTERNATIONAL
+    # « Dayton, Ohio »: a state or province in full, as the last segment.
+    if "," in (lieu or "") and any(
+        _n((lieu or "").split(",")[-1]) in etats for etats in _ETATS.values()
+    ):
         return INTERNATIONAL
     wtj = _RX_REGION_WTJ.search(t)
     reg, pays = (wtj.group(1), wtj.group(2)) if wtj else ("", "")
@@ -1329,6 +1371,49 @@ def libelle_secteur(cle: str) -> str:
 # One canonical name per country, in French, whatever the language of the place:
 # "Switzerland", "Suisse" and "Schweiz" must fall into the same box
 # of the filter, otherwise three boxes have to be ticked for a single country.
+# A state or province written in full as the LAST segment: « Dayton, Ohio ». Compared
+# whole to that segment only — « Maine-et-Loire » is not Maine, and Georgia is left
+# out (it is a country too).
+_ETATS = {
+    "États-Unis": (
+        "alabama", "alaska", "arizona", "arkansas", "california", "colorado",
+        "connecticut", "delaware", "florida", "hawaii", "idaho", "illinois", "indiana",
+        "iowa", "kansas", "kentucky", "louisiana", "maine", "maryland", "massachusetts",
+        "michigan", "minnesota", "mississippi", "missouri", "montana", "nebraska",
+        "nevada", "new hampshire", "new jersey", "new mexico", "new york",
+        "north carolina", "north dakota", "ohio", "oklahoma", "oregon", "pennsylvania",
+        "rhode island", "south carolina", "south dakota", "tennessee", "texas", "utah",
+        "vermont", "virginia", "washington", "west virginia", "wisconsin", "wyoming",
+        "district of columbia",
+    ),
+    "Canada": (
+        "alberta", "british columbia", "manitoba", "new brunswick", "newfoundland and labrador",
+        "nova scotia", "ontario", "prince edward island", "quebec", "saskatchewan",
+    ),
+}  # fmt: skip
+
+# The two-letter codes of the American states, for the places typed « Columbus, OH ».
+ETATS_US_CODES = {
+    "al": "Alabama", "ak": "Alaska", "az": "Arizona", "ar": "Arkansas", "ca": "California",
+    "co": "Colorado", "ct": "Connecticut", "de": "Delaware", "fl": "Florida", "ga": "Georgia",
+    "hi": "Hawaii", "id": "Idaho", "il": "Illinois", "in": "Indiana", "ia": "Iowa",
+    "ks": "Kansas", "ky": "Kentucky", "la": "Louisiana", "me": "Maine", "md": "Maryland",
+    "ma": "Massachusetts", "mi": "Michigan", "mn": "Minnesota", "ms": "Mississippi",
+    "mo": "Missouri", "mt": "Montana", "ne": "Nebraska", "nv": "Nevada",
+    "nh": "New Hampshire", "nj": "New Jersey", "nm": "New Mexico", "ny": "New York",
+    "nc": "North Carolina", "nd": "North Dakota", "oh": "Ohio", "ok": "Oklahoma",
+    "or": "Oregon", "pa": "Pennsylvania", "ri": "Rhode Island", "sc": "South Carolina",
+    "sd": "South Dakota", "tn": "Tennessee", "tx": "Texas", "ut": "Utah", "vt": "Vermont",
+    "va": "Virginia", "wa": "Washington", "wv": "West Virginia", "wi": "Wisconsin",
+    "wy": "Wyoming", "dc": "District of Columbia",
+}  # fmt: skip
+
+
+def code_pays(nom: str) -> str:
+    """The ISO code of a country as pays_lieu names it (« États-Unis » → « us »); "" if unknown."""
+    return next((k for k, v in _ISO_PAYS.items() if v == nom and len(k) == 2), "")
+
+
 _PAYS_CANON = {
     "Suisse": ("switzerland", "suisse", "schweiz"),
     "Pays-Bas": ("netherlands", "nederland", "pays-bas"),
@@ -1729,12 +1814,21 @@ def pays_lieu(lieu: str | None) -> str:
     communes and WTJ formats. Abroad, the WRITTEN COUNTRY wins over the city ("Paris,
     Texas" does not exist here, but "London, Ontario" does).
     """
-    z = zone_lieu(lieu)
+    z = zone_france(lieu)
     t = _n(lieu)
     if z == INCONNU:
         # Vague for the ZONE (which region?), not for the COUNTRY: "France",
         # "All France (remote)" and "Remote (FR)" are in France.
         return "France" if _contient(t, ("france", "fr")) else "?"
+    dernier = _n((lieu or "").split(",")[-1])
+    for canon, etats in _ETATS.items():
+        if dernier in etats:
+            return canon
+    # Outside France, the user's own sectors (« Columbus ») are at home, not in France.
+    maison = _ici.PAYS_MAISON
+    if maison != "fr" and z in (PRIORITAIRE, SECONDAIRE):
+        ecrit = next((c for c, al in _PAYS_CANON.items() if dernier in al), "")
+        return ecrit or ("France" if dernier == "france" else _ISO_PAYS.get(maison, "?"))
     if z != INTERNATIONAL:
         return "France"
     if _RX_VILLE_ETAT.match(lieu or ""):
@@ -1920,7 +2014,7 @@ def _lieu_sur(lieu: str) -> bool:
     zone_lieu classes any unknown word "ailleurs" (the rest of France): "Vodafone"
     or "Effacer tous les filtres" would pass for French towns.
     """
-    z = zone_lieu(lieu)
+    z = zone_france(lieu)
     if z == INTERNATIONAL:
         return pays_lieu(lieu) not in ("?", "étranger (autre)")
     if z == INCONNU:

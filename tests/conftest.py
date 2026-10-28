@@ -21,6 +21,13 @@ os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 if str(SRC) not in sys.path:  # without installation (pip install -e .), the package is there
     sys.path.insert(0, str(SRC))
 
+# The interface defaults to the system's language (3.46), read by some modules when they
+# load. The tests read French texts: pinned here, or an English CI machine reads English.
+# A test of that default sets locales.systeme itself.
+import jobhunter.locales  # noqa: E402
+
+jobhunter.locales.systeme = lambda: "fr"
+
 
 class Reponse:
     """Minimal HTTP response, matching what the engine reads."""

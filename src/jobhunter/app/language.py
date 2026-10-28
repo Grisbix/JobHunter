@@ -78,7 +78,7 @@ def _ancien_fichier() -> Path | None:
 
 
 def lire() -> str:
-    """The chosen language, one of LANGUES (French by default)."""
+    """The chosen language, one of LANGUES (the system's by default, locales.systeme)."""
     env = os.environ.get("JOBHUNTER_LANGUE", "").lower()
     if env in LANGUES:
         return env
@@ -89,7 +89,9 @@ def lire() -> str:
             v = None
         if v in LANGUES:
             return str(v)
-    return "fr"
+    from jobhunter.locales import systeme
+
+    return systeme()
 
 
 def choisir(langue: str) -> None:

@@ -28,8 +28,10 @@ def racine(tmp_path, monkeypatch):
     return tmp_path
 
 
-def test_francais_par_defaut(racine):
+def test_langue_du_systeme_par_defaut(racine, monkeypatch):
     assert langue.lire() == "fr"
+    monkeypatch.setattr("jobhunter.locales.systeme", lambda: "en")
+    assert langue.lire() == "en"
 
 
 def test_choisir_puis_lire(racine):
@@ -59,7 +61,7 @@ def test_variable_d_environnement(racine, monkeypatch):
 
 def test_fichier_illisible(racine):
     (racine / "Scripts" / "_interface.json").write_text("{pas du json", encoding="utf-8")
-    assert langue.lire() == "fr"
+    assert langue.lire() == "fr"  # the system's language (pinned to French by conftest)
 
 
 def test_t(monkeypatch):
