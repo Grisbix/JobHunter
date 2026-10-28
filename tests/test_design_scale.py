@@ -49,3 +49,18 @@ def test_les_fenetres_d_accueil_suivent_les_memes_echelles():
                 assert int(v) in ESPACEMENTS, (nom, pad)
     assert set(welcome.TYPO) == {int(v) for v in re.findall(r"--t-\w+:\s*(\d+)px", CSS)}
     assert set(welcome.ESPACEMENTS) <= ESPACEMENTS
+
+
+def test_une_fenetre_basse_ne_pousse_pas_les_lignes_hors_du_panneau():
+    # 900×560 (the window's minimum): the list's own 260 px minimum outgrew its panel,
+    # and its rows showed under the panel's edge (2026-10-28). The panel holds the
+    # minimum; the list inside may shrink.
+    regle = re.search(r"\.vue\.plein \.remplit > \.defile[^{]*\{([^}]*)\}", CSS).group(1)
+    assert "min-height: 0" in regle
+    panneau = re.search(r"\.vue\.plein \.colonne > \.remplit,[^{]*\{([^}]*)\}", CSS).group(1)
+    assert re.search(r"min-height: [1-9]\d+px", panneau)
+
+
+def test_le_kanban_defile_au_lieu_d_ecraser_ses_colonnes():
+    assert re.search(r"\.tableau-kanban \{[^}]*overflow-x: auto", CSS)
+    assert re.search(r"\n\.colonne-k \{[^}]*min-width: [1-9]\d+px", CSS)

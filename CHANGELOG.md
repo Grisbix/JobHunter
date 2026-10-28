@@ -4,6 +4,15 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.55.0 — 2026-10-28
+
+Nothing overlaps in a small window.
+
+### Fixed
+- **A low window no longer pushes the list out of its panel.** At the window's minimum size (900 × 560), the offers' and documents' lists kept 260 px of their own while their panel shrank: rows showed under the panel's edge. The panel now keeps room for a few rows and the page scrolls below that.
+- **The applications' columns scroll sideways in a narrow window** instead of crushing the one holding cards (its title, count and date overlapped at 900 px).
+- Checked on every screen at 900 × 560, 1024 × 640, 1280 × 720, 1280 × 800 and 1440 × 900, in French and English: no element overlaps another or leaves its panel. The filters' line keeps scrolling sideways under 1100 px, as designed.
+
 ## 3.54.0 — 2026-10-28
 
 Sites are recognised by the URL's host, not by a piece of text.
