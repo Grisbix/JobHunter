@@ -54,6 +54,7 @@ def registre(tmp_path, monkeypatch):
     monkeypatch.setattr(cs, "_pages_par_entreprise", lambda: {})
     monkeypatch.setattr(cs, "annuaire_workday", lambda: {})
     monkeypatch.setattr(feeds, "suspendre_morts", lambda *a, **k: {})
+    monkeypatch.setattr(cs, "suivre_seules", lambda *a: [])
     INCIDENTS.clear()
     yield q
     INCIDENTS.clear()

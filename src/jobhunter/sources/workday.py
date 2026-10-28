@@ -8,11 +8,13 @@ from typing import Any
 
 from jobhunter import log as _journal
 from jobhunter.sources import common as _commun
+from jobhunter.sources import keywords as _mots
 from jobhunter.sources.common import INCIDENTS, UA, _mk, _strip_html, title_ok
 
 _log = _journal.journal(__name__)
 
 
+# Used when the profile has no keyword (sources.keywords): only its first 8 are searched.
 # Short on purpose. The 55 keywords of KEYWORDS would target LinkedIn, not a company
 # feed where we look for a PROFESSION in an already narrow catalogue.
 WORKDAY_MOTS = [
@@ -77,7 +79,7 @@ def fetch_workday(tenant: str, host: str, site: str, nom: str) -> list[dict[str,
     base = f"https://{tenant}.{host}.myworkdayjobs.com"
     vus, retenues = set(), []
     try:
-        for mot in WORKDAY_MOTS:
+        for mot in _mots.mots("workday", WORKDAY_MOTS, len(WORKDAY_MOTS)):
             for page in range(WORKDAY_PAGES):
                 r = _commun._post_borne(
                     httpx,

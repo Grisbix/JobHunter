@@ -22,6 +22,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from jobhunter import log as _journal
 from jobhunter.sources import common as _commun
+from jobhunter.sources import keywords as _mots
 from jobhunter.sources.aggregators import (
     AGREG_PAUSE,
     _agreg_offre,
@@ -38,7 +39,7 @@ UA = {"User-Agent": "Grisbix/JobHunter (+https://github.com/Grisbix/JobHunter)"}
 PAR_PAGE = 50  # the API's maximum
 PAGES = 3
 JOURS = 30
-# Its own words, the telling one first. Its search requires the first words and drops
+# Its own words, used when the profile has none (sources.keywords), the telling one first. Its search requires the first words and drops
 # the last ones when too few postings match: « analyste ESG » brought back every
 # « analyste ». Quotes do not help (« "analyste ESG" » found 1 posting, 2026-10-27).
 MOTS = (
@@ -103,7 +104,7 @@ def scan_freehire() -> list[dict[str, Any]]:
     garde, out, vus = _Garde("freehire"), [], set()
     faites = 0
     les_pays = pays()
-    for mot in MOTS:
+    for mot in _mots.mots("freehire", MOTS, len(MOTS)):
         for page in range(PAGES):
             if garde.fini or _quota_atteint("freehire"):
                 break

@@ -24,6 +24,7 @@ def lire(monkeypatch):
     """lire(kind, cle, pages, statut=200, ats=False) -> (offers, URLs requested, incidents).
     `pages`: a single body (any URL), or {URL pattern: body} (first pattern contained)."""
     monkeypatch.setattr(J, "WORKDAY_MOTS", ["esg"])  # one request per keyword reader
+    monkeypatch.setattr("jobhunter.sources.keywords.du_profil", lambda n: [])  # not the profile's
     monkeypatch.setattr(J, "WORKDAY_PAUSE", 0)
 
     def faire(kind, cle, pages, statut=200, ats=False, appel=None):

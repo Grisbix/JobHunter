@@ -27,7 +27,9 @@ again after `DELAI` days, doubled each time it had nothing (7, 14, 28, then 56 d
 each run takes the `PAR_PASSE` least recently asked, the most recently seen first.
 What was asked when, and the tools learned, are kept in `_company_sites.json`, next
 to the queue. The freehire requests count against its daily quota. At the end of the
-run, the followed feeds dead for 60 days are suspended (sources.feeds.suspendre_morts).
+run, the followed feeds dead for 60 days are suspended (sources.feeds.suspendre_morts),
+and the well-rated companies whose feed just answered are followed
+(`suivre_seules`): no list of companies is written by hand for any profession.
 
 Polite by design: the project names itself, one request at a time with a pause; a
 refusal stops the way that met it for the run. Nothing is bypassed.
@@ -60,6 +62,8 @@ ENTITES = 3  # freehire companies kept per name (« Amundi », « Amundi Ireland
 DEVINES = 40  # companies whose tool is guessed per run (≤ 8 requests each)
 PAGES = 30  # career pages read per run
 UA = {"User-Agent": "Grisbix/JobHunter (+https://github.com/Grisbix/JobHunter)"}
+SUIVI_FIT = 7  # the best fit a company's offers must reach to be followed on its own
+SUIVI_MAX = 10  # companies followed per run at most
 
 # Job boards and aggregators: their pages are not the company's career site.
 _PAS_LE_SITE = (
@@ -420,6 +424,102 @@ def _pages_par_entreprise() -> dict[str, list[str]]:
     return out
 
 
+def _fits_par_entreprise() -> dict[str, int]:
+    """{company: the best fit of its offers in the queue}."""
+    from jobhunter.storage import companies
+    from jobhunter.storage import queue as queue_io
+
+    out: dict[str, int] = {}
+    try:
+        file = queue_io.charger(_commun.QUEUE, descriptions=False)
+    except Exception:
+        return out
+    for o in file:
+        k = companies.cle(o.get("entreprise"))
+        if k:
+            out[k] = max(out.get(k, 0), int(o.get("fit") or 0))
+    return out
+
+
+def reglage_suivi(cfg: dict[str, Any]) -> int | None:
+    """The fit from which a company is followed on its own; None when switched off.
+
+    `suivi_auto` in sources_config.json: absent → `SUIVI_FIT`, `false` → off,
+    `{"fit_min": 8}` → from 8.
+    """
+    v = cfg.get("suivi_auto", {})
+    if v is False:
+        return None
+    try:
+        return int((v or {}).get("fit_min", SUIVI_FIT))
+    except (AttributeError, TypeError, ValueError):
+        return SUIVI_FIT
+
+
+def suivre_seules(
+    fichier_cfg: Path, repondu: dict[str, dict[str, Any]], noms: dict[str, str]
+) -> list[str]:
+    """Follows the companies whose feed just gave offers, if they are rated well enough.
+
+    No request: `repondu` holds the feeds this run read with offers. A company the
+    user removed (`flux_retires`) is never followed again; those the engine followed
+    are listed in `flux_suivis_auto`, for « suivie auto » in Entreprises suivies.
+
+    Args:
+        fichier_cfg: sources_config.json.
+        repondu: {company: its feed, as the register keeps it}.
+        noms: {company: its name}.
+
+    Returns:
+        The names of the companies followed.
+    """
+    from jobhunter import inventory
+    from jobhunter.sources import feeds
+
+    try:
+        cfg = json.loads(fichier_cfg.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    if not isinstance(cfg, dict) or not repondu:
+        return []
+    fit_min = reglage_suivi(cfg)
+    if fit_min is None:
+        return []
+    fits = _fits_par_entreprise()
+    suivis, _ = _suivis()
+    retires = cfg.get(feeds.CLE_RETIRES) or {}
+    defauts = {
+        "ats_slugs": {k: list(v) for k, v in _commun.ATS_SLUGS.items()},
+        "workday_flux": [list(x) for x in _commun.WORKDAY_FLUX],
+        "autres_flux": [list(x) for x in _commun.AUTRES_FLUX],
+    }
+    le = date.today().isoformat()
+    auto = dict(cfg.get(feeds.CLE_SUIVI_AUTO) or {})
+    faits: list[str] = []
+    for k in sorted(repondu, key=lambda c: -fits.get(c, 0)):
+        if len(faits) >= SUIVI_MAX or fits.get(k, 0) < fit_min:
+            break
+        fl = repondu[k]
+        c = fl.get("cle")
+        trouve = (str(fl.get("outil")), tuple(c) if isinstance(c, list) else c)
+        compte = str(c[0] if isinstance(c, list) else c).lower()
+        ident = feeds.cle(trouve[0], compte)
+        if (trouve[0], compte) in suivis or ident in retires:
+            continue
+        if not inventory.ajouter_flux(cfg, defauts, trouve).startswith("＋"):
+            continue
+        auto[ident] = le
+        faits.append(noms.get(k) or k)
+    if not faits:
+        return []
+    cfg[feeds.CLE_SUIVI_AUTO] = auto
+    tmp = fichier_cfg.with_name(fichier_cfg.name + ".tmp")
+    # LF, as the app writes it (write_text would turn every line into CRLF on Windows).
+    tmp.write_bytes(json.dumps(cfg, ensure_ascii=False, indent=1).encode("utf-8"))
+    tmp.replace(fichier_cfg)
+    return faits
+
+
 def scan_company_sites(n: int = PAR_PASSE) -> list[dict[str, Any]]:
     """Asks `n` companies of the register what they have open now.
 
@@ -443,6 +543,7 @@ def scan_company_sites(n: int = PAR_PASSE) -> list[dict[str, Any]]:
     garde = _Garde("freehire")
     out: list[dict[str, Any]] = []
     vu = {"outil": 0, "freehire": 0, "nom": 0, "page": 0, "appris": 0}
+    repondu: dict[str, dict[str, Any]] = {}  # feeds that gave offers this run
     devines = lues = 0
     for i, e in enumerate(lot):
         k = e["_cle"]
@@ -483,10 +584,14 @@ def scan_company_sites(n: int = PAR_PASSE) -> list[dict[str, Any]]:
             INCIDENTS["sites-carrieres"][type(x).__name__] += 1
             continue
         out.extend(offres)
+        if offres and (fl_lu := e.get("flux") or appris.get(k)):
+            repondu[k] = fl_lu
         _, vides = _demande(demandes.get(k))
         demandes[k] = {"le": jour, "offres": len(offres), "vides": 0 if offres else vides + 1}
     ecrire_json(chemin_etat(), {"demandes": demandes, "flux": appris})
     morts = feeds.suspendre_morts(_commun.SOURCES_CFG, root.scripts() / feeds.FICHIER)
+    noms = {e["_cle"]: str(e.get("nom") or e["_cle"]) for e in lot}
+    suivies = suivre_seules(_commun.SOURCES_CFG, repondu, noms)
     _log.info(
         f"  ✓ sites carrières → {len(out)} offres ({vu['outil']} entreprises par leur outil, "
         f"{vu['freehire']} par freehire ; outils appris : {vu['appris']} par freehire, "
@@ -497,5 +602,9 @@ def scan_company_sites(n: int = PAR_PASSE) -> list[dict[str, Any]]:
         _log.info(
             f"  ⏸ {len(morts)} flux suivis morts depuis {feeds.MORT_JOURS} j, suspendus : "
             + ", ".join(sorted(morts))
+        )
+    if suivies:
+        _log.info(
+            f"  ＋ {len(suivies)} entreprise(s) suivie(s) d'elles-mêmes : " + ", ".join(suivies)
         )
     return out

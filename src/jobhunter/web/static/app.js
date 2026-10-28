@@ -1392,7 +1392,8 @@ ONGLETS_SOURCES.entreprises = async (vue) => {
     corps.replaceChildren(...lignes.flatMap((l) => {
       const plusieurs = (l.flux || []).length > 1;
       const tete = h("tr", { class: l.offres ? "" : "pale" },
-        h("td", {}, h("div", { class: "t" }, l.nom)),
+        h("td", {}, h("div", { class: "t" }, l.nom,
+          l.ajoutee ? [" ", h("span", { class: "etiq", title: l.ajoutee }, "suivie auto")] : null)),
         h("td", {}, l.outil),
         h("td", {}, etat(l)),
         h("td", { class: "num" }, nombre(l.offres)),

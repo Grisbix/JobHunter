@@ -341,14 +341,14 @@ _RX_LABEL = re.compile(
 
 # values accepted just after that label
 _RX_VALEUR = re.compile(
-    r"^\W{0,3}(CDI|CDD|alternance|apprentissage|stage|int[e\u00e9]rim|freelance|V\.?I\.?E|contrat \u00e0 dur\u00e9e (?:in)?d\u00e9termin\u00e9e)",
+    r"^\W{0,3}(CDI|CDD|alternance|apprentissage|stage|int[e\u00e9]rim|freelance|saisonni|V\.?I\.?E|contrat \u00e0 dur\u00e9e (?:in)?d\u00e9termin\u00e9e)",
     re.I,
 )
 
 # All the contract types, to spot the ENUMERATIONS (see pass 2).
 _RX_TOUS_CONTRATS = re.compile(
     r"\bCDI\b|\bCDD\b|\balternance\b|\bapprentissage\b|\bstages?\b"
-    r"|\bV\.?I\.?E\b|\bint[eé]rim\b|\bfreelance\b",
+    r"|\bV\.?I\.?E\b|\bint[eé]rim\b|\bfreelance\b|\bsaisonni",
     re.I,
 )
 
@@ -371,6 +371,11 @@ _DESC_CONTRAT = [
         ),
     ),
     ("V.I.E", re.compile(r"\bV\.I\.[EA]\b|volontariat international en entreprise", re.I)),
+    # Before CDD: a seasonal contract IS a fixed-term one, the season is what matters.
+    (
+        "Saisonnier",
+        re.compile(r"\b(?:contrat|emploi|poste|job)s?\s+saisonni", re.I),
+    ),
     ("CDD", re.compile(r"\bCDD\b|contrat \u00e0 dur\u00e9e d\u00e9termin\u00e9e", re.I)),
     (
         "CDI",
@@ -476,6 +481,8 @@ def contrat_de_la_description(desc: str, defaut: str = "") -> str:
                 return "Interim"
             if mot.startswith("free"):
                 return "Freelance"
+            if mot.startswith("sais"):
+                return "Saisonnier"
             if mot.startswith("v"):
                 return "V.I.E"
     for etiquette, motif in _DESC_CONTRAT:
@@ -500,6 +507,8 @@ def contrat_de_la_description(desc: str, defaut: str = "") -> str:
 # We do NOT keep "full-time" / "temps plein": it is a working pattern,
 # not a contract type — a CDD can be full-time.
 _TITRE_CONTRAT = [
+    # « Serveur saisonnier », « Seasonal ski instructor » — before CDD, which the season is.
+    ("Saisonnier", re.compile(r"\bsaisonni[eè]re?s?\b|\bseasonal\b", re.I)),
     (
         "CDD",
         re.compile(r"\bCDD\b|contrat\s+[àa]\s+dur[ée]e\s+d[ée]termin[ée]e|\bfixed[- ]term\b", re.I),

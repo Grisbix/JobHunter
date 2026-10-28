@@ -1026,6 +1026,7 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     ),
     "Reprendre": ("Resume", "Fortsetzen", "Reanudar"),
     "suspendue auto": ("auto-suspended", "automatisch pausiert", "suspendida auto"),
+    "suivie auto": ("auto-followed", "automatisch verfolgt", "seguida auto"),
     "suspendue par le moteur : {r}": (
         "suspended by the engine: {r}",
         "von der Engine pausiert: {r}",

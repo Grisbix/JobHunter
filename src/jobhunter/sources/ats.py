@@ -14,6 +14,7 @@ from urllib.parse import quote, unquote, urlparse
 from jobhunter import log as _journal
 from jobhunter.sources import common as _commun
 from jobhunter.sources import feeds as _feeds
+from jobhunter.sources import keywords as _mots
 from jobhunter.sources import workday as _workday
 from jobhunter.sources.common import INCIDENTS, UA, _mk, _strip_html, title_ok
 
@@ -657,7 +658,7 @@ def fetch_autre(kind: str, cle: str, nom: str) -> list[dict[str, Any]]:
                 time.sleep(_workday.WORKDAY_PAUSE)
         else:
             vus = set()
-            for mot in _workday.WORKDAY_MOTS:
+            for mot in _mots.mots("workday", _workday.WORKDAY_MOTS, len(_workday.WORKDAY_MOTS)):
                 for titre, url, lieu, date, desc in _cherche_autre(httpx, kind, cle, mot):
                     if url and url not in vus:
                         vus.add(url)

@@ -143,11 +143,17 @@ def rejoueur(
     return get, post
 
 
+def _sans_profil(n: int) -> list[str]:
+    return []
+
+
 @contextmanager
 def reglages(valeurs: dict[str, Any]) -> Iterator[None]:
     """Applies a scenario's reduced settings, then puts the original values back."""
+    # The module's words, never the profile's (sources.keywords): a recording must not
+    # depend on who records it.
     avant = []
-    for chemin, valeur in valeurs.items():
+    for chemin, valeur in {"jobhunter.sources.keywords:du_profil": _sans_profil, **valeurs}.items():
         module, nom = chemin.split(":")
         m = importlib.import_module(module)
         avant.append((m, nom, getattr(m, nom)))

@@ -353,7 +353,7 @@ DOM_SHORT = {
 
 CONTRAT_COURT = {"non precise": "—", "non précisé": "—", "Non précisé": "—"}
 # The contract types the collection writes; each is translated where it is shown.
-CONTRATS = ("CDI", "CDD", "V.I.E", "Freelance", "Interim", "Bénévolat")
+CONTRATS = ("CDI", "CDD", "V.I.E", "Freelance", "Interim", "Saisonnier", "Bénévolat")
 
 
 # STATUSES AND CONTRACTS ARE STORED IN FRENCH (applications.json, the queue): the

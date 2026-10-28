@@ -18,6 +18,7 @@ from urllib.parse import quote
 
 from jobhunter import log as _journal
 from jobhunter.sources import common as _commun
+from jobhunter.sources import keywords as _mots
 from jobhunter.sources.aggregators import AGREG_PAUSE, _agreg_offre, _Garde, _quota_atteint
 from jobhunter.sources.common import INCIDENTS
 
@@ -32,7 +33,7 @@ EN_TETES = {
 }
 PAR_PAGE = 100  # the API's maximum
 JOURS = 30
-# German and English, the telling word first; the API matches titles and occupations.
+# Used when the profile has no keyword (sources.keywords). German and English, the telling word first; the API matches titles and occupations.
 MOTS = (
     "ESG",
     "Nachhaltigkeit",
@@ -70,7 +71,7 @@ def scan_arbeitsagentur() -> list[dict[str, Any]]:
 
     _EX = _commun.contrats_exclus()
     garde, out, vus = _Garde("arbeitsagentur"), [], set()
-    for i, mot in enumerate(MOTS):
+    for i, mot in enumerate(_mots.mots("arbeitsagentur", MOTS, len(MOTS))):
         if garde.fini or _quota_atteint("arbeitsagentur"):
             break
         if i:

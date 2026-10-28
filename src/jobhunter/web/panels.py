@@ -9,6 +9,7 @@ inherits these methods; they use its `_file()`, `_suivi()` and task runner.
 
 from __future__ import annotations
 
+import datetime
 import json
 import re
 import subprocess
@@ -511,7 +512,9 @@ class PanneauxApi:
 
         etat = feeds.lire(root.scripts() / feeds.FICHIER)
         suspendus = feeds.suspendus()
-        auto = self._cfg_sources()[1].get(feeds.CLE_AUTO) or {}  # suspended by the engine
+        cfg = self._cfg_sources()[1]
+        auto = cfg.get(feeds.CLE_AUTO) or {}  # suspended by the engine
+        suivis_auto = cfg.get(feeds.CLE_SUIVI_AUTO) or {}  # followed by the engine
         flux = self._flux()
         comptes = inventory.compter(self._file(), flux)
 
@@ -542,6 +545,9 @@ class PanneauxApi:
                 "lien": f.lien,
                 "suspendue": f.outil != "site" and feeds.cle(f.outil, f.cle) in suspendus,
                 "auto": f.outil != "site" and feeds.cle(f.outil, f.cle) in auto,
+                "ajoutee": suivis_auto.get(feeds.cle(f.outil, f.cle))
+                if f.outil != "site"
+                else None,
                 "site": f.outil == "site",
             }
 
@@ -582,6 +588,7 @@ class PanneauxApi:
                     "suspendue": all(x["suspendue"] for x in fl if not x["site"])
                     and any(not x["site"] for x in fl),
                     "auto": any(x["auto"] for x in fl),
+                    "ajoutee": next((x["ajoutee"] for x in fl if x["ajoutee"]), None),
                     "flux": [{**x, "derniere": _date_fr(x["derniere"])} for x in fl],
                 }
             )
@@ -765,6 +772,8 @@ class PanneauxApi:
             f, urls = self._sites()
             f.write_text("\n".join(u for u in urls if u != fl.cle).strip() + "\n", encoding="utf-8")
         else:
+            from jobhunter.sources import feeds
+
             f, c = self._cfg_sources()
             if not inventory.retirer_flux(c, self._defauts(), fl):
                 from jobhunter.sources import company_lists
@@ -782,6 +791,10 @@ class PanneauxApi:
                     "ok": False,
                     "erreur": f"{fl.nom} : flux introuvable dans sources_config.json",
                 }
+            # Removed by the user: the engine (sources.company_sites) never follows it again.
+            cle = feeds.cle(fl.outil, fl.cle)
+            c.setdefault(feeds.CLE_RETIRES, {})[cle] = datetime.date.today().isoformat()
+            (c.get(feeds.CLE_SUIVI_AUTO) or {}).pop(cle, None)
             _ecrire_json(f, c)
         return {"ok": True, "message": f"{fl.nom} ne sera plus collectée"}
 

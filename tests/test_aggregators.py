@@ -326,8 +326,12 @@ def test_arbeitsagentur_refus_arrete(agreg):
 
 
 def test_freehire_page_courte_pas_de_page_suivante(freehire):
-    # 2 offers < 50: one request per word, never a second page
-    assert len(freehire[2]) == len(js.freehire.MOTS)
+    # 2 offers < 50: one request per word searched, never a second page
+    from jobhunter.sources import keywords
+
+    assert len(freehire[2]) == len(
+        keywords.mots("freehire", js.freehire.MOTS, len(js.freehire.MOTS))
+    )
 
 
 def test_freehire_429_attend_puis_s_arrete(agreg):

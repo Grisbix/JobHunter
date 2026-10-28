@@ -4,6 +4,34 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.45.0 — 2026-10-28
+
+Your target companies now follow from your profile, for any profession: no list of
+companies or words is written by hand per field any more.
+
+- **The sources search with your words.** freehire, EURES, the Bundesagentur
+  (arbeitsagentur.de) and the Workday feeds each had their own list of ESG / finance
+  words. They now take your collection keywords (Ma recherche) — at most as many as
+  their old list — so a seasonal worker, a nurse or a developer gets their own
+  offers there too. A hand-tuned list per source still wins: `mots_sources` in
+  `sources_config.json` (`{"freehire": [...], "eures": [...]}`); the old lists are
+  kept for a profile with no keyword. With your words, EURES keeps the offers whose
+  title names one of them (its ESG-only title filter stays with its own list).
+- **Well-rated companies are followed on their own.** At the end of the career-site
+  pass, a company whose feed just gave open offers and whose best offer reaches fit 7
+  is added to Entreprises suivies (10 a run at most, no extra request), tagged
+  « suivie auto ». A company you remove is never followed again by the engine
+  (`flux_retires`). `"suivi_auto": {"fit_min": 8}` raises the bar, `false` turns it
+  off; « Suivre les bien notées » still does it by hand.
+- **Seasonal contracts.** « Saisonnier » is a contract type: read in the title
+  (« Serveur saisonnier », « Seasonal ski instructor »), in the body (« Type de
+  contrat : saisonnier », « emploi saisonnier ») and in France Travail's own field
+  (`SAI`; `MIS` gives Interim). It can be set aside like any other in Exclusions.
+- **A « Montagne (stations) » zone** in the places catalogue: the six departments that
+  are mountains through and through (04, 05, 09, 65, 73, 74) and the resorts by name
+  elsewhere (Font-Romeu, Métabief, Gérardmer, Le Lioran…). « Alpes » or « Pyrénées »
+  alone are never read as mountains: Auvergne-Rhône-Alpes is Lyon.
+
 ## 3.44.0 — 2026-10-27
 
 - **Finding the companies' career sites, better** (Sources → Entreprises vues, and

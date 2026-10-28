@@ -188,6 +188,10 @@ def muets(
 # ── Dead feeds, suspended on their own (the user, 2026-10-27) ──────────────────────
 MORT_JOURS = 60
 CLE_AUTO = "flux_suspendus_auto"  # {feed: "reason (date)"}: why the engine suspended it
+# Followed by the engine (sources.company_sites.suivre_seules): {feed: date}.
+CLE_SUIVI_AUTO = "flux_suivis_auto"
+# Removed by the user: {feed: date}; the engine never follows them again.
+CLE_RETIRES = "flux_retires"
 
 
 def morts(

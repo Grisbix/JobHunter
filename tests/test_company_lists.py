@@ -180,3 +180,26 @@ def test_beau_nom():
     assert _beau_nom(["Alpha"], None) == "Alpha"
     assert _beau_nom([], Counter({"CDC": 2}), ["Caissedesdepots Recrute"]) == "CDC"
     assert _beau_nom([], None, ["Rejoindre"]) == "Rejoindre"
+
+
+def test_suivie_auto_puis_retiree_pour_de_bon(api):
+    a, dossier = api
+    f = dossier / "sources_config.json"
+    f.write_text(
+        json.dumps(
+            {
+                "ats_slugs": {"lever": ["ucpa"]},
+                "workday_flux": [],
+                "autres_flux": [],
+                "listes": [],
+                feeds.CLE_SUIVI_AUTO: {"lever:ucpa": "2026-10-28"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    ligne = next(x for x in a.entreprises()["lignes"] if x["outil"] == "Lever")
+    assert ligne["ajoutee"] == "2026-10-28"
+    assert a.retirer_entreprise(ligne["id"])["ok"]
+    c = json.loads(f.read_text(encoding="utf-8"))
+    assert "lever:ucpa" in c[feeds.CLE_RETIRES]
+    assert "lever:ucpa" not in c[feeds.CLE_SUIVI_AUTO]

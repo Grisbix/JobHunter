@@ -9,6 +9,7 @@ from typing import Any
 
 from jobhunter import log as _journal
 from jobhunter.sources import common as _commun
+from jobhunter.sources import keywords as _mots
 from jobhunter.sources.common import INCIDENTS, UA, _mk, _strip_html, contrat_du_titre, title_ok
 from jobhunter.sources.efc import _RX_EFC_ESG, _RX_EFC_SENIOR, _est_graduate
 
@@ -129,8 +130,23 @@ def _eures_corps(mot: str, page: int, par_page: int) -> dict[str, Any]:
     }
 
 
-def _eures_offre(j: Any, _EX: Any) -> dict[str, Any] | None:
-    """One EURES posting -> offer, or None if the title does not fit."""
+def _parle_de(titre: str, mots: list[str]) -> bool:
+    """The title holds the first word of one of the searched phrases (« moniteur » de ski)."""
+    t = titre.lower()
+    return any(
+        re.search(r"\b" + re.escape(m.split()[0].lower()) + r"\b", t) for m in mots if m.split()
+    )
+
+
+def _eures_offre(j: Any, _EX: Any, mots: list[str] | None = None) -> dict[str, Any] | None:
+    """One EURES posting -> offer, or None if the title does not fit.
+
+    Args:
+        j: the posting.
+        _EX: the contract types set aside.
+        mots: the words searched, when they are the profile's: the title must then
+            name one of them, instead of ESG or sustainability.
+    """
     titre = __import__("html").unescape(str(j.get("title") or "")).strip()
     # STRICT FILTER, measured on 2026-09-24. With eFC's profession filter alone,
     # 55 of the 61 offers kept were generic German "Data Analyst" or "Business
@@ -139,7 +155,10 @@ def _eures_offre(j: Any, _EX: Any) -> dict[str, Any] | None:
     # sustainability, or to be a graduate programme.
     if not titre or not title_ok(titre) or _RX_EFC_SENIOR.search(titre):
         return None
-    if not (_RX_EFC_ESG.search(titre) or _est_graduate(titre)) or _RX_EURES_VERRE.search(titre):
+    if mots:
+        if not _parle_de(titre, mots):
+            return None
+    elif not (_RX_EFC_ESG.search(titre) or _est_graduate(titre)) or _RX_EURES_VERRE.search(titre):
         return None
     if _RX_EURES_HORS.search(titre):
         return None
@@ -177,7 +196,10 @@ def scan_eures(
     offers, vus = [], set()
     n_req = 0
     with httpx.Client(follow_redirects=True) as client:
-        for mot in mots or EURES_MOTS:
+        cherches = mots or _mots.mots("eures", EURES_MOTS, len(EURES_MOTS))
+        # The strict ESG title filter belongs to the module's own words (measured 2026-09-24).
+        du_profil = [m.lower() for m in cherches] != [m.lower() for m in EURES_MOTS]
+        for mot in cherches:
             for page in range(1, pages + 1):
                 if n_req:
                     time.sleep(EURES_DELAI)  # crawl-delay: 10
@@ -206,7 +228,7 @@ def scan_eures(
                     if j.get("id") in vus:
                         continue
                     vus.add(j.get("id"))
-                    o = _eures_offre(j, _EX)
+                    o = _eures_offre(j, _EX, cherches if du_profil else None)
                     if o:
                         offers.append(o)
                         garde += 1

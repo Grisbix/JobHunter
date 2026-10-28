@@ -33,6 +33,8 @@ FT_TOKEN_URL = (
 )
 
 FT_SEARCH = "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search"
+# Its `typeContrat` codes; the others (LIB, FRA, CCE…) are left to the title and the body.
+_FT_CONTRAT = {"CDI": "CDI", "CDD": "CDD", "MIS": "Interim", "SAI": "Saisonnier"}
 
 
 def _ft_token() -> str | None:
@@ -81,6 +83,7 @@ def fetch_france_travail(par_mot: int = 50) -> list[dict[str, Any]]:
         return []
     H = {**UA, "Authorization": f"Bearer {tok}", "Accept": "application/json"}
     out, seen = [], set()
+    _EX = _commun.contrats_exclus()
     for kw in _commun.KEYWORDS:
         if not _quota.reserver("francetravail"):
             _log.warning("  ⏸ France Travail : quota du jour atteint (tous profils) — arret")
@@ -112,17 +115,21 @@ def fetch_france_travail(par_mot: int = 50) -> list[dict[str, Any]]:
             seen.add(u)
             lieu = str((j.get("lieuTravail") or {}).get("libelle") or "")
             desc = str(j.get("description") or "")
-            out.append(
-                _mk(
-                    titre,
-                    u,
-                    str((j.get("entreprise") or {}).get("nom") or "France Travail"),
-                    lieu,
-                    str(j.get("dateCreation") or "")[:10],
-                    f"francetravail:{kw}",
-                    desc,
-                )
+            ctr = _FT_CONTRAT.get(str(j.get("typeContrat") or ""), "")
+            if ctr and ctr in _EX:
+                continue
+            o = _mk(
+                titre,
+                u,
+                str((j.get("entreprise") or {}).get("nom") or "France Travail"),
+                lieu,
+                str(j.get("dateCreation") or "")[:10],
+                f"francetravail:{kw}",
+                desc,
             )
+            if ctr:
+                o["contrat"] = ctr
+            out.append(o)
             got += 1
         if got:
             _log.info(f"  ✓ france-travail «{kw}» → {got} offres")
