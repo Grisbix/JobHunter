@@ -60,7 +60,7 @@ def msix_du_store() -> bool:
     A package installed from the release's JobHunter.msix is not the Store's: its
     updates come from the release, and the Store's page shows nothing for it.
     """
-    if not paquet_msix():
+    if sys.platform != "win32" or not paquet_msix():
         return False
     import ctypes
     import re
