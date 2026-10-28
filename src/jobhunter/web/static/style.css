@@ -363,9 +363,11 @@ td > .score { width: 34px; height: 34px; font-size: var(--t-m); }
 .tableau-kanban { display: flex; gap: 16px; align-items: flex-start; }
 .colonne-k { flex: 1 1 196px; min-width: 0; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 200px; }
 /* An empty column stays a drop target but gives its width to the full ones. */
-.colonne-k.vide-k { flex: 0 0 132px; min-height: 120px; }
+/* Its width is its title's: "À postuler" wrapped on two lines at a fixed 132 px. */
+.colonne-k.vide-k { flex: 0 0 auto; min-width: 132px; min-height: 120px; }
+.colonne-k .entete { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 2px 4px 8px; }
+.colonne-k .entete > :first-child { white-space: nowrap; }
 .colonne-k.vide-k .vide { padding: 8px 0; font-size: var(--t-m); }
-.colonne-k .entete { display: flex; justify-content: space-between; align-items: center; padding: 2px 4px 8px; }
 .compte { font-size: var(--t-s); min-width: 24px; height: 22px; padding: 0 8px; border-radius: 11px; display: grid; place-items: center; background: var(--piste); color: var(--gris); }
 .fiche-k { padding: 16px; overflow-wrap: anywhere; cursor: pointer; transition: transform .12s, box-shadow .12s; }
 .fiche-k:hover { transform: translateY(-1px); box-shadow: 0 8px 20px -10px rgba(92,60,46,.25); }
