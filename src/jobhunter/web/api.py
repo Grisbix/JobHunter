@@ -1689,11 +1689,28 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         derniere = _derniere_version()
         nouvelle = installee != "?" and _plus_recente(derniere, installee)
         store = frozen.paquet_msix() and frozen.msix_du_store()
+        signee = nouvelle and not store and _signee(derniere)
+        attente = ""
+        if nouvelle and not store and not signee:
+            # The latest waits for its author's signature (up to an hour): an earlier
+            # signed one newer than the installed one is offered meanwhile.
+            from jobhunter.programs import update
+
+            attente = derniere
+            try:
+                proposee = update.derniere_signee(6)
+            except Exception:  # noqa: BLE001 — offline, rate limit: nothing offered
+                proposee = ""
+            if _plus_recente(proposee, installee):
+                derniere, signee = proposee, True
+            else:
+                nouvelle = False
         return {
             "installee": installee,
             "derniere": derniere,
             "nouvelle": nouvelle,
-            "signee": nouvelle and not store and _signee(derniere),
+            "signee": signee,
+            "attente": attente,
             "store": store,
         }
 

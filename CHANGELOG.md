@@ -11,6 +11,7 @@ Your data, when you uninstall.
 - **Uninstalling asks** whether to remove your data too (profile, CVs, letters, offers, tracked applications) — « No » by default. On « Yes », `Documents\JobHunter` goes to the Recycle Bin, so it can still be restored. The daily collection of that installation is removed with it.
 - **Maintenance → « Effacer mes données… »** in the installed application (Store version included, where Windows lets no question be asked at uninstall): after a confirmation, the data goes to the Recycle Bin, the daily collection stops, and JobHunter closes.
 - README and Store listing say where the data lives and how to remove it.
+- **« Chercher une mise à jour »** no longer stops at « attend la signature » during the hour a new version waits for its author's signature: it offers the latest signed version newer than yours, and says the next one follows once signed.
 
 ## 3.68.0 — 2026-10-29
 

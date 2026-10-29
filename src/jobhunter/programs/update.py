@@ -72,6 +72,7 @@ ZIP_URL = f"https://github.com/{DEPOT}/archive/refs/heads/main.zip"
 PAGE_VERSIONS = f"https://github.com/{DEPOT}/releases/latest"
 TAG_URL = f"https://github.com/{DEPOT}/archive/refs/tags/v{{}}.zip"
 VERSION_URL = f"https://raw.githubusercontent.com/{DEPOT}/main/VERSION"
+RELEASES_URL = f"https://api.github.com/repos/{DEPOT}/releases?per_page=10"
 # Files attached to the release v<version>: the signature and the installer.
 ASSET_URL = f"https://github.com/{DEPOT}/releases/download/v{{}}/{{}}"
 SETUP = "JobHunterSetup.exe"
@@ -237,6 +238,35 @@ def prete(version, timeout=5):
         return False
 
 
+def derniere_signee(timeout=10):
+    """The most recent release that can be installed (its signature published), "" if none.
+
+    A release waits for its author's signature for up to an hour after it is published;
+    during that hour « Chercher une mise à jour » answered only « attend la signature »
+    even when an earlier signed version was newer than the installed one (the user,
+    2026-10-29). Each release is checked against its own signature: installing an
+    earlier one is as safe as the latest.
+    """
+    nom = _sig.FICHIER if _sig.CLE_PUBLIQUE else SETUP + ".sha256"
+    meilleure = ""
+    for r in json.loads(_get(RELEASES_URL, timeout)):
+        if r.get("draft") or r.get("prerelease"):
+            continue
+        v = str(r.get("tag_name") or "").lstrip("v")
+        if not re.fullmatch(r"\d+(\.\d+){1,3}", v):
+            continue
+        signee = nom in {a.get("name") for a in r.get("assets") or []}
+        if signee and _cle_version(v) > _cle_version(meilleure or "0"):
+            meilleure = v
+    return meilleure
+
+
+def version_proposee(timeout=10):
+    """The version an update installs: main's VERSION once signed, else the latest signed."""
+    distante = _get(VERSION_URL, timeout)[:64].decode("utf-8").strip()
+    return distante if prete(distante, timeout) else derniere_signee(timeout)
+
+
 def nouvelle_version(timeout=5, intervalle_h=24):
     """Available version if it is more recent than the installed one, otherwise None.
 
@@ -263,7 +293,10 @@ def nouvelle_version(timeout=5, intervalle_h=24):
         if _cle_version(distante) <= locale:
             distante = ""
         elif not prete(distante, timeout):
-            return None
+            # The latest waits for its signature: an earlier signed one, without a date,
+            # so the next start asks again and finds the latest once signed.
+            signee = derniere_signee(timeout)
+            return signee if signee and _cle_version(signee) > locale else None
         DERNIERE_VERIF.write_text(f"{time.strftime('%Y-%m-%d %H:%M')}|{distante}", encoding="utf-8")
         return distante or None
     except Exception:
@@ -619,12 +652,12 @@ def maj_paquet(verifier_seulement):
     """
     locale = version_paquet()
     try:
-        distante = _get(VERSION_URL, 30)[:64].decode("utf-8").strip()
+        distante = version_proposee(30)
     except Exception as e:
         print(f"! GitHub injoignable ({type(e).__name__}) : réessaie plus tard.")
         return 1
-    print(f"Version installée : {locale} · disponible : {distante}", flush=True)
-    if _cle_version(distante) <= _cle_version(locale):
+    print(f"Version installée : {locale} · disponible : {distante or '—'}", flush=True)
+    if not distante or _cle_version(distante) <= _cle_version(locale):
         print("Déjà à jour.")
         return 0
     if verifier_seulement:
@@ -633,7 +666,7 @@ def maj_paquet(verifier_seulement):
         return OCCUPE
     print("Étape 1/2 : téléchargement et vérification", flush=True)
     try:
-        fichiers = fichiers_a_installer()
+        fichiers = fichiers_a_installer(distante)
     except _sig.SignatureInvalide as e:
         print(f"! Mise à jour refusée : {e}. Rien n'a été installé.")
         return 1
@@ -677,7 +710,7 @@ def telecharger(url=ZIP_URL, timeout=120):
     return _get(url, timeout)
 
 
-def fichiers_a_installer():
+def fichiers_a_installer(distante=None):
     """The files of the proposed version, checked by the author's signature.
 
     Always the ZIP of the announced version's TAG. Before 3.4, without a public key, it
@@ -688,7 +721,8 @@ def fichiers_a_installer():
     Raises:
         signature.SignatureInvalide: version refused (nothing was written).
     """
-    distante = _get(VERSION_URL, 30)[:64].decode("utf-8").strip()
+    if distante is None:
+        distante = _get(VERSION_URL, 30)[:64].decode("utf-8").strip()
     if not re.fullmatch(r"\d+(\.\d+){1,3}", distante):
         raise ValueError(f"numéro de version illisible : {distante[:20]!r}")
     nouveaux = fichiers_du_zip(telecharger(TAG_URL.format(distante)))

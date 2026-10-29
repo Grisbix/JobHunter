@@ -2224,9 +2224,10 @@ async function verifierMaj(ev) {
   if (v.store) return toast(v.nouvelle
     ? `Version ${v.derniere} publiée ; installée : ${v.installee}. Le Microsoft Store l'installe de lui-même dans les jours qui viennent.`
     : `À jour : ${v.installee}. Le Microsoft Store installe les mises à jour.`);
-  if (!v.nouvelle) return toast(`À jour : ${v.installee} est la dernière version.`);
-  if (!v.signee) return toast(`La version ${v.derniere} attend la signature de son auteur : réessaie plus tard.`);
-  const ok = await dialogue(`Version ${v.derniere} disponible`, `Installée : ${v.installee}. Elle est vérifiée (signature) avant d'être installée ; relance JobHunter ensuite.`,
+  // v.attente: the latest, published but not signed yet (its author signs within the hour)
+  const suite = v.attente ? ` La ${v.attente} sera proposée dès que son auteur l'aura signée.` : "";
+  if (!v.nouvelle) return toast(`À jour : ${v.installee}.${suite}`);
+  const ok = await dialogue(`Version ${v.derniere} disponible`, `Installée : ${v.installee}. Elle est vérifiée (signature) avant d'être installée ; relance JobHunter ensuite.${suite}`,
     null, [["Installer", "plein", () => true]]);
   if (!ok) return;
   await lancer("maj");  // suivreTache → suivreMaj: the button and the Moteur card follow it

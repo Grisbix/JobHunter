@@ -47,7 +47,9 @@ def test_maj_paquet_installe_les_fichiers_signes(monkeypatch, capsys):
     monkeypatch.setattr(mise_a_jour, "_get", lambda url, t: b"3.58.0\n")
     monkeypatch.setattr(mise_a_jour, "file_libre", lambda garder=True: True)
     monkeypatch.setattr(
-        mise_a_jour, "fichiers_a_installer", lambda: {"pyproject.toml": b"[project]\n"}
+        mise_a_jour,
+        "fichiers_a_installer",
+        lambda distante=None: {"pyproject.toml": b"[project]\n"},
     )
     vus = {}
 
