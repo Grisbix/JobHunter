@@ -653,6 +653,28 @@ def _ecrire_json(f: Path, donnees: Any) -> None:
     tmp.replace(f)
 
 
+def _version_installee() -> str:
+    """The running JobHunter's version.
+
+    The compiled application (installer, Store) carries no pip metadata: its version is
+    the VERSION file shipped with it. Reading only the metadata showed « ? » there, and
+    offered every release as new (the user, 2026-10-29).
+    """
+    from importlib.metadata import PackageNotFoundError, version
+
+    from jobhunter import frozen
+
+    if frozen.est_gele():
+        from jobhunter.programs import update
+
+        v = update.version_locale()
+        return v if v != "0" else "?"
+    try:
+        return version("jobhunter")
+    except PackageNotFoundError:
+        return "?"
+
+
 def _derniere_version(timeout: float = 6) -> str:
     """The latest release tag of the public repository, "" when offline."""
     import urllib.request
@@ -1001,15 +1023,11 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
     def maintenance(self) -> dict[str, Any]:
         """Engine version, last collection, backups and data sizes."""
         import json
-        from importlib.metadata import PackageNotFoundError, version
 
         from jobhunter import root
 
         donnees = root.scripts()
-        try:
-            v = version("jobhunter")
-        except PackageNotFoundError:
-            v = "?"
+        v = _version_installee()
         try:
             c = json.loads((donnees / "_derniere_collecte.json").read_text(encoding="utf-8"))
         except (OSError, ValueError):
@@ -1634,20 +1652,22 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         return False
 
     def mise_a_jour(self) -> dict[str, Any]:
-        """Installed engine version and the latest published one (a check only)."""
-        from importlib.metadata import PackageNotFoundError, version
+        """Installed engine version and the latest published one (a check only).
 
-        try:
-            installee = version("jobhunter")
-        except PackageNotFoundError:
-            installee = "?"
+        `store`: the Microsoft Store installed it and installs its updates.
+        """
+        from jobhunter import frozen
+
+        installee = _version_installee()
         derniere = _derniere_version()
-        nouvelle = _plus_recente(derniere, installee)
+        nouvelle = installee != "?" and _plus_recente(derniere, installee)
+        store = frozen.paquet_msix() and frozen.msix_du_store()
         return {
             "installee": installee,
             "derniere": derniere,
             "nouvelle": nouvelle,
-            "signee": nouvelle and _signee(derniere),
+            "signee": nouvelle and not store and _signee(derniere),
+            "store": store,
         }
 
     def annonce_maj(self) -> dict[str, Any] | None:

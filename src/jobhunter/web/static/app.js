@@ -2207,6 +2207,9 @@ async function verifierMaj(ev) {
   const v = await window.pywebview.api.mise_a_jour();
   if (b) b.disabled = false;
   if (!v.derniere) return toast("GitHub injoignable : réessaie plus tard.", true);
+  if (v.store) return toast(v.nouvelle
+    ? `Version ${v.derniere} publiée ; installée : ${v.installee}. Le Microsoft Store l'installe de lui-même dans les jours qui viennent.`
+    : `À jour : ${v.installee}. Le Microsoft Store installe les mises à jour.`);
   if (!v.nouvelle) return toast(`À jour : ${v.installee} est la dernière version.`);
   if (!v.signee) return toast(`La version ${v.derniere} attend la signature de son auteur : réessaie plus tard.`);
   const ok = await dialogue(`Version ${v.derniere} disponible`, `Installée : ${v.installee}. Elle est vérifiée (signature) avant d'être installée ; relance JobHunter ensuite.`,

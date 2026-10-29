@@ -4,6 +4,13 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.68.0 — 2026-10-29
+
+For the Microsoft Store version.
+
+- **Desktop icon**: installed from the Store, JobHunter puts its icon on the desktop at its first start — once: deleted, it stays deleted.
+- **« Chercher une mise à jour »** showed « ? » for the installed version in the application installed from the Store or the installer: it now reads the version shipped with it. From the Store, it says that the Store installs the updates, instead of offering to download them.
+
 ## 3.67.0 — 2026-10-29
 
 The home screen fits the window, the app works with the keyboard, each offer shows where it comes from, and the sheet warns about ghost offers.

@@ -7,7 +7,10 @@ Windows pins the program behind it, pythonw.exe (the user, 2026-10-28: « un log
 soit partout le même, pas un logo Python »). This shortcut has JobHunter's icon and the
 window's identity, so the taskbar, the pin and the Start menu all show JobHunter.
 
-The installer (JobHunterSetup.exe) makes its own shortcuts: nothing to do there.
+The installer (JobHunterSetup.exe) makes its own shortcuts: nothing to do there. The
+Microsoft Store package (MSIX) has its Start menu entry from Windows, but no desktop
+icon (the user, 2026-10-29): it gets one at its first start, once — deleted, it stays
+deleted.
 
     jobhunter shortcut            the Start menu
     jobhunter shortcut --bureau   the desktop too
@@ -77,12 +80,24 @@ def cible() -> tuple[Path, str, Path]:
     return exe, args, dossier
 
 
+def dossier_bureau() -> Path:
+    """The user's desktop, where Windows has it (OneDrive moves it out of the profile)."""
+    if sys.platform == "win32":
+        import ctypes
+
+        tampon = ctypes.create_unicode_buffer(260)
+        # CSIDL_DESKTOPDIRECTORY = 0x10
+        if ctypes.windll.shell32.SHGetFolderPathW(None, 0x10, None, 0, tampon) == 0:
+            return Path(tampon.value)
+    return Path(os.environ.get("USERPROFILE", Path.home())) / "Desktop"
+
+
 def dossiers(bureau: bool) -> list[Path]:
     """The Start menu's Programs folder, and the desktop if asked."""
     appdata = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
     sortie = [appdata / "Microsoft" / "Windows" / "Start Menu" / "Programs"]
     if bureau:
-        sortie.append(Path(os.environ.get("USERPROFILE", Path.home())) / "Desktop")
+        sortie.append(dossier_bureau())
     return sortie
 
 
@@ -97,11 +112,15 @@ def assurer() -> None:
     Called at the window's opening, in the background: an installation from before 3.59
     gets it without running anything. Silent on failure: cosmetic only.
     """
-    if sys.platform != "win32" or existe():
+    if sys.platform != "win32":
         return
     from jobhunter import frozen
 
     if frozen.est_gele():
+        if frozen.paquet_msix():
+            bureau_msix()
+        return
+    if existe():
         return
     try:
         creer(dossiers(False)[0] / "JobHunter.lnk", *cible())
@@ -109,7 +128,44 @@ def assurer() -> None:
         pass
 
 
-def creer(lien: Path, exe: Path, args: str, dossier: Path) -> None:
+def bureau_msix() -> bool:
+    """The desktop icon of the Store package, made once; True when made now.
+
+    It opens the package through the Start menu's entry (shell:AppsFolder), with the
+    package's identity, so a pin groups with the window. Its icon is copied into the
+    data folder: the package's own folder changes name at each update.
+    """
+    from jobhunter import frozen, root
+
+    famille = frozen.famille_msix()
+    if not famille:
+        return False
+    donnees = root.scripts()
+    temoin = donnees / "_raccourci_bureau.txt"
+    if temoin.exists():
+        return False
+    lien = dossier_bureau() / "JobHunter.lnk"
+    try:
+        if not lien.exists():
+            icone = donnees / "jobhunter.ico"
+            icone.write_bytes(ICONE.read_bytes())
+            creer(
+                lien,
+                Path(os.environ.get("WINDIR", r"C:\Windows")) / "explorer.exe",
+                f"shell:AppsFolder\\{famille}!JobHunter",
+                frozen.dossier_donnees(),
+                icone=icone,
+                aumid=f"{famille}!JobHunter",
+            )
+        temoin.write_text(str(lien), encoding="utf-8")
+    except (OSError, subprocess.SubprocessError):
+        return False  # tried again at the next start
+    return True
+
+
+def creer(
+    lien: Path, exe: Path, args: str, dossier: Path, icone: Path = ICONE, aumid: str = AUMID
+) -> None:
     """Writes `lien` (.lnk); raises CalledProcessError when PowerShell fails."""
     env = dict(
         os.environ,
@@ -117,8 +173,8 @@ def creer(lien: Path, exe: Path, args: str, dossier: Path) -> None:
         JH_CIBLE=str(exe),
         JH_ARGS=args,
         JH_DOSSIER=str(dossier),
-        JH_ICONE=str(ICONE),
-        JH_AUMID=AUMID,
+        JH_ICONE=str(icone),
+        JH_AUMID=aumid,
     )
     subprocess.run(  # nosec B603 B607 : fixed script, values by environment
         ["powershell", "-NoProfile", "-NonInteractive", "-Command", _PS],

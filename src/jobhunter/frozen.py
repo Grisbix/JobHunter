@@ -54,26 +54,33 @@ def paquet_msix() -> bool:
     return code == 122
 
 
-def msix_du_store() -> bool:
-    """In the MSIX package: True when the Store installed it (SignatureKind « Store »).
-
-    A package installed from the release's JobHunter.msix is not the Store's: its
-    updates come from the release, and the Store's page shows nothing for it.
-    """
+def famille_msix() -> str:
+    """The package family name ("Editeur.JobHunter_abc123"), "" outside a package."""
     if sys.platform != "win32" or not paquet_msix():
-        return False
+        return ""
     import ctypes
     import re
-    import subprocess
 
     longueur = ctypes.c_uint32(256)
     tampon = ctypes.create_unicode_buffer(256)
     try:
         code = ctypes.windll.kernel32.GetCurrentPackageFamilyName(ctypes.byref(longueur), tampon)
     except (AttributeError, OSError):
-        return False
+        return ""
     famille = tampon.value
-    if code != 0 or not re.fullmatch(r"[A-Za-z0-9._-]+", famille):
+    return famille if code == 0 and re.fullmatch(r"[A-Za-z0-9._-]+", famille) else ""
+
+
+def msix_du_store() -> bool:
+    """In the MSIX package: True when the Store installed it (SignatureKind « Store »).
+
+    A package installed from the release's JobHunter.msix is not the Store's: its
+    updates come from the release, and the Store's page shows nothing for it.
+    """
+    import subprocess
+
+    famille = famille_msix()
+    if not famille:
         return False
     try:
         r = subprocess.run(  # nosec B603 B607 : fixed command, the family name checked above
