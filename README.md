@@ -108,7 +108,10 @@ rate-limited, or refused — an empty day is never mistaken for a quiet one.
    run from the app.
 
 Your data (profile, CV, letters, offers, application log) lives in `Documents\JobHunter`:
-updates and uninstalling never touch it. The app offers each new version at start-up.
+updates never touch it. Uninstalling keeps it unless you say otherwise (the installer
+asks, « No » by default); to start again from nothing, *Maintenance → Effacer mes
+données* sends it to the Recycle Bin, Store version included. The app offers each new
+version at start-up.
 
 Recommended: [LibreOffice](https://www.libreoffice.org/download/) (CVs and letters as PDF)
 and Google Chrome (form filling; without it, collection uses Edge, which every Windows has).

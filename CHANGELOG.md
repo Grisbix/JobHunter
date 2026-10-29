@@ -4,6 +4,14 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.69.0 — 2026-10-29
+
+Your data, when you uninstall.
+
+- **Uninstalling asks** whether to remove your data too (profile, CVs, letters, offers, tracked applications) — « No » by default. On « Yes », `Documents\JobHunter` goes to the Recycle Bin, so it can still be restored. The daily collection of that installation is removed with it.
+- **Maintenance → « Effacer mes données… »** in the installed application (Store version included, where Windows lets no question be asked at uninstall): after a confirmation, the data goes to the Recycle Bin, the daily collection stops, and JobHunter closes.
+- README and Store listing say where the data lives and how to remove it.
+
 ## 3.68.0 — 2026-10-29
 
 For the Microsoft Store version.

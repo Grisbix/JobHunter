@@ -17,6 +17,8 @@ prépare un CV et une lettre de motivation sur mesure pour chacune.
 - Suit vos candidatures et vos relances.
 - Vos données restent sur votre ordinateur : pas de compte, pas de serveur, pas de
   publicité. L'envoi d'une candidature reste toujours votre clic.
+- Vos données vivent dans Documents\JobHunter et survivent à une désinstallation :
+  pour tout effacer, Maintenance → Effacer mes données (vers la Corbeille).
 
 **Fonctionnalités** (une par ligne)
 
@@ -46,6 +48,8 @@ tailored CV and cover letter for each one.
 - Tracks your applications and follow-ups.
 - Your data stays on your computer: no account, no server, no ads. Sending an
   application is always your click.
+- Your data lives in Documents\JobHunter and survives uninstalling: to remove it all,
+  Maintenance → Effacer mes données (to the Recycle Bin).
 
 **Features** (one per line)
 

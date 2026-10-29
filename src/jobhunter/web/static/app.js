@@ -23,6 +23,7 @@ const ICONES = {
   fenetre: "M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 5v9h14V9z",
   panneau: "M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm5 2v12h9V6z",
   reglage: "M3 6h9v2H3zm14 0h4v2h-4zM3 16h4v2H3zm8 0h10v2H11zM12 4h4v6h-4zM7 14h4v6H7z",
+  corbeille: "M9 3h6l1 2h4v2H4V5h4zM6 9h12l-.9 10.6A1.5 1.5 0 0 1 15.6 21H8.4a1.5 1.5 0 0 1-1.5-1.4z",
 };
 
 function svg(nom) {
@@ -2069,10 +2070,23 @@ ECRANS.maintenance = {
         h("dl", { class: "paires" },
           h("dt", {}, "Offres"), h("dd", {}, nombre(m.offres)), h("dt", {}, "Candidatures"), h("dd", {}, nombre(m.candidatures)),
           m.tailles.map((t) => [h("dt", {}, t.nom), h("dd", {}, taille(t.octets))])),
-        h("div", { class: "actions-col" }, action("Contrôler les offres fermées", "loupe", "disponibilite"))),
+        h("div", { class: "actions-col" }, action("Contrôler les offres fermées", "loupe", "disponibilite"),
+          m.effacable ? bouton("Effacer mes données…", "corbeille", () => effacerDonnees(m)) : null)),
       carteOutils(await appel("outils"))));
   },
 };
+
+// Uninstalling keeps Documents/JobHunter: this starts again from nothing (Recycle Bin).
+async function effacerDonnees(m) {
+  const ok = await dialogue("Effacer mes données ?",
+    `Le profil, les CV, les lettres, les ${nombre(m.offres)} offres et les ${nombre(m.candidatures)} candidatures suivies ` +
+    "partent à la Corbeille, la collecte du matin est arrêtée et JobHunter se ferme. " +
+    "Tant que la Corbeille n'est pas vidée, on peut tout restaurer.",
+    null, [["Effacer et fermer", "plein", () => true]]);
+  if (!ok) return;
+  const r = await appel("effacer_donnees");
+  if (r && !r.ok) toast(r.message, true);
+}
 
 // --- Navigation ---------------------------------------------------------------------
 

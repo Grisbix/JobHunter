@@ -675,6 +675,32 @@ def _version_installee() -> str:
         return "?"
 
 
+# Waits for the application to close, then sends its data folder to the Recycle Bin.
+# Values come by environment variables, never pasted into the script.
+_CORBEILLE = r"""
+try { Wait-Process -Id ([int]$env:JH_PID) -Timeout 120 -ErrorAction Stop } catch {}
+Add-Type -AssemblyName Microsoft.VisualBasic
+[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory(
+  $env:JH_DOSSIER, 'OnlyErrorDialogs', 'SendToRecycleBin')
+"""
+
+
+def _dossier_effacable() -> Path | None:
+    """The data folder « Effacer mes données » may remove, None when there is none.
+
+    Only the installed application's own folder (Documents/JobHunter): never a folder
+    named by JOBHUNTER_RACINE, nor a source or pip installation's, which may hold
+    anything else (a git repository, the author's own files).
+    """
+    from jobhunter import frozen, profiles
+
+    if not frozen.est_gele():
+        return None
+    dossier = profiles.principale().resolve()
+    defaut = (Path.home() / "Documents" / "JobHunter").resolve()
+    return dossier if dossier == defaut and dossier.is_dir() else None
+
+
 def _derniere_version(timeout: float = 6) -> str:
     """The latest release tag of the public repository, "" when offline."""
     import urllib.request
@@ -1047,6 +1073,7 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         collecte["erreurs"] = len(c.get("erreurs") or [])
         return {
             "version": v,
+            "effacable": _dossier_effacable() is not None,
             "collecte": collecte,
             "sauvegardes": jours,
             "tailles": tailles,
@@ -1674,6 +1701,36 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         """A newer signed version, for the button of the title bar; None otherwise."""
         v = self.mise_a_jour()
         return v if v["signee"] else None
+
+    def effacer_donnees(self) -> dict[str, Any]:
+        """Sends the installed application's data to the Recycle Bin, then closes it.
+
+        Uninstalling never touches Documents/JobHunter (the installer asks, the Store
+        cannot): this is how to start again from nothing (the user, 2026-10-29). The
+        daily collection is unscheduled first, else it would make the folder again.
+        """
+        dossier = _dossier_effacable()
+        if dossier is None:
+            return {"ok": False, "message": "Réservé à l'application installée."}
+        from jobhunter import scheduling
+        from jobhunter.programs import update
+
+        if not update.file_libre(garder=False):
+            return {"ok": False, "message": "Une tâche tourne : réessaie quand elle est finie."}
+        if scheduling.disponible() and scheduling.planifiee():
+            scheduling.supprimer()
+        env = dict(os.environ, JH_PID=str(os.getpid()), JH_DOSSIER=str(dossier))
+        drapeaux = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(
+            subprocess, "DETACHED_PROCESS", 0
+        )
+        subprocess.Popen(  # nosec B603 B607 : fixed script, values by environment
+            ["powershell", "-NoProfile", "-NonInteractive", "-Command", _CORBEILLE],
+            env=env,
+            creationflags=drapeaux,
+        )
+        if self._fenetre is not None:
+            self._fenetre.destroy()
+        return {"ok": True, "dossier": str(dossier)}
 
     # Actions that only open things.
     def ouvrir_profil(self) -> bool:
