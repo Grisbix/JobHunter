@@ -232,6 +232,7 @@ def _ligne(o: Mapping[str, Any], suivi: Mapping[str, Any]) -> dict[str, Any]:
         # last seen alive: link checked or served again, whichever is later
         "signal": o.get("signal") or "",
         "alerte": _alerte(o),
+        "source": o.get("source") or "",  # its logo beside the company (3.67)
     }
 
 
@@ -352,6 +353,7 @@ def fiche(o: Mapping[str, Any], suivi: Mapping[str, Any], description: str) -> d
         "postule_le": s.get("d") or "",
         "envoi": s.get("envoi") or "",
         "pourquoi": o.get("pourquoi") or "",
+        "republiee": o.get("republiee") or 0,  # programs/reposts: times reposted in 90 days
         "exp_requise": o.get("exp_requise") or "",
         "salaire": o.get("salaire") or "",
         "teletravail": o.get("teletravail") or "",

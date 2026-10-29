@@ -12,14 +12,14 @@
 <div class="barre pywebview-drag-region" id="barre">
   <button class="bouton plein maj" id="maj" hidden></button>
   <div class="feux">
-    <button data-action="reduire" title="Réduire"><svg viewBox="0 0 12 12"><path d="M2.5 6h7"/></svg></button>
-    <button data-action="agrandir" title="Plein écran ou fenêtre"><svg viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7" rx="1.5"/></svg></button>
-    <button data-action="fermer" class="fermer" title="Fermer"><svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
+    <button data-action="reduire" title="Réduire" aria-label="Réduire"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button>
+    <button data-action="agrandir" title="Plein écran ou fenêtre" aria-label="Plein écran ou fenêtre"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx="1.5"/></svg></button>
+    <button data-action="fermer" class="fermer" title="Fermer" aria-label="Fermer"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
   </div>
 </div>
 <main class="fenetre">
-  <nav class="menu" id="menu">
-    <div class="marque"><span class="logo"></span>JobHunter</div>
+  <nav class="menu" id="menu" aria-label="Écrans">
+    <div class="marque"><span class="logo" aria-hidden="true"></span>JobHunter</div>
     <div class="groupe">Recherche</div>
     <a data-ecran="accueil" data-icone="maison">Accueil</a>
     <a data-ecran="offres" data-icone="valise">Offres</a>
@@ -43,8 +43,8 @@
 </main>
 
 <div class="voile" id="voile"></div>
-<aside class="tiroir" id="tiroir" aria-hidden="true">
-  <button class="rond-fermer" id="fermer-tiroir" title="Fermer"><svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
+<aside class="tiroir" id="tiroir" role="dialog" aria-label="Détail" aria-hidden="true">
+  <button class="rond-fermer" id="fermer-tiroir" title="Fermer" aria-label="Fermer"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
   <div id="tiroir-corps"></div>
 </aside>
 <div class="tache guidee" id="guidee" hidden></div>

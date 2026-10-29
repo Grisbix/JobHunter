@@ -4,6 +4,15 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.67.0 — 2026-10-29
+
+The home screen fits the window, the app works with the keyboard, each offer shows where it comes from, and the sheet warns about ghost offers.
+
+- **Home screen**: holds in a 1280 × 720 window without scrolling; the chart's scale no longer runs under its card in a low window.
+- **Keyboard and screen readers**: every clickable row and card is reached with Tab and opened with Enter or Space, with a visible focus ring; the detail drawer and dialogs take the focus and give it back when they close; icons are hidden from screen readers and icon-only buttons have a name.
+- **Source logos**: the offer list, the sheet and Sources access show the platform's logo (LinkedIn, Welcome to the Jungle, Indeed, Glassdoor, Greenhouse, Personio, SAP SuccessFactors, Oracle, XING; simple-icons, CC0), or its initial.
+- **Ghost offers**: the sheet has a « À vérifier avant de postuler » card that explains each signal — republished N times in 90 days (often no live hiring), the same text at another company (often an agency: apply at the source), a duplicate, a knock-out condition.
+
 ## 3.66.0 — 2026-10-29
 
 A new logo: a target with a check, indigo and coral — the offer that fits.

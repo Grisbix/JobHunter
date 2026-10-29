@@ -542,7 +542,7 @@ body.natif .tiroir { top: 52px; }
   .liste-meilleures ol { margin-top: 12px; gap: 8px; }
   .sombre { padding: 20px; }
   .fil { margin-top: 16px; gap: 16px; }
-  .accueil .panneau { padding: 20px 24px; }
+  .accueil .panneau { padding: 16px 24px; }
   .vue { padding-bottom: 16px; }
   /* Statistics: the four stacks under the figures, whole (audit 2026-10-28). */
   /* (two classes: the base rules come further down the file) */
@@ -878,3 +878,27 @@ label.case.pale { color: var(--gris); cursor: default; }
 .sombre::before, .sombre::after { display: none; }
 .col .plein { background: var(--c2); }
 .tuile i { background: rgba(var(--c1-rgb), .28); }
+
+/* Keyboard focus (3.67): what Tab reaches shows a ring, on every background and theme.
+   Text fields keep their own glow (.champ-texte:focus); a mouse click draws nothing. */
+body :is(a, button, select, summary, [tabindex], input[type="checkbox"], input[type="range"]):focus-visible {
+  outline: 2px solid var(--c2); outline-offset: 2px;
+}
+body tr[tabindex]:focus-visible { outline-offset: -2px; }
+.menu a[href] { text-decoration: none; }
+
+/* The offer's signals in words (3.67): reposted, same text elsewhere, knock-out. */
+.signaux { padding: 16px 24px; border: 1px solid rgba(var(--c2-rgb), .45); }
+.signaux h3 { margin: 0 0 8px; }
+.signaux .signal { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; }
+.signaux .signe { flex: none; width: 24px; text-align: center; font-size: var(--t-xl); color: var(--c2); }
+.signaux .t { font-weight: 600; }
+.signaux .sous { margin-top: 2px; line-height: 1.5; }
+
+/* The source's logo (3.67): in the text's colour, a letter when there is none. */
+.avec-logo { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.s.avec-logo { display: flex; }
+.logo-source { flex: none; width: 16px; height: 16px; display: inline-grid; place-items: center; color: inherit; opacity: .75; }
+.logo-source svg { width: 14px; height: 14px; fill: currentColor; }
+.logo-source.initiale { border-radius: 4px; background: rgba(var(--c2-rgb), .22); font-size: var(--t-xs); font-weight: 700; line-height: 1; }
+.avec-logo .coupe { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

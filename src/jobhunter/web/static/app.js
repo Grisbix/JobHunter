@@ -29,6 +29,8 @@ function svg(nom) {
   const ns = "http://www.w3.org/2000/svg";
   const s = document.createElementNS(ns, "svg");
   s.setAttribute("viewBox", "0 0 24 24");
+  s.setAttribute("aria-hidden", "true");  // an icon beside its text: the text names it
+  s.setAttribute("focusable", "false");
   const p = document.createElementNS(ns, "path");
   p.setAttribute("d", ICONES[nom] || "");
   s.appendChild(p);
@@ -47,7 +49,85 @@ function h(tag, attrs, ...enfants) {
   }
   for (const c of enfants.flat(Infinity)) if (c != null && c !== false) e.append(c instanceof Node ? c : String(c));
   if (tag === "tr" && attrs && attrs.onclick) e.classList.add("cliquable");  // hover only where a click does something
+  accessible(e, attrs || {});
   return e;
+}
+
+// --- Where an offer comes from (3.67) ------------------------------------------------
+// The source's logo beside its name. Logos from Simple Icons (simple-icons.org, CC0,
+// v13.21.0), drawn in the text's colour; a source without one gets its initial.
+const LOGOS_SOURCES = {
+  glassdoor: "M14.1093.0006c-.0749-.0074-.1348.0522-.1348.127v3.451c0 .0673.0537.1194.121.127 2.619.172 4.6092.9501 4.6092 3.6814H13.086a.1343.1343 0 0 0-.1348.1347v8.9644c0 .0748.06.1347.1348.1347h10.0034c.0748 0 .1347-.0599.1347-.1347V7.342c0-2.2374-.7996-4.0558-2.4159-5.3279C19.3191.8469 17.0874.1428 14.1093.0006ZM.9107 7.387a.1342.1342 0 0 0-.1347.1347v8.9566c0 .0748.06.1347.1347.1347h5.6189c0 2.7313-1.9902 3.5094-4.6091 3.6815-.0674.0075-.1192.0596-.1192.127v3.451c0 .0747.06.1343.1348.1269 2.9781-.1422 5.2078-.8463 6.6969-2.0136 1.6163-1.272 2.4159-3.0905 2.4159-5.3278V7.5217a.1343.1343 0 0 0-.1348-.1347z",
+  greenhouse: "M16.279 7.13c0 1.16-.49 2.185-1.293 2.987-.891.891-2.184 1.114-2.184 1.872 0 1.025 1.65.713 3.231 2.295 1.048 1.047 1.694 2.43 1.694 4.034C17.727 21.482 15.187 24 12 24c-3.187 0-5.727-2.518-5.727-5.68 0-1.607.646-2.989 1.694-4.036 1.582-1.582 3.23-1.27 3.23-2.295 0-.758-1.292-.98-2.183-1.872-.802-.802-1.293-1.827-1.293-3.03 0-2.318 1.895-4.19 4.212-4.19.446 0 .847.067 1.181.067.602 0 .914-.268.914-.691 0-.245-.112-.557-.112-.891 0-.758.647-1.382 1.427-1.382s1.404.646 1.404 1.426c0 .825-.647 1.204-1.137 1.382-.401.134-.713.312-.713.713 0 .758 1.382 1.493 1.382 3.61zm-.446 11.19c0-2.206-1.627-3.99-3.833-3.99-2.206 0-3.833 1.784-3.833 3.99 0 2.184 1.627 3.989 3.833 3.989 2.206 0 3.833-1.808 3.833-3.99zM14.518 7.086c0-1.404-1.136-2.562-2.518-2.562S9.482 5.682 9.482 7.086 10.618 9.65 12 9.65s2.518-1.159 2.518-2.563z",
+  indeed: "M11.566 21.5633v-8.762c.2553.0231.5009.0346.758.0346 1.2225 0 2.3739-.3206 3.3506-.8928v9.6182c0 .8219-.1957 1.4287-.5757 1.8338-.378.4033-.8808.6049-1.491.6049-.6007 0-1.0766-.2016-1.468-.6183-.3781-.4032-.5739-1.01-.5739-1.8184zM11.589.5659c2.5447-.8929 5.4424-.8449 7.6186.987.405.3687.8673.8334 1.0515 1.3806.2207.6913-.7695-.073-.9057-.167-.71-.4532-1.4182-.8334-2.2127-1.0946C12.8614.3873 8.8122 2.709 6.2945 6.315c-1.0516 1.5939-1.7367 3.2721-2.299 5.1174-.0614.2017-.1094.4647-.2207.6413-.1113.2036-.048-.5453-.048-.5702.0845-.7623.2438-1.4997.4414-2.237C5.3292 5.3375 7.897 2.0655 11.5891.5658zm4.9281 7.0587c0 1.6686-1.353 3.0224-3.0205 3.0224-1.6677 0-3.0186-1.3538-3.0186-3.0224 0-1.6687 1.351-3.0224 3.0186-3.0224 1.6676 0 3.0205 1.3518 3.0205 3.0224Z",
+  linkedin: "M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z",
+  oracle: "M16.412 4.412h-8.82a7.588 7.588 0 0 0-.008 15.176h8.828a7.588 7.588 0 0 0 0-15.176zm-.193 12.502H7.786a4.915 4.915 0 0 1 0-9.828h8.433a4.914 4.914 0 1 1 0 9.828z",
+  personio: "M21.603 24H2.47v-1.563h19.133Zm-6.167-4.044c.557.145 1.137-.244 1.303-.867.166-.624-.157-1.25-.713-1.39-.556-.142-1.137.24-1.304.865-.167.624.156 1.25.714 1.39zM22.37.676c-1.737-1.347-5.387-.43-8.145.576A41.707 41.705 0 0 0 5.64 5.625C3.624 6.985 1.135 8.987.748 10.814a1.43 1.43 0 0 0 .28 1.263c.505.59 1.354.576 1.516.568a.781.781 0 0 0 .51-1.368.783.783 0 0 0-.58-.193.877.877 0 0 1-.181-.016c.58-2.136 6.69-6.232 12.47-8.342 3.858-1.408 5.964-1.342 6.649-.81.284.22.433.487.23 1.062-.545 1.535-3.2 3.96-7.108 6.48-.725.467-1.434.898-2.11 1.29.544-1.92 1.1-3.88 1.582-5.561a.782.782 0 0 0-1.504-.43 2070.72 2070.634 0 0 0-2.002 7.05c-1.564.811-2.754 1.3-3.22 1.366a.783.783 0 0 0-1.025 1.095c.134.226.4.476.929.476.088 0 .177-.007.264-.02.54-.073 1.417-.395 2.485-.884-.758 2.702-1.373 4.975-1.407 5.282a.781.781 0 0 0 .69.858.668.668 0 0 0 .087 0 .783.783 0 0 0 .775-.685c.062-.38.822-3.133 1.746-6.42a58.241 58.239 0 0 0 4.01-2.401c5.435-3.587 7.007-5.917 7.362-7.241.277-1.02-.017-1.93-.825-2.557z",
+  sap: "M0 6.064v11.872h12.13L24 6.064zm3.264 2.208h.005c.863.001 1.915.245 2.676.633l-.82 1.43c-.835-.404-1.255-.442-1.73-.467-.708-.038-1.064.215-1.069.488-.007.332.669.633 1.305.838.964.306 2.19.715 2.377 1.9L7.77 8.437h2.046l2.064 5.576-.007-5.575h2.37c2.257 0 3.318.764 3.318 2.519 0 1.575-1.09 2.514-2.936 2.514h-.763l-.01 2.094-3.588-.003-.25-.908c-.37.122-.787.189-1.23.189-.456 0-.885-.071-1.263-.2l-.358.919-2 .006.09-.462c-.029.025-.057.05-.087.074-.535.43-1.208.629-2.037.644l-.213.002a5.075 5.075 0 0 1-2.581-.675l.73-1.448c.79.467 1.286.572 1.956.558.347-.007.598-.07.761-.239a.557.557 0 0 0 .156-.369c.007-.376-.53-.553-1.185-.756-.531-.164-1.135-.389-1.606-.735-.559-.41-.825-.924-.812-1.65a1.99 1.99 0 0 1 .566-1.377c.519-.537 1.357-.863 2.363-.863zm10.597 1.67v1.904h.521c.694 0 1.247-.23 1.248-.964 0-.709-.554-.94-1.248-.94zm-5.087.767l-.748 2.362c.223.085.481.133.757.133.268 0 .52-.047.742-.126l-.736-2.37z",
+  welcometothejungle: "M22.62 3.783c-1.115-1.811-4.355-2.604-6.713-.265-.132.135-.306.548.218 1.104 1.097 1.149 6.819 7.046 4.702 12.196-1.028 2.504-3.953 2.073-5.052-2.076a23.184 23.184 0 0 1-.473-9.367s.105-.394-.065-.52c-.117-.087-.305-.05-.547.33-.06.096-.048.076-.106.178l-.003.002c-1.622 2.688-3.272 5.874-4.049 7.07.38-1.803-.101-4.283-.85-6.359l-.142-.375c-.692-1.776-1.524-2.974-1.776-3.245-.03-.033-.105-.094-.353-.094H.398c-.49 0-.448.412-.293.561 1.862 2.178 7.289 10.343 4.773 18.355-.194.619.11.944.612.305 2.206-2.81 4.942-7.598 6.925-11.187-.437 1.245-.822 2.63-1.028 4.083-.435 3.064.487 5.37 1.162 6.58.345.619.803.998 1.988.824 6.045-.885 8.06-6.117 8.805-8.77 1.357-4.839.363-7.568-.722-9.33",
+  xing: "M18.188 0c-.517 0-.741.325-.927.66 0 0-7.455 13.224-7.702 13.657.015.024 4.919 9.023 4.919 9.023.17.308.436.66.967.66h3.454c.211 0 .375-.078.463-.22.089-.151.089-.346-.009-.536l-4.879-8.916c-.004-.006-.004-.016 0-.022L22.139.756c.095-.191.097-.387.006-.535C22.056.078 21.894 0 21.686 0h-3.498zM3.648 4.74c-.211 0-.385.074-.473.216-.09.149-.078.339.02.531l2.34 4.05c.004.01.004.016 0 .021L1.86 16.051c-.099.188-.093.381 0 .529.085.142.239.234.45.234h3.461c.518 0 .766-.348.945-.667l3.734-6.609-2.378-4.155c-.172-.315-.434-.659-.962-.659H3.648v.016z",
+};
+const FAMILLES_SOURCES = [
+  [/linkedin/, "linkedin"], [/glassdoor/, "glassdoor"], [/indeed/, "indeed"],
+  [/wttj|welcome ?to ?the ?jungle/, "welcometothejungle"], [/greenhouse/, "greenhouse"],
+  [/personio/, "personio"], [/oracle/, "oracle"], [/sfrss|successfactors/, "sap"], [/xing/, "xing"],
+];
+function logoSource(source) {
+  const s = String(source || "").toLowerCase();
+  if (!s) return null;
+  const famille = (FAMILLES_SOURCES.find(([rx]) => rx.test(s)) || [])[1];
+  const pastille = h("span", { class: "logo-source", "aria-hidden": "true" });
+  if (famille) {
+    const ns = "http://www.w3.org/2000/svg";
+    const g = document.createElementNS(ns, "svg");
+    g.setAttribute("viewBox", "0 0 24 24");
+    const p = document.createElementNS(ns, "path");
+    p.setAttribute("d", LOGOS_SOURCES[famille]);
+    g.appendChild(p);
+    pastille.append(g);
+  } else {
+    pastille.classList.add("initiale");
+    // The platform's initial: "workday:pwc" is Workday, "sites-carrieres:teamtailor" Teamtailor.
+    const plateforme = s.startsWith("sites-carrieres:") ? s.slice(16) : s.split(":")[0];
+    pastille.textContent = (plateforme.match(/[a-z]/) || ["?"])[0].toUpperCase();
+  }
+  return pastille;
+}
+
+// --- Accessibility (3.67) -----------------------------------------------------------
+// What a mouse can click, the keyboard reaches too (Tab, then Enter or Space), and what
+// shows only an icon says its name to a screen reader.
+const CLIQUABLES = new Set(["tr", "li", "div"]);
+function accessible(e, attrs) {
+  if (attrs.onclick && CLIQUABLES.has(e.localName) && !attrs.tabindex) {
+    e.tabIndex = 0;
+    if (e.localName !== "tr" && !attrs.role) e.setAttribute("role", "button");
+    e.addEventListener("keydown", (ev) => {
+      if (ev.target !== e || (ev.key !== "Enter" && ev.key !== " ")) return;
+      ev.preventDefault();
+      e.click();
+    });
+  }
+  if (e.localName === "button" && attrs.title && !attrs["aria-label"] && !e.textContent.trim()) {
+    e.setAttribute("aria-label", attrs.title);
+  }
+}
+
+// The drawer is a dialog: it takes the focus when it opens, gives it back when it closes.
+function suivreTiroir() {
+  const t = $("tiroir");
+  let avant = null;
+  new MutationObserver(() => {
+    const ouvert = t.classList.contains("ouvert");
+    if (ouvert === (t.getAttribute("aria-hidden") === "false")) return;
+    t.setAttribute("aria-hidden", ouvert ? "false" : "true");
+    if (ouvert) {
+      avant = document.activeElement;
+      $("fermer-tiroir").focus({ preventScroll: true });
+    } else if (avant && document.contains(avant)) {
+      avant.focus({ preventScroll: true });
+    }
+  }).observe(t, { attributes: true, attributeFilter: ["class"] });
 }
 
 // A text cut by the layout shows in full in its tooltip.
@@ -190,7 +270,7 @@ const ouvrirFichier = (chemin) => window.pywebview && window.pywebview.api.ouvri
 
 // A short message at the bottom of the window, gone after a few seconds.
 function toast(texte, erreur = false) {
-  const t = h("div", { class: `toast ${erreur ? "erreur" : ""}` }, texte);
+  const t = h("div", { class: `toast ${erreur ? "erreur" : ""}`, role: erreur ? "alert" : "status" }, texte);
   document.body.append(t);
   setTimeout(() => t.classList.add("parti"), 3800);
   setTimeout(() => t.remove(), 4300);
@@ -417,10 +497,16 @@ async function annulerGeste() {
 function dialogue(titre, sous, contenu, boutons) {
   return new Promise((fin) => {
     const fond = h("div", { class: "dialogue-fond" });
-    const fermer = (v) => { fond.remove(); fin(v); };
+    const avant = document.activeElement;
+    const fermer = (v) => {
+      fond.remove();
+      if (avant && document.contains(avant)) avant.focus({ preventScroll: true });
+      fin(v);
+    };
     fond.addEventListener("click", (e) => { if (e.target === fond) fermer(null); });
-    fond.append(h("div", { class: "dialogue verre" },
-      h("h2", {}, titre), sous ? h("p", { class: "sous" }, sous) : null,
+    const id = `dialogue-${Date.now()}`;
+    fond.append(h("div", { class: "dialogue verre", role: "dialog", "aria-modal": "true", "aria-labelledby": id },
+      h("h2", { id }, titre), sous ? h("p", { class: "sous" }, sous) : null,
       contenu,
       h("div", { class: "boutons" }, bouton("Annuler", "", () => fermer(null)),
         boutons.map(([texte, classe, valeur]) => bouton(texte, "", () => {
@@ -428,7 +514,7 @@ function dialogue(titre, sous, contenu, boutons) {
           if (v !== undefined) fermer(v);
         }, classe)))));
     document.body.append(fond);
-    const champ = fond.querySelector("input, textarea");
+    const champ = fond.querySelector("input, textarea") || fond.querySelector(".boutons button:last-child");
     if (champ) champ.focus();
     fond.addEventListener("keydown", (e) => { if (e.key === "Escape") fermer(null); });
   });
@@ -571,6 +657,28 @@ async function voirDocument(o, chemin, titre, mode = "apercu") {
   montrer(mode);
 }
 
+// What to check before applying (programs/reposts, 3.67): the signals said in words, not
+// only as the list's ⚑ sign. Observations: they change neither the score nor the order.
+function carteSignaux(o) {
+  const lignes = (o.signal || "").split(" · ").filter(Boolean).map((s) => {
+    const m = s.match(/^republiée ×(\d+)/);
+    if (m) return ["↻", `Republiée ${m[1]} fois en 90 jours`,
+      "Une annonce remise en ligne sans cesse est souvent une offre « fantôme » (pas de recrutement en cours) ou un poste difficile à pourvoir. Vérifie sur le site de l'entreprise avant d'y passer du temps."];
+    if (s.startsWith("⚠")) return ["⚠", `Condition éliminatoire : ${s.slice(1).trim()}`,
+      "L'annonce l'exige explicitement : vérifie que tu la remplis."];
+    const [etiquette, noms] = s.split(" : ");
+    if (etiquette === "même texte") return ["≡", `Même texte chez ${noms}`,
+      "Souvent un cabinet ou un site d'emploi qui reprend l'offre d'un employeur : mieux vaut postuler à la source."];
+    if (etiquette === "doublon") return ["≡", `En double : ${noms}`, "La même offre sous un autre nom du même groupe."];
+    return ["•", s, ""];
+  });
+  if (!lignes.length) return null;
+  return h("div", { class: "carte signaux", role: "note" }, h("h3", {}, "À vérifier avant de postuler"),
+    lignes.map(([signe, titre, aide]) => h("div", { class: "signal" },
+      h("span", { class: "signe", "aria-hidden": "true" }, signe),
+      h("div", {}, h("div", { class: "t" }, titre), aide ? h("div", { class: "sous" }, aide) : null))));
+}
+
 async function ouvrirOffre(id) {
   const corps = $("tiroir-corps");
   $("tiroir").classList.remove("document");
@@ -619,13 +727,14 @@ async function ouvrirOffre(id) {
           if (r) { toast("Suivi enregistré."); ouvrirOffre(o.id); redessiner(); }
         }, "plein"), o.envoi ? h("span", { class: "sous" }, `envoi ${o.envoi}`) : null));
     })(),
+    carteSignaux(o),
     o.pourquoi ? h("div", { class: "carte description" }, h("h3", {}, "Pourquoi ce score"),
       h("div", { translate: "no" }, traduireFit(o.pourquoi))) : null,
     h("div", { class: "carte description" },
       o.description ? h("div", { translate: "no" }, o.description) : "Pas de description enregistrée pour cette offre."),
     h("dl", { class: "paires" },
       h("dt", {}, "Domaine"), h("dd", {}, o.domaine || "—"),
-      h("dt", {}, "Source"), h("dd", { title: o.source }, o.source || "—"),
+      h("dt", {}, "Source"), h("dd", { title: o.source, class: "avec-logo" }, logoSource(o.source), o.source || "—"),
       h("dt", {}, "Statut"), h("dd", {}, o.statut || "—"),
       h("dt", {}, "Score fin"), h("dd", {}, o.fit_fin ? o.fit_fin.toFixed(2) : "—"),
       h("dt", {}, "Expérience"), h("dd", {}, o.exp_requise ? `${o.exp_requise} ans` : "—"),
@@ -651,7 +760,7 @@ ECRANS.accueil = {
     const max = Math.max(4, Math.ceil(Math.max(0, ...col.map((c) => c.n)) / 4) * 4);
     const pleins = [];
     const barres = h("div", { class: "barres" },
-      [100, 75, 50, 25, 0].map((p) => h("div", { class: "axe", style: `top:${(1 - p / 100) * 168}px` },
+      [100, 75, 50, 25, 0].map((p) => h("div", { class: "axe", style: `top:calc(${1 - p / 100} * (100% - 22px))` },
         h("span", {}, nombre(Math.round(max * p / 100))))),
       col.map((c) => {
         const plein = h("div", { class: "plein", style: "height:0" });
@@ -721,7 +830,9 @@ function ajusterAccueil(vue) {
   if (!accueil) return;
   accueil.querySelectorAll(".range").forEach((e) => e.classList.remove("range"));
   if (getComputedStyle(accueil).gridTemplateColumns.split(" ").length < 2) return;
-  const bas = vue.getBoundingClientRect().bottom - 8 + vue.scrollTop;  // the visible edge, not the padding
+  // The visible edge, padding included (3.67: a fixed 8 px let the left column run 7 px
+  // past the bottom of a low window, whose padding is 16).
+  const bas = vue.getBoundingClientRect().bottom - parseFloat(getComputedStyle(vue).paddingBottom) + vue.scrollTop;
   const apres = (col, sel, garder) => [...col.querySelectorAll(sel)].slice(garder).reverse();
   const [gauche, droite] = accueil.querySelectorAll(":scope > .colonne");
   const etapes = [
@@ -952,11 +1063,11 @@ ECRANS.offres = {
             onclick: () => { d.lignes.forEach((o) => (tous ? coches.delete(o.id) : coches.add(o.id))); relancer(); } })),
             ["Score", "Offre", ...cols.map(([, nom]) => nom)].map((t) => h("th", {}, t)))),
           h("tbody", {}, d.lignes.map((o) => h("tr", { onclick: () => ouvrirOffre(o.id), class: coches.has(o.id) ? "cochee" : "" },
-            h("td", { onclick: (e) => cocher(o.id, e) }, h("input", { type: "checkbox", class: "coche", checked: coches.has(o.id) })),
+            h("td", { onclick: (e) => cocher(o.id, e) }, h("input", { type: "checkbox", class: "coche", checked: coches.has(o.id), "aria-label": `Cocher : ${o.poste}` })),
             h("td", {}, h("span", { class: classeScore(o.fit), title: `Score ${nombre(o.fit)} sur 10` }, nombre(o.fit))),
             h("td", {}, h("div", { class: "cellule-offre" },
               h("div", {}, h("div", { class: "t", title: o.poste }, o.alerte ? h("span", { class: "alerte", title: o.signal }, o.alerte + " ") : null, o.poste),
-                h("div", { class: "s" }, o.entreprise)))),
+                h("div", { class: "s avec-logo" }, logoSource(o.source), h("span", { class: "coupe" }, o.entreprise))))),
             cols.map(([, , cellule]) => h("td", {}, cellule(o))))))))
         : h("div", { class: "vide" }, "Aucune offre ne correspond à ces filtres."),
         pagination(d, (p) => { f.page = p; relancer(); vue.scrollTop = 0; },
@@ -1368,7 +1479,7 @@ ONGLETS_SOURCES.recherche = async (vue) => {
           h("colgroup", {}, h("col", { style: "width:20%" }), h("col", { style: "width:14%" }), h("col", { style: "width:14%" }), h("col", { style: "width:30%" }), h("col", {})),
           h("thead", {}, h("tr", {}, ["Source", "Ramenées", "Nouvelles", "", "Dernier passage"].map((t) => h("th", {}, t)))),
           h("tbody", {}, s.rendement.map((r) => h("tr", {},
-            h("td", { style: "text-transform:capitalize" }, r.source), h("td", {}, nombre(r.ramenees)), h("td", {}, nombre(r.nouvelles)),
+            h("td", { style: "text-transform:capitalize" }, h("span", { class: "avec-logo" }, logoSource(r.source), r.source)), h("td", {}, nombre(r.ramenees)), h("td", {}, nombre(r.nouvelles)),
             h("td", {}, h("div", { class: "prog" }, h("i", { style: `width:${100 * r.nouvelles / max}%` }))),
             h("td", {}, `${dateFr(r.dernier)} `, r.verdict ? h("span", { class: r.verdict === "ok" ? "etiq gris" : "etiq" }, r.verdict) : null)))))
         : h("div", { class: "vide" }, "Pas encore de journal de rendement.")),
@@ -2205,7 +2316,11 @@ async function aller(nom) {
   if (!ECRANS[nom]) nom = "accueil";
   courant = nom;
   fermerTiroir();
-  for (const a of document.querySelectorAll(".menu a")) a.classList.toggle("actif", a.dataset.ecran === nom);
+  for (const a of document.querySelectorAll(".menu a")) {
+    a.classList.toggle("actif", a.dataset.ecran === nom);
+    if (a.dataset.ecran === nom) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
+  }
   const e = ECRANS[nom];
   $("titre").textContent = e.titre;
   $("actions").replaceChildren(...e.actions());
@@ -2265,8 +2380,10 @@ async function demarrer() {
   await appel("textes").then(chargerCatalogue).catch(() => { /* French */ });
   for (const a of document.querySelectorAll(".menu a[data-icone]")) {
     a.prepend(svg(a.dataset.icone));
-    a.addEventListener("click", () => aller(a.dataset.ecran));
+    a.href = `#${a.dataset.ecran}`;  // a link with an address: reached by Tab, opened by Enter
+    a.addEventListener("click", (e) => { e.preventDefault(); aller(a.dataset.ecran); });
   }
+  suivreTiroir();
   marqueProfil();
   $("menu").append(h("button", { class: "replier", title: "Replier ou déplier le menu", onclick: basculerMenu },
     svg("panneau"), h("span", {}, "Replier le menu")));
