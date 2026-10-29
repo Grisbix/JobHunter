@@ -141,7 +141,11 @@ def restaurer(nom: str, appliquer: bool = False, montrer: int = 15) -> int:
     textes_sauvegarde = _lire(s.descriptions) if s.descriptions else None
     if not isinstance(textes_sauvegarde, dict):
         textes_sauvegarde = {}
-    suivies = set(suivi_io.charger())
+    try:
+        suivies = set(suivi_io.charger(strict=True))
+    except suivi_io.SuiviIllisible as e:
+        print(f"{e} Restauration refusée : les candidatures doivent rester protégées.")
+        return 2
 
     if not appliquer:
         resultat, revenues, parties, gardees = plan(queue_io.charger(), anciennes, suivies)

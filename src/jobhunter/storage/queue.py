@@ -144,7 +144,10 @@ def charger(chemin: Chemin | None = None, descriptions: bool = True) -> list[Off
 
 
 def sauver(
-    offres: list[Offre], chemin: Chemin | None = None, _avant: dict[str, str] | None = None
+    offres: list[Offre],
+    chemin: Chemin | None = None,
+    _avant: dict[str, str] | None = None,
+    _purger: bool = True,
 ) -> None:
     """Atomic write, WITHOUT lock.
 
@@ -158,6 +161,8 @@ def sauver(
         _avant: the descriptions already read by the caller. `transaction` passes
             them on — without that, `sauver` reread the 8.8 MB that `charger` had just
             read, 63 ms thrown away at each write.
+        _purger: remove the orphan descriptions (False: the offers were not all loaded
+            with their text, an orphan cannot be told from a text not read).
     """
     p = Path(chemin or CHEMIN)
     _format.verifier_ecriture(p.parent)  # never over a newer JobHunter's data
@@ -183,7 +188,7 @@ def sauver(
         if t:
             textes[cle_o] = t
     purgees = textes
-    if _avant is None or avant:
+    if _purger and (_avant is None or avant):
         # purge of the orphans. Skipped when the caller did not read the annex
         # file (transaction descriptions=False): we could not tell
         # "orphan" from "not loaded", and we would erase everything.
@@ -260,7 +265,8 @@ def transaction(
         # A single read of the descriptions for the whole transaction: it
         # serves to reinject them on entry, THEN to know on exit whether they
         # changed. Rereading them in sauver cost 63 ms for nothing.
-        textes = _lire_descriptions() if (relire and descriptions and _est_la_file(p)) else {}
+        lues = relire and descriptions and _est_la_file(p)
+        textes = _lire_descriptions() if lues else {}
         offres = charger(p, descriptions=False) if relire else []
         if textes:
             for o in offres:
@@ -269,7 +275,18 @@ def transaction(
                     if t:
                         o["description"] = t
         yield offres
-        sauver(offres, p, _avant=textes)  # reached only if the block did not raise
+        # reached only if the block did not raise
+        if (
+            not lues
+            and _est_la_file(p)
+            and any((o.get("description") or "").strip() for o in offres)
+        ):
+            # A text set in a block that did not read the annex: merged INTO it. With the
+            # empty `textes`, the annex was rewritten with only the new texts — every
+            # other offer lost its posting (audit 2026-10-29).
+            sauver(offres, p, _avant=None, _purger=False)
+        else:
+            sauver(offres, p, _avant=textes)
     finally:
         if a_nous:
             verrou.rendre_verrou(p)

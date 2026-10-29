@@ -4,6 +4,20 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.70.0 — 2026-10-29
+
+Your data, safer: fixes from a full audit.
+
+- **Two writes at once no longer erase each other.** The window serves each click on its own thread; the lock was held per program, so two quick gestures could both write and the last one won. Each thread now waits its turn.
+- **An unreadable application log stops every deletion.** Before, it was read as « no application », and the closed-offer purge, the noise purge, sorting and restore could remove the very offers you applied to. Now they stop (or skip the purge) and say why.
+- **« Supprimer » and « Écarter » keep the offers you applied to**, with their posting; the message says how many were kept.
+- **Clearing a status keeps the note** and the sending record (it erased the whole entry).
+- **Errors show up.** A failed save in the window shows a message instead of a stuck button.
+- **Daily backup**: a copy cut short is completed the next run; the audit's own copies no longer push the daily ones out of the seven days.
+- **Postings' text**: a text added without reading the others no longer rewrites the file with only the new one.
+- **Collection**: one source that fails no longer loses the other sources of its pass; Welcome to the Jungle's closed-offer check stops when part of its sitemap is missing (all its offers looked withdrawn).
+- Dead code removed (an unused account-creation branch, an unreachable line).
+
 ## 3.69.0 — 2026-10-29
 
 Your data, when you uninstall.

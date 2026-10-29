@@ -471,9 +471,13 @@ const STATUTS = ["à postuler", "à vérifier", "postulé", "relancé", "entreti
 const majuscule = (s) => s[0].toUpperCase() + s.slice(1);
 
 // A call that writes: outside the application it only says so; an error becomes a toast.
+// A Python exception (corrupt file, full disk) rejects the call: a toast too, never a
+// silent half-done gesture (audit 2026-10-29).
 async function ecrire(nom, ...args) {
   if (!window.pywebview) { toast(HORS_APPLI, true); return null; }
-  const r = await window.pywebview.api[nom](...args);
+  let r;
+  try { r = await window.pywebview.api[nom](...args); }
+  catch (e) { toast(`Échec : ${(e && e.message) || e}`, true); return null; }
   if (r && r.ok === false) { toast(r.erreur || (r.erreurs || []).join(" · "), true); return null; }
   return r;
 }
@@ -540,11 +544,14 @@ async function ecarter(ids) {
   if (!motif) return;
   const r = await ecrire("ecarter", ids, motif);
   if (!r) return;
-  toast(`${r.retirees} offre(s) écartée(s) — « ${motif} ». ${r.exclusions} nouvelle(s) exclusion(s).`);
+  toast(`${r.retirees} offre(s) écartée(s) — « ${motif} ». ${r.exclusions} nouvelle(s) exclusion(s).${gardees(r)}`);
   coches.clear();
   fermerTiroir();
   redessiner();
 }
+
+// Offers with an application stay in the queue with their posting (the server keeps them).
+const gardees = (r) => (r.gardees ? ` ${r.gardees} gardée(s) : elles ont une candidature.` : "");
 
 async function supprimer(ids) {
   const ok = await dialogue(`Supprimer ${ids.length} offre${ids.length > 1 ? "s" : ""} ?`,
@@ -553,7 +560,7 @@ async function supprimer(ids) {
   if (!ok) return;
   const r = await ecrire("supprimer", ids);
   if (!r) return;
-  toast(`${r.n} offre(s) supprimée(s) — copie : _corbeille/${r.copie}`);
+  toast(`${r.n} offre(s) supprimée(s) — copie : _corbeille/${r.copie}${gardees(r)}`);
   coches.clear();
   fermerTiroir();
   redessiner();
@@ -1319,7 +1326,9 @@ function barreEnregistrer(enregistrer) {
   b.onclick = async () => {
     b.disabled = true;
     msg.textContent = "Enregistrement…";
-    const r = await enregistrer();
+    let r = null;
+    try { r = await enregistrer(); }
+    catch (e) { r = { ok: false, erreur: `Échec : ${(e && e.message) || e}` }; }
     if (r && r.ok) {
       msg.textContent = r.message || "Enregistré.";
     } else {
@@ -2218,8 +2227,10 @@ async function verifierMaj(ev) {
   if (!window.pywebview) return toast(HORS_APPLI, true);
   const b = ev && ev.currentTarget;
   if (b) b.disabled = true;
-  const v = await window.pywebview.api.mise_a_jour();
-  if (b) b.disabled = false;
+  let v = {};
+  try { v = (await window.pywebview.api.mise_a_jour()) || {}; }
+  catch (e) { v = {}; }
+  finally { if (b) b.disabled = false; }
   if (!v.derniere) return toast("GitHub injoignable : réessaie plus tard.", true);
   if (v.store) return toast(v.nouvelle
     ? `Version ${v.derniere} publiée ; installée : ${v.installee}. Le Microsoft Store l'installe de lui-même dans les jours qui viennent.`

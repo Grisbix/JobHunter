@@ -803,7 +803,6 @@ def main():
                             login_flow,
                             retry,
                             smart_step,
-                            switch_to_register,
                         )
 
                         ck = dismiss_cookies(page)
@@ -880,29 +879,19 @@ def main():
                         elif r["status"] == "ok":
                             print(f"  ✅ nav: {r['kind']} ({r['note']})")
                             if r["kind"] == "login":
-                                # #auth: applying = often NO account -> tries switching to creation
+                                # #auth: the email is filled in, never a password nor a new account
                                 auth = getattr(args, "auth", "auto")
-                                switched = False
-                                if False:  # account creation: never automatic (project rule)
-                                    sw = retry(
-                                        page,
-                                        lambda: switch_to_register(page),
-                                        lambda x: x.get("switched"),
-                                        3,
-                                    )
-                                    if sw.get("switched") and sw.get("kind") == "register":
-                                        print(
-                                            f"     ➡️  bascule INSCRIPTION : '{sw.get('label', '')}' → email+mdp+confirm+CGU auto, captcha=toi"
-                                        )
-                                        switched = True
-                                if not switched and auth != "register":
+                                if auth != "register":
                                     # Login: the email only, the password stays the user's.
                                     lg = login_flow(page, PROFILE.get("email", ""), "")
                                     print(f"     🔑 login 2-étapes : {len(lg['steps'])} étape(s)")
-                                elif not switched:
-                                    print("     ⚠️  pas de bouton inscription trouvé — à la main")
+                                else:
+                                    # Never an account created by the program (project rule).
+                                    print("     ⚠️  création de compte : à toi, à la main")
                             elif r["kind"] == "register":
-                                print("     inscription : email+mdp+confirm+CGU auto, captcha=toi")
+                                print(
+                                    "     inscription : à toi (aucun compte créé par le programme)"
+                                )
                         else:
                             print(f"  🔁 nav: {r['note']} (kind={r['kind']})")
                     except Exception as e:

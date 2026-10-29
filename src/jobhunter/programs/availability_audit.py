@@ -350,9 +350,14 @@ def _wtj_urls():
             idx = lire(client, WTJ_SITEMAP)
             for f in re.findall(r"<loc>([^<]+)</loc>", idx):
                 if "job-listings" in f:
+                    page = lire(client, f)
+                    if not page:
+                        # One part missing: its offers would all look withdrawn (audit
+                        # 2026-10-29). Nothing judged from an incomplete list.
+                        print("  ~ WTJ : une partie du sitemap manque, contrôle sauté")
+                        return None
                     urls.update(
-                        u.rstrip("/").lower()
-                        for u in re.findall(r"<loc>([^<]+)</loc>", lire(client, f))
+                        u.rstrip("/").lower() for u in re.findall(r"<loc>([^<]+)</loc>", page)
                     )
     except Exception as e:
         print(f"  ~ WTJ : sitemap illisible ({type(e).__name__})")
@@ -486,7 +491,7 @@ def supprimer(etat, age_max, aujourd_hui, copier=True, absente_jours=30):
         for f in ("apply_queue.json", "descriptions.json"):
             if (HERE / f).exists():
                 backups.ecrire(HERE / f, copie)
-    suivi = suivi_io.charger()
+    suivi = suivi_io.charger(strict=True)  # unreadable: stop, never purge blind
     motifs = collections.Counter()
     with queue_io.transaction(descriptions=False) as q:
         absente = None

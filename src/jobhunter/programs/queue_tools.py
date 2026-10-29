@@ -99,7 +99,7 @@ def prune(path=QUEUE, drop=("MORT",), verbose=True):
     Run mark_dead BEFORE. Reversible: queue regenerable through build_queue + git backup."""
     # Tracked offers NEVER leave: a posting closes after one applied,
     # and that is precisely the one we want to keep (invariant of AGENTS.md).
-    suivies = set(suivi_io.charger())
+    suivies = set(suivi_io.charger(strict=True))
     with queue_io.transaction(path, descriptions=False) as rows:
         before = len(rows)
         rows[:] = [

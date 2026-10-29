@@ -103,7 +103,10 @@ def empreinte(texte: str) -> str:
         return ""
     poids = [0] * 64
     for i in range(len(mots) - 2):
-        h = int.from_bytes(hashlib.sha1(" ".join(mots[i : i + 3]).encode()).digest()[:8], "big")
+        h = int.from_bytes(
+            hashlib.sha1(" ".join(mots[i : i + 3]).encode(), usedforsecurity=False).digest()[:8],
+            "big",
+        )
         for b in range(64):
             poids[b] += 1 if (h >> (63 - b)) & 1 else -1
     v = 0

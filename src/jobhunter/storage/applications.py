@@ -57,19 +57,25 @@ class VerrouIndisponible(RuntimeError):
     """Another program is modifying the tracker and did not release it in time."""
 
 
-def charger(chemin: Chemin | None = None) -> Suivi:
+def charger(chemin: Chemin | None = None, strict: bool = False) -> Suivi:
     """The tracker, read only.
 
     Args:
         chemin: the file; None = `Scripts/suivi.json` of the data folder.
+        strict: raise SuiviIllisible instead of returning {} when the file exists
+            but cannot be read. Every deletion guard reads strictly: an unreadable
+            tracker read as « no application » let a purge remove the very offers
+            applied to (audit 2026-10-29).
 
     Returns:
         The applications by offer identity; empty dict if the file is missing
-        or unreadable.
+        (or unreadable, when not strict).
     """
     try:
         return _lire(Path(chemin or CHEMIN))
     except SuiviIllisible:
+        if strict:
+            raise
         return {}
 
 

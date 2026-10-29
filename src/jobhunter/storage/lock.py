@@ -20,6 +20,7 @@ Decision: docs/adr/0003-file-lock-exit-code-3.md
 import atexit as _atexit
 import os
 import sys
+import threading as _threading
 import time as _time
 from pathlib import Path
 
@@ -28,7 +29,14 @@ from jobhunter import log as _journal
 _log = _journal.journal(__name__)
 
 
-_TENUS: dict[str, bool] = {}
+# Who holds each lock in this process: the thread that took it, or _PROCESSUS for a
+# lock kept for the whole run (`garder`), which every thread of the program shares.
+# The web window serves each page call on its own thread: with one flag per process,
+# a second thread saw the lock « already ours », skipped it, and the last of two
+# writes erased the other (audit 2026-10-29: an offer's status lost, no error).
+_PROCESSUS = 0
+_TENUS: dict[str, int] = {}
+_GARDE = _threading.Lock()
 
 Chemin = str | os.PathLike[str]
 
@@ -114,21 +122,32 @@ def prendre_verrou(
         True if the lock is obtained, False otherwise.
     """
     v = _fverrou(path)
+    cle, moi = str(v), _threading.get_ident()
     # Reentrance: a program that already holds the lock must not block
-    # itself if a called function asks for it again.
-    if _TENUS.get(str(v)):
+    # itself if a called function asks for it again (same thread, or `garder`).
+    if _TENUS.get(cle) in (_PROCESSUS, moi):
         return True
     fin = _time.time() + attente
     prevenu = False
     while True:
-        try:
-            fd = os.open(str(v), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-            os.write(fd, f"{os.getpid()} {_time.time():.0f}".encode())
-            os.close(fd)
-            _TENUS[str(v)] = True
-            return True
-        except FileExistsError:
-            pass
+        with _GARDE:
+            soeur = cle in _TENUS
+            if not soeur:
+                try:
+                    fd = os.open(cle, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+                    os.write(fd, f"{os.getpid()} {_time.time():.0f}".encode())
+                    os.close(fd)
+                    _TENUS[cle] = moi
+                    return True
+                except FileExistsError:
+                    pass
+        if soeur:
+            # Another thread of this process holds it: wait for it like for another
+            # program, never through the file (its PID is alive: ours).
+            if _time.time() >= fin:
+                return False
+            _time.sleep(0.05)
+            continue
         try:
             age = _time.time() - v.stat().st_mtime
         except FileNotFoundError:
@@ -205,7 +224,7 @@ def tenu(path: Chemin) -> bool:
     Returns:
         True if this process holds the lock.
     """
-    return bool(_TENUS.get(str(_fverrou(path))))
+    return _TENUS.get(str(_fverrou(path))) in (_PROCESSUS, _threading.get_ident())
 
 
 def rendre_verrou(path: Chemin) -> None:
@@ -215,7 +234,10 @@ def rendre_verrou(path: Chemin) -> None:
         path: the protected file.
     """
     v = _fverrou(path)
-    if _TENUS.pop(str(v), None):
+    with _GARDE:
+        if _TENUS.get(str(v)) not in (_PROCESSUS, _threading.get_ident()):
+            return  # not ours, or another thread's: never released from here
+        del _TENUS[str(v)]
         try:
             v.unlink()
         except FileNotFoundError:
@@ -236,7 +258,10 @@ def garder(path: Chemin, attente: float = 180) -> bool:
     Returns:
         True if the lock is taken for the rest of the process.
     """
-    if not prendre_verrou(path, attente=attente):
+    if prendre_verrou(path, attente=attente):
+        # Kept for the whole run: shared by the program's threads, released at exit.
+        _TENUS[str(_fverrou(path))] = _PROCESSUS
+    else:
         _log.info(
             f"✗ {Path(path).name} est deja en cours de modification par un autre"
             f" programme. Rien n'a ete touche — relance quand il aura fini."

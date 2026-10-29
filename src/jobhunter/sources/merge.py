@@ -215,14 +215,22 @@ def _merge_into_queue(
     # Design Intern" applied to then purged by an empty merge).
     from jobhunter.storage import applications as suivi_io
 
-    suivies = set(suivi_io.charger())
+    try:
+        suivies: set[str] | None = set(suivi_io.charger(strict=True))
+    except suivi_io.SuiviIllisible as illisible:
+        # Unreadable tracker: no purge today rather than one blind to the applications.
+        print(f"  ! {illisible} Purge du bruit sautée.")
+        suivies = None
     before = len(q)
-    q = [
-        x
-        for x in q
-        if queue_io.oid(x) in suivies
-        or not (str(x.get("statut", "")).startswith("Scan ") and not title_ok(x.get("poste", "")))
-    ]
+    if suivies is not None:
+        q = [
+            x
+            for x in q
+            if queue_io.oid(x) in suivies
+            or not (
+                str(x.get("statut", "")).startswith("Scan ") and not title_ok(x.get("poste", ""))
+            )
+        ]
     purged = before - len(q)
     idx = {_norm(x.get("entreprise", "")) + "|" + _norm(x.get("poste", "")): x for x in q}
     have_url = {_norm_url(x.get("url")) for x in q if x.get("url")}

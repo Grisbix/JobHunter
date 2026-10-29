@@ -553,7 +553,7 @@ def main() -> int:
         QUEUE
     )  # descriptions: outils_techniques reads them
     proteges = (
-        set(importlib.import_module("jobhunter.storage.applications").charger(SUIVI))
+        set(importlib.import_module("jobhunter.storage.applications").charger(SUIVI, strict=True))
         if SUIVI.exists()
         else set()
     )

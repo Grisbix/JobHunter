@@ -21,6 +21,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
+from jobhunter.storage.applications import SuiviIllisible as _SuiviIllisible
 from jobhunter.web.background import FondApi
 from jobhunter.web.guided import CandidatureApi
 from jobhunter.web.panels import PanneauxApi
@@ -644,6 +645,22 @@ def _lieu(e: Any) -> Any:
             "lieux": _textes(e.get("lieux")) or [str(e.get("libelle") or e["cle"]).strip()],
         }
     return None
+
+
+_GARDEES = "Ces offres ont une candidature : elles restent dans la file avec leur annonce."
+
+
+def _hors_suivi(oids: set[str]) -> tuple[set[str], int]:
+    """The offers that may leave the queue, and how many are kept for their application.
+
+    An applied offer keeps its posting in the queue (AGENTS.md invariant): removing it by
+    hand cut the application from its text and its documents (audit 2026-10-29).
+    Raises SuiviIllisible when the tracker cannot be read: nothing leaves blind.
+    """
+    from jobhunter.storage import applications
+
+    suivies = set(applications.charger(strict=True))
+    return oids - suivies, len(oids & suivies)
 
 
 def _ecrire_json(f: Path, donnees: Any) -> None:
@@ -1330,6 +1347,8 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
             ecrit = mail_statuses.appliquer(self._propositions[int(i)], attente=3)
         except applications.VerrouIndisponible:
             return {"ok": False, "erreur": "Suivi occupé : réessaie dans un instant."}
+        except applications.SuiviIllisible as e:
+            return {"ok": False, "erreur": str(e)}
         if not ecrit:
             return {"ok": False, "erreur": "Le suivi a changé entre-temps : rien écrit."}
         return {"ok": True}
@@ -1365,6 +1384,8 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
                 "ok": False,
                 "erreur": "Un autre programme écrit le suivi : réessaie dans un instant.",
             }
+        except applications.SuiviIllisible as e:
+            return {"ok": False, "erreur": str(e)}
         self._annuler.append(list(geste))
         del self._annuler[:-50]
         return {"ok": True, "n": len(geste)}
@@ -1392,7 +1413,9 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
     def marquer(self, ident: str | list[str], statut: str) -> dict[str, Any]:
         """Sets the status of one or several applications; "" clears it (undoable).
 
-        The date is today's when the status changes; the note and the rest stay.
+        The date is today's when the status changes; the note and the rest stay,
+        also when the status is cleared (it erased the whole entry, note and
+        sending record included: audit 2026-10-29).
         """
         idents = [ident] if isinstance(ident, str) else [str(x) for x in ident or []]
         if statut and statut not in STATUTS:
@@ -1403,7 +1426,9 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
 
         def changer(rec: dict[str, Any]) -> dict[str, Any]:
             if not statut:
-                return {}
+                rec.pop("s", None)
+                rec.pop("d", None)
+                return rec if any(v for v in rec.values()) else {}
             if rec.get("s") != statut:
                 rec["d"] = jour
             rec["s"] = statut
@@ -1455,6 +1480,8 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
                 "ok": False,
                 "erreur": "Un autre programme écrit le suivi : réessaie dans un instant.",
             }
+        except applications.SuiviIllisible as e:
+            return {"ok": False, "erreur": str(e)}
         self._annuler.append([(ident, avant)])
         self._garder_annonces([ident], "postulé")
         return {"ok": True}
@@ -1479,6 +1506,9 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         except applications.VerrouIndisponible:
             self._annuler.append(geste)
             return {"ok": False, "erreur": "Suivi occupé : réessaie dans un instant."}
+        except applications.SuiviIllisible as e:
+            self._annuler.append(geste)
+            return {"ok": False, "erreur": str(e)}
         return {"ok": True, "n": len(geste)}
 
     def motifs(self) -> list[str]:
@@ -1501,6 +1531,12 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         if not motif or not oids:
             return {"ok": False, "erreur": "il faut des offres et un motif"}
         try:
+            oids, gardees = _hors_suivi(oids)
+        except _SuiviIllisible as e:
+            return {"ok": False, "erreur": str(e)}
+        if not oids:
+            return {"ok": False, "erreur": _GARDEES}
+        try:
             with queue_io.transaction(attente=20) as file:
                 n_exc = exclusions.ajouter([o for o in file if queue_io.oid(o) in oids], motif)
                 avant = len(file)
@@ -1511,7 +1547,7 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
                 "ok": False,
                 "erreur": "Un autre programme modifie la file : réessaie dans un instant.",
             }
-        return {"ok": True, "retirees": retirees, "exclusions": n_exc}
+        return {"ok": True, "retirees": retirees, "exclusions": n_exc, "gardees": gardees}
 
     def supprimer(self, idents: list[str]) -> dict[str, Any]:
         """Removes offers from the queue after a dated copy in _corbeille/ (nothing lost)."""
@@ -1521,6 +1557,12 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         oids = {str(x) for x in idents or []}
         if not oids:
             return {"ok": False, "erreur": "aucune offre"}
+        try:
+            oids, gardees = _hors_suivi(oids)
+        except _SuiviIllisible as e:
+            return {"ok": False, "erreur": str(e)}
+        if not oids:
+            return {"ok": False, "erreur": _GARDEES}
         corbeille = root.scripts() / "_corbeille"
         try:
             with queue_io.transaction(attente=20) as file:
@@ -1537,7 +1579,7 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
             }
         except OSError as e:
             return {"ok": False, "erreur": f"copie impossible, rien supprimé : {e}"}
-        return {"ok": True, "n": len(partantes), "copie": f.name}
+        return {"ok": True, "n": len(partantes), "copie": f.name, "gardees": gardees}
 
     def ajouter_offre(self, url: str) -> dict[str, Any]:
         """Analyses a pasted offer link (add_offer) and adds it to the queue."""

@@ -151,16 +151,28 @@ def sauvegarder(garder=7):
         # trial, a manual rerun) copied the queue already modified over
         # the morning's: on 2026-10-02, the 18:55 trial replaced the state
         # from before the audit that had just removed 1486 offers.
-        if backups.fichier(cible, "apply_queue.json"):
-            return cible
+        # A copy cut short (a crash, a full disk) has the queue but not the rest: the
+        # missing files are completed, the ones there are never replaced (audit
+        # 2026-10-29: the day's tracker was missing and never copied again).
         cible.mkdir(parents=True, exist_ok=True)
         for nom in _A_SAUVER:
             src = SCRIPTS / nom
-            if src.exists():
+            if src.exists() and not backups.fichier(cible, nom):
                 backups.ecrire(src, cible)
-        # The name is an ISO date: alphabetical order is chronological.
-        for vieux in sorted(p for p in base.iterdir() if p.is_dir())[:-garder]:
+        # The name is an ISO date: alphabetical order is chronological. Only the daily
+        # folders count: the copies `<date>_avant_audit` / `_avant_restauration` live
+        # here too, and counted among the seven they pushed out the daily ones.
+        jours = sorted(
+            p for p in base.iterdir() if p.is_dir() and re.fullmatch(r"\d{4}-\d{2}-\d{2}", p.name)
+        )
+        for vieux in jours[:-garder]:
             shutil.rmtree(vieux, ignore_errors=True)
+        # The audit and restore copies follow the day they were taken.
+        if len(jours) > garder:
+            doyen = jours[-garder].name
+            for p in base.iterdir():
+                if p.is_dir() and p.name[:10] < doyen and p.name[10:11] == "_":
+                    shutil.rmtree(p, ignore_errors=True)
         # The backups made before 3.61, plain: compressed once, as they are met.
         for d in base.iterdir():
             if d.is_dir():

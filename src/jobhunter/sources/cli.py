@@ -483,7 +483,13 @@ def main() -> int:
     fresh = []
     for titre, nom, fn, kw in etapes:
         print(titre)
-        fresh += _rendement.mesurer(nom, fn, **kw)
+        try:
+            fresh += _rendement.mesurer(nom, fn, **kw)
+        except Exception as e:  # noqa: BLE001 — one source's failure never loses the others
+            # Before: an exception from any source ended the pass, and the offers of
+            # the sources already run were never merged (audit 2026-10-29).
+            print(f"  ! {nom} : {type(e).__name__}: {e} — source sautée, les autres continuent")
+            _commun.INCIDENTS.noter(nom, type(e).__name__)
 
     uniq = dedoublonner(fresh)
     # --dry writes NOTHING, not even the scan: it does not hold the lock of

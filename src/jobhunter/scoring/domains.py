@@ -69,14 +69,13 @@ def classify_domaine(title: str) -> str:
     for cle, rx in _DOMAINES_RX[:-1]:
         if rx is not None and rx.search(t):
             return cle
-    return _DOMAINES_RX[-1][0]
     # NEUTRAL DEFAULT. It used to be "ESG_Finance_Durable", so that 2151 offers
     # out of 2818 carried this domain WITHOUT any ESG keyword in their title:
     # « Analyste DSI », « Financial Controller », « Business Analyst ». Elles
     # received the ESG CV and, since the per-domain bases, a letter that
     # opens on sustainable finance — in front of an oil company, it
     # misses the point. The domain must describe the OFFER, not the user's target.
-    return "Finance"
+    return _DOMAINES_RX[-1][0]
 
 
 def matches_esg_finance(title: str) -> bool:
