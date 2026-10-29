@@ -32,10 +32,11 @@ def test_install_bat_fait_le_raccourci():
 
 
 def test_le_readme_montre_le_logo():
+    # Since 3.66, the logo with its name, light or dark with GitHub's theme.
     for nom in ("README.md", "README.fr.md"):
-        assert "src/jobhunter/app/assets/jobhunter.png" in (RACINE / nom).read_text(
-            encoding="utf-8"
-        )
+        texte = (RACINE / nom).read_text(encoding="utf-8")
+        assert "docs/brand/jobhunter-stacked-light.svg" in texte
+        assert "docs/brand/jobhunter-stacked-dark.svg" in texte
 
 
 def test_la_cible_lance_jobhunter_pyw_sans_console(monkeypatch, tmp_path):

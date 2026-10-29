@@ -4,6 +4,14 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.66.0 — 2026-10-29
+
+A new logo: a target with a check, indigo and coral — the offer that fits.
+
+- **One drawing, every form**: `tools/brand.py` writes the app icon (`.ico` from 16 to 256 px, the window's and the web page's PNG, so the MSIX and Store tiles too) and, in `docs/brand/`, the SVGs: the tile, the mark alone for light and dark backgrounds and in one colour, the name under or beside the mark. The name is drawn as outlines, the same everywhere without the font.
+- **README**: the logo with its name, light or dark with GitHub's theme.
+- `docs/brand/store-300.png`: the Store listing's logo, for Partner Center.
+
 ## 3.65.0 — 2026-10-28
 
 Relances and Statistiques hold in the window when they open, like Candidatures.

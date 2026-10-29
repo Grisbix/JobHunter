@@ -1,8 +1,9 @@
 <div align="center">
 
-<img src="src/jobhunter/app/assets/jobhunter.png" alt="" width="96">
-
-# JobHunter
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/brand/jobhunter-stacked-dark.svg">
+  <img src="docs/brand/jobhunter-stacked-light.svg" alt="JobHunter" width="180">
+</picture>
 
 **Your job search, prepared every morning — and the final click stays yours.**
 
