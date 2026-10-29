@@ -1,7 +1,8 @@
 # 0015 — An MSIX package for the Microsoft Store
 
-Date: 2026-10-27. Status: accepted; the Store listing waits for the author's
-Partner Center account.
+Date: 2026-10-27. Status: accepted. Live on the Store since 2026-10-29
+(Store ID 9NZRC274B820, first certified version 3.44.0); the CI's `store` job is on
+and sent 3.65.0 the same day.
 
 ## Context
 

@@ -20,6 +20,8 @@ short message for each one. It runs on your computer. It never sends an applicat
 
 <a href="https://github.com/Grisbix/JobHunter/releases/latest/download/JobHunterSetup.exe"><img alt="Download the Windows installer" src="https://img.shields.io/badge/Download-JobHunterSetup.exe-2563eb?style=for-the-badge&logo=windows&logoColor=white"></a>
 &nbsp;
+<a href="https://apps.microsoft.com/detail/9NZRC274B820"><img alt="Get it from the Microsoft Store" src="https://img.shields.io/badge/Microsoft%20Store-JobHunter-0f766e?style=for-the-badge&logo=microsoftstore&logoColor=white"></a>
+&nbsp;
 <a href="#from-source"><img alt="Source code" src="https://img.shields.io/badge/Source%20code-customise-334155?style=for-the-badge&logo=github&logoColor=white"></a>
 
 <sub>Windows 10/11 · no Python, no administrator rights · interface in English, French, German or Spanish · your data stays in <code>Documents\JobHunter</code></sub>
@@ -96,7 +98,9 @@ rate-limited, or refused — an empty day is never mistaken for a quiet one.
 
 1. **Download [`JobHunterSetup.exe`](https://github.com/Grisbix/JobHunter/releases/latest/download/JobHunterSetup.exe)**
    and run it. No Python, no administrator rights: JobHunter installs for you only and adds
-   a Start menu shortcut.
+   a Start menu shortcut. Or install it from the
+   [**Microsoft Store**](https://apps.microsoft.com/detail/9NZRC274B820): same app, updated
+   by the Store (each new version reaches it after Microsoft's certification).
 2. **On first launch**, pick your CV (`.docx` preferred): JobHunter reads it and asks five
    questions (target jobs, experience, cities, grammatical gender for French letters, sector).
 3. **Click “Actualiser les offres”** (refresh offers): collection, scoring and documents all
