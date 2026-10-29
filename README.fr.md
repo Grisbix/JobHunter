@@ -21,6 +21,8 @@ jamais de candidature.
 
 <a href="https://github.com/Grisbix/JobHunter/releases/latest/download/JobHunterSetup.exe"><img alt="Télécharger l'installateur pour Windows" src="https://img.shields.io/badge/T%C3%A9l%C3%A9charger-JobHunterSetup.exe-2563eb?style=for-the-badge&logo=windows&logoColor=white"></a>
 &nbsp;
+<a href="https://apps.microsoft.com/detail/9NZRC274B820"><img alt="Disponible sur le Microsoft Store" src="https://img.shields.io/badge/Microsoft%20Store-JobHunter-0f766e?style=for-the-badge&logo=microsoftstore&logoColor=white"></a>
+&nbsp;
 <a href="#depuis-le-code-source-windows"><img alt="Code source" src="https://img.shields.io/badge/Code%20source-personnaliser-334155?style=for-the-badge&logo=github&logoColor=white"></a>
 
 <sub>Windows 10/11 · sans Python ni droits d'administrateur · interface en français, anglais, allemand ou espagnol · tes données restent dans <code>Documents\JobHunter</code></sub>
@@ -104,7 +106,10 @@ avec une journée calme.
 
 1. **Télécharge [`JobHunterSetup.exe`](https://github.com/Grisbix/JobHunter/releases/latest/download/JobHunterSetup.exe)**
    et lance-le. Pas de Python à installer, pas de droits d'administrateur : JobHunter
-   s'installe pour toi seul et ajoute un raccourci au menu Démarrer.
+   s'installe pour toi seul et ajoute un raccourci au menu Démarrer. Ou installe-le depuis
+   le [**Microsoft Store**](https://apps.microsoft.com/detail/9NZRC274B820) : même
+   application, mise à jour par le Store (chaque version y arrive après la certification de
+   Microsoft).
 2. **Au premier lancement**, choisis ton CV (`.docx` de préférence) : JobHunter le lit et
    pose cinq questions (métiers visés, expérience, villes, accords, secteur).
 3. **Clique sur « Actualiser les offres »** : la collecte, la note et les documents se font
