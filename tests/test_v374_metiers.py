@@ -153,7 +153,7 @@ def test_interface():
     assert "async function carteMetiers()" in JS and "async function profilAvance()" in JS
     assert 'bouton("Profil avancé", "doc", profilAvance)' in JS
     assert 'carte("Domaines visés"' not in JS
-    assert "return [lettre];" in JS
+    assert "function phrase(m)" in JS  # 3.75: the letter card went into the trades
     assert "body.relais::after" in CSS
 
 

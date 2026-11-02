@@ -198,7 +198,7 @@ def statistiques(
     e = funnel.entonnoir(sv, {queue_io.oid(o): o for o in q})
     cartes = [
         ("Offres en ligne", len(ok)),
-        ("Fit ≥ 8", len(top)),
+        ("Score ≥ 8", len(top)),
         ("Dossiers prêts", len(pretes)),
         ("Candidatures envoyées", e["envoyees"]),
         ("Réponses", e["reponses"]),
@@ -232,7 +232,7 @@ def statistiques(
         return sorted(d.items(), key=lambda x: -x[1])
 
     section(
-        "Sur les offres à fit ≥ 8",
+        "Sur les offres à score ≥ 8",
         [
             ("dossiers prêts (CV, lettre, lien vérifié)", len(pretes)),
             ("sans CV ou lettre", len(sans_doc)),
@@ -260,7 +260,7 @@ def statistiques(
             },
         }
     fits = [(f"fit {i}", sum(1 for o in ok if (o.get("fit") or 0) == i)) for i in range(10, 0, -1)]
-    section("Fit des offres en ligne", [p for p in fits if p[1]], base=len(ok))
+    section("Score des offres en ligne", [p for p in fits if p[1]], base=len(ok))
     libelles = {d["cle"]: str(d.get("libelle") or d["cle"]) for d in profile.domaines()}
     par_domaine: dict[str, int] = {}
     for v, n in compte("domaine", ok):
@@ -365,7 +365,7 @@ class PanneauxApi:
 
         cle = api_keys.CLES.get(nom)
         if cle is None:
-            return {"ok": False, "erreur": "accès libre, aucune clé à saisir."}
+            return {"ok": False, "erreur": "Accès libre, aucune clé à saisir."}
         return {
             "ok": True,
             "libelle": cle.libelle,
@@ -383,7 +383,7 @@ class PanneauxApi:
         from jobhunter import api_keys, root
 
         if nom not in api_keys.CLES:
-            return {"ok": False, "erreur": "source inconnue"}
+            return {"ok": False, "erreur": "Source inconnue"}
         propres = {str(k): str(v or "").strip() for k, v in (valeurs or {}).items()}
         try:
             api_keys.enregistrer(root.dossier_cles(), nom, propres)
@@ -397,7 +397,7 @@ class PanneauxApi:
         from jobhunter.sources import connexion
 
         if nom not in api_keys.CLES:
-            return {"ok": False, "erreur": "accès libre, aucune clé à saisir."}
+            return {"ok": False, "erreur": "Accès libre, aucune clé à saisir."}
         try:
             r = connexion.tester(nom)
             etat, detail = r.etat, r.detail
@@ -416,7 +416,7 @@ class PanneauxApi:
         from jobhunter.sources import source_yield as rendement
 
         if nom not in inventory.DRAPEAUX_COLLECTE:
-            return {"ok": False, "erreur": "source inconnue"}
+            return {"ok": False, "erreur": "Source inconnue"}
         journal = rendement.lire_journal(root.dans(root.scripts(), "_rendement.jsonl"))
         fichiers = {c.fichier: c.nom for c in api_keys.CLES.values()}
         e = next(
@@ -455,7 +455,7 @@ class PanneauxApi:
         from jobhunter.programs import access
 
         if not verifier and site not in access.SITES_CONNEXION:
-            return {"ok": False, "erreur": "site inconnu"}
+            return {"ok": False, "erreur": "Site inconnu"}
         args = ["--check"] if verifier else ["--open", site]
         subprocess.Popen(  # nosec B603 : our own program, arguments from a fixed list
             [frozen.interpreteur(), "-m", "jobhunter.programs.access", *args],
@@ -698,11 +698,11 @@ class PanneauxApi:
 
         v = str(texte or "").strip()
         if not v.startswith("http"):
-            return {"ok": False, "erreur": "une adresse http, ou cherche le nom dans l'annuaire"}
+            return {"ok": False, "erreur": "Une adresse http, ou cherche le nom dans l'annuaire"}
         if _est_board(v):
             return {
                 "ok": False,
-                "erreur": "c'est un site d'offres général : ajoute-le dans « Sites d'offres »",
+                "erreur": "C'est un site d'offres général : ajoute-le dans « Sites d'offres »",
             }
         trouve = inventory.flux_depuis_url(v)
         if trouve:
@@ -712,7 +712,7 @@ class PanneauxApi:
             return {"ok": True, "message": msg}
         f, urls = self._sites()
         if v in urls:
-            return {"ok": False, "erreur": "déjà suivi"}
+            return {"ok": False, "erreur": "Déjà suivi"}
         f.write_text(("\n".join([*urls, v])).strip() + "\n", encoding="utf-8")
         return {"ok": True, "message": f"site carrière ajouté, lu par le navigateur : {v}"}
 
@@ -748,11 +748,11 @@ class PanneauxApi:
 
             trouve = ("workday", directory.workday_de_jeton(jeton))
             if discovery.offres_ouvertes(trouve) == 0:
-                return {"ok": False, "erreur": "ce site Workday n'a aucune offre ouverte"}
+                return {"ok": False, "erreur": "Ce site Workday n'a aucune offre ouverte"}
         elif outil in directory.SUIVABLES and re.fullmatch(r"[\w.-]+", str(jeton or "")):
             trouve = (outil, jeton)
         else:
-            return {"ok": False, "erreur": "entrée d'annuaire invalide"}
+            return {"ok": False, "erreur": "Entrée d'annuaire invalide"}
         f, c = self._cfg_sources()
         msg = inventory.ajouter_flux(c, self._defauts(), trouve)
         _ecrire_json(f, c)
@@ -767,7 +767,7 @@ class PanneauxApi:
 
         fl = self._trouver_flux(ident)
         if fl is None:
-            return {"ok": False, "erreur": "entreprise introuvable"}
+            return {"ok": False, "erreur": "Entreprise introuvable"}
         if fl.outil == "site":
             f, urls = self._sites()
             f.write_text("\n".join(u for u in urls if u != fl.cle).strip() + "\n", encoding="utf-8")
@@ -789,7 +789,7 @@ class PanneauxApi:
                     }
                 return {
                     "ok": False,
-                    "erreur": f"{fl.nom} : flux introuvable dans sources_config.json",
+                    "erreur": f"{fl.nom} : son adresse de collecte est introuvable.",
                 }
             # Removed by the user: the engine (sources.company_sites) never follows it again.
             cle = feeds.cle(fl.outil, fl.cle)
@@ -804,7 +804,7 @@ class PanneauxApi:
 
         fl = self._trouver_flux(ident)
         if fl is None:
-            return {"ok": False, "erreur": "entreprise introuvable"}
+            return {"ok": False, "erreur": "Entreprise introuvable"}
         if fl.outil == "site":
             return {
                 "ok": False,
@@ -842,7 +842,7 @@ class PanneauxApi:
 
         liste = company_lists.par_ident(str(ident or ""))
         if liste is None:
-            return {"ok": False, "erreur": "liste inconnue"}
+            return {"ok": False, "erreur": "Liste inconnue"}
         f, c = self._cfg_sources()
         company_lists.activer(c, liste.ident, bool(oui))
         _ecrire_json(f, c)
@@ -856,7 +856,7 @@ class PanneauxApi:
         if not re.fullmatch(r"[\w.|-]+", str(outil or "")) or not re.fullmatch(
             r"[\w.|-]+", str(cle or "")
         ):
-            return {"ok": False, "erreur": "entreprise invalide"}
+            return {"ok": False, "erreur": "Entreprise invalide"}
         f, c = self._cfg_sources()
         feeds.suspendre(c, feeds.cle(outil, cle), not oui)
         _ecrire_json(f, c)
@@ -892,17 +892,17 @@ class PanneauxApi:
         """Adds an ATS slug (API) or a job board (read by "Scrape les sites")."""
         v = str(valeur or "").strip()
         if not v:
-            return {"ok": False, "erreur": "valeur vide"}
+            return {"ok": False, "erreur": "Valeur vide"}
         if genre == "board":
             if not v.startswith("http"):
-                return {"ok": False, "erreur": "un site d'offres : adresse http"}
+                return {"ok": False, "erreur": "Un site d'offres : adresse http"}
             f, urls = self._sites()
             if v in urls:
-                return {"ok": False, "erreur": "déjà présent"}
+                return {"ok": False, "erreur": "Déjà présent"}
             f.write_text(("\n".join([*urls, v])).strip() + "\n", encoding="utf-8")
             return {"ok": True}
         if genre not in ATS_URL:
-            return {"ok": False, "erreur": f"type inconnu : {genre}"}
+            return {"ok": False, "erreur": f"Type inconnu : {genre}"}
         f, c = self._cfg_sources()
         slugs = c.setdefault("ats_slugs", {}).setdefault(genre, [])
         if v not in slugs:

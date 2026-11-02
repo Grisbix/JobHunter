@@ -7,27 +7,27 @@ https://github.com/Grisbix/JobHunter/blob/main/docs/PRIVACY.md
 
 **Description**
 
-JobHunter cherche les offres d'emploi pour vous, les trie selon votre profil et
+JobHunter cherche les offres d'emploi pour toi, les trie selon ton profil et
 prépare un CV et une lettre de motivation sur mesure pour chacune.
 
 - Collecte chaque matin sur les sites carrières des entreprises, les offres publiques
   et les API d'emploi : France, Allemagne, Europe et au-delà.
-- Note chaque offre selon votre métier, vos compétences, vos langues et vos lieux.
+- Note chaque offre selon ton métier, tes compétences, tes langues et tes lieux.
 - Prépare CV et lettre pour les meilleures offres, en français ou en anglais.
-- Suit vos candidatures et vos relances.
-- Vos données restent sur votre ordinateur : pas de compte, pas de serveur, pas de
-  publicité. L'envoi d'une candidature reste toujours votre clic.
-- Vos données vivent dans Documents\JobHunter et survivent à une désinstallation :
+- Suit tes candidatures et tes relances.
+- Tes données restent sur ton ordinateur : pas de compte, pas de serveur, pas de
+  publicité. L'envoi d'une candidature reste toujours ton clic.
+- Tes données vivent dans Documents\JobHunter et survivent à une désinstallation :
   pour tout effacer, Maintenance → Effacer mes données (vers la Corbeille).
 
 **Fonctionnalités** (une par ligne)
 
 Collecte quotidienne des offres d'emploi
-Tri des offres selon votre profil
+Tri des offres selon ton profil
 CV et lettre de motivation sur mesure
 Suivi des candidatures et relances
 Plusieurs profils de recherche
-Données gardées sur votre ordinateur
+Données gardées sur ton ordinateur
 
 **Mots-clés** : emploi, recherche d'emploi, CV, lettre de motivation, candidature,
 offres d'emploi, carrière

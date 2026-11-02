@@ -24,6 +24,7 @@ from typing import Any
 from jobhunter.storage.applications import SuiviIllisible as _SuiviIllisible
 from jobhunter.web.background import FondApi
 from jobhunter.web.guided import CandidatureApi
+from jobhunter.web.messages import echec
 from jobhunter.web.panels import PanneauxApi
 from jobhunter.web.trades import MetiersApi
 from jobhunter.web.workshop import AtelierApi
@@ -533,14 +534,120 @@ def ecrire_reglages(valeurs: Any) -> dict[str, Any]:
     return propres
 
 
+# --- The Outils menu ------------------------------------------------------------------------
+
+# Catalogue label → (name shown, what it is for, diagnostic). None: the window already has
+# its button (named in the comment), the tool is not repeated (audit 2026-11-02).
+OUTILS_WEB: dict[str, tuple[str | None, str, bool]] = {
+    "Scrape les sites": (
+        "Lire les sites carrières suivis",
+        "Ouvre le site carrière de chaque entreprise suivie et garde ses offres récentes.",
+        False,
+    ),
+    "Rattrapage 31 j": (
+        "Rattraper le dernier mois",
+        "Collecte les offres publiées ces 31 derniers jours, utile après une absence.",
+        False,
+    ),
+    "Sonder mots-clés": (
+        "Tester des mots-clés",
+        "Mesure combien d'offres nouvelles chaque mot-clé ramène vraiment.",
+        False,
+    ),
+    "Documents à comparer…": (
+        "Comparer mes retouches…",
+        "Un document retouché à la main et sa nouvelle version : choisis celle à garder.",
+        False,
+    ),
+    "Sync docs+format": (
+        "Remettre les PDF à jour",
+        "Refait le PDF des CV et lettres modifiés dans Word.",
+        False,
+    ),
+    "Export CSV": (
+        "Exporter les offres (Excel)",
+        "Copie lisible de toutes les offres, à ouvrir dans Excel.",
+        False,
+    ),
+    "Relire les lettres": (
+        "Relire les lettres",
+        "Signale ce qui cloche dans les lettres préparées, sans rien changer.",
+        False,
+    ),
+    "Contrôler les dossiers": (
+        "Contrôler les dossiers",
+        "Vérifie que chaque CV et lettre s'ouvre, tient sur une page et porte tes coordonnées.",
+        False,
+    ),
+    "Recettes de nettoyage…": (
+        "Nettoyer la file…",
+        "Renomme ou corrige d'un coup les offres qui suivent une règle.",
+        False,
+    ),
+    "Alerte matchs": (
+        "Alerte des nouvelles offres",
+        "Notification Windows quand arrivent des offres à score 8 et plus.",
+        False,
+    ),
+    "Fermer Chrome": (
+        "Fermer le navigateur de candidature",
+        "Ferme le Chrome ouvert par la candidature guidée.",
+        False,
+    ),
+    "Homepages": (
+        "Trouver le site des entreprises",
+        "Devine l'adresse du site des entreprises qui n'ont pas de lien d'offre.",
+        True,
+    ),
+    "Sonder flux ATS": (
+        "Chercher des sites carrières lisibles",
+        "Teste quelles entreprises publient leurs offres dans un format que JobHunter lit.",
+        True,
+    ),
+    "Sonder flux Workday": (
+        "Chercher les offres Workday des grands groupes",
+        "Trouve les offres que les grands groupes publient par Workday.",
+        True,
+    ),
+    "Recheck 404": (
+        "Repérer les offres pourvues",
+        "Ouvre les annonces pour trouver celles « pourvues » que le contrôle simple ne voit pas.",
+        True,
+    ),
+    "Tester accès aux sites": (
+        "Tester l'accès aux sites",
+        "Dit quels sites d'offres s'ouvrent et lesquels bloquent.",
+        True,
+    ),
+    "Tests live (lent, ouvre un navigateur)": (
+        "Tester la lecture des sites (lent)",
+        "Ouvre de vrais sites carrières pour vérifier que JobHunter les comprend encore.",
+        True,
+    ),
+    "CV/lettres…": (None, "", False),  # Documents, Accueil « Préparer les 30 meilleures »
+    "Relances": (None, "", False),  # Candidatures → Relances
+    "Re-score": (None, "", False),  # Profil « Recalculer les scores »
+    "URLs mortes": (None, "", False),  # Offres « Vérifier les offres »
+    "Statuts depuis mes courriels…": (
+        None,
+        "",
+        False,
+    ),  # Candidatures « Lire les réponses par mail »
+    "Profils…": (None, "", False),  # Profil « Gérer les profils »
+    "Clés France Travail": (None, "", False),  # Sources → Accès et clés
+}
+
+
 # --- Tasks -------------------------------------------------------------------------------
 
 # What the buttons may start: programs the desktop app's buttons already run
 # (app/execution.py, app/common.py), and nothing else. None of them sends anything.
 TACHES: dict[str, tuple[str, list[str]]] = {
     "collecte": ("Collecte du matin", ["jobhunter.programs.daily_pipeline", "--un-profil"]),
-    "scan": ("Scan offres", ["jobhunter.sources", "--all"]),  # the desktop's first step
+    "scan": ("Collecte des offres", ["jobhunter.sources", "--all"]),  # the desktop's first step
     "brouillons": ("Brouillons de relance", ["jobhunter.programs.follow_ups", "--brouillons"]),
+    # + the offer's identity: its own follow-up draft, J+7 or J+10 (the offer drawer)
+    "relance": ("Brouillon de relance", ["jobhunter.programs.follow_ups", "--brouillon-de"]),
     "regenerer_cv": ("Refaire les CV", ["jobhunter.programs.regenerate_docs", "--cv"]),
     "regenerer_lettres": ("Refaire les lettres", ["jobhunter.programs.regenerate_docs"]),
     "disponibilite": (
@@ -561,7 +668,7 @@ TACHES: dict[str, tuple[str, list[str]]] = {
     ),
     # after a change of places / of skills (the desktop app runs the same)
     "zones": ("Zones des offres mises à jour", ["jobhunter.scoring.zones", "--ecrire"]),
-    "rescore": ("Recalculer le fit", ["jobhunter.programs.rescore_ats"]),
+    "rescore": ("Recalculer les scores", ["jobhunter.programs.rescore_ats"]),
     "domaines": ("Domaines des offres", ["jobhunter.programs.reclassify_domains"]),
     # signed release, checked before it is installed (programs.update)
     "maj": ("Mise à jour de JobHunter", ["jobhunter.programs.update"]),
@@ -876,7 +983,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         from jobhunter.web import saved_views
 
         if not saved_views.enregistrer(nom, filtres):
-            return {"ok": False, "erreur": "donne un nom à la vue"}
+            return {"ok": False, "erreur": "Donne un nom à la vue"}
         return {"ok": True}
 
     def supprimer_vue(self, nom: str) -> dict[str, Any]:
@@ -884,7 +991,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         from jobhunter.web import saved_views
 
         if not saved_views.supprimer(nom):
-            return {"ok": False, "erreur": "vue inconnue"}
+            return {"ok": False, "erreur": "Vue inconnue"}
         return {"ok": True}
 
     def memoriser_colonnes(self, colonnes: list[str]) -> dict[str, Any]:
@@ -892,7 +999,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         from jobhunter.web import saved_views
 
         if not saved_views.memoriser_colonnes(colonnes):
-            return {"ok": False, "erreur": "garde au moins une colonne"}
+            return {"ok": False, "erreur": "Garde au moins une colonne"}
         return {"ok": True}
 
     def offres(self, filtres: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -1309,7 +1416,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
             lot: Callable[[], Any] = lambda: reading.depuis_gmail(cles)  # noqa: E731
         elif source in ("mbox", "eml"):
             if self._fenetre is None:
-                return {"ok": False, "erreur": "il faut l'application pour choisir un fichier"}
+                return {"ok": False, "erreur": "Il faut l'application pour choisir un fichier"}
             import webview
 
             if source == "mbox":
@@ -1328,7 +1435,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
                 else (lambda: reading.depuis_eml(chemin))
             )
         else:
-            return {"ok": False, "erreur": f"source inconnue : {source}"}
+            return {"ok": False, "erreur": f"Source inconnue : {source}"}
         try:
             tous = list(lot())
             self._propositions = statuses.propositions(tous, applications.charger())
@@ -1338,7 +1445,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
                 "erreur": 'Lecture Gmail : installe d\'abord pip install "jobhunter[gmail]".',
             }
         except Exception as e:  # noqa: BLE001 — shown to the user, never swallowed
-            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+            return {"ok": False, "erreur": echec(e)}
         champs = ("oid", "actuel", "propose", "raison", "de", "sujet", "le")
         return {
             "ok": True,
@@ -1354,7 +1461,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         from jobhunter.storage import applications
 
         if not 0 <= int(i) < len(self._propositions):
-            return {"ok": False, "erreur": "proposition inconnue"}
+            return {"ok": False, "erreur": "Proposition inconnue"}
         try:
             ecrit = mail_statuses.appliquer(self._propositions[int(i)], attente=3)
         except applications.VerrouIndisponible:
@@ -1431,9 +1538,9 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         """
         idents = [ident] if isinstance(ident, str) else [str(x) for x in ident or []]
         if statut and statut not in STATUTS:
-            return {"ok": False, "erreur": f"statut inconnu : {statut}"}
+            return {"ok": False, "erreur": f"Statut inconnu : {statut}"}
         if not idents or not all(self._connue(i) for i in idents):
-            return {"ok": False, "erreur": "offre introuvable"}
+            return {"ok": False, "erreur": "Offre introuvable"}
         jour = date.today().isoformat()
 
         def changer(rec: dict[str, Any]) -> dict[str, Any]:
@@ -1454,13 +1561,13 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
     def suivre(self, ident: str, d: dict[str, Any]) -> dict[str, Any]:
         """The tracking fields of the offer sheet: status, note, date (the desktop's card)."""
         if not self._connue(ident):
-            return {"ok": False, "erreur": "offre introuvable"}
+            return {"ok": False, "erreur": "Offre introuvable"}
         statut = str(d.get("statut") or "")
         if statut and statut not in STATUTS:
-            return {"ok": False, "erreur": f"statut inconnu : {statut}"}
+            return {"ok": False, "erreur": f"Statut inconnu : {statut}"}
         le = str(d.get("date") or "").strip()
         if le and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", le):
-            return {"ok": False, "erreur": "date au format AAAA-MM-JJ"}
+            return {"ok": False, "erreur": "Date au format AAAA-MM-JJ"}
 
         def changer(rec: dict[str, Any]) -> dict[str, Any]:
             for cle, val in (("s", statut), ("n", str(d.get("note") or "").strip()), ("d", le)):
@@ -1483,7 +1590,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         from jobhunter.storage import applications
 
         if not self._connue(ident):
-            return {"ok": False, "erreur": "offre introuvable"}
+            return {"ok": False, "erreur": "Offre introuvable"}
         avant = dict(self._suivi().get(ident) or {})
         try:
             applications.declarer_envoi(ident, "déclaré", attente=4)
@@ -1541,7 +1648,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         motif = str(motif or "").strip()
         oids = {str(x) for x in idents or []}
         if not motif or not oids:
-            return {"ok": False, "erreur": "il faut des offres et un motif"}
+            return {"ok": False, "erreur": "Il faut des offres et un motif"}
         try:
             oids, gardees = _hors_suivi(oids)
         except _SuiviIllisible as e:
@@ -1574,7 +1681,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
 
         oids = {str(x) for x in idents or []}
         if not oids:
-            return {"ok": False, "erreur": "aucune offre"}
+            return {"ok": False, "erreur": "Aucune offre"}
         try:
             oids, gardees = _hors_suivi(oids)
         except _SuiviIllisible as e:
@@ -1597,14 +1704,14 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
                 "erreur": "Un autre programme modifie la file : réessaie dans un instant.",
             }
         except OSError as e:
-            return {"ok": False, "erreur": f"copie impossible, rien supprimé : {e}"}
+            return {"ok": False, "erreur": f"Copie impossible, rien supprimé : {e}"}
         return {"ok": True, "n": len(partantes), "copie": f.name, "gardees": gardees}
 
     def ajouter_offre(self, url: str) -> dict[str, Any]:
         """Analyses a pasted offer link (add_offer) and adds it to the queue."""
         url = str(url or "").strip()
         if not re.match(r"^https?://", url):
-            return {"ok": False, "erreur": "colle un lien http(s) d'offre"}
+            return {"ok": False, "erreur": "Colle un lien http(s) d'offre"}
         if self._tache and self._tache.code is None:
             return {"ok": False, "erreur": f"« {self._tache.libelle} » tourne encore."}
         return self._demarrer("ajout", TACHES["ajout"][0], [*TACHES["ajout"][1], url])
@@ -1627,13 +1734,13 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         o = next((x for x in self._file() if _oid(x) == ident), None)
         url = str((o or {}).get("url") or "")
         if not url.startswith("http"):
-            return {"ok": False, "erreur": "pas de lien, donc pas de site"}
+            return {"ok": False, "erreur": "Pas de lien, donc pas de site"}
         hote = urlparse(url).netloc.replace("www.", "").lower()
         f = root.dans(root.scripts(), "comptes_sites.json")
         try:
             comptes = json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
         except (OSError, ValueError) as e:
-            return {"ok": False, "erreur": f"comptes_sites.json illisible : {e}"}
+            return {"ok": False, "erreur": f"La liste de tes comptes est illisible : {e}"}
         lies = [h for h in comptes if hote == h or hote.endswith("." + h) or h.endswith("." + hote)]
         if lies:
             for h in lies:
@@ -1654,21 +1761,21 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         if self._tache and self._tache.code is None:
             return {"ok": False, "erreur": f"« {self._tache.libelle} » tourne encore."}
         if cle not in TACHES:
-            return {"ok": False, "erreur": f"tâche inconnue : {cle}"}
+            return {"ok": False, "erreur": f"Tâche inconnue : {cle}"}
         libelle, args = TACHES[cle][0], list(TACHES[cle][1])
         if cle == "ajout":
-            return {"ok": False, "erreur": "passe par ajouter_offre"}
+            return {"ok": False, "erreur": "Pour ajouter une offre, utilise « Ajouter une offre »."}
         if cle == "description":
             if not any(_oid(o) == ident for o in self._file()):
-                return {"ok": False, "erreur": "offre introuvable"}
+                return {"ok": False, "erreur": "Offre introuvable"}
             args.append(ident)
             libelle = f"{libelle} · {ident.partition('|')[0]}"
-        elif cle == "documents":
+        elif cle in ("documents", "relance"):
             # By its identity, not its link: an offer without a link, or two offers
             # sharing one, were refused or both redone (the user, 2026-11-02:
             # « création de cv et lettre pour offre individuelle ne fonctionne pas »).
             if not any(_oid(o) == ident for o in self._file()):
-                return {"ok": False, "erreur": "offre introuvable"}
+                return {"ok": False, "erreur": "Offre introuvable"}
             args.append(ident)
             libelle = f"{libelle} · {ident.partition('|')[0]}"
         return self._demarrer(cle, libelle, args)
@@ -1683,23 +1790,36 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         return {"ok": True}
 
     def outils(self) -> list[dict[str, Any]]:
-        """The Outils menu, the desktop's own list (tools_catalog), by group."""
+        """The Outils menu: the desktop's tools (tools_catalog) this window has no button for.
+
+        Each with a clear name and a line on what it is for; the diagnostics fold away.
+        A tool OUTILS_WEB does not know shows under its catalogue label.
+        """
         from jobhunter import tools_catalog as cat
 
         def genre(quoi: list[str] | str) -> str:
             args = cat.programme(quoi)
             return "action" if args is None else "console" if cat.interactif(args) else "tache"
 
-        return [
-            {
-                "groupe": groupe,
-                "outils": [
-                    {"libelle": lib, "genre": genre(q), "action": q if isinstance(q, str) else ""}
-                    for lib, q in items
-                ],
-            }
-            for groupe, items in cat.OUTILS
-        ]
+        simples: dict[str, list[dict[str, Any]]] = {}
+        avances: list[dict[str, Any]] = []
+        for groupe, items in cat.OUTILS:
+            for lib, q in items:
+                nom, aide, avance = OUTILS_WEB.get(lib, (lib, "", False))
+                if nom is None:
+                    continue
+                o = {
+                    "libelle": lib,
+                    "nom": nom,
+                    "aide": aide,
+                    "genre": genre(q),
+                    "action": q if isinstance(q, str) else "",
+                }
+                (avances if avance else simples.setdefault(groupe, [])).append(o)
+        sortie = [{"groupe": g, "outils": o, "avance": False} for g, o in simples.items()]
+        if avances:
+            sortie.append({"groupe": "Diagnostic", "outils": avances, "avance": True})
+        return sortie
 
     def lancer_outil(self, libelle: str) -> dict[str, Any]:
         """Runs one tool of the Outils menu, found by its label (never a command sent by the page).
@@ -1712,7 +1832,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
 
         quoi = next((q for _g, items in cat.OUTILS for lib, q in items if lib == libelle), None)
         if quoi is None:
-            return {"ok": False, "erreur": f"outil inconnu : {libelle}"}
+            return {"ok": False, "erreur": f"Outil inconnu : {libelle}"}
         args = cat.programme(quoi)
         if args is None:
             return {"ok": True, "action": quoi}
@@ -1867,14 +1987,14 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         Only the interface: letters, messages and the profile keep their language.
         """
         if code not in LANGUES:
-            return {"ok": False, "erreur": f"langue inconnue : {code}"}
+            return {"ok": False, "erreur": f"Langue inconnue : {code}"}
         f = _fichier_reglages()
         if f is None:
-            return {"ok": False, "erreur": "dossier de données introuvable"}
+            return {"ok": False, "erreur": "Dossier de données introuvable"}
         try:
             tout = json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
         except (OSError, ValueError):
-            return {"ok": False, "erreur": f"{f.name} illisible : rien écrit"}
+            return {"ok": False, "erreur": "Fichier des réglages illisible : rien n'est écrit."}
         if not isinstance(tout, dict):
             tout = {}
         tout["langue"] = code
@@ -1890,7 +2010,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
             return {"ok": False, "erreur": "Planification disponible sous Windows seulement."}
         heure = str(heure or "").strip()
         if heure and not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", heure):
-            return {"ok": False, "erreur": "heure au format 08:00"}
+            return {"ok": False, "erreur": "Heure au format 08:00"}
         ok, msg = scheduling.creer(heure) if heure else scheduling.supprimer()
         return {"ok": ok, "message": msg, "erreur": "" if ok else msg}
 
@@ -1946,7 +2066,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         from jobhunter import profiles
 
         if slug not in {x.slug for x in profiles.liste()}:
-            return {"ok": False, "erreur": "profil inconnu"}
+            return {"ok": False, "erreur": "Profil inconnu"}
         if self._tache and self._tache.code is None:
             return {
                 "ok": False,
@@ -1962,7 +2082,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
 
         nom = str(nom or "").strip()
         if not nom:
-            return {"ok": False, "erreur": "nom vide"}
+            return {"ok": False, "erreur": "Nom vide"}
         profiles.renommer(profiles.actif(), nom)
         return {"ok": True}
 
@@ -1992,9 +2112,9 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
 
         nom = str(nom or "").strip()
         if not nom:
-            return {"ok": False, "erreur": "donne un nom au profil"}
+            return {"ok": False, "erreur": "Donne un nom au profil"}
         if self._fenetre is None:
-            return {"ok": False, "erreur": "il faut l'application pour choisir un CV"}
+            return {"ok": False, "erreur": "Il faut l'application pour choisir un CV"}
         import webview
 
         choix = self._fenetre.create_file_dialog(
@@ -2088,7 +2208,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
                 "pages": _pages(p),
             }
         if docx is None or not docx.is_file():
-            return {"ok": False, "erreur": "document introuvable (seul un .docx se modifie)"}
+            return {"ok": False, "erreur": "Document introuvable (seul un .docx se modifie)"}
         pdf = docx.with_suffix(".pdf")
         if not pdf.is_file():
             rendering.to_pdf(docx)
@@ -2103,7 +2223,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
                 "pages": _pages(pdf) if pdf.is_file() else [],
             }
         except Exception as e:  # noqa: BLE001 — a damaged file is said, not hidden
-            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+            return {"ok": False, "erreur": echec(e)}
 
     def enregistrer_document(
         self, chemin: str, avant: list[str], apres: list[str]
@@ -2116,18 +2236,18 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         p = _document_permis(chemin)
         docx = p.with_suffix(".docx") if p else None
         if docx is None or not docx.is_file():
-            return {"ok": False, "erreur": "document introuvable"}
+            return {"ok": False, "erreur": "Document introuvable"}
         if not isinstance(avant, list) or not isinstance(apres, list) or len(avant) != len(apres):
-            return {"ok": False, "erreur": "texte reçu incomplet"}
+            return {"ok": False, "erreur": "Texte reçu incomplet"}
         origine = docx.with_name(docx.name + ".orig")
         if not origine.exists():
             shutil.copy2(docx, origine)  # the generated version, kept once
         try:
             faits, refus = editing.modifier(docx, [str(x) for x in avant], [str(x) for x in apres])
         except PermissionError:
-            return {"ok": False, "erreur": "le fichier est ouvert ailleurs (Word ?) : ferme-le"}
+            return {"ok": False, "erreur": "Le fichier est ouvert ailleurs (Word ?) : ferme-le"}
         except Exception as e:  # noqa: BLE001
-            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+            return {"ok": False, "erreur": echec(e)}
         pdf = rendering.to_pdf(docx) if faits else None
         return {"ok": True, "modifies": faits, "refuses": refus, "pdf": pdf is not None}
 
@@ -2142,20 +2262,20 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         p = _document_permis(chemin)
         docx = p.with_suffix(".docx") if p else None
         if docx is None or not docx.is_file():
-            return {"ok": False, "erreur": "document introuvable"}
+            return {"ok": False, "erreur": "Document introuvable"}
         if action not in ("supprimer", "ajouter"):
-            return {"ok": False, "erreur": "action inconnue"}
+            return {"ok": False, "erreur": "Action inconnue"}
         origine = docx.with_name(docx.name + ".orig")
         if not origine.exists():
             shutil.copy2(docx, origine)  # the generated version, kept once
         try:
             fait = editing.structurer(docx, action, int(i), str(texte), str(nouveau or ""))
         except PermissionError:
-            return {"ok": False, "erreur": "le fichier est ouvert ailleurs (Word ?) : ferme-le"}
+            return {"ok": False, "erreur": "Le fichier est ouvert ailleurs (Word ?) : ferme-le"}
         except Exception as e:  # noqa: BLE001
-            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+            return {"ok": False, "erreur": echec(e)}
         if not fait:
-            return {"ok": False, "erreur": "le document a changé depuis : recharge-le"}
+            return {"ok": False, "erreur": "Le document a changé depuis : recharge-le"}
         pdf = rendering.to_pdf(docx)
         return {"ok": True, "pdf": pdf is not None}
 

@@ -4,6 +4,19 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.75.0 — 2026-11-02
+
+An audit of the whole window: no button that leads nowhere, no button twice, and words a user reads instead of file names and error codes.
+
+- **« Brouillon de relance » works.** The button in an application's drawer asked for a task that did not exist; it now writes the follow-up draft of that application (J+7, or J+10 after a first follow-up).
+- **One way to set an offer aside.** « Supprimer » is gone; « Écarter » stays, with its reason: the reason explains what does not fit and corrects the score.
+- **Outils without duplicates.** The Maintenance tools that repeated a button found elsewhere are gone; each remaining tool has a clear name and a line saying what it does. Diagnostic tools are folded under « Diagnostic (avancé) ».
+- **One place for letters.** « Mes métiers » holds each trade's CV and letter, and the sentence about you that every letter reuses (French and English). The old « CV de base » and letter cards are gone.
+- **Long chip lists fold.** Past 15 chips, the rest hides behind « + N autres »; typing in the field filters the list.
+- **Plain words.** One word for the mark of an offer: « score ». No file name, no `.bak`, no raw Python error: a file open in Word, a missing file or a full disk each get a sentence. Messages start with a capital.
+- **Translations.** About 150 texts of the window were still French in English, German and Spanish; they are translated.
+- **Tutoiement everywhere.** The installer and the Store listing speak to you as the app does (French).
+
 ## 3.74.0 — 2026-11-02
 
 Several trades in one profile, each with its own CV and letter; the whole profile editable without opening a file; a profile switch that no longer looks like the app shutting down.

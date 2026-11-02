@@ -24,17 +24,11 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "Sources": ("Sources", "Quellen", "Fuentes"),
     "Maintenance": ("Maintenance", "Wartung", "Mantenimiento"),
     "Réglages": ("Settings", "Einstellungen", "Ajustes"),
-    "Réduire": ("Minimise", "Minimieren", "Minimizar"),
     "Changer de profil": ("Switch profile", "Profil wechseln", "Cambiar de perfil"),
     "Profils": ("Profiles", "Profile", "Perfiles"),
     "Gérer les profils…": ("Manage profiles…", "Profile verwalten…", "Gestionar perfiles…"),
     "Score {n} sur 10": ("Score {n} out of 10", "Punktzahl {n} von 10", "Puntuación {n} sobre 10"),
     "Aucun résultat": ("No result", "Kein Ergebnis", "Ningún resultado"),
-    "Plein écran ou fenêtre": (
-        "Full screen or window",
-        "Vollbild oder Fenster",
-        "Pantalla completa o ventana",
-    ),
     "Fermer": ("Close", "Schließen", "Cerrar"),
     "Impossible de charger cet écran.": (
         "This screen could not be loaded.",
@@ -74,37 +68,16 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "{n} Mo": ("{n} MB", "{n} MB", "{n} MB"),
     # --- Tasks (the panel at the bottom right) ---
     "Collecte": ("Collection", "Sammlung", "Recogida"),
-    "Scan offres": ("Scan offers", "Angebote scannen", "Escanear ofertas"),
     "Ouvrir le dossier": ("Open the folder", "Ordner öffnen", "Abrir la carpeta"),
     "Recharger": ("Reload", "Neu laden", "Recargar"),
     "Arrêter": ("Stop", "Stoppen", "Detener"),
     "{m} min {s}": ("{m} min {s}", "{m} Min. {s}", "{m} min {s}"),
     "en cours · {duree}": ("running · {duree}", "läuft · {duree}", "en curso · {duree}"),
     "terminé en {duree}": ("finished in {duree}", "fertig in {duree}", "terminado en {duree}"),
-    "file occupée par un autre programme : rien n'a été touché": (
-        "queue busy with another program: nothing was touched",
-        "Liste von einem anderen Programm belegt: nichts wurde angefasst",
-        "lista ocupada por otro programa: no se tocó nada",
-    ),
-    "arrêté (code {code})": (
-        "stopped (code {code})",
-        "gestoppt (Code {code})",
-        "detenido (código {code})",
-    ),
     "{libelle} : pas encore dans cette fenêtre.": (
         "{libelle}: not in this window yet.",
         "{libelle}: noch nicht in diesem Fenster.",
         "{libelle}: todavía no en esta ventana.",
-    ),
-    "{libelle} : fenêtre console ouverte, réponds-y au clavier.": (
-        "{libelle}: console window open, answer it with the keyboard.",
-        "{libelle}: Konsolenfenster geöffnet, antworte dort mit der Tastatur.",
-        "{libelle}: ventana de consola abierta, respóndele con el teclado.",
-    ),
-    "les mêmes que le menu Outils de l'application de bureau": (
-        "the same as the Tools menu of the desktop application",
-        "dieselben wie im Menü Werkzeuge der Desktop-Anwendung",
-        "los mismos que el menú Herramientas de la aplicación de escritorio",
     ),
     "Brouillons de relance": (
         "Follow-up drafts",
@@ -212,30 +185,10 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Das Programm arbeitet: warte, bis es bereit ist.",
         "El programa está trabajando: espera a que esté listo.",
     ),
-    "commande inconnue : {c}": (
-        "unknown command: {c}",
-        "unbekannter Befehl: {c}",
-        "orden desconocida: {c}",
-    ),
     "✅ Envoi confirmé par le site.": (
         "✅ Sending confirmed by the site.",
         "✅ Versand von der Website bestätigt.",
         "✅ Envío confirmado por el sitio.",
-    ),
-    "✅ Envoi confirmé par le site.\n« {e} »": (
-        "✅ Sending confirmed by the site.\n“{e}”",
-        "✅ Versand von der Website bestätigt.\n„{e}“",
-        "✅ Envío confirmado por el sitio.\n«{e}»",
-    ),
-    "⚠ Envoi enregistré, mais le site ne l'a pas confirmé : vérifie ta boîte mail ou ton espace candidat. Rien ne sera renvoyé automatiquement.": (
-        "⚠ Sending recorded, but the site did not confirm it: check your mailbox or your candidate area. Nothing will be resent automatically.",
-        "⚠ Versand vermerkt, aber die Website hat ihn nicht bestätigt: prüfe dein Postfach oder deinen Bewerberbereich. Nichts wird automatisch erneut gesendet.",
-        "⚠ Envío registrado, pero el sitio no lo confirmó: revisa tu correo o tu espacio de candidato. No se reenviará nada automáticamente.",
-    ),
-    "⚠ Envoi enregistré, mais le site ne l'a pas confirmé : vérifie ta boîte mail ou ton espace candidat. Rien ne sera renvoyé automatiquement.\n« {e} »": (
-        "⚠ Sending recorded, but the site did not confirm it: check your mailbox or your candidate area. Nothing will be resent automatically.\n“{e}”",
-        "⚠ Versand vermerkt, aber die Website hat ihn nicht bestätigt: prüfe dein Postfach oder deinen Bewerberbereich. Nichts wird automatisch erneut gesendet.\n„{e}“",
-        "⚠ Envío registrado, pero el sitio no lo confirmó: revisa tu correo o tu espacio de candidato. No se reenviará nada automáticamente.\n«{e}»",
     ),
     "Offre sautée.": ("Offer skipped.", "Angebot übersprungen.", "Oferta saltada."),
     "✗ Le suivi n'a pas pu être écrit : confirme la candidature dans la fiche.": (
@@ -248,27 +201,12 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Formular bereit ({c} % der Felder · Dokumente: {d}). Prüfe in Chrome, klicke selbst auf „{b}“, dann auf „Ich habe gesendet“.",
         "Formulario listo ({c} % de los campos · documentos: {d}). Revisa en Chrome, haz clic tú en «{b}», luego en «Lo he enviado».",
     ),
-    "Formulaire prêt ({c} % des champs). Vérifie dans Chrome, clique « {b} » toi-même, puis « J'ai envoyé ».": (
-        "Form ready ({c} % of the fields). Check in Chrome, click “{b}” yourself, then “I sent it”.",
-        "Formular bereit ({c} % der Felder). Prüfe in Chrome, klicke selbst auf „{b}“, dann auf „Ich habe gesendet“.",
-        "Formulario listo ({c} % de los campos). Revisa en Chrome, haz clic tú en «{b}», luego en «Lo he enviado».",
-    ),
     "Formulaire prêt (documents : {d}). Vérifie dans Chrome, clique « {b} » toi-même, puis « J'ai envoyé ».": (
         "Form ready (documents: {d}). Check in Chrome, click “{b}” yourself, then “I sent it”.",
         "Formular bereit (Dokumente: {d}). Prüfe in Chrome, klicke selbst auf „{b}“, dann auf „Ich habe gesendet“.",
         "Formulario listo (documentos: {d}). Revisa en Chrome, haz clic tú en «{b}», luego en «Lo he enviado».",
     ),
-    "Formulaire prêt. Vérifie dans Chrome, clique « {b} » toi-même, puis « J'ai envoyé ».": (
-        "Form ready. Check in Chrome, click “{b}” yourself, then “I sent it”.",
-        "Formular bereit. Prüfe in Chrome, klicke selbst auf „{b}“, dann auf „Ich habe gesendet“.",
-        "Formulario listo. Revisa en Chrome, haz clic tú en «{b}», luego en «Lo he enviado».",
-    ),
     "le bouton d'envoi": ("the send button", "die Senden-Schaltfläche", "el botón de envío"),
-    "À toi dans Chrome : {r}. Le programme ne contourne rien. Puis « Re-remplir ».": (
-        "Your turn in Chrome: {r}. The program bypasses nothing. Then “Fill in again”.",
-        "Du bist dran in Chrome: {r}. Das Programm umgeht nichts. Dann „Neu ausfüllen“.",
-        "Tu turno en Chrome: {r}. El programa no sortea nada. Luego «Volver a rellenar».",
-    ),
     "action requise": ("action required", "Aktion erforderlich", "acción necesaria"),
     "Toutes les offres sont passées. « Arrêter » ferme Chrome.": (
         "All the offers are done. “Stop” closes Chrome.",
@@ -290,7 +228,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "à vérifier": ("to check", "zu prüfen", "por verificar"),
     "pas intéressé": ("not interested", "kein Interesse", "no interesado"),
     "à traiter": ("to process", "zu bearbeiten", "por tratar"),
-    "À postuler": ("To apply", "Zu bewerben", "Por postular"),
     "Statut : {statut} — « Annuler » pour revenir.": (
         "Status: {statut} — “Cancel” to go back.",
         "Status: {statut} — „Abbrechen“ zum Zurücknehmen.",
@@ -300,16 +237,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "{n} offers · Status: {statut} — “Cancel” to go back.",
         "{n} Angebote · Status: {statut} — „Abbrechen“ zum Zurücknehmen.",
         "{n} ofertas · Estado: {statut} — «Cancelar» para volver.",
-    ),
-    "Statut vidé — « Annuler » pour revenir.": (
-        "Status cleared — “Cancel” to go back.",
-        "Status geleert — „Abbrechen“ zum Zurücknehmen.",
-        "Estado vaciado — «Cancelar» para volver.",
-    ),
-    "{n} offres · Statut vidé — « Annuler » pour revenir.": (
-        "{n} offers · Status cleared — “Cancel” to go back.",
-        "{n} Angebote · Status geleert — „Abbrechen“ zum Zurücknehmen.",
-        "{n} ofertas · Estado vaciado — «Cancelar» para volver.",
     ),
     "Annulé ({n} offre{s}).": (
         "Undone ({n} offer{s}).",
@@ -322,11 +249,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Dismiss {n} offer{s}",
         "{n} Angebot(e) aussortieren",
         "Descartar {n} oferta{s}",
-    ),
-    "Retirées de la file et bloquées au prochain scan. Le motif sert à corriger la notation.": (
-        "Removed from the queue and blocked at the next scan. The reason helps correct the scoring.",
-        "Aus der Liste entfernt und beim nächsten Scan gesperrt. Der Grund hilft, die Bewertung zu korrigieren.",
-        "Retiradas de la lista y bloqueadas en el próximo escaneo. El motivo sirve para corregir la puntuación.",
     ),
     "Écarter": ("Dismiss", "Aussortieren", "Descartar"),
     "Écarter…": ("Dismiss…", "Aussortieren…", "Descartar…"),
@@ -341,17 +263,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "{n} Angebot(e) löschen?",
         "¿Eliminar {n} oferta{s}?",
     ),
-    "Une copie est gardée dans _corbeille/ : rien n'est perdu. Pour qu'elles ne reviennent pas au prochain scan, préfère « Écarter ».": (
-        "A copy is kept in _corbeille/: nothing is lost. To keep them from coming back at the next scan, prefer “Dismiss”.",
-        "Eine Kopie bleibt in _corbeille/: nichts geht verloren. Damit sie beim nächsten Scan nicht zurückkommen, nimm lieber „Aussortieren“.",
-        "Se guarda una copia en _corbeille/: no se pierde nada. Para que no vuelvan en el próximo escaneo, mejor «Descartar».",
-    ),
-    "{n} offre(s) supprimée(s) — copie : _corbeille/{c}": (
-        "{n} offer(s) deleted — copy: _corbeille/{c}",
-        "{n} Angebot(e) gelöscht — Kopie: _corbeille/{c}",
-        "{n} oferta(s) eliminada(s) — copia: _corbeille/{c}",
-    ),
-    "Supprimer…": ("Delete…", "Löschen…", "Eliminar…"),
     "Ajouter une offre": ("Add an offer", "Angebot hinzufügen", "Añadir una oferta"),
     "Colle le lien de l'annonce : titre, entreprise et description sont lus, puis l'offre entre dans la file.": (
         "Paste the posting's link: title, company and description are read, then the offer joins the queue.",
@@ -369,11 +280,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Application noted as sent.",
         "Bewerbung als gesendet vermerkt.",
         "Candidatura anotada como enviada.",
-    ),
-    "À brancher sur le moteur": (
-        "Not wired to the engine yet",
-        "Noch nicht mit der Engine verbunden",
-        "Pendiente de conectar al motor",
     ),
     "{n} résultat{s} · page {p} sur {t}": (
         "{n} result{s} · page {p} of {t}",
@@ -407,7 +313,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     ),
     "Finalement intéressé": ("Interested after all", "Doch interessiert", "Al final me interesa"),
     "Pas intéressé": ("Not interested", "Kein Interesse", "No me interesa"),
-    "Brouillon de relance": ("Follow-up draft", "Nachfass-Entwurf", "Borrador de recordatorio"),
     "Chercher sur le web": ("Search the web", "Im Web suchen", "Buscar en la web"),
     "Recharger la description": (
         "Reload the description",
@@ -460,37 +365,27 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "{n} ans": ("{n} years", "{n} Jahre", "{n} años"),
     "Salaire": ("Salary", "Gehalt", "Salario"),
     "Télétravail": ("Remote work", "Homeoffice", "Teletrabajo"),
-    "offre introuvable": ("offer not found", "Angebot nicht gefunden", "oferta no encontrada"),
-    "aucune offre": ("no offer", "kein Angebot", "ninguna oferta"),
-    "il faut des offres et un motif": (
-        "offers and a reason are needed",
+    "Offre introuvable": ("Offer not found", "Angebot nicht gefunden", "Oferta no encontrada"),
+    "Aucune offre": ("No offer", "Kein Angebot", "Ninguna oferta"),
+    "Il faut des offres et un motif": (
+        "Offers and a reason are needed",
         "Angebote und ein Grund sind nötig",
-        "hacen falta ofertas y un motivo",
+        "Hacen falta ofertas y un motivo",
     ),
-    "colle un lien http(s) d'offre": (
-        "paste an http(s) link to an offer",
-        "füge einen http(s)-Link zu einem Angebot ein",
-        "pega un enlace http(s) de una oferta",
+    "Colle un lien http(s) d'offre": (
+        "Paste an http(s) link to an offer",
+        "Füge einen http(s)-Link zu einem Angebot ein",
+        "Pega un enlace http(s) de una oferta",
     ),
-    "cette offre n'a pas de lien": (
-        "this offer has no link",
-        "dieses Angebot hat keinen Link",
-        "esta oferta no tiene enlace",
+    "Pas de lien, donc pas de site": (
+        "No link, so no site",
+        "Kein Link, also keine Website",
+        "Sin enlace, no hay sitio",
     ),
-    "pas de lien, donc pas de site": (
-        "no link, so no site",
-        "kein Link, also keine Website",
-        "sin enlace, no hay sitio",
-    ),
-    "statut inconnu : {s}": (
-        "unknown status: {s}",
-        "unbekannter Status: {s}",
-        "estado desconocido: {s}",
-    ),
-    "date au format AAAA-MM-JJ": (
-        "date as YYYY-MM-DD",
+    "Date au format AAAA-MM-JJ": (
+        "Date as YYYY-MM-DD",
         "Datum im Format JJJJ-MM-TT",
-        "fecha con formato AAAA-MM-DD",
+        "Fecha con formato AAAA-MM-DD",
     ),
     "Le suivi a changé entre-temps : rien écrit.": (
         "The tracking changed meanwhile: nothing written.",
@@ -512,10 +407,10 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Ein anderes Programm ändert die Liste: versuche es gleich nochmal.",
         "Otro programa está modificando la lista: inténtalo de nuevo en un momento.",
     ),
-    "copie impossible, rien supprimé : {e}": (
-        "copy impossible, nothing deleted: {e}",
+    "Copie impossible, rien supprimé : {e}": (
+        "Copy impossible, nothing deleted: {e}",
         "Kopie unmöglich, nichts gelöscht: {e}",
-        "copia imposible, no se eliminó nada: {e}",
+        "Copia imposible, no se eliminó nada: {e}",
     ),
     # --- Home ---
     "Lancer la collecte": ("Start the collection", "Sammlung starten", "Iniciar la recogida"),
@@ -529,7 +424,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "Prioritaire": ("Priority", "Vorrangig", "Prioritaria"),
     "Secondaire": ("Secondary", "Nachrangig", "Secundaria"),
     "International": ("International", "International", "Internacional"),
-    "Ailleurs": ("Elsewhere", "Anderswo", "Otras"),
     "inconnu": ("unknown", "unbekannt", "desconocido"),
     "Autres": ("Others", "Andere", "Otras"),
     "Stage": ("Internship", "Praktikum", "Prácticas"),
@@ -552,30 +446,7 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Marca los sectores que quieres recoger. En una lista, desmarca una empresa para "
         "dejarla de lado; sus ofertas ya en la cola se quedan.",
     ),
-    "« {liste} » collectée dès la prochaine collecte": (
-        "« {liste} » collected from the next collection",
-        "« {liste} » wird ab der nächsten Sammlung gesammelt",
-        "« {liste} » se recoge desde la próxima recogida",
-    ),
-    "« {liste} » n'est plus collectée": (
-        "« {liste} » is no longer collected",
-        "« {liste} » wird nicht mehr gesammelt",
-        "« {liste} » ya no se recoge",
-    ),
-    "{nom} vient de la liste {listes} : décoche-la dans la liste, ou suspends-la.": (
-        "{nom} comes from the list {listes}: untick it in the list, or suspend it.",
-        "{nom} stammt aus der Liste {listes}: Haken in der Liste entfernen oder pausieren.",
-        "{nom} viene de la lista {listes}: desmárcala en la lista o suspéndela.",
-    ),
     "Finance et ESG": ("Finance and ESG", "Finanzen und ESG", "Finanzas y ESG"),
-    "Banques, gestion d'actifs, assurance, conseil et acteurs de la finance durable (la liste d'origine du moteur).": (
-        "Banks, asset management, insurance, consulting and sustainable finance players "
-        "(the engine's original list).",
-        "Banken, Vermögensverwaltung, Versicherungen, Beratung und Akteure der "
-        "nachhaltigen Finanzen (die ursprüngliche Liste).",
-        "Bancos, gestión de activos, seguros, consultoría y actores de las finanzas "
-        "sostenibles (la lista original del motor).",
-    ),
     "Tech et numérique": ("Tech and digital", "Tech und Digitales", "Tecnología y digital"),
     "Éditeurs de logiciels, start-up et scale-up, ESN et conseil numérique, surtout en France et en Europe.": (
         "Software companies, start-ups and scale-ups, IT services and digital consulting, "
@@ -654,11 +525,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "À faire": ("To do", "Zu tun", "Por hacer"),
     "Relancer {e}": ("Follow up with {e}", "Bei {e} nachfassen", "Recordar a {e}"),
     "{j} j · {poste}": ("{j} d · {poste}", "{j} T. · {poste}", "{j} d · {poste}"),
-    "Rien à relancer aujourd'hui": (
-        "Nothing to follow up today",
-        "Heute nichts nachzufassen",
-        "Nada que recordar hoy",
-    ),
     "Par zone": ("By area", "Nach Zone", "Por zona"),
     "offres notées 7 et plus": (
         "offers rated 7 and above",
@@ -691,10 +557,10 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Die in der Tabelle gezeigten Spalten; die Wahl bleibt für das nächste Mal.",
         "Las columnas que muestra la tabla; la elección se guarda para la próxima vez.",
     ),
-    "garde au moins une colonne": (
-        "keep at least one column",
-        "behalte mindestens eine Spalte",
-        "deja al menos una columna",
+    "Garde au moins une colonne": (
+        "Keep at least one column",
+        "Behalte mindestens eine Spalte",
+        "Deja al menos una columna",
     ),
     "par exemple : ESG à Paris, 8+": (
         "for example: ESG in Paris, 8+",
@@ -725,12 +591,12 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     ),
     "Vues…": ("Views…", "Ansichten…", "Vistas…"),
     "Tout réinitialiser": ("Reset everything", "Alles zurücksetzen", "Restablecer todo"),
-    "donne un nom à la vue": (
-        "give the view a name",
-        "gib der Ansicht einen Namen",
-        "ponle un nombre a la vista",
+    "Donne un nom à la vue": (
+        "Give the view a name",
+        "Gib der Ansicht einen Namen",
+        "Ponle un nombre a la vista",
     ),
-    "vue inconnue": ("unknown view", "unbekannte Ansicht", "vista desconocida"),
+    "Vue inconnue": ("Unknown view", "Unbekannte Ansicht", "Vista desconocida"),
     "Préparer les 30 meilleures": (
         "Prepare the 30 best",
         "Die 30 besten vorbereiten",
@@ -743,13 +609,9 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     ),
     "Toutes les zones": ("All areas", "Alle Zonen", "Todas las zonas"),
     "{n} cochée": ("{n} ticked", "{n} angehakt", "{n} marcada"),
-    "{n} cochées": ("{n} ticked", "{n} angehakt", "{n} marcadas"),
     "Vider le statut": ("Clear the status", "Status leeren", "Vaciar el estado"),
     "Tout décocher": ("Untick all", "Alle abhaken", "Desmarcar todo"),
     "Meilleur score": ("Best score", "Beste Punktzahl", "Mejor puntuación"),
-    "Plus récentes": ("Most recent", "Neueste", "Más recientes"),
-    "Publiées en dernier": ("Last posted", "Zuletzt veröffentlicht", "Publicadas al final"),
-    "Vérifiées en dernier": ("Last checked", "Zuletzt geprüft", "Verificadas al final"),
     "Entreprise A → Z": ("Company A → Z", "Unternehmen A → Z", "Empresa A → Z"),
     "Tous les domaines": ("All fields", "Alle Bereiche", "Todas las áreas"),
     "Tous les contrats": ("All contracts", "Alle Verträge", "Todos los contratos"),
@@ -762,14 +624,8 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     # --- CV or letter seen and edited in the drawer ---
     "Retour à l'offre": ("Back to the offer", "Zurück zum Angebot", "Volver a la oferta"),
     "Aperçu": ("Preview", "Vorschau", "Vista previa"),
-    "Modifier le texte": ("Edit the text", "Text bearbeiten", "Editar el texto"),
     "Ouvrir dans Word": ("Open in Word", "In Word öffnen", "Abrir en Word"),
     "Annuler les changements": ("Undo the changes", "Änderungen verwerfen", "Deshacer los cambios"),
-    "Pas de PDF : il sera fait au prochain enregistrement.": (
-        "No PDF: it will be made at the next save.",
-        "Kein PDF: es entsteht beim nächsten Speichern.",
-        "Sin PDF: se hará al guardar la próxima vez.",
-    ),
     "Contient un lien : à modifier dans Word.": (
         "Holds a link: edit it in Word.",
         "Enthält einen Link: in Word bearbeiten.",
@@ -780,16 +636,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Nothing could be written: the file changed, reload it.",
         "Nichts geschrieben: die Datei hat sich geändert, lade sie neu.",
         "No se pudo escribir nada: el archivo cambió, vuelve a cargarlo.",
-    ),
-    "{n} paragraphe(s) modifié(s), PDF refait.": (
-        "{n} paragraph(s) changed, PDF made again.",
-        "{n} Absatz/Absätze geändert, PDF neu erstellt.",
-        "{n} párrafo(s) modificado(s), PDF rehecho.",
-    ),
-    "{n} paragraphe(s) modifié(s), PDF non refait (LibreOffice ?).": (
-        "{n} paragraph(s) changed, PDF not made again (LibreOffice?).",
-        "{n} Absatz/Absätze geändert, PDF nicht neu erstellt (LibreOffice?).",
-        "{n} párrafo(s) modificado(s), PDF no rehecho (¿LibreOffice?).",
     ),
     "{n} par page": ("{n} per page", "{n} pro Seite", "{n} por página"),
     "Replier le menu": ("Fold the menu", "Menü einklappen", "Plegar el menú"),
@@ -805,10 +651,7 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Kein Angebot passt zu diesen Filtern.",
         "Ninguna oferta coincide con estos filtros.",
     ),
-    "Postulées": ("Applied", "Beworben", "Postuladas"),
-    "Écartées": ("Dismissed", "Aussortiert", "Descartadas"),
     "Toutes": ("All", "Alle", "Todas"),
-    "À traiter": ("To process", "Zu bearbeiten", "Por tratar"),
     # --- Applications, follow-ups, documents ---
     "Lire les réponses par mail": (
         "Read the answers by email",
@@ -851,24 +694,16 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Das Senden bleibt deine Sache: kopieren, gegenlesen, aus deinem Postfach senden.",
         "El envío sigue siendo cosa tuya: copia, relee y envía desde tu correo.",
     ),
-    "Refaire les CV après un changement de modèle": (
-        "Redo the CVs after a template change",
-        "Lebensläufe nach einem Vorlagenwechsel neu erstellen",
-        "Rehacer los CV tras un cambio de plantilla",
-    ),
     "Entreprise, poste…": ("Company, position…", "Unternehmen, Stelle…", "Empresa, puesto…"),
     "Type": ("Type", "Typ", "Tipo"),
     "Document": ("Document", "Dokument", "Documento"),
     "Format": ("Format", "Format", "Formato"),
-    "Taille": ("Size", "Größe", "Tamaño"),
-    "Aucun document.": ("No document.", "Kein Dokument.", "Ningún documento."),
-    "document introuvable": (
-        "document not found",
+    "Document introuvable": (
+        "Document not found",
         "Dokument nicht gefunden",
-        "documento no encontrado",
+        "Documento no encontrado",
     ),
     # --- Profile ---
-    "Ouvrir profile.json": ("Open profile.json", "profile.json öffnen", "Abrir profile.json"),
     "Prénom": ("First name", "Vorname", "Nombre"),
     "Nom": ("Last name", "Nachname", "Apellido"),
     "Ville": ("Town", "Ort", "Ciudad"),
@@ -889,20 +724,10 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Vor- und Nachname sind nötig (Anschreiben, Lebensläufe)",
         "hacen falta nombre y apellido (cartas, CV)",
     ),
-    "Enregistré (profil d'avant gardé : {bak}).": (
-        "Saved (previous profile kept: {bak}).",
-        "Gespeichert (vorheriges Profil behalten: {bak}).",
-        "Guardado (perfil anterior conservado: {bak}).",
-    ),
     "Enregistré (profil d'avant : {bak}). Effet à la prochaine collecte.": (
         "Saved (previous profile: {bak}). Takes effect at the next collection.",
         "Gespeichert (vorheriges Profil: {bak}). Wirkt ab der nächsten Sammlung.",
         "Guardado (perfil anterior: {bak}). Surte efecto en la próxima recogida.",
-    ),
-    "Enregistré (profil d'avant : {bak}). Effet à la prochaine collecte. Zones des offres en cours de mise à jour.": (
-        "Saved (previous profile: {bak}). Takes effect at the next collection. Offer areas being updated.",
-        "Gespeichert (vorheriges Profil: {bak}). Wirkt ab der nächsten Sammlung. Zonen der Angebote werden aktualisiert.",
-        "Guardado (perfil anterior: {bak}). Surte efecto en la próxima recogida. Zonas de las ofertas actualizándose.",
     ),
     "Ma recherche": ("My search", "Meine Suche", "Mi búsqueda"),
     "Mots-clés de collecte · {n}": (
@@ -932,36 +757,17 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Títulos que se descartan",
     ),
     "mot à écarter…": ("word to set aside…", "auszuschließendes Wort…", "palabra que descartar…"),
-    "Recalculer le fit": ("Recompute the fit", "Fit neu berechnen", "Recalcular el fit"),
     "Compétence de base du CV": (
         "Core CV skill",
         "Kernkompetenz des Lebenslaufs",
         "Competencia base del CV",
-    ),
-    "Compte pour cet axe du fit": (
-        "Counts for this fit axis",
-        "Zählt für diese Fit-Achse",
-        "Cuenta para este eje del fit",
     ),
     "mot cherché…": ("word searched for…", "gesuchtes Wort…", "palabra buscada…"),
     "Retirer la compétence": ("Remove the skill", "Kompetenz entfernen", "Quitar la competencia"),
     "Nouvelle compétence…": ("New skill…", "Neue Kompetenz…", "Nueva competencia…"),
     "Elle existe déjà.": ("It already exists.", "Sie existiert bereits.", "Ya existe."),
     "Compétences": ("Skills", "Kompetenzen", "Competencias"),
-    "Les mots cherchés dans les annonces, et les axes du fit pour lesquels chaque compétence compte.": (
-        "The words searched for in the postings, and the fit axes each skill counts for.",
-        "Die in den Anzeigen gesuchten Wörter und die Fit-Achsen, für die jede Kompetenz zählt.",
-        "Las palabras que se buscan en los anuncios y los ejes del fit para los que cuenta cada competencia.",
-    ),
-    "Domaines visés": ("Target fields", "Zielbereiche", "Áreas objetivo"),
-    "Leur définition reste dans profile.json.": (
-        "Their definition stays in profile.json.",
-        "Ihre Definition bleibt in profile.json.",
-        "Su definición sigue en profile.json.",
-    ),
-    "Notation": ("Scoring", "Bewertung", "Puntuación"),
     # --- Sources ---
-    "Collecter maintenant": ("Collect now", "Jetzt sammeln", "Recoger ahora"),
     "Mots-clés et rendement": (
         "Keywords and yield",
         "Schlüsselwörter und Ertrag",
@@ -1018,13 +824,11 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Nur lesend: nichts wird gesendet.",
         "Solo lectura: no se envía nada.",
     ),
-    "proposition inconnue": (
-        "unknown suggestion",
-        "unbekannter Vorschlag",
-        "propuesta desconocida",
+    "Proposition inconnue": (
+        "Unknown suggestion",
+        "Unbekannter Vorschlag",
+        "Propuesta desconocida",
     ),
-    "{n} flux ▾": ("{n} feeds ▾", "{n} Feeds ▾", "{n} fuentes ▾"),
-    "{n} flux ▴": ("{n} feeds ▴", "{n} Feeds ▴", "{n} fuentes ▴"),
     "{n} / {t} entreprises ({f} flux) · {o} offres en file": (
         "{n} / {t} companies ({f} feeds) · {o} offers in queue",
         "{n} / {t} Unternehmen ({f} Feeds) · {o} Angebote in der Liste",
@@ -1155,52 +959,51 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "{nom}: gib zuerst seinen Schlüssel ein.",
         "{nom}: introduce primero su clave.",
     ),
-    "source inconnue": ("unknown source", "unbekannte Quelle", "fuente desconocida"),
+    "Source inconnue": ("Unknown source", "Unbekannte Quelle", "Fuente desconocida"),
     "source inconnue : {s}": (
         "unknown source: {s}",
         "unbekannte Quelle: {s}",
         "fuente desconocida: {s}",
     ),
-    "site inconnu": ("unknown site", "unbekannte Website", "sitio desconocido"),
+    "Site inconnu": ("Unknown site", "Unbekannte Website", "Sitio desconocido"),
     "muette : {n}": ("silent: {n}", "still: {n}", "sin ofertas: {n}"),
-    "une adresse http, ou cherche le nom dans l'annuaire": (
-        "an http address, or search the name in the directory",
-        "eine http-Adresse, oder suche den Namen im Verzeichnis",
-        "una dirección http, o busca el nombre en el directorio",
+    "Une adresse http, ou cherche le nom dans l'annuaire": (
+        "An http address, or search the name in the directory",
+        "Eine http-Adresse, oder suche den Namen im Verzeichnis",
+        "Una dirección http, o busca el nombre en el directorio",
     ),
-    "c'est un site d'offres général : ajoute-le dans « Sites d'offres »": (
-        "it is a general job site: add it under “Job sites”",
-        "das ist eine allgemeine Jobbörse: füge sie unter „Jobbörsen“ hinzu",
-        "es un portal de empleo general: añádelo en «Portales de empleo»",
+    "C'est un site d'offres général : ajoute-le dans « Sites d'offres »": (
+        "It is a general job site: add it under “Job sites”",
+        "Das ist eine allgemeine Jobbörse: füge sie unter „Jobbörsen“ hinzu",
+        "Es un portal de empleo general: añádelo en «Portales de empleo»",
     ),
-    "déjà suivi": ("already followed", "bereits verfolgt", "ya seguido"),
-    "déjà présent": ("already there", "bereits vorhanden", "ya presente"),
+    "Déjà suivi": ("Already followed", "Bereits verfolgt", "Ya seguido"),
+    "Déjà présent": ("Already there", "Bereits vorhanden", "Ya presente"),
     "site carrière ajouté, lu par le navigateur : {u}": (
         "careers site added, read by the browser: {u}",
         "Karriereseite hinzugefügt, vom Browser gelesen: {u}",
         "sitio de empleo añadido, leído por el navegador: {u}",
     ),
-    "entrée d'annuaire invalide": (
-        "invalid directory entry",
-        "ungültiger Verzeichniseintrag",
-        "entrada de directorio no válida",
+    "Entrée d'annuaire invalide": (
+        "Invalid directory entry",
+        "Ungültiger Verzeichniseintrag",
+        "Entrada de directorio no válida",
     ),
-    "entreprise introuvable": (
-        "company not found",
+    "Entreprise introuvable": (
+        "Company not found",
         "Unternehmen nicht gefunden",
-        "empresa no encontrada",
+        "Empresa no encontrada",
     ),
     "{s} ne sera plus collectée": (
         "{s} will no longer be collected",
         "{s} wird nicht mehr gesammelt",
         "{s} ya no se recogerá",
     ),
-    "valeur vide": ("empty value", "leerer Wert", "valor vacío"),
-    "type inconnu : {t}": ("unknown type: {t}", "unbekannter Typ: {t}", "tipo desconocido: {t}"),
-    "un site d'offres : adresse http": (
-        "a job site: http address",
-        "eine Jobbörse: http-Adresse",
-        "un portal de empleo: dirección http",
+    "Valeur vide": ("Empty value", "Leerer Wert", "Valor vacío"),
+    "Un site d'offres : adresse http": (
+        "A job site: http address",
+        "Eine Jobbörse: http-Adresse",
+        "Un portal de empleo: dirección http",
     ),
     "{s} : flux introuvable dans sources_config.json": (
         "{s}: feed not found in sources_config.json",
@@ -1211,16 +1014,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "sources_config.json unreadable: {e}",
         "sources_config.json unlesbar: {e}",
         "sources_config.json ilegible: {e}",
-    ),
-    "comptes_sites.json illisible : {e}": (
-        "comptes_sites.json unreadable: {e}",
-        "comptes_sites.json unlesbar: {e}",
-        "comptes_sites.json ilegible: {e}",
-    ),
-    "Sur les offres à fit ≥ 8": (
-        "On offers with fit ≥ 8",
-        "Bei Angeboten mit Fit ≥ 8",
-        "En ofertas con fit ≥ 8",
     ),
     "dossiers prêts (CV, lettre, lien vérifié)": (
         "ready files (CV, letter, checked link)",
@@ -1241,11 +1034,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "Offres en ligne": ("Offers online", "Angebote online", "Ofertas en línea"),
     "Dossiers prêts": ("Ready files", "Fertige Unterlagen", "Expedientes listos"),
     "Réponses": ("Answers", "Antworten", "Respuestas"),
-    "Fit des offres en ligne": (
-        "Fit of the offers online",
-        "Fit der Angebote online",
-        "Fit de las ofertas en línea",
-    ),
     "Sites d'où viennent les offres": (
         "Sites the offers come from",
         "Websites, von denen die Angebote stammen",
@@ -1260,7 +1048,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "Par contrat": ("By contract", "Nach Vertrag", "Por contrato"),
     "Par domaine": ("By field", "Nach Bereich", "Por área"),
     "Voir les {n} autres": ("See the other {n}", "Die anderen {n} zeigen", "Ver los otros {n}"),
-    "Replier": ("Fold", "Einklappen", "Plegar"),
     # --- Documents ---
     "Dossier des CV": ("CV folder", "Lebenslauf-Ordner", "Carpeta de CV"),
     "Lettres": ("Letters", "Anschreiben", "Cartas"),
@@ -1287,11 +1074,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Offers of the companies seen",
         "Angebote der gesehenen Unternehmen",
         "Ofertas de las empresas vistas",
-    ),
-    "Suivre les bien notées (fit ≥ 7)": (
-        "Follow the well-rated ones (fit ≥ 7)",
-        "Gut bewertete verfolgen (Fit ≥ 7)",
-        "Seguir las bien valoradas (fit ≥ 7)",
     ),
     "Aucune entreprise bien notée à suivre.": (
         "No well-rated company to follow.",
@@ -1329,21 +1111,16 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "{n} documents": ("{n} documents", "{n} Dokumente", "{n} documentos"),
     "Voir et modifier": ("View and edit", "Ansehen und bearbeiten", "Ver y editar"),
     "Collecte {nom}": ("{nom} collection", "{nom}-Sammlung", "Recogida {nom}"),
-    "accès libre, aucune clé à saisir.": (
-        "open access, no key needed.",
-        "frei zugänglich, kein Schlüssel nötig.",
-        "acceso libre, sin clave.",
+    "Accès libre, aucune clé à saisir.": (
+        "Open access, no key needed.",
+        "Frei zugänglich, kein Schlüssel nötig.",
+        "Acceso libre, sin clave.",
     ),
     # --- Statistics ---
     "Candidatures envoyées": (
         "Applications sent",
         "Gesendete Bewerbungen",
         "Candidaturas enviadas",
-    ),
-    "Réponses (entretien ou refus)": (
-        "Answers (interview or refusal)",
-        "Antworten (Gespräch oder Absage)",
-        "Respuestas (entrevista o rechazo)",
     ),
     "Entretiens": ("Interviews", "Vorstellungsgespräche", "Entrevistas"),
     "Sans réponse depuis 30 jours": (
@@ -1375,7 +1152,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "non precise": ("not specified", "nicht angegeben", "sin precisar"),
     "Liens OK": ("Working links", "Funktionierende Links", "Enlaces válidos"),
     "Avec description": ("With description", "Mit Beschreibung", "Con descripción"),
-    "Fit ≥ 8": ("Fit ≥ 8", "Fit ≥ 8", "Fit ≥ 8"),
     "Dossiers préparés": (
         "Prepared applications",
         "Vorbereitete Bewerbungen",
@@ -1419,19 +1195,12 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Liste wird gelesen… (beim ersten Mal etwa dreißig Sekunden)",
         "Leyendo la lista… (unos treinta segundos la primera vez)",
     ),
-    "{n} offres · fit moyen {m} (enregistré {m2}) · à 8 et plus : {h} (enregistré {h2})": (
-        "{n} offers · average fit {m} (saved {m2}) · 8 and above: {h} (saved {h2})",
-        "{n} Angebote · mittlerer Fit {m} (gespeichert {m2}) · 8 und mehr: {h} (gespeichert {h2})",
-        "{n} ofertas · fit medio {m} (guardado {m2}) · 8 o más: {h} (guardado {h2})",
-    ),
     "fit {i} : {n} (enregistré : {e})": (
         "fit {i}: {n} (saved: {e})",
         "Fit {i}: {n} (gespeichert: {e})",
         "fit {i}: {n} (guardado: {e})",
     ),
-    "Recalculer le fit ?": ("Recompute the fit?", "Fit neu berechnen?", "¿Recalcular el fit?"),
     "Recalculer": ("Recompute", "Neu berechnen", "Recalcular"),
-    "Fit : les poids": ("Fit: the weights", "Fit: die Gewichte", "Fit: los pesos"),
     "Chaque curseur recalcule la file aussitôt, sans rien écrire. Barres claires : les poids enregistrés.": (
         "Each slider recomputes the queue at once, writing nothing. Light bars: the saved weights.",
         "Jeder Regler berechnet die Liste sofort neu, ohne etwas zu schreiben. Helle Balken: die gespeicherten Gewichte.",
@@ -1441,11 +1210,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "Score pour 10": ("Score for 10", "Punkte für 10", "Puntos para 10"),
     "Bonus junior": ("Junior bonus", "Junior-Bonus", "Bono junior"),
     "Malus senior": ("Senior penalty", "Senior-Abzug", "Penalización sénior"),
-    "Le CV d'où partent tous les CV préparés. « Voir » l'ouvre pour le lire ou modifier son texte ; l'ancien est gardé à côté, en .bak.": (
-        "The CV every prepared CV starts from. « View » opens it to read it or edit its text; the old one is kept alongside, as .bak.",
-        "Der Lebenslauf, von dem alle vorbereiteten ausgehen. « Ansehen » öffnet ihn zum Lesen oder Bearbeiten; der alte bleibt daneben als .bak.",
-        "El CV del que parten todos los CV preparados. « Ver » lo abre para leerlo o modificar su texto; el anterior se guarda al lado, en .bak.",
-    ),
     "offres notées 8 et plus": (
         "offers scored 8 and more",
         "Angebote mit 8 und mehr",
@@ -1457,32 +1221,10 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Angebote ab 8 · {n} vorzubereiten",
         "ofertas con 8 o más · {n} por preparar",
     ),
-    "À préparer": ("To prepare", "Vorzubereiten", "Por preparar"),
     "Voir": ("View", "Ansehen", "Ver"),
     "absent": ("missing", "fehlt", "ausente"),
-    "Aucun CV de base dans le profil.": (
-        "No base CV in the profile.",
-        "Kein Basis-Lebenslauf im Profil.",
-        "Ningún CV base en el perfil.",
-    ),
-    "Lettre de motivation": ("Cover letter", "Anschreiben", "Carta de motivación"),
-    "Chaque lettre est écrite pour son offre ; ce paragraphe sur toi est repris dans toutes. Modifie-le ici, puis refais les lettres.": (
-        "Each letter is written for its offer; this paragraph about you goes into all of them. Edit it here, then remake the letters.",
-        "Jedes Anschreiben wird für sein Angebot geschrieben; dieser Absatz über dich steht in allen. Ändere ihn hier und erstelle die Anschreiben dann neu.",
-        "Cada carta se escribe para su oferta; este párrafo sobre ti aparece en todas. Modifícalo aquí y luego rehaz las cartas.",
-    ),
     "En français": ("In French", "Auf Französisch", "En francés"),
     "En anglais": ("In English", "Auf Englisch", "En inglés"),
-    "Refaire les lettres ?": (
-        "Remake the letters?",
-        "Anschreiben neu erstellen?",
-        "¿Rehacer las cartas?",
-    ),
-    "Refaire maintenant les lettres déjà préparées pour les offres ?": (
-        "Remake now the letters already prepared for the offers?",
-        "Die bereits vorbereiteten Anschreiben jetzt neu erstellen?",
-        "¿Rehacer ahora las cartas ya preparadas para las ofertas?",
-    ),
     "Voir la dernière lettre": (
         "View the latest letter",
         "Letztes Anschreiben ansehen",
@@ -1492,11 +1234,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "A profile = a separate search: another job, another city, or another person.",
         "Ein Profil = eine eigene Suche: ein anderer Beruf, eine andere Stadt oder eine andere Person.",
         "Un perfil = una búsqueda aparte: otro oficio, otra ciudad u otra persona.",
-    ),
-    "Remplacer le CV de base ?": (
-        "Replace the base CV?",
-        "Basis-Lebenslauf ersetzen?",
-        "¿Reemplazar el CV base?",
     ),
     "Remplacer ton CV de base ({a}) par {cv} ? L'ancien est gardé à côté, en .bak.": (
         "Replace your base CV ({a}) with {cv}? The old one is kept next to it, as .bak.",
@@ -1522,16 +1259,11 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Lebensläufe und Anschreiben · {n} Angebot(e)",
         "CV y cartas · {n} oferta(s)",
     ),
-    "Combien d'offres traiter ? {n} offre(s) à fit 8 et plus attendent encore leurs documents.": (
-        "How many offers to process? {n} offer(s) with fit 8 and above still wait for their documents.",
-        "Wie viele Angebote bearbeiten? {n} Angebot(e) mit Fit 8 und mehr warten noch auf ihre Unterlagen.",
-        "¿Cuántas ofertas tratar? {n} oferta(s) con fit 8 o más esperan aún sus documentos.",
-    ),
     "Préparer": ("Prepare", "Vorbereiten", "Preparar"),
-    "entre 1 et 1000 offres": (
-        "between 1 and 1000 offers",
-        "zwischen 1 und 1000 Angeboten",
-        "entre 1 y 1000 ofertas",
+    "Entre 1 et 1000 offres": (
+        "Between 1 and 1000 offers",
+        "Zwischen 1 und 1000 Angeboten",
+        "Entre 1 y 1000 ofertas",
     ),
     "{n} changement(s), {e} écarté(s). Rien n'est écrit.": (
         "{n} change(s), {e} set aside. Nothing is written.",
@@ -1553,12 +1285,12 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Version beiseitegelegt: {v}",
         "Versión apartada: {v}",
     ),
-    "un CV au format .docx ou .pdf": (
-        "a CV as .docx or .pdf",
-        "ein Lebenslauf als .docx oder .pdf",
-        "un CV en formato .docx o .pdf",
+    "Un CV au format .docx ou .pdf": (
+        "A CV as .docx or .pdf",
+        "Ein Lebenslauf als .docx oder .pdf",
+        "Un CV en formato .docx o .pdf",
     ),
-    "aucun CV choisi": ("no CV chosen", "kein Lebenslauf gewählt", "ningún CV elegido"),
+    "Aucun CV choisi": ("No CV chosen", "Kein Lebenslauf gewählt", "Ningún CV elegido"),
     "Lecture impossible : {e}": (
         "Could not read: {e}",
         "Lesen nicht möglich: {e}",
@@ -1569,15 +1301,15 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Im Moment nicht möglich ({e}): ist das Dokument in Word geöffnet?",
         "Imposible por ahora ({e}): ¿está el documento abierto en Word?",
     ),
-    "il faut l'application pour choisir un CV": (
-        "the application is needed to choose a CV",
-        "zum Wählen eines Lebenslaufs braucht es die Anwendung",
-        "hace falta la aplicación para elegir un CV",
+    "Il faut l'application pour choisir un CV": (
+        "The application is needed to choose a CV",
+        "Zum Wählen eines Lebenslaufs braucht es die Anwendung",
+        "Hace falta la aplicación para elegir un CV",
     ),
-    "il faut l'application pour choisir un fichier": (
-        "the application is needed to choose a file",
-        "zum Wählen einer Datei braucht es die Anwendung",
-        "hace falta la aplicación para elegir un archivo",
+    "Il faut l'application pour choisir un fichier": (
+        "The application is needed to choose a file",
+        "Zum Wählen einer Datei braucht es die Anwendung",
+        "Hace falta la aplicación para elegir un archivo",
     ),
     "Tous les fichiers (*.*)": (
         "All files (*.*)",
@@ -1599,42 +1331,17 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "Fin": ("End", "Ende", "Fin"),
     "Erreurs": ("Errors", "Fehler", "Errores"),
     "Dernier succès": ("Last success", "Letzter Erfolg", "Último éxito"),
-    "Relancer la collecte": (
-        "Run the collection again",
-        "Sammlung erneut starten",
-        "Volver a lanzar la recogida",
-    ),
     "Données": ("Data", "Daten", "Datos"),
-    "Contrôler les offres fermées": (
-        "Check the closed offers",
-        "Geschlossene Angebote prüfen",
-        "Controlar las ofertas cerradas",
-    ),
     "Sauvegardes": ("Backups", "Sicherungen", "Copias de seguridad"),
     "une par jour, sept jours glissants": (
         "one a day, seven rolling days",
         "eine pro Tag, sieben Tage rollierend",
         "una al día, siete días móviles",
     ),
-    "tâche inconnue : {t}": (
-        "unknown task: {t}",
-        "unbekannte Aufgabe: {t}",
-        "tarea desconocida: {t}",
-    ),
-    "outil inconnu : {t}": (
-        "unknown tool: {t}",
-        "unbekanntes Werkzeug: {t}",
-        "herramienta desconocida: {t}",
-    ),
-    "dossier de données introuvable": (
-        "data folder not found",
+    "Dossier de données introuvable": (
+        "Data folder not found",
         "Datenordner nicht gefunden",
-        "carpeta de datos no encontrada",
-    ),
-    "{f} illisible : rien écrit": (
-        "{f} unreadable: nothing written",
-        "{f} unlesbar: nichts geschrieben",
-        "{f} ilegible: no se escribió nada",
+        "Carpeta de datos no encontrada",
     ),
     # --- Settings ---
     "Apparence": ("Appearance", "Erscheinungsbild", "Apariencia"),
@@ -1681,27 +1388,7 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Sprache der Oberfläche, in beiden Fenstern. Anschreiben und Nachrichten behalten ihre eigene.",
         "Idioma de la interfaz, en las dos ventanas. Las cartas y los mensajes conservan el suyo.",
     ),
-    "langue inconnue : {c}": (
-        "unknown language: {c}",
-        "unbekannte Sprache: {c}",
-        "idioma desconocido: {c}",
-    ),
     "Mise à jour": ("Update", "Update", "Actualización"),
-    "GitHub injoignable : réessaie plus tard.": (
-        "GitHub unreachable: try again later.",
-        "GitHub nicht erreichbar: versuche es später erneut.",
-        "GitHub inaccesible: inténtalo más tarde.",
-    ),
-    "À jour : {v} est la dernière version.": (
-        "Up to date: {v} is the latest version.",
-        "Aktuell: {v} ist die neueste Version.",
-        "Al día: {v} es la última versión.",
-    ),
-    "La version {v} attend la signature de son auteur : réessaie plus tard.": (
-        "Version {v} awaits its author's signature: try again later.",
-        "Version {v} wartet auf die Signatur ihres Autors: versuche es später erneut.",
-        "La versión {v} espera la firma de su autor: inténtalo más tarde.",
-    ),
     "Version {v} disponible": (
         "Version {v} available",
         "Version {v} verfügbar",
@@ -1753,7 +1440,7 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Planung nur unter Windows verfügbar.",
         "Programación disponible solo en Windows.",
     ),
-    "heure au format 08:00": ("time as 08:00", "Uhrzeit im Format 08:00", "hora con formato 08:00"),
+    "Heure au format 08:00": ("Time as 08:00", "Uhrzeit im Format 08:00", "Hora con formato 08:00"),
     "Un profil = une recherche à part : un autre métier, une autre ville, ou une autre personne. Chacun a ses offres, ses CV et ses lettres ; les clés des sites restent communes. Changer de profil relance la fenêtre.": (
         "A profile = a separate search: another job, another city, or another person. "
         "Each has its offers, CVs and letters; the site keys stay shared. Switching "
@@ -1818,7 +1505,6 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "un formulario rellenado a partir del CV: revisa, completa, valida. Tu perfil "
         "actual no cambia.",
     ),
-    "Choisir le CV…": ("Choose the CV…", "Lebenslauf wählen…", "Elegir el CV…"),
     "Complète le formulaire": (
         "Complete the form",
         "Fülle das Formular aus",
@@ -1839,12 +1525,12 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     ),
     "C'est fait": ("Done", "Fertig", "Hecho"),
     "Profil créé.": ("Profile created.", "Profil erstellt.", "Perfil creado."),
-    "profil inconnu": ("unknown profile", "unbekanntes Profil", "perfil desconocido"),
-    "nom vide": ("empty name", "leerer Name", "nombre vacío"),
-    "donne un nom au profil": (
-        "give the profile a name",
-        "gib dem Profil einen Namen",
-        "ponle un nombre al perfil",
+    "Profil inconnu": ("Unknown profile", "Unbekanntes Profil", "Perfil desconocido"),
+    "Nom vide": ("Empty name", "Leerer Name", "Nombre vacío"),
+    "Donne un nom au profil": (
+        "Give the profile a name",
+        "Gib dem Profil einen Namen",
+        "Ponle un nombre al perfil",
     ),
     "Le profil principal ne s'archive pas.": (
         "The main profile cannot be archived.",
@@ -1953,50 +1639,752 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Textvorschau ohne Layout: installiere LibreOffice (libreoffice.org), um das Dokument so zu sehen, wie es verschickt wird.",
         "Vista previa del texto, sin el formato: instala LibreOffice (libreoffice.org) para ver el documento tal como se enviará.",
     ),
-    "Remplacer ta lettre de base ?": (
-        "Replace your base letter?",
-        "Basis-Anschreiben ersetzen?",
-        "¿Sustituir tu carta base?",
+    # --- 3.67 → 3.75: texts the audit of 2026-11-02 found untranslated
+    "Un autre programme écrit les offres : réessaie dans un instant": (
+        "Another program is writing the offers: try again in a moment",
+        "Ein anderes Programm schreibt die Angebote: versuch es gleich noch einmal",
+        "Otro programa está escribiendo las ofertas: vuelve a intentarlo en un momento",
     ),
-    "Remplacer {a} par {b} ? L'ancienne est gardée à côté, en .bak.": (
-        "Replace {a} with {b}? The old one is kept beside it, as .bak.",
-        "{a} durch {b} ersetzen? Das alte bleibt daneben, als .bak.",
-        "¿Sustituir {a} por {b}? La anterior se guarda al lado, como .bak.",
+    "arrêté avant la fin": (
+        "stopped before the end",
+        "vor dem Ende gestoppt",
+        "detenido antes del final",
     ),
-    "Lettre gardée : {nom}. Aucun paragraphe de parcours reconnu : écris-le dans le champ.": (
-        "Letter kept: {nom}. No background paragraph found: write it in the field.",
-        "Anschreiben gespeichert: {nom}. Kein Werdegang-Absatz erkannt: schreib ihn ins Feld.",
-        "Carta guardada: {nom}. No se reconoció ningún párrafo de trayectoria: escríbelo en el campo.",
+    "en arrière-plan": ("in the background", "im Hintergrund", "en segundo plano"),
+    "en arrière-plan · {a} sur {b}": (
+        "in the background · {a} of {b}",
+        "im Hintergrund · {a} von {b}",
+        "en segundo plano · {a} de {b}",
     ),
-    "Reprendre ton paragraphe de parcours ?": (
-        "Use your background paragraph?",
-        "Deinen Werdegang-Absatz übernehmen?",
-        "¿Usar tu párrafo de trayectoria?",
+    "Masquer le détail": ("Hide the details", "Details ausblenden", "Ocultar el detalle"),
+    "Voir le détail": ("Show the details", "Details anzeigen", "Ver el detalle"),
+    "terminée": ("finished", "beendet", "terminada"),
+    "Échec : {x}": ("Failed: {x}", "Fehlgeschlagen: {x}", "Error: {x}"),
+    "Échec.": ("Failed.", "Fehlgeschlagen.", "Error."),
+    "Retirées de la file, elles ne reviennent pas à la collecte suivante. Le motif aide à comprendre ce qui ne va pas et corrige le score.": (
+        "Removed from the queue, they do not come back at the next collection. The reason helps to understand what is wrong and corrects the score.",
+        "Aus der Liste entfernt, kommen sie bei der nächsten Sammlung nicht zurück. Der Grund hilft zu verstehen, was nicht passt, und korrigiert den Score.",
+        "Retiradas de la lista, no vuelven en la próxima recogida. El motivo ayuda a entender qué falla y corrige la puntuación.",
     ),
-    "Le reprendre": ("Use it", "Übernehmen", "Usarlo"),
-    "Paragraphe repris dans le profil.": (
-        "Paragraph saved in the profile.",
-        "Absatz ins Profil übernommen.",
-        "Párrafo guardado en el perfil.",
+    "{n} offre(s) écartée(s) — « {motif} ». {e} nouvelle(s) exclusion(s).{g}": (
+        "{n} offer(s) set aside — “{motif}”. {e} new exclusion(s).{g}",
+        "{n} Angebot(e) aussortiert — „{motif}“. {e} neue Ausschlüsse.{g}",
+        "{n} oferta(s) descartada(s) — «{motif}». {e} nueva(s) exclusión(es).{g}",
     ),
-    "Ta lettre de base, si tu en as une : JobHunter en reprend ton paragraphe de parcours. Chaque lettre est ensuite écrite pour son offre ; le paragraphe ci-dessous est repris dans toutes.": (
-        "Your base letter, if you have one: JobHunter takes your background paragraph from it. Each letter is then written for its offer; the paragraph below goes into all of them.",
-        "Dein Basis-Anschreiben, falls du eines hast: JobHunter übernimmt daraus deinen Werdegang-Absatz. Jedes Anschreiben wird dann für sein Angebot geschrieben; der Absatz unten steht in allen.",
-        "Tu carta base, si tienes una: JobHunter toma de ella tu párrafo de trayectoria. Cada carta se escribe luego para su oferta; el párrafo de abajo va en todas.",
+    "{n} gardée(s) : elles ont une candidature.": (
+        "{n} kept: they have an application.",
+        "{n} behalten: sie haben eine Bewerbung.",
+        "{n} conservada(s): tienen una candidatura.",
     ),
-    "Pas encore de lettre de base.": (
-        "No base letter yet.",
-        "Noch kein Basis-Anschreiben.",
-        "Todavía no hay carta base.",
+    "Élément {n}": ("Element {n}", "Element {n}", "Elemento {n}"),
+    "Ajouter un élément après": (
+        "Add an element after",
+        "Element danach hinzufügen",
+        "Añadir un elemento después",
     ),
-    "Remplacer ma lettre de base…": (
-        "Replace my base letter…",
-        "Mein Basis-Anschreiben ersetzen…",
-        "Sustituir mi carta base…",
+    "Ajouter un élément après celui-ci": (
+        "Add an element after this one",
+        "Nach diesem ein Element hinzufügen",
+        "Añadir un elemento después de este",
     ),
-    "Ajouter ma lettre de base…": (
-        "Add my base letter…",
-        "Mein Basis-Anschreiben hinzufügen…",
-        "Añadir mi carta base…",
+    "Supprimer cet élément": (
+        "Remove this element",
+        "Dieses Element entfernen",
+        "Quitar este elemento",
+    ),
+    "Supprimer l'élément": ("Remove the element", "Element entfernen", "Quitar el elemento"),
+    "{n} paragraphe(s) modifié(s){x}.": (
+        "{n} paragraph(s) changed{x}.",
+        "{n} Absatz/Absätze geändert{x}.",
+        "{n} párrafo(s) modificado(s){x}.",
+    ),
+    "Nouvel élément": ("New element", "Neues Element", "Nuevo elemento"),
+    "PDF non refait (LibreOffice ?).": (
+        "PDF not remade (LibreOffice?).",
+        "PDF nicht neu erstellt (LibreOffice?).",
+        "PDF no rehecho (¿LibreOffice?).",
+    ),
+    "Republiée {n} fois en 90 jours": (
+        "Reposted {n} times in 90 days",
+        "{n}-mal in 90 Tagen neu veröffentlicht",
+        "Republicada {n} veces en 90 días",
+    ),
+    "Une annonce remise en ligne sans cesse est souvent une offre « fantôme » (pas de recrutement en cours) ou un poste difficile à pourvoir. Vérifie sur le site de l'entreprise avant d'y passer du temps.": (
+        "A posting put online again and again is often a “ghost” offer (no hiring under way) or a post hard to fill. Check on the company's site before spending time on it.",
+        "Eine immer wieder veröffentlichte Anzeige ist oft ein „Geisterangebot“ (keine laufende Einstellung) oder eine schwer zu besetzende Stelle. Prüf es auf der Seite des Unternehmens, bevor du Zeit investierst.",
+        "Un anuncio publicado una y otra vez suele ser una oferta «fantasma» (sin contratación en curso) o un puesto difícil de cubrir. Compruébalo en el sitio de la empresa antes de dedicarle tiempo.",
+    ),
+    "Condition éliminatoire : {x}": (
+        "Eliminating condition: {x}",
+        "Ausschlusskriterium: {x}",
+        "Condición eliminatoria: {x}",
+    ),
+    "L'annonce l'exige explicitement : vérifie que tu la remplis.": (
+        "The posting requires it explicitly: check that you meet it.",
+        "Die Anzeige verlangt es ausdrücklich: prüf, ob du es erfüllst.",
+        "El anuncio lo exige explícitamente: comprueba que lo cumples.",
+    ),
+    "Même texte chez {x}": ("Same text at {x}", "Gleicher Text bei {x}", "Mismo texto en {x}"),
+    "Souvent un cabinet ou un site d'emploi qui reprend l'offre d'un employeur : mieux vaut postuler à la source.": (
+        "Often an agency or a job site copying an employer's offer: better to apply at the source.",
+        "Oft eine Agentur oder Jobbörse, die das Angebot eines Arbeitgebers übernimmt: besser direkt an der Quelle bewerben.",
+        "A menudo una agencia o un portal que copia la oferta de un empleador: mejor postular en el origen.",
+    ),
+    "En double : {x}": ("Duplicate: {x}", "Doppelt: {x}", "Duplicada: {x}"),
+    "La même offre sous un autre nom du même groupe.": (
+        "The same offer under another name of the same group.",
+        "Dasselbe Angebot unter einem anderen Namen derselben Gruppe.",
+        "La misma oferta con otro nombre del mismo grupo.",
+    ),
+    "À vérifier avant de postuler": (
+        "To check before applying",
+        "Vor der Bewerbung prüfen",
+        "Comprobar antes de postular",
+    ),
+    "Postuler chez {x}": ("Apply at {x}", "Bewerben bei {x}", "Postular en {x}"),
+    "Rien à faire pour l'instant": (
+        "Nothing to do for now",
+        "Im Moment nichts zu tun",
+        "Nada que hacer por ahora",
+    ),
+    "Vérifier les offres": ("Check the offers", "Angebote prüfen", "Comprobar las ofertas"),
+    "{n} cochée{s}": ("{n} ticked", "{n} angehakt", "{n} marcada{s}"),
+    "Score max": ("Best score", "Bester Score", "Puntuación máx."),
+    "Suivre celles à score ≥ 7": (
+        "Follow those scoring ≥ 7",
+        "Die mit Score ≥ 7 verfolgen",
+        "Seguir las de puntuación ≥ 7",
+    ),
+    "{n} offres · score moyen {m} (enregistré {e}) · à 8 et plus : {h} (enregistré {k})": (
+        "{n} offers · average score {m} (saved {e}) · 8 and above: {h} (saved {k})",
+        "{n} Angebote · Durchschnittsscore {m} (gespeichert {e}) · ab 8: {h} (gespeichert {k})",
+        "{n} ofertas · puntuación media {m} (guardada {e}) · 8 o más: {h} (guardadas {k})",
+    ),
+    "score {i} : {n} (enregistré : {e})": (
+        "score {i}: {n} (saved: {e})",
+        "Score {i}: {n} (gespeichert: {e})",
+        "puntuación {i}: {n} (guardada: {e})",
+    ),
+    "Poids enregistrés (l'ancienne version est gardée).": (
+        "Weights saved (the previous version is kept).",
+        "Gewichte gespeichert (die vorherige Version bleibt erhalten).",
+        "Pesos guardados (se conserva la versión anterior).",
+    ),
+    "Recalculer les scores ?": (
+        "Recompute the scores?",
+        "Scores neu berechnen?",
+        "¿Recalcular las puntuaciones?",
+    ),
+    "Recalculer maintenant le score enregistré de chaque offre de ta file ? Le tableau et le tri l'utilisent.": (
+        "Recompute now the saved score of every offer in your queue? The table and the sorting use it.",
+        "Jetzt den gespeicherten Score jedes Angebots deiner Liste neu berechnen? Tabelle und Sortierung verwenden ihn.",
+        "¿Recalcular ahora la puntuación guardada de cada oferta de tu lista? La tabla y el orden la usan.",
+    ),
+    "Score : les poids": ("Score: the weights", "Score: die Gewichte", "Puntuación: los pesos"),
+    "Score : réglages": ("Score: settings", "Score: Einstellungen", "Puntuación: ajustes"),
+    "Compte pour cet axe du score": (
+        "Counts for this axis of the score",
+        "Zählt für diese Achse des Scores",
+        "Cuenta para este eje de la puntuación",
+    ),
+    "Les mots cherchés dans les annonces, et les axes du score pour lesquels chaque compétence compte.": (
+        "The words searched in the postings, and the axes of the score each skill counts for.",
+        "Die in den Anzeigen gesuchten Wörter und die Achsen des Scores, für die jede Kompetenz zählt.",
+        "Las palabras buscadas en los anuncios y los ejes de la puntuación para los que cuenta cada competencia.",
+    ),
+    "Combien d'offres traiter ? {n} offre(s) à score 8 et plus attendent encore leurs documents.": (
+        "How many offers to process? {n} offer(s) scoring 8 and above still wait for their documents.",
+        "Wie viele Angebote bearbeiten? {n} Angebot(e) mit Score ab 8 warten noch auf ihre Unterlagen.",
+        "¿Cuántas ofertas tratar? {n} oferta(s) con puntuación 8 o más esperan aún sus documentos.",
+    ),
+    "Appels d'API aujourd'hui (tous profils) :": (
+        "Requests to the services today (all profiles):",
+        "Anfragen an die Dienste heute (alle Profile):",
+        "Consultas a los servicios hoy (todos los perfiles):",
+    ),
+    "{x}Crée-la sur {y}. Elle va dans son fichier, jamais ailleurs.": (
+        "{x}Create it on {y}. It goes into its own file, nowhere else.",
+        "{x}Erstelle ihn auf {y}. Er kommt in seine eigene Datei, nirgendwo sonst hin.",
+        "{x}Créala en {y}. Va a su propio archivo, a ningún otro sitio.",
+    ),
+    "Refaire maintenant ceux déjà préparés pour les offres ?": (
+        "Remake now those already prepared for the offers?",
+        "Die bereits für die Angebote erstellten jetzt neu machen?",
+        "¿Rehacer ahora los ya preparados para las ofertas?",
+    ),
+    "Lettre de « {m} » : {n}. Aucun paragraphe de parcours reconnu.": (
+        "Letter of “{m}”: {n}. No background paragraph recognised.",
+        "Anschreiben für „{m}“: {n}. Kein Werdegang-Absatz erkannt.",
+        "Carta de «{m}»: {n}. Ningún párrafo de trayectoria reconocido.",
+    ),
+    "Lettre de « {m} » : {n}. Son paragraphe de parcours est repris.": (
+        "Letter of “{m}”: {n}. Its background paragraph is taken over.",
+        "Anschreiben für „{m}“: {n}. Sein Werdegang-Absatz wird übernommen.",
+        "Carta de «{m}»: {n}. Se retoma su párrafo de trayectoria.",
+    ),
+    "CV de « {m} » : {n}.": (
+        "CV of “{m}”: {n}.",
+        "Lebenslauf für „{m}“: {n}.",
+        "CV de «{m}»: {n}.",
+    ),
+    "Nom du métier": ("Name of the trade", "Name des Berufs", "Nombre del oficio"),
+    "Mots du titre des offres (séparés par des virgules)": (
+        "Words of the offers' titles (separated by commas)",
+        "Wörter im Titel der Angebote (durch Kommas getrennt)",
+        "Palabras del título de las ofertas (separadas por comas)",
+    ),
+    "Ajouter un métier": ("Add a trade", "Beruf hinzufügen", "Añadir un oficio"),
+    "Ajouter un métier…": ("Add a trade…", "Beruf hinzufügen…", "Añadir un oficio…"),
+    "Un CV pour un autre métier, et sa lettre si tu veux : les offres dont le titre contient un de ces mots le prennent. Choisis ensuite le CV.": (
+        "A CV for another trade, and its letter if you like: the offers whose title holds one of these words take it. Then choose the CV.",
+        "Ein Lebenslauf für einen anderen Beruf, und sein Anschreiben, wenn du willst: Angebote mit einem dieser Wörter im Titel nehmen ihn. Wähl dann den Lebenslauf.",
+        "Un CV para otro oficio, y su carta si quieres: las ofertas cuyo título contiene una de estas palabras lo toman. Elige luego el CV.",
+    ),
+    "Choisir le CV…": ("Choose the CV…", "Lebenslauf wählen…", "Elegir el CV…"),
+    "Il faut un nom et au moins un mot.": (
+        "A name and at least one word are needed.",
+        "Ein Name und mindestens ein Wort sind nötig.",
+        "Hace falta un nombre y al menos una palabra.",
+    ),
+    "Métier ajouté, CV : {x}. Les offres prennent leur domaine…": (
+        "Trade added, CV: {x}. The offers take their field…",
+        "Beruf hinzugefügt, Lebenslauf: {x}. Die Angebote erhalten ihren Bereich…",
+        "Oficio añadido, CV: {x}. Las ofertas toman su área…",
+    ),
+    "Ajouter sa lettre ?": ("Add its letter?", "Sein Anschreiben hinzufügen?", "¿Añadir su carta?"),
+    "Choisir la lettre…": ("Choose the letter…", "Anschreiben wählen…", "Elegir la carta…"),
+    "Ta lettre pour ce métier : son paragraphe de parcours sera repris dans les lettres de ses offres.": (
+        "Your letter for this trade: its background paragraph will be used in the letters of its offers.",
+        "Dein Anschreiben für diesen Beruf: sein Werdegang-Absatz wird in die Anschreiben seiner Angebote übernommen.",
+        "Tu carta para este oficio: su párrafo de trayectoria se usará en las cartas de sus ofertas.",
+    ),
+    "Modifier « {x} »": ("Edit “{x}”", "„{x}“ bearbeiten", "Editar «{x}»"),
+    "Retirer « {x} » ?": ("Remove “{x}”?", "„{x}“ entfernen?", "¿Quitar «{x}»?"),
+    "Ses offres passent aux autres métiers. Son CV et sa lettre restent dans leurs dossiers.": (
+        "Its offers go to the other trades. Its CV and letter stay in their folders.",
+        "Seine Angebote gehen an die anderen Berufe. Lebenslauf und Anschreiben bleiben in ihren Ordnern.",
+        "Sus ofertas pasan a los otros oficios. Su CV y su carta quedan en sus carpetas.",
+    ),
+    "Mes métiers : CV et lettre": (
+        "My trades: CV and letter",
+        "Meine Berufe: Lebenslauf und Anschreiben",
+        "Mis oficios: CV y carta",
+    ),
+    "Chaque métier a son CV et sa lettre ; une offre prend le métier dont un mot est dans son titre. Chaque métier est un domaine du filtre des offres.": (
+        "Each trade has its CV and its letter; an offer takes the trade with a word in its title. Each trade is a field of the offers' filter.",
+        "Jeder Beruf hat seinen Lebenslauf und sein Anschreiben; ein Angebot nimmt den Beruf, dessen Wort im Titel steht. Jeder Beruf ist ein Bereich im Angebotsfilter.",
+        "Cada oficio tiene su CV y su carta; una oferta toma el oficio con una palabra en su título. Cada oficio es un área del filtro de ofertas.",
+    ),
+    "{x} (le reste)": ("{x} (the rest)", "{x} (der Rest)", "{x} (el resto)"),
+    "les offres qu'aucun métier ne prend": (
+        "the offers no trade takes",
+        "die Angebote, die kein Beruf nimmt",
+        "las ofertas que ningún oficio toma",
+    ),
+    "aucune": ("none", "keins", "ninguna"),
+    "Changer…": ("Change…", "Ändern…", "Cambiar…"),
+    "Enregistré (l'ancienne version est gardée).": (
+        "Saved (the previous version is kept).",
+        "Gespeichert (die vorherige Version bleibt erhalten).",
+        "Guardado (se conserva la versión anterior).",
+    ),
+    "Enregistré (l'ancienne version est gardée). Effet à la prochaine collecte.": (
+        "Saved (the previous version is kept). Takes effect at the next collection.",
+        "Gespeichert (die vorherige Version bleibt erhalten). Wirkt ab der nächsten Sammlung.",
+        "Guardado (se conserva la versión anterior). Efecto en la próxima recogida.",
+    ),
+    "Ta phrase sur toi, reprise dans toutes les lettres": (
+        "Your sentence about yourself, used in every letter",
+        "Dein Satz über dich, in jedem Anschreiben",
+        "Tu frase sobre ti, en todas las cartas",
+    ),
+    "Refaire les lettres ?": (
+        "Remake the letters?",
+        "Anschreiben neu machen?",
+        "¿Rehacer las cartas?",
+    ),
+    "Refaire maintenant les lettres déjà préparées pour les offres ?": (
+        "Remake now the letters already prepared for the offers?",
+        "Die bereits für die Angebote erstellten Anschreiben jetzt neu machen?",
+        "¿Rehacer ahora las cartas ya preparadas para las ofertas?",
+    ),
+    "Métier inconnu": ("Unknown trade", "Unbekannter Beruf", "Oficio desconocido"),
+    "Il faut un nom et au moins un mot du titre": (
+        "A name and at least one title word are needed",
+        "Ein Name und mindestens ein Titelwort sind nötig",
+        "Hace falta un nombre y al menos una palabra del título",
+    ),
+    "Garde au moins un métier": (
+        "Keep at least one trade",
+        "Behalte mindestens einen Beruf",
+        "Conserva al menos un oficio",
+    ),
+    "Au moins un mot du titre": (
+        "At least one title word",
+        "Mindestens ein Titelwort",
+        "Al menos una palabra del título",
+    ),
+    "Profil avancé": ("Advanced profile", "Erweitertes Profil", "Perfil avanzado"),
+    "· un par ligne": ("· one per line", "· eins pro Zeile", "· uno por línea"),
+    "Profil enregistré (l'ancienne version est gardée).": (
+        "Profile saved (the previous version is kept).",
+        "Profil gespeichert (die vorherige Version bleibt erhalten).",
+        "Perfil guardado (se conserva la versión anterior).",
+    ),
+    "Rien n'est écrit — {x}": (
+        "Nothing is written — {x}",
+        "Nichts wird geschrieben — {x}",
+        "No se escribe nada — {x}",
+    ),
+    "Tout le profil, rubrique par rubrique. Les rubriques ne s'ajoutent ni ne se retirent ici ; le profil d'avant est gardé à chaque enregistrement.": (
+        "The whole profile, section by section. Sections are neither added nor removed here; the previous profile is kept at each save.",
+        "Das ganze Profil, Abschnitt für Abschnitt. Abschnitte werden hier weder hinzugefügt noch entfernt; das vorherige Profil bleibt bei jedem Speichern erhalten.",
+        "Todo el perfil, sección por sección. Aquí no se añaden ni se quitan secciones; el perfil anterior se conserva en cada guardado.",
+    ),
+    "Effacer mes données…": ("Erase my data…", "Meine Daten löschen…", "Borrar mis datos…"),
+    "Effacer mes données ?": ("Erase my data?", "Meine Daten löschen?", "¿Borrar mis datos?"),
+    "Le profil, les CV, les lettres, les {n} offres et les {c} candidatures suivies": (
+        "The profile, the CVs, the letters, the {n} offers and the {c} tracked applications",
+        "Das Profil, die Lebensläufe, die Anschreiben, die {n} Angebote und die {c} verfolgten Bewerbungen",
+        "El perfil, los CV, las cartas, las {n} ofertas y las {c} candidaturas seguidas",
+    ),
+    "partent à la Corbeille, la collecte du matin est arrêtée et JobHunter se ferme.": (
+        "go to the Recycle Bin, the morning collection is stopped and JobHunter closes.",
+        "kommen in den Papierkorb, die Morgensammlung wird gestoppt und JobHunter schließt sich.",
+        "van a la Papelera, la recogida matinal se detiene y JobHunter se cierra.",
+    ),
+    "Tant que la Corbeille n'est pas vidée, on peut tout restaurer.": (
+        "Until the Recycle Bin is emptied, everything can be restored.",
+        "Solange der Papierkorb nicht geleert ist, lässt sich alles wiederherstellen.",
+        "Mientras no se vacíe la Papelera, todo se puede restaurar.",
+    ),
+    "Effacer et fermer": ("Erase and close", "Löschen und schließen", "Borrar y cerrar"),
+    "Impossible de joindre le serveur des mises à jour : réessaie plus tard.": (
+        "The update server cannot be reached: try again later.",
+        "Der Update-Server ist nicht erreichbar: versuch es später noch einmal.",
+        "No se puede contactar con el servidor de actualizaciones: vuelve a intentarlo más tarde.",
+    ),
+    "À jour : {v}.": ("Up to date: {v}.", "Aktuell: {v}.", "Actualizado: {v}."),
+    "À jour : {v}.{x}": ("Up to date: {v}.{x}", "Aktuell: {v}.{x}", "Actualizado: {v}.{x}"),
+    "Installée : {v}. JobHunter se ferme pendant l'installation puis se rouvre de lui-même.": (
+        "Installed: {v}. JobHunter closes during the installation, then opens again by itself.",
+        "Installiert: {v}. JobHunter schließt sich während der Installation und öffnet sich dann von selbst wieder.",
+        "Instalada: {v}. JobHunter se cierra durante la instalación y luego se vuelve a abrir solo.",
+    ),
+    "La {v} sera proposée dès que son auteur l'aura signée.": (
+        "{v} will be offered as soon as its author has signed it.",
+        "{v} wird angeboten, sobald sein Autor sie signiert hat.",
+        "La {v} se propondrá en cuanto su autor la haya firmado.",
+    ),
+    "Plein écran": ("Full screen", "Vollbild", "Pantalla completa"),
+    "Revenir à une fenêtre": ("Back to a window", "Zurück zum Fenster", "Volver a una ventana"),
+    "Une fenêtre s'est ouverte : réponds-y au clavier.": (
+        "A window opened: answer it with the keyboard.",
+        "Ein Fenster hat sich geöffnet: antworte darin mit der Tastatur.",
+        "Se abrió una ventana: respóndela con el teclado.",
+    ),
+    "Diagnostic (avancé)": (
+        "Diagnostics (advanced)",
+        "Diagnose (erweitert)",
+        "Diagnóstico (avanzado)",
+    ),
+    "Diagnostic": ("Diagnostics", "Diagnose", "Diagnóstico"),
+    "Lire les sites carrières suivis": (
+        "Read the followed career sites",
+        "Verfolgte Karriereseiten lesen",
+        "Leer los sitios de empleo seguidos",
+    ),
+    "Ouvre le site carrière de chaque entreprise suivie et garde ses offres récentes.": (
+        "Opens the career site of each followed company and keeps its recent offers.",
+        "Öffnet die Karriereseite jedes verfolgten Unternehmens und behält seine neuen Angebote.",
+        "Abre el sitio de empleo de cada empresa seguida y conserva sus ofertas recientes.",
+    ),
+    "Rattraper le dernier mois": (
+        "Catch up on the last month",
+        "Den letzten Monat nachholen",
+        "Recuperar el último mes",
+    ),
+    "Collecte les offres publiées ces 31 derniers jours, utile après une absence.": (
+        "Collects the offers posted in the last 31 days, useful after an absence.",
+        "Sammelt die Angebote der letzten 31 Tage, nützlich nach einer Abwesenheit.",
+        "Recoge las ofertas publicadas en los últimos 31 días, útil tras una ausencia.",
+    ),
+    "Tester des mots-clés": ("Test keywords", "Suchbegriffe testen", "Probar palabras clave"),
+    "Mesure combien d'offres nouvelles chaque mot-clé ramène vraiment.": (
+        "Measures how many new offers each keyword really brings back.",
+        "Misst, wie viele neue Angebote jeder Suchbegriff wirklich bringt.",
+        "Mide cuántas ofertas nuevas trae de verdad cada palabra clave.",
+    ),
+    "Comparer mes retouches…": (
+        "Compare my edits…",
+        "Meine Änderungen vergleichen…",
+        "Comparar mis retoques…",
+    ),
+    "Un document retouché à la main et sa nouvelle version : choisis celle à garder.": (
+        "A document edited by hand and its new version: choose the one to keep.",
+        "Ein von Hand geändertes Dokument und seine neue Version: wähl, welche bleibt.",
+        "Un documento retocado a mano y su nueva versión: elige cuál conservar.",
+    ),
+    "Remettre les PDF à jour": (
+        "Bring the PDFs up to date",
+        "PDFs aktualisieren",
+        "Actualizar los PDF",
+    ),
+    "Refait le PDF des CV et lettres modifiés dans Word.": (
+        "Remakes the PDF of the CVs and letters changed in Word.",
+        "Erstellt das PDF der in Word geänderten Lebensläufe und Anschreiben neu.",
+        "Rehace el PDF de los CV y cartas modificados en Word.",
+    ),
+    "Exporter les offres (Excel)": (
+        "Export the offers (Excel)",
+        "Angebote exportieren (Excel)",
+        "Exportar las ofertas (Excel)",
+    ),
+    "Copie lisible de toutes les offres, à ouvrir dans Excel.": (
+        "A readable copy of all the offers, to open in Excel.",
+        "Lesbare Kopie aller Angebote, in Excel zu öffnen.",
+        "Copia legible de todas las ofertas, para abrir en Excel.",
+    ),
+    "Signale ce qui cloche dans les lettres préparées, sans rien changer.": (
+        "Points out what is wrong in the prepared letters, without changing anything.",
+        "Zeigt, was in den erstellten Anschreiben nicht stimmt, ohne etwas zu ändern.",
+        "Señala lo que falla en las cartas preparadas, sin cambiar nada.",
+    ),
+    "Vérifie que chaque CV et lettre s'ouvre, tient sur une page et porte tes coordonnées.": (
+        "Checks that each CV and letter opens, fits on one page and carries your contact details.",
+        "Prüft, ob jeder Lebenslauf und jedes Anschreiben sich öffnet, auf eine Seite passt und deine Kontaktdaten trägt.",
+        "Comprueba que cada CV y carta se abre, cabe en una página y lleva tus datos de contacto.",
+    ),
+    "Nettoyer la file…": ("Clean up the queue…", "Liste bereinigen…", "Limpiar la lista…"),
+    "Renomme ou corrige d'un coup les offres qui suivent une règle.": (
+        "Renames or fixes at once the offers that follow a rule.",
+        "Benennt die Angebote, die einer Regel folgen, auf einmal um oder korrigiert sie.",
+        "Renombra o corrige de una vez las ofertas que siguen una regla.",
+    ),
+    "Alerte des nouvelles offres": (
+        "New offers alert",
+        "Hinweis auf neue Angebote",
+        "Aviso de ofertas nuevas",
+    ),
+    "Notification Windows quand arrivent des offres à score 8 et plus.": (
+        "A Windows notification when offers scoring 8 and above arrive.",
+        "Windows-Benachrichtigung, wenn Angebote mit Score ab 8 eintreffen.",
+        "Notificación de Windows cuando llegan ofertas con puntuación 8 o más.",
+    ),
+    "Fermer le navigateur de candidature": (
+        "Close the application browser",
+        "Bewerbungsbrowser schließen",
+        "Cerrar el navegador de candidatura",
+    ),
+    "Ferme le Chrome ouvert par la candidature guidée.": (
+        "Closes the Chrome opened by the guided application.",
+        "Schließt das von der geführten Bewerbung geöffnete Chrome.",
+        "Cierra el Chrome abierto por la candidatura guiada.",
+    ),
+    "Trouver le site des entreprises": (
+        "Find the companies' websites",
+        "Websites der Unternehmen finden",
+        "Encontrar el sitio de las empresas",
+    ),
+    "Devine l'adresse du site des entreprises qui n'ont pas de lien d'offre.": (
+        "Guesses the website of the companies that have no offer link.",
+        "Errät die Website der Unternehmen ohne Angebotslink.",
+        "Adivina la web de las empresas que no tienen enlace de oferta.",
+    ),
+    "Chercher des sites carrières lisibles": (
+        "Look for readable career sites",
+        "Lesbare Karriereseiten suchen",
+        "Buscar sitios de empleo legibles",
+    ),
+    "Teste quelles entreprises publient leurs offres dans un format que JobHunter lit.": (
+        "Tests which companies publish their offers in a format JobHunter reads.",
+        "Testet, welche Unternehmen ihre Angebote in einem Format veröffentlichen, das JobHunter liest.",
+        "Prueba qué empresas publican sus ofertas en un formato que JobHunter lee.",
+    ),
+    "Chercher les offres Workday des grands groupes": (
+        "Look for the large groups' Workday offers",
+        "Workday-Angebote großer Konzerne suchen",
+        "Buscar las ofertas Workday de los grandes grupos",
+    ),
+    "Trouve les offres que les grands groupes publient par Workday.": (
+        "Finds the offers the large groups publish through Workday.",
+        "Findet die Angebote, die große Konzerne über Workday veröffentlichen.",
+        "Encuentra las ofertas que los grandes grupos publican mediante Workday.",
+    ),
+    "Repérer les offres pourvues": (
+        "Spot the filled offers",
+        "Besetzte Angebote erkennen",
+        "Detectar las ofertas cubiertas",
+    ),
+    "Ouvre les annonces pour trouver celles « pourvues » que le contrôle simple ne voit pas.": (
+        "Opens the postings to find the “filled” ones the simple check misses.",
+        "Öffnet die Anzeigen, um die „besetzten“ zu finden, die die einfache Prüfung übersieht.",
+        "Abre los anuncios para encontrar los «cubiertos» que el control simple no ve.",
+    ),
+    "Tester l'accès aux sites": (
+        "Test access to the sites",
+        "Zugang zu den Seiten testen",
+        "Probar el acceso a los sitios",
+    ),
+    "Dit quels sites d'offres s'ouvrent et lesquels bloquent.": (
+        "Says which offer sites open and which block.",
+        "Sagt, welche Angebotsseiten sich öffnen und welche blockieren.",
+        "Dice qué sitios de ofertas se abren y cuáles bloquean.",
+    ),
+    "Tester la lecture des sites (lent)": (
+        "Test reading the sites (slow)",
+        "Lesen der Seiten testen (langsam)",
+        "Probar la lectura de los sitios (lento)",
+    ),
+    "Ouvre de vrais sites carrières pour vérifier que JobHunter les comprend encore.": (
+        "Opens real career sites to check that JobHunter still understands them.",
+        "Öffnet echte Karriereseiten, um zu prüfen, ob JobHunter sie noch versteht.",
+        "Abre sitios de empleo reales para comprobar que JobHunter aún los entiende.",
+    ),
+    "Entrée ajoute le mot ; taper filtre la liste": (
+        "Enter adds the word; typing filters the list",
+        "Eingabe fügt das Wort hinzu; Tippen filtert die Liste",
+        "Intro añade la palabra; escribir filtra la lista",
+    ),
+    "+ {n} autres": ("+ {n} more", "+ {n} weitere", "+ {n} más"),
+    "Replier": ("Fold", "Einklappen", "Plegar"),
+    "Le fichier est ouvert dans un autre programme (Word ?) : ferme-le puis réessaie.": (
+        "The file is open in another program (Word?): close it, then try again.",
+        "Die Datei ist in einem anderen Programm geöffnet (Word?): schließ sie und versuch es noch einmal.",
+        "El archivo está abierto en otro programa (¿Word?): ciérralo y vuelve a intentarlo.",
+    ),
+    "Fichier introuvable : il a peut-être été déplacé ou supprimé.": (
+        "File not found: it may have been moved or deleted.",
+        "Datei nicht gefunden: sie wurde vielleicht verschoben oder gelöscht.",
+        "Archivo no encontrado: quizá se movió o se borró.",
+    ),
+    "Le disque a refusé l'écriture : {x}.": (
+        "The disk refused the write: {x}.",
+        "Der Datenträger hat das Schreiben verweigert: {x}.",
+        "El disco rechazó la escritura: {x}.",
+    ),
+    "La liste de tes comptes est illisible : {x}": (
+        "The list of your accounts is unreadable: {x}",
+        "Die Liste deiner Konten ist unlesbar: {x}",
+        "La lista de tus cuentas es ilegible: {x}",
+    ),
+    "Pour ajouter une offre, utilise « Ajouter une offre ».": (
+        "To add an offer, use “Add an offer”.",
+        "Um ein Angebot hinzuzufügen, nutze „Angebot hinzufügen“.",
+        "Para añadir una oferta, usa «Añadir una oferta».",
+    ),
+    "Fichier des réglages illisible : rien n'est écrit.": (
+        "Settings file unreadable: nothing is written.",
+        "Einstellungsdatei unlesbar: nichts wird geschrieben.",
+        "Archivo de ajustes ilegible: no se escribe nada.",
+    ),
+    "{x} : son adresse de collecte est introuvable.": (
+        "{x}: its collection address cannot be found.",
+        "{x}: seine Sammeladresse ist nicht auffindbar.",
+        "{x}: no se encuentra su dirección de recogida.",
+    ),
+    "Brouillon de relance": ("Follow-up draft", "Nachfass-Entwurf", "Borrador de recordatorio"),
+    "Recalculer les scores": (
+        "Recompute the scores",
+        "Scores neu berechnen",
+        "Recalcular las puntuaciones",
+    ),
+    "Collecte des offres": ("Collection of offers", "Angebotssammlung", "Recogida de ofertas"),
+    "Domaines des offres": (
+        "Fields of the offers",
+        "Bereiche der Angebote",
+        "Áreas de las ofertas",
+    ),
+    "Score ≥ 8": ("Score ≥ 8", "Score ≥ 8", "Puntuación ≥ 8"),
+    "Sur les offres à score ≥ 8": (
+        "On offers scoring ≥ 8",
+        "Bei Angeboten mit Score ≥ 8",
+        "En las ofertas con puntuación ≥ 8",
+    ),
+    "Score des offres en ligne": (
+        "Score of the offers online",
+        "Score der Online-Angebote",
+        "Puntuación de las ofertas en línea",
+    ),
+    # --- Still shown (put back after the 3.75 clean-up)
+    "Scan offres": ("Scan offers", "Angebote scannen", "Escanear ofertas"),
+    "Commande inconnue : {c}": (
+        "Unknown command: {c}",
+        "Unbekannter Befehl: {c}",
+        "Orden desconocida: {c}",
+    ),
+    "✅ Envoi confirmé par le site.\n« {e} »": (
+        "✅ Sending confirmed by the site.\n“{e}”",
+        "✅ Versand von der Website bestätigt.\n„{e}“",
+        "✅ Envío confirmado por el sitio.\n«{e}»",
+    ),
+    "Statut inconnu : {s}": (
+        "Unknown status: {s}",
+        "Unbekannter Status: {s}",
+        "Estado desconocido: {s}",
+    ),
+    "Recalculer le fit": ("Recompute the fit", "Fit neu berechnen", "Recalcular el fit"),
+    "Type inconnu : {t}": ("Unknown type: {t}", "Unbekannter Typ: {t}", "Tipo desconocido: {t}"),
+    "Sur les offres à fit ≥ 8": (
+        "On offers with fit ≥ 8",
+        "Bei Angeboten mit Fit ≥ 8",
+        "En ofertas con fit ≥ 8",
+    ),
+    "Fit ≥ 8": ("Fit ≥ 8", "Fit ≥ 8", "Fit ≥ 8"),
+    "Tâche inconnue : {t}": (
+        "Unknown task: {t}",
+        "Unbekannte Aufgabe: {t}",
+        "Tarea desconocida: {t}",
+    ),
+    "Outil inconnu : {t}": (
+        "Unknown tool: {t}",
+        "Unbekanntes Werkzeug: {t}",
+        "Herramienta desconocida: {t}",
+    ),
+    "Langue inconnue : {c}": (
+        "Unknown language: {c}",
+        "Unbekannte Sprache: {c}",
+        "Idioma desconocido: {c}",
+    ),
+    # --- Built from pieces in the source: still shown
+    "Plein écran ou fenêtre": (
+        "Full screen or window",
+        "Vollbild oder Fenster",
+        "Pantalla completa o ventana",
+    ),
+    "file occupée par un autre programme : rien n'a été touché": (
+        "queue busy with another program: nothing was touched",
+        "Liste von einem anderen Programm belegt: nichts wurde angefasst",
+        "lista ocupada por otro programa: no se tocó nada",
+    ),
+    "arrêté (code {code})": (
+        "stopped (code {code})",
+        "gestoppt (Code {code})",
+        "detenido (código {code})",
+    ),
+    "⚠ Envoi enregistré, mais le site ne l'a pas confirmé : vérifie ta boîte mail ou ton espace candidat. Rien ne sera renvoyé automatiquement.": (
+        "⚠ Sending recorded, but the site did not confirm it: check your mailbox or your candidate area. Nothing will be resent automatically.",
+        "⚠ Versand vermerkt, aber die Website hat ihn nicht bestätigt: prüfe dein Postfach oder deinen Bewerberbereich. Nichts wird automatisch erneut gesendet.",
+        "⚠ Envío registrado, pero el sitio no lo confirmó: revisa tu correo o tu espacio de candidato. No se reenviará nada automáticamente.",
+    ),
+    "⚠ Envoi enregistré, mais le site ne l'a pas confirmé : vérifie ta boîte mail ou ton espace candidat. Rien ne sera renvoyé automatiquement.\n« {e} »": (
+        "⚠ Sending recorded, but the site did not confirm it: check your mailbox or your candidate area. Nothing will be resent automatically.\n“{e}”",
+        "⚠ Versand vermerkt, aber die Website hat ihn nicht bestätigt: prüfe dein Postfach oder deinen Bewerberbereich. Nichts wird automatisch erneut gesendet.\n„{e}“",
+        "⚠ Envío registrado, pero el sitio no lo confirmó: revisa tu correo o tu espacio de candidato. No se reenviará nada automáticamente.\n«{e}»",
+    ),
+    "Formulaire prêt ({c} % des champs). Vérifie dans Chrome, clique « {b} » toi-même, puis « J'ai envoyé ».": (
+        "Form ready ({c} % of the fields). Check in Chrome, click “{b}” yourself, then “I sent it”.",
+        "Formular bereit ({c} % der Felder). Prüfe in Chrome, klicke selbst auf „{b}“, dann auf „Ich habe gesendet“.",
+        "Formulario listo ({c} % de los campos). Revisa en Chrome, haz clic tú en «{b}», luego en «Lo he enviado».",
+    ),
+    "Formulaire prêt. Vérifie dans Chrome, clique « {b} » toi-même, puis « J'ai envoyé ».": (
+        "Form ready. Check in Chrome, click “{b}” yourself, then “I sent it”.",
+        "Formular bereit. Prüfe in Chrome, klicke selbst auf „{b}“, dann auf „Ich habe gesendet“.",
+        "Formulario listo. Revisa en Chrome, haz clic tú en «{b}», luego en «Lo he enviado».",
+    ),
+    "À toi dans Chrome : {r}. Le programme ne contourne rien. Puis « Re-remplir ».": (
+        "Your turn in Chrome: {r}. The program bypasses nothing. Then “Fill in again”.",
+        "Du bist dran in Chrome: {r}. Das Programm umgeht nichts. Dann „Neu ausfüllen“.",
+        "Tu turno en Chrome: {r}. El programa no sortea nada. Luego «Volver a rellenar».",
+    ),
+    "À postuler": ("To apply", "Zu bewerben", "Por postular"),
+    "Statut vidé — « Annuler » pour revenir.": (
+        "Status cleared — “Cancel” to go back.",
+        "Status geleert — „Abbrechen“ zum Zurücknehmen.",
+        "Estado vaciado — «Cancelar» para volver.",
+    ),
+    "{n} offres · Statut vidé — « Annuler » pour revenir.": (
+        "{n} offers · Status cleared — “Cancel” to go back.",
+        "{n} Angebote · Status geleert — „Abbrechen“ zum Zurücknehmen.",
+        "{n} ofertas · Estado vaciado — «Cancelar» para volver.",
+    ),
+    "cette offre n'a pas de lien": (
+        "this offer has no link",
+        "dieses Angebot hat keinen Link",
+        "esta oferta no tiene enlace",
+    ),
+    "Ailleurs": ("Elsewhere", "Anderswo", "Otras"),
+    "« {liste} » collectée dès la prochaine collecte": (
+        "« {liste} » collected from the next collection",
+        "« {liste} » wird ab der nächsten Sammlung gesammelt",
+        "« {liste} » se recoge desde la próxima recogida",
+    ),
+    "« {liste} » n'est plus collectée": (
+        "« {liste} » is no longer collected",
+        "« {liste} » wird nicht mehr gesammelt",
+        "« {liste} » ya no se recoge",
+    ),
+    "{nom} vient de la liste {listes} : décoche-la dans la liste, ou suspends-la.": (
+        "{nom} comes from the list {listes}: untick it in the list, or suspend it.",
+        "{nom} stammt aus der Liste {listes}: Haken in der Liste entfernen oder pausieren.",
+        "{nom} viene de la lista {listes}: desmárcala en la lista o suspéndela.",
+    ),
+    "Banques, gestion d'actifs, assurance, conseil et acteurs de la finance durable (la liste d'origine du moteur).": (
+        "Banks, asset management, insurance, consulting and sustainable finance players (the engine's original list).",
+        "Banken, Vermögensverwaltung, Versicherungen, Beratung und Akteure der nachhaltigen Finanzen (die ursprüngliche Liste).",
+        "Bancos, gestión de activos, seguros, consultoría y actores de las finanzas sostenibles (la lista original del motor).",
+    ),
+    "Rien à relancer aujourd'hui": (
+        "Nothing to follow up today",
+        "Heute nichts nachzufassen",
+        "Nada que recordar hoy",
+    ),
+    "{n} cochées": ("{n} ticked", "{n} angehakt", "{n} marcadas"),
+    "Plus récentes": ("Most recent", "Neueste", "Más recientes"),
+    "Publiées en dernier": ("Last posted", "Zuletzt veröffentlicht", "Publicadas al final"),
+    "Vérifiées en dernier": ("Last checked", "Zuletzt geprüft", "Verificadas al final"),
+    "Modifier le texte": ("Edit the text", "Text bearbeiten", "Editar el texto"),
+    "Pas de PDF : il sera fait au prochain enregistrement.": (
+        "No PDF: it will be made at the next save.",
+        "Kein PDF: es entsteht beim nächsten Speichern.",
+        "Sin PDF: se hará al guardar la próxima vez.",
+    ),
+    "{n} paragraphe(s) modifié(s), PDF refait.": (
+        "{n} paragraph(s) changed, PDF made again.",
+        "{n} Absatz/Absätze geändert, PDF neu erstellt.",
+        "{n} párrafo(s) modificado(s), PDF rehecho.",
+    ),
+    "{n} paragraphe(s) modifié(s), PDF non refait (LibreOffice ?).": (
+        "{n} paragraph(s) changed, PDF not made again (LibreOffice?).",
+        "{n} Absatz/Absätze geändert, PDF nicht neu erstellt (LibreOffice?).",
+        "{n} párrafo(s) modificado(s), PDF no rehecho (¿LibreOffice?).",
+    ),
+    "Postulées": ("Applied", "Beworben", "Postuladas"),
+    "Écartées": ("Dismissed", "Aussortiert", "Descartadas"),
+    "À traiter": ("To process", "Zu bearbeiten", "Por tratar"),
+    "Refaire les CV après un changement de modèle": (
+        "Redo the CVs after a template change",
+        "Lebensläufe nach einem Vorlagenwechsel neu erstellen",
+        "Rehacer los CV tras un cambio de plantilla",
+    ),
+    "Taille": ("Size", "Größe", "Tamaño"),
+    "Aucun document.": ("No document.", "Kein Dokument.", "Ningún documento."),
+    "{n} flux ▾": ("{n} feeds ▾", "{n} Feeds ▾", "{n} fuentes ▾"),
+    "{n} flux ▴": ("{n} feeds ▴", "{n} Feeds ▴", "{n} fuentes ▴"),
+    "Réponses (entretien ou refus)": (
+        "Answers (interview or refusal)",
+        "Antworten (Gespräch oder Absage)",
+        "Respuestas (entrevista o rechazo)",
+    ),
+    "À préparer": ("To prepare", "Vorzubereiten", "Por preparar"),
+    "Contrôler les offres fermées": (
+        "Check the closed offers",
+        "Geschlossene Angebote prüfen",
+        "Controlar las ofertas cerradas",
+    ),
+    "GitHub injoignable : réessaie plus tard.": (
+        "GitHub unreachable: try again later.",
+        "GitHub nicht erreichbar: versuche es später erneut.",
+        "GitHub inaccesible: inténtalo más tarde.",
+    ),
+    "À jour : {v} est la dernière version.": (
+        "Up to date: {v} is the latest version.",
+        "Aktuell: {v} ist die neueste Version.",
+        "Al día: {v} es la última versión.",
+    ),
+    "La version {v} attend la signature de son auteur : réessaie plus tard.": (
+        "Version {v} awaits its author's signature: try again later.",
+        "Version {v} wartet auf die Signatur ihres Autors: versuche es später erneut.",
+        "La versión {v} espera la firma de su autor: inténtalo más tarde.",
     ),
 }

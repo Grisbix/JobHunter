@@ -224,8 +224,20 @@ def main():
         action="store_true",
         help="brouillons .txt de toutes les relances dues + bilan Markdown (n'ouvre et n'envoie rien)",
     )
+    ap.add_argument(
+        "--brouillon-de",
+        help='"Entreprise|Poste" → son brouillon .txt seul, J+7 ou J+10 selon le suivi (n\'ouvre rien)',
+    )
     a = ap.parse_args()
 
+    if a.brouillon_de:
+        # The offer drawer's « Brouillon de relance » (web window): one offer, nothing opened.
+        try:
+            s = importlib.import_module("jobhunter.storage.applications").charger(SUIVI)
+        except Exception:
+            s = {}
+        j = 10 if s.get(a.brouillon_de, {}).get("s") == "relancé" else 7
+        sys.exit(0 if make_draft(a.brouillon_de, j=j, open_mailto=False) else 1)
     if a.brouillons:
         print(preparer_brouillons(a_relancer(a.days)))
         return

@@ -60,7 +60,7 @@ Name: "{autodesktop}\JobHunter"; Filename: "{app}\JobHunter.exe"; Tasks: bureau;
 Filename: "{app}\JobHunter.exe"; Description: "{cm:LaunchProgram,JobHunter}"; Flags: nowait postinstall skipifsilent
 
 [CustomMessages]
-fr.EffacerDonnees=Supprimer aussi vos données JobHunter (profil, CV, lettres, offres, candidatures suivies) ?%n%n%1%n%nOui : elles partent à la Corbeille, d'où on peut les restaurer tant qu'elle n'est pas vidée.%nNon : elles restent pour une prochaine installation.
+fr.EffacerDonnees=Supprimer aussi tes données JobHunter (profil, CV, lettres, offres, candidatures suivies) ?%n%n%1%n%nOui : elles partent à la Corbeille, d'où on peut les restaurer tant qu'elle n'est pas vidée.%nNon : elles restent pour une prochaine installation.
 en.EffacerDonnees=Also remove your JobHunter data (profile, CVs, letters, offers, tracked applications)?%n%n%1%n%nYes: it goes to the Recycle Bin, where it can be restored until it is emptied.%nNo: it stays for a later installation.
 
 [Code]

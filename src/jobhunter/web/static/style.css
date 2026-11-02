@@ -147,8 +147,6 @@ h3 { font-size: var(--t-xl); font-weight: 500; }
 .bouton[disabled] { opacity: .45; cursor: default; transform: none; }
 .bouton[disabled]:hover { background: var(--verre-fort); }
 .bouton.plein[disabled]:hover { background: var(--sombre); }
-.bientot { font-size: var(--t-xs); font-weight: 400; padding: 2px 8px; border-radius: 6px; background: var(--piste); color: var(--gris); }
-.plein .bientot { background: rgba(255,255,255,.12); color: #b8afab; }
 .pilule {
   display: inline-flex; align-items: center; gap: 12px;
   background: rgba(var(--blanc-rgb),.75); border: 1px solid var(--filet);
@@ -770,8 +768,17 @@ body[data-teinte="noir"] {
 .outils { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px 24px; margin-top: 16px; }
 .groupe-outils { display: grid; gap: 8px; align-content: start; }
 .groupe-outils h3 { font-size: var(--t-s); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); margin: 0 0 4px; }
-.bouton.outil { justify-content: flex-start; height: 34px; font-size: var(--t-m); background: rgba(var(--blanc-rgb), .45); }
-.bouton.outil:hover { background: rgba(var(--c1-rgb), .18); }
+/* A tool: its name and what it is for (3.75: no name left unexplained). */
+.outil-ligne { display: flex; gap: 8px; align-items: flex-start; text-align: left; padding: 8px 12px; border: 0; border-radius: 10px;
+  background: rgba(var(--blanc-rgb), .45); color: inherit; font: inherit; cursor: pointer; }
+.outil-ligne:hover { background: rgba(var(--c1-rgb), .18); }
+.outil-ligne svg { flex: none; width: 16px; height: 16px; margin-top: 2px; }
+.outil-ligne .t { display: block; font-size: var(--t-m); font-weight: 600; }
+.outil-ligne .sous { display: block; font-size: var(--t-s); }
+.outils-avances { margin-top: 20px; }
+.outils-avances > summary, .phrase-lettres > summary { cursor: pointer; font-weight: 600; color: var(--gris); }
+.phrase-lettres { margin-top: 16px; }
+.phrase-lettres[open] > summary { margin-bottom: 8px; }
 
 /* Offers: ticks, selection bar; the offer sheet's tracking; dialogs. */
 .coche { width: 16px; height: 16px; accent-color: var(--brun); cursor: pointer; }

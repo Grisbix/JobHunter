@@ -16,6 +16,8 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+from jobhunter.web.messages import echec
+
 # Sliders of the fit weights: (minimum, maximum, step), the desktop's.
 BORNES = {
     "axe": (0.0, 5.0, 0.25),
@@ -309,7 +311,7 @@ class AtelierApi:
 
         attente = self._attente()
         if not 0 <= int(i) < len(attente):
-            return {"ok": False, "erreur": "document introuvable"}
+            return {"ok": False, "erreur": "Document introuvable"}
         e = attente[int(i)]
         try:
             lignes = generated.comparer(e.actuel, e.nouveau)
@@ -323,7 +325,7 @@ class AtelierApi:
 
         attente = self._attente()
         if not 0 <= int(i) < len(attente):
-            return {"ok": False, "erreur": "document introuvable"}
+            return {"ok": False, "erreur": "Document introuvable"}
         e = attente[int(i)]
         try:
             ou = generated.prendre_nouvelle(e) if prendre else generated.garder_mienne(e)
@@ -352,7 +354,7 @@ class AtelierApi:
         except (TypeError, ValueError):
             n = 0
         if not 1 <= n <= 1000:
-            return {"ok": False, "erreur": "entre 1 et 1000 offres"}
+            return {"ok": False, "erreur": "Entre 1 et 1000 offres"}
         if self._tache and self._tache.code is None:
             return {"ok": False, "erreur": f"« {self._tache.libelle} » tourne encore."}
         return self._demarrer(
@@ -369,7 +371,7 @@ class AtelierApi:
         from jobhunter import base_cv, profile
 
         if self._fenetre is None:
-            return {"ok": False, "erreur": "il faut l'application pour choisir un CV"}
+            return {"ok": False, "erreur": "Il faut l'application pour choisir un CV"}
         import webview
 
         choix = self._fenetre.create_file_dialog(
@@ -379,7 +381,7 @@ class AtelierApi:
             return {"ok": False, "annule": True}
         cv = Path(str(choix[0]))
         if cv.suffix.lower() not in (".docx", ".pdf"):
-            return {"ok": False, "erreur": "un CV au format .docx ou .pdf"}
+            return {"ok": False, "erreur": "Un CV au format .docx ou .pdf"}
         try:
             noms = base_cv.cvs_de_base(profile.charger())
         except (profile.ProfilAbsent, ValueError):
@@ -394,7 +396,7 @@ class AtelierApi:
 
         cv, self._cv_choisi = self._cv_choisi, None
         if cv is None:
-            return {"ok": False, "erreur": "aucun CV choisi"}
+            return {"ok": False, "erreur": "Aucun CV choisi"}
         try:
             noms = base_cv.cvs_de_base(profile.charger())
         except (profile.ProfilAbsent, ValueError):
@@ -403,7 +405,7 @@ class AtelierApi:
         try:
             neuf = base_cv.remplacer_cv_de_base(cv, ancien, paths.CV_MODELES, Path(profile.FICHIER))
         except (OSError, ValueError) as e:
-            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+            return {"ok": False, "erreur": echec(e)}
         profile.recharger()
         return {"ok": True, "neuf": neuf}
 
@@ -444,7 +446,7 @@ class AtelierApi:
     def choisir_lettre_base(self) -> dict[str, Any]:
         """Asks for the user's own letter; nothing is copied before `remplacer_lettre_base`."""
         if self._fenetre is None:
-            return {"ok": False, "erreur": "il faut l'application pour choisir une lettre"}
+            return {"ok": False, "erreur": "Il faut l'application pour choisir une lettre"}
         import webview
 
         choix = self._fenetre.create_file_dialog(
@@ -454,7 +456,7 @@ class AtelierApi:
             return {"ok": False, "annule": True}
         f = Path(str(choix[0]))
         if f.suffix.lower() not in (".docx", ".pdf"):
-            return {"ok": False, "erreur": "une lettre au format .docx ou .pdf"}
+            return {"ok": False, "erreur": "Une lettre au format .docx ou .pdf"}
         self._lettre_choisie = f
         ancienne = lettre_de_base()
         return {"ok": True, "nom": f.name, "ancienne": ancienne.name if ancienne else ""}
@@ -473,7 +475,7 @@ class AtelierApi:
 
         f, self._lettre_choisie = self._lettre_choisie, None
         if f is None or not f.is_file():
-            return {"ok": False, "erreur": "aucune lettre choisie"}
+            return {"ok": False, "erreur": "Aucune lettre choisie"}
         dossier = _dossier_lettre_base()
         try:
             dossier.mkdir(parents=True, exist_ok=True)
@@ -482,7 +484,7 @@ class AtelierApi:
             neuve = dossier / f.name
             shutil.copy2(f, neuve)
         except OSError as e:
-            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+            return {"ok": False, "erreur": echec(e)}
         try:
             parcours = own_letter.parcours_de_lettre(neuve)
         except (OSError, ValueError):
@@ -506,5 +508,5 @@ class AtelierApi:
         try:
             bak = self._ecrire_profil(nouveau)  # type: ignore[attr-defined]
         except (OSError, ValueError) as e:
-            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+            return {"ok": False, "erreur": echec(e)}
         return {"ok": True, "bak": bak}

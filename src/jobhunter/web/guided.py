@@ -146,7 +146,7 @@ class CandidatureApi:
         """Passes one of the user's commands on, only while the program waits for one."""
         s = self._seance
         if cmd not in guidee.COMMANDES:
-            return {"ok": False, "erreur": f"commande inconnue : {cmd}"}
+            return {"ok": False, "erreur": f"Commande inconnue : {cmd}"}
         if s is None or not s.attente:
             return {"ok": False, "erreur": "Le programme travaille : attends qu'il soit prêt."}
         s.attente = False

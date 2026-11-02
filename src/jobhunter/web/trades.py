@@ -22,6 +22,8 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from jobhunter.web.messages import echec
+
 FORMATS = ("Document (*.docx;*.pdf)",)
 
 
@@ -134,6 +136,14 @@ class MetiersApi:
                 continue
             cv = str(d.get("cv") or "")
             lettre = str(d.get("lettre") or "")
+            chemin_lettre = str(lettres / lettre) if lettre and (lettres / lettre).is_file() else ""
+            if not lettre and d.get("cle") == "General":
+                # The letter given before trades existed (Letters/Base) is the rest's
+                # letter: one place for letters, « Mes métiers » (3.75).
+                from jobhunter.web.workshop import lettre_de_base
+
+                base = lettre_de_base()
+                lettre, chemin_lettre = (base.name, str(base)) if base else ("", "")
             sortie.append(
                 {
                     "cle": str(d.get("cle") or ""),
@@ -144,12 +154,16 @@ class MetiersApi:
                     if cv and (paths.CV_MODELES / cv).is_file()
                     else "",
                     "lettre": lettre,
-                    "lettre_chemin": str(lettres / lettre)
-                    if lettre and (lettres / lettre).is_file()
-                    else "",
+                    "lettre_chemin": chemin_lettre,
                 }
             )
-        return {"metiers": sortie}
+        base = self.documents_de_base()  # type: ignore[attr-defined]
+        return {
+            "metiers": sortie,
+            "phrase_fr": base["phrase_fr"],
+            "phrase_en": base["phrase_en"],
+            "exemple": base["exemple"],
+        }
 
     def _poser(self, cle: str, champs: dict[str, Any]) -> dict[str, Any]:
         p = self._profil_brut()
@@ -158,11 +172,11 @@ class MetiersApi:
                 d.update(champs)
                 break
         else:
-            return {"ok": False, "erreur": "métier inconnu"}
+            return {"ok": False, "erreur": "Métier inconnu"}
         try:
             return {"ok": True, "bak": self._ecrire_profil(p)}
         except (OSError, ValueError) as e:
-            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+            return {"ok": False, "erreur": echec(e)}
 
     def _copier_cv(self, f: Path) -> str:
         from jobhunter import paths
@@ -199,7 +213,7 @@ class MetiersApi:
         try:
             nom = self._copier_cv(f)
         except OSError as e:
-            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+            return {"ok": False, "erreur": echec(e)}
         return {**self._poser(str(cle), {"cv": nom}), "nom": nom}
 
     def lettre_metier(self, cle: str) -> dict[str, Any]:
@@ -210,7 +224,7 @@ class MetiersApi:
         try:
             nom, champs = self._copier_lettre(f)
         except OSError as e:
-            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+            return {"ok": False, "erreur": echec(e)}
         r = self._poser(str(cle), {"lettre": nom, **champs})
         return {**r, "nom": nom, "parcours": next(iter(champs.values()), "")}
 
@@ -223,7 +237,7 @@ class MetiersApi:
         libelle = str(libelle or "").strip()[:40]
         liste = _mots(mots)
         if not libelle or not liste:
-            return {"ok": False, "erreur": "il faut un nom et au moins un mot du titre"}
+            return {"ok": False, "erreur": "Il faut un nom et au moins un mot du titre"}
         f = self._choisir("cv")
         if f is None:
             return {"ok": False, "annule": True}
@@ -235,7 +249,7 @@ class MetiersApi:
         try:
             cv = self._copier_cv(f)
         except OSError as e:
-            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+            return {"ok": False, "erreur": echec(e)}
         neuf = {
             **{k: v for k, v in modele.items() if isinstance(v, str)},
             "cle": _cle_libre(libelle, {str(d.get("cle")) for d in domaines}),
@@ -256,7 +270,7 @@ class MetiersApi:
         try:
             bak = self._ecrire_profil(p)
         except (OSError, ValueError) as e:
-            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+            return {"ok": False, "erreur": echec(e)}
         return {"ok": True, "cle": neuf["cle"], "cv": cv, "bak": bak}
 
     def retirer_metier(self, cle: str) -> dict[str, Any]:
@@ -265,25 +279,25 @@ class MetiersApi:
         domaines = [d for d in p.get("domaines") or [] if isinstance(d, dict)]
         reste = [d for d in domaines if d.get("cle") != cle]
         if len(reste) == len(domaines):
-            return {"ok": False, "erreur": "métier inconnu"}
+            return {"ok": False, "erreur": "Métier inconnu"}
         if not [d for d in reste if d.get("cle") != "General"]:
-            return {"ok": False, "erreur": "garde au moins un métier"}
+            return {"ok": False, "erreur": "Garde au moins un métier"}
         p["domaines"] = reste
         try:
             return {"ok": True, "bak": self._ecrire_profil(p)}
         except (OSError, ValueError) as e:
-            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+            return {"ok": False, "erreur": echec(e)}
 
     def renommer_metier(self, cle: str, libelle: str, mots: str | list[Any]) -> dict[str, Any]:
         """A trade's displayed name and title words."""
         libelle = str(libelle or "").strip()[:40]
         liste = _mots(mots)
         if not libelle:
-            return {"ok": False, "erreur": "nom vide"}
+            return {"ok": False, "erreur": "Nom vide"}
         champs: dict[str, Any] = {"libelle": libelle}
         if cle != "General":
             if not liste:
-                return {"ok": False, "erreur": "au moins un mot du titre"}
+                return {"ok": False, "erreur": "Au moins un mot du titre"}
             champs["mots_titre"] = liste
         return self._poser(str(cle), champs)
 
@@ -293,18 +307,18 @@ class MetiersApi:
         try:
             return {"ok": True, "profil": self._profil_brut()}
         except (OSError, ValueError) as e:
-            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+            return {"ok": False, "erreur": echec(e)}
 
     def enregistrer_profil_avance(self, neuf: Any) -> dict[str, Any]:
         """Writes the form back, only if every key and type is as before (`meme_forme`)."""
         try:
             ancien = self._profil_brut()
         except (OSError, ValueError) as e:
-            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+            return {"ok": False, "erreur": echec(e)}
         erreur = meme_forme(ancien, neuf)
         if erreur:
             return {"ok": False, "erreur": f"Rien n'est écrit — {erreur}"}
         try:
             return {"ok": True, "bak": self._ecrire_profil(neuf)}
         except (OSError, ValueError) as e:
-            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+            return {"ok": False, "erreur": echec(e)}

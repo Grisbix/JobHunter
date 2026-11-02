@@ -166,7 +166,7 @@ function chargerCatalogue(c) {
     // A cheap test before the regex: the longest fixed piece must be in the text.
     return { motif, noms, cible, fixe: fixes.join("").length, lettres: /[A-Za-zÀ-ÿ]/.test(fixes.join("")), indice: fixes.reduce((a, b) => (b.length > a.length ? b : a), "") };
   };
-  // Most fixed text first: "fit {n}" would also match "fit 1 : 0 (enregistré : 0)".
+  // Most fixed text first: "score {n}" would also match "score 1 : 0 (enregistré : 0)".
   const precis = (a, b) => b.fixe - a.fixe;
   // A template with no letter of its own ("{a} : {b}") would only copy its holes.
   MODELES = c.modeles.map(compiler).filter((m) => m.lettres).sort(precis);
@@ -300,21 +300,23 @@ async function lancerOutil(libelle) {
   const r = await window.pywebview.api.lancer_outil(libelle);
   if (!r.ok) return toast(r.erreur, true);
   if (r.action) return ACTIONS_OUTILS[r.action] ? ACTIONS_OUTILS[r.action]() : toast(`${libelle} : pas encore dans cette fenêtre.`, true);
-  if (r.console) return toast(`${libelle} : fenêtre console ouverte, réponds-y au clavier.`);
+  if (r.console) return toast("Une fenêtre s'est ouverte : réponds-y au clavier.");
   suivreTache();
 }
 function carteOutils(groupes) {
+  const outil = (o) => h("button", { class: "outil-ligne", onclick: () => lancerOutil(o.libelle) },
+    svg(o.genre === "console" ? "clavier" : o.genre === "action" ? "fenetre" : "eclair"),
+    h("span", {}, h("span", { class: "t" }, o.nom), h("span", { class: "sous" }, o.aide)));
+  const groupe = (g) => h("div", { class: "groupe-outils" }, h("h3", {}, g.groupe), g.outils.map(outil));
+  const simples = (groupes || []).filter((g) => !g.avance);
+  const avances = (groupes || []).filter((g) => g.avance);
   return h("div", { class: "verre panneau large" },
     h("div", { class: "entete-panneau" }, h("h2", {}, "Outils"),
-      h("span", { class: "sous" }, "les mêmes que le menu Outils de l'application de bureau")),
-    h("div", { class: "outils" },
-      h("div", { class: "groupe-outils" }, h("h3", {}, "Collecte"),
-        bouton("Scan offres", "eclair", () => lancer("scan"), "outil"),
-        bouton("Ouvrir le dossier", "dossier", () => window.pywebview ? window.pywebview.api.ouvrir_dossier() : toast(HORS_APPLI, true), "outil"),
-        bouton("Recharger", "fleche", () => redessiner(), "outil")),
-      (groupes || []).map((g) => h("div", { class: "groupe-outils" }, h("h3", {}, g.groupe),
-        g.outils.map((o) => bouton(o.libelle, o.genre === "console" ? "clavier" : o.genre === "action" ? "fenetre" : "eclair",
-          () => lancerOutil(o.libelle), "outil"))))));
+      h("span", { style: "flex:1" }),
+      bouton("Ouvrir le dossier", "dossier", () => window.pywebview ? window.pywebview.api.ouvrir_dossier() : toast(HORS_APPLI, true))),
+    h("div", { class: "outils" }, simples.map(groupe)),
+    avances.length ? h("details", { class: "outils-avances" }, h("summary", {}, "Diagnostic (avancé)"),
+      h("div", { class: "outils" }, avances.map(groupe))) : null);
 }
 
 function duree(s) {
@@ -362,7 +364,7 @@ function dessinerActivite() {
     const pct = e.fini ? null : avancement(e.lignes);
     const etat = !e.fini ? `en cours · ${duree(e.duree)}${pct === null ? "" : ` · ${pct} %`}`
       : e.code === 0 ? `terminé en ${duree(e.duree)}`
-      : e.code === 3 ? "un autre programme écrit les offres : réessaie dans un instant"
+      : e.code === 3 ? "Un autre programme écrit les offres : réessaie dans un instant"
       : "arrêté avant la fin";
     lignes.push(h("div", { class: "activite-ligne" },
       h("span", { class: "point" }),
@@ -590,7 +592,7 @@ async function demanderMotif(n) {
     choix = m; libre.value = "";
     liste.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b === e.currentTarget)); } }, m)));
   return dialogue(`Écarter ${n} offre${n > 1 ? "s" : ""}`,
-    "Retirées de la file et bloquées au prochain scan. Le motif sert à corriger la notation.",
+    "Retirées de la file, elles ne reviennent pas à la collecte suivante. Le motif aide à comprendre ce qui ne va pas et corrige le score.",
     h("div", {}, liste, libre),
     [["Écarter", "chaud", () => (choix ? choix : (toast("Choisis un motif.", true), undefined))]]);
 }
@@ -609,19 +611,6 @@ async function ecarter(ids) {
 // Offers with an application stay in the queue with their posting (the server keeps them).
 const gardees = (r) => (r.gardees ? ` ${r.gardees} gardée(s) : elles ont une candidature.` : "");
 
-async function supprimer(ids) {
-  const ok = await dialogue(`Supprimer ${ids.length} offre${ids.length > 1 ? "s" : ""} ?`,
-    "Une copie est gardée dans _corbeille/ : rien n'est perdu. Pour qu'elles ne reviennent pas au prochain scan, préfère « Écarter ».",
-    null, [["Supprimer", "chaud", () => true]]);
-  if (!ok) return;
-  const r = await ecrire("supprimer", ids);
-  if (!r) return;
-  toast(`${r.n} offre(s) supprimée(s) — copie : _corbeille/${r.copie}${gardees(r)}`);
-  coches.clear();
-  fermerTiroir();
-  redessiner();
-}
-
 async function ajouterOffre() {
   const champ = h("input", { class: "champ-texte", placeholder: "https://…" });
   const url = await dialogue("Ajouter une offre", "Colle le lien de l'annonce : titre, entreprise et description sont lus, puis l'offre entre dans la file.",
@@ -637,10 +626,6 @@ async function declarerEnvoi(id) {
   if (await ecrire("declarer_envoi", id)) { toast("Candidature notée comme envoyée."); ouvrirOffre(id); redessiner(); }
 }
 
-// A button that is drawn but not yet wired to the engine: it says so.
-const aBrancher = (texte, icone, classe = "") =>
-  h("button", { class: `bouton ${classe}`, disabled: true, title: "À brancher sur le moteur" },
-    icone ? svg(icone) : null, texte, h("span", { class: "bientot" }, "bientôt"));
 const bouton = (texte, icone, onclick, classe = "") =>
   h("button", { class: `bouton ${classe}`, onclick }, icone ? svg(icone) : null, texte);
 
@@ -815,7 +800,6 @@ async function ouvrirOffre(id) {
         ? bouton("Finalement intéressé", "fleche", () => marquer(o.id, ""))
         : bouton("Pas intéressé", "", () => marquer(o.id, "pas intéressé")),
       bouton("Écarter…", "", () => ecarter([o.id])),
-      bouton("Supprimer…", "", () => supprimer([o.id])),
       ["postulé", "relancé"].includes(o.suivi) ? bouton("Brouillon de relance", "cloche", () => lancer("relance", o.id)) : null,
       bouton("Chercher sur le web", "loupe", () => ecrire("chercher_web", o.id)),
       bouton(o.description ? "Recharger la description" : "Récupérer la description", "fleche", () => lancer("description", o.id)),
@@ -1149,7 +1133,6 @@ ECRANS.offres = {
       h("select", { class: "choix", onchange: (e) => { if (e.target.value) { marquer(ids(), e.target.value === "—" ? "" : e.target.value, false); coches.clear(); } } },
         h("option", { value: "" }, "Statut…"), h("option", { value: "—" }, "Vider le statut"),
         STATUTS.map((s) => h("option", { value: s }, majuscule(s)))),
-      bouton("Supprimer…", "", () => supprimer(ids()), "chaud"),
       bouton("Tout décocher", "", () => { coches.clear(); relancer(); })) : null;
     const cocher = (id, e) => { e.stopPropagation(); coches.has(id) ? coches.delete(id) : coches.add(id); relancer(); };
     const tous = d.lignes.length && d.lignes.every((o) => coches.has(o.id));
@@ -1361,26 +1344,40 @@ const puces = (liste, classe = "puce") => liste.length
 // --- Editing: chips, places, save bar --------------------------------------------------
 
 // Calls an API method that writes; in the browser preview, says it cannot.
-// A list of words edited in place: × removes, Enter adds, Backspace on empty removes the last.
+// A list of words edited in place: × removes, Enter adds. A long list shows its first
+// fifteen; what is typed also filters, so a word is found among two hundred.
+const PUCES_MAX = 15;
 function editeurPuces(liste, sale, placeholder = "Ajouter…") {
   const boite = h("div", { class: "puces-edit" });
+  let filtre = "";
+  let tout = false;
   const dessiner = (focus = false) => {
     const champ = h("input", {
-      placeholder,
+      placeholder, value: filtre,
+      title: liste.length > PUCES_MAX ? "Entrée ajoute le mot ; taper filtre la liste" : "",
+      oninput: (e) => { filtre = e.target.value; dessiner(true); },
       onkeydown: (e) => {
         const v = e.target.value.trim();
         if (e.key === "Enter" && v) {
           e.preventDefault();
           if (!liste.some((x) => x.toLowerCase() === v.toLowerCase())) { liste.push(v); sale(); }
+          filtre = "";
           dessiner(true);
-        } else if (e.key === "Backspace" && !e.target.value && liste.length) {
+        } else if (e.key === "Backspace" && !e.target.value && liste.length && liste.length <= PUCES_MAX) {
           liste.pop(); sale(); dessiner(true);
         }
       },
     });
-    boite.replaceChildren(...liste.map((x, i) => h("span", { class: "puce modifiable", title: x }, x,
-      h("button", { title: "Retirer", onclick: () => { liste.splice(i, 1); sale(); dessiner(); } }, "×"))), champ);
-    if (focus) champ.focus();
+    const f = filtre.trim().toLowerCase();
+    const vus = liste.map((x, i) => [x, i]).filter(([x]) => !f || x.toLowerCase().includes(f));
+    const montres = f || tout ? vus : vus.slice(0, PUCES_MAX);
+    const reste = vus.length - montres.length;
+    boite.replaceChildren(...montres.map(([x, i]) => h("span", { class: "puce modifiable", title: x }, x,
+      h("button", { title: "Retirer", onclick: () => { liste.splice(i, 1); sale(); dessiner(); } }, "×"))),
+      reste ? h("button", { class: "lien", onclick: () => { tout = true; dessiner(); } }, `+ ${reste} autres`)
+        : tout && !f && liste.length > PUCES_MAX ? h("button", { class: "lien", onclick: () => { tout = false; dessiner(); } }, "Replier") : "",
+      champ);
+    if (focus) { champ.focus(); champ.selectionStart = champ.selectionEnd = champ.value.length; }
   };
   dessiner();
   return boite;
@@ -1450,7 +1447,7 @@ function barreEnregistrer(enregistrer) {
 }
 
 const sousTitre = (t, marge = "16px 0 8px") => h("div", { class: "sous", style: `margin:${marge}` }, t);
-const avecBak = (r) => r && r.ok ? { ...r, message: `Enregistré (profil d'avant gardé : ${r.bak}).` } : r;
+const avecBak = (r) => r && r.ok ? { ...r, message: "Enregistré (l'ancienne version est gardée)." } : r;
 
 ECRANS.profil = {
   titre: "Profil",
@@ -1478,7 +1475,7 @@ ECRANS.profil = {
     const bR = barreEnregistrer(async () => {
       const res = await ecrire("enregistrer_recherche", r);
       if (res && res.ok) {
-        res.message = `Enregistré (profil d'avant : ${res.bak}). Effet à la prochaine collecte.`
+        res.message = "Enregistré (l'ancienne version est gardée). Effet à la prochaine collecte."
           + (res.zones ? " Zones des offres en cours de mise à jour." : "");
         if (res.zones) suivreTache();
       }
@@ -1504,7 +1501,7 @@ ECRANS.profil = {
       const res = avecBak(await ecrire("enregistrer_competences", liste));
       if (res && res.ok) {
         // The axes of the offers changed: their fit follows only once recomputed.
-        if (!bC.el.querySelector(".rescore")) bC.el.append(bouton("Recalculer le fit", "fleche", () => lancer("rescore"), "rescore"));
+        if (!bC.el.querySelector(".rescore")) bC.el.append(bouton("Recalculer les scores", "fleche", () => lancer("rescore"), "rescore"));
       }
       return res;
     });
@@ -1512,7 +1509,7 @@ ECRANS.profil = {
       h("div", { class: "nom-comp" }, c.nom, c.base ? h("span", { class: "etiq gris", title: "Compétence de base du CV" }, "base") : null),
       h("div", { class: "axes-comp" }, axes.map((a) => h("button", {
         class: `bascule ${c.axes.includes(a) ? "on" : ""}`,
-        title: "Compte pour cet axe du fit",
+        title: "Compte pour cet axe du score",
         onclick: () => { c.axes = c.axes.includes(a) ? c.axes.filter((x) => x !== a) : [...c.axes, a]; bC.sale(); dessinerComp(); },
       }, a))),
       editeurPuces(c.synonymes, bC.sale, "mot cherché…"),
@@ -1529,7 +1526,7 @@ ECRANS.profil = {
     } });
     const carteComp = h("div", { class: "verre panneau large" },
       h("div", { class: "titre-ligne" }, h("h2", {}, "Compétences"), h("span", { class: "compte" }, liste.length)),
-      h("div", { class: "sous", style: "margin:-6px 0 14px" }, "Les mots cherchés dans les annonces, et les axes du fit pour lesquels chaque compétence compte."),
+      h("div", { class: "sous", style: "margin:-6px 0 14px" }, "Les mots cherchés dans les annonces, et les axes du score pour lesquels chaque compétence compte."),
       corps,
       h("label", { class: "champ", style: "margin-top:14px" }, svg("etoile"), nouvelle),
       bC.el);
@@ -1539,10 +1536,9 @@ ECRANS.profil = {
     vue.replaceChildren(h("div", { class: "grille" },
       carteId,
       h("div", { class: "pile" },
-        carte("Notation", h("dl", { class: "paires" }, Object.entries(p.scoring).map(([k, v]) =>
+        carte("Score : réglages", h("dl", { class: "paires" }, Object.entries(p.scoring).map(([k, v]) =>
           [h("dt", {}, k.replaceAll("_", " ")), h("dd", {}, String(v))])))),
       await carteMetiers(),
-      ...(await cartesDocumentsBase()),
       carteRech,
       carteComp,
       await cartePoids(),
@@ -1554,7 +1550,7 @@ let ongletSources = "recherche";
 ECRANS.sources = {
   titre: "Sources",
   plein: () => ongletSources !== "recherche",
-  actions: () => [action("Collecter maintenant", "eclair", "collecte", "plein")],
+  actions: () => [action("Lancer la collecte", "eclair", "collecte", "plein")],
   async dessiner(vue) {
     const tete = segment([["recherche", "Mots-clés et rendement"], ["entreprises", "Entreprises suivies"], ["vues", "Entreprises vues"],
       ["sites", "Sites d'offres"], ["acces", "Accès et clés"]], ongletSources, (v) => { ongletSources = v; ECRANS.sources.dessiner(vue); });
@@ -1758,7 +1754,7 @@ ONGLETS_SOURCES.entreprises = async (vue) => {
     h("div", { class: "ligne-ajout" }, champ, bouton("Ajouter", "", ajouter, "plein"), bouton("Annuaire…", "loupe", () => ouvrirAnnuaire(champ.value.trim(), () => ONGLETS_SOURCES.entreprises(vue)))),
     h("label", { class: "champ", style: "margin:12px 0" }, svg("loupe"), h("input", { type: "search", placeholder: "Filtrer : entreprise, outil ou adresse", oninput: (e) => { filtre = e.target.value; dessiner(); } })),
     h("div", { class: "defile" }, h("table", { class: "tableau-simple" },
-      h("thead", {}, h("tr", {}, ["Entreprise", "Lue par", "Dernière collecte", "Offres", "Fit max", "Dernière", ""].map((t) => h("th", {}, t)))),
+      h("thead", {}, h("tr", {}, ["Entreprise", "Lue par", "Dernière collecte", "Offres", "Score max", "Dernière", ""].map((t) => h("th", {}, t)))),
       corps)))));
 };
 
@@ -1796,7 +1792,7 @@ ONGLETS_SOURCES.vues = async (vue) => {
   vue.replaceChildren(h("div", { class: "verre panneau" },
     h("div", { class: "titre-ligne" }, h("h2", {}, "Entreprises vues"), compte,
       bouton("Chercher leurs offres", "loupe", () => lancer("sites_carrieres")),
-      bouton("Suivre les bien notées (fit ≥ 7)", "etoile", async () => {
+      bouton("Suivre celles à score ≥ 7", "etoile", async () => {
         const n = d.lignes.filter((l) => l.url_flux && !l.suivie && (l.fit || 0) >= 7).length;
         if (!n) return toast("Aucune entreprise bien notée à suivre.");
         const ok = await dialogue(`Suivre ${n} entreprise(s) ?`, "Chacune est d'abord vérifiée : une requête à son outil de recrutement, suivie seulement si elle a des offres ouvertes.", null, [["Suivre", "", () => true]]);
@@ -1807,7 +1803,7 @@ ONGLETS_SOURCES.vues = async (vue) => {
     h("div", { class: "sous", style: "margin:4px 0 12px" }, "Chaque collecte note les entreprises de ses offres, même écartées ou fermées depuis. « Chercher leurs offres » demande à 150 d'entre elles, chaque matin aussi, ce qu'elles ont d'ouvert sur leur site carrière : par leur outil de recrutement, par freehire, sinon en devinant leur outil par leur nom (annuaire Workday compris) ou en lisant leur page carrière. L'outil trouvé est retenu pour la fois suivante. « Suivre » lit ensuite ses offres à chaque collecte, quand son lien d'offre donne son outil de recrutement."),
     h("label", { class: "champ", style: "margin:12px 0" }, svg("loupe"), h("input", { type: "search", placeholder: "Filtrer : entreprise, site ou outil", oninput: (e) => { filtre = e.target.value; dessiner(); } })),
     h("div", { class: "defile" }, h("table", { class: "tableau-simple" },
-      h("thead", {}, h("tr", {}, ["Entreprise", "Offres", "Fit max", "Vue sur", "Dernière fois", ""].map((t) => h("th", {}, t)))),
+      h("thead", {}, h("tr", {}, ["Entreprise", "Offres", "Score max", "Vue sur", "Dernière fois", ""].map((t) => h("th", {}, t)))),
       corps))));
 };
 
@@ -1966,9 +1962,9 @@ async function cartePoids() {
       return;
     }
     const e = b.essai, s = b.enregistre;
-    resume.textContent = `${nombre(e.n)} offres · fit moyen ${e.moyenne.toFixed(2)} (enregistré ${s.moyenne.toFixed(2)}) · à 8 et plus : ${nombre(e.haut)} (enregistré ${nombre(s.haut)})`;
+    resume.textContent = `${nombre(e.n)} offres · score moyen ${e.moyenne.toFixed(2)} (enregistré ${s.moyenne.toFixed(2)}) · à 8 et plus : ${nombre(e.haut)} (enregistré ${nombre(s.haut)})`;
     const max = Math.max(1, ...e.repartition, ...s.repartition);
-    histo.replaceChildren(...e.repartition.map((n, i) => h("div", { class: "histo-col", title: `fit ${i + 1} : ${n} (enregistré : ${s.repartition[i]})` },
+    histo.replaceChildren(...e.repartition.map((n, i) => h("div", { class: "histo-col", title: `score ${i + 1} : ${n} (enregistré : ${s.repartition[i]})` },
       h("div", { class: "histo-barres" },
         h("span", { class: "apres", style: `height:${100 * n / max}%` }),
         h("span", { class: "avant", style: `height:${100 * s.repartition[i] / max}%` })),
@@ -1996,73 +1992,19 @@ async function cartePoids() {
   const enregistrer = async () => {
     const r = await ecrire("enregistrer_poids", valeurs);
     if (!r) return;
-    toast(`Pondération enregistrée (profil d'avant : ${r.bak}).`);
-    const ok = await dialogue("Recalculer le fit ?", "Recalculer maintenant le fit enregistré de chaque offre de ta file ? Le tableau et le tri l'utilisent.",
+    toast("Poids enregistrés (l'ancienne version est gardée).");
+    const ok = await dialogue("Recalculer les scores ?", "Recalculer maintenant le score enregistré de chaque offre de ta file ? Le tableau et le tri l'utilisent.",
       null, [["Recalculer", "plein", () => true]]);
     if (ok) lancer("rescore");
     redessiner();
   };
-  return h("div", { class: "verre panneau large" }, h("div", { class: "titre-ligne" }, h("h2", {}, "Fit : les poids")),
+  return h("div", { class: "verre panneau large" }, h("div", { class: "titre-ligne" }, h("h2", {}, "Score : les poids")),
     h("div", { class: "sous", style: "margin-bottom:10px" }, "Chaque curseur recalcule la file aussitôt, sans rien écrire. Barres claires : les poids enregistrés."),
     h("div", { class: "poids" }, blocs), resume, histo,
     h("div", { class: "boutons", style: "margin-top:12px" },
       bouton("Enregistrer", "", enregistrer, "plein"),
       bouton("Annuler les modifications", "", () => redessiner()),
       bouton("Relire la file", "fleche", async () => { if (await ecrire("relire_composantes")) { essais = 0; resume.textContent = "Lecture de la file…"; setTimeout(recalculer, 1500); } })));
-}
-
-// The base CV and the base letter: seen, edited, replaced (the user, 2026-10-27).
-async function cartesDocumentsBase() {
-  const d = (await appel("documents_de_base")) || { cvs: [], exemple: "", phrase_fr: "", phrase_en: "" };
-  const cv = carte("CV de base",
-    h("div", { class: "sous", style: "margin-bottom:10px" }, "Le CV d'où partent tous les CV préparés. « Voir » l'ouvre pour le lire ou modifier son texte ; l'ancien est gardé à côté, en .bak."),
-    h("div", { class: "liste-profils" }, d.cvs.length ? d.cvs.map((c) => h("div", { class: "ligne-profil" },
-      h("span", { class: "t", title: c.nom }, c.nom),
-      c.chemin ? bouton("Voir", "doc", () => voirDocument(null, c.chemin, c.nom)) : h("span", { class: "etiq gris" }, "absent")))
-      : h("div", { class: "sous" }, "Aucun CV de base dans le profil.")),
-    h("div", { class: "boutons" }, bouton("Remplacer mon CV de base…", "doc", remplacerCvBase, "plein")));
-  const fr = h("textarea", { class: "champ-texte", rows: 4 }, d.phrase_fr);
-  const en = h("textarea", { class: "champ-texte", rows: 4 }, d.phrase_en);
-  // The user's own letter, beside the base CV: seen, replaced; its background paragraph
-  // goes into the field below, to check and save (the user, 2026-10-28).
-  const remplacerLettre = async () => {
-    const c = await ecrire("choisir_lettre_base");
-    if (!c) return;
-    if (c.ancienne) {
-      const ok = await dialogue("Remplacer ta lettre de base ?", `Remplacer ${c.ancienne} par ${c.nom} ? L'ancienne est gardée à côté, en .bak.`,
-        null, [["Remplacer", "plein", () => true]]);
-      if (!ok) return;
-    }
-    const r = await ecrire("remplacer_lettre_base");
-    if (!r) return;
-    redessiner();
-    if (!r.parcours) return toast(`Lettre gardée : ${r.nom}. Aucun paragraphe de parcours reconnu : écris-le dans le champ.`);
-    const ok = await dialogue("Reprendre ton paragraphe de parcours ?", r.parcours, null, [["Le reprendre", "plein", () => true]]);
-    if (!ok) return;
-    const [phraseFr, phraseEn] = r.langue === "en" ? [fr.value, r.parcours] : [r.parcours, en.value];
-    const e = await ecrire("enregistrer_phrases_lettre", phraseFr, phraseEn);
-    if (e) { toast("Paragraphe repris dans le profil."); redessiner(); }
-  };
-  const base = d.lettre_base;
-  const lettre = carte("Lettre de motivation",
-    h("div", { class: "sous", style: "margin-bottom:10px" }, "Ta lettre de base, si tu en as une : JobHunter en reprend ton paragraphe de parcours. Chaque lettre est ensuite écrite pour son offre ; le paragraphe ci-dessous est repris dans toutes."),
-    h("div", { class: "liste-profils" }, base
-      ? h("div", { class: "ligne-profil" }, h("span", { class: "t", title: base.nom }, base.nom),
-          bouton("Voir", "doc", () => voirDocument(null, base.chemin, base.nom)))
-      : h("div", { class: "sous" }, "Pas encore de lettre de base.")),
-    h("div", { class: "boutons", style: "margin-bottom:12px" }, bouton(base ? "Remplacer ma lettre de base…" : "Ajouter ma lettre de base…", "doc", remplacerLettre)),
-    h("label", { class: "champ-bloc" }, h("span", { class: "sous" }, "En français"), fr),
-    h("label", { class: "champ-bloc" }, h("span", { class: "sous" }, "En anglais"), en),
-    h("div", { class: "boutons" },
-      bouton("Enregistrer", "", async () => {
-        const r = await ecrire("enregistrer_phrases_lettre", fr.value, en.value);
-        if (!r) return;
-        toast(`Enregistré (profil d'avant gardé : ${r.bak}).`);
-        const refaire = await dialogue("Refaire les lettres ?", "Refaire maintenant les lettres déjà préparées pour les offres ?", null, [["Refaire les lettres", "plein", () => true]]);
-        if (refaire) lancer("regenerer_lettres");
-      }, "plein"),
-      d.exemple ? bouton("Voir la dernière lettre", "doc", () => voirDocument(null, d.exemple, "Lettre")) : null));
-  return [lettre];  // the CVs: one per trade, in carteMetiers (3.74)
 }
 
 // Trades (3.74): one CV and one letter each. A trade is a domain of the profile: added
@@ -2127,7 +2069,7 @@ async function carteMetiers() {
     const [lib, nom, chemin] = genre === "cv" ? ["CV", x.cv, x.cv_chemin] : ["Lettre", x.lettre, x.lettre_chemin];
     return h("div", { class: "doc-metier" },
       h("span", { class: "lab" }, lib),
-      h("span", { class: `t ${nom ? "" : "vide-doc"}`, title: nom || "" }, nom || (genre === "cv" ? "aucun" : "celle du profil")),
+      h("span", { class: `t ${nom ? "" : "vide-doc"}`, title: nom || "" }, nom || "aucune"),
       chemin ? h("button", { class: "lien", onclick: () => voirDocument(null, chemin, nom) }, "Voir") : null,
       h("button", { class: "lien", onclick: () => changer(x, genre) }, nom ? "Changer…" : "Ajouter…"));
   };
@@ -2142,7 +2084,27 @@ async function carteMetiers() {
         h("div", { class: "outils-metier" },
           h("button", { class: "lien", onclick: () => modifier(x) }, "Modifier"),
           x.cle !== "General" && vrais.length > 1 ? h("button", { class: "lien", onclick: () => retirer(x) }, "Retirer") : null)),
-      doc(x, "cv"), doc(x, "lettre")))));
+      doc(x, "cv"), doc(x, "lettre")))),
+    phrase(m));
+}
+
+// The sentence about you that every letter repeats, under the trades (was the « Lettre de
+// motivation » card: one place for letters, 3.75).
+function phrase(m) {
+  const fr = h("textarea", { class: "champ-texte", rows: 3 }, m.phrase_fr || "");
+  const en = h("textarea", { class: "champ-texte", rows: 3 }, m.phrase_en || "");
+  const enregistrer = async () => {
+    if (!await ecrire("enregistrer_phrases_lettre", fr.value, en.value)) return;
+    toast("Enregistré (l'ancienne version est gardée).");
+    const refaire = await dialogue("Refaire les lettres ?", "Refaire maintenant les lettres déjà préparées pour les offres ?", null, [["Refaire les lettres", "plein", () => true]]);
+    if (refaire) lancer("regenerer_lettres");
+  };
+  return h("details", { class: "phrase-lettres" },
+    h("summary", {}, "Ta phrase sur toi, reprise dans toutes les lettres"),
+    h("label", { class: "champ-bloc" }, h("span", { class: "sous" }, "En français"), fr),
+    h("label", { class: "champ-bloc" }, h("span", { class: "sous" }, "En anglais"), en),
+    h("div", { class: "boutons" }, bouton("Enregistrer", "", enregistrer, "plein"),
+      m.exemple ? bouton("Voir la dernière lettre", "doc", () => voirDocument(null, m.exemple, "Lettre")) : null));
 }
 
 // The whole profile as a form (3.74): what « Fichier du profil (avancé) » opened in
@@ -2190,7 +2152,7 @@ async function profilAvance() {
   const enregistrer = async () => {
     const e = await ecrire("enregistrer_profil_avance", donnees);
     if (!e) return;
-    toast(`Profil enregistré (celui d'avant : ${e.bak}).`);
+    toast("Profil enregistré (l'ancienne version est gardée).");
     fermerTiroir();
     redessiner();
   };
@@ -2201,26 +2163,13 @@ async function profilAvance() {
     h("div", { class: "avance" }, Object.keys(donnees).map((k) => champ(donnees, k, nomLisible(k)))));
 }
 
-async function remplacerCvBase() {
-  const c = await ecrire("choisir_cv_base");
-  if (!c) return;
-  const ok = await dialogue("Remplacer le CV de base ?", `Remplacer ton CV de base (${c.ancien}${c.autres ? ` + ${c.autres}` : ""}) par ${c.cv} ? L'ancien est gardé à côté, en .bak.`,
-    null, [["Remplacer", "plein", () => true]]);
-  if (!ok) return;
-  const r = await ecrire("remplacer_cv_base");
-  if (!r) return;
-  toast(`CV de base remplacé : ${r.neuf}`);
-  const refaire = await dialogue("Refaire les CV ?", "Refaire maintenant les CV déjà préparés pour les offres ?", null, [["Refaire les CV", "plein", () => true]]);
-  if (refaire) lancer("regenerer_cv");
-}
-
 ACTIONS_OUTILS.profils = gererProfils;
 
 ACTIONS_OUTILS.documents = async () => {
   const reste = await ecrire("documents_restants");
   if (reste == null) return;
   const champ = h("input", { class: "champ-texte", type: "number", min: 1, max: 1000, value: Math.min(reste || 30, 50), style: "width:120px" });
-  const n = await dialogue("CV et lettres", `Combien d'offres traiter ? ${reste} offre(s) à fit 8 et plus attendent encore leurs documents.`,
+  const n = await dialogue("CV et lettres", `Combien d'offres traiter ? ${reste} offre(s) à score 8 et plus attendent encore leurs documents.`,
     champ, [["Préparer", "plein", () => Number(champ.value) || undefined]]);
   if (n && await ecrire("documents_lot", n)) suivreTache();
 };
