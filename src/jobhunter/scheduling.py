@@ -42,6 +42,12 @@ def commande() -> str:
         FileNotFoundError: source code without `JobHunter.pyw` at the data root.
     """
     if _gele.est_gele():
+        if _gele.paquet_msix():
+            # Store package: its folder (WindowsApps/<name>_<VERSION>_...) changes with each
+            # update, and the task kept running the removed version, then nothing
+            # (audit 2026-10-29). The execution alias of the manifest stays put.
+            alias = Path(os.environ.get("LOCALAPPDATA", "")) / "Microsoft" / "WindowsApps"
+            return f'"{alias / _gele.CONSOLE}" pipeline'
         return f'"{_gele.interpreteur()}" pipeline'
     lanceur = _profils.principale() / "JobHunter.pyw"  # the task runs every profile
     if not lanceur.exists():

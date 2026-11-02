@@ -157,6 +157,8 @@ def accord(masculin: str, feminin: str) -> str:
 def _fragment(mot: object, entier: bool) -> str:
     mot = str(mot)
     if mot.startswith("re:"):
+        if not mot[3:].strip():
+            return "(?!)"  # "re:" alone matched every text: it matches none
         # Taken as is, except the backspace that "\b" becomes when the profile is
         # edited by hand in JSON: there it can only mean a word boundary.
         return "(?:" + mot[3:].replace("\x08", r"\b") + ")"
@@ -166,7 +168,10 @@ def _fragment(mot: object, entier: bool) -> str:
         # mechanical engineer on « ingénieur » alone (2026-10-28).
         parties = [p.strip() for p in mot.split(" + ") if p.strip()]
         return "".join(
-            "(?=.*?(?:" + "|".join(_fragment(v.strip(), entier) for v in p.split(" / ")) + "))"
+            # [\s\S], not ".": a description has line breaks, and "." stops at them.
+            r"(?=[\s\S]*?(?:"
+            + "|".join(_fragment(v.strip(), entier) for v in p.split(" / "))
+            + "))"
             for p in parties
         )
     # "*mot": found inside a word too — "*analyst" finds "Nachhaltigkeitsanalyst",
@@ -175,7 +180,11 @@ def _fragment(mot: object, entier: bool) -> str:
     # Word: LEFT boundary ("rse" must not find "diveRSE"), no boundary
     # droite sauf `entier` — « analyste » doit trouver « analystes ».
     corps = re.escape(mot.lstrip("*").strip()).replace(r"\ ", r"\s+")
-    return ("" if libre else r"\b") + corps + (r"\b" if entier else "")
+    if not corps:
+        return "(?!)"  # "*" alone: no word, nothing found
+    # (?<!\w) / (?!\w) rather than \b: the same for a word that starts and ends with a
+    # letter, and right for "c++" or ".net", which \b never bounded (audit 2026-10-29).
+    return ("" if libre else r"(?<!\w)") + corps + (r"(?!\w)" if entier else "")
 
 
 def motif(mots: Iterable[object] | None, entier: bool = False) -> re.Pattern[str] | None:

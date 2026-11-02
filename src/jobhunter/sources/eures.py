@@ -193,7 +193,8 @@ def scan_eures(
     import httpx
 
     _EX = _commun.contrats_exclus()
-    offers, vus = [], set()
+    offers: list[dict[str, Any]] = []
+    vus: set[Any] = set()
     n_req = 0
     with httpx.Client(follow_redirects=True) as client:
         cherches = mots or _mots.mots("eures", EURES_MOTS, len(EURES_MOTS))
@@ -221,11 +222,20 @@ def scan_eures(
                     break
                 if r.status_code != 200:
                     INCIDENTS["eures"][f"HTTP {r.status_code}"] += 1
+                    if r.status_code in (401, 403, 429, 999):
+                        # A refusal or a quota: the next keywords would get the same
+                        # answer, asked again every 10 s (audit 2026-10-29).
+                        _log.info(f"  ~ EURES : HTTP {r.status_code}, source arrêtée")
+                        return offers
                     break
-                jvs = (r.json() or {}).get("jvs") or []
+                try:
+                    jvs = (r.json() or {}).get("jvs") or []
+                except ValueError:
+                    INCIDENTS["eures"]["réponse illisible"] += 1
+                    break
                 garde = 0
                 for j in jvs:
-                    if j.get("id") in vus:
+                    if not j.get("id") or j.get("id") in vus:
                         continue
                     vus.add(j.get("id"))
                     o = _eures_offre(j, _EX, cherches if du_profil else None)

@@ -82,8 +82,11 @@ def texte_docx(document: Any) -> str:
 
 
 # ── PDF ───────────────────────────────────────────────────────────────────────
-# Characters a PDF font without a Unicode map produces, and invisible ones.
-_PARASITES = re.compile("[\ufffd\u00ad\u200b-\u200d\ufeff\ue000-\uf8ff]")
+# Characters a PDF font without a Unicode map produces, invisible ones, and the control
+# characters Word refuses in a document (all but tab and line breaks).
+_PARASITES = re.compile(
+    "[\ufffd\u00ad\u200b-\u200d\ufeff\ue000-\uf8ff\x00-\x08\x0b\x0c\x0e-\x1f\x7f]"
+)
 
 
 def _propre(texte: str) -> str:

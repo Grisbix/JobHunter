@@ -97,6 +97,18 @@ def fetch_france_travail(par_mot: int = 50) -> list[dict[str, Any]]:
                 params={"motsCles": kw, "range": f"0-{par_mot - 1}"},
             )
             # 204 = no result, 206 = partial result (pagination): both OK
+            if r.status_code in (401, 403):
+                _commun.INCIDENTS.noter("francetravail", r.status_code)
+                _log.warning(f"  ~ France Travail : HTTP {r.status_code}, arrêt")
+                break
+            if r.status_code == 429:
+                # The next keyword was asked at once: a quota answered by more
+                # requests (audit 2026-10-29). Wait what the API asks, then go on.
+                _commun.INCIDENTS.noter("francetravail", 429)
+                from jobhunter.network import retry_after
+
+                time.sleep(retry_after(r.headers.get("Retry-After"), 2, 60))
+                continue
             if r.status_code not in (200, 206):
                 continue
             res = r.json().get("resultats") or []

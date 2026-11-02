@@ -203,7 +203,8 @@ def _de(mot: str, apostrophe: str = "'") -> str:
     apostrophes six words apart, on a CV.
     """
     mot = (mot or "").strip()
-    if mot[:1].lower() in "aàâäeéèêëiîïoôöuùûü":
+    # mot[:1] of "" is "", found in any string: an empty word gave « d' ».
+    if mot and mot[:1].lower() in "aàâäeéèêëiîïoôöuùûü":
         return "d" + apostrophe + mot
     return "de " + mot
 

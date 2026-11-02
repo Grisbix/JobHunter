@@ -79,11 +79,14 @@ def fetch_vie(limit: int = 1000) -> list[dict[str, Any]]:
             break
         for x in res:
             titre = str(x.get("missionTitle") or "").strip()
-            if not title_ok(titre):
-                continue
+            if not title_ok(titre) or not x.get("id"):
+                continue  # without an id, the link was « …/offres/None »
             pays = str(x.get("countryName") or "")
             ville = str(x.get("cityName") or "")
-            ind = x.get("indemnite") or 0
+            try:
+                ind = int(float(x.get("indemnite") or 0))
+            except (TypeError, ValueError):
+                ind = 0  # « selon profil »: one odd offer never stops the source
             dur = x.get("missionDuration") or ""
             desc = "\n".join(
                 filter(
@@ -91,7 +94,7 @@ def fetch_vie(limit: int = 1000) -> list[dict[str, Any]]:
                     [
                         str(x.get("missionDescription") or ""),
                         "PROFIL : " + str(x.get("missionProfile") or ""),
-                        f"[{x.get('missionType') or 'VIE'} · {dur} mois · indemnité {int(ind)} EUR/mois]",
+                        f"[{x.get('missionType') or 'VIE'} · {dur} mois · indemnité {ind} EUR/mois]",
                     ],
                 )
             )

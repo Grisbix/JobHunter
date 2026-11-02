@@ -25,6 +25,7 @@ import concurrent.futures as cf
 import html
 import re
 import sys
+import threading
 import time
 
 from jobhunter import root as _racine
@@ -59,11 +60,20 @@ BRIDAGES = {"n": 0}
 # saves audit_dispo one more request on the same endpoint.
 FERMEES: set[str] = set()
 
+# A 403 / 999 is a refusal of entry, not a rate limit: every next request would get
+# the same, so the program stops (project rule; audit 2026-10-29: it carried on
+# through the whole queue, one refused request per offer).
+REFUS = threading.Event()
+
 
 def description(jid, client, essais=4):
     """Text of the posting, or "" if unreadable. Never raises: a failure leaves
     the offer as it is, no data is degraded."""
+    from jobhunter.network import INCIDENTS, retry_after
+
     for n in range(essais):
+        if REFUS.is_set():
+            return ""
         try:
             r = client.get(API.format(jid), headers=UA, timeout=20)
         except Exception:
@@ -71,8 +81,12 @@ def description(jid, client, essais=4):
             continue
         if r.status_code == 429:
             BRIDAGES["n"] += 1
-            time.sleep(5 * (n + 1))
+            time.sleep(retry_after(r.headers.get("Retry-After"), 5 * (n + 1), 300))
             continue
+        if r.status_code in (403, 999):
+            INCIDENTS.noter("linkedin_desc", r.status_code)
+            REFUS.set()
+            return ""
         if r.status_code != 200:
             return ""
         if RX_FERME.search(r.text):
@@ -203,6 +217,8 @@ def _travail(cibles, a, queue_io):
                     faits += 1
                     if faits % 50 == 0:
                         print(f"  … {faits}/{len(cibles)}")
+            if REFUS.is_set():
+                print("  ! LinkedIn refuse l'accès (403/999) : arrêt, pas de nouvel essai.")
             try:
                 n, d = _ecrire(en_attente, queue_io)
             except queue_io.VerrouIndisponible as e:
@@ -212,6 +228,8 @@ def _travail(cibles, a, queue_io):
             delta += d
             en_attente = {}
             print(f"  ✓ lot ecrit · {ecrites} descriptions posees au total")
+            if REFUS.is_set():
+                break
     if en_attente:
         # Last chance, with a long wait: it is the only moment when
         # a refusal would really lose work.

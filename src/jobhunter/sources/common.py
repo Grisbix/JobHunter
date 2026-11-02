@@ -193,6 +193,9 @@ def _ligne(s: str | None) -> str:
     import html as _html
 
     t = re.sub(r"<[^>]*>", " ", _html.unescape(s or ""))
+    # Control characters: invisible in the table, refused by Word in the letter's
+    # subject — the document of such an offer could not be written (audit 2026-10-29).
+    t = re.sub(r"[\x00-\x1f\x7f]", " ", t)
     return " ".join(t.split())
 
 

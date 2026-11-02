@@ -239,7 +239,18 @@ _PARESSEUX["COEUR"] = lambda: (
 )
 _PARESSEUX["COMPLEMENT"] = lambda: _ici._SC.get("axe_complement") or ""
 _PARESSEUX["_CAP"] = lambda: int(_ici._SC.get("saturation_axe", 3))
-_PARESSEUX["_TARGET"] = lambda: float(_ici._SC.get("cible_score", 3.0))
+
+
+def _cible() -> float:
+    """cible_score of the profile; 0 or less (a division by zero) gives the default."""
+    try:
+        v = float(_ici._SC.get("cible_score", 3.0))
+    except (TypeError, ValueError):
+        v = 3.0
+    return v if v > 0 else 3.0
+
+
+_PARESSEUX["_TARGET"] = _cible
 _PARESSEUX["_PLAFOND_SANS_COEUR"] = lambda: float(_ici._SC.get("plafond_sans_coeur", 6.0))
 _PARESSEUX["_PLAFOND_COMPLEMENT"] = lambda: float(_ici._SC.get("plafond_complement", 8.0))
 _PARESSEUX["_PLAFOND_SECOND"] = lambda: float(_ici._SC.get("plafond_second", 8.0))

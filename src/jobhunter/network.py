@@ -87,6 +87,28 @@ class Incidents(collections.defaultdict[str, collections.Counter[str | int]]):
 INCIDENTS = Incidents()
 
 
+def retry_after(valeur: Any, defaut: float, plafond: float = 3600) -> float:
+    """Seconds to wait from a Retry-After header: a number of seconds or an HTTP date.
+
+    `int(header)` crashed Glassdoor's whole source on a date (« Wed, 21 Oct 2026
+    07:28:00 GMT », RFC 9110 allows both), and other sources ignored the header
+    (audit 2026-10-29). Missing or unreadable: `defaut`. Never below 0 nor above `plafond`.
+    """
+    import email.utils
+
+    s = str(valeur or "").strip()
+    secondes: float = defaut
+    if s.isdigit():
+        secondes = float(s)
+    elif s:
+        try:
+            quand = email.utils.parsedate_to_datetime(s)
+            secondes = quand.timestamp() - time.time()
+        except (TypeError, ValueError, IndexError, OverflowError):
+            secondes = defaut
+    return max(0.0, min(float(secondes), plafond))
+
+
 def client_partage() -> "httpx.Client":
     """A single httpx.Client, which KEEPS ITS CONNECTIONS OPEN.
 

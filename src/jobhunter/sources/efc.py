@@ -157,12 +157,21 @@ def _efc_urls(client: Any, site: str = "fr") -> list[tuple[Any, str]]:
     return out
 
 
+class _EfcRefus(Exception):
+    """eFC refuses the postings (403, 429, 999): reading stops for this run."""
+
+
 def _efc_fiche(url: str, client: Any) -> dict[str, Any] | None:
-    """JobPosting of the posting, or None. Never raises."""
+    """JobPosting of the posting, or None. Raises _EfcRefus on a refusal or a quota."""
     try:
         r = _commun._get_borne(client, url, headers=EFC_UA, timeout=30)
     except Exception:
         return None
+    if r.status_code in (403, 429, 999):
+        # Before, silent: a run refused from the first posting looked like a calm day,
+        # and the 10 s between requests were paid on every refused one (audit 2026-10-29).
+        INCIDENTS["efc"][f"HTTP {r.status_code}"] += 1
+        raise _EfcRefus(r.status_code)
     if r.status_code != 200:
         return None
     for bloc in re.findall(
@@ -272,7 +281,11 @@ def scan_efc(
         for n, url in enumerate(cibles, 1):
             if n > 1:
                 time.sleep(EFC_DELAI)  # crawl-delay: 10
-            jp = _efc_fiche(url, client)
+            try:
+                jp = _efc_fiche(url, client)
+            except _EfcRefus as e:
+                _log.info(f"  ~ eFC : HTTP {e}, lecture des fiches arrêtée")
+                break
             if not jp:
                 continue
             # The ld+json carries HTML entities in the title: without unescape,

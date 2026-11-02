@@ -4,6 +4,17 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.71.0 — 2026-10-29
+
+Collection that stops when refused, waits when asked, and does not crash on odd answers (rest of the full audit).
+
+- **A refusal stops.** LinkedIn descriptions (403/999), eFC postings (403/429/999), EURES and France Travail (401/403) no longer ask again offer after offer or keyword after keyword; the refusal is counted in the end-of-collection summary.
+- **A rate limit waits what it asks.** The Retry-After header is read as seconds or as a date everywhere (Glassdoor crashed on a date); France Travail waits on a 429 instead of asking the next keyword at once.
+- **Odd answers no longer crash a source**: a V.I.E indemnity that is not a number, a Greenhouse offer without date, an unreadable EURES answer; offers without an id are skipped instead of linking to « …/None ».
+- **Store version**: the daily collection runs through the app's execution alias, which survives updates (it pointed at the folder of the version installed when it was scheduled).
+- **Profile words**: an empty « re: » or « * » finds nothing (it found everything); « c++ » and « .net » are found as whole words; « a + b » also across line breaks; a target score of 0 no longer divides by zero.
+- **Documents**: control characters in a title no longer stop the letter; « de » before an empty name no longer gives « d' ».
+
 ## 3.70.0 — 2026-10-29
 
 Your data, safer: fixes from a full audit.

@@ -138,7 +138,7 @@ def fetch_ats(kind: str, slug: str) -> list[dict[str, Any]]:
                         j.get("absolute_url", ""),
                         nom_ats(slug),
                         (j.get("location") or {}).get("name", ""),
-                        j.get("updated_at", "")[:10],
+                        str(j.get("updated_at") or "")[:10],
                         f"greenhouse:{slug}",
                         _strip_html(j.get("content", "")),
                     )

@@ -8,7 +8,7 @@ import time
 from typing import Any
 
 from jobhunter import log as _journal
-from jobhunter.network import exiger_http
+from jobhunter.network import exiger_http, retry_after
 from jobhunter.sources import common as _commun
 from jobhunter.sources.common import INCIDENTS, _lire_borne, _mk, contrat_du_titre, title_ok
 from jobhunter.sources.indeed import INDEED_UA, _IndeedBride
@@ -144,7 +144,7 @@ def _gd_cartes(mot: str) -> list[Any]:
             # new attempt were paid on each of the 37 keywords
             # reached, and the step was killed at 40 min (same on 2026-10-03).
             if e.code == 429 and essai == 1:
-                attente = int(e.headers.get("Retry-After") or GD_REPOS)
+                attente = int(retry_after(e.headers.get("Retry-After"), GD_REPOS, 300))
                 _log.info(f"    ~ {mot} : HTTP {e.code}, repos {attente} s")
                 time.sleep(min(attente, 300))
                 continue
