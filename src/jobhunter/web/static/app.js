@@ -2333,9 +2333,14 @@ async function verifierMaj(ev) {
   catch (e) { v = {}; }
   finally { if (b) b.disabled = false; }
   if (!v.derniere) return toast("Impossible de joindre le serveur des mises à jour : réessaie plus tard.", true);
-  if (v.store) return toast(v.nouvelle
-    ? `Version ${v.derniere} publiée ; installée : ${v.installee}. Le Microsoft Store l'installe de lui-même dans les jours qui viennent.`
-    : `À jour : ${v.installee}. Le Microsoft Store installe les mises à jour.`);
+  if (v.store) {
+    // Installed from here, no Store window (3.74): JobHunter closes and opens again.
+    if (!v.nouvelle) return toast(`À jour : ${v.installee}.`);
+    const ok = await dialogue(`Version ${v.derniere} disponible`, `Installée : ${v.installee}. JobHunter se ferme pendant l'installation puis se rouvre de lui-même.`,
+      null, [["Installer", "plein", () => true]]);
+    if (ok) await lancer("maj");
+    return;
+  }
   // v.attente: the latest, published but not signed yet (its author signs within the hour)
   const suite = v.attente ? ` La ${v.attente} sera proposée dès que son auteur l'aura signée.` : "";
   if (!v.nouvelle) return toast(`À jour : ${v.installee}.${suite}`);

@@ -754,10 +754,26 @@ def maj_application(verifier_seulement):
         import webbrowser
 
         if _gele.msix_du_store():
-            print("Installée par le Microsoft Store : c'est le Store qui la met à jour.")
-            if v and not verifier_seulement:
-                webbrowser.open(STORE_MISES_A_JOUR)
-            return 0
+            # Installed here, without the Store's window (3.74): see store_update.
+            from jobhunter import store_update
+
+            if verifier_seulement:
+                return 0
+            if not file_libre(garder=False):
+                return OCCUPE
+            print("Le Microsoft Store télécharge la mise à jour…")
+            etat = store_update.installer()
+            if etat == "Completed":
+                print("Mise à jour installée : JobHunter redémarre.")
+                return 0
+            if etat == "Aucune":
+                print("Le Microsoft Store n'a pas encore reçu cette version : réessaie demain.")
+                return 0
+            print(
+                f"! Le Store n'a pas pu l'installer ({etat or 'pas de réponse'}) : sa page s'ouvre."
+            )
+            webbrowser.open(STORE_MISES_A_JOUR)
+            return 1
         # Installed from the release's JobHunter.msix: the Store does not know it, and
         # its page said nothing (the user, 2026-10-28). The new .msix installs over it
         # and keeps the data (Documents/JobHunter).

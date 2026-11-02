@@ -160,12 +160,16 @@ def test_appli_pas_encore_signee_rien_ouvert(appli, capsys, monkeypatch):
     assert "pas encore signée" in capsys.readouterr().out
 
 
-def test_appli_du_store_laisse_le_store_mettre_a_jour(appli, monkeypatch, capsys):
+def test_appli_du_store_installe_par_le_store(appli, monkeypatch, capsys):
+    # 3.73: installed from here through the Store's API, its page only if that fails.
+    from jobhunter import store_update
+
     lances = appli({})  # nothing served: a download would raise KeyError
     monkeypatch.setattr(maj._gele, "paquet_msix", lambda: True)
     monkeypatch.setattr(maj._gele, "msix_du_store", lambda: True)
+    monkeypatch.setattr(store_update, "installer", lambda: "Completed")
     assert maj.maj_application(False) == 0
-    assert lances == [["navigateur", maj.STORE_MISES_A_JOUR]]
+    assert lances == []
     assert "Microsoft Store" in capsys.readouterr().out
 
 

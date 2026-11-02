@@ -4,6 +4,15 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.73.0 — 2026-11-02
+
+See a CV or a letter as it will be sent, change it element by element, update from the Store without leaving the app, and a deleted offer that stays deleted.
+
+- **Preview without Word.** A CV or a letter opens as pictures of its pages, exactly as the PDF will look — no PDF reader needed in the window.
+- **Change it element by element.** In « Modifier », the pages stay beside the text: « + » adds an element of the same form just after (a bullet stays a bullet), « × » removes it, and the PDF is made again each time. The first generated version is kept beside it.
+- **Updates from the Store, inside the app.** The Store version installs its update from « Mettre à jour » without opening the Store: JobHunter closes during the installation and opens again by itself. If the Store cannot, its page opens as before. The title bar's button now shows for the Store version too.
+- **A deleted offer stays deleted.** « Supprimer » now remembers the refusal (reason « Supprimée »): the next collection used to find the offer again at its source and add it back.
+
 ## 3.72.0 — 2026-11-02
 
 Faster descriptions, one light activity panel instead of a black console and a toast per batch, each button in one place.

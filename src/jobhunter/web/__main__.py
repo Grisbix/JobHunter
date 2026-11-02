@@ -196,6 +196,13 @@ def main() -> int:
     cadre = _Cadre(fenetre)
     api._fenetre = fenetre
     api._basculer = cadre.basculer
+    from jobhunter import frozen
+
+    if frozen.paquet_msix():
+        # The Store's update closes the window; Windows opens it again after (3.74).
+        from jobhunter import store_update
+
+        store_update.redemarrer_apres_maj()
     api._plein = lambda: cadre.plein
     api._toile = cadre.fond
     fenetre.events.shown += cadre.installer

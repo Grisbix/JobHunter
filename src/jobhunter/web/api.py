@@ -1777,7 +1777,8 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
     def annonce_maj(self) -> dict[str, Any] | None:
         """A newer signed version, for the button of the title bar; None otherwise."""
         v = self.mise_a_jour()
-        return v if v["signee"] else None
+        # The Store's package: no signature to wait for, the Store checked it (3.74).
+        return v if v["signee"] or (v["store"] and v["nouvelle"]) else None
 
     def effacer_donnees(self) -> dict[str, Any]:
         """Sends the installed application's data to the Recycle Bin, then closes it.
