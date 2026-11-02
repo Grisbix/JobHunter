@@ -78,7 +78,8 @@ def test_effacer_refuse(monkeypatch, tmp_path):
 
 
 def test_bouton_seulement_quand_effacable():
-    assert 'm.effacable ? bouton("Effacer mes données…"' in JS
+    assert 'bouton("Effacer mes données…", "corbeille", () => effacerDonnees(m))' in JS
+    assert "m.effacable ? h(" in JS
     assert 'appel("effacer_donnees")' in JS
 
 

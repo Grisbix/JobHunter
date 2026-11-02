@@ -4,6 +4,18 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.72.0 — 2026-11-02
+
+Faster descriptions, one light activity panel instead of a black console and a toast per batch, each button in one place.
+
+- **Descriptions faster.** They are written ten at a time instead of rewriting the whole queue after each one; the fast links (Workday, plain pages) come first; a page that gave nothing is not asked again for two weeks. The collection no longer holds the queue for the whole run, so other actions are not blocked meanwhile.
+- **Activity panel.** What runs now — a button's task and the background work — sits in one light panel at the bottom right, with a progress bar each; the details fold away. No more toast every few descriptions: only failures show one.
+- **CV and letter of one offer** are made by the offer's identity: an offer without a link, or two offers sharing one, no longer fail or both get redone; an offer whose contract is hidden by default still gets them when asked.
+- **One place per button.** Offres: « Vérifier les offres » (closed postings) added, « Annuler » removed. Updates only in Maintenance; profiles only in Profil; Maintenance no longer repeats « Lancer la collecte ». Follow-ups leave the menu and the home screen: they are one click from Candidatures. « À faire » now lists the best offers with their CV and letter ready.
+- **White bar** under the filters fixed: a list's panel is as white as its header row.
+- **Full screen**: the title bar button shows « back to a window » when the window is full screen.
+- No mention of the update server's host in the window.
+
 ## 3.71.0 — 2026-10-29
 
 Collection that stops when refused, waits when asked, and does not crash on odd answers (rest of the full audit).

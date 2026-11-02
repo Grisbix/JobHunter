@@ -10,7 +10,6 @@ Usage:
 No sending, no login typed. Read-only of the page → text."""
 
 import argparse
-import importlib
 import sys
 import time
 
@@ -90,7 +89,7 @@ def fetch_one(page, url):
         dismiss_cookies(page)
     except Exception:
         pass
-    time.sleep(1.5)
+    time.sleep(1.0)
     # unfolds "voir plus" (2 passes: some toggles appear after the 1st click)
     for _ in range(2):
         try:
@@ -157,6 +156,14 @@ def _fetch_ld(url):
     return {"ok": True, "text": txt[:CAP], "via": "ld+json"} if len(txt) >= 120 else None
 
 
+def fetch_api_possible(url):
+    """True when `fetch_api` reads this link without a browser."""
+    from urllib.parse import urlsplit
+
+    u = urlsplit(url or "")
+    return u.netloc in _PAGES_LD or (u.netloc.endswith(".myworkdayjobs.com") and "/job/" in u.path)
+
+
 def fetch_api(url):
     """Description through the public API when the ATS has one, without a browser.
 
@@ -185,20 +192,67 @@ def fetch_api(url):
     return {"ok": True, "text": txt[:CAP], "via": "api workday"} if len(txt) >= 120 else None
 
 
+# An offer whose page gave nothing is not asked again before this many days: the same
+# refusing pages (login walls, anti-bot) were fetched again at every opening of the
+# window, and a batch of 40 brought back 9 (the user, 2026-11-02: « accélérer »).
+REPOS_ECHEC_J = 14
+LOT_ECRITURE = 10  # descriptions written per locked write
+
+
+def _cle(x):
+    return f"{x.get('entreprise', '')}|{x.get('poste', '')}"
+
+
+def ecrire_lot(textes, echecs, chemin=None):
+    """Writes the texts read and the failed attempts, in ONE locked transaction.
+
+    The run no longer holds the queue's lock from start to end (minutes): « Préparer CV
+    et lettre » started meanwhile found the queue busy and did nothing (code 3). The
+    queue is re-read inside the lock, so a text written meanwhile by another program
+    is kept. Returns the number of descriptions written.
+    """
+    if not textes and not echecs:
+        return 0
+    from jobhunter.storage import queue as queue_io
+
+    jour = time.strftime("%Y-%m-%d")
+    n = 0
+    with queue_io.transaction(chemin or QUEUE, attente=120) as rows:
+        for x in rows:
+            k = _cle(x)
+            if k in textes and not (x.get("description") or "").strip():
+                x["description"] = textes[k]
+                x.pop("desc_essai", None)
+                n += 1
+            elif k in echecs:
+                x["desc_essai"] = jour
+    return n
+
+
 def save(q, key, text):
+    """One description, written at once (kept for the callers of a single offer)."""
     for x in q:
-        if f"{x.get('entreprise', '')}|{x.get('poste', '')}" == key:
+        if _cle(x) == key:
             x["description"] = text
             break
-    importlib.import_module("jobhunter.programs.util").jwrite(QUEUE, q)
+    ecrire_lot({key: text}, set())
+
+
+def _recent(x, jour):
+    """Tried without success less than REPOS_ECHEC_J days ago."""
+    import datetime
+
+    try:
+        d = datetime.date.fromisoformat(str(x.get("desc_essai") or ""))
+    except ValueError:
+        return False
+    return (jour - d).days < REPOS_ECHEC_J
 
 
 def main():
     # Inter-process lock: this program rewrites the ENTIRE queue. If
     # another one does it at the same time (scheduled task vs app), the last one
     # to write erases the other's work.
-    if not importlib.import_module("jobhunter.programs.util").garder(QUEUE):
-        return 3
     ap = argparse.ArgumentParser()
     ap.add_argument("--key", help="Entreprise|Poste (1 offre)")
     ap.add_argument("--all", action="store_true", help="lot : offres sans description")
@@ -223,13 +277,19 @@ def main():
 
     # Explicit QUEUE: the tests replace this constant with a throwaway
     # file. Without it, charger() would read the real queue.
-    q = queue_io.charger(QUEUE)  # descriptions reinjectees depuis descriptions.json
+    # Read without the lock: each batch is written under it, on the state re-read then.
+    q = queue_io.charger(QUEUE)
+    import datetime
+
+    jour = datetime.date.today()
     targets = []
     if args.key:
-        targets = [x for x in q if f"{x.get('entreprise', '')}|{x.get('poste', '')}" == args.key]
+        targets = [x for x in q if _cle(x) == args.key]
     elif args.all:
+        # The fast ones first (Workday API, plain request), the browser after.
+        q = sorted(q, key=lambda x: fetch_api_possible(x.get("url") or "") is False)
         for x in q:
-            if x.get("description"):
+            if x.get("description") or _recent(x, jour):
                 continue
             if args.canal == "linkedin" and "linkedin.com" not in (x.get("url") or ""):
                 continue
@@ -254,24 +314,36 @@ def main():
         print("Aucune offre ciblée.")
         return
     print(f"{len(targets)} offre(s) à récupérer…")
+    textes, echecs = {}, set()
+
+    def vider(force=False):
+        """Writes the pending batch; a busy queue keeps it for the next one."""
+        if not force and len(textes) + len(echecs) < LOT_ECRITURE:
+            return 0
+        try:
+            n = ecrire_lot(textes, echecs)
+        except queue_io.VerrouIndisponible as e:
+            if force:
+                print(f"! {len(textes)} description(s) lues mais non écrites : {e}")
+            return 0
+        textes.clear()
+        echecs.clear()
+        return n
 
     if args.api_seul:
         ok = 0
         for i, x in enumerate(targets, 1):
-            key = f"{x.get('entreprise', '')}|{x.get('poste', '')}"
             try:
                 r = fetch_api(x.get("url") or "")
             except Exception:
                 r = None
             if r:
-                x["description"] = r["text"]
-                ok += 1  # x is the object of q
-            if i % 25 == 0 or i == len(targets):
-                importlib.import_module("jobhunter.programs.util").jwrite(
-                    QUEUE, q
-                )  # in batches: the queue is heavy
-                print(f"   ── {i}/{len(targets)} — {ok} ok")
+                textes[_cle(x)] = r["text"]
+                ok += 1
+            print(f"→ [{i}/{len(targets)}] {_cle(x)[:55]}")
+            vider()
             time.sleep(0.3)
+        vider(force=True)
         print(f"\n=== {ok}/{len(targets)} descriptions enregistrées (API) ===")
         return
 
@@ -298,7 +370,7 @@ def main():
         ctx, page = launch()
         t0 = time.time()
         for i, x in enumerate(targets, 1):
-            key = f"{x.get('entreprise', '')}|{x.get('poste', '')}"
+            key = _cle(x)
             url = x.get("url") or ""
             print(f"→ [{i}/{len(targets)}] {key[:55]}")
             try:
@@ -317,11 +389,15 @@ def main():
                         print(f"   ✖ relance navigateur impossible : {e2}")
                         break
             if r["ok"]:
-                save(q, key, r["text"])  # immediate save: nothing is lost
+                textes[key] = r["text"]
                 ok += 1
                 print(f"   ✅ {len(r['text'])} car. (via {r['via']})")
             else:
+                echecs.add(key)
                 print(f"   ✗ {r['note']}")
+            # In batches of ten: rewriting the whole queue after each description cost
+            # more than reading the page.
+            vider()
             if i % 25 == 0:
                 rate = (time.time() - t0) / i
                 print(
@@ -341,6 +417,7 @@ def main():
             ctx.close()
         except Exception:
             pass
+    vider(force=True)
     print(f"\n=== {ok}/{len(targets)} descriptions enregistrées dans apply_queue.json ===")
 
 

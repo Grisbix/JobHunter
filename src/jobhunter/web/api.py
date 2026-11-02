@@ -96,6 +96,10 @@ def tableau(
             relances.append({"entreprise": entreprise, "poste": poste, "jours": (jour - d).days})
     relances.sort(key=lambda r: -r["jours"])
 
+    # « À faire »: the best offers with their CV and letter ready, not applied to yet.
+    pretes = [o for o in a_traiter if o.get("cv") and o.get("lettre") and _oid(o) not in suivi]
+    pretes.sort(key=lambda o: (-_fit(o), -_fit(o, "fit_fin")))
+
     zones = Counter(str(o.get("zone") or "inconnu") for o in offres if _fit(o) >= 7)
     total_zones = sum(zones.values()) or 1
 
@@ -134,6 +138,10 @@ def tableau(
             for o in meilleures
         ],
         "relances": relances[:4],
+        "a_postuler": [
+            {"poste": o.get("poste") or "", "entreprise": o.get("entreprise") or "", "fit": _fit(o)}
+            for o in pretes[:4]
+        ],
         "relances_toutes": relances,
         "zones": [
             {"zone": z, "n": n, "pct": round(100 * n / total_zones)}
@@ -555,7 +563,7 @@ TACHES: dict[str, tuple[str, list[str]]] = {
     # signed release, checked before it is installed (programs.update)
     "maj": ("Mise à jour de JobHunter", ["jobhunter.programs.update"]),
     # + the offer's URL, which generate_docs matches by substring
-    "documents": ("CV et lettre de l'offre", ["jobhunter.programs.generate_docs", "--url"]),
+    "documents": ("CV et lettre de l'offre", ["jobhunter.programs.generate_docs", "--oid"]),
     # + an http(s) link pasted by the user: title, company, description → queue
     "ajout": ("Ajouter une offre", ["jobhunter.programs.add_offer", "--url"]),
     # + the offer's identity: its description fetched online (headless)
@@ -788,6 +796,7 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
     # Set by __main__ once the window exists; private, so pywebview does not expose it.
     _fenetre: Any = None
     _basculer: Any = None  # full screen <-> rounded window
+    _plein: Any = None  # () -> bool: is the window full screen
     # Applies a backdrop by name, see FONDS. Not `_fond`: that is the background loop
     # (web.background), which this attribute overwrote — every fond_etat call failed
     # and the background's news never reached the page (found 2026-10-28).
@@ -1645,10 +1654,12 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
             args.append(ident)
             libelle = f"{libelle} · {ident.partition('|')[0]}"
         elif cle == "documents":
-            url = next((str(o.get("url") or "") for o in self._file() if _oid(o) == ident), "")
-            if not re.match(r"^https?://", url):
-                return {"ok": False, "erreur": "cette offre n'a pas de lien"}
-            args.append(url)
+            # By its identity, not its link: an offer without a link, or two offers
+            # sharing one, were refused or both redone (the user, 2026-11-02:
+            # « création de cv et lettre pour offre individuelle ne fonctionne pas »).
+            if not any(_oid(o) == ident for o in self._file()):
+                return {"ok": False, "erreur": "offre introuvable"}
+            args.append(ident)
             libelle = f"{libelle} · {ident.partition('|')[0]}"
         return self._demarrer(cle, libelle, args)
 
@@ -2078,11 +2089,14 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         pdf = rendering.to_pdf(docx) if faits else None
         return {"ok": True, "modifies": faits, "refuses": refus, "pdf": pdf is not None}
 
-    def fenetre(self, action: str) -> None:
-        """The title bar buttons of the frameless window: reduire, agrandir, fermer."""
+    def fenetre(self, action: str) -> bool | None:
+        """The title bar buttons of the frameless window: reduire, agrandir, fermer.
+
+        Returns whether the window is full screen ("etat" only asks), for the button's icon.
+        """
         f = self._fenetre
         if f is None:
-            return
+            return None
         if action == "reduire":
             f.minimize()
         elif action == "agrandir":
@@ -2091,6 +2105,8 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         elif action == "fermer":
             self._fermer_seance()  # a guided application running: stopped, Chrome closed
             f.destroy()
+            return None
+        return bool(self._plein()) if self._plein else None
 
 
 def _dossier_relances() -> Path:

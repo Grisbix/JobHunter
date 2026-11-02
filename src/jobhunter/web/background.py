@@ -22,17 +22,50 @@ import time
 from collections.abc import Callable
 from typing import Any
 
-LOT_DESCRIPTIONS = 8  # batches of 40 descriptions per session at most (the desktop's cap)
+LOT_DESCRIPTIONS = 4  # batches per session at most
+TAILLE_LOT = 100  # descriptions per batch (a progress bar follows it, no message per batch)
 SCANS_MAX = 4  # company-site scans per session
 PREMIER_SCAN_S = 120
 ECART_SCAN_S = 3 * 3600
 ECART_SYNC_S = 600
 
 
-def _lancer(args: list[str], delai: int) -> subprocess.CompletedProcess[str]:
-    """One program, without a console window, its output kept; never raises on its code."""
+_RX_AVANCE = re.compile(r"\[(\d+)/(\d+)\]")
+
+
+def _lancer(
+    args: list[str], delai: int, au_fil: Callable[[str], None] | None = None
+) -> subprocess.CompletedProcess[str]:
+    """One program, without a console window, its output kept; never raises on its code.
+
+    `au_fil`: called with each line as it comes (a progress bar follows the program).
+    """
     from jobhunter import frozen, root
 
+    if au_fil is not None:
+        proc = subprocess.Popen(  # nosec B603 : our own programs, fixed arguments
+            [frozen.interpreteur(), "-m", *args],
+            cwd=str(root.scripts()),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            bufsize=1,
+            env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        fin = time.time() + delai
+        lignes: list[str] = []
+        assert proc.stdout is not None
+        for ligne in proc.stdout:
+            lignes.append(ligne)
+            au_fil(ligne.rstrip("\n"))
+            if time.time() > fin:
+                proc.kill()
+                break
+        code = proc.wait()
+        return subprocess.CompletedProcess(args, code, "".join(lignes[-200:]), "")
     return subprocess.run(  # nosec B603 : our own programs, fixed arguments
         [frozen.interpreteur(), "-m", *args],
         cwd=str(root.scripts()),
@@ -74,6 +107,8 @@ class Fond:
         """`occupe`: True while a button's task or a guided application runs."""
         self.occupe = occupe
         self.messages: list[dict[str, Any]] = []
+        # What runs now, for the activity panel: {"libelle", "fait", "total"} or None.
+        self.activite: dict[str, Any] | None = None
         self.version = 0  # grows when the data may have changed: the page redraws
         self.lots = 0
         self.eues = 0  # descriptions fetched since the last ATS re-scoring
@@ -118,7 +153,21 @@ class Fond:
         if not avant:
             return
         self.lots += 1
-        _lancer(["jobhunter.programs.scrape_desc", "--all", "--limit", "40"], 900)
+        self.activite = {"libelle": "Descriptions des offres", "fait": 0, "total": 0}
+
+        def avance(ligne: str) -> None:
+            m = _RX_AVANCE.search(ligne)
+            if m and self.activite is not None:
+                self.activite = {**self.activite, "fait": int(m[1]), "total": int(m[2])}
+
+        try:
+            _lancer(
+                ["jobhunter.programs.scrape_desc", "--all", "--limit", str(TAILLE_LOT)],
+                1800,
+                au_fil=avance,
+            )
+        finally:
+            self.activite = None
         reste = descriptions_manquantes()
         eu = avant - reste
         self.eues += eu
@@ -127,7 +176,11 @@ class Fond:
         # after the last batch, not after each (the user, 2026-10-28: « je trouve ça
         # lent » — three batches kept a core busy for four minutes after opening).
         if not suite and self.eues:
-            _lancer(["jobhunter.programs.rescore_ats"], 300)
+            self.activite = {"libelle": "Notes des offres mises à jour", "fait": 0, "total": 0}
+            try:
+                _lancer(["jobhunter.programs.rescore_ats"], 300)
+            finally:
+                self.activite = None
             self.eues = 0
         self.dire(f"Descriptions : +{eu} récupérées ({reste} restantes).", change=eu > 0)
         if suite:
@@ -210,5 +263,9 @@ class FondApi:
             except OSError:
                 pass
         if f:
-            return {"version": f"{f.version}.{fichiers}", "messages": f.messages[-5:]}
-        return {"version": f"0.{fichiers}", "messages": []}
+            return {
+                "version": f"{f.version}.{fichiers}",
+                "messages": f.messages[-5:],
+                "activite": f.activite,
+            }
+        return {"version": f"0.{fichiers}", "messages": [], "activite": None}

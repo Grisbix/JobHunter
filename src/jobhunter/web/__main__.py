@@ -196,6 +196,7 @@ def main() -> int:
     cadre = _Cadre(fenetre)
     api._fenetre = fenetre
     api._basculer = cadre.basculer
+    api._plein = lambda: cadre.plein
     api._toile = cadre.fond
     fenetre.events.shown += cadre.installer
     # The icon from the window's creation: set at "shown", the taskbar first showed

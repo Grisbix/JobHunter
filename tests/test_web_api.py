@@ -352,9 +352,9 @@ def test_lancer_seulement_les_taches_connues(monkeypatch):
     monkeypatch.setattr("jobhunter.root.scripts", lambda: Path("."))
     api = _api_sur([_offre("A", "a", 8, url="https://ex.org/1"), _offre("B", "b", 8)], {})
     assert not api.lancer("rm -rf")["ok"]
-    assert not api.lancer("documents", "B|b")["ok"]  # no link
-    assert api.lancer("documents", "A|a")["ok"]
-    assert lances[-1][-3:] == ["jobhunter.programs.generate_docs", "--url", "https://ex.org/1"]
+    assert not api.lancer("documents", "Z|z")["ok"]  # unknown offer
+    assert api.lancer("documents", "B|b")["ok"]  # no link: by its identity (3.72)
+    assert lances[-1][-3:] == ["jobhunter.programs.generate_docs", "--oid", "B|b"]
     assert not api.lancer("collecte")["ok"]  # one at a time
     api._tache.code = 0
     assert api.lancer("collecte")["ok"]

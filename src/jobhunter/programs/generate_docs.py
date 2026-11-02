@@ -58,6 +58,12 @@ def main():
         "(apres une retouche dans CV/Sur_mesure ou Lettres/Sur_mesure)",
     )
     ap.add_argument(
+        "--oid",
+        default="",
+        help="refait CV et lettre de CETTE offre, « Entreprise|Poste » exact "
+        "(le bouton de l'application)",
+    )
+    ap.add_argument(
         "--cv-generique",
         action="store_true",
         help="remplace les CV pointant sur un gabarit partage (CV/Modeles) "
@@ -238,7 +244,15 @@ def main():
             return False
         return contrat_du_titre(x.get("poste") or "") not in _EX
 
-    if a.sans_source:
+    if a.oid:
+        # One offer, asked by name: made even when its contract is hidden by default,
+        # and never the other offers whose link holds the same text (« --url »).
+        todo = [x for x in q if f"{x.get('entreprise', '')}|{x.get('poste', '')}" == a.oid]
+        if not todo:
+            print(f"! Offre introuvable dans la file : {a.oid}")
+            return 1
+        selecteur = None
+    elif a.sans_source:
         selecteur = _sans_source
     elif a.url:
         selecteur = lambda x: a.url in str(x.get("url") or "")
@@ -250,7 +264,8 @@ def main():
         selecteur = _objet_perime
     else:
         selecteur = needs
-    todo = [x for x in q if _visible(x) and selecteur(x)]
+    if selecteur is not None:
+        todo = [x for x in q if _visible(x) and selecteur(x)]
     # Within the same integer fit, the rank (fit_fin, reposts, contract) decides.
     todo.sort(key=lambda x: (-(int(x.get("fit") or 0)), -_ranking.rang(x)))
     if not a.all:

@@ -198,6 +198,9 @@ h3 { font-size: var(--t-xl); font-weight: 500; }
    minimum, a low window pushed its rows out under the panel (audit 2026-10-28). */
 .vue.plein .colonne > .remplit, .vue.plein .colonne > .panneau:has(> .defile), .vue.plein .corps-onglet > .panneau:has(> .defile) { flex: 1 1 auto; min-height: 320px; display: flex; flex-direction: column; }
 .vue.plein .remplit > .defile, .vue.plein .panneau > .defile { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; scrollbar-width: thin; }
+/* A list's panel is as white as its header row: on the glass, the opaque header was a
+   white bar across the panel, under the filters (the user, 2026-11-02, the third time). */
+.vue.plein .colonne > .remplit, .vue.plein .colonne > .panneau:has(> .defile), .vue.plein .corps-onglet > .panneau:has(> .defile) { background: rgb(var(--blanc-rgb)); }
 /* Opaque: the rows scrolled under the header showed through it (audit 2026-10-27). */
 .vue.plein .defile thead th { position: sticky; top: 0; z-index: 2; background: rgb(var(--blanc-rgb)); box-shadow: 0 1px 0 var(--filet); }
 /* The header's band runs from edge to edge of its panel, in line with the filters above
@@ -612,32 +615,40 @@ body[data-teinte="noir"] {
   --ombre-rgb: 0, 0, 0; --fond-rgb: 228, 228, 228;
 }
 
-/* Task panel (bottom right) and toasts. */
+/* Activity panel (bottom right): the window's glass, its own text, a progress bar per
+   job, the details folded (the user, 2026-11-02: not a black console). */
 .tache {
-  position: fixed; right: 24px; bottom: 24px; width: 380px; z-index: 12;
-  background: var(--sombre); color: #f4efec; border-radius: var(--r-panneau); padding: 16px 20px;
-  box-shadow: 0 24px 50px -12px rgba(var(--ombre-rgb), .5);
+  position: fixed; right: 24px; bottom: 24px; width: 360px; z-index: 12;
+  background: var(--verre-fort); color: var(--encre); border: 1px solid var(--filet);
+  backdrop-filter: blur(24px) saturate(1.15); border-radius: var(--r-panneau); padding: 16px;
+  box-shadow: 0 18px 40px -16px rgba(var(--ombre-rgb), .35);
+  display: grid; gap: 12px;
 }
 .tache[hidden] { display: none; }
-.tache-tete { display: flex; align-items: center; gap: 12px; }
-.tache-tete .t { display: block; font-size: var(--t-l); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tache-tete .s { font-size: var(--t-s); color: #a39a95; margin-top: 2px; }
-.tache-tete .bouton { height: 32px; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.14); color: #f4efec; }
+.tache-tete, .activite-ligne { display: flex; align-items: center; gap: 12px; }
+.activite-texte { min-width: 0; flex: 1; }
+.tache-tete .t, .activite-ligne .t { display: block; font-size: var(--t-l); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tache-tete .s, .activite-ligne .s { font-size: var(--t-s); color: var(--gris); margin-top: 2px; }
+.tache-tete .bouton, .activite-ligne .bouton { height: 32px; }
 .tache .point { width: 9px; height: 9px; border-radius: 50%; background: var(--c1); flex: none; animation: battre 1.2s ease-in-out infinite; }
-.tache.fini .point { animation: none; background: #8fbf8f; }
-.tache.echec .point { background: #e07a6a; }
+.tache.fini .point { animation: none; background: #6fa86f; }
+.tache.echec .activite-ligne:first-child .point { background: #d0644f; }
 @keyframes battre { 50% { opacity: .3; } }
-.tache pre {
-  margin-top: 12px; max-height: 150px; overflow: auto; font: 11.5px/1.5 "Cascadia Mono", Consolas, monospace;
-  color: #cfc6c1; white-space: pre-wrap; word-break: break-word;
-}
+.jauge { height: 5px; border-radius: 3px; background: var(--piste); overflow: hidden; margin-top: 8px; }
+.jauge i { display: block; height: 100%; width: 0; background: var(--c1); border-radius: 3px; transition: width .4s ease; }
+.jauge.indet i { width: 30%; animation: glisser 1.4s ease-in-out infinite; }
+@keyframes glisser { 0% { transform: translateX(-100%); } 100% { transform: translateX(340%); } }
+.lien-plier { justify-self: start; background: none; border: 0; padding: 0; color: var(--gris); font: inherit; font-size: var(--t-s); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.lien-plier:hover { color: var(--encre); }
+.activite-detail { max-height: 150px; overflow: auto; font-size: var(--t-s); line-height: 1.5; color: var(--texte-doux); white-space: pre-wrap; word-break: break-word; scrollbar-width: thin; }
+.tache pre { margin: 0; max-height: 150px; overflow: auto; font: inherit; font-size: var(--t-s); line-height: 1.5; color: var(--texte-doux); white-space: pre-wrap; word-break: break-word; }
 /* Guided application: the task panel's look, wider; the task panel goes above it. */
 .guidee { width: 460px; display: grid; gap: 12px; }
 .guidee:not([hidden]) ~ .tache { bottom: auto; top: 96px; }
 .guidee.a-toi .point { animation: none; background: var(--c1); }
 .guidee .zone-offre { font-size: var(--t-xl); font-weight: 600; }
 .guidee .zone-dossier, .guidee .zone-etat, .guidee .zone-resultat { font-size: var(--t-m); line-height: 1.45; white-space: pre-line; }
-.guidee .ton-mut { color: #a39a95; }
+.guidee .ton-mut { color: var(--gris); }
 .guidee .ton-acc { color: var(--c1); }
 .guidee .ton-ok { color: #8fbf8f; }
 .guidee .ton-ambre { color: #e8b85c; }

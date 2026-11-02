@@ -16,7 +16,9 @@ def lances(monkeypatch):
 
     vu = Lances()
 
-    def lancer(args, delai):
+    def lancer(args, delai, au_fil=None):
+        if au_fil:
+            au_fil("→ [3/7] Entreprise|Poste")
         vu.append(args[0])
         return subprocess.CompletedProcess(args, vu.code, vu.sortie, "")
 
@@ -129,3 +131,20 @@ def test_la_toile_de_la_fenetre_n_ecrase_pas_la_boucle_de_fond(monkeypatch):
     assert "messages" in a.fond_etat()
     principal = Path(web_api.__file__).with_name("__main__.py").read_text(encoding="utf-8")
     assert "api._fond =" not in principal
+
+
+def test_l_avancement_suit_le_programme(monkeypatch):
+    vus = []
+
+    def lancer(args, delai, au_fil=None):
+        au_fil("→ [3/7] Entreprise|Poste")
+        vus.append(dict(f.activite))
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(bg, "_lancer", lancer)
+    restes = iter([5, 5])
+    monkeypatch.setattr(bg, "descriptions_manquantes", lambda: next(restes))
+    f = bg.Fond(lambda: False)
+    f.descriptions()
+    assert vus == [{"libelle": "Descriptions des offres", "fait": 3, "total": 7}]
+    assert f.activite is None  # finished: nothing shown

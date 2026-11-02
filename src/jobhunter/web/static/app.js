@@ -287,6 +287,7 @@ async function lancer(cle, ident = "") {
   if (!window.pywebview) return toast(HORS_APPLI, true);
   const r = await window.pywebview.api.lancer(cle, ident);
   if (!r.ok) { toast(r.erreur, true); return false; }
+  tacheMasquee = false;
   suivreTache();
   return true;
 }
@@ -320,28 +321,83 @@ function duree(s) {
   return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")}`;
 }
 
+// --- Activity: what runs now, in a light panel that folds -----------------------------
+// The user, 2026-11-02: « un panneau dédié ou une notification repliable », not a black
+// console, and no toast every nine descriptions. One panel shows the task started by a
+// button and the background work, each with its progress; the details fold away.
+let etatTache = null;  // api.tache()
+let etatFond = null;  // api.fond_etat()
+let tacheMasquee = false;  // « Fermer » on a finished task: hidden until the next one
+let activiteDepliee = false;
+try { activiteDepliee = localStorage.getItem("jh-activite") === "1"; } catch (_) { /* no storage */ }
+
+// The percentage a program's output says: « [12/40] », « ── 12/40 » or « 45 % ».
+function avancement(lignes) {
+  for (let i = lignes.length - 1; i >= Math.max(0, lignes.length - 30); i--) {
+    const l = lignes[i];
+    let m = l.match(/\[(\d+)\/(\d+)\]/) || l.match(/── (\d+)\/(\d+)/);
+    if (m && +m[2] > 0) return Math.min(100, Math.round((100 * m[1]) / m[2]));
+    m = l.match(/(\d+(?:[.,]\d+)?) ?%/);
+    if (m) return Math.min(100, Math.round(parseFloat(m[1].replace(",", "."))));
+  }
+  return null;
+}
+
+function jauge(pct) {
+  return h("div", { class: `jauge ${pct === null ? "indet" : ""}`, role: "progressbar",
+    "aria-valuemin": "0", "aria-valuemax": "100", ...(pct === null ? {} : { "aria-valuenow": String(pct) }) },
+  h("i", { style: pct === null ? "" : `width:${pct}%` }));
+}
+
+function dessinerActivite() {
+  const p = $("tache");
+  const e = etatTache && !tacheMasquee ? etatTache : null;
+  const f = etatFond && etatFond.activite;
+  if (!e && !f) { p.hidden = true; return; }
+  p.hidden = false;
+  p.classList.toggle("fini", !!(e && e.fini) && !f);
+  p.classList.toggle("echec", !!(e && e.fini && e.code !== 0));
+  const lignes = [];
+  if (e) {
+    const pct = e.fini ? null : avancement(e.lignes);
+    const etat = !e.fini ? `en cours · ${duree(e.duree)}${pct === null ? "" : ` · ${pct} %`}`
+      : e.code === 0 ? `terminé en ${duree(e.duree)}`
+      : e.code === 3 ? "un autre programme écrit les offres : réessaie dans un instant"
+      : "arrêté avant la fin";
+    lignes.push(h("div", { class: "activite-ligne" },
+      h("span", { class: "point" }),
+      h("div", { class: "activite-texte" }, h("div", { class: "t" }, e.libelle), h("div", { class: "s" }, etat),
+        e.fini ? null : jauge(pct)),
+      e.fini
+        ? h("button", { class: "bouton", onclick: () => { tacheMasquee = true; dessinerActivite(); } }, "Fermer")
+        : h("button", { class: "bouton", onclick: async () => { await window.pywebview.api.arreter(); suivreTache(); } }, "Arrêter")));
+  }
+  if (f) {
+    const pct = f.total ? Math.round((100 * f.fait) / f.total) : null;
+    lignes.push(h("div", { class: "activite-ligne fond-ligne" },
+      h("span", { class: "point" }),
+      h("div", { class: "activite-texte" }, h("div", { class: "t" }, f.libelle),
+        h("div", { class: "s" }, f.total ? `en arrière-plan · ${f.fait} sur ${f.total}` : "en arrière-plan"), jauge(pct))));
+  }
+  const detail = e ? e.lignes.slice(-12) : (etatFond.messages || []).map((m) => `${m.heure}  ${m.texte}`);
+  const plier = h("button", { class: "lien-plier", "aria-expanded": String(activiteDepliee), onclick: () => {
+    activiteDepliee = !activiteDepliee;
+    try { localStorage.setItem("jh-activite", activiteDepliee ? "1" : ""); } catch (_) { /* no storage */ }
+    dessinerActivite();
+  } }, activiteDepliee ? "Masquer le détail" : "Voir le détail");
+  p.replaceChildren(...lignes,
+    ...(detail.length ? [plier] : []),
+    ...(detail.length && activiteDepliee ? [h("div", { class: "activite-detail" }, detail.map((l) => h("div", {}, l)))] : []));
+}
+
 async function suivreTache() {
   clearTimeout(minuteurTache);
   if (!window.pywebview) return;
   const e = await window.pywebview.api.tache();
   suivreMaj(e);
-  const p = $("tache");
-  if (!e) { p.hidden = true; return; }
-  const etat = !e.fini ? `en cours · ${duree(e.duree)}`
-    : e.code === 0 ? `terminé en ${duree(e.duree)}`
-    : e.code === 3 ? "file occupée par un autre programme : rien n'a été touché"
-    : `arrêté (code ${e.code})`;
-  p.hidden = false;
-  p.classList.toggle("fini", e.fini);
-  p.classList.toggle("echec", e.fini && e.code !== 0);
-  p.replaceChildren(
-    h("div", { class: "tache-tete" },
-      h("span", { class: "point" }),
-      h("div", { style: "min-width:0;flex:1" }, h("div", { class: "t" }, e.libelle), h("div", { class: "s" }, etat)),
-      e.fini
-        ? h("button", { class: "bouton", onclick: () => { p.hidden = true; } }, "Fermer")
-        : h("button", { class: "bouton", onclick: async () => { await window.pywebview.api.arreter(); suivreTache(); } }, "Arrêter")),
-    h("pre", {}, e.lignes.join("\n") || "…"));
+  etatTache = e;
+  dessinerActivite();
+  if (!e) return;
   if (!e.fini) {
     tacheEnCours = true;
     minuteurTache = setTimeout(suivreTache, 1000);
@@ -812,11 +868,13 @@ ECRANS.accueil = {
             d.cle_conseillee ? h("li", { onclick: () => saisirCle(d.cle_conseillee.nom, () => aller("accueil")) },
               h("div", { class: "t" }, `Ajouter la clé ${d.cle_conseillee.libelle}`),
               h("div", { class: "s" }, "Gratuite, 5 minutes : beaucoup plus d'offres")) : null,
-            d.relances.length
-            ? d.relances.map((r) => h("li", { onclick: () => aller("relances") },
-                h("div", { class: "t" }, `Relancer ${r.entreprise}`),
-                h("div", { class: "s", title: r.poste }, `${r.jours} j · ${r.poste}`)))
-            : h("li", { class: "vide" }, "Rien à relancer aujourd'hui"))),
+            // Offers with their CV and letter ready, not applied to yet: what to do next.
+            // The follow-ups left this list (the user, 2026-11-02: « pas très importantes »).
+            (d.a_postuler || []).length
+            ? d.a_postuler.map((o) => h("li", { onclick: () => ouvrirOffre(`${o.entreprise}|${o.poste}`) },
+                h("div", { class: "t" }, `Postuler chez ${o.entreprise}`),
+                h("div", { class: "s", title: o.poste }, `${nombre(o.fit)} · ${o.poste}`)))
+            : h("li", { class: "vide" }, "Rien à faire pour l'instant"))),
         h("div", { class: "zones" }, h("h2", {}, "Par zone"), h("div", { class: "sous", style: "margin-bottom:16px" }, "offres notées 7 et plus"),
           d.zones.map((z) => h("div", { class: "zone" },
             h("div", {}, h("div", { class: "lab" }, z.zone), h("div", { class: "val" }, nombre(z.n))),
@@ -1007,8 +1065,8 @@ ECRANS.offres = {
   titre: "Offres",
   plein: true,
   actions: () => [
-    bouton("Annuler", "fleche", annulerGeste),
     bouton("Ajouter une offre", "sortie", ajouterOffre),
+    action("Vérifier les offres", "loupe", "disponibilite"),
     action("Lancer la collecte", "eclair", "collecte", "plein")],
   async dessiner(vue) {
     const f = filtresOffres;
@@ -1109,7 +1167,8 @@ window.addEventListener("resize", () => { if (courant === "candidatures") ajuste
 ECRANS.candidatures = {
   titre: "Candidatures",
   plein: true,
-  actions: () => [bouton("Lire les réponses par mail", "cloche", ouvrirCourriels)],
+  actions: () => [bouton("Relances", "cloche", () => aller("relances")),
+    bouton("Lire les réponses par mail", "cloche", ouvrirCourriels)],
   async dessiner(vue) {
     const d = await appel("candidatures");
     // A card dragged to another column takes its status (the user, 2026-10-27), as the
@@ -1349,8 +1408,7 @@ const avecBak = (r) => r && r.ok ? { ...r, message: `Enregistré (profil d'avant
 ECRANS.profil = {
   titre: "Profil",
   actions: () => [
-    bouton("Gérer les profils", "profil", gererProfils),
-    bouton("Nouveau profil…", "profil", nouveauProfil, "plein"),
+    bouton("Gérer les profils", "profil", gererProfils, "plein"),
     bouton("Fichier du profil (avancé)", "doc", async () => {
       const r = await ecrire("ouvrir_profil");
       if (r === false) toast("profile.json introuvable", true);
@@ -2073,14 +2131,12 @@ ECRANS.maintenance = {
         h("div", { class: c.etat === "ok" ? "etat ok" : "etat" }, c.etat === "ok" ? "Réussie" : (c.etat || "inconnue")),
         h("dl", { class: "paires", style: "margin-top:14px" },
           h("dt", {}, "Début"), h("dd", {}, c.debut || "—"), h("dt", {}, "Fin"), h("dd", {}, c.fin || "—"),
-          h("dt", {}, "Erreurs"), h("dd", {}, String(c.erreurs)), h("dt", {}, "Dernier succès"), h("dd", {}, c.dernier_succes || "—")),
-        h("div", { class: "actions-col" }, action("Relancer la collecte", "eclair", "collecte"))),
+          h("dt", {}, "Erreurs"), h("dd", {}, String(c.erreurs)), h("dt", {}, "Dernier succès"), h("dd", {}, c.dernier_succes || "—"))),
       carte("Données",
         h("dl", { class: "paires" },
           h("dt", {}, "Offres"), h("dd", {}, nombre(m.offres)), h("dt", {}, "Candidatures"), h("dd", {}, nombre(m.candidatures)),
           m.tailles.map((t) => [h("dt", {}, t.nom), h("dd", {}, taille(t.octets))])),
-        h("div", { class: "actions-col" }, action("Contrôler les offres fermées", "loupe", "disponibilite"),
-          m.effacable ? bouton("Effacer mes données…", "corbeille", () => effacerDonnees(m)) : null)),
+        m.effacable ? h("div", { class: "actions-col" }, bouton("Effacer mes données…", "corbeille", () => effacerDonnees(m))) : null),
       carteOutils(await appel("outils"))));
   },
 };
@@ -2231,7 +2287,7 @@ async function verifierMaj(ev) {
   try { v = (await window.pywebview.api.mise_a_jour()) || {}; }
   catch (e) { v = {}; }
   finally { if (b) b.disabled = false; }
-  if (!v.derniere) return toast("GitHub injoignable : réessaie plus tard.", true);
+  if (!v.derniere) return toast("Impossible de joindre le serveur des mises à jour : réessaie plus tard.", true);
   if (v.store) return toast(v.nouvelle
     ? `Version ${v.derniere} publiée ; installée : ${v.installee}. Le Microsoft Store l'installe de lui-même dans les jours qui viennent.`
     : `À jour : ${v.installee}. Le Microsoft Store installe les mises à jour.`);
@@ -2283,16 +2339,10 @@ async function cartesParametres() {
   return [
     h("div", { class: "pile" },
       carte("Langue",
-        h("div", { class: "sous", style: "margin-bottom:10px" }, "Langue de l'interface, dans les deux fenêtres. Les lettres et les messages gardent la leur."), langue),
-      carte("Mise à jour",
-        h("div", { class: "sous", style: "margin-bottom:10px" }, "Les mises à jour viennent de GitHub ; chacune est vérifiée avant d'être installée."),
-        bouton("Vérifier les mises à jour", "fleche", verifierMaj, "plein"))),
+        h("div", { class: "sous", style: "margin-bottom:10px" }, "Langue de l'interface, dans les deux fenêtres. Les lettres et les messages gardent la leur."), langue)),
     carte("Collecte automatique",
       h("div", { class: "sous", style: "margin-bottom:10px" }, "Chaque jour à l'heure choisie, l'ordinateur collecte les offres de tous tes profils, même si JobHunter est fermé."),
       planif),
-    carte("Profils",
-      h("div", { class: "sous", style: "margin-bottom:10px" }, "Un profil = une recherche à part : un autre métier, une autre ville, ou une autre personne."),
-      bouton("Gérer les profils", "profil", gererProfils, "plein")),
   ];
 }
 
@@ -2345,9 +2395,10 @@ async function aller(nom) {
   if (!ECRANS[nom]) nom = "accueil";
   courant = nom;
   fermerTiroir();
+  const lien = nom === "relances" ? "candidatures" : nom;  // Relances: a page of Candidatures
   for (const a of document.querySelectorAll(".menu a")) {
-    a.classList.toggle("actif", a.dataset.ecran === nom);
-    if (a.dataset.ecran === nom) a.setAttribute("aria-current", "page");
+    a.classList.toggle("actif", a.dataset.ecran === lien);
+    if (a.dataset.ecran === lien) a.setAttribute("aria-current", "page");
     else a.removeAttribute("aria-current");
   }
   const e = ECRANS[nom];
@@ -2432,15 +2483,28 @@ function natif() {
   appel("session").then((s) => document.body.classList.toggle("leger", !!(s && s.distance))).catch(() => {});
   suivreTache();  // a task started before a reload keeps being followed
   for (const b of document.querySelectorAll(".feux button")) {
-    b.addEventListener("click", () => window.pywebview.api.fenetre(b.dataset.action));
+    b.addEventListener("click", () => window.pywebview.api.fenetre(b.dataset.action).then(iconePlein));
   }
   $("barre").addEventListener("dblclick", (e) => {
-    if (!e.target.closest("button")) window.pywebview.api.fenetre("agrandir");
+    if (!e.target.closest("button")) window.pywebview.api.fenetre("agrandir").then(iconePlein);
   });
+  window.pywebview.api.fenetre("etat").then(iconePlein);
   demarrer();
   annonceMaj();
   window.pywebview.api.demarrage().then((m) => { if (m) toast(m, m.startsWith("!")); });
   suivreFond();
+}
+
+// Full screen: the button shows two windows (« back to a window »), as Windows does;
+// in a window, one square (the user, 2026-11-02).
+function iconePlein(plein) {
+  const b = document.querySelector('.feux [data-action="agrandir"]');
+  if (!b || typeof plein !== "boolean") return;
+  b.innerHTML = plein
+    ? '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="4" width="6" height="6" rx="1.2"/><path d="M4 4V3.2C4 2.5 4.5 2 5.2 2H8.8C9.5 2 10 2.5 10 3.2V6.8C10 7.5 9.5 8 8.8 8H8"/></svg>'
+    : '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx="1.5"/></svg>';
+  b.title = plein ? "Revenir à une fenêtre" : "Plein écran";
+  b.setAttribute("aria-label", b.title);
 }
 
 // The background work (web.background): its news as toasts, the screen redrawn when
@@ -2452,12 +2516,16 @@ async function suivreFond() {
   if (e) {
     const m = e.messages[e.messages.length - 1];
     const cle = m ? m.heure + m.texte : "";
-    if (vuFond !== null && cle && cle !== vuFond) toast(m.texte, m.texte.startsWith("!"));
+    // Only a failure is worth a toast: the progress is in the activity panel.
+    if (vuFond !== null && cle && cle !== vuFond && m.texte.startsWith("!")) toast(m.texte, true);
     vuFond = cle;
     if (versionFond !== null && e.version !== versionFond) redessinerDonnees();
     versionFond = e.version;
+    etatFond = e;
+    dessinerActivite();
   }
-  setTimeout(suivreFond, 20000);
+  // Every 2 s while something runs in the background (its progress bar), else 20 s.
+  setTimeout(suivreFond, e && e.activite ? 2000 : 20000);
 }
 
 if (window.pywebview) natif();
