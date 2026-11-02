@@ -25,6 +25,7 @@ from jobhunter.storage.applications import SuiviIllisible as _SuiviIllisible
 from jobhunter.web.background import FondApi
 from jobhunter.web.guided import CandidatureApi
 from jobhunter.web.panels import PanneauxApi
+from jobhunter.web.trades import MetiersApi
 from jobhunter.web.workshop import AtelierApi
 
 # Statuses of an application still waiting for an answer (same as the follow-ups).
@@ -335,6 +336,7 @@ def offres(
         "choisis": {"pays": sorted(pays_, key=_cle_tri)},
         "zones": sorted({str(o.get("zone")) for o in offres if o.get("zone")}),
         "domaines": sorted({str(o.get("domaine")) for o in offres if o.get("domaine")}),
+        "noms_domaines": _noms_domaines(),
         "contrats": sorted({str(o.get("contrat")) for o in offres if o.get("contrat")}),
         # "?" is no choice: the offers it groups have no place (zones.lieu_deduit
         # finds most of them); "Tous les pays" still shows them.
@@ -560,6 +562,7 @@ TACHES: dict[str, tuple[str, list[str]]] = {
     # after a change of places / of skills (the desktop app runs the same)
     "zones": ("Zones des offres mises à jour", ["jobhunter.scoring.zones", "--ecrire"]),
     "rescore": ("Recalculer le fit", ["jobhunter.programs.rescore_ats"]),
+    "domaines": ("Domaines des offres", ["jobhunter.programs.reclassify_domains"]),
     # signed release, checked before it is installed (programs.update)
     "maj": ("Mise à jour de JobHunter", ["jobhunter.programs.update"]),
     # + the offer's URL, which generate_docs matches by substring
@@ -786,7 +789,7 @@ def bureau_a_distance() -> bool:
         return False
 
 
-class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
+class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
     """Methods the page calls through `window.pywebview.api`.
 
     Nothing here writes to the queue, the applications or the profile; only the
@@ -1892,7 +1895,18 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         return {"ok": ok, "message": msg, "erreur": "" if ok else msg}
 
     def _relancer(self) -> None:
-        """Starts the web interface again on the active profile, then closes this window."""
+        """Starts the web interface again on the active profile, then closes this window.
+
+        The new window opens at the same size and says when its page is drawn (a file,
+        JH_RELAIS); only then does this one close, so the switch looks like a reload,
+        not like the application shutting down (the user, 2026-11-02: « plus smooth le
+        changement de profil, pas éteindre l'application »). The paths of the profile
+        are fixed when the modules load: a fresh process is the only safe switch.
+        """
+        import tempfile
+        import threading
+        import time
+
         from jobhunter import frozen, profiles
 
         principale = profiles.principale()
@@ -1905,9 +1919,27 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
             cmd = [sys.executable, str(principale / "JobHunter.pyw")]
         else:
             cmd = [sys.executable, "-m", "jobhunter.launch"]
+        relais = Path(tempfile.gettempdir()) / f"jobhunter_relais_{os.getpid()}"
+        relais.unlink(missing_ok=True)
+        env["JH_RELAIS"] = str(relais)
+        env["JH_PLEIN"] = "1" if (self._plein is None or self._plein()) else "0"
         subprocess.Popen(cmd, cwd=str(principale), env=env)  # nosec B603 : our own program
-        if self._fenetre is not None:
-            self._fenetre.destroy()
+        fenetre = self._fenetre
+        if fenetre is None:
+            return
+        try:
+            fenetre.evaluate_js("document.body.classList.add('relais')")
+        except Exception:  # noqa: BLE001 — only the veil
+            pass
+
+        def fermer() -> None:
+            fin = time.time() + 45  # a new window that never says ready: close anyway
+            while time.time() < fin and not relais.exists():
+                time.sleep(0.2)
+            relais.unlink(missing_ok=True)
+            fenetre.destroy()
+
+        threading.Thread(target=fermer, daemon=True).start()
 
     def changer_profil(self, slug: str) -> dict[str, Any]:
         """Opens another profile: the window restarts on its data (paths are fixed at start)."""
@@ -2170,6 +2202,20 @@ def _pages(pdf: Path) -> list[str]:
     from jobhunter.documents import rendering
 
     return [base64.b64encode(b).decode("ascii") for b in rendering.pages_png(pdf)]
+
+
+def _noms_domaines() -> dict[str, str]:
+    """Each domain's key -> its trade's name, for the Offres screen's filter (3.74)."""
+    from jobhunter import profile
+
+    try:
+        return {
+            str(d["cle"]): str(d.get("libelle") or d["cle"])
+            for d in profile.domaines()
+            if isinstance(d, dict) and d.get("cle")
+        }
+    except Exception:  # noqa: BLE001 — no profile: the keys are shown
+        return {}
 
 
 def _document_permis(chemin: str) -> Path | None:

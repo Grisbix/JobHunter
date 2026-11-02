@@ -992,20 +992,22 @@ const sansAccent = (t) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase
 // and a list of boxes with Apply. The list hangs on <body>: inside the filter bar, its
 // scrolling and fade (mask) would clip it. Past a dozen values, a field narrows it.
 const enListe = (v) => (Array.isArray(v) ? v : v ? [v] : []);
-function listeMulti(choisis, tous, valeurs, appliquer, lien = null) {
+// `noms`: the name shown for a value (a domain's key -> its trade's name, 3.74).
+function listeMulti(choisis, tous, valeurs, appliquer, lien = null, noms = {}) {
   const garde = new Set(choisis);
+  const nom = (v) => noms[v] || v;
   const libelle = !choisis.length ? tous
-    : choisis.length <= 2 ? choisis.join(", ") : `${choisis[0]} + ${choisis.length - 1}`;
+    : choisis.length <= 2 ? choisis.map(nom).join(", ") : `${nom(choisis[0])} + ${choisis.length - 1}`;
   const bouton_ = h("button", { class: `choix multi${choisis.length ? " pris" : ""}`, title: choisis.join(", ") || tous }, libelle);
   const menu = h("div", { class: "menu-cherchable menu-multi" });
   const cherche = valeurs.length > 12 ? h("input", { type: "search", class: "champ-texte", placeholder: "Chercher…", autocomplete: "off" }) : null;
   const cases = h("div", { class: "cases" });
   const remplir = () => {
     const q = cherche ? sansAccent(cherche.value.trim()) : "";
-    const vus = valeurs.filter((v) => sansAccent(v).includes(q));
+    const vus = valeurs.filter((v) => sansAccent(nom(v)).includes(q));
     cases.replaceChildren(...(vus.length ? vus.slice(0, 300).map((v) => h("label", {},
       h("input", { type: "checkbox", checked: garde.has(v), onchange: (e) => { e.target.checked ? garde.add(v) : garde.delete(v); } }),
-      h("span", {}, v))) : [h("div", { class: "sous" }, "Aucun résultat")]));
+      h("span", {}, nom(v)))) : [h("div", { class: "sous" }, "Aucun résultat")]));
   };
   const placer = (e) => {
     if (e && menu.contains(e.target)) return;
@@ -1131,7 +1133,7 @@ ECRANS.offres = {
     let minuteur;
     const champ = h("input", { type: "search", placeholder: "Poste, entreprise, ville…", value: f.texte,
       oninput: (e) => { clearTimeout(minuteur); minuteur = setTimeout(() => changer("texte", e.target.value), 250); } });
-    const liste = (cle, tous, valeurs, lien) => listeMulti(enListe(f[cle]), tous, valeurs || [], (v) => changer(cle, v), lien);
+    const liste = (cle, tous, valeurs, lien, noms) => listeMulti(enListe(f[cle]), tous, valeurs || [], (v) => changer(cle, v), lien, noms);
     // Which places are priority or secondary is the profile's search (the user could not
     // find it, 2026-10-27): the zone list leads there.
     const reglerZones = ["Régler les zones…", () => aller("profil").then(() => {
@@ -1164,7 +1166,7 @@ ECRANS.offres = {
           segment(d.statuts.map((s) => [s, s[0].toUpperCase() + s.slice(1)]), f.statut, (v) => changer("statut", v)),
           tri, menuVues(), bouton("Colonnes…", "", choisirColonnes)),
         h("div", { class: "grille-filtres" },
-          liste("zone", "Toutes les zones", d.zones, reglerZones), liste("domaine", "Tous les domaines", d.domaines), liste("contrat", "Tous les contrats", d.contrats),
+          liste("zone", "Toutes les zones", d.zones, reglerZones), liste("domaine", "Tous les domaines", d.domaines, null, d.noms_domaines || {}), liste("contrat", "Tous les contrats", d.contrats),
           liste("region", "Toutes les régions", d.regions), liste("pays", "Tous les pays", d.pays))),
       barreSel,
       h("div", { class: "verre panneau remplit" },
@@ -1454,10 +1456,7 @@ ECRANS.profil = {
   titre: "Profil",
   actions: () => [
     bouton("Gérer les profils", "profil", gererProfils, "plein"),
-    bouton("Fichier du profil (avancé)", "doc", async () => {
-      const r = await ecrire("ouvrir_profil");
-      if (r === false) toast("profile.json introuvable", true);
-    })],
+    bouton("Profil avancé", "doc", profilAvance)],
   async dessiner(vue) {
     const [p, rech, comp] = await Promise.all([appel("profil"), appel("recherche"), appel("competences")]);
 
@@ -1535,17 +1534,18 @@ ECRANS.profil = {
       h("label", { class: "champ", style: "margin-top:14px" }, svg("etoile"), nouvelle),
       bC.el);
 
+    // CVs and letters first, side by side (the user, 2026-11-02: « mettre ajout lettre
+    // de motivation plus haut dans le panneau profil à côté de CV »).
     vue.replaceChildren(h("div", { class: "grille" },
       carteId,
       h("div", { class: "pile" },
-        carte("Domaines visés", puces(p.domaines.map((d) => d.libelle), "puce chaude"),
-          h("div", { class: "sous", style: "margin-top:12px" }, "Leur définition reste dans profile.json.")),
         carte("Notation", h("dl", { class: "paires" }, Object.entries(p.scoring).map(([k, v]) =>
           [h("dt", {}, k.replaceAll("_", " ")), h("dd", {}, String(v))])))),
+      await carteMetiers(),
+      ...(await cartesDocumentsBase()),
       carteRech,
       carteComp,
       await cartePoids(),
-      ...(await cartesDocumentsBase()),
       carte("Outils", puces(p.outils))));
   },
 };
@@ -2062,7 +2062,143 @@ async function cartesDocumentsBase() {
         if (refaire) lancer("regenerer_lettres");
       }, "plein"),
       d.exemple ? bouton("Voir la dernière lettre", "doc", () => voirDocument(null, d.exemple, "Lettre")) : null));
-  return [cv, lettre];
+  return [lettre];  // the CVs: one per trade, in carteMetiers (3.74)
+}
+
+// Trades (3.74): one CV and one letter each. A trade is a domain of the profile: added
+// here, it shows in the Offres screen's domain filter once the offers are classed again.
+async function choixFichier(nom, ...args) {
+  if (!window.pywebview) { toast(HORS_APPLI, true); return null; }
+  let r;
+  try { r = await window.pywebview.api[nom](...args); } catch (e) { toast(`Échec : ${(e && e.message) || e}`, true); return null; }
+  if (!r || r.annule) return null;
+  if (!r.ok) { toast(r.erreur || "Échec.", true); return null; }
+  return r;
+}
+
+async function carteMetiers() {
+  const m = (await appel("metiers")) || { metiers: [] };
+  const vrais = m.metiers.filter((x) => x.cle !== "General");
+  const refaire = async (genre) => {
+    const [titre, cle] = genre === "cv" ? ["Refaire les CV ?", "regenerer_cv"] : ["Refaire les lettres ?", "regenerer_lettres"];
+    const ok = await dialogue(titre, "Refaire maintenant ceux déjà préparés pour les offres ?", null, [["Refaire", "plein", () => true]]);
+    if (ok) lancer(cle);
+  };
+  const changer = async (x, genre) => {
+    const r = await choixFichier(genre === "cv" ? "cv_metier" : "lettre_metier", x.cle);
+    if (!r) return;
+    toast(genre === "cv" ? `CV de « ${x.libelle} » : ${r.nom}.`
+      : r.parcours ? `Lettre de « ${x.libelle} » : ${r.nom}. Son paragraphe de parcours est repris.` : `Lettre de « ${x.libelle} » : ${r.nom}. Aucun paragraphe de parcours reconnu.`);
+    redessiner();
+    refaire(genre);
+  };
+  const champsMetier = (x) => {
+    const nom = h("input", { class: "champ-texte", value: x ? x.libelle : "", placeholder: "Ex. : Contrôle de gestion" });
+    const mots = h("input", { class: "champ-texte", value: x ? x.mots.join(", ") : "", placeholder: "Ex. : contrôleur de gestion, contrôle de gestion, fp&a" });
+    const bloc = h("div", { class: "formulaire" },
+      h("label", { class: "champ-form" }, h("span", {}, "Nom du métier"), nom),
+      x && x.cle === "General" ? null : h("label", { class: "champ-form" }, h("span", {}, "Mots du titre des offres (séparés par des virgules)"), mots));
+    return { bloc, nom, mots };
+  };
+  const ajouter = async () => {
+    const c = champsMetier(null);
+    const v = await dialogue("Ajouter un métier", "Un CV pour un autre métier, et sa lettre si tu veux : les offres dont le titre contient un de ces mots le prennent. Choisis ensuite le CV.",
+      c.bloc, [["Choisir le CV…", "plein", () => (c.nom.value.trim() && c.mots.value.trim() ? [c.nom.value, c.mots.value] : (toast("Il faut un nom et au moins un mot.", true), undefined))]]);
+    if (!v) return;
+    const r = await choixFichier("ajouter_metier", v[0], v[1]);
+    if (!r) return;
+    toast(`Métier ajouté, CV : ${r.cv}. Les offres prennent leur domaine…`);
+    lancer("domaines");
+    redessiner();
+    const lettre = await dialogue("Ajouter sa lettre ?", "Ta lettre pour ce métier : son paragraphe de parcours sera repris dans les lettres de ses offres.", null, [["Choisir la lettre…", "plein", () => true]]);
+    if (lettre) changer({ cle: r.cle, libelle: v[0] }, "lettre");
+  };
+  const modifier = async (x) => {
+    const c = champsMetier(x);
+    const ok = await dialogue(`Modifier « ${x.libelle} »`, null, c.bloc, [["Enregistrer", "plein", () => true]]);
+    if (!ok) return;
+    if (await ecrire("renommer_metier", x.cle, c.nom.value, c.mots.value)) { lancer("domaines"); redessiner(); }
+  };
+  const retirer = async (x) => {
+    const ok = await dialogue(`Retirer « ${x.libelle} » ?`, "Ses offres passent aux autres métiers. Son CV et sa lettre restent dans leurs dossiers.", null, [["Retirer", "plein", () => true]]);
+    if (ok && await ecrire("retirer_metier", x.cle)) { lancer("domaines"); redessiner(); }
+  };
+  const doc = (x, genre) => {
+    const [lib, nom, chemin] = genre === "cv" ? ["CV", x.cv, x.cv_chemin] : ["Lettre", x.lettre, x.lettre_chemin];
+    return h("div", { class: "doc-metier" },
+      h("span", { class: "lab" }, lib),
+      h("span", { class: `t ${nom ? "" : "vide-doc"}`, title: nom || "" }, nom || (genre === "cv" ? "aucun" : "celle du profil")),
+      chemin ? h("button", { class: "lien", onclick: () => voirDocument(null, chemin, nom) }, "Voir") : null,
+      h("button", { class: "lien", onclick: () => changer(x, genre) }, nom ? "Changer…" : "Ajouter…"));
+  };
+  return h("div", { class: "verre panneau large" },
+    h("div", { class: "titre-ligne" }, h("h2", {}, "Mes métiers : CV et lettre"), h("span", { class: "compte" }, vrais.length),
+      h("span", { style: "flex:1" }), bouton("Ajouter un métier…", "doc", ajouter, "plein")),
+    h("div", { class: "sous", style: "margin:-6px 0 14px" }, "Chaque métier a son CV et sa lettre ; une offre prend le métier dont un mot est dans son titre. Chaque métier est un domaine du filtre des offres."),
+    h("div", { class: "metiers" }, m.metiers.map((x) => h("div", { class: "metier" },
+      h("div", { class: "metier-tete" },
+        h("div", { style: "min-width:0" }, h("div", { class: "t" }, x.cle === "General" ? `${x.libelle} (le reste)` : x.libelle),
+          h("div", { class: "sous", title: x.mots.join(", ") }, x.cle === "General" ? "les offres qu'aucun métier ne prend" : x.mots.join(" · "))),
+        h("div", { class: "outils-metier" },
+          h("button", { class: "lien", onclick: () => modifier(x) }, "Modifier"),
+          x.cle !== "General" && vrais.length > 1 ? h("button", { class: "lien", onclick: () => retirer(x) }, "Retirer") : null)),
+      doc(x, "cv"), doc(x, "lettre")))));
+}
+
+// The whole profile as a form (3.74): what « Fichier du profil (avancé) » opened in
+// Notepad. Each value keeps its type; lists of words are one per line.
+async function profilAvance() {
+  const r = await ecrire("profil_avance");
+  if (!r) return;
+  const donnees = structuredClone(r.profil);
+  const corps = $("tiroir-corps");
+  $("tiroir").classList.add("ouvert", "document");
+  $("tiroir").classList.remove("large");
+  $("voile").classList.add("ouvert");
+  const nomLisible = (k) => String(k).replaceAll("_", " ");
+  const scalaire = (v) => v === null || ["string", "number", "boolean"].includes(typeof v);
+  const champ = (parent, cle, libelle) => {
+    const v = parent[cle];
+    if (typeof v === "boolean") {
+      return h("label", { class: "av-ligne" }, h("span", { class: "av-cle" }, libelle),
+        h("input", { type: "checkbox", checked: v, onchange: (e) => { parent[cle] = e.target.checked; } }));
+    }
+    if (typeof v === "number") {
+      return h("label", { class: "av-ligne" }, h("span", { class: "av-cle" }, libelle),
+        h("input", { class: "champ-texte av-nombre", type: "number", step: "any", value: String(v),
+          oninput: (e) => { const n = parseFloat(e.target.value); if (!Number.isNaN(n)) parent[cle] = n; } }));
+    }
+    if (typeof v === "string" || v === null) {
+      const long = (v || "").length > 70;
+      const z = h(long ? "textarea" : "input", { class: "champ-texte", rows: long ? 3 : null, value: long ? null : (v || ""),
+        oninput: (e) => { parent[cle] = e.target.value; } }, long ? v : null);
+      return h("label", { class: "av-ligne" }, h("span", { class: "av-cle" }, libelle), z);
+    }
+    if (Array.isArray(v) && v.every(scalaire) && (v.length === 0 || v.every((x) => typeof x === "string"))) {
+      const z = h("textarea", { class: "champ-texte", rows: Math.min(8, Math.max(2, v.length + 1)),
+        oninput: (e) => { parent[cle] = e.target.value.split("\n").map((s) => s.trim()).filter(Boolean); } }, v.join("\n"));
+      return h("label", { class: "av-ligne" }, h("span", { class: "av-cle" }, libelle, h("span", { class: "sous" }, " · un par ligne")), z);
+    }
+    if (Array.isArray(v)) {
+      return h("details", { class: "av-groupe" }, h("summary", {}, `${libelle} · ${v.length}`),
+        v.map((x, i) => (scalaire(x) ? champ(v, i, `${i + 1}`)
+          : h("details", { class: "av-groupe" }, h("summary", {}, (x && (x.libelle || x.nom || x.cle)) || `${i + 1}`),
+            Object.keys(x).map((k) => champ(x, k, nomLisible(k)))))));
+    }
+    return h("details", { class: "av-groupe" }, h("summary", {}, libelle), Object.keys(v).map((k) => champ(v, k, nomLisible(k))));
+  };
+  const enregistrer = async () => {
+    const e = await ecrire("enregistrer_profil_avance", donnees);
+    if (!e) return;
+    toast(`Profil enregistré (celui d'avant : ${e.bak}).`);
+    fermerTiroir();
+    redessiner();
+  };
+  corps.replaceChildren(
+    h("div", { class: "fiche-tete" }, h("div", {}, h("h2", {}, "Profil avancé"),
+      h("div", { class: "sous" }, "Tout le profil, rubrique par rubrique. Les rubriques ne s'ajoutent ni ne se retirent ici ; le profil d'avant est gardé à chaque enregistrement."))),
+    h("div", { class: "boutons" }, bouton("Enregistrer", "doc", enregistrer, "plein"), bouton("Fermer", "", fermerTiroir)),
+    h("div", { class: "avance" }, Object.keys(donnees).map((k) => champ(donnees, k, nomLisible(k)))));
 }
 
 async function remplacerCvBase() {

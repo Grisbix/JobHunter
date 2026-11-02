@@ -117,7 +117,8 @@ class _Cadre:
             from System.Drawing import Color
 
             forme.Invoke(Action(lambda: setattr(forme, "BackColor", Color.Black)))
-            self._placer(True)
+            # Opened by a profile switch: the size the previous window had.
+            self._placer(os.environ.pop("JH_PLEIN", "1") != "0")
         except Exception as e:  # noqa: BLE001 — cosmetic only
             print(f"cadre : {e}")
 
@@ -206,6 +207,19 @@ def main() -> int:
     api._plein = lambda: cadre.plein
     api._toile = cadre.fond
     fenetre.events.shown += cadre.installer
+    relais = os.environ.pop("JH_RELAIS", "")
+    if relais:
+        # Opened by a profile switch: the previous window closes once this page is drawn.
+        def pret() -> None:
+            import time
+
+            time.sleep(0.6)  # the page's first screen, not only its HTML
+            try:
+                Path(relais).write_text("pret", encoding="utf-8")
+            except OSError:
+                pass
+
+        fenetre.events.loaded += pret
     # The icon from the window's creation: set at "shown", the taskbar first showed
     # pythonw.exe's, Python's logo (the user, 2026-10-28).
     webview.start(icon=str(ICONE if sys.platform == "win32" else ICONE.with_suffix(".png")))

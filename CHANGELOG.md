@@ -4,6 +4,16 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.74.0 — 2026-11-02
+
+Several trades in one profile, each with its own CV and letter; the whole profile editable without opening a file; a profile switch that no longer looks like the app shutting down.
+
+- **Mes métiers : CV et lettre.** The Profil screen lists each trade you target with its CV and its cover letter side by side: see them, change them, add a letter where there is none. A trade can be added (name + title words, then its CV), renamed or removed. A letter given to a trade gives that trade its own background paragraph.
+- **A new trade is a new domain.** The offers already in the queue are sorted again at once, and the Offres screen's « Domaines » filter shows the new trade by its name.
+- **Profil avancé.** Every setting of the profile in a form — yes/no, numbers, texts, lists one per line, sections that fold — instead of opening the JSON file. A change of shape (a number where a list was expected) is refused and nothing is written.
+- **Smoother profile switch.** The new profile opens at the same window size and the current window stays, veiled « Ouverture du profil… », until the new one is drawn.
+- The « Domaines visés » card is gone: its content is now in « Mes métiers ».
+
 ## 3.73.0 — 2026-11-02
 
 See a CV or a letter as it will be sent, change it element by element, update from the Store without leaving the app, and a deleted offer that stays deleted.
