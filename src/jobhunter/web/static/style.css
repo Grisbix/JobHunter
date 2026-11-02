@@ -356,6 +356,20 @@ button.choix.multi.pris { border-color: var(--c2); font-weight: 500; }
 .pied-multi .bouton { height: 32px; }
 /* A CV or a letter in the drawer: wider, its PDF, its paragraphs to edit. */
 .tiroir.document { width: min(860px, 72vw); }
+/* « Modifier »: the text on the left, the pages on the right, updated at each change. */
+.tiroir.document.large { width: min(1320px, 94vw); }
+.edition-cote { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.cote-apercu { position: sticky; top: 0; }
+.cote-apercu .apercu-pages { max-height: calc(100vh - 200px); }
+@media (max-width: 1000px) { .edition-cote { grid-template-columns: minmax(0, 1fr); } .cote-apercu { position: static; } }
+.apercu-pages { display: grid; gap: 12px; max-height: calc(100vh - 220px); overflow: auto; scrollbar-width: thin; }
+.apercu-pages img { width: 100%; height: auto; display: block; background: #fff; border-radius: 8px; box-shadow: 0 8px 24px -12px rgba(var(--ombre-rgb), .35); }
+.ligne-doc { display: flex; gap: 8px; align-items: flex-start; }
+.ligne-doc .champ-texte { flex: 1; }
+.outils-ligne { display: flex; flex-direction: column; gap: 4px; opacity: .35; transition: opacity .15s; }
+.ligne-doc:hover .outils-ligne, .ligne-doc:focus-within .outils-ligne { opacity: 1; }
+.mini { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--filet); background: var(--verre-fort); color: var(--texte-doux); font: inherit; font-size: var(--t-m); line-height: 1; cursor: pointer; padding: 0; }
+.mini:hover { color: var(--encre); background: rgb(var(--blanc-rgb)); }
 .apercu-doc { width: 100%; height: calc(100vh - 230px); border: 0; border-radius: 12px; background: #fff; }
 .edition-doc { display: grid; gap: 8px; }
 .champ-texte.para-doc { width: 100%; resize: none; overflow: hidden; min-height: 0; padding: 8px 12px; line-height: 1.45; font: inherit; font-size: var(--t-m); }

@@ -45,6 +45,11 @@ MOTIFS = [
 ]
 
 
+# The reason given to an offer deleted without one (« Supprimer » in the window): the
+# collection must not bring it back, but it says nothing of what the scoring misses.
+SUPPRIMEE = "Supprimée"
+
+
 def charger():
     try:
         d = json.loads(FICHIER.read_text(encoding="utf-8"))

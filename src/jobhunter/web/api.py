@@ -1559,8 +1559,14 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
         return {"ok": True, "retirees": retirees, "exclusions": n_exc, "gardees": gardees}
 
     def supprimer(self, idents: list[str]) -> dict[str, Any]:
-        """Removes offers from the queue after a dated copy in _corbeille/ (nothing lost)."""
+        """Removes offers from the queue after a dated copy in _corbeille/ (nothing lost).
+
+        The refusal is remembered (exclusions, reason « Supprimée »): the collection finds
+        a deleted offer again at its source and added it back the next morning (the
+        user, 2026-11-02: « est-ce que la suppression fonctionne bien »).
+        """
         from jobhunter import root
+        from jobhunter.programs import exclusions
         from jobhunter.storage import queue as queue_io
 
         oids = {str(x) for x in idents or []}
@@ -1580,6 +1586,7 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
                 corbeille.mkdir(parents=True, exist_ok=True)
                 f = corbeille / f"supprimees_{datetime.now():%Y-%m-%d_%H%M%S}.json"
                 _ecrire_json(f, partantes)
+                exclusions.ajouter(partantes, exclusions.SUPPRIMEE)
                 file[:] = [o for o in file if queue_io.oid(o) not in oids]
         except queue_io.VerrouIndisponible:
             return {
@@ -2045,6 +2052,7 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
                 "paragraphes": [],
                 "modifiables": [],
                 "pdf": base64.b64encode(p.read_bytes()).decode("ascii"),
+                "pages": _pages(p),
             }
         if docx is None or not docx.is_file():
             return {"ok": False, "erreur": "document introuvable (seul un .docx se modifie)"}
@@ -2059,6 +2067,7 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
                 "paragraphes": editing.lire(docx),
                 "modifiables": editing.modifiables(docx),
                 "pdf": base64.b64encode(pdf.read_bytes()).decode("ascii") if pdf.is_file() else "",
+                "pages": _pages(pdf) if pdf.is_file() else [],
             }
         except Exception as e:  # noqa: BLE001 — a damaged file is said, not hidden
             return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
@@ -2088,6 +2097,34 @@ class Api(PanneauxApi, AtelierApi, CandidatureApi, FondApi):
             return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
         pdf = rendering.to_pdf(docx) if faits else None
         return {"ok": True, "modifies": faits, "refuses": refus, "pdf": pdf is not None}
+
+    def structurer_document(
+        self, chemin: str, action: str, i: int, texte: str, nouveau: str = ""
+    ) -> dict[str, Any]:
+        """Removes a paragraph or adds one after it, then remakes the PDF."""
+        import shutil
+
+        from jobhunter.documents import editing, rendering
+
+        p = _document_permis(chemin)
+        docx = p.with_suffix(".docx") if p else None
+        if docx is None or not docx.is_file():
+            return {"ok": False, "erreur": "document introuvable"}
+        if action not in ("supprimer", "ajouter"):
+            return {"ok": False, "erreur": "action inconnue"}
+        origine = docx.with_name(docx.name + ".orig")
+        if not origine.exists():
+            shutil.copy2(docx, origine)  # the generated version, kept once
+        try:
+            fait = editing.structurer(docx, action, int(i), str(texte), str(nouveau or ""))
+        except PermissionError:
+            return {"ok": False, "erreur": "le fichier est ouvert ailleurs (Word ?) : ferme-le"}
+        except Exception as e:  # noqa: BLE001
+            return {"ok": False, "erreur": f"{type(e).__name__}: {e}"}
+        if not fait:
+            return {"ok": False, "erreur": "le document a changé depuis : recharge-le"}
+        pdf = rendering.to_pdf(docx)
+        return {"ok": True, "pdf": pdf is not None}
 
     def fenetre(self, action: str) -> bool | None:
         """The title bar buttons of the frameless window: reduire, agrandir, fermer.
@@ -2123,6 +2160,15 @@ def _dossiers_documents() -> dict[str, Path]:
         "CV": root.dans(root.racine() / "CV", "Par_offre"),
         "Lettre": root.dans(root.dossier("Lettres"), "Par_offre"),
     }
+
+
+def _pages(pdf: Path) -> list[str]:
+    """The PDF's pages as PNG in base64, for the window's preview."""
+    import base64
+
+    from jobhunter.documents import rendering
+
+    return [base64.b64encode(b).decode("ascii") for b in rendering.pages_png(pdf)]
 
 
 def _document_permis(chemin: str) -> Path | None:

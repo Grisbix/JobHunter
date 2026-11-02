@@ -661,7 +661,7 @@ function pagination(d, aller, taille = null) {
 // --- Drawer: one offer --------------------------------------------------------------
 
 function fermerTiroir() {
-  $("tiroir").classList.remove("ouvert", "document");
+  $("tiroir").classList.remove("ouvert", "document", "large");
   $("voile").classList.remove("ouvert");
 }
 
@@ -669,7 +669,11 @@ function fermerTiroir() {
 // its .docx to change. Only the paragraphs changed are written, in place (their bold and
 // italics stay); the PDF is made again from the .docx.
 // `o` is the offer it was made for, or null when opened from the Documents screen.
-async function voirDocument(o, chemin, titre, mode = "apercu") {
+// The PDF is shown as pictures of its pages (3.73): the web view's own PDF reader is not
+// always there, and the user had to open Word to see the document. In « Modifier », the
+// pages stay beside the text, and an element (a bullet, a line) is removed or added.
+// `focus`: the paragraph to put the cursor in after the page is drawn again.
+async function voirDocument(o, chemin, titre, mode = "apercu", focus = -1) {
   const corps = $("tiroir-corps");
   $("tiroir").classList.add("ouvert", "document");
   $("voile").classList.add("ouvert");
@@ -682,36 +686,77 @@ async function voirDocument(o, chemin, titre, mode = "apercu") {
   if (!d || !d.ok) return corps.replaceChildren(retour, h("div", { class: "vide" }, d ? d.erreur : "Lecture impossible."));
   const textes = [...d.paragraphes];
   const place = h("div");
-  const montrer = (m) => {
-    mode = d.docx ? m : "apercu";  // a PDF alone: shown, not edited
-    onglets.replaceChildren(d.docx ? segment([["apercu", "Aperçu"], ["texte", "Modifier le texte"]], mode, montrer) : "");
-    if (mode === "apercu") {
-      // No PDF (no LibreOffice): its text, without the layout.
-      if (!d.pdf) return place.replaceChildren(
-        h("div", { class: "sous", style: "margin-bottom:12px" }, "Aperçu du texte, sans la mise en page : installe LibreOffice (libreoffice.org) pour voir le document tel qu'il sera envoyé."),
-        h("div", { class: "texte-doc" }, textes.filter((t) => t.trim()).map((t) => h("p", {}, t))));
+  // The document as it will be sent: its pages as pictures, else the PDF, else its text.
+  const pagesDoc = () => {
+    if ((d.pages || []).length) {
+      return h("div", { class: "apercu-pages", "aria-label": titre },
+        d.pages.map((b, i) => h("img", { src: `data:image/png;base64,${b}`, alt: `${titre}, page ${i + 1}` })));
+    }
+    if (d.pdf) {
       const octets = Uint8Array.from(atob(d.pdf), (c) => c.charCodeAt(0));
       const url = URL.createObjectURL(new Blob([octets], { type: "application/pdf" }));
-      return place.replaceChildren(h("iframe", { class: "apercu-doc", src: url, title: titre }));
+      return h("iframe", { class: "apercu-doc", src: url, title: titre });
     }
-    const ajuster = (t) => { t.style.height = "auto"; t.style.height = `${t.scrollHeight + 2}px`; };
-    const zones = textes.map((t, i) => (t.trim() ? h("textarea", {
-      class: "champ-texte para-doc", rows: 1, readonly: !d.modifiables[i],
-      title: d.modifiables[i] ? null : "Contient un lien : à modifier dans Word.",
-      oninput: (e) => { textes[i] = e.target.value.replace(/\n/g, " "); ajuster(e.target); },
-    }, t) : null)).filter(Boolean);
-    place.replaceChildren(h("div", { class: "edition-doc" }, zones),
-      h("div", { class: "boutons", style: "margin-top:12px" },
-        bouton("Enregistrer", "doc", enregistrer, "plein"),
-        bouton("Annuler les changements", "", () => voirDocument(o, chemin, titre, "texte"))));
-    requestAnimationFrame(() => zones.forEach(ajuster));
+    // No PDF (no LibreOffice): its text, without the layout.
+    return h("div", {},
+      h("div", { class: "sous", style: "margin-bottom:12px" }, "Aperçu du texte, sans la mise en page : installe LibreOffice (libreoffice.org) pour voir le document tel qu'il sera envoyé."),
+      h("div", { class: "texte-doc" }, textes.filter((t) => t.trim()).map((t) => h("p", {}, t))));
   };
-  const enregistrer = async () => {
+  const montrer = (m) => {
+    mode = d.docx ? m : "apercu";  // a PDF alone: shown, not edited
+    $("tiroir").classList.toggle("large", mode === "texte");
+    onglets.replaceChildren(d.docx ? segment([["apercu", "Aperçu"], ["texte", "Modifier"]], mode, montrer) : "");
+    if (mode === "apercu") return place.replaceChildren(pagesDoc());
+    const ajuster = (t) => { t.style.height = "auto"; t.style.height = `${t.scrollHeight + 2}px`; };
+    const zones = [];
+    const lignes = textes.map((t, i) => {
+      if (!t.trim()) return null;
+      const z = h("textarea", {
+        class: "champ-texte para-doc", rows: 1, readonly: !d.modifiables[i], "data-i": String(i),
+        title: d.modifiables[i] ? null : "Contient un lien : à modifier dans Word.",
+        "aria-label": `Élément ${i + 1}`,
+        oninput: (e) => { textes[i] = e.target.value.replace(/\n/g, " "); ajuster(e.target); },
+      }, t);
+      zones.push(z);
+      return h("div", { class: "ligne-doc" }, z,
+        h("div", { class: "outils-ligne" },
+          h("button", { class: "mini", title: "Ajouter un élément après celui-ci", "aria-label": "Ajouter un élément après", onclick: () => structurer("ajouter", i) }, "+"),
+          h("button", { class: "mini", title: "Supprimer cet élément", "aria-label": "Supprimer l'élément", onclick: () => structurer("supprimer", i) }, "×")));
+    }).filter(Boolean);
+    place.replaceChildren(h("div", { class: "edition-cote" },
+      h("div", {},
+        h("div", { class: "sous", style: "margin-bottom:10px" }, "Change un texte puis « Enregistrer » ; + ajoute un élément de même forme juste après, × le retire. Le PDF est refait à chaque fois."),
+        h("div", { class: "edition-doc" }, lignes),
+        h("div", { class: "boutons", style: "margin-top:12px" },
+          bouton("Enregistrer", "doc", () => enregistrer(), "plein"),
+          bouton("Annuler les changements", "", () => voirDocument(o, chemin, titre, "texte")))),
+      h("div", { class: "cote-apercu" }, pagesDoc())));
+    requestAnimationFrame(() => {
+      zones.forEach(ajuster);
+      const z = zones.find((x) => x.dataset.i === String(focus));
+      if (z) { z.focus(); z.select(); z.scrollIntoView({ block: "center" }); }
+    });
+  };
+  const changes = () => textes.some((t, i) => t !== d.paragraphes[i]);
+  // `garder`: stay in « Modifier » (the text changes saved before a + or ×).
+  const enregistrer = async (garder = false) => {
     const r = await window.pywebview.api.enregistrer_document(chemin, d.paragraphes, textes);
-    if (!r || !r.ok) return toast(r ? r.erreur : "Lecture impossible.", true);
-    if (!r.modifies) return toast(r.refuses ? "Rien n'a pu être écrit : le fichier a changé, recharge-le." : "Rien n'a changé.", !!r.refuses);
+    if (!r || !r.ok) { toast(r ? r.erreur : "Lecture impossible.", true); return false; }
+    if (!r.modifies) {
+      if (r.refuses || !garder) toast(r.refuses ? "Rien n'a pu être écrit : le fichier a changé, recharge-le." : "Rien n'a changé.", !!r.refuses);
+      return !r.refuses;
+    }
+    if (garder) return true;
     toast(`${r.modifies} paragraphe(s) modifié(s)${r.pdf ? ", PDF refait" : ", PDF non refait (LibreOffice ?)"}.`);
-    voirDocument(o, chemin, titre, "apercu");
+    voirDocument(o, chemin, titre, "texte");
+    return true;
+  };
+  const structurer = async (action, i) => {
+    if (changes() && !(await enregistrer(true))) return;
+    const r = await window.pywebview.api.structurer_document(chemin, action, i, textes[i], action === "ajouter" ? "Nouvel élément" : "");
+    if (!r || !r.ok) return toast(r ? r.erreur : "Lecture impossible.", true);
+    if (!r.pdf) toast("PDF non refait (LibreOffice ?).", true);
+    voirDocument(o, chemin, titre, "texte", action === "ajouter" ? i + 1 : -1);
   };
   const onglets = h("div");
   corps.replaceChildren(
@@ -745,7 +790,7 @@ function carteSignaux(o) {
 
 async function ouvrirOffre(id) {
   const corps = $("tiroir-corps");
-  $("tiroir").classList.remove("document");
+  $("tiroir").classList.remove("document", "large");
   corps.replaceChildren(h("div", { class: "vide" }, "Chargement…"));
   $("tiroir").classList.add("ouvert");
   $("voile").classList.add("ouvert");

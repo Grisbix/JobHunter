@@ -7,8 +7,13 @@ a heading or the italics of a date stay where they were.
 
 A paragraph whose text changed on disk since it was read is left alone (counted as
 refused), as is one whose text the runs do not hold in full (a hyperlink, a field).
+
+`structurer` removes a paragraph or adds one after another, with its look (a bullet
+stays a bullet): the user, 2026-11-02, « supprimer ou rajouter un élément et ça met à
+jour le pdf ».
 """
 
+import copy
 from collections.abc import Iterator, Sequence
 from pathlib import Path
 from typing import Any
@@ -79,6 +84,55 @@ def _remplacer(par: Paragraph, ancien: str, nouveau: str) -> bool:
         if garde != t:
             runs[i].text = garde
     return str(par.text) == nouveau
+
+
+def _dans_cellule_seul(par: Paragraph) -> bool:
+    """The only paragraph of a table cell: Word wants one there, so it is emptied instead."""
+    parent = par._p.getparent()
+    return bool(
+        parent is not None
+        and parent.tag.rsplit("}", 1)[-1] == "tc"
+        and len([e for e in parent if e.tag.rsplit("}", 1)[-1] == "p"]) == 1
+    )
+
+
+def structurer(docx: Path, action: str, i: int, texte: str, nouveau: str = "") -> bool:
+    """Removes paragraph `i` ("supprimer") or adds one after it ("ajouter").
+
+    `texte` is the paragraph's text as the window read it: if the file changed since,
+    nothing is done (False). An added paragraph is a copy of paragraph `i` (its style,
+    bullet, indent, the look of its first run) holding `nouveau`.
+    """
+    doc = Document(str(docx))
+    pars = list(_paragraphes(doc))
+    if not 0 <= i < len(pars) or pars[i].text != texte:
+        return False
+    par = pars[i]
+    if action == "supprimer":
+        if _dans_cellule_seul(par):
+            for r in par.runs:
+                r.text = ""
+        else:
+            par._p.getparent().remove(par._p)
+    elif action == "ajouter":
+        double = copy.deepcopy(par._p)
+        par._p.addnext(double)
+        neuf = Paragraph(double, par._parent)
+        runs = neuf.runs
+        if runs:
+            runs[0].text = nouveau
+            for r in runs[1:]:
+                r._r.getparent().remove(r._r)
+        else:
+            neuf.add_run(nouveau)
+        # A copied hyperlink or field would keep the old text beside the new one.
+        for e in list(double):
+            if e.tag.rsplit("}", 1)[-1] in ("hyperlink", "fldSimple", "ins", "smartTag"):
+                double.remove(e)
+    else:
+        return False
+    doc.save(str(docx))
+    return True
 
 
 def modifier(docx: Path, avant: Sequence[str], apres: Sequence[str]) -> tuple[int, int]:
