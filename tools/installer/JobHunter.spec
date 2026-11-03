@@ -11,7 +11,7 @@ ICI = SPECPATH
 RACINE = os.path.dirname(os.path.dirname(ICI))
 SQUELETTE = os.path.join(ICI, "build", "squelette")
 # The executables, the windows and the taskbar wear it (no icon: PyInstaller's own).
-ICONE = os.path.join(RACINE, "src", "jobhunter", "app", "assets", "jobhunter.ico")
+ICONE = os.path.join(RACINE, "src", "jobhunter", "assets", "jobhunter.ico")
 
 cachees = collect_submodules("jobhunter")  # dispatched by name (-m module, jobhunter <command>)
 donnees = (
