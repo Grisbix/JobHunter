@@ -352,33 +352,14 @@ def highlight_submit(page):
 
 
 def accept_consent(page):
-    """Ticks the MANDATORY consent boxes (T&Cs, terms, privacy policy,
-    data processing) needed to create an account / apply. Does NOT tick marketing
-    opt-ins (newsletter, commercial offers)."""
-    js = r"""
-    () => {
-      const REQ = /(accepte|conditions|cgu|c\.g\.u|politique|traitement.*donn|j'?ai lu|termes|terms|privacy|consent|rgpd|mentions l)/i;
-      const MKT = /(newsletter|marketing|commercial|actualit|offres|partenaires|promo)/i;
-      let n = 0;
-      const boxes = [...document.querySelectorAll('input[type=checkbox]')];
-      for (const b of boxes) {
-        if (b.checked || b.disabled) continue;
-        // texte associé : label[for], parent, aria-label, texte voisin
-        let t = '';
-        if (b.id) { const l = document.querySelector(`label[for="${b.id}"]`); if (l) t += ' ' + l.innerText; }
-        t += ' ' + (b.getAttribute('aria-label')||'');
-        let p = b.closest('label') || b.parentElement;
-        if (p) t += ' ' + (p.innerText||'');
-        if (REQ.test(t) && !MKT.test(t)) {
-          try { b.click(); n++; } catch(e){}
-        }
-      }
-      return n;
-    }"""
-    try:
-        return page.evaluate(js)
-    except Exception:
-        return 0
+    """Ticks the MANDATORY consent boxes: navigation.forms.accept_consent (one rule).
+
+    This module had its own copy, which also ticked « données transmises à des tiers »
+    (audit 2026-11-03).
+    """
+    from jobhunter.navigation.forms import accept_consent as _accepter
+
+    return _accepter(page)
 
 
 # ── Who answers "envoyé ?": the keyboard (terminal) or the application (pilote) ──

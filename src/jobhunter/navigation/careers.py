@@ -252,9 +252,10 @@ def search_careers(page: Any, query: str) -> dict[str, Any]:
         page.wait_for_timeout(2500)
         return {"searched": True, "ph": r.get("ph", ""), "q": str(query)[:60]}
     except Exception:
-        # fallback: requestSubmit of the form containing the field
+        # fallback: requestSubmit of the form containing THE SEARCH FIELD, nothing else
         try:
-            react_submit(page)
+            if not react_submit(page, '[data-wn-search="1"]'):
+                return {"searched": False, "ph": r.get("ph", "")}
             page.wait_for_timeout(2000)
             return {"searched": True, "ph": r.get("ph", ""), "q": str(query)[:60]}
         except Exception:

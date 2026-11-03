@@ -269,12 +269,18 @@ function ouvrir(url) {
 }
 const ouvrirFichier = (chemin) => window.pywebview && window.pywebview.api.ouvrir_fichier(chemin);
 
-// A short message at the bottom of the window, gone after a few seconds.
-function toast(texte, erreur = false) {
+// A short message at the bottom of the window, gone after a few seconds. `geste`:
+// [label, function] — a button in the message (« Annuler »), which then stays longer.
+function toast(texte, erreur = false, geste = null) {
   const t = h("div", { class: `toast ${erreur ? "erreur" : ""}`, role: erreur ? "alert" : "status" }, texte);
+  if (geste) {
+    const [libelle, fn] = geste;
+    t.append(h("button", { class: "toast-geste", onclick: () => { t.remove(); fn(); } }, libelle));
+  }
   document.body.append(t);
-  setTimeout(() => t.classList.add("parti"), 3800);
-  setTimeout(() => t.remove(), 4300);
+  const duree = geste ? 7000 : 3800;
+  setTimeout(() => t.classList.add("parti"), duree);
+  setTimeout(() => t.remove(), duree + 500);
 }
 const HORS_APPLI = "Aperçu navigateur : les actions ne tournent que dans l'application.";
 
@@ -503,6 +509,12 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     commandeGuidee("envoye");
   }
+  // Ctrl+Z = undo the last status change, outside a text field (where it undoes typing).
+  const saisie = e.target && e.target.closest && e.target.closest("input, textarea, [contenteditable]");
+  if (e.ctrlKey && !e.shiftKey && (e.key === "z" || e.key === "Z") && !saisie) {
+    e.preventDefault();
+    annulerGeste();
+  }
 });
 
 // Redraws the current screen without leaving it (the drawer stays open).
@@ -544,7 +556,10 @@ async function marquer(id, statut, rouvrir = true) {
   const r = await ecrire("marquer", id, statut);
   if (!r) return;
   const n = Array.isArray(id) ? id.length : 1;
-  toast(`${n > 1 ? `${n} offres · ` : ""}${statut ? `Statut : ${statut}` : "Statut vidé"} — « Annuler » pour revenir.`);
+  // The promised « Annuler » is a real button now, and Ctrl+Z does the same: the toast
+  // used to promise it with nothing wired to annulerGeste (audit 2026-11-03).
+  toast(`${n > 1 ? `${n} offres · ` : ""}${statut ? `Statut : ${statut}` : "Statut vidé"}`, false,
+    ["Annuler", annulerGeste]);
   if (rouvrir && !Array.isArray(id)) ouvrirOffre(id);
   redessiner();
 }

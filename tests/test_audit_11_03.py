@@ -1,0 +1,261 @@
+"""3.76: defects found by the code audit of 2026-11-03, one test per ticket.
+
+Each case was first reproduced on the 3.75 engine (essay or real queue); the test pins
+the fixed behaviour.
+"""
+
+from jobhunter.app import actions
+from jobhunter.app import common as app_common
+from jobhunter.storage import applications
+
+# --- 01: the Tk app removed applied offers ---------------------------------------------
+
+
+class _FauxTk:
+    """The few attributes the Tk delete / set-aside paths read before writing."""
+
+    _partantes_permises = actions.ActionsMixin._partantes_permises
+    _delete_checked = actions.ActionsMixin._delete_checked
+    _ecarter_checked = actions.ActionsMixin._ecarter_checked
+
+    def __init__(self, coches):
+        self.checked = set(coches)
+        self.journal = []
+
+    def _log(self, texte):
+        self.journal.append(texte)
+
+    def _demander_motif(self, n):
+        raise AssertionError("aucune offre ne peut partir : pas de dialogue")
+
+
+def test_tk_garde_les_offres_suivies(tmp_path, monkeypatch):
+    suivi = tmp_path / "applications.json"
+    suivi.write_text('{"A|B": {"s": "postulé"}}', encoding="utf-8")
+    monkeypatch.setattr(app_common, "SUIVI", suivi)
+    monkeypatch.setattr(
+        actions.messagebox,
+        "askyesno",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("pas de dialogue")),
+    )
+    app = _FauxTk({"A|B"})
+    app._delete_checked()
+    app._ecarter_checked()
+    assert any("candidature" in j for j in app.journal)
+    assert app._partantes_permises({"A|B", "C|D"}) == {"C|D"}
+
+
+def test_tk_suivi_illisible_ne_retire_rien(tmp_path, monkeypatch):
+    suivi = tmp_path / "applications.json"
+    suivi.write_text('{"A|B": ', encoding="utf-8")
+    monkeypatch.setattr(app_common, "SUIVI", suivi)
+    app = _FauxTk({"C|D"})
+    assert app._partantes_permises({"C|D"}) is None
+    assert applications.hors_suivi({"C|D"}, tmp_path / "absent.json") == ({"C|D"}, 0)
+
+
+# --- 05: react_submit sent the page's first form ----------------------------------------
+
+
+def test_react_submit_ne_touche_que_le_bon_formulaire():
+    import pytest
+
+    pytest.importorskip("playwright")
+    from playwright.sync_api import sync_playwright
+
+    from jobhunter.navigation.account import react_submit
+
+    candidature = (
+        '<form id="cand" onsubmit="window.envoi=\'candidature\';return false">'
+        '<input name="nom"><input type="file" name="cv"></form>'
+    )
+    recherche = (
+        '<form id="rech" onsubmit="window.envoi=\'recherche\';return false">'
+        '<input data-wn-search="1" name="q"></form>'
+    )
+    with sync_playwright() as p:
+        navigateur = p.chromium.launch(headless=True)
+        try:
+            page = navigateur.new_page()
+            # No filled email, no marked field: nothing leaves (3.75 sent « cand »).
+            page.set_content(candidature)
+            assert react_submit(page) is False
+            assert page.evaluate("window.envoi || ''") == ""
+            # The search fallback submits the search form, never the application.
+            page.set_content(candidature + recherche)
+            assert react_submit(page, '[data-wn-search="1"]') is True
+            assert page.evaluate("window.envoi") == "recherche"
+            # A search box inside an application form: refused.
+            page.set_content(
+                "<form onsubmit=\"window.envoi='x';return false\">"
+                '<input data-wn-search="1"><textarea></textarea></form>'
+            )
+            page.evaluate("window.envoi = ''")
+            assert react_submit(page, '[data-wn-search="1"]') is False
+            assert page.evaluate("window.envoi || ''") == ""
+        finally:
+            navigateur.close()
+
+
+# --- 06: « Ajouter une offre » overwrote another offer's documents -----------------------
+
+
+def test_ajout_manuel_nomme_sans_collision(file_temporaire, monkeypatch):
+    import jobhunter.documents as documents
+    from jobhunter.programs import add_offer
+    from jobhunter.storage import queue as queue_io
+
+    poste = "Auditeur junior analyste financier et extra-financier ESG"
+    queue_io.sauver(
+        [
+            {"entreprise": "Deloitte", "poste": poste + " - Bordeaux", "url": "https://a/1"},
+            {"entreprise": "Deloitte", "poste": poste + " - Toulouse", "url": "https://a/2"},
+        ],
+        file_temporaire,
+    )
+    monkeypatch.setattr(add_offer, "QUEUE", file_temporaire)
+    vus = {}
+    monkeypatch.setattr(
+        documents, "cv_une_page", lambda offer, nom=None, **k: (vus.setdefault("cv", nom), None)
+    )
+    monkeypatch.setattr(
+        documents, "tailor_letter", lambda offer, nom=None, **k: vus.setdefault("lt", nom)
+    )
+    monkeypatch.setattr(documents, "to_pdf", lambda lt: None)
+    assert add_offer.make_docs("https://a/2") == "docs générés"
+    # same truncated name for both offers: the second one is numbered
+    assert vus["cv"].endswith("_2") and vus["lt"].endswith("_2")
+    lien = next(o for o in queue_io.charger(file_temporaire) if o["url"] == "https://a/2")
+    assert lien["cv"] and lien["lettre"]
+    # the queue file does not carry the descriptions back
+    assert "description" not in file_temporaire.read_text(encoding="utf-8")
+
+
+# --- 10: two programs both broke the same orphan lock -----------------------------------
+
+
+def test_verrou_change_de_main_pas_casse(tmp_path):
+    from jobhunter.storage import lock
+
+    f = tmp_path / "file.json"
+    v = lock._fverrou(f)
+    v.write_text("999999 1", encoding="utf-8")
+    vus = v.read_text(encoding="utf-8").split()
+    # Meanwhile another program broke it and set its own (live) lock.
+    v.write_text(f"{__import__('os').getpid()} 2", encoding="utf-8")
+    assert lock._casser_si_inchange(v, vus) is False
+    assert v.exists()
+    # Unchanged: broken, and the breaker's file is gone.
+    assert lock._casser_si_inchange(v, v.read_text(encoding="utf-8").split()) is True
+    assert not v.exists() and not (tmp_path / "file.json.lock.casse").exists()
+
+
+def test_cassage_en_cours_attend(tmp_path):
+    from jobhunter.storage import lock
+
+    v = lock._fverrou(tmp_path / "file.json")
+    v.write_text("999999 1", encoding="utf-8")
+    (tmp_path / "file.json.lock.casse").write_text("", encoding="utf-8")
+    assert lock._casser_si_inchange(v, ["999999", "1"]) is False
+    assert v.exists()
+
+
+# --- 11: linkedin_closed read a truncated tracker as « no application » -----------------
+
+
+def test_linkedin_closed_suivi_illisible(tmp_path, monkeypatch):
+    from jobhunter.programs import linkedin_closed
+
+    suivi = tmp_path / "applications.json"
+    suivi.write_text('{"A|B": {"s": "post', encoding="utf-8")
+    monkeypatch.setattr(linkedin_closed, "SUIVI", suivi)
+    assert linkedin_closed._oids_suivis() is None
+    suivi.write_text('{"A|B": {"s": "postulé"}}', encoding="utf-8")
+    assert linkedin_closed._oids_suivis() == {"A|B"}
+
+
+# --- 12: the toast promised « Annuler », nothing called annulerGeste --------------------
+
+
+def test_annuler_est_branche():
+    import re
+    from pathlib import Path
+
+    js = (
+        Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "web" / "static" / "app.js"
+    ).read_text(encoding="utf-8")
+    appels = [m.start() for m in re.finditer(r"annulerGeste\b", js)]
+    definition = js.index("async function annulerGeste")
+    assert [a for a in appels if a != definition + len("async function ")], "jamais appelé"
+    assert '["Annuler", annulerGeste]' in js and 'e.key === "z"' in js
+
+
+# --- 15: application forms: wrong fields filled, third-party consent ticked -------------
+
+_PROFIL_15 = {
+    "email": "g@x.fr", "prenom": "Camille", "nom": "EXEMPLE", "tel": "0600000000",
+    "ville": "Paris", "pays": "France", "site_web": "https://site.fr",
+    "message": "Lettre…", "niveau_etudes": "Bac+5 (Master)", "date_naissance": "01/01/2000",
+    "adresse": "1 rue X",
+}  # fmt: skip
+
+_FORM_15 = """<form>
+<div class=form-group><label for=a>Numéro de sécurité sociale</label><input id=a></div>
+<div class=form-group><label for=b>Numéro de passeport</label><input id=b></div>
+<div class=form-group><label for=c>Profil Facebook</label><input id=c></div>
+<div class=form-group><label for=d>Comment avez-vous connu notre entreprise ?</label><input id=d></div>
+<div class=form-group><label for=e>Nom de votre employeur actuel</label><input id=e></div>
+<div class=form-group><label for=f>Mot de passe (identifiant)</label><input id=f type=password></div>
+<div class=form-group><label for=g>Nom du référent / manager</label><input id=g></div>
+<div class=form-group><label for=h>Niveau d'études</label><select id=h><option value="">--</option>
+  <option value="ba">Bachelor</option><option value="ma">Master</option></select></div>
+<div class=form-group><label for=i>Numéro de rue</label><input id=i></div>
+<div class=form-group><label for=j>Ville de naissance</label><input id=j></div>
+<div class=form-group><label for=m>IBAN</label><input id=m></div>
+<div class=form-group><label for=n>Handicap / RQTH (commentaire)</label><input id=n></div>
+<div class=form-group><label for=t>Téléphone</label><input id=t></div>
+<div class=form-group><label for=v>Ville</label><input id=v></div>
+<label><input type=checkbox id=o> J'accepte que mes données soient transmises à des tiers</label>
+<label><input type=checkbox id=q> J'accepte les CGU</label>
+</form>"""
+
+
+def test_formulaire_ne_remplit_que_les_bons_champs():
+    import pytest
+
+    pytest.importorskip("playwright")
+    from playwright.sync_api import sync_playwright
+
+    from jobhunter.navigation import forms
+
+    with sync_playwright() as p:
+        navigateur = p.chromium.launch(headless=True)
+        try:
+            page = navigateur.new_page()
+            page.set_content(_FORM_15)
+            forms.fill_application(page, _PROFIL_15)
+            valeur = {
+                i: page.evaluate(f"document.getElementById('{i}').value") for i in "abcdefgijmntv"
+            }
+            assert {k: v for k, v in valeur.items() if v} == {"t": "0600000000", "v": "Paris"}
+            assert page.evaluate("document.getElementById('h').value") == "ma"
+            assert not page.evaluate("document.getElementById('o').checked")
+            assert page.evaluate("document.getElementById('q').checked")
+            # the separate consent pass follows the same rule
+            page.set_content(_FORM_15)
+            assert forms.accept_consent(page) == 1
+            assert not page.evaluate("document.getElementById('o').checked")
+        finally:
+            navigateur.close()
+
+
+def test_consentement_regle():
+    from jobhunter.navigation.forms import consentement_a_cocher as c
+
+    assert c("j'accepte les conditions generales d'utilisation", False)
+    assert c("j'accepte le traitement de mes donnees pour ma candidature", True)
+    assert not c("j'accepte le traitement de mes donnees pour ma candidature", False)
+    assert not c("j'accepte que mes donnees soient transmises a des tiers", True)
+    assert not c("i agree to share my data with partners", True)
+    assert not c("j'accepte de recevoir la newsletter", True)
+    assert c("j'ai lu la procedure de recrutement et j'accepte", False)

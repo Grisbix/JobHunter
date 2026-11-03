@@ -77,32 +77,7 @@ def main():
     # file. Without it, charger() would read the real queue.
     q = queue_io.charger(QUEUE)  # descriptions reinjectees depuis descriptions.json
 
-    from jobhunter.programs.rename_docs import new_name
-
-    def _noms_uniques(toutes, kind):
-        """stem per offer, without collision.
-
-        new_name() truncates the job to 48 characters and the company to 2 words:
-        "Auditeur junior analyste - Nice", "… - Montpellier" and
-        "… - Strasbourg" at Deloitte give the SAME name. The last one written
-        overwrites the others, and two offers end up linked to a letter that talks
-        about another city. We keep the bare name for the first offer (by URL, hence
-        stable from one run to the next) and number the following ones.
-        """
-        # Grouping in LOWER CASE: Windows does not distinguish case, so
-        # "Auditeur junior analyste" and "Auditeur Junior Analyste" are two
-        # different keys here but ONE SINGLE file on disk. Grouping
-        # case-sensitively let these pairs overwrite each other despite the numbering.
-        par_nom = {}
-        for x in toutes:
-            base = new_name(kind, x.get("poste", ""), x.get("entreprise", ""))
-            par_nom.setdefault(base.lower(), []).append((base, x))
-        out = {}
-        for _cle, lot in par_nom.items():
-            lot.sort(key=lambda t: str(t[1].get("url") or ""))
-            for rang, (base, y) in enumerate(lot):
-                out[id(y)] = base if rang == 0 else f"{base}_{rang + 1}"
-        return out
+    from jobhunter.programs.rename_docs import noms_uniques as _noms_uniques
 
     # computed on the ENTIRE queue: an offer not regenerated already holds its name
     noms_cv = _noms_uniques(q, "CV")

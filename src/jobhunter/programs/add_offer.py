@@ -136,44 +136,51 @@ def add_to_queue(url, meta):
 
 
 def make_docs(url):
-    """Generates CV + letter for the queue row of this URL, updates the links."""
+    """Generates CV + letter for the queue row of this URL, updates the links.
+
+    The documents take the offer's UNIQUE name, computed on the whole queue as
+    `documents` does: with the bare new_name(), « Auditeur junior analyste » at
+    Deloitte Bordeaux overwrote the CV and letter of the Toulouse offer (audit
+    2026-11-03, reproduced). The links are written through queue_io.transaction —
+    the old jwrite() put the descriptions back into the queue file.
+    """
+    from jobhunter.documents import cv_une_page, tailor_letter, to_pdf
+    from jobhunter.links import url_de as _url_of
+    from jobhunter.programs.rename_docs import noms_uniques
     from jobhunter.storage import queue as queue_io
 
     # Explicit QUEUE: the tests replace this constant with a throwaway
-    # file. Without it, charger() would read the real queue.
-    q = queue_io.charger(QUEUE)  # descriptions reinjectees depuis descriptions.json
-    x = next((v for v in q if v.get("url") == url), None)
-    if not x:
-        return "offre introuvable en queue"
-    from jobhunter.documents import cv_une_page, tailor_letter, to_pdf
-
-    offer = dict(
-        company=x["entreprise"],
-        role=x["poste"],
-        offer_text=f"{x['poste']} {x.get('description', '')}",
-        lieu=x.get("localisation") or "",
-        missions=(x.get("description") or "")[:400],
-        profil="",
-        domaine=x.get("domaine", ""),
-        rh=x.get("rh"),
-    )
-    from jobhunter.links import url_de as _url_of
-
-    try:
-        cv, pdf = cv_une_page(offer)
-        if cv:
-            x["cv"] = _url_of(pdf or cv)
-            x["cv_variant"] = None
-    except Exception as e:
-        print(f"  ! cv: {type(e).__name__}")
-    try:
-        lt = tailor_letter(offer)
-        if lt:
-            pdf = to_pdf(lt)
-            x["lettre"] = _url_of(pdf or lt)
-    except Exception as e:
-        print(f"  ! lettre: {type(e).__name__}")
-    importlib.import_module("jobhunter.programs.util").jwrite(QUEUE, q)
+    # file. Without it, the transaction would open the real queue.
+    with queue_io.transaction(QUEUE) as q:
+        x = next((v for v in q if v.get("url") == url), None)
+        if not x:
+            return "offre introuvable en queue"
+        nom_cv = noms_uniques(q, "CV").get(id(x))
+        nom_lt = noms_uniques(q, "Lettre").get(id(x))
+        offer = dict(
+            company=x["entreprise"],
+            role=x["poste"],
+            offer_text=f"{x['poste']} {x.get('description', '')}",
+            lieu=x.get("localisation") or "",
+            missions=(x.get("description") or "")[:400],
+            profil="",
+            domaine=x.get("domaine", ""),
+            rh=x.get("rh"),
+        )
+        try:
+            cv, pdf = cv_une_page(offer, nom=nom_cv)
+            if cv:
+                x["cv"] = _url_of(pdf or cv)
+                x["cv_variant"] = None
+        except Exception as e:
+            print(f"  ! cv: {type(e).__name__}")
+        try:
+            lt = tailor_letter(offer, nom=nom_lt)
+            if lt:
+                pdf = to_pdf(lt)
+                x["lettre"] = _url_of(pdf or lt)
+        except Exception as e:
+            print(f"  ! lettre: {type(e).__name__}")
     return "docs générés"
 
 

@@ -704,6 +704,11 @@ body[data-teinte="noir"] {
   box-shadow: 0 16px 40px -12px rgba(var(--ombre-rgb), .5); transition: opacity .4s;
 }
 .toast.erreur { background: #7a2e22; }
+.toast-geste {
+  margin-left: 14px; padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.3);
+  background: transparent; color: inherit; font: inherit; font-weight: 600; cursor: pointer;
+}
+.toast-geste:hover { background: rgba(255,255,255,.12); }
 .toast.parti { opacity: 0; }
 .ligne-statut { display: flex; align-items: center; gap: 12px; font-size: var(--t-m); color: var(--gris); }
 .ligne-statut .choix { flex: 1; min-width: 0; }

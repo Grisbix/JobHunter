@@ -126,11 +126,18 @@ def _oid_offre(offre):
 
 
 def _oids_suivis():
-    """Offers carrying a trace of application. Untouchable."""
+    """Offers carrying a trace of application. Untouchable.
+
+    None when the tracker exists but cannot be read: a truncated applications.json
+    read as « no application » protected nothing, and the purge removed the closed
+    offers applied to (audit 2026-11-03). The caller then deletes nothing.
+    """
+    suivi_io = importlib.import_module("jobhunter.storage.applications")
     try:
-        return set(importlib.import_module("jobhunter.storage.applications").charger(SUIVI))
-    except (FileNotFoundError, ValueError):
-        return set()
+        return set(suivi_io.charger(SUIVI, strict=True))
+    except suivi_io.SuiviIllisible as e:
+        print(f"  ✗ {e}")
+        return None
 
 
 def _memoire():
@@ -246,6 +253,9 @@ def main():
     # for real (Volkswagen Financial Services, application of 11/07).
     fermes, proteges = [], 0
     suivis = _oids_suivis()
+    if suivis is None:
+        print("  Aucune offre retirée : le suivi illisible ne protège plus les candidatures.")
+        return 1
     for i, v in res.items():
         if v != FERME:
             continue

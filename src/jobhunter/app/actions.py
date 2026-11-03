@@ -353,6 +353,24 @@ class ActionsMixin:
         except Exception:
             pass
 
+    def _partantes_permises(self: "AppTypee", oids: set[str]) -> set[str] | None:
+        """The ticked offers that may leave the queue; None (logged) if none may.
+
+        An offer with an application keeps its posting (AGENTS.md invariant). The web
+        window already asked the tracker; the Tk app removed applied offers silently
+        (audit 2026-11-03). An unreadable tracker removes nothing.
+        """
+        try:
+            permises, gardees = suivi_io.hors_suivi(oids, _commun.SUIVI)
+        except suivi_io.SuiviIllisible as ex:
+            self._log(f"✗ {ex}\n")
+            return None
+        if gardees:
+            self._log(
+                f"ℹ {gardees} offre(s) avec une candidature restent dans la file avec leur annonce.\n"
+            )
+        return permises or None
+
     def _ecarter_checked(self: "AppTypee") -> None:
         """Sets the ticked offers aside WITH a reason, and remembers the refusal.
 
@@ -368,6 +386,9 @@ class ActionsMixin:
         if not oids:
             self._log("Coche d'abord des offres (colonne ☐).\n")
             return
+        oids = self._partantes_permises(oids)
+        if not oids:
+            return
         motif = self._demander_motif(len(oids))
         if not motif:
             return
@@ -380,10 +401,13 @@ class ActionsMixin:
             self._log("✗ un autre programme modifie la file — réessaie dans un instant.\n")
             return
         try:
+            # No fallback on the in-memory list: writing that snapshot back would erase
+            # what the background jobs added since the last load.
             try:
                 fresh = queue_io.charger(QUEUE)
-            except Exception:
-                fresh = list(self.offers)
+            except Exception as ex:
+                self._log(f"! lecture queue KO: {ex} — rien n'est écarté.\n")
+                return
             vises = [o for o in fresh if self._oid(o) in oids]
             # We record BEFORE removing: if writing the queue fails,
             # better one exclusion too many than an offer set aside without a reason.
@@ -507,6 +531,9 @@ class ActionsMixin:
         if not oids:
             self._log("Coche d'abord des offres (colonne ☐).\n")
             return
+        oids = self._partantes_permises(oids)
+        if not oids:
+            return
         if not messagebox.askyesno(
             _t("Supprimer les offres"),
             _t(
@@ -529,8 +556,9 @@ class ActionsMixin:
             # last load — otherwise we would overwrite their changes
             try:
                 fresh = queue_io.charger(QUEUE)
-            except Exception:
-                fresh = list(self.offers)
+            except Exception as ex:
+                self._log(f"! lecture queue KO: {ex} — rien n'est supprimé.\n")
+                return
             before = len(fresh)
             partantes = [o for o in fresh if self._oid(o) in oids]
             fresh = [o for o in fresh if self._oid(o) not in oids]
@@ -548,6 +576,14 @@ class ActionsMixin:
             except Exception as ex:
                 self._log(f"! copie de sauvegarde KO ({ex}) — suppression ANNULÉE.\n")
                 return
+            # The refusal is remembered, as in the web window: otherwise the next
+            # collection finds the offer at its source and adds it back.
+            try:
+                from jobhunter.programs import exclusions
+
+                exclusions.ajouter(partantes, exclusions.SUPPRIMEE)
+            except Exception as ex:
+                self._log(f"! exclusion non retenue ({ex}) — l'offre peut revenir au scan.\n")
             try:
                 # sauver() moves the descriptions out to descriptions.json;
                 # _jwrite would write them back into the queue and undo the separation.

@@ -31,7 +31,13 @@ def main(argv: list[str] | None = None) -> int:
     if erreurs := R.valider(recettes):
         print("! Recettes refusées :\n  " + "\n  ".join(erreurs))
         return 1
-    candidatures = set(suivi_io.charger())
+    # Strict: a recipe renames offers, and a renamed applied offer loses its link to the
+    # application. An unreadable tracker read as « none » let every recipe through.
+    try:
+        candidatures = set(suivi_io.charger(strict=True))
+    except suivi_io.SuiviIllisible as e:
+        print(f"! {e}")
+        return 1
     chg = R.apercu(queue_io.charger(descriptions=False), recettes, candidatures)
     gardes = [c for c in chg if not c.ecarte]
     for c in chg[:60]:

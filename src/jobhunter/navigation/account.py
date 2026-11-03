@@ -62,25 +62,39 @@ _LOGIN_JS = r"""
 
 
 # #7 React: fill() does not always trigger the state -> native requestSubmit().
-# Targets the form containing a filled email/password input. Returns bool.
+# Targets ONLY the form holding the given field: by default a filled email/password input
+# (login), or the marked search box. No form found = nothing submitted. It used to fall
+# back on the page's FIRST form, and the career search fallback reached it with no
+# email filled: on an application page, that first form was the application, sent
+# without Gabriel's click (audit 2026-11-03, reproduced in Chromium).
+# A form that carries a file input or a text area is an application, never a login
+# or a search: refused.
 _REQSUBMIT_JS = r"""
-() => {
-  const inp=[...document.querySelectorAll('input[type=email],input[type=password],input[name*=email i]')].find(e=>e.value&&e.value.trim());
-  const form=inp?inp.closest('form'):document.querySelector('form');
-  if(form && form.requestSubmit){ form.requestSubmit(); return true; }
-  if(form){ form.submit(); return true; }
-  return false;
+(sel) => {
+  const inp = sel
+    ? document.querySelector(sel)
+    : [...document.querySelectorAll('input[type=email],input[type=password],input[name*=email i]')].find(e=>e.value&&e.value.trim());
+  const form = inp ? inp.closest('form') : null;
+  if(!form) return false;
+  if(form.querySelector('input[type=file],textarea')) return false;
+  if(form.requestSubmit){ form.requestSubmit(); return true; }
+  form.submit(); return true;
 }
 """
 
 
-def react_submit(page: Any) -> bool:
+def react_submit(page: Any, champ: str | None = None) -> bool:
     """Native HTML submission (form.requestSubmit) when the button click is swallowed by React/SPA.
+
+    Args:
+        page: the Playwright page.
+        champ: CSS selector of the field whose form is submitted; None = the form of a
+            filled email/password input. Never another form.
 
     Returns True if a form was submitted.
     """
     try:
-        return bool(page.evaluate(_REQSUBMIT_JS))
+        return bool(page.evaluate(_REQSUBMIT_JS, champ))
     except Exception:
         return False
 

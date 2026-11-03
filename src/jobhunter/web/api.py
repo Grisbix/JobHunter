@@ -769,16 +769,10 @@ _GARDEES = "Ces offres ont une candidature : elles restent dans la file avec leu
 
 
 def _hors_suivi(oids: set[str]) -> tuple[set[str], int]:
-    """The offers that may leave the queue, and how many are kept for their application.
-
-    An applied offer keeps its posting in the queue (AGENTS.md invariant): removing it by
-    hand cut the application from its text and its documents (audit 2026-10-29).
-    Raises SuiviIllisible when the tracker cannot be read: nothing leaves blind.
-    """
+    """The offers that may leave the queue (applications.hors_suivi)."""
     from jobhunter.storage import applications
 
-    suivies = set(applications.charger(strict=True))
-    return oids - suivies, len(oids & suivies)
+    return applications.hors_suivi(oids)
 
 
 def _ecrire_json(f: Path, donnees: Any) -> None:

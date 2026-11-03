@@ -106,6 +106,49 @@ def _pid_vivant(pid: int | str | None, depuis: float | str | None = None) -> boo
         return True
 
 
+def _casser_si_inchange(v: Path, vus: list[str]) -> bool:
+    """Removes the lock `v` only if it still holds what was read (`vus`). True if removed.
+
+    Two programs that find the same orphan lock both decided to break it. The first one
+    unlinked it and set its own; the second, a moment later, unlinked THAT one — and
+    both believed they held the file (audit 2026-11-03, reproduced with two processes).
+    Breaking now goes through a second file taken with O_EXCL, and the lock is reread
+    inside it: a lock that changed owner in the meantime is a live one, left alone.
+    """
+    casse = Path(str(v) + ".casse")
+    try:
+        fd = os.open(casse, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError:
+        # Someone is breaking it right now. A breaker killed in those few
+        # microseconds leaves its file: after 10 s, it is stale.
+        try:
+            if _time.time() - casse.stat().st_mtime > 10:
+                casse.unlink()
+        except OSError:
+            pass
+        return False
+    try:
+        os.close(fd)
+        try:
+            maintenant = v.read_text(encoding="utf-8").split()
+        except FileNotFoundError:
+            return False
+        except OSError:
+            maintenant = []
+        if maintenant != vus:
+            return False
+        try:
+            v.unlink()
+        except FileNotFoundError:
+            return False
+        return True
+    finally:
+        try:
+            casse.unlink()
+        except OSError:
+            pass
+
+
 def prendre_verrou(
     path: Chemin, attente: float = 180, perime: float = 1800, bavard: bool = True
 ) -> bool:
@@ -164,12 +207,8 @@ def prendre_verrou(
         # Orphan lock: the process that held it died without releasing it.
         # No point waiting for expiry, nobody touches the file any more.
         if tenu_par and not _pid_vivant(tenu_par, pose):
-            if bavard:
+            if _casser_si_inchange(v, champs) and bavard:
                 _log.info(f"! verrou {v.name} laisse par le PID {tenu_par}, mort — je le casse")
-            try:
-                v.unlink()
-            except FileNotFoundError:
-                pass
             continue
         # EXPIRY ONLY APPLIES TO A LOCK WITHOUT A LIVE OWNER.
         # On 2026-09-22, `linkedin_desc` read 6438 descriptions in three hours
@@ -183,14 +222,10 @@ def prendre_verrou(
         # `attente`); `perime` now only decides the case where we do not know
         # who holds the lock.
         if age > perime and not tenu_par:
-            if bavard:
+            if _casser_si_inchange(v, champs) and bavard:
                 _log.warning(
                     f"! verrou {v.name} abandonne depuis {int(age)}s, sans proprietaire — je le casse"
                 )
-            try:
-                v.unlink()
-            except FileNotFoundError:
-                pass
             continue
         if age > perime and bavard and not prevenu:
             _log.info(

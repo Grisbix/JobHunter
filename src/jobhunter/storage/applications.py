@@ -83,6 +83,20 @@ class SuiviIllisible(RuntimeError):
     """The tracker file exists but cannot be read: we refuse to write over it."""
 
 
+def hors_suivi(oids: set[str], chemin: Chemin | None = None) -> tuple[set[str], int]:
+    """The offers that may leave the queue, and how many are kept for their application.
+
+    An applied offer keeps its posting in the queue (AGENTS.md invariant): removing it by
+    hand cut the application from its text and its documents (audit 2026-10-29). Every
+    window that removes offers by hand asks here — the Tk app did not (audit 2026-11-03).
+
+    Raises:
+        SuiviIllisible: the tracker cannot be read; nothing leaves blind.
+    """
+    suivies = set(charger(chemin, strict=True))
+    return oids - suivies, len(oids & suivies)
+
+
 def _lire(p: Path) -> Suivi:
     """The tracker; {} if the file does not exist; SuiviIllisible if it exists but cannot be read.
 

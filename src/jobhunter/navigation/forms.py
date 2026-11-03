@@ -123,30 +123,29 @@ _FILEINPUT_JS = r"""
 def accept_consent(page: Any) -> Any:
     """Ticks the MANDATORY consent boxes (T&Cs, terms, privacy policy, data processing) needed to apply.
 
-    Does NOT tick marketing opt-ins (newsletter, commercial offers).
+    Does NOT tick marketing opt-ins (newsletter, commercial offers) nor a box that hands
+    the data to third parties; the decision is `consentement_a_cocher`, shared with
+    fill_application (apply_runner had its own copy of the old rule).
     """
-    js = r"""
-    () => {
-      const REQ = /(accepte|conditions|cgu|c\.g\.u|politique|traitement.*donn|j'?ai lu|termes|terms|privacy|consent|rgpd|mentions l)/i;
-      const MKT = /(newsletter|marketing|commercial|actualit|offres|partenaires|promo)/i;
-      let n = 0;
-      const boxes = [...document.querySelectorAll('input[type=checkbox]')];
-      for (const b of boxes) {
-        if (b.checked || b.disabled) continue;
-        // texte associé : label[for], parent, aria-label, texte voisin
-        let t = '';
-        if (b.id) { const l = document.querySelector(`label[for="${b.id}"]`); if (l) t += ' ' + l.innerText; }
-        t += ' ' + (b.getAttribute('aria-label')||'');
-        let p = b.closest('label') || b.parentElement;
-        if (p) t += ' ' + (p.innerText||'');
-        if (REQ.test(t) && !MKT.test(t)) {
-          try { b.click(); n++; } catch(e){}
-        }
-      }
-      return n;
-    }"""
+    lire = r"""
+    () => [...document.querySelectorAll('input[type=checkbox]')].map((b, i) => {
+      if (b.checked || b.disabled) return null;
+      // texte associé : label[for], parent, aria-label, texte voisin
+      let t = '';
+      if (b.id) { const l = document.querySelector(`label[for="${CSS.escape(b.id)}"]`); if (l) t += ' ' + l.innerText; }
+      t += ' ' + (b.getAttribute('aria-label')||'');
+      const p = b.closest('label') || b.parentElement;
+      if (p) t += ' ' + (p.innerText||'');
+      const N = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+      return {i, t: N(t).slice(0, 300), req: b.required || b.getAttribute('aria-required') === 'true'};
+    }).filter(Boolean)"""
+    cocher = r"""
+    (idx) => { const boxes = [...document.querySelectorAll('input[type=checkbox]')]; let n = 0;
+      for (const i of idx) { try { boxes[i].click(); n++; } catch(e){} } return n; }"""
     try:
-        return page.evaluate(js)
+        boites = page.evaluate(lire)
+        idx = [b["i"] for b in boites if consentement_a_cocher(b["t"], bool(b["req"]))]
+        return page.evaluate(cocher, idx) if idx else 0
     except Exception:
         return 0
 
@@ -654,7 +653,9 @@ _FILL_SCAN_JS = r"""
   let k=0; const out=[];
   deep(document,[],'input,textarea,select').forEach(el=>{
     const type=(el.type||el.tagName).toLowerCase();
-    if(['hidden','submit','button','image','reset','search'].includes(type))return;
+    // password: never filled (no password handled by the programs, AGENTS.md); it
+    // received the e-mail through « identifiant » (audit 2026-11-03).
+    if(['hidden','submit','button','image','reset','search','password'].includes(type))return;
     const key=N([el.name,el.id,el.placeholder,el.getAttribute('aria-label'),el.autocomplete,lab(el)].join(' '));
     // bug5 : ne PAS remplir les champs recherche d'offre / newsletter / filtre (pas le formulaire de candidature)
     const SKIP=/(recherch|\bsearch\b|\bquery\b|keyword|mot.?cle|filtre|\bfilter\b|newsletter|s'?abonn|subscribe|alerte.?(email|emploi|job))/;
@@ -680,12 +681,18 @@ _PROFILE_LEX = [
     (r"(e-?mail|courriel|identifiant|username|login|user_?mail)", "email"),
     (r"(first.?name|f.?name|fname|pr[eé]nom|given.?name|vorname|nome)", "prenom"),
     (r"(last.?name|l.?name|lname|surname|family.?name|nom de famille|nachname|\bnom\b)", "nom"),
-    (r"(date.?de.?naissance|birth|naissance|geburt|d\.?o\.?b|nascita)", "date_naissance"),
+    # The DATE only: « Ville / lieu de naissance » received the birth date.
+    (
+        r"(date.?(de.?)?naissance|birth.?date|date.?of.?birth|\bd\.?o\.?b\b|geburtsdatum|data.?di.?nascita)",
+        "date_naissance",
+    ),
     (r"(nationalit|nationality|staatsang)", "nationalite"),
     (r"(linked ?in)", "linkedin"),
     (r"(github)", "github"),
-    (r"(portfolio|site ?web|website|url perso|personal (site|web)|book)", "site_web"),
-    (r"(mobile|portable|handy|t[eé]l[eé]?(phone)?|phone|num[eé]ro|tel\b)", "tel"),
+    # no bare « book »: it is in « Facebook »
+    (r"(portfolio|site ?web|website|url perso|personal (site|web))", "site_web"),
+    # no bare « numéro »: social security, passport and street numbers got the phone
+    (r"(mobile|portable|handy|t[eé]l[eé]?(phone)?|phone|tel\b)", "tel"),
     (r"(code postal|zip|postal|\bcp\b|plz|postcode)", "cp"),
     (r"(city|ville|localit|commune|stadt|citt)", "ville"),
     (r"(country|pays|land|nation)", "pays"),
@@ -711,7 +718,8 @@ _PROFILE_LEX = [
     (r"(langue|language|sprach|lingua)", "langues"),
     (r"(comp[eé]tence|skills|comp[eé]tences cl[eé]|kenntnisse)", "competences"),
     (
-        r"(message|motivation|lettre|cover|pourquoi|presentation|about you|tell us|parlez|why|motiv|commentaire|comment)",
+        # no bare « comment »: « Comment avez-vous connu… » received the letter
+        r"(message|motivation|lettre|cover|pourquoi|presentation|about you|tell us|parlez|why|motiv|commentaires?\b)",
         "message",
     ),
     (
@@ -720,12 +728,65 @@ _PROFILE_LEX = [
     ),  # generic last
 ]
 
+# Fields never filled: identity numbers, bank and card details, passwords, and the
+# sensitive questions (disability, health, religion…). They stay for Gabriel, listed
+# in `unmatched` when required. The keys come accent-free and lower case from the scan.
+_SENSIBLE = (
+    r"(securite sociale|social security|\bssn\b|\bnir\b|national insurance|passeport|passport"
+    r"|carte d.?identite|identity card|id number|\biban\b|\bbic\b|swift|carte bancaire|credit card"
+    r"|card number|\bcvv\b|mot de passe|password|kennwort|passwort|handicap|rqth|disabilit"
+    r"|sante|health|religio|ethni|orientation|casier|criminal)"
+)
+# The field is about SOMEONE ELSE (employer, manager, referee, school): the person's
+# own name, e-mail or phone has nothing to do there. « Nom de l'employeur » and « Nom
+# du manager » received « RISACHER » (audit 2026-11-03).
+_AUTRUI = (
+    r"(employeur|employer|entreprise|company|societe|manager|superieur|responsable|referent"
+    r"|referee|reference|contact d.?urgence|emergency|ecole|school|universit|parrain|recruteur)"
+)
+_PERSONNE = {"nom", "prenom", "full", "email", "tel"}
+# A street or house number is not the address; a birthplace is not the current city.
+_NUMERO_VOIE = (
+    r"(numero de (rue|voie)|n.? de (rue|voie)|street number|house number|hausnummer"
+    r"|(lieu|ville|pays|commune|departement) de naissance|birth.?place|place of birth"
+    r"|(country|city) of birth|geburtsort)"
+)
+
 
 def _match_profile_key(key: str) -> str | None:
+    if _re_lex.search(_SENSIBLE, key) or _re_lex.search(_NUMERO_VOIE, key):
+        return None
     for rx, pk in _PROFILE_LEX:
         if _re_lex.search(rx, key):
+            if pk in _PERSONNE and _re_lex.search(_AUTRUI, key):
+                return None
             return pk
     return None
+
+
+# Consent boxes. A box that hands the data to THIRD PARTIES is never ticked, nor a
+# marketing one; the others only when required or worded as the site's terms.
+# « J'accepte que mes données soient transmises à des tiers » was ticked (audit 2026-11-03).
+_CONSENT_OUI = (
+    r"(cgu|cgv|condition|politique|traitement.*donn|j'?ai lu|termes|terms|privacy|consent|rgpd"
+    r"|mentions|accept)"
+)
+_CONSENT_FORT = (
+    r"(cgu|conditions? generales|terms (of|and)|privacy|politique de confidentialit|j'?ai lu)"
+)
+_CONSENT_NON = (
+    r"(newsletter|marketing|commercial|actualit|offres|promo|partenaires|partners?|tiers|third.?part"
+    r"|transmi|transf[eé]r|partag|\bshar(e|ing)|cession|\bsell|\bvend|alerte?s?\b)"
+)
+
+
+def consentement_a_cocher(cle: str, requis: bool) -> bool:
+    """Should this unticked consent checkbox be ticked? `cle`: its label context."""
+    if not _re_lex.search(_CONSENT_OUI, cle, _re_lex.I) or _re_lex.search(
+        _CONSENT_NON, cle, _re_lex.I
+    ):
+        return False
+    return requis or bool(_re_lex.search(_CONSENT_FORT, cle, _re_lex.I))
 
 
 _CONSENT_DIALOG_JS = r"""
@@ -825,7 +886,8 @@ def fill_application(
         loc = page.locator(f'[data-wn-fa="{f["i"]}"]').first
         try:
             if f["tag"] == "SELECT":
-                if _pick_option(loc, f.get("options", []), str(val)):
+                iso = pk in ("pays", "nationalite")
+                if _pick_option(loc, f.get("options", []), str(val), iso=iso):
                     filled += 1
             else:
                 loc.fill(str(val), timeout=2500)
@@ -848,6 +910,7 @@ def fill_application(
                 f.get("options", []),
                 "france",
                 extra=("fr",),
+                iso=True,
             ):
                 filled += 1
     # title RADIO (Monsieur / M.)
@@ -871,12 +934,7 @@ def fill_application(
     # mandatory consent CHECKBOX (T&Cs/GDPR) — not marketing
     consent = 0
     for f in [x for x in fields if x["type"] == "checkbox" and not x.get("checked")]:
-        if _re_lex.search(
-            r"(cgu|cgv|condition|politique|traitement.*donn|j'?ai lu|termes|terms|privacy|consent|rgpd|mentions|accept)",
-            f["key"],
-        ) and not _re_lex.search(
-            r"(newsletter|marketing|commercial|actualit|offres|promo|partenaires)", f["key"]
-        ):
+        if consentement_a_cocher(f["key"], bool(f.get("required"))):
             try:
                 page.locator(f'[data-wn-fa="{f["i"]}"]').first.check(timeout=1500)
                 consent += 1
@@ -932,12 +990,17 @@ def _fold(s: str) -> str:
     ).strip()
 
 
-def _pick_option(loc: Any, options: Any, val: Any, extra: Any = ()) -> bool:
+def _pick_option(loc: Any, options: Any, val: Any, extra: Any = (), iso: bool = False) -> bool:
     """Selects the option of a <select> matching val (label/value), + extra variants.
 
-    Accent-insensitive + ISO code match (option value='FR' for 'France').
+    Accent-insensitive. The BEST option wins, not the first that loosely matches:
+    exact label or value, then the option containing the value, then the longest
+    option label contained in the value (« Bac+5 » for « Bac+5 (Master) », not « Bac »).
+    `iso`: also the two-letter code (option value='FR' for 'Française') — countries
+    only: on any list, « ba » (Bachelor) was picked for « Bac+5 » (audit 2026-11-03).
     """
-    cands = [_fold(val)] + [_fold(e) for e in extra]
+    cands = [c for c in [_fold(val)] + [_fold(e) for e in extra] if c]
+    meilleur, rang = None, (0, 0)
     try:
         for i, o in enumerate(options):
             t = _fold(o.get("t") or "")
@@ -945,9 +1008,21 @@ def _pick_option(loc: Any, options: Any, val: Any, extra: Any = ()) -> bool:
             if not t and not ov:
                 continue
             for c in cands:
-                if c and (c in t or t in c or c == ov or (len(c) >= 4 and ov and ov == c[:2])):
-                    loc.select_option(index=i, timeout=2000)
-                    return True
+                if c == t or c == ov:
+                    note = 4
+                elif t and c in t:
+                    note = 3
+                elif len(t) >= 3 and t in c:
+                    note = 2
+                elif iso and len(c) >= 4 and len(ov) == 2 and ov == c[:2]:
+                    note = 1
+                else:
+                    continue
+                if (note, len(t)) > rang:
+                    meilleur, rang = i, (note, len(t))
+        if meilleur is not None:
+            loc.select_option(index=meilleur, timeout=2000)
+            return True
     except Exception:
         pass
     return False
