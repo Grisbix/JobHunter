@@ -121,9 +121,10 @@ jobs:
           $env:JOBHUNTER_RACINE = "$env:RUNNER_TEMP\JobHunterEssai"
           & "$dest\jobhunter-cli.exe" --help | Out-Null
           if ($LASTEXITCODE -ne 0) { exit 1 }
-          foreach ($f in "profile\profile.json", "data\apply_queue.json") {
-            if (-not (Test-Path "$env:JOBHUNTER_RACINE\$f")) { Write-Error "$f perdu"; exit 1 }
-          }
+          if (-not (Test-Path "$env:JOBHUNTER_RACINE\profile\profile.json")) { Write-Error "profile.json perdu"; exit 1 }
+          # The queue: queue.sqlite3 once a first write migrated it (3.77, ADR 0016), the JSON before
+          $donnees = "$env:JOBHUNTER_RACINE\data"
+          if (-not ((Test-Path "$donnees\queue.sqlite3") -or (Test-Path "$donnees\apply_queue.json"))) { Write-Error "file perdue"; exit 1 }
           Write-Output "mise à jour installée, données gardées"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
