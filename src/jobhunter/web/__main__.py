@@ -5,6 +5,7 @@ Needs the optional dependency: pip install "jobhunter[web]" (pywebview).
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -143,6 +144,30 @@ class _Cadre:
             print(f"cadre : {e}")  # noqa: T201
 
 
+def _depot_cv(fenetre: Any) -> None:
+    """The welcome's drop zone: a file dropped on the window goes to the page by its path.
+
+    The page only sees a dropped file's name; pywebview gives its full path to Python
+    (`pywebviewFullPath`), which hands it to the page's `cvDepose`.
+    """
+    try:
+        from webview.dom import DOMEventHandler
+    except ImportError:  # an older pywebview: the « Choisir mon CV… » button remains
+        return
+
+    def deposer(e: dict[str, Any]) -> None:
+        fichiers = (e.get("dataTransfer") or {}).get("files") or []
+        chemins = [str(f.get("pywebviewFullPath") or "") for f in fichiers if isinstance(f, dict)]
+        chemin = next((c for c in chemins if c), "")
+        if chemin:
+            fenetre.evaluate_js(f"cvDepose({json.dumps(chemin)})")
+
+    try:
+        fenetre.dom.document.events.drop += DOMEventHandler(deposer, True, True)
+    except Exception:  # noqa: BLE001 — no drop, the button remains
+        pass
+
+
 def main() -> int:
     """Opens the window; returns 1 when pywebview is missing."""
     # Without a console (pythonw.exe, the windowed JobHunter.exe) sys.stdout is None:
@@ -174,7 +199,10 @@ def main() -> int:
     from jobhunter.web.api import Api
 
     api = Api()
-    api.demarrer_fond()  # the desktop's background work (web.background)
+    from jobhunter import welcome
+
+    if welcome.a_un_profil():  # without one, the welcome first (web.onboarding)
+        api.demarrer_fond()  # the desktop's background work (web.background)
     # The Start menu shortcut, once: pinned, the window keeps JobHunter's logo (shortcut.py).
     import threading
 
@@ -207,6 +235,8 @@ def main() -> int:
     api._plein = lambda: cadre.plein
     api._toile = cadre.fond
     fenetre.events.shown += cadre.installer
+    if not welcome.a_un_profil():
+        fenetre.events.loaded += lambda: _depot_cv(fenetre)
     relais = os.environ.pop("JH_RELAIS", "")
     if relais:
         # Opened by a profile switch: the previous window closes once this page is drawn.

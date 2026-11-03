@@ -182,9 +182,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         if any(a in ("-h", "--help") for a in reste):
             print(f"jobhunter {cmd} — {COMMANDES[cmd][1]}. Aucune option.")
             return 0
-        from jobhunter.welcome import assurer_profil
+        from jobhunter.launch import _migrer
 
-        assurer_profil()
+        _migrer()
     # The steps launched as subprocesses (pipeline, application) do `python -m ...`.
     racine.exporter_paquet()
     sys.argv = [f"jobhunter {cmd}", *reste]  # argparse's prog, and the few that read it

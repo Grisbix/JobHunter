@@ -29,8 +29,8 @@ SONDE = textwrap.dedent(
         elif nom == "open" and isinstance(args[0], (str, bytes, os.PathLike)):
             p = os.fsdecode(args[0])
             if isinstance(args[1], str) and any(c in args[1] for c in "wax+"):
-                # customtkinter copies its fonts into ~/.fonts on Linux, at import:
-                # the library's doing, not the engine's (none of this on Windows).
+                # ~/.fonts: a GUI library copying its fonts on Linux at import (it was
+                # customtkinter until 3.78), not the engine's doing.
                 if not p.startswith(os.path.expanduser("~/.fonts")):
                     ev["ecritures"].append(f"open {p}")
             elif not p.endswith((".py", ".pyc", ".pyd", ".dll", ".so", ".pth")) \

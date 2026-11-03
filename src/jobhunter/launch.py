@@ -3,7 +3,8 @@
 Since 3.29 the web window (jobhunter.web) is the application; the desktop window
 (customtkinter) it replaced was removed in 3.77, guided application included
 (jobhunter.web.guided). When the web view cannot open (pywebview missing, no WebView2),
-the launcher says so and how to fix it, instead of opening another window.
+the launcher says so and how to fix it, instead of opening another window. Without a
+profile the window shows the welcome (jobhunter.web.onboarding, 3.78).
 
 JobHunter.pyw, `jobhunter app` and the compiled JobHunter.exe all come here.
 
@@ -17,13 +18,11 @@ import sys
 
 
 def main() -> int:
-    """Ensures the profile, then opens the web window."""
+    """Opens the web window; without a profile it shows the welcome (3.78)."""
     from jobhunter.profiles import appliquer
 
     appliquer()  # the active profile, before any module builds its paths
-    from jobhunter.welcome import assurer_profil
-
-    assurer_profil()
+    _migrer()
     try:
         from jobhunter.web.__main__ import main as web
 
@@ -38,6 +37,21 @@ def main() -> int:
         return 2  # the installer's CI: the web window must open, nothing else
     _dire_pourquoi(raison)
     return 1
+
+
+def _migrer() -> None:
+    """A 2.x folder takes the 3.0 names before the window opens.
+
+    Its sentence is shown by the page (JH_MIGRATION, jobhunter.web.onboarding).
+    """
+    from jobhunter.welcome import migrer_si_besoin
+
+    try:
+        message = migrer_si_besoin()
+    except RuntimeError:  # no data folder at all: the welcome makes one
+        return
+    if message:
+        os.environ["JH_MIGRATION"] = message
 
 
 def _dire_pourquoi(raison: str) -> None:

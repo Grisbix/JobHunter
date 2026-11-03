@@ -143,7 +143,7 @@ pattern to `ats_match` raises its count without any test having been written.
 | `jobhunter.sources` | `job_sources`: one source per module, `commun`, `fusion`, `cli` — assignment routed to the owner |
 | `jobhunter.documents` | `tailor_application` (`commun`, `cv`, `lettre`, `llm`, `rendu`), `message` (`message_offre`), `cv_auto` |
 | `jobhunter.navigation` | `web_nav`: one section per module (`page`, `carrieres`, `formulaires`…), `strategies` (`site_strategies`) |
-| `jobhunter.web` | the application's window (pywebview): `api` (one mixin per domain), `static/` (HTML, CSS, JS); the desktop window `jobhunter.app` was removed in 3.77 (ADR 0017) |
+| `jobhunter.web` | the application's window (pywebview): `api` (one mixin per domain), `static/` (HTML, CSS, JS), `onboarding` (the welcome, without a profile); the desktop window `jobhunter.app` was removed in 3.77 (ADR 0017), the Tk welcome in 3.78 (ADR 0018) |
 | `jobhunter.programs` | the ~57 programs (former `Scripts/*.py`): `daily_pipeline`, `generate_docs`, `apply_runner`, `availability_audit`, `util`… |
 | `jobhunter` | `root`, `profil`, `network` (bounded requests), `paths`, `texte`, `liens`, `welcome`, `cli` (`python -m jobhunter <commande>`) |
 

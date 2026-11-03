@@ -11,6 +11,92 @@ Same register as the French: "tu" → "du" in German, "tú" in Spanish.
 """
 
 TEXTES: dict[str, tuple[str, str, str]] = {
+    # --- The welcome (3.78, web.onboarding): no profile yet ---
+    "Bienvenue": ("Welcome", "Willkommen", "Bienvenido"),
+    "Bon retour": ("Welcome back", "Willkommen zurück", "Bienvenido de nuevo"),
+    "Ton profil": ("Your profile", "Dein Profil", "Tu perfil"),
+    "Lecture du CV…": ("Reading the CV…", "Lebenslauf wird gelesen…", "Leyendo el CV…"),
+    "Dépose ton CV ici": (
+        "Drop your CV here",
+        "Leg deinen Lebenslauf hier ab",
+        "Suelta tu CV aquí",
+    ),
+    "PDF ou Word": ("PDF or Word", "PDF oder Word", "PDF o Word"),
+    "Choisir mon CV…": ("Choose my CV…", "Meinen Lebenslauf wählen…", "Elegir mi CV…"),
+    "Plus tard": ("Later", "Später", "Más tarde"),
+    "Autre dossier…": ("Another folder…", "Anderer Ordner…", "Otra carpeta…"),
+    "Copie en cours…": ("Copying…", "Wird kopiert…", "Copiando…"),
+    "profil du {d}": ("profile of {d}", "Profil vom {d}", "perfil del {d}"),
+    "Choisir un autre CV…": ("Choose another CV…", "Anderen Lebenslauf wählen…", "Elegir otro CV…"),
+    "Créer mon profil": ("Create my profile", "Mein Profil erstellen", "Crear mi perfil"),
+    "Création du profil…": ("Creating the profile…", "Profil wird erstellt…", "Creando el perfil…"),
+    "Voir la version Word": ("See the Word version", "Word-Fassung ansehen", "Ver la versión Word"),
+    "Reprendre celui de ma lettre…": (
+        "Take the one from my letter…",
+        "Den aus meinem Anschreiben übernehmen…",
+        "Tomar el de mi carta…",
+    ),
+    "Email": ("Email", "E-Mail", "Correo"),
+    "Téléphone": ("Phone", "Telefon", "Teléfono"),
+    "Métiers visés": ("Target jobs", "Angestrebte Berufe", "Puestos buscados"),
+    "Années d'expérience": ("Years of experience", "Berufsjahre", "Años de experiencia"),
+    "Accords": ("Grammar (French)", "Grammatik (Französisch)", "Concordancia (francés)"),
+    "Autres villes": ("Other cities", "Weitere Städte", "Otras ciudades"),
+    "Où chercher": ("Where to search", "Wo suchen", "Dónde buscar"),
+    "Pays ou régions": ("Countries or regions", "Länder oder Regionen", "Países o regiones"),
+    "Secteurs prioritaires": ("Priority areas", "Vorrangige Gebiete", "Zonas prioritarias"),
+    "Secteurs secondaires (facultatif)": (
+        "Secondary areas (optional)",
+        "Nachrangige Gebiete (optional)",
+        "Zonas secundarias (opcional)",
+    ),
+    "Ton CV et tes lettres": (
+        "Your CV and letters",
+        "Dein Lebenslauf und deine Anschreiben",
+        "Tu CV y tus cartas",
+    ),
+    "Adapter mon CV à chaque offre": (
+        "Tailor my CV to each offer",
+        "Meinen Lebenslauf an jedes Angebot anpassen",
+        "Adaptar mi CV a cada oferta",
+    ),
+    "Aussi à l'étranger": ("Abroad too", "Auch im Ausland", "También en el extranjero"),
+    "Seulement en {p}": ("Only in {p}", "Nur in {p}", "Solo en {p}"),
+    "Le paragraphe de parcours de tes lettres": (
+        "The background paragraph of your letters",
+        "Der Werdegang-Absatz deiner Anschreiben",
+        "El párrafo de trayectoria de tus cartas",
+    ),
+    "Vérifie et complète : rien n'est écrit tant que tu n'as pas validé.": (
+        "Check and complete: nothing is written until you confirm.",
+        "Prüfe und ergänze: Nichts wird gespeichert, bevor du bestätigst.",
+        "Revisa y completa: no se escribe nada hasta que confirmes.",
+    ),
+    "Aucun profil pour l'instant. Donne ton CV, en PDF (ou en Word) : JobHunter le lit puis te pose quelques questions.": (
+        "No profile yet. Give your CV, as a PDF (or Word): JobHunter reads it, then asks you a few questions.",
+        "Noch kein Profil. Gib deinen Lebenslauf als PDF (oder Word): JobHunter liest ihn und stellt dir dann ein paar Fragen.",
+        "Todavía no hay perfil. Da tu CV, en PDF (o Word): JobHunter lo lee y luego te hace unas preguntas.",
+    ),
+    "Ce dossier est vide, mais un autre JobHunter a déjà ton profil. Reprends ses données (profil, CV, offres, candidatures) : elles sont copiées ici, l'ancien dossier ne change pas.": (
+        "This folder is empty, but another JobHunter already has your profile. Take its data back (profile, CVs, offers, applications): they are copied here, the old folder does not change.",
+        "Dieser Ordner ist leer, aber ein anderes JobHunter hat schon dein Profil. Übernimm seine Daten (Profil, Lebensläufe, Angebote, Bewerbungen): Sie werden hierher kopiert, der alte Ordner bleibt unverändert.",
+        "Esta carpeta está vacía, pero otro JobHunter ya tiene tu perfil. Recupera sus datos (perfil, CV, ofertas, candidaturas): se copian aquí, la carpeta antigua no cambia.",
+    ),
+    "Suivre les ~90 entreprises de finance / ESG proposées": (
+        "Follow the ~90 finance / ESG companies offered",
+        "Den ~90 vorgeschlagenen Finanz-/ESG-Unternehmen folgen",
+        "Seguir las ~90 empresas de finanzas / ESG propuestas",
+    ),
+    "Tiré de ton CV. Tu as déjà une lettre que tu aimes ? Reprends-en le paragraphe.": (
+        "Taken from your CV. Already have a letter you like? Take its paragraph.",
+        "Aus deinem Lebenslauf. Du hast schon ein Anschreiben, das dir gefällt? Übernimm seinen Absatz.",
+        "Sacado de tu CV. ¿Ya tienes una carta que te gusta? Toma su párrafo.",
+    ),
+    "Repris de {f}. Relis-le.": (
+        "Taken from {f}. Read it again.",
+        "Aus {f} übernommen. Lies ihn noch einmal.",
+        "Tomado de {f}. Reléelo.",
+    ),
     # --- Menu, title bar, screens ---
     "Recherche": ("Search", "Suche", "Búsqueda"),
     "Outils": ("Tools", "Werkzeuge", "Herramientas"),

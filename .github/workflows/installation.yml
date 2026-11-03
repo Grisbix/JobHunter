@@ -31,7 +31,7 @@ jobs:
           python-version: "3.12"
       - name: Le Python de la machine n'a pas les bibliothèques
         shell: bash
-        run: "! python -c 'import customtkinter'"
+        run: "! python -c 'import webview'"
       - name: Comme un ZIP téléchargé (sans dépôt git)
         shell: bash
         run: rm -rf .git
@@ -44,8 +44,8 @@ jobs:
           PYTHONIOENCODING: utf-8
         run: |
           test -x .venv/Scripts/python.exe
-          .venv/Scripts/python.exe -c "import customtkinter, playwright, docx, fitz, httpx"
-          ! python -c 'import customtkinter'
+          .venv/Scripts/python.exe -c "import webview, playwright, docx, fitz, httpx"
+          ! python -c 'import webview'
           .venv/Scripts/python.exe JobHunter.pyw update --controler
           python -c "import json,sys; m=json.load(open('.maj_manifeste.json',encoding='utf-8')); bad=[k for k in m if k.startswith('.venv')]; print(len(m),'fichiers'); sys.exit(1 if bad or not m else 0)"
 
@@ -68,7 +68,7 @@ jobs:
           PYTHONIOENCODING: utf-8
         run: |
           test -x .venv/bin/python
-          .venv/bin/python -c "import customtkinter, playwright, docx, fitz, httpx"
-          ! python -c 'import customtkinter'
+          .venv/bin/python -c "import webview, playwright, docx, fitz, httpx"
+          ! python -c 'import webview'
           .venv/bin/python JobHunter.pyw update --controler
           python -c "import json,sys; m=json.load(open('.maj_manifeste.json',encoding='utf-8')); bad=[k for k in m if k.startswith('.venv')]; print(len(m),'fichiers'); sys.exit(1 if bad or not m else 0)"

@@ -66,6 +66,15 @@ def test_reprendre_copie_les_donnees_pas_le_code_ni_les_sauvegardes(tmp_path):
     assert (src / "profile" / "profile.json").is_file()  # the previous folder unchanged
 
 
+def _bienvenue(monkeypatch):
+    from jobhunter.web.onboarding import BienvenueApi
+
+    monkeypatch.setattr(welcome, "a_un_profil", lambda: False)
+    monkeypatch.setattr(BienvenueApi, "_secondaire", staticmethod(lambda: ""))
+    monkeypatch.delenv("JH_CV", raising=False)
+    return BienvenueApi().bienvenue()
+
+
 def test_l_accueil_propose_la_reprise_avant_le_cv(monkeypatch, tmp_path):
     from jobhunter import profile, root
 
@@ -74,11 +83,11 @@ def test_l_accueil_propose_la_reprise_avant_le_cv(monkeypatch, tmp_path):
     ici.mkdir()
     monkeypatch.setattr(root, "racine", lambda: ici)
     monkeypatch.setattr(pd, "_lieux", lambda: [])
-    monkeypatch.setattr(welcome, "proposer_reprise", lambda f, c: c[0])
-    monkeypatch.setattr(welcome, "_migrer_si_besoin", lambda: None)
+    assert [Path(r["dossier"]) for r in _bienvenue(monkeypatch)["reprise"]] == [src]
+    monkeypatch.setattr(welcome, "migrer_si_besoin", lambda: "")
     monkeypatch.setattr(profile, "recharger", lambda f=None: None)
     monkeypatch.setattr(profile, "charger", lambda: {})
-    assert welcome._reprise(None)
+    assert welcome.reprendre(src) == ""
     assert (ici / "profile" / "profile.json").is_file()
     assert src.is_dir()
 
@@ -88,6 +97,4 @@ def test_sans_ancien_dossier_l_accueil_demande_le_cv(monkeypatch, tmp_path):
 
     monkeypatch.setattr(root, "racine", lambda: tmp_path / "JobHunter")
     monkeypatch.setattr(pd, "_lieux", lambda: [])
-    vu = []
-    monkeypatch.setattr(welcome, "proposer_reprise", lambda f, c: vu.append(c))
-    assert not welcome._reprise(None) and vu == []
+    assert _bienvenue(monkeypatch)["reprise"] == []

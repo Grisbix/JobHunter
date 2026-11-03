@@ -162,26 +162,10 @@ def test_profil_d_un_cv_en_zones_de_texte_sans_clavier(tmp_path):
     assert profil["identite"]["email"] == "camille.exemple@example.com"
 
 
-def test_fenetres_d_accueil_aux_couleurs_de_l_interface_web():
-    # welcome draws in customtkinter what web/static/style.css draws in HTML.
-    import re
-
+def test_l_icone_de_l_accueil_existe():
+    # The welcome is drawn by the web page since 3.78; its icon is still the app's.
     from jobhunter import welcome
 
-    css = (Path(welcome.__file__).parent / "web" / "static" / "style.css").read_text("utf-8")
-    racine = css[css.index(":root {") : css.index("}", css.index(":root {"))]
-    var = dict(re.findall(r"--([\w-]+):\s*([^;]+);", racine))
-    for nom, cle in (
-        ("ENCRE", "encre"),
-        ("TEXTE_DOUX", "texte-doux"),
-        ("SOMBRE", "sombre"),
-        ("ACCENT", "c2"),
-        ("ACCENT_H", "c3"),
-        ("C1B", "c1b"),
-    ):
-        assert getattr(welcome, nom).lower() == var[cle].strip().lower(), nom
-    r, g, b = (int(x) for x in var["fond-rgb"].split(","))
-    assert welcome.FOND.lower() == f"#{r:02x}{g:02x}{b:02x}"
     assert welcome.ICONE.is_file()
 
 

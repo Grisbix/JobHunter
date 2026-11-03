@@ -15,9 +15,7 @@ ICONE = os.path.join(RACINE, "src", "jobhunter", "assets", "jobhunter.ico")
 
 cachees = collect_submodules("jobhunter")  # dispatched by name (-m module, jobhunter <command>)
 donnees = (
-    collect_data_files("customtkinter")
-    + collect_data_files("tkinterdnd2")  # the native tkdnd library (drag-and-drop)
-    + collect_data_files("docx")
+    collect_data_files("docx")
     + collect_data_files("jobhunter", includes=["sources/directories/*", "web/static/*", "assets/*"])
     + collect_data_files("webview")  # the web view's own scripts and DLLs (3.29)
     + [

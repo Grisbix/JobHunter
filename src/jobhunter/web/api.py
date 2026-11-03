@@ -26,6 +26,7 @@ from jobhunter.storage.queue import oid as _oid  # one key definition (audit 202
 from jobhunter.web.background import FondApi
 from jobhunter.web.guided import CandidatureApi
 from jobhunter.web.messages import echec
+from jobhunter.web.onboarding import BienvenueApi
 from jobhunter.web.panels import PanneauxApi
 from jobhunter.web.trades import MetiersApi
 from jobhunter.web.workshop import AtelierApi
@@ -889,7 +890,7 @@ def bureau_a_distance() -> bool:
         return False
 
 
-class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
+class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, BienvenueApi):
     """Methods the page calls through `window.pywebview.api`.
 
     Nothing here writes to the queue, the applications or the profile; only the
@@ -2003,8 +2004,11 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         ok, msg = scheduling.creer(heure) if heure else scheduling.supprimer()
         return {"ok": ok, "message": msg, "erreur": "" if ok else msg}
 
-    def _relancer(self) -> None:
+    def _relancer(self, dans: Path | None = None, cv: str = "") -> None:
         """Starts the web interface again on the active profile, then closes this window.
+
+        `dans`: another data folder instead (a new profile's, still empty: the welcome
+        opens there, `cv` already chosen).
 
         The new window opens at the same size and says when its page is drawn (a file,
         JH_RELAIS); only then does this one close, so the switch looks like a reload,
@@ -2021,6 +2025,11 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         principale = profiles.principale()
         env = {k: v for k, v in os.environ.items() if k != profiles.ENV_PRINCIPALE}
         env["JOBHUNTER_RACINE"] = str(principale)
+        if dans is not None:
+            env["JOBHUNTER_RACINE"] = str(dans)
+            env[profiles.ENV_PRINCIPALE] = str(principale)
+        if cv:
+            env["JH_CV"] = cv
         # As the desktop's _relancer: the compiled app, else the folder's launcher.
         if frozen.est_gele():
             cmd = [sys.executable]
@@ -2092,10 +2101,10 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
         return {"ok": True}
 
     def nouveau_profil(self, nom: str) -> dict[str, Any]:
-        """A new profile from a CV: its folder, then the guided first launch in it.
+        """A new profile from a CV: its folder, then the window restarts in it.
 
-        The questions are answered in a window of their own (jobhunter.welcome);
-        `profil_cree` checks the result.
+        The welcome opens there with the CV already chosen (jobhunter.web.onboarding);
+        giving up puts the empty folder in the archives and reopens this profile.
         """
         from jobhunter import profiles
 
@@ -2104,50 +2113,15 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
             return {"ok": False, "erreur": "Donne un nom au profil"}
         if self._fenetre is None:
             return {"ok": False, "erreur": "Il faut l'application pour choisir un CV"}
-        import webview
-
-        choix = self._fenetre.create_file_dialog(
-            webview.FileDialog.OPEN, file_types=("CV (*.docx;*.pdf)", "Tous les fichiers (*.*)")
-        )
-        if not choix:
+        cv = self._dialogue()
+        if not cv:
             return {"ok": False, "annule": True}
         try:
             racine = profiles.creer(nom)
         except FileExistsError:
             return {"ok": False, "erreur": "Un profil de ce nom existe déjà."}
-        env = {
-            **os.environ,
-            "JOBHUNTER_RACINE": str(racine),
-            profiles.ENV_PRINCIPALE: str(profiles.principale()),
-        }
-        subprocess.Popen(  # nosec B603 : our own program, arguments built here
-            [sys.executable, "-m", "jobhunter.welcome", str(choix[0])],
-            cwd=str(racine),
-            env=env,
-            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
-        )
+        self._relancer(dans=racine, cv=cv)
         return {"ok": True, "slug": racine.name}
-
-    def profil_cree(self, slug: str, ouvrir: bool = False) -> dict[str, Any]:
-        """After the console: the profile exists if its questions were answered.
-
-        An unfinished one is moved to the archives (never deleted).
-        """
-        from jobhunter import profiles
-
-        racine = profiles.racine_de(slug)
-        if not (racine / "profile" / "profile.json").exists():
-            if racine.exists():
-                try:
-                    profiles.archiver(slug)
-                except (ValueError, RuntimeError):
-                    pass  # left as it is: never deleted
-            return {"ok": False, "erreur": "Le profil n'a pas été créé (questions non terminées)."}
-        profiles.nommer(racine)
-        if ouvrir:
-            profiles.activer(slug)
-            self._relancer()
-        return {"ok": True}
 
     def ouvrir_dossier(self) -> bool:
         """Opens the data folder in the Explorer (the desktop's "Ouvrir le dossier")."""

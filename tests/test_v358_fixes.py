@@ -119,8 +119,8 @@ def test_un_seul_logo():
     icone = Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "assets"
     assert (STATIQUE / "logo.png").read_bytes() == (icone / "jobhunter.png").read_bytes()
     assert re.search(r'\.logo \{[^}]*url\("logo\.png"\)', CSS)
-    welcome = (icone.parent / "welcome.py").read_text(encoding="utf-8")
-    assert "SetCurrentProcessExplicitAppUserModelID" in welcome
+    fenetre = (icone.parent / "web" / "__main__.py").read_text(encoding="utf-8")
+    assert "SetCurrentProcessExplicitAppUserModelID" in fenetre
 
 
 def test_la_bande_d_en_tete_va_d_un_bord_a_l_autre_du_panneau():

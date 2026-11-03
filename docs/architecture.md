@@ -26,10 +26,10 @@ choice has its own ADR in [`docs/adr/`](adr/); the plan that led here is
              ┌──────────────────────────────┼───────────────────────────┐
              ▼                              ▼                           ▼
   ┌── documents ──────────┐   ┌── application ─────────┐   ┌── navigation ──────────┐
-  │ jobhunter.documents   │   │ jobhunter.app          │   │ jobhunter.navigation   │
-  │  cv · lettre · message│   │  fenetre.App = mixins  │   │  page · carrieres      │
-  │  cv_auto · llm · rendu│   │  tableau · fiche ·     │   │  formulaires · segment │
-  │  (.docx then .pdf)    │   │  actions · panneaux…   │   │  compte · linkedin…    │
+  │ jobhunter.documents   │   │ jobhunter.web          │   │ jobhunter.navigation   │
+  │  cv · lettre · message│   │  api = mixins · static │   │  page · carrieres      │
+  │  cv_auto · llm · rendu│   │  onboarding · guided · │   │  formulaires · segment │
+  │  (.docx then .pdf)    │   │  background · panels…  │   │  compte · linkedin…    │
   └───────────────────────┘   └────────────────────────┘   └────────────────────────┘
                                                               fills in, HIGHLIGHTS submit:
                                                               the final click is human
@@ -50,10 +50,9 @@ choice has its own ADR in [`docs/adr/`](adr/); the plan that led here is
 | `jobhunter.sources` | collection per source, merge into the queue | reseau, scoring, stockage |
 | `jobhunter.documents` | CV, letter, short message, PDF | profil, scoring.lexique, chemins |
 | `jobhunter.navigation` | Playwright: from the company's site to the filled-in form | racine |
-| `jobhunter.web` | the application's window since 3.29 (pywebview, HTML), its guided application and background work | everything above |
-| `jobhunter.guided_apply` | the guided application's events and texts, shared by both windows | — |
-| `jobhunter.app` | the classic window (customtkinter): fallback, and `jobhunter bureau` | everything above |
-| `jobhunter.launch` | opens the web window, the classic one when it cannot | web, app |
+| `jobhunter.web` | the application's window (pywebview, HTML): the welcome without a profile (3.78), the guided application, background work | everything above |
+| `jobhunter.guided_apply` | the guided application's events and texts | — |
+| `jobhunter.launch` | opens the web window; when it cannot, says why (ADR 0017) | web |
 | `jobhunter.programs` | the programs (pipeline, documents, application, audits, probes) | everything above |
 | `jobhunter.cli` | `python -m jobhunter <commande>`, and any program by its name | racine |
 

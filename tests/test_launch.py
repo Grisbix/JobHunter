@@ -10,7 +10,7 @@ def ouvertures(monkeypatch):
     """Records which window opens, without opening any."""
     vu = []
     monkeypatch.setattr("jobhunter.profiles.appliquer", lambda: None)
-    monkeypatch.setattr("jobhunter.welcome.assurer_profil", lambda: vu.append("profil"))
+    monkeypatch.setattr(launch, "_migrer", lambda: vu.append("profil"))
     monkeypatch.setattr(launch, "_dire_pourquoi", lambda raison: vu.append(f"message: {raison}"))
     return vu
 

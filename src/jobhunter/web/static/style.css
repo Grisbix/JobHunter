@@ -966,3 +966,30 @@ body tr[tabindex]:focus-visible { outline-offset: -2px; }
 .logo-source svg { width: 14px; height: 14px; fill: currentColor; }
 .logo-source.initiale { border-radius: 4px; background: rgba(var(--c2-rgb), .22); font-size: var(--t-xs); font-weight: 700; line-height: 1; }
 .avec-logo .coupe { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* The welcome (3.78, web/onboarding.py): no profile yet, so no menu nor title; one
+   centred card, as the first launch's windows were before. */
+body.sans-profil .menu, body.sans-profil .tete { display: none; }
+body.sans-profil .fenetre { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.bienvenue { max-width: 760px; margin: 0 auto; padding: 8px 0 32px; }
+.bienvenue > .panneau { display: flex; flex-direction: column; gap: 12px; }
+.bienvenue .grand-titre { font-size: var(--t-5xl); font-weight: 600; line-height: 1.1; }
+.bienvenue .sous { margin-top: 0; line-height: 1.5; }
+.bienvenue .formulaire { margin-top: 8px; }
+.bienvenue .champ-form { grid-template-columns: 160px 1fr; }
+.bienvenue .champ-texte { width: 100%; padding: 8px 12px; line-height: 1.45; font: inherit; font-size: var(--t-m); resize: vertical; }
+.bienvenue .boutons { align-items: center; margin-top: 8px; }
+.bienvenue .erreur-texte { color: var(--terre); white-space: pre-wrap; font-size: var(--t-m); }
+.bienvenue .erreur-texte:empty { display: none; }
+.depot-cv {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 130px; margin: 8px 0; border-radius: var(--r-carte); cursor: pointer;
+  border: 2px dashed rgba(var(--c2-rgb), .45); background: var(--piste); color: var(--texte-doux);
+  font-size: var(--t-l); text-align: center;
+}
+.depot-cv.survol { background: rgba(var(--c1-rgb), .18); border-color: var(--c2); }
+.secteurs { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 4px 16px; padding: 12px 16px; border-radius: var(--r-carte); background: var(--surface); }
+.secteurs .case-colonne { font-size: var(--t-m); }
+.reprises { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.reprise { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.reprise .coupe { min-width: 0; overflow-wrap: anywhere; }

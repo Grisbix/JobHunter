@@ -6,7 +6,7 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     # Bounds already open up to the next major: a PR only when a
-    # version falls outside them (customtkinter 6), not to raise the floor at every release.
+    # version falls outside them (pywebview 7), not to raise the floor at every release.
     versioning-strategy: increase-if-necessary
   - package-ecosystem: github-actions
     directory: /
