@@ -37,6 +37,22 @@ FT_SEARCH = "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/sea
 _FT_CONTRAT = {"CDI": "CDI", "CDD": "CDD", "MIS": "Interim", "SAI": "Saisonnier"}
 
 
+def _cause(r: Any) -> str:
+    """What to do about a refused token, from the OAuth error code (never the secret)."""
+    try:
+        code = str((r.json() or {}).get("error") or "")
+    except (ValueError, AttributeError):  # no JSON body
+        code = ""
+    if code == "invalid_scope":
+        return (
+            "identifiants reconnus, mais l'application n'est abonnée à aucune API : sur "
+            "francetravail.io, ouvre ton application et ajoute l'API « Offres d'emploi v2 »"
+        )
+    if code in ("invalid_client", "unauthorized_client"):
+        return "identifiants inconnus : recopie client_id et client_secret depuis francetravail.io"
+    return "vérifie les identifiants et l'abonnement à l'API « Offres d'emploi v2 » sur francetravail.io"
+
+
 def _ft_token() -> str | None:
     import json as _json
 
@@ -60,12 +76,10 @@ def _ft_token() -> str | None:
         if r.status_code != 200:
             # A REFUSED TOKEN IS A REFUSAL, not a calm day: counted, the yield says
             # « refusé ». From 20/10 to 03/11/2026 every collection read « rien à
-            # prendre » while the token answered 400 (credentials no longer valid).
+            # prendre » while the token answered 400 `invalid_scope`: the credentials
+            # were known, but the application was subscribed to no API.
             _commun.INCIDENTS["francetravail"][f"jeton refusé HTTP {r.status_code}"] += 1
-            _log.warning(
-                f"  ✗ France Travail : jeton refusé (HTTP {r.status_code}) — identifiants à "
-                "renouveler sur francetravail.io"
-            )
+            _log.warning(f"  ✗ France Travail : jeton refusé (HTTP {r.status_code}) — {_cause(r)}")
             return None
         jeton: str | None = r.json().get("access_token")
         return jeton

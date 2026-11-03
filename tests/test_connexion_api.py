@@ -89,3 +89,15 @@ def test_jeton_refuse_compte_comme_refus(cles, monkeypatch):
     assert incidents == {"jeton refusé HTTP 400": 1}
     assert R.verdict(0, incidents) == R.REFUSE
     C.INCIDENTS.clear()
+
+
+@pytest.mark.parametrize(
+    ("erreur", "conseil"),
+    [("invalid_scope", "Offres d'emploi v2"), ("invalid_client", "recopie"), ("", "vérifie")],
+)
+def test_jeton_refuse_dit_quoi_faire(erreur, conseil):
+    class R:
+        def json(self):
+            return {"error": erreur}
+
+    assert conseil in FT._cause(R())
