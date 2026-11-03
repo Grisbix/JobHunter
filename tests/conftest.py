@@ -177,6 +177,15 @@ def _compteur_api_jetable(tmp_path_factory, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _sans_contrats_exclus(monkeypatch):
+    """The sort's excluded contracts (3.80) empty unless a test sets them: never the
+    repository's own sources_config."""
+    from jobhunter.scoring import sorting
+
+    monkeypatch.setattr(sorting, "_EXCLUS", set())
+
+
+@pytest.fixture(autouse=True)
 def _curseur_linkedin_jetable(tmp_path_factory, monkeypatch):
     """LinkedIn's cursor (3.79) in a throwaway folder: a test never resumes another's."""
     from jobhunter.sources import linkedin

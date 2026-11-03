@@ -38,6 +38,7 @@ HERE = _racine.scripts()
 QUEUE = HERE / "apply_queue.json"
 
 from jobhunter.programs.linkedin_closed import API, RX_FERME, UA, job_id  # same endpoint, same UA
+from jobhunter.sources.common import completer_contrat
 
 # The description lives in a `description__text` block; fallback on <section>.
 RX_DESC = [
@@ -179,6 +180,7 @@ def _ecrire(textes, queue_io, attente=180):
                 continue
             avant = o.get("fit")
             o["description"] = t
+            completer_contrat(o)
             # MANDATORY re-score: without it the offer keeps the fit computed without a description
             _historique.poser(
                 o, *fit_detail(f"{o.get('poste', '')} {t}", o.get("poste", "")), "description"

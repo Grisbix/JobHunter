@@ -544,6 +544,19 @@ def pas_une_offre(o: Offre) -> str | None:
     return None
 
 
+_EXCLUS: set[str] | None = None
+
+
+def _contrats_exclus() -> set[str]:
+    """sources_config's excluded contracts, read once per run (motif sees every offer)."""
+    global _EXCLUS
+    if _EXCLUS is None:
+        from jobhunter.sources.common import contrats_exclus
+
+        _EXCLUS = contrats_exclus()
+    return _EXCLUS
+
+
 def motif(o: Offre, proteges: set[str]) -> str | None:
     """Deletion reason, or None if the offer is kept."""
     if _oid(o) in proteges:
@@ -570,10 +583,20 @@ def motif(o: Offre, proteges: set[str]) -> str | None:
     # Sustainable Finance Analyst" wants a "final or penultimate year
     # student" (the user, 2026-10-07). The contract taken from the title (V.I.E)
     # came before the description, the offer stayed at fit 10.
-    from jobhunter.sources.common import demande_etudiant
+    from jobhunter.sources.common import demande_etudiant, offre_de_stage
 
     if _ici._ETUDIANT and demande_etudiant(o.get("description")):
         return "etudiant"
+
+    # A contract the user excluded (sources_config « contrats_exclus ») is filtered at
+    # the sources' entrance, but only on the contract they announce: an internship
+    # labelled CDD, or said only in the text, got through and stayed at fit 10.
+    exclus = _contrats_exclus()
+    if exclus:
+        if (o.get("contrat") or "") in exclus:
+            return "contrat_exclu"
+        if exclus & {"Stage", "Alternance"} and offre_de_stage(o.get("description")):
+            return "contrat_exclu"
 
     propre = _P.cherche(_ici._RX_PROPRE_METIER, titre)
     lu = _titre_seniorite(titre)

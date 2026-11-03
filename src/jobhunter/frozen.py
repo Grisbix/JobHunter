@@ -92,6 +92,8 @@ def msix_du_store() -> bool:
             ],
             capture_output=True,
             text=True,
+            encoding="oem",
+            errors="replace",
             timeout=30,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )

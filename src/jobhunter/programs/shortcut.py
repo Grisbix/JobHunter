@@ -182,6 +182,8 @@ def creer(
         check=True,
         capture_output=True,
         text=True,
+        encoding="oem",
+        errors="replace",
         timeout=120,
         creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
     )

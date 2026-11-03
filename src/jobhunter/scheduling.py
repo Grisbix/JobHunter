@@ -64,6 +64,11 @@ def _schtasks(*args: str) -> subprocess.CompletedProcess[str]:
         ["schtasks", *args],
         capture_output=True,
         text=True,
+        # Windows tools answer in the console's code page (cp850), not UTF-8: a
+        # French « Erreur : » carries a non-breaking space (0xFF) that killed
+        # the reading thread in UTF-8 mode (2026-11-03).
+        encoding="oem",
+        errors="replace",
         timeout=30,
         creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
     )

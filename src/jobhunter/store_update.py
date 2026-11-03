@@ -56,6 +56,8 @@ def _lancer(action: str, delai: int) -> str:
             ["powershell", "-NoProfile", "-NonInteractive", "-Command", SCRIPT],
             capture_output=True,
             text=True,
+            encoding="oem",
+            errors="replace",
             timeout=delai,
             env=dict(os.environ, JH_ACTION=action),
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),

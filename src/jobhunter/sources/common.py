@@ -443,6 +443,35 @@ _RX_OU_DIPLOME = re.compile(
 )
 
 
+# The posting OFFERS an internship or a work-study, in so many words. Crédit Agricole
+# writes « Vous recherchez un stage en finance durable ? » and labels the job CDD: four
+# such internships stood at fit 10, first of the queue (2026-11-03). Each phrase names
+# the offer itself, not a past internship the candidate may have done.
+_RX_OFFRE_STAGE = re.compile(
+    r"(?:recherch\w*|propos\w*|offr\w*|cherch\w*|recrut\w*)\s+(?:un|une|notre|son|d[\u2019'])\s*"
+    r"(?:\w+\s+){0,2}?(?:stage|stagiaire|alternan\w*|apprenti\w*)\b"
+    r"|\b(?:offre|poste|mission)\s+de\s+stage\b"
+    r"|\bstage\s+(?:de|d[\u2019'])\s*(?:\d+|six|quatre|trois|cinq)\s*(?:\u00e0\s*\d+\s*)?mois\b"
+    r"|\b(?:\d+|six)[\s-]*months?\s+internship\b|\binternship\s+(?:of|for)\s+(?:\d+|six)\s+months?\b"
+    r"|\b(?:this|our|the)\s+internship\b|\binternship\s+(?:position|opportunity|program+e?)\b",
+    re.I,
+)
+# Just before the phrase, a word that turns it around: « ne s'adresse pas aux
+# personnes recherchant une alternance » (EDF's graduate jobs), « également ouvert
+# à un stage de 6 mois » (a CDD first). Measured on the 2 855 offers at fit 8 or more:
+# 7 of 17 matches were these.
+_RX_STAGE_RENVERSE = re.compile(r"\b(?:pas|not|ni|nor|[\u00e9e]galement|aussi|also)\b", re.I)
+
+
+def offre_de_stage(desc: str | None) -> bool:
+    """True if the posting offers an internship or a work-study (see _RX_OFFRE_STAGE)."""
+    t = re.sub(r"\s+", " ", str(desc or ""))
+    for m in _RX_OFFRE_STAGE.finditer(t):
+        if not _RX_STAGE_RENVERSE.search(t[max(0, m.start() - 45) : m.start()]):
+            return True
+    return False
+
+
 def demande_etudiant(desc: str | None) -> bool:
     """True if the posting asks for a candidate STILL A STUDENT, without an alternative for a graduate.
 
@@ -471,7 +500,7 @@ def contrat_de_la_description(desc: str, defaut: str = "") -> str:
         return defaut
     # Before any label: "Contrat : CDD" on a job reserved for students
     # stays a student job, not a job for a graduate.
-    if demande_etudiant(t):
+    if demande_etudiant(t) or offre_de_stage(t):
         return "Stage"
     for m in _RX_LABEL.finditer(t):
         v = _RX_VALEUR.search(t[m.end() : m.end() + 40])
@@ -518,6 +547,20 @@ def contrat_de_la_description(desc: str, defaut: str = "") -> str:
             continue
         return etiquette
     return defaut
+
+
+def completer_contrat(o: dict[str, Any]) -> None:
+    """Reads the contract in a description that arrived AFTER the offer.
+
+    The merge deduces it only from the text it has at entry; LinkedIn's comes later
+    (linkedin_desc, scrape_desc, wtj_desc). 845 offers of the queue kept « non precise »
+    while their text said CDI, CDD or Stage (2026-11-03).
+    """
+    if (o.get("contrat") or "non precise") != "non precise":
+        return
+    c = contrat_de_la_description(o.get("description") or "")
+    if c:
+        o["contrat"] = c
 
 
 # Contract mentions in the TITLE. The French acronyms are unambiguous

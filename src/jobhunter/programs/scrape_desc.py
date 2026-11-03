@@ -15,6 +15,7 @@ import time
 
 from jobhunter import root as _racine
 from jobhunter.navigation.browser import lancer as _lancer
+from jobhunter.sources.common import completer_contrat
 
 # line_buffering: otherwise nothing comes out when the output is redirected (background run = blind)
 sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
@@ -222,6 +223,7 @@ def ecrire_lot(textes, echecs, chemin=None):
             k = _cle(x)
             if k in textes and not (x.get("description") or "").strip():
                 x["description"] = textes[k]
+                completer_contrat(x)
                 x.pop("desc_essai", None)
                 n += 1
             elif k in echecs:

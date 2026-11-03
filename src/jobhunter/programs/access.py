@@ -120,7 +120,12 @@ def _procs_profil():
     )
     try:
         r = subprocess.run(
-            ["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True, timeout=30
+            ["powershell", "-NoProfile", "-Command", ps],
+            capture_output=True,
+            text=True,
+            encoding="oem",
+            errors="replace",
+            timeout=30,
         )
     except Exception:  # noqa: BLE001
         return []

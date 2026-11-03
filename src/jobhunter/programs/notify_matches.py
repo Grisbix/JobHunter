@@ -86,6 +86,8 @@ def toast(title, body):
             ],
             capture_output=True,
             text=True,
+            encoding="oem",
+            errors="replace",
             timeout=30,
             env=env,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),

@@ -31,6 +31,7 @@ import time
 
 from jobhunter import root as _racine
 from jobhunter.scoring import history as _historique
+from jobhunter.sources.common import completer_contrat
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -174,6 +175,7 @@ def _travail(q, a, ecrire):
         o = q[i]
         avant = o.get("fit")
         o["description"] = t
+        completer_contrat(o)
         _historique.poser(
             o, *fit_detail(f"{o.get('poste', '')} {t}", o.get("poste", "")), "description"
         )
