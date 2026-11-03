@@ -299,6 +299,26 @@ def test_frais_fixe_l_emporte_sur_l_age(cibles):
     assert "E2" in cibles[3]
 
 
+def test_fit_faible_revue_tous_les_20_jours():
+    """3.81: under the triage's reach, checked every 20 days instead of 5."""
+    j = datetime.date(2026, 10, 2)
+    basse = offre(1, url=L + "1000011", source="linkedin 2026-08-01", fit=3)
+    moyenne = offre(2, url=L + "1000012", source="linkedin 2026-08-01", fit=6)
+    vu = lambda o, d: [a.queue_io.oid(o), ["OK", "ouverte", o["url"], d]]  # noqa: E731
+    il_y_a_10 = dict([vu(basse, "2026-09-22"), vu(moyenne, "2026-09-22")])
+    assert [o["entreprise"] for o in a.choisir_cibles([basse, moyenne], il_y_a_10, {}, j)] == ["E2"]
+    il_y_a_25 = dict([vu(basse, "2026-09-07")])
+    assert [o["entreprise"] for o in a.choisir_cibles([basse], il_y_a_25, {}, j)] == ["E1"]
+
+
+def test_429_isole_ralentit_le_rythme_puis_il_revient(pauses, scenario):
+    """3.81: after an isolated 429 the pause between requests doubles, then shrinks."""
+    scenario([OUVERTE, R(429)] + [OUVERTE] * 11)
+    assert a.verifier([offre(i) for i in range(12)], {}, 4, JOUR)
+    assert pauses[:3] == [a.PAS_MIN, 30, 2 * a.PAS_MIN]
+    assert pauses[-1] < 2 * a.PAS_MIN  # ten answers later: faster again
+
+
 # ── linkedin_desc reports a closed posting in passing ──────────────────────────
 @pytest.fixture
 def fiche_fermee():
@@ -320,6 +340,19 @@ def test_fiche_fermee_pas_de_description(fiche_fermee):
 
 def test_fiche_fermee_reperee(fiche_fermee):
     assert "42" in ld.FERMEES
+
+
+def test_description_lue_compte_comme_verifiee(file_temporaire):
+    """3.81: the description step read the page: availability_audit skips it today."""
+    from jobhunter.storage import queue as queue_io
+
+    o = offre(1, url=L + "2000001")
+    queue_io.modifier(lambda q: q.append(dict(o)))
+    ld._ecrire({"2000001": "Une description " * 20}, queue_io)
+    etat = a.charger_etat()
+    assert etat[queue_io.oid(o)][:2] == ["OK", "description lue"]
+    jour = datetime.date.today()
+    assert a.choisir_cibles(queue_io.charger(), etat, {}, jour) == []
 
 
 # ── the day's backup is never overwritten ─────────────────────────────────

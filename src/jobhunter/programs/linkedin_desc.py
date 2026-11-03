@@ -162,7 +162,7 @@ def _ecrire(textes, queue_io, attente=180):
 
     from jobhunter.scoring.fit import fit_detail
 
-    ecrites, delta = 0, []
+    ecrites, delta, lues = 0, [], []
     with queue_io.transaction(attente=attente) as q:
         for o in q:
             if "linkedin.com" not in (o.get("url") or ""):
@@ -178,6 +178,7 @@ def _ecrire(textes, queue_io, attente=180):
             t = textes.get(job_id(o.get("url")))
             if not t:
                 continue
+            lues.append(o)
             avant = o.get("fit")
             o["description"] = t
             completer_contrat(o)
@@ -196,7 +197,32 @@ def _ecrire(textes, queue_io, attente=180):
                         (o.get("poste") or "")[:40],
                     )
                 )
+    noter_ouvertes(lues)
     return ecrites, delta
+
+
+def noter_ouvertes(offres):
+    """The postings just read are open today: availability_audit need not ask again.
+
+    Both programs read the same page (jobPosting/<id>); on 2026-11-03 the morning read
+    509 descriptions, then the availability step asked LinkedIn for the same pages,
+    one 429 per request, and stopped at its 100 minutes. A lost note costs one check.
+    """
+    if not offres:
+        return
+    import datetime
+
+    from jobhunter.programs import availability_audit as audit
+    from jobhunter.storage import queue as queue_io
+
+    jour = datetime.date.today().isoformat()
+    try:
+        etat = audit.charger_etat()
+        for o in offres:
+            etat[queue_io.oid(o)] = ["OK", "description lue", o.get("url") or "", jour]
+        audit.sauver_etat(etat)
+    except OSError as e:
+        print(f"  ! etat de disponibilite non note ({type(e).__name__}) : sans gravite")
 
 
 def _travail(cibles, a, queue_io):

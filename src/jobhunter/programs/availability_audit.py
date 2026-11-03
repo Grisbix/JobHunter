@@ -141,6 +141,17 @@ _RX_URL_GENERIQUE = re.compile(r"^https?://[^/]+/?(?:[a-z]{2}(?:-[a-z]{2})?/?)?$
 REFUS_DEBIT = {429}  # rate limit: we wait and resume
 REFUS_ENTREE = {401, 403, 999}  # anti-bot: we do not loop
 
+# An offer at or under this fit is never shown in the daily triage: it is checked
+# every 20 days instead of 5 to 10. On 2026-11-03, 1366 of the 3902 LinkedIn checks
+# left were at fit 4 or less, and the step stopped at its 100 minutes.
+FIT_FAIBLE = 4
+JOURS_FAIBLE = 20
+
+# Pause between two LinkedIn requests, in seconds: doubled after each isolated 429,
+# shortened again while LinkedIn answers. With a fixed 0.5 s, 250 checks took 29 min
+# (2026-11-03): one request in a few was a 429 and cost 30 s, unseen in the log.
+PAS_MIN, PAS_MAX = 0.5, 8.0
+
 
 def _date_collecte(o):
     for k in ("source", "process", "date_pub"):
@@ -240,7 +251,8 @@ def verifier(cibles, etat, pauses_max, aujourd_hui, fin=None):
     _progres(len(autres), total, fermees, fin)
 
     c = collections.Counter()
-    pauses = refus = 0
+    pauses = refus = isoles = 0
+    pas = PAS_MIN
     cl = httpx.Client(timeout=15, headers=UA, follow_redirects=True)
     i = 0
     while i < len(li):
@@ -258,7 +270,9 @@ def verifier(cibles, etat, pauses_max, aujourd_hui, fin=None):
             continue
         if r.status_code in REFUS_DEBIT:
             refus += 1
-            if refus < 3:  # an isolated 429: short pause
+            if refus < 3:  # an isolated 429: short pause, and a slower pace after it
+                isoles += 1
+                pas = min(pas * 2, PAS_MAX)
                 time.sleep(30)
                 continue
             if pauses >= pauses_max or temps_ecoule(_attente(r, pauses + 1)):
@@ -297,12 +311,15 @@ def verifier(cibles, etat, pauses_max, aujourd_hui, fin=None):
         i += 1
         if i % 10 == 0:
             _progres(len(autres) + i, total, fermees, fin)
-        time.sleep(0.5)
+            pas = max(PAS_MIN, pas * 0.8)  # every ten answers: a little faster again
+        time.sleep(pas)
         if i % 250 == 0:
             sauver_etat(etat)
             print(f"  -- {i}/{len(li)} {dict(c)}")
     sauver_etat(etat)
     print(f"  LinkedIn : {dict(c)}")
+    if isoles:
+        print(f"  ({isoles} limite(s) de debit isolee(s), 30 s chacune ; pause finale {pas:.1f} s)")
     _progres(len(autres) + i, total, fermees, fin)
     return i >= len(li)
 
@@ -545,7 +562,10 @@ def choisir_cibles(q, etat, suivi, j, frais=0):
         if frais:
             return jours(frais)
         d = _date_collecte(o)
-        base = 10 if d and d >= jours(14) else 5
+        if _fit(o) <= FIT_FAIBLE:
+            base = JOURS_FAIBLE
+        else:
+            base = 10 if d and d >= jours(14) else 5
         return jours(base + zlib.crc32(queue_io.oid(o).encode()) % 3)
 
     revue_recente = jours(2)
