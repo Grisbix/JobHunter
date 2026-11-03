@@ -195,3 +195,13 @@ def test_la_duree_se_regle_en_ligne_de_commande():
     pipe = open(daily_pipeline.__file__, encoding="utf-8").read()
     assert '["--linkedin", "--linkedin-minutes", str(LINKEDIN_MINUTES)]' in pipe
     assert daily_pipeline.LINKEDIN_MINUTES * 60 < J.LI_DUREE_MAX
+
+
+def test_une_page_incomplete_est_la_derniere(li):
+    # 1 card < 25: page 2 would be empty, it is not asked for.
+    assert len(li(page(), page(), lieux={"France": 3})[1]) == 1
+
+
+def test_une_page_pleine_demande_la_suivante(li):
+    pleine = Reponse(CARTE_LI * 25)
+    assert len(li(pleine, page(), lieux={"France": 3})[1]) == 2

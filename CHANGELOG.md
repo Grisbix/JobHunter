@@ -11,6 +11,7 @@ LinkedIn covers all its searches and the morning collection is half an hour shor
 - **LinkedIn resumes where it stopped.** Each pass started again at the first keyword in your country: the time ran out in the same place every day, and the last keywords and the worldwide search were almost never asked. A pass now resumes at the search where the previous one stopped, and goes round.
 - **A shorter LinkedIn pass in the morning**: 15 minutes instead of 45, most of which were pauses on LinkedIn's rate limit. Short passes later in the day continue the round: `jobhunter collect --linkedin --linkedin-minutes 15`.
 - **A refused France Travail key now shows as refused.** The yield says « refusé » instead of « rien à prendre », and the log says what to do: when the key is known but subscribed to no API, add « Offres d'emploi v2 » to your application on francetravail.io.
+- **LinkedIn no longer asks for a page after the last one**: a page with fewer than 25 postings ends the search, as JobSpy does. Fewer requests, fewer rate limits.
 - **Career feeds**: a Recruitee account that was renamed is followed to its new name, and large Lever feeds get 40 s to answer instead of 15 (theodo timed out every day).
 - **Welcome to the Jungle waits once per pass, not twice**: about 3 minutes saved a day for the same few postings.
 

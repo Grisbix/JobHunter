@@ -83,11 +83,13 @@ def linkedin_guest_search(
                 INCIDENTS["linkedin_http"][r.status_code] += 1
                 break
             blocks = r.text.split("base-card")  # 1 card per block
+            cartes = 0
             for b in blocks:
                 mu = re.search(r'href="(https://[a-z]+\.linkedin\.com/jobs/view/[^"?]+)', b)
                 mt = re.search(r'<span class="sr-only">\s*([^<]+?)\s*</span>', b)
                 if not (mu and mt):
                     continue
+                cartes += 1
                 comp = _LI_COMP.search(b)
                 loc = _LI_LOC.search(b)
                 quand = _LI_DATE.search(b)
@@ -107,6 +109,10 @@ def linkedin_guest_search(
             INCIDENTS["linkedin_reseau"][type(e).__name__] += 1
             break
         _dormir(LI_PAUSE)  # polite: spaces out the pages
+        # A page short of 25 cards is the last one: asking for the next spent a
+        # request (and LinkedIn's rate limit) on an empty answer. As JobSpy does.
+        if cartes < LI_PAR_PAGE:
+            break
     return out
 
 
@@ -125,6 +131,7 @@ def linkedin_guest_search(
 # The pipeline's LinkedIn pass is killed at 3600 s, and a killed pass loses ALL
 # its collection (merge at the end of the pass): we stop cleanly at 45 min.
 LI_PAUSE = 3.0
+LI_PAR_PAGE = 25  # cards per page of the guest search
 
 LI_ATTENTES = (60, 120, 240)
 
