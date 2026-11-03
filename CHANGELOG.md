@@ -4,6 +4,13 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.80.1 — 2026-11-03
+
+Maintenance: nothing changes on screen.
+
+- **Safer small saves.** Five places wrote their file by hand; they now use the engine's one safe writer, which retries when Windows or OneDrive holds the file a moment. Two offers opened at the same instant could clash before.
+- Code tidied after the 3.80 review (one constant for the pipeline's lock, the contracts filter read like the other settings). Same behaviour, same tests, plus one.
+
 ## 3.80.0 — 2026-11-03
 
 A daily triage, internships kept out, and a clearer window.
