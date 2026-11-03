@@ -165,7 +165,7 @@ def _efc_fiche(url: str, client: Any) -> dict[str, Any] | None:
     """JobPosting of the posting, or None. Raises _EfcRefus on a refusal or a quota."""
     try:
         r = _commun._get_borne(client, url, headers=EFC_UA, timeout=30)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
     if r.status_code in (403, 429, 999):
         # Before, silent: a run refused from the first posting looked like a calm day,
@@ -179,7 +179,7 @@ def _efc_fiche(url: str, client: Any) -> dict[str, Any] | None:
     ):
         try:
             o = json.loads(bloc)
-        except Exception:
+        except Exception:  # noqa: BLE001
             continue
         if isinstance(o, dict) and o.get("@type") == "JobPosting":
             return o

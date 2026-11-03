@@ -76,7 +76,7 @@ def description(jid, client, essais=4):
             return ""
         try:
             r = client.get(API.format(jid), headers=UA, timeout=20)
-        except Exception:
+        except Exception:  # noqa: BLE001
             time.sleep(1.5 * (n + 1))
             continue
         if r.status_code == 429:

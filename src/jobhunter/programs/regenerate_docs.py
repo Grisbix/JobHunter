@@ -77,7 +77,7 @@ def convertir(fichiers, exe, dossier):
                 timeout=60 + 8 * len(lot),
             )
             faits += sum(1 for f in lot if f.with_suffix(".pdf").exists())
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"  ! lot PDF {i // LOT_PDF + 1} : {type(e).__name__}")
         print(f"    PDF … {min(i + LOT_PDF, len(fichiers))}/{len(fichiers)}")
     return faits
@@ -157,7 +157,7 @@ def main():
                         print(f"  ! {stem[:60]} : {type(e).__name__}: {e}")
                 else:
                     time.sleep(0.5 * (essai + 1))
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 rates += 1
                 if rates <= 5:
                     print(f"  ! {stem[:60]} : {type(e).__name__}: {e}")

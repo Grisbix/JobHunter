@@ -45,7 +45,7 @@ def to_pdf(docx):
             timeout=90,
         )
         return r.returncode == 0
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False
 
 
@@ -75,7 +75,7 @@ def pass_links(dry=False):
     """Broken cv/letter links in the queue → re-match by stem in the right folder."""
     try:
         q = importlib.import_module("jobhunter.storage.queue").charger(QUEUE, descriptions=False)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return 0, 0
     fixed = broken = 0
     for x in q:
@@ -120,7 +120,7 @@ def _fix_dashes():
         m = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(m)
         return m if callable(getattr(m, "fix_doc", None)) else None
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"  dashes: skipped ({f.name} does not load: {type(e).__name__}: {e})")
         return None
 
@@ -141,7 +141,7 @@ def pass_format(dry=False):
             if fix_dashes:
                 c |= bool(fix_dashes.fix_doc(f, dry=dry))
             c |= bool(refresh_letters.fix_doc(f, ents.get(f.stem, ""), dry=dry))
-        except Exception:
+        except Exception:  # noqa: BLE001
             continue
         n += bool(c)
         if (i + 1) % 300 == 0:

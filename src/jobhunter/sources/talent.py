@@ -39,12 +39,12 @@ def _talent_detail(httpx: Any, url: str) -> Any:
         r = _commun._get_borne(httpx, url, headers=UA, follow_redirects=True)
         if r.status_code != 200:
             return None
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
     for b in re.findall(r'<script type="application/ld\+json">(.*?)</script>', r.text, re.S):
         try:
             d = _json.loads(b)
-        except Exception:
+        except Exception:  # noqa: BLE001
             continue
         nodes = d.get("@graph") if isinstance(d, dict) and "@graph" in d else [d]
         for n in nodes or []:
@@ -90,7 +90,7 @@ def fetch_talent(max_days: int = 60, per_kw: int = 20) -> list[dict[str, Any]]:
             for o in queue_io.charger(descriptions=False)
             if _liens.sur_site(o.get("url"), "talent.com")
         }
-    except Exception:
+    except Exception:  # noqa: BLE001
         seen = set()
     connues = len(seen)
     for kw in _commun.KEYWORDS:
@@ -100,7 +100,7 @@ def fetch_talent(max_days: int = 60, per_kw: int = 20) -> list[dict[str, Any]]:
             )
             if r.status_code != 200:
                 continue
-        except Exception:
+        except Exception:  # noqa: BLE001
             continue
         links = list(dict.fromkeys(_TALENT_LINK_RX.findall(r.text)))[:per_kw]
         got = 0
@@ -119,7 +119,7 @@ def fetch_talent(max_days: int = 60, per_kw: int = 20) -> list[dict[str, Any]]:
                 try:
                     if (today - datetime.date.fromisoformat(date)).days > max_days:
                         continue
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
             out.append(_mk(titre, u, ent or "Talent.com", loc, date, f"talent:{kw}", desc))
             got += 1

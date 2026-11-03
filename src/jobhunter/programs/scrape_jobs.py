@@ -33,7 +33,7 @@ from jobhunter import root as _racine
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
-except Exception:
+except Exception:  # noqa: BLE001
     pass
 
 # An offer's domain and wide lexicon: jobhunter.scoring.domains (phase 3.4).
@@ -243,7 +243,7 @@ def robots_autorise(url: str) -> bool:
     try:
         s = urlsplit(url)
         hote = f"{s.scheme}://{s.netloc}"
-    except Exception:
+    except Exception:  # noqa: BLE001
         return True
     rp: Any = _ROBOTS_CACHE.get(hote)
     if rp is None:
@@ -257,14 +257,14 @@ def robots_autorise(url: str) -> bool:
                 follow_redirects=True,
             )
             rp = robots_lu(r.status_code, r.content.decode("utf-8", "replace"))
-        except Exception:
+        except Exception:  # noqa: BLE001
             rp = False  # unreachable: we do not come back to it, and we move on
         _ROBOTS_CACHE[hote] = rp
     if rp is False:
         return True
     try:
         return rp.can_fetch(ROBOTS_UA, url)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return True
 
 
@@ -489,7 +489,7 @@ def offre_retenue(titre: str) -> bool:
         return False
     try:
         from jobhunter.sources.common import title_ok
-    except Exception:
+    except Exception:  # noqa: BLE001
         return matches_esg_finance(titre)
     return title_ok(titre)
 
@@ -542,7 +542,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                     )
                 else:
                     print(f"  ~ API SmartRecruiters {slug}: HTTP {resp.status_code}")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 print(f"  ~ API SmartRecruiters {slug}: {type(e).__name__}")
         if offers:
             return offers
@@ -592,7 +592,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
 
                     page.evaluate(COOKIE_JS)
                     time.sleep(0.5)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
 
                 # Wait for job content
@@ -641,7 +641,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                 offer_count = len(offers) - total_before
                 total_count = len(js_offers)
                 print(f"  ~ {slug}: {total_count} offres, {offer_count} ESG/Finance")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 print(f"  ~ WTJ {slug}: {type(e).__name__}")
                 continue
         return offers
@@ -656,7 +656,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                     from jobhunter.navigation.page import COOKIE_JS
 
                     page.evaluate(COOKIE_JS)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
                 page.wait_for_timeout(2000)
                 js_offers = page.evaluate(EXTRACT_OFFERS_JS)
@@ -679,7 +679,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                 if offers:
                     print(f"  ✓ {len(offers)} offres retenues Breezy")
                     break
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 print(f"  ! Breezy {url}: {type(e).__name__}")
                 continue
         return offers
@@ -696,7 +696,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                         from jobhunter.navigation.page import COOKIE_JS
 
                         page.evaluate(COOKIE_JS)
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         pass
                     page.wait_for_timeout(2000)
 
@@ -723,9 +723,9 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                     if offers:
                         print(f"  ✓ {len(offers)} offres retenues TalentSoft")
                         break
-                except Exception as e:
+                except Exception:  # noqa: BLE001
                     continue
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"  ! TalentSoft: {e}")
         return offers
 
@@ -751,7 +751,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
 
                 page.evaluate(COOKIE_JS)
                 time.sleep(0.5)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
 
             # Analyse the page
@@ -784,7 +784,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                 job_links = info.get("jobLinks", 0)
                 if job_links > 0:
                     pass  # Some links found but not enough to qualify as job page
-        except Exception as e:
+        except Exception:  # noqa: BLE001
             continue
 
     # ── Fallback: try to find careers section from homepage ──
@@ -798,7 +798,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                 from jobhunter.navigation.page import COOKIE_JS
 
                 page.evaluate(COOKIE_JS)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
             careers = goto_careers(page)
             if careers.get("clicked"):
@@ -823,7 +823,7 @@ def scrape_site(page, entry: dict, timeout_ms: int = 20000) -> list[dict]:
                         )
                 if offers:
                     print(f"  ✓ {len(offers)} offres retenues (via careers)")
-        except Exception as e:
+        except Exception:  # noqa: BLE001
             pass
 
     return offers
@@ -862,7 +862,7 @@ def scrape_all_sites(
             existing = json.loads(output_path.read_text(encoding="utf-8"))
             all_offers = existing
             print(f"📂 Repris {len(all_offers)} offres existantes")
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
     # Choose the engine
@@ -885,7 +885,7 @@ def scrape_all_sites(
             from jobhunter.navigation.browser import block_resources
 
             block_resources(context, images=False)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
         total_offers = 0
@@ -911,7 +911,7 @@ def scrape_all_sites(
                         print(f"  ✅ {len(offers)} offres retenues — total: {total_offers}")
                     else:
                         print("  ⚠️ Aucune offre retenue")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     print(f"  ❌ Erreur site: {type(e).__name__}: {str(e)[:100]}")
                 # Pause between the sites
                 time.sleep(random.uniform(1.0, 3.0))
@@ -920,7 +920,7 @@ def scrape_all_sites(
             # and a rerun scan stacked one more each time.
             try:
                 browser.close()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
 
     # Sauvegarde finale

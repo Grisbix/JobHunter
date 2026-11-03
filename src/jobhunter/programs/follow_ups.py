@@ -23,7 +23,7 @@ from jobhunter.storage.queue import oid as _oid
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console : TextIOWrapper
-except Exception:
+except Exception:  # noqa: BLE001
     pass
 
 ROOT = _racine.racine()
@@ -91,7 +91,7 @@ def a_relancer(days=10):
     q = queue_io.charger(Q, descriptions=False)
     try:
         s = importlib.import_module("jobhunter.storage.applications").charger(SUIVI)
-    except Exception:
+    except Exception:  # noqa: BLE001
         s = {}
     today = date.today()
     out = []
@@ -101,7 +101,7 @@ def a_relancer(days=10):
             continue
         try:
             d = datetime.strptime(sv.get("d", ""), "%Y-%m-%d").date()
-        except Exception:
+        except Exception:  # noqa: BLE001
             continue
         age = (today - d).days
         if age >= days:
@@ -231,7 +231,7 @@ def main():
         # The offer drawer's « Brouillon de relance » (web window): one offer, nothing opened.
         try:
             s = importlib.import_module("jobhunter.storage.applications").charger(SUIVI)
-        except Exception:
+        except Exception:  # noqa: BLE001
             s = {}
         j = 10 if s.get(a.brouillon_de, {}).get("s") == "relancé" else 7
         sys.exit(0 if make_draft(a.brouillon_de, j=j, open_mailto=False) else 1)

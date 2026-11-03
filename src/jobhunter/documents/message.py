@@ -542,16 +542,16 @@ def main() -> int:
         or (a.contient and a.contient.lower() in (o.get("entreprise") or "").lower())
     ]
     if not cibles:
-        print("aucune offre ne correspond")
+        print("aucune offre ne correspond")  # noqa: T201
         return 1
     for o in cibles:
         txt = message(cast(dict[str, Any], o), langue=a.langue, ton=a.ton)
         MSG_OUT.mkdir(parents=True, exist_ok=True)  # at write time, not at import
         f = MSG_OUT / (new_name("Message", o.get("poste", ""), o.get("entreprise", "")) + ".txt")
         f.write_text(txt, encoding="utf-8")
-        print(f"\n=== {o.get('entreprise')} — {(o.get('poste') or '')[:50]} ===")
-        print(txt)
-        print(f"\n-> {f}")
+        print(f"\n=== {o.get('entreprise')} — {(o.get('poste') or '')[:50]} ===")  # noqa: T201
+        print(txt)  # noqa: T201
+        print(f"\n-> {f}")  # noqa: T201
     return 0
 
 

@@ -133,7 +133,7 @@ def _cle(chemin: Path, *champs: str) -> tuple[str, ...] | None:
     try:
         c = _json.loads(chemin.read_text(encoding="utf-8"))
         return tuple(str(c[k]) for k in champs)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         _log.info(
             f"  ✗ {chemin.name} illisible ({type(e).__name__}) — attendu : {', '.join(champs)}"
         )
@@ -262,7 +262,7 @@ def scan_adzuna() -> list[dict[str, Any]]:
                     "content-type": "application/json",
                 },
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             INCIDENTS["adzuna"][type(e).__name__] += 1
             continue
         if not garde.reponse(r):
@@ -325,7 +325,7 @@ def scan_jooble() -> list[dict[str, Any]]:
                 headers={**UA, "Content-Type": "application/json"},
                 json={"keywords": mot, "location": _pays.nom(), "page": "1"},
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             INCIDENTS["jooble"][type(e).__name__] += 1
             continue
         if not garde.reponse(r):
@@ -416,7 +416,7 @@ def scan_usajobs() -> list[dict[str, Any]]:
                 headers={"Host": "data.usajobs.gov", "User-Agent": email, "Authorization-Key": key},
                 params={"Keyword": mot, "DatePosted": 30, "ResultsPerPage": 250},
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             INCIDENTS["usajobs"][type(e).__name__] += 1
             continue
         if not garde.reponse(r):

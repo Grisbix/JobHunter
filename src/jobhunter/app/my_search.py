@@ -337,7 +337,7 @@ class MaRechercheMixin:
                 try:
                     total, avant = _gardees()
                     _total, apres = _gardees(candidat)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     msg = f"! {_t('Aperçu impossible')} ({type(e).__name__})"
                 else:
                     perdues = sorted(avant - apres)
@@ -366,7 +366,7 @@ class MaRechercheMixin:
             try:
                 texte = _sugg.lire_cv(Path(p))
                 liste = _sugg.suggestions(texte, brut())
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 messagebox.showerror("JobHunter", f"{type(e).__name__}: {e}", parent=self.root)
                 return
             if not liste:

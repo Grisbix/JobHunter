@@ -244,9 +244,9 @@ def main() -> int:
         _commun.MONDE = False
         if not a.france and en_plus:
             _commun.PAYS_EN_PLUS, _commun.LIEUX_EN_PLUS = en_plus, noms
-            print(f"── recherche : pays du profil + {', '.join(noms)} ──")
+            print(f"── recherche : pays du profil + {', '.join(noms)} ──")  # noqa: T201
         else:
-            print("── recherche restreinte au pays du profil ──")
+            print("── recherche restreinte au pays du profil ──")  # noqa: T201
     # --efc and --efc-tout count as a requested source. Without them in
     # this list, `--efc` alone fell back on a.all = True and started the WHOLE
     # daily scan again before reaching eFC.
@@ -300,12 +300,12 @@ def main() -> int:
         if demande and not du_pays(n)
     )
     if hors_pays:
-        print(
+        print(  # noqa: T201
             f"── sautées, elles ne couvrent pas ton pays ({_pays.nom()}) : "
             f"{', '.join(hors_pays)} ──"
         )
     if not _vise_finance() and (a.all or a.fir or a.efc or a.efc_tout or a.efc_metier):
-        print(
+        print(  # noqa: T201
             "── FIR et eFinancialCareers sautés : ton filtre de titre ne garde aucun métier finance ──"
         )
 
@@ -477,18 +477,18 @@ def main() -> int:
         durees = _rendement.durees_habituelles(
             _rendement.lire_journal(_racine.dans(_commun.HERE, "_rendement.jsonl"))
         )
-    except Exception:  # an estimate never stops a collection
+    except Exception:  # an estimate never stops a collection  # noqa: BLE001
         durees = {}
     _rendement.plan([nom for _t, nom, _f, _k in etapes], durees)
     fresh = []
     for titre, nom, fn, kw in etapes:
-        print(titre)
+        print(titre)  # noqa: T201
         try:
             fresh += _rendement.mesurer(nom, fn, **kw)
         except Exception as e:  # noqa: BLE001 — one source's failure never loses the others
             # Before: an exception from any source ended the pass, and the offers of
             # the sources already run were never merged (audit 2026-10-29).
-            print(f"  ! {nom} : {type(e).__name__}: {e} — source sautée, les autres continuent")
+            print(f"  ! {nom} : {type(e).__name__}: {e} — source sautée, les autres continuent")  # noqa: T201
             _commun.INCIDENTS.noter(nom, type(e).__name__)
 
     uniq = dedoublonner(fresh)
@@ -497,7 +497,7 @@ def main() -> int:
     # the latter's `--fusion-seule`. Seen on 2026-09-23 on an --apec --dry.
     if not a.dry:
         FRESH.write_text(json.dumps(uniq, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(
+    print(  # noqa: T201
         f"\nScan : {len(uniq)} offres uniques"
         + (" (non ecrit : --dry)" if a.dry else f" (→ {FRESH.name})")
     )
@@ -507,9 +507,9 @@ def main() -> int:
     # is exactly what must not be done against a quota.
     refus = incidents_resume()
     if refus:
-        print("\nRefus rencontrés (une collecte vide peut venir de là) :")
+        print("\nRefus rencontrés (une collecte vide peut venir de là) :")  # noqa: T201
         for l in refus:
-            print(l)
+            print(l)  # noqa: T201
 
     code = _fusionner(uniq, a.dry)
     # The merge stays the priority; a degraded Indeed source is not a success.
@@ -578,8 +578,8 @@ def _fusionner(uniq: Any, dry: bool) -> int:
     try:
         r = merge_into_queue(uniq, dry=dry, attente=1800)
     except queue_io.VerrouIndisponible as e:
-        print(f"! {e}")
-        print(
+        print(f"! {e}")  # noqa: T201
+        print(  # noqa: T201
             f"  Le scan est conserve dans {FRESH.name} : "
             f"`jobhunter collect --fusion-seule` le fusionnera."
         )
@@ -587,14 +587,14 @@ def _fusionner(uniq: Any, dry: bool) -> int:
     # YIELD PER SOURCE: what each one brought back, and why not more.
     _rendement.completer(uniq, r.get("par_source") or {})
     if _rendement.MESURES:
-        print("\nRendement par source :")
+        print("\nRendement par source :")  # noqa: T201
         for ligne in _rendement.resume():
-            print(ligne)
+            print(ligne)  # noqa: T201
         if not dry:
             try:
                 _rendement.enregistrer(_racine.dans(_commun.HERE, "_rendement.jsonl"))
             except OSError as e:
-                print(f"  ! journal de rendement non écrit : {e}")
+                print(f"  ! journal de rendement non écrit : {e}")  # noqa: T201
     if not dry:
         # Per company: last attempt, last success, incident (sources.feeds).
         from jobhunter.sources import feeds as _flux
@@ -602,8 +602,8 @@ def _fusionner(uniq: Any, dry: bool) -> int:
         try:
             _flux.enregistrer(_racine.dans(_commun.HERE, _flux.FICHIER))
         except OSError as e:
-            print(f"  ! état des entreprises non écrit : {e}")
-    print(
+            print(f"  ! état des entreprises non écrit : {e}")  # noqa: T201
+    print(  # noqa: T201
         f"Merge {'[DRY] ' if dry else ''}: +{r['added']} nouvelles, {r['updated']} enrichies (desc), "
         f"{r['promus']} liens promus (LinkedIn -> vrai site), "
         f"{r['hors_zone']} hors zone, "
@@ -613,9 +613,9 @@ def _fusionner(uniq: Any, dry: bool) -> int:
     )
     _rendement.progres(f"bilan {r['added']} nouvelles")
     if r.get("modifiees"):
-        print(
+        print(  # noqa: T201
             f"  {r['modifiees']} offre(s) modifiée(s) par leur site (titre, salaire, contrat, lieu)"
         )
     if r["added"] and not dry:
-        print("→ re-score + descriptions manquantes : automatiques au prochain lancement de l'app.")
+        print("→ re-score + descriptions manquantes : automatiques au prochain lancement de l'app.")  # noqa: T201
     return 0

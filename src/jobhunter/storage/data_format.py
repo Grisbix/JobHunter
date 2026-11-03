@@ -51,7 +51,7 @@ def verifier_ecriture(dossier: Path) -> None:
             from importlib.metadata import version
 
             par = version("jobhunter")
-        except Exception:  # running from the source code, not installed
+        except Exception:  # running from the source code, not installed  # noqa: BLE001
             par = "?"
         try:
             atomique.ecrire_json(dossier / FICHIER, {"format": FORMAT, "par": par})

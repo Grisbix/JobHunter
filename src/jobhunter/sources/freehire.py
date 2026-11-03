@@ -125,7 +125,7 @@ def scan_freehire() -> list[dict[str, Any]]:
                         "offset": page * PAR_PAGE,
                     },
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 INCIDENTS["freehire"][type(e).__name__] += 1
                 break
             if not garde.reponse(r):

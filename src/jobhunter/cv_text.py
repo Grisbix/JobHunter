@@ -185,7 +185,7 @@ def pourquoi_peu_de_texte(chemin: Path | str) -> str:
                     "pas en lire le texte. Exporte ton CV en PDF depuis Word, Canva ou Google "
                     "Docs, ou donne le .docx."
                 )
-    except Exception:  # a damaged file: the generic advice
+    except Exception:  # a damaged file: the generic advice  # noqa: BLE001
         return ""
     return ""
 

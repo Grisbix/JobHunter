@@ -1282,7 +1282,7 @@ def reclasser_domaines():
                 if o.get("domaine") != d:
                     o["domaine"] = d
                     n += 1
-    except Exception as e:  # queue busy: the profile is written all the same
+    except Exception as e:  # queue busy: the profile is written all the same  # noqa: BLE001
         print(f"  offres        : domaines non recalculés ({type(e).__name__}), relance plus tard")
         return 0
     return n

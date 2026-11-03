@@ -233,7 +233,7 @@ def dismiss_cookies(page: Any) -> Any:
     """
     try:
         return page.evaluate(COOKIE_JS)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {"done": "err"}
 
 
@@ -275,7 +275,7 @@ def dismiss_overlays(page: Any) -> Any:
     """
     try:
         return page.evaluate(_OVERLAY_JS)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {"closed": 0, "kinds": []}
 
 
@@ -290,7 +290,7 @@ def analyze(page: Any) -> Any:
     """
     try:
         return page.evaluate(ANALYZE_JS)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {"kind": "other", "captcha": False, "blocked": False}
 
 
@@ -323,13 +323,13 @@ def wait_for_form(
     while _t.time() < deadline:
         try:
             n = page.evaluate(_COUNT_VISIBLE_INPUTS_JS)
-        except Exception:
+        except Exception:  # noqa: BLE001
             n = 0
         if n >= min_inputs:
             return n
         try:
             page.wait_for_timeout(500)
-        except Exception:
+        except Exception:  # noqa: BLE001
             break
     return n
 
@@ -350,6 +350,6 @@ def click_for_task(page: Any, task: str) -> Any:
             page.locator('[data-wn-pick="1"]').first.click(timeout=4000)
             page.wait_for_timeout(1500)
             return r.get("label")
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return None

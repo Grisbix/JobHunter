@@ -119,7 +119,7 @@ def parle(langue: str) -> bool:
         from jobhunter import profile as _P
 
         langues: Any = _P.get("langues_parlees", None)
-    except Exception:
+    except Exception:  # noqa: BLE001
         langues = None
     if not isinstance(langues, list) or not langues:
         return langue == "fr"

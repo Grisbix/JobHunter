@@ -629,18 +629,18 @@ def main() -> int:
     import collections
 
     cnt = collections.Counter(m for m, _ in jette)
-    print(f"file : {len(q)} offres")
-    print(f"  conservees : {len(garde)}")
-    print(f"  supprimees : {len(jette)}\n")
+    print(f"file : {len(q)} offres")  # noqa: T201
+    print(f"  conservees : {len(garde)}")  # noqa: T201
+    print(f"  supprimees : {len(jette)}\n")  # noqa: T201
     for m, n in cnt.most_common():
-        print(f"    {m:24} {n:5}")
+        print(f"    {m:24} {n:5}")  # noqa: T201
 
     if a.motifs:
         for m in [x for x, _ in cnt.most_common()]:
             lot = [o for mm, o in jette if mm == m]
-            print(f"\n── {m} ({len(lot)}) ──")
+            print(f"\n── {m} ({len(lot)}) ──")  # noqa: T201
             for o in lot[: a.echantillon]:
-                print(
+                print(  # noqa: T201
                     f"   fit {o.get('fit'):>2} exp {str(o.get('exp_requise')):>2}  "
                     f"{(o.get('entreprise') or '')[:22]:24}{(o.get('poste') or '')[:58]}"
                 )
@@ -648,26 +648,26 @@ def main() -> int:
     if a.garde:
         reste = [o for _, o in garde]
         reste.sort(key=lambda o: -(o.get("fit") or 0))
-        print("\n── conservees, du meilleur fit au moins bon ──")
+        print("\n── conservees, du meilleur fit au moins bon ──")  # noqa: T201
         for o in reste[: a.echantillon]:
-            print(
+            print(  # noqa: T201
                 f"   fit {o.get('fit'):>2}  {(o.get('entreprise') or '')[:22]:24}"
                 f"{(o.get('poste') or '')[:58]}"
             )
-        print("   ...")
+        print("   ...")  # noqa: T201
         for o in reste[-a.echantillon :]:
-            print(
+            print(  # noqa: T201
                 f"   fit {o.get('fit'):>2}  {(o.get('entreprise') or '')[:22]:24}"
                 f"{(o.get('poste') or '')[:58]}"
             )
 
     if not a.supprime:
-        print("\n[INSPECTION] rien n'a ete ecrit. --supprime pour purger.")
+        print("\n[INSPECTION] rien n'a ete ecrit. --supprime pour purger.")  # noqa: T201
         return 0
 
     sauv = QUEUE.with_suffix(f".json.avant_tri_{time.strftime('%Y%m%d_%H%M%S')}")
     shutil.copy2(QUEUE, sauv)
-    print(f"\nsauvegarde : {sauv.name}")
+    print(f"\nsauvegarde : {sauv.name}")  # noqa: T201
     # ONE PER DAY SINCE THE PIPELINE SORTS. 9 MB each, endlessly: we keep
     # the last five. The name carries the timestamp, so alphabetical order
     # is chronological order.
@@ -717,15 +717,15 @@ def main() -> int:
         # Project convention: queue busy = code 3, nothing changed. Without
         # this, a traceback and code 1 — the pipeline could not tell
         # "someone is writing" from "the sorting crashed".
-        print(f"! {e}")
+        print(f"! {e}")  # noqa: T201
         return 3
-    print(f"file purgee : {avant} → {restant} offres ({avant - restant} supprimees)")
-    print(f"lieux trouves ou nettoyes : {lieux}")
+    print(f"file purgee : {avant} → {restant} offres ({avant - restant} supprimees)")  # noqa: T201
+    print(f"lieux trouves ou nettoyes : {lieux}")  # noqa: T201
     # The collection must not take them back tomorrow: see rejets_tri.py.
     from jobhunter.programs import sort_rejections as rejets_tri
 
     n = rejets_tri.ajouter(retires, extraits=extraits)
-    print(f"rejets memorises : {n} (la collecte les ignore {rejets_tri.DUREE_JOURS} jours)")
+    print(f"rejets memorises : {n} (la collecte les ignore {rejets_tri.DUREE_JOURS} jours)")  # noqa: T201
     return 0
 
 

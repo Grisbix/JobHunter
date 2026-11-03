@@ -50,7 +50,7 @@ PROGRES = "»» "
 
 def progres(texte: str) -> None:
     """Prints one progress line, at once (the application reads it as it comes)."""
-    print(PROGRES + texte, flush=True)
+    print(PROGRES + texte, flush=True)  # noqa: T201
 
 
 def durees_habituelles(lignes: Iterable[dict[str, Any]], n: int = 5) -> dict[str, float]:

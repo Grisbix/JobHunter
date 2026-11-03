@@ -283,7 +283,7 @@ def _get(client, url, timeout=15):
     try:
         r = client.get(url, timeout=timeout, headers=UA, follow_redirects=True)
         return r
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 

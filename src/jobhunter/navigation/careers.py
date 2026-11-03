@@ -76,7 +76,7 @@ def smart_step(
                     page.wait_for_timeout(wait)
                     page.reload(timeout=30000, wait_until="domcontentloaded")
                     page.wait_for_timeout(1500)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
                 continue
             return {"status": "blocked", "kind": kind, "note": "anti-bot — humain requis"}
@@ -90,7 +90,7 @@ def smart_step(
             if lbl:
                 try:
                     page.wait_for_load_state("domcontentloaded", timeout=4000)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
                 page.wait_for_timeout(1500)
                 continue  # re-analysis after the click
@@ -146,12 +146,12 @@ def smart_step(
                                 "note": "form dans une iframe",
                                 "frame": fr.url,
                             }
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         pass
             elif strat == "reload":
                 page.reload(timeout=30000, wait_until="domcontentloaded")
                 page.wait_for_timeout(2000)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     # last resort: LLM vision (Ollama llava) — "sees" the right button
     v = vision_pick(page, task)
@@ -239,7 +239,7 @@ def search_careers(page: Any, query: str) -> dict[str, Any]:
         return {"searched": False}
     try:
         r = page.evaluate(_SEARCH_JS)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {"searched": False}
     if not r or not r.get("found"):
         return {"searched": False}
@@ -251,14 +251,14 @@ def search_careers(page: Any, query: str) -> dict[str, Any]:
         loc.press("Enter", timeout=3000)
         page.wait_for_timeout(2500)
         return {"searched": True, "ph": r.get("ph", ""), "q": str(query)[:60]}
-    except Exception:
+    except Exception:  # noqa: BLE001
         # fallback: requestSubmit of the form containing THE SEARCH FIELD, nothing else
         try:
             if not react_submit(page, '[data-wn-search="1"]'):
                 return {"searched": False, "ph": r.get("ph", "")}
             page.wait_for_timeout(2000)
             return {"searched": True, "ph": r.get("ph", ""), "q": str(query)[:60]}
-        except Exception:
+        except Exception:  # noqa: BLE001
             return {"searched": False, "ph": r.get("ph", "")}
 
 
@@ -530,14 +530,14 @@ def goto_careers(page: Any) -> dict[str, Any]:
     # ── Primary: deep career scan (4-pass comprehensive DOM search) ──
     try:
         r = page.evaluate(_DEEP_CAREER_SCAN_JS)
-    except Exception:
+    except Exception:  # noqa: BLE001
         r = None
 
     # If deep scan found nothing, fall back to pick_js("careers")
     if not r or not r.get("found"):
         try:
             r = page.evaluate(pick_js("careers"))
-        except Exception:
+        except Exception:  # noqa: BLE001
             return {"clicked": False, "reason": "scan_error"}
 
     if not r or not r.get("found"):
@@ -550,7 +550,7 @@ def goto_careers(page: Any) -> dict[str, Any]:
                 page.wait_for_timeout(3500)
                 try:
                     page.wait_for_load_state("domcontentloaded", timeout=5000)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
                 kind = analyze(page).get("kind", "other")
                 return {
@@ -562,7 +562,7 @@ def goto_careers(page: Any) -> dict[str, Any]:
                     "is_js_only": False,
                     "top5": [],
                 }
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
         return {
             "clicked": False,
@@ -583,10 +583,10 @@ def goto_careers(page: Any) -> dict[str, Any]:
             page.wait_for_timeout(3500)
             try:
                 page.wait_for_load_state("domcontentloaded", timeout=5000)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
             clicked = True
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     # Strategy 2: JS click via evaluate (bypasses Playwright actionability checks)
     if not clicked:
@@ -597,10 +597,10 @@ def goto_careers(page: Any) -> dict[str, Any]:
             page.wait_for_timeout(3500)
             try:
                 page.wait_for_load_state("domcontentloaded", timeout=5000)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
             clicked = True
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     # Strategy 3: For JS-only links (no href), dispatch MouseEvent
     if not clicked and is_js_only:
@@ -616,10 +616,10 @@ def goto_careers(page: Any) -> dict[str, Any]:
             page.wait_for_timeout(3500)
             try:
                 page.wait_for_load_state("domcontentloaded", timeout=5000)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
             clicked = True
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     # Strategy 4: If element has no href but has parent <a>, click parent
     if not clicked:
@@ -635,10 +635,10 @@ def goto_careers(page: Any) -> dict[str, Any]:
             page.wait_for_timeout(3500)
             try:
                 page.wait_for_load_state("domcontentloaded", timeout=5000)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
             clicked = True
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     # Strategy 5: navigate directly to href if available
     if not clicked and href and not is_js_only:
@@ -653,7 +653,7 @@ def goto_careers(page: Any) -> dict[str, Any]:
             page.goto(full_url, timeout=30000, wait_until="domcontentloaded")
             page.wait_for_timeout(3500)
             clicked = True
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
     if not clicked:
@@ -784,7 +784,7 @@ def fetch_sitemap_careers(page: Any, base_url: str = "") -> list[Any]:
     else:
         try:
             origin = page.evaluate("() => window.location.origin")
-        except Exception:
+        except Exception:  # noqa: BLE001
             origin = ""
     if origin:
         sitemap_urls = [
@@ -822,7 +822,7 @@ def fetch_sitemap_careers(page: Any, base_url: str = "") -> list[Any]:
                         results.append(
                             {"url": url_text, "label": label, "score": 2, "source": "sitemap"}
                         )
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # Fallback: raw regex on the XML
                 for match in _re.finditer(
                     r"<loc>([^<]+)</loc>", data.decode("utf-8", errors="ignore")
@@ -836,7 +836,7 @@ def fetch_sitemap_careers(page: Any, base_url: str = "") -> list[Any]:
                         )
             if results:
                 break
-        except Exception:
+        except Exception:  # noqa: BLE001
             continue
     return results
 
@@ -849,7 +849,7 @@ def drill_to_offer(page: Any, role_hint: str = "", job_rx: str = "") -> dict[str
     """
     try:
         r = page.evaluate(_drill_js(role_hint, job_rx))
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {"clicked": False}
     if not r or not r.get("found"):
         return {"clicked": False}
@@ -857,7 +857,7 @@ def drill_to_offer(page: Any, role_hint: str = "", job_rx: str = "") -> dict[str
         page.locator('[data-wn-drill="1"]').first.click(timeout=4000)
         page.wait_for_timeout(2000)
         return {"clicked": True, "label": r.get("label", ""), "n": r.get("n", 0)}
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {"clicked": False, "label": r.get("label", "")}
 
 
@@ -875,10 +875,10 @@ def find_offer(page: Any, role_hint: str = "", max_tries: int = 3) -> Any:
     # lets the JS render the offers (React/Vue cards) before analysing
     try:
         page.wait_for_load_state("networkidle", timeout=6000)
-    except Exception:
+    except Exception:  # noqa: BLE001
         try:
             page.wait_for_timeout(2000)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     ats = detect_ats(page)
     last = {}
@@ -988,7 +988,7 @@ def homepage_fallback(
             hp = _json.loads(
                 (_racine.scripts() / "homepages.json").read_text(encoding="utf-8")
             ).get(entreprise)
-        except Exception:
+        except Exception:  # noqa: BLE001
             hp = None
     if not hp:  # 2) on-the-fly resolution (guesses the domain + validates over HTTP)
         try:
@@ -1013,9 +1013,9 @@ def homepage_fallback(
                     # an interrupted write_text left it truncated — hence
                     # unreadable, hence rebuilt from scratch at the next scan.
                     importlib.import_module("jobhunter.programs.util").jwrite(_hp_f, c)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
-        except Exception:
+        except Exception:  # noqa: BLE001
             hp = None
     if not hp:
         return {"ok": False, "note": "no_homepage"}

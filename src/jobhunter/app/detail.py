@@ -220,7 +220,7 @@ class DetailMixin:
                         text=f"{path.name} · {doc.page_count} p. · lecture (PDF) — molette pour dérouler"
                     )
                     doc.close()  # releases the file (images already rendered)
-                except Exception as ex:
+                except Exception as ex:  # noqa: BLE001
                     surface("txt")
                     rtxt.delete("1.0", "end")
                     rtxt.insert("end", f"aperçu KO: {type(ex).__name__}")
@@ -243,7 +243,7 @@ class DetailMixin:
                         else "lecture seule (CV : 📂 Ouvrir → Word)"
                     )
                 )
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 rtxt.insert("end", f"lecture KO: {type(ex).__name__}")
 
         def save_doc() -> None:
@@ -284,7 +284,7 @@ class DetailMixin:
                         s.append(s.makeelement(qn("w:autoHyphenation"), {qn("w:val"): "true"}))
                     doc.save(str(p))
                 self._log(f"💾 enregistré : {p.name}\n")
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 self._log(f"! sauvegarde KO: {type(ex).__name__}\n")
                 return
             tw = p.with_suffix(".pdf")
@@ -313,7 +313,7 @@ class DetailMixin:
                                 self.root.after(
                                     0, lambda: self._log(f"📄 PDF resynchronisé : {tw.name}\n")
                                 )
-                            except Exception:
+                            except Exception:  # noqa: BLE001
                                 pass
                             return
 
@@ -562,7 +562,7 @@ class DetailMixin:
                 pginfo.configure(
                     text=f"{doc.page_count} page(s) · zoom {state['zoom']:.1f} · molette = dérouler"
                 )
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 cv_canvas.delete("all")
                 cv_canvas.create_text(
                     20, 20, text=f"aperçu KO: {type(ex).__name__}", fill="#dc2626", anchor="nw"
@@ -577,7 +577,7 @@ class DetailMixin:
             if state.get("doc") is not None:
                 try:
                     state["doc"].close()
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
                 state["doc"] = None
             state["path"] = path
@@ -590,7 +590,7 @@ class DetailMixin:
                     state["doc"] = fitz.open(str(path))
                     show_surface("pdf")
                     render()
-                except Exception as ex:
+                except Exception as ex:  # noqa: BLE001
                     show_surface("txt")
                     txtv.delete("1.0", "end")
                     txtv.insert("end", f"lecture KO: {type(ex).__name__}")
@@ -620,7 +620,7 @@ class DetailMixin:
                 pginfo.configure(text=state["info"])
                 state["editable"] = editable
                 txtv.edit_modified(False)
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 txtv.insert(
                     "end", f"lecture KO: {type(ex).__name__} — clique « Ouvrir » pour Word."
                 )
@@ -701,7 +701,7 @@ class DetailMixin:
                 self._log(f"💾 enregistré : {p.name}\n")
                 txtv.edit_modified(False)
                 maj_marque()
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 self._log(f"! sauvegarde KO: {type(ex).__name__}\n")
                 return
             # twin PDF regenerated in the background (LibreOffice) to stay in sync
@@ -731,7 +731,7 @@ class DetailMixin:
                                 self.root.after(
                                     0, lambda: self._log(f"📄 PDF resynchronisé : {tw.name}\n")
                                 )
-                            except Exception:
+                            except Exception:  # noqa: BLE001
                                 pass
                             return
 
@@ -835,7 +835,7 @@ class DetailMixin:
                     )
                     out = ((r.stdout or "") + (r.stderr or "")).strip().splitlines()
                     msg = out[-1][:90] if out else "fini"
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     msg = f"! {type(e).__name__}"
 
                 def done() -> None:
@@ -878,7 +878,7 @@ class DetailMixin:
             if state.get("doc") is not None:
                 try:
                     state["doc"].close()
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
                 state["doc"] = None
 

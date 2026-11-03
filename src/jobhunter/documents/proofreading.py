@@ -146,7 +146,7 @@ def _banals() -> set[str]:
         from jobhunter.profile import identite
 
         nom = {m.lower() for m in identite()["nom"].split()}
-    except Exception:  # profile missing: we count without its name
+    except Exception:  # profile missing: we count without its name  # noqa: BLE001
         nom = set()
     return _BANALS_BASE | nom
 

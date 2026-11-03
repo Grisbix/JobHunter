@@ -95,7 +95,7 @@ def _get(httpx: Any, adresse: str, **params: Any) -> Any:
     for attente in (*ATTENTES, None):
         try:
             r = _commun._get_borne(httpx, adresse, timeout=60, headers=UA, params=params)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             _log.info(f"  ⚠ Common Crawl : {type(e).__name__}")
             r = None
         if r is not None and r.status_code == 200:
@@ -212,7 +212,7 @@ def offres_ouvertes(trouve: tuple[str, Any]) -> int | None:
             return None
         r = _commun._get_borne(httpx, _API_COMPTE[outil].format(cle), timeout=15, headers=UA)
         return _compte(outil, r.json()) if r.status_code == 200 else 0
-    except Exception:
+    except Exception:  # noqa: BLE001
         return 0
 
 
@@ -227,7 +227,7 @@ def main(argv: list[str] | None = None) -> int:
         ap.print_help()
         return 0
     bilan = construire_annuaire(a.instantanes)
-    print(
+    print(  # noqa: T201
         f"Annuaire Workday : {bilan['sites']} sites ({bilan['nouveaux']} nouveaux, "
         f"{bilan['pages']} pages lues)"
         + (

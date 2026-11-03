@@ -54,7 +54,7 @@ def noter(path: Path) -> None:
     """Records `path`'s current text as generated (not a retouch)."""
     try:
         empreinte = _empreinte(_texte(path))
-    except Exception:  # an unreadable document: nothing to protect it against
+    except Exception:  # an unreadable document: nothing to protect it against  # noqa: BLE001
         return
     reg = _lire(path.parent)
     reg[path.name] = empreinte
@@ -72,7 +72,8 @@ def retouche(path: Path) -> bool:
         return False
     try:
         return _empreinte(_texte(path)) != connue
-    except Exception:  # unreadable (open in Word, damaged): do not overwrite it either
+    # unreadable (open in Word, damaged): do not overwrite it either
+    except Exception:  # noqa: BLE001
         return True
 
 
@@ -94,7 +95,7 @@ def enregistrer(doc: Any, out: Path) -> Path:
         doc.save(str(nouveau))
         try:
             n = ecart(out, nouveau)
-        except Exception:
+        except Exception:  # noqa: BLE001
             n = -1
         _log.warning(
             f"  ✋ {out.name} retouché à la main : ta version est gardée. La nouvelle est dans "

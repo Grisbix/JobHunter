@@ -63,7 +63,10 @@ extend-include = ["*.pyw"]
 src = ["src", "outils"]
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "I", "UP", "B", "D"]
+select = ["E", "W", "F", "I", "UP", "B", "D", "BLE", "T20"]
+# BLE (blind except) and T20 (print) since 2026-11-03, as a ratchet: the existing
+# cases carry a `noqa` each, a new one is refused. An error swallowed in silence
+# was behind several bugs of that audit (a skipped pass, a tracker read as empty).
 # Suspended rules, TO BE CLEARED (counts as of 2026-10-17). Each one needs
 # manual work or depends on the package split (phase 3); they are not
 # added in bulk to `ignore` without a count or a reason.
@@ -79,7 +82,6 @@ ignore = [
     "B023",   # 2 — function that captures a loop variable
     "E731",   # 4 — lambda assigned to a name
     "UP035",  # 1 — deprecated import
-    "F841",   # 11 — variable assigned but never read (to review one by one)
 ]
 
 # Google-style docstrings (phase 8): required on the package's whole public API.
@@ -89,8 +91,11 @@ ignore = [
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"!src/jobhunter/**/*.py" = ["D"]
-"src/jobhunter/programs/*" = ["D"]
+"!src/jobhunter/**/*.py" = ["D", "T20"]
+# print is the output of the command lines: allowed in the programs and the CLI.
+"src/jobhunter/programs/*" = ["D", "T20"]
+"src/jobhunter/cli.py" = ["T20"]
+"src/jobhunter/__main__.py" = ["T20"]
 "src/jobhunter/app/*" = ["D"]
 
 [tool.ruff.lint.isort]

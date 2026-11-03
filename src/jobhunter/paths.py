@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
     etat = f"chemins.json → {_ici.BASE}" if CONFIG.exists() else "defaut : la racine du projet"
-    print(f"source du reglage : {etat}")
+    print(f"source du reglage : {etat}")  # noqa: T201
     for nom, p in (
         ("CV/Par_offre", _ici.CV_PAR_OFFRE),
         ("Lettres/Par_offre", _ici.LT_PAR_OFFRE),
@@ -122,4 +122,4 @@ if __name__ == "__main__":
         ("CV/Sur_mesure", CV_SUR_MESURE),
     ):
         n = len(list(p.glob("*"))) if p.exists() else 0
-        print(f"  {nom:20} {'✓' if p.exists() else '✗'} {n:6} fichiers  {p}")
+        print(f"  {nom:20} {'✓' if p.exists() else '✗'} {n:6} fichiers  {p}")  # noqa: T201

@@ -270,7 +270,7 @@ def scan_hellowork(limite: int = 30) -> list[dict[str, Any]]:
                 offers.append(_mk(titre, url, str(soc), lieu, quand, "hellowork", d))
         except Refus as e:
             _log.info(f"  ~ HelloWork : refus (HTTP {e}) — arrêt de la passe, sans contournement")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             INCIDENTS.noter("hellowork", type(e).__name__)
             _log.info(f"  ~ HelloWork : {type(e).__name__} — arrêt de la passe")
     _log.info(f"  ✓ HelloWork → {len(offers)} offres (avec description)")

@@ -198,7 +198,7 @@ def prendre_verrou(
         try:
             champs = v.read_text(encoding="utf-8").split()
             tenu_par = champs[0]
-        except Exception:
+        except Exception:  # noqa: BLE001
             champs, tenu_par = [], ""
         try:
             pose = float(champs[1])
@@ -237,7 +237,7 @@ def prendre_verrou(
         if bavard and not prevenu:
             try:
                 qui = v.read_text(encoding="utf-8").split()[0]
-            except Exception:
+            except Exception:  # noqa: BLE001
                 qui = "?"
             _log.info(f"… {v.name} tenu par le PID {qui} — j'attends (max {attente}s)")
             prevenu = True

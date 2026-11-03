@@ -371,7 +371,7 @@ def deviner(
             time.sleep(AGREG_PAUSE / 2)
             try:
                 n = _essai(httpx, outil, compte, nom)
-            except Exception as x:
+            except Exception as x:  # noqa: BLE001
                 INCIDENTS["sites-carrieres"][type(x).__name__] += 1
                 continue
             if n > 0:
@@ -400,7 +400,7 @@ def lire_la_page(httpx: Any, url: str) -> dict[str, Any] | None:
     """The tool behind a career page, by reading it once; None if none or unreachable."""
     try:
         r = _commun._get_borne(httpx, url, timeout=15, headers=UA, follow_redirects=True)
-    except Exception as x:
+    except Exception as x:  # noqa: BLE001
         INCIDENTS["sites-carrieres"][type(x).__name__] += 1
         return None
     if r.status_code != 200:
@@ -416,7 +416,7 @@ def _pages_par_entreprise() -> dict[str, list[str]]:
     out: dict[str, list[str]] = {}
     try:
         file = queue_io.charger(_commun.QUEUE, descriptions=False)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return out
     for o in file:
         u = str(o.get("url") or "")
@@ -433,7 +433,7 @@ def _fits_par_entreprise() -> dict[str, int]:
     out: dict[str, int] = {}
     try:
         file = queue_io.charger(_commun.QUEUE, descriptions=False)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return out
     for o in file:
         k = companies.cle(o.get("entreprise"))
@@ -583,7 +583,7 @@ def scan_company_sites(n: int = PAR_PASSE) -> list[dict[str, Any]]:
             for o in offres:
                 if not str(o.get("source") or "").startswith("sites-carrieres:"):
                     o["source"] = f"sites-carrieres:{outil}"
-        except Exception as x:
+        except Exception as x:  # noqa: BLE001
             INCIDENTS["sites-carrieres"][type(x).__name__] += 1
             continue
         out.extend(offres)

@@ -50,17 +50,17 @@ class DonneesMixin:
         self._search_cache.clear()
         try:
             self.offers = queue_io.charger(QUEUE)
-        except Exception:
+        except Exception:  # noqa: BLE001
             self.offers = []
         try:
             self.suivi = importlib.import_module("jobhunter.storage.applications").charger(
                 _commun.SUIVI
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             self.suivi = {}
         try:
             self.comptes = json.loads(_commun.COMPTES.read_text(encoding="utf-8"))
-        except Exception:
+        except Exception:  # noqa: BLE001
             self.comptes = {}
         self._empreinte_file = self._empreinte_donnees()
         self.refresh_table()
@@ -145,7 +145,7 @@ class DonneesMixin:
                     timeout=300,
                     creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 err = type(e).__name__
                 self.root.after(0, lambda n=err: self._log(f"! auto-desc: {n}\n"))
             self.root.after(0, done)
@@ -187,7 +187,7 @@ class DonneesMixin:
                 )
                 lines = [l for l in (r.stdout or "").splitlines() if l.strip()]
                 msg = " · ".join(lines[-2:])[:110] if lines else ""
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 msg = f"! {type(e).__name__}"
 
             def done() -> None:
@@ -263,7 +263,7 @@ class DonneesMixin:
                         if err
                         else ("! code %d" % r.returncode)
                     )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 msg = "! %s" % type(e).__name__
 
             def done() -> None:
@@ -303,7 +303,7 @@ class DonneesMixin:
                         "envoie-le puis passe le statut à « relancé ».\n"
                     ),
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 err = type(e).__name__
                 self.root.after(0, lambda n=err: self._log(f"! relance: {n}\n"))
 

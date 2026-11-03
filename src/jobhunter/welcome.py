@@ -62,7 +62,7 @@ def activer_depot(fenetre: Any, rappel: Callable[[list[Path]], None]) -> bool:
 
         fenetre.dnd_bind("<<Drop>>", deposer)
         return True
-    except Exception:  # library missing, or this Tk cannot load tkdnd
+    except Exception:  # library missing, or this Tk cannot load tkdnd  # noqa: BLE001
         return False
 
 
@@ -901,7 +901,7 @@ def profil_guide(fenetre: Any, cv: str = "") -> bool:
             from jobhunter.programs.first_launch import lire_cv
 
             texte = lire_cv(cv)
-        except (Exception, SystemExit) as e:  # a damaged, protected or unknown file
+        except (Exception, SystemExit) as e:  # a damaged, protected or unknown file  # noqa: BLE001
             messagebox.showerror(
                 "JobHunter",
                 f"Ce fichier ne s'ouvre pas : {Path(cv).name}\n\n{e}\n\n"

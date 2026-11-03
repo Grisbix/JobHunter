@@ -307,7 +307,7 @@ def main(argv: list[str]) -> int:
     for nom in argv[1:] or list(SCENARIOS):
         try:
             enregistrer(nom)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"{nom:<11} ÉCHEC : {type(e).__name__}: {e}")
     return 0
 

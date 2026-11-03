@@ -1132,7 +1132,7 @@ def _secteurs(cle_profil: str, defaut: list[Any]) -> list[Secteur]:
         from jobhunter import profile as _P
 
         brut = _P.get(f"zones.{cle_profil}", defaut)
-    except Exception:
+    except Exception:  # noqa: BLE001
         brut = defaut
     return [s for s in (_secteur(x) for x in (brut or [])) if s]
 
@@ -1142,7 +1142,7 @@ def _pays_maison() -> str:
         from jobhunter import profile as _P
 
         v = str(_P.get("pays", "") or "").strip().lower()
-    except Exception:
+    except Exception:  # noqa: BLE001
         v = ""
     return v if len(v) == 2 and v.isalpha() else "fr"
 
@@ -1346,7 +1346,7 @@ def zone_france(lieu: str | None) -> str:
 
             if not job_sources._RX_FR.search(lieu or ""):
                 return INTERNATIONAL
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     # France or abroad? We rely on job_sources' detector, the only
     # place where the lists of countries and American state codes live.
@@ -1363,7 +1363,7 @@ def zone_france(lieu: str | None) -> str:
         etranger = not francais and bool(
             job_sources._RX_ETAT_US.search(lieu or "") or _code_etranger(job_sources, lieu or "")
         )
-    except Exception:
+    except Exception:  # noqa: BLE001
         etranger = False
     if etranger or _etranger_par_forme(lieu or ""):
         return INTERNATIONAL
@@ -1935,7 +1935,7 @@ def pays_lieu(lieu: str | None) -> str:
 
         if job_sources._RX_ETAT_US.search(lieu or ""):
             return "États-Unis"
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return "étranger (autre)"
 
@@ -2256,13 +2256,13 @@ def main() -> int:
         haut = collections.Counter(
             zone_lieu(o.get("localisation")) for o in q if (o.get("fit") or 0) >= 8
         )
-        print(f"{len(q)} offres\n")
+        print(f"{len(q)} offres\n")  # noqa: T201
         for z in sorted(c, key=lambda z: ORDRE[z]):
-            print(f"  {z:12} {c[z]:5}   dont fit >= 8 : {haut.get(z, 0)}")
-        print("\nExemples classes « ailleurs » a fit >= 8 :")
+            print(f"  {z:12} {c[z]:5}   dont fit >= 8 : {haut.get(z, 0)}")  # noqa: T201
+        print("\nExemples classes « ailleurs » a fit >= 8 :")  # noqa: T201
         for o in q:
             if (o.get("fit") or 0) >= 8 and zone_lieu(o.get("localisation")) == AILLEURS:
-                print(
+                print(  # noqa: T201
                     f"  fit {o['fit']}  {(o.get('localisation') or '')[:34]:34} "
                     f"{(o.get('poste') or '')[:38]}"
                 )
@@ -2276,9 +2276,9 @@ def main() -> int:
                 if o.get("zone") != z:
                     o["zone"] = z
                     n += 1
-            print(f"{n} offre(s) etiquetee(s). Champ `zone` a jour.")
+            print(f"{n} offre(s) etiquetee(s). Champ `zone` a jour.")  # noqa: T201
     except queue_io.VerrouIndisponible as e:
-        print(f"! {e}")
+        print(f"! {e}")  # noqa: T201
         return 3
     return 0
 

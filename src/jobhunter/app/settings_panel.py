@@ -27,7 +27,7 @@ def version() -> str:
         from jobhunter.programs import update as _maj
 
         v = str(_maj.version_locale())
-    except Exception:  # an incomplete install must not hide the panel
+    except Exception:  # an incomplete install must not hide the panel  # noqa: BLE001
         v = "0"
     if v in ("", "0"):
         try:

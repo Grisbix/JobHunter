@@ -70,7 +70,7 @@ def description(url, client, essais=2):
     for n in range(essais):
         try:
             r = client.get(url, headers=UA, timeout=25)
-        except Exception:
+        except Exception:  # noqa: BLE001
             time.sleep(1.5 * (n + 1))
             continue
         # 202 with an empty body = CloudFront anti-bot challenge. It does not come at
@@ -85,7 +85,7 @@ def description(url, client, essais=2):
         for bloc in RX_LD.findall(r.text):
             try:
                 o = json.loads(bloc)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 continue
             # Only one block carries @type JobPosting; the other is a FAQPage
             # without a useful description.

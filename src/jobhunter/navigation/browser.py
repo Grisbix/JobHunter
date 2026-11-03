@@ -40,7 +40,7 @@ def lancer(chromium: Any, **options: Any) -> Any:
         for canal in CANAUX_SYSTEME:
             try:
                 return chromium.launch(channel=canal, **options)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 continue
         raise
 
@@ -49,7 +49,7 @@ def human_pause(page: Any, lo: int = 350, hi: int = 1100) -> None:
     """Fixed pause (average of lo and hi), so as not to hammer the site."""
     try:
         page.wait_for_timeout((lo + hi) // 2)
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
 
 
@@ -61,7 +61,7 @@ def human_type(page: Any, selector: str, text: str, click_first: bool = True) ->
             loc.click(timeout=3000)
         loc.fill(str(text), timeout=3000)
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False
 
 
@@ -70,7 +70,7 @@ def human_click(page: Any, selector: str, steps: int | None = None, timeout: int
     try:
         page.locator(selector).first.click(timeout=timeout)
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False
 
 
@@ -80,7 +80,7 @@ def human_scroll(page: Any, steps: int | None = None) -> None:
         try:
             page.mouse.wheel(0, 500)
             human_pause(page, 250, 800)
-        except Exception:
+        except Exception:  # noqa: BLE001
             break
 
 
@@ -117,15 +117,15 @@ def block_resources(ctx: Any, images: bool = False) -> None:
             if rq.resource_type in heavy or _AD_RX.search(rq.url):
                 return route.abort()
             return route.continue_()
-        except Exception:
+        except Exception:  # noqa: BLE001
             try:
                 return route.continue_()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
 
     try:
         ctx.route("**/*", _route)
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
 
 
@@ -143,7 +143,7 @@ def robust_goto(
             # iCIMS + SPAs: client-side redirect can destroy context — settle wait
             try:
                 page.wait_for_load_state("domcontentloaded", timeout=2500)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
             page.wait_for_timeout(_rnd.randint(300, 700))
             code = resp.status if resp else 0
@@ -152,7 +152,7 @@ def robust_goto(
                 page.wait_for_timeout(min(2**i * 3000, 20000))
                 continue
             return {"ok": True, "status": code, "note": "ok"}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             last = str(e).splitlines()[0][:120]
             page.wait_for_timeout(min(2**i * 2500, 15000))
     return {"ok": False, "status": 0, "note": last or "goto échoué"}
@@ -172,7 +172,7 @@ def available_engines() -> list[str]:
         import playwright.sync_api  # noqa: F401
 
         return ["playwright"]
-    except Exception:
+    except Exception:  # noqa: BLE001
         return []
 
 
@@ -242,22 +242,22 @@ class BrowserSession:
         try:
             if self._page and not self._page.is_closed():
                 self._page.close()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         try:
             if self._context:
                 self._context.close()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         try:
             if self._browser and self._browser.is_connected():
                 self._browser.close()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         try:
             if self._playwright:
                 self._playwright.stop()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         _t.sleep(1)
         self._crashed = True
@@ -268,20 +268,20 @@ class BrowserSession:
         try:
             if self._page and not self._page.is_closed():
                 self._page.close()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         try:
             if self._context:
                 self._context.close()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         try:
             if self._browser and self._browser.is_connected():
                 self._browser.close()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         try:
             if self._playwright:
                 self._playwright.stop()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass

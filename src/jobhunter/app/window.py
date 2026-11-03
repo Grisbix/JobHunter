@@ -107,7 +107,7 @@ class App(
         self._search_job = None  # pending after() (anti-stutter)
         try:
             self.myemail = _profil.identite()["email"]
-        except Exception:
+        except Exception:  # noqa: BLE001
             self.myemail = ""
         root.title("JobHunter")
         _poser_icone(root)
@@ -120,10 +120,10 @@ class App(
         def _maximiser() -> None:
             try:
                 root.state("zoomed")
-            except Exception:
+            except Exception:  # noqa: BLE001
                 try:
                     root.attributes("-zoomed", True)  # repli Linux
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
 
         _maximiser()
@@ -345,7 +345,7 @@ class App(
 
             if msg := _maj.confirmer_demarrage():
                 self._log(msg + "\n")
-        except Exception:  # never a reason not to open
+        except Exception:  # never a reason not to open  # noqa: BLE001
             pass
         # JOBHUNTER_SANS_FOND=1 : aucun travail de fond (scan, descriptions,
         # sync). To open the app for a visual check without
@@ -522,11 +522,11 @@ class App(
         }
         try:
             etat["split"] = self._offer_split.sash_coord(0)[0]
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         try:
             etat["cols"] = {c: int(self.tree.column(c, "width")) for c in self._visible_cols}
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         return etat
 
@@ -551,12 +551,12 @@ class App(
         if "split" in e:
             try:
                 self._offer_split.sash_place(0, e["split"], self._offer_split.sash_coord(0)[1])
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
         for c, w in (e.get("cols") or {}).items():
             try:
                 self.tree.column(c, width=w)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
 
     def _dispo_suivre(self, widget: Any) -> None:
@@ -637,7 +637,7 @@ def _annonce_mise_a_jour(root: Any, app: Any) -> None:
 
             v = mise_a_jour.nouvelle_version()
             installee = mise_a_jour.version_locale()
-        except Exception:
+        except Exception:  # noqa: BLE001
             v = None
         if v:
             root.after(0, lambda: proposer(v, installee))

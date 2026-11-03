@@ -584,7 +584,7 @@ def _executer(a, journal):
         q = queue_io.charger(descriptions=False)
         fit9 = sum(1 for o in q if (o.get("fit") or 0) >= 9)
         print(f"\n  file : {len(q)} offres · {fit9} a fit >= 9")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"\n  ! lecture de la file impossible : {type(e).__name__}")
 
     if alertes:

@@ -111,13 +111,13 @@ class ExecutionMixin:
         try:
             if lbl is None or not lbl.winfo_exists():
                 return  # the window was closed before this callback
-        except Exception:
+        except Exception:  # noqa: BLE001
             return
         try:
             from jobhunter import collect_state as _etat
 
             d = _etat.diagnostic(tr=_langue.t)
-        except Exception:  # never break the window over a status line
+        except Exception:  # never break the window over a status line  # noqa: BLE001
             d = None
         if d is not None:
             couleur = {"ok": SIDE_MUT, "en_cours": SIDE_TX}.get(d.niveau, SIDE_ALERTE)
@@ -168,7 +168,7 @@ class ExecutionMixin:
             subprocess.Popen(
                 cmd, cwd=str(SCRIPTS), creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0x10)
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self._log(f"! lancement console KO: {e}\n")
 
     def run_all(self: "AppTypee") -> None:
@@ -249,7 +249,7 @@ class ExecutionMixin:
             from jobhunter.programs import update as mise_a_jour
 
             avant = mise_a_jour.version_locale()
-        except Exception:
+        except Exception:  # noqa: BLE001
             mise_a_jour, avant = None, "?"  # type: ignore[assignment]  # module missing: None, tested below
         self._log(f"\n{'=' * 56}\n▶ Mise à jour de JobHunter\n{'=' * 56}\n")
 
@@ -308,7 +308,7 @@ class ExecutionMixin:
                 bufsize=1,
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.q.put(("line", f"! lancement KO: {e}\n"))
             return False
         for line in self.proc.stdout:
@@ -348,7 +348,7 @@ class ExecutionMixin:
                     f"\n{'=' * 60}\n{datetime.datetime.now():%Y-%m-%d %H:%M:%S}  "
                     f"[{contexte}]\n{trace}"
                 )
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass  # logging must never become the next failure
         resume = (
             f"{type(exc).__name__}: {exc}" if exc is not None else trace.strip().split("\n")[-1]
@@ -358,7 +358,7 @@ class ExecutionMixin:
                 f"! panne interne [{contexte}] — {resume[:120]}\n"
                 f"  trace complète : Scripts/_logs/app_erreurs.log\n"
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
     def _panne_tk(self: "AppTypee", typ: Any, val: Any, tb: Any) -> None:
@@ -405,7 +405,7 @@ class ExecutionMixin:
             ):
                 self._bande_maj = maintenant
                 self._maj_bande()
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             # ONE FAULTY LINE KILLED THE APP. Only queue.Empty was
             # caught: any other failure exited BEFORE the `after` of the
             # last line, and nothing rescheduled itself any more. Measured: 1 loop
@@ -436,12 +436,12 @@ class ExecutionMixin:
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
             )
             self._log(f"⏹ arrete (arbre du PID {pid})." + "\n")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             err = type(e).__name__
             self._log(f"! arret KO ({err}) — repli sur terminate\n")
             try:
                 self.proc.terminate()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
 
     def _gen_docs(self: "AppTypee") -> None:
@@ -451,7 +451,7 @@ class ExecutionMixin:
         click ten times. We ask for it, offering the real count to do."""
         try:
             q = queue_io.charger(QUEUE)
-        except Exception:
+        except Exception:  # noqa: BLE001
             q = list(self.offers)
 
         def _f(u: Any) -> Any:
@@ -459,7 +459,7 @@ class ExecutionMixin:
                 return False
             try:
                 return _doc_existe(u)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 return False
 
         reste = sum(

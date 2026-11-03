@@ -43,7 +43,7 @@ def _travail(q, a):
 
     try:
         from jobhunter.documents import match_skills
-    except Exception:
+    except Exception:  # noqa: BLE001
         match_skills = None
 
     changed = fit_changed = senior = 0
@@ -77,7 +77,7 @@ def _travail(q, a):
                 x["skills_match"] = len(
                     match_skills(f"{x.get('poste', '')} {x.get('domaine', '')} {miss} {prof}")
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
         b = "—" if new is None else f"{(new // 20) * 20}-{(new // 20) * 20 + 19}"
         dist[b] = dist.get(b, 0) + 1

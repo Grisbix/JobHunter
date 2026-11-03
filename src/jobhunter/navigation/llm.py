@@ -63,7 +63,7 @@ def vision_pick(
 
     try:
         png = page.screenshot(type="png")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         return {"clicked": False, "note": "screenshot KO: %s" % type(e).__name__}
     b64 = base64.b64encode(png).decode()
     goal = _VISION_TASK_FR.get(task, _VISION_TASK_FR["apply"])
@@ -90,7 +90,7 @@ def vision_pick(
         with urllib.request.urlopen(req, timeout=120) as resp:  # nosec B310 : scheme checked by exiger_http
             out = json.loads(resp.read().decode())
         label = (out.get("response") or "").strip().strip('"').splitlines()[0][:60]
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         return {"clicked": False, "note": "ollama KO (%s) — pull %s ?" % (type(e).__name__, model)}
     if not label or label.upper() == "NONE":
         return {"clicked": False, "label": label, "note": "vision: aucun bouton"}
@@ -99,7 +99,7 @@ def vision_pick(
         if r and r.get("found"):
             page.locator('[data-wn-vpick="1"]').first.click(timeout=4000)
             return {"clicked": True, "label": r.get("label", label), "note": "vision OK"}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         return {"clicked": False, "label": label, "note": "clic KO: %s" % type(e).__name__}
     return {"clicked": False, "label": label, "note": "label vu mais introuvable au DOM"}
 
@@ -137,7 +137,7 @@ def _detect_vision_model(host: str = "http://localhost:11434") -> str | None:
             ml = m.lower()
             if "vl" in ml or "vision" in ml:
                 return m.split(":")[0] if ":" in m else m
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return None  # nothing found → manual fallback
 
@@ -159,7 +159,7 @@ def _detect_text_model(host: str = "http://localhost:11434") -> str | None:
                 if kw in m.lower() and "vl" not in m.lower() and "vision" not in m.lower():
                     return m
         return models[0] if models else None
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 
@@ -223,7 +223,7 @@ def llm_agent(
             return {"ok": False, "steps": step, "log": log, "note": "captcha — humain requis"}
         try:
             dom = page.evaluate(_AGENT_DOM_JS)
-        except Exception:
+        except Exception:  # noqa: BLE001
             return {"ok": False, "steps": step, "log": log, "note": "dom digest KO"}
         prompt = (
             "Tu pilotes un navigateur pour ce but: %s.\n"
@@ -265,7 +265,7 @@ def llm_agent(
             with urllib.request.urlopen(req, timeout=90) as resp:  # nosec B310 : scheme checked by exiger_http
                 out = json.loads(resp.read().decode())
             act = json.loads(out.get("response") or "{}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {"ok": False, "steps": step, "log": log, "note": "llm KO: %s" % type(e).__name__}
         a = (act.get("action") or "").lower()
         log.append(
@@ -291,7 +291,7 @@ def llm_agent(
             # final submit safeguard
             try:
                 txt = page.locator(sel).first.inner_text(timeout=1500)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 txt = ""
             if NEVER.search(txt or ""):
                 return {

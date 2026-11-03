@@ -79,7 +79,7 @@ def ouvrir(app: Any) -> None:
         for e in _generes.en_attente(dossiers()):
             try:
                 n = str(_generes.ecart(e.actuel, e.nouveau))
-            except Exception:  # open in Word, damaged: shown, not compared
+            except Exception:  # open in Word, damaged: shown, not compared  # noqa: BLE001
                 n = "?"
             iid = tv.insert("", "end", values=(os.path.relpath(e.actuel, _chemins.BASE), n))
             attente[iid] = e
@@ -97,7 +97,7 @@ def ouvrir(app: Any) -> None:
         e = attente[sel[0]]
         try:
             lignes = _generes.comparer(e.actuel, e.nouveau)
-        except Exception as x:
+        except Exception as x:  # noqa: BLE001
             texte.insert("end", _t("Lecture impossible : {a}").format(a=type(x).__name__), "-")
             return
         for genre, p in lignes:

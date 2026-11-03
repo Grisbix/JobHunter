@@ -69,7 +69,7 @@ SITES_CONNEXION = {
 def _load(p, default):
     try:
         return json.loads(p.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001
         return default
 
 
@@ -121,7 +121,7 @@ def _procs_profil():
         r = subprocess.run(
             ["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True, timeout=30
         )
-    except Exception:
+    except Exception:  # noqa: BLE001
         return []
     out = []
     for ligne in r.stdout.split(chr(10)):
@@ -169,7 +169,7 @@ def cmd_close(force=False):
     for pid in racines:
         try:
             subprocess.run(["taskkill", "/PID", str(pid), "/T"], capture_output=True, timeout=15)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     for _ in range(10):
         time.sleep(1)
@@ -189,7 +189,7 @@ def cmd_close(force=False):
             subprocess.run(
                 ["taskkill", "/F", "/PID", str(pid), "/T"], capture_output=True, timeout=15
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     time.sleep(1)
     reste = _pids_profil()
@@ -211,7 +211,7 @@ def cmd_open(host):
         from jobhunter.navigation import get_sync_playwright
 
         sp, _ = get_sync_playwright("auto")
-    except Exception:
+    except Exception:  # noqa: BLE001
         from playwright.sync_api import sync_playwright as sp
     PROFIL.mkdir(parents=True, exist_ok=True)
     print(f"→ ouverture de {url}")
@@ -227,13 +227,13 @@ def cmd_open(host):
                 no_viewport=True,
                 timeout=90000,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"✗ Chrome n'a pas demarre ({type(e).__name__})")
             return 1
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
         try:
             page.goto(url, timeout=45000)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         # ACTIVE wait: we re-read the session state every 2 s and close
         # as soon as the login is done. No more need for a human to close the
@@ -250,7 +250,7 @@ def cmd_open(host):
                     connecte = True
                     break
                 ctx.pages[0].wait_for_timeout(2000)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # An OAuth redirect temporarily destroys the JS context.
                 # Wait for the next round, without closing the login in progress.
                 if not ctx.pages:
@@ -262,7 +262,7 @@ def cmd_open(host):
             print("  ⚠ delai ecoule sans connexion detectee — fermeture quand meme")
         try:
             ctx.close()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     if connecte:
         print(
@@ -304,7 +304,7 @@ def cmd_check(limit_hosts=None):
         from jobhunter.navigation import analyze, dismiss_cookies, get_sync_playwright
 
         sp, eng = get_sync_playwright("auto")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"✗ playwright indisponible : {type(e).__name__}")
         return 1
     PROFIL.mkdir(parents=True, exist_ok=True)
@@ -323,7 +323,7 @@ def cmd_check(limit_hosts=None):
                 no_viewport=True,
                 timeout=90000,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # Tell the two causes apart: the previous message announced
             # "profil verrouillé" even on a simple timeout.
             n = type(e).__name__
@@ -345,7 +345,7 @@ def cmd_check(limit_hosts=None):
                 try:
                     dismiss_cookies(page)
                     page.wait_for_timeout(700)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
                 a = analyze(page)
                 kind = str(a.get("kind") or "?")
@@ -360,14 +360,14 @@ def cmd_check(limit_hosts=None):
                     # The absence of a form proves nothing: we look for a sign
                     # POSITIF de session (deconnexion, avatar, espace perso).
                     etat = "connecte" if page.evaluate(_SESSION_JS) else "indetermine"
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 etat, kind = "erreur", type(ex).__name__
             entree = c.setdefault(h, {})
             entree["session"], entree["session_verif"] = etat, today
             print(f"  {etat:<12} {h:<34} (kind={kind})")
         try:
             ctx.close()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     _save(COMPTES, c)
     print(f"\n→ etat ecrit dans {COMPTES.name}")
@@ -389,7 +389,7 @@ def cmd_open_all(only=None):
         from jobhunter.navigation import get_sync_playwright
 
         sp, _ = get_sync_playwright("auto")
-    except Exception:
+    except Exception:  # noqa: BLE001
         from playwright.sync_api import sync_playwright as sp
     PROFIL.mkdir(parents=True, exist_ok=True)
     sites = [(h, u) for h, u in SITES_CONNEXION.items() if not only or h in only]
@@ -405,7 +405,7 @@ def cmd_open_all(only=None):
                 no_viewport=True,
                 timeout=90000,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"✗ Chrome n'a pas demarre ({type(e).__name__})")
             return 1
         first = ctx.pages[0] if ctx.pages else None
@@ -420,10 +420,10 @@ def cmd_open_all(only=None):
 
                     _dc(page)
                     page.wait_for_timeout(700)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
                 print(f"  ✓ onglet {i + 1}/{len(sites)} : {h}")
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 print(f"  ! onglet {i + 1}/{len(sites)} : {h} ({type(ex).__name__})")
             _t.sleep(0.6)
         print("\nNavigateur ouvert. Connecte-toi dans chaque onglet.")
@@ -431,11 +431,11 @@ def cmd_open_all(only=None):
         try:
             while ctx.pages:  # holds as long as a tab stays open
                 _t.sleep(3)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         try:
             ctx.close()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     print("→ navigateur ferme, sessions conservees. Verifie : python JobHunter.pyw acces --check")
     return 0

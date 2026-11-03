@@ -108,7 +108,7 @@ def balayer(app, journal: str, oui: bool) -> None:
             try:
                 if not c.winfo_ismapped():  # another panel, hidden
                     continue
-            except Exception:
+            except Exception:  # noqa: BLE001
                 continue
             n = c.__class__.__name__
             if n == "CTkSegmentedButton" and "English" in (c.cget("values") or []):
@@ -128,7 +128,7 @@ def balayer(app, journal: str, oui: bool) -> None:
     def texte(b):
         try:
             return str(b.cget("text"))
-        except Exception:
+        except Exception:  # noqa: BLE001
             return "?"
 
     profond = [False]
@@ -145,7 +145,7 @@ def balayer(app, journal: str, oui: bool) -> None:
                     profond[0] = False
                 try:
                     t.destroy()
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
 
     def cliquer(b, ou):
@@ -167,7 +167,7 @@ def balayer(app, journal: str, oui: bool) -> None:
             else:
                 b.invoke()
             app.root.update()
-        except Exception:
+        except Exception:  # noqa: BLE001
             erreur(*sys.exc_info())
         fermer(avant)
 
@@ -184,7 +184,7 @@ def balayer(app, journal: str, oui: bool) -> None:
                 try:
                     m.invoke(i)
                     app.root.update()
-                except Exception:
+                except Exception:  # noqa: BLE001
                     erreur(*sys.exc_info())
                 fermer(avant)
 
@@ -192,7 +192,7 @@ def balayer(app, journal: str, oui: bool) -> None:
         if i == len(PANNEAUX):
             try:
                 menu(app._menu_reglages())
-            except Exception:
+            except Exception:  # noqa: BLE001
                 erreur(*sys.exc_info())
             dire(f"FIN : {len(erreurs)} erreur(s)")
             log.close()
@@ -210,9 +210,9 @@ def balayer(app, journal: str, oui: bool) -> None:
                         cliquer(b, cle)
                         app._nav[cle].invoke()  # back to the panel after each click
                         app.root.update()
-                except Exception:
+                except Exception:  # noqa: BLE001
                     erreur(*sys.exc_info())
-        except Exception:
+        except Exception:  # noqa: BLE001
             erreur(*sys.exc_info())
         app.root.after(300, lambda: panneau(i + 1))
 

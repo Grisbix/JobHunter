@@ -92,7 +92,7 @@ def langue_offre(
             from jobhunter.scoring.zones import INCONNU, INTERNATIONAL, zone_france
 
             z = zone_france(L)
-        except Exception:
+        except Exception:  # noqa: BLE001
             z = None
         if z is not None and z not in (INTERNATIONAL, INCONNU):
             return "fr"  # a French place, whatever the zone
@@ -122,14 +122,14 @@ def main() -> int:
         lg = langue_offre(o.get("poste"), o.get("description"))
         c[lg] += 1
         par_zone[o.get("zone") or "?"][lg] += 1
-    print(f"{len(q)} offres · {c['fr']} en francais · {c['en']} en anglais\n")
+    print(f"{len(q)} offres · {c['fr']} en francais · {c['en']} en anglais\n")  # noqa: T201
     for z, cc in sorted(par_zone.items()):
-        print(f"  {z:14} fr {cc['fr']:5}   en {cc['en']:5}")
-    print("\nExemples classes ANGLAIS :")
+        print(f"  {z:14} fr {cc['fr']:5}   en {cc['en']:5}")  # noqa: T201
+    print("\nExemples classes ANGLAIS :")  # noqa: T201
     n = 0
     for o in q:
         if langue_offre(o.get("poste"), o.get("description")) == "en" and n < 8:
-            print(
+            print(  # noqa: T201
                 f"  {(o.get('entreprise') or '')[:22]:22} {(o.get('poste') or '')[:44]:44} "
                 f"{(o.get('localisation') or '')[:22]}"
             )

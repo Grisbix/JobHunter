@@ -91,7 +91,7 @@ def react_submit(page: Any, champ: str | None = None) -> bool:
     """
     try:
         return bool(page.evaluate(_REQSUBMIT_JS, champ))
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False
 
 
@@ -104,14 +104,14 @@ def login_flow(page: Any, email: str, pwd: str, max_steps: int = 3) -> dict[str,
     stops, without clicking: before, it wrote "" there and clicked « log in »
     (audit 2026-11-03).
     """
-    pwd = ""
+    del pwd  # never used: the password is never typed (project rule)
     import json as _json
 
     steps = []
     for _ in range(max_steps):
         try:
             r = page.evaluate(f"({_LOGIN_JS})({_json.dumps({'email': email})})")
-        except Exception:
+        except Exception:  # noqa: BLE001
             break
         steps.append(r)
         submitted_pwd = bool(r.get("pwd"))
@@ -119,12 +119,12 @@ def login_flow(page: Any, email: str, pwd: str, max_steps: int = 3) -> dict[str,
             url_before = None
             try:
                 url_before = page.url
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
             try:
                 page.locator('[data-wn-next="1"]').first.click(timeout=4000)
                 page.wait_for_timeout(2000)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 break
             # click swallowed (URL + DOM unchanged) -> native requestSubmit
             try:
@@ -133,7 +133,7 @@ def login_flow(page: Any, email: str, pwd: str, max_steps: int = 3) -> dict[str,
                     if react_submit(page):
                         r["reqsubmit"] = True
                         page.wait_for_timeout(2000)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
         if submitted_pwd:  # password step reached: the human's turn, stop
             break
@@ -177,14 +177,14 @@ def switch_to_register(page: Any) -> dict[str, Any]:
     """
     try:
         r = page.evaluate(_SWITCH_REG_JS)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {"switched": False}
     if not r or not r.get("found"):
         return {"switched": False}
     try:
         page.locator('[data-wn-reg="1"]').first.click(timeout=4000)
         page.wait_for_timeout(1800)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {"switched": False, "label": r.get("label", "")}
     kind = analyze(page).get("kind", "other")
     return {"switched": True, "label": r.get("label", ""), "kind": kind}

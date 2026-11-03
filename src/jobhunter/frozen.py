@@ -152,7 +152,7 @@ def documents() -> Path:
                         return Path(chemin.value)
                 finally:
                     ctypes.windll.ole32.CoTaskMemFree(chemin)  # type: ignore[attr-defined,unused-ignore]
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     return Path.home() / "Documents"
 

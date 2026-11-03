@@ -248,7 +248,7 @@ def main():
                 continue
             try:
                 hits = linkedin_guest_search(kw, pages=a.pages, days=a.days)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 print(f"  ✖  {kw:<34} erreur {type(e).__name__}")
                 continue
             urls = {norm_url(h["url"]) for h in hits}

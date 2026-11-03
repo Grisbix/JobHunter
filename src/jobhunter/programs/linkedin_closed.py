@@ -89,7 +89,7 @@ def etat(jid, client, essais=2):
     for n in range(essais):
         try:
             r = client.get(API.format(jid), headers=UA, timeout=15)
-        except Exception:
+        except Exception:  # noqa: BLE001
             time.sleep(1.5 * (n + 1))
             continue
         if r.status_code == 429:  # LinkedIn slows us down: we slow down
@@ -139,7 +139,7 @@ def _oids_suivis():
 def _memoire():
     try:
         return json.loads(ETAT.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {}
 
 
@@ -149,7 +149,7 @@ def _frais(entree, jours):
         return False
     try:
         vu = _dt.date.fromisoformat(entree["date"])
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False
     return (_dt.date.today() - vu).days < jours
 

@@ -81,7 +81,7 @@ def _ids_ashby(corps: Any) -> set[str] | None:
 def _json(r: Any) -> Any:
     try:
         return r.json()
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 
@@ -131,7 +131,7 @@ def controle(url: str, get: Callable[..., Any]) -> Verdict | None:
             if ident.lower() in ids:
                 return OUVERTE, "ouverte (tableau Ashby)"
             return FERMEE, "absente du tableau Ashby"
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
     return None
 

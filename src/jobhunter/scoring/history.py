@@ -45,7 +45,7 @@ def regles() -> str:
         from importlib.metadata import version
 
         moteur = version("jobhunter")
-    except Exception:  # source code without installation
+    except Exception:  # source code without installation  # noqa: BLE001
         moteur = "?"
     try:
         from jobhunter import profile as _profil
@@ -55,7 +55,7 @@ def regles() -> str:
         empreinte = hashlib.sha256(
             json.dumps(utile, sort_keys=True, ensure_ascii=False).encode("utf-8")
         ).hexdigest()[:8]
-    except Exception:  # no profile yet
+    except Exception:  # no profile yet  # noqa: BLE001
         empreinte = "?"
     return f"{moteur}·{empreinte}"
 

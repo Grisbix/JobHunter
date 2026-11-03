@@ -83,7 +83,7 @@ def _citable(t: str | None, langue: str) -> bool:
         if len(t) < 120:
             return True
         return langue_offre("", t) == langue
-    except Exception:
+    except Exception:  # noqa: BLE001
         return True
 
 
@@ -511,7 +511,7 @@ def _enable_hyphenation(doc: Any) -> None:
         if s.find(qn("w:autoHyphenation")) is None:
             el = s.makeelement(qn("w:autoHyphenation"), {qn("w:val"): "true"})
             s.append(el)
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
 
 

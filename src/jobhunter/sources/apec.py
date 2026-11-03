@@ -115,7 +115,7 @@ def _apec_page(mot: str, debut: int) -> tuple[Any, int]:
         _log.info(f"    ! {mot} : HTTP {e.code}")
         INCIDENTS["apec"][f"HTTP {e.code}"] += 1
         return None, 0
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         _log.info(f"    ! {mot} : {type(e).__name__}")
         return [], 0
     return d.get("resultats") or [], d.get("totalCount") or 0

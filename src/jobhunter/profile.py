@@ -377,10 +377,10 @@ if __name__ == "__main__":
     try:
         p = charger()
     except ProfilAbsent as e:
-        print(e)
+        print(e)  # noqa: T201
         sys.exit(1)
-    print(f"Profil : {FICHIER}")
-    print(
+    print(f"Profil : {FICHIER}")  # noqa: T201
+    print(  # noqa: T201
         f"  {identite()['nom']} · {len(domaines())} domaine(s) · "
         f"{len(get('competences', {}) or {})} competence(s) · "
         f"{len(get('collecte.mots_cles', []) or [])} mot(s)-cle(s) de collecte"

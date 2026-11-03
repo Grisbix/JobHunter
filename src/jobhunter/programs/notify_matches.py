@@ -93,7 +93,7 @@ def toast(title, body):
             print(f"  ! toast échoué : {(r.stderr or '').strip()[:120]}")
             return False
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"  ! toast impossible : {type(e).__name__}")
         return False
 
@@ -124,7 +124,7 @@ def main():
     if SEEN.exists():
         try:
             seen = set(json.loads(SEEN.read_text(encoding="utf-8")))
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass  # unreadable history: we start from scratch rather than crash
 
     hits = [

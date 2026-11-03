@@ -310,7 +310,7 @@ def _pages_pdf(pdf: Path) -> int:
         with fitz.open(str(pdf)) as d:
             pages: int = d.page_count
             return pages
-    except Exception:
+    except Exception:  # noqa: BLE001
         return 1  # unreadable: no point looping
 
 

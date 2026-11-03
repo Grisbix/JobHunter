@@ -73,7 +73,7 @@ def lire_pdf(chemin: Path) -> tuple[str, int] | None:
         with fitz.open(str(chemin)) as doc:
             texte = "\n".join(page.get_text() for page in doc)
             return texte, int(doc.page_count)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 

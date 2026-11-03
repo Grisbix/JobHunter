@@ -292,13 +292,13 @@ def main() -> int:
     a = ap.parse_args()
     from jobhunter.sources import countries
 
-    print(f"Annuaires — {countries.nom()} · familles : {', '.join(familles_du_profil()) or '—'}")
+    print(f"Annuaires — {countries.nom()} · familles : {', '.join(familles_du_profil()) or '—'}")  # noqa: T201
     try:
         r = importer(a.n, a.tous_secteurs, a.dry)
     except RuntimeError as e:
-        print(f"  {e}")
+        print(f"  {e}")  # noqa: T201
         return 3
-    print(
+    print(  # noqa: T201
         f"  {r['lus']} entreprises lues · {r['gardes']} gardées · "
         f"{r['ajoutes']} {'à ajouter' if a.dry else 'ajoutées'} au registre"
     )

@@ -78,6 +78,6 @@ def to_pdf(docx_path: Path) -> Path | None:
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),  # no console flash
         )
         return docx_path.with_suffix(".pdf")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         _log.warning(f"  ! PDF échec: {e}")
         return None

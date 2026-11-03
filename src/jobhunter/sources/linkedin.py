@@ -101,7 +101,7 @@ def linkedin_guest_search(
                             f"linkedin-search:{keyword}",
                         )
                     )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             INCIDENTS["linkedin_reseau"][type(e).__name__] += 1
             break
         _dormir(LI_PAUSE)  # polite: spaces out the pages

@@ -266,14 +266,14 @@ def fetch_ats(kind: str, slug: str) -> list[dict[str, Any]]:
                                 str(v.get("text", "")) for v in secs.values() if isinstance(v, dict)
                             )
                         )[:30000]
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
                 time.sleep(0.4)  # detail call per offer: we do not machine-gun
             # Same guard as the normal output: an offer without a URL is not
             # usable, it must not get in through this branch either.
             _feeds.brut(kind, slug, len(out))
             return [o for o in kept if o["titre"] and o["url"]]
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         INCIDENTS[f"ats:{kind}"][type(e).__name__] += 1
         return []
     _feeds.brut(kind, slug, len(out))
@@ -666,7 +666,7 @@ def fetch_autre(kind: str, cle: str, nom: str) -> list[dict[str, Any]]:
                             _mk(titre, url, nom, lieu, date, f"{kind}:{cle.split('|')[0]}", desc)
                         )
                 time.sleep(_workday.WORKDAY_PAUSE)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         INCIDENTS[f"ats:{kind}"][type(e).__name__] += 1
         return []
     # No raw count here: several of these feeds are searched by keyword, so an
@@ -765,7 +765,7 @@ def _cherche_autre(httpx: Any, kind: str, cle: str, mot: str) -> list[Any]:
             try:
                 ddo, _ = json.JSONDecoder().raw_decode(r.text[i + 12 :])
                 jobs = ddo["eagerLoadRefineSearch"]["data"]["jobs"]
-            except Exception:
+            except Exception:  # noqa: BLE001
                 break
             res += [
                 (
@@ -1044,7 +1044,7 @@ def fetch_service_public() -> list[dict[str, Any]]:
                         )
                     )
                 time.sleep(_workday.WORKDAY_PAUSE)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         INCIDENTS["service_public"][type(e).__name__] += 1
     return [
         o
@@ -1117,7 +1117,7 @@ def fetch_impactpool() -> list[dict[str, Any]]:
                     )
                 )
             time.sleep(IMPACTPOOL_PAUSE)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         INCIDENTS["impactpool"][type(e).__name__] += 1
     return [o for o in out if o["titre"] and o["url"] and title_ok(o["titre"])]
 

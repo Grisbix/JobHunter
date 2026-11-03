@@ -91,7 +91,7 @@ def tenant_vivant(tenant, host):
     try:
         r = httpx.get(url, timeout=10, headers=UA, follow_redirects=True)
         return (tenant, host) if r.status_code < 500 else None
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 
@@ -110,7 +110,7 @@ def probe_site(tenant, host, site):
         if r.status_code != 200:
             return None
         d = r.json()
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
     n = int(d.get("total") or 0)
     if n <= 0:

@@ -73,7 +73,7 @@ def _description_ld(page):
 
     try:
         jp = fiche(page.content())
-    except Exception:
+    except Exception:  # noqa: BLE001
         return ""
     txt = _strip_html(str((jp or {}).get("description") or "")).strip()
     return txt if len(txt) >= 120 else ""
@@ -87,7 +87,7 @@ def fetch_one(page, url):
         return {"ok": False, "note": g.get("note", "goto_fail")}
     try:
         dismiss_cookies(page)
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     time.sleep(1.0)
     # unfolds "voir plus" (2 passes: some toggles appear after the 1st click)
@@ -96,11 +96,11 @@ def fetch_one(page, url):
             if not page.evaluate(_EXPAND_JS):
                 break
             time.sleep(0.8)
-        except Exception:
+        except Exception:  # noqa: BLE001
             break
     try:
         r = page.evaluate(_DESC_JS, CAP)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         return {"ok": False, "note": type(e).__name__}
     txt = (r or {}).get("text", "").strip()
     via = r.get("via", "?")
@@ -147,7 +147,7 @@ def _fetch_ld(url):
     try:
         with httpx.Client(follow_redirects=True) as client:
             r = _commun._get_borne(client, url, headers=UA, timeout=30)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
     if r.status_code != 200:
         return None
@@ -335,7 +335,7 @@ def main():
         for i, x in enumerate(targets, 1):
             try:
                 r = fetch_api(x.get("url") or "")
-            except Exception:
+            except Exception:  # noqa: BLE001
                 r = None
             if r:
                 textes[_cle(x)] = r["text"]
@@ -362,7 +362,7 @@ def main():
                 from jobhunter.navigation import block_resources
 
                 block_resources(c, images=False)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
             return c, pg
 
@@ -374,17 +374,17 @@ def main():
             print(f"→ [{i}/{len(targets)}] {key[:55]}")
             try:
                 r = fetch_api(url) or fetch_one(page, url)
-            except Exception as e:  # a link that blows up does not kill the batch
+            except Exception as e:  # a link that blows up does not kill the batch  # noqa: BLE001
                 r = {"ok": False, "note": f"erreur: {type(e).__name__}"}
                 if "TargetClosed" in type(e).__name__ or "Closed" in str(e):
                     try:
                         ctx.close()
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         pass
                     try:
                         ctx, page = launch()
                         r["note"] += " (navigateur relancé)"
-                    except Exception as e2:
+                    except Exception as e2:  # noqa: BLE001
                         print(f"   ✖ relance navigateur impossible : {e2}")
                         break
             if r["ok"]:
@@ -410,11 +410,11 @@ def main():
                     old_page = page
                     page = ctx.new_page()
                     old_page.close()
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
         try:
             ctx.close()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     vider(force=True)
     print(f"\n=== {ok}/{len(targets)} descriptions enregistrées dans apply_queue.json ===")

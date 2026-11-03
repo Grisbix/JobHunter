@@ -75,7 +75,7 @@ def _wtj_fiche(url: str, client: Any) -> dict[str, Any] | None:
 
     try:
         r = _commun._get_borne(client, url, headers=_WUA, timeout=30)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
     if r.status_code in (202, 429):
         raise Bloque(r.status_code)
@@ -86,7 +86,7 @@ def _wtj_fiche(url: str, client: Any) -> dict[str, Any] | None:
     ):
         try:
             o = json.loads(bloc)
-        except Exception:
+        except Exception:  # noqa: BLE001
             continue
         if isinstance(o, dict) and o.get("@type") == "JobPosting":
             return o
@@ -143,7 +143,7 @@ def scan_wtj(pages: int = 2) -> list[dict[str, Any]]:
     with httpx.Client(follow_redirects=True) as client:
         try:
             idx = _lire(client, WTJ_SITEMAP)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             _log.info(f"  ~ WTJ : sitemap injoignable ({type(e).__name__})")
             return offers
         fichiers = [l for l in re.findall(r"<loc>([^<]+)</loc>", idx) if "job-listings" in l]
@@ -155,7 +155,7 @@ def scan_wtj(pages: int = 2) -> list[dict[str, Any]]:
         for f in fichiers:
             try:
                 t = _lire(client, f)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 continue
             for l in re.findall(r"<loc>([^<]+)</loc>", t):
                 if "/fr/companies/" not in l or "/jobs/" not in l:

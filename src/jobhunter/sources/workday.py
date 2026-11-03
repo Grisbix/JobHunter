@@ -58,7 +58,7 @@ def _workday_detail(httpx: Any, base: str, tenant: str, site: str, chemin: str) 
         if r.status_code != 200:
             return {}
         ji = (r.json() or {}).get("jobPostingInfo") or {}
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {}
     pays = (ji.get("country") or {}).get("descriptor") or ""
     return {
@@ -107,7 +107,7 @@ def fetch_workday(tenant: str, host: str, site: str, nom: str) -> list[dict[str,
                     if titre and title_ok(titre):
                         retenues.append((titre, chemin, j.get("locationsText") or ""))
                 time.sleep(WORKDAY_PAUSE)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         INCIDENTS[f"workday:{tenant}"][type(e).__name__] += 1
 
     out = []

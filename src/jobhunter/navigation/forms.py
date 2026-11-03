@@ -64,15 +64,15 @@ def run_wizard(page: Any, fill_fn: Any = None, max_screens: int = 6) -> dict[str
         if fill_fn:
             try:
                 filled_total += int(fill_fn(page) or 0)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
         try:
             accept_consent(page)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         try:
             nav = page.evaluate(_WIZARD_NEXT_JS)
-        except Exception:
+        except Exception:  # noqa: BLE001
             nav = {"next": "", "final": False}
         # only the final submit present -> stop (the human clicks Send)
         if not nav.get("next"):
@@ -84,19 +84,19 @@ def run_wizard(page: Any, fill_fn: Any = None, max_screens: int = 6) -> dict[str
         cur = None
         try:
             cur = page.url
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         try:
             human_click(page, '[data-wn-wnext="1"]')
             page.wait_for_timeout(_rnd.randint(1200, 2200))
-        except Exception:
+        except Exception:  # noqa: BLE001
             return {"screens": screens, "filled_total": filled_total, "stopped": "click_fail"}
         # no progress (URL + DOM identical) -> stop
         try:
             if cur and page.url == cur and cur in seen_urls:
                 return {"screens": screens, "filled_total": filled_total, "stopped": "no_progress"}
             seen_urls.append(cur)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     return {"screens": screens, "filled_total": filled_total, "stopped": "max_screens"}
 
@@ -146,7 +146,7 @@ def accept_consent(page: Any) -> Any:
         boites = page.evaluate(lire)
         idx = [b["i"] for b in boites if consentement_a_cocher(b["t"], bool(b["req"]))]
         return page.evaluate(cocher, idx) if idx else 0
-    except Exception:
+    except Exception:  # noqa: BLE001
         return 0
 
 
@@ -170,7 +170,7 @@ def _handle_smartrecruiters_iframe(page: Any) -> Any:
         n_inputs = page.evaluate(_COUNT_VISIBLE_INPUTS_JS)
         if n_inputs >= 2:
             return None
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
 
     # SmartRecruiters / generic ATS Apply button selectors (ordered by specificity)
@@ -202,7 +202,7 @@ def _handle_smartrecruiters_iframe(page: Any) -> Any:
                 loc.click(timeout=5000)
                 clicked = True
                 break
-        except Exception:
+        except Exception:  # noqa: BLE001
             continue
 
     if not clicked:
@@ -227,18 +227,18 @@ def _handle_smartrecruiters_iframe(page: Any) -> Any:
                             # Give content a moment to fully render
                             try:
                                 f.wait_for_timeout(1000)
-                            except Exception:
+                            except Exception:  # noqa: BLE001
                                 pass
                             return f
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         # Cross-origin — still worth returning the frame
                         if has_keyword:
                             return f
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         try:
             page.wait_for_timeout(500)
-        except Exception:
+        except Exception:  # noqa: BLE001
             break
 
     return None
@@ -321,7 +321,7 @@ def apply_to_offer(
             result["errors"].append(f"Navigation échouée: {r.get('note', '?')}")
             return result
         result["steps"].append("navigated")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         result["errors"].append(f"Goto error: {e}")
         return result
 
@@ -334,7 +334,7 @@ def apply_to_offer(
         ats = page.evaluate(_ATS_DETECT_JS)
         result["ats_type"] = ats.get("name", "unknown")
         result["steps"].append(f"ats:{result['ats_type']}")
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
 
     # ── SmartRecruiters: iframe flow — click Apply & switch to iframe ──
@@ -381,7 +381,7 @@ def apply_to_offer(
     # ── Step 4: Scan form fields ──
     try:
         scan = page.evaluate(_SCAN_FORM_FIELDS_JS)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         result["errors"].append(f"Scan error: {e}")
         scan = {"fields": [], "checkboxes": [], "fileInputs": [], "submits": []}
 
@@ -461,14 +461,14 @@ def apply_to_offer(
                                 page.locator(f'option[value="{opt["value"]}"]').click(timeout=1000)
                                 filled += 1
                                 break
-                            except Exception:
+                            except Exception:  # noqa: BLE001
                                 pass
             else:
                 loc.click(timeout=1000)
                 loc.fill(str(val), timeout=3000)
                 filled += 1
                 human_pause(page, 50, 150)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             result["errors"].append(f"Fill '{f['name'] or f['id']}' failed: {e}")
 
     result["filled_count"] = filled
@@ -501,7 +501,7 @@ def apply_to_offer(
         n_radios = page.evaluate(radio_js)
         if n_radios:
             result["steps"].append(f"radios:{n_radios}")
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
 
     # ── Step 7: Upload CV + cover letter ──
@@ -512,7 +512,7 @@ def apply_to_offer(
             if up:
                 result["uploaded"] = up
                 result["steps"].append(f"uploaded:{len(up)}")
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
         # Fallback: direct file input approach if smart_upload didn't work
@@ -529,7 +529,7 @@ def apply_to_offer(
                             loc.set_input_files(files_to_upload[i], timeout=3000)
                             result["uploaded"].append(_P(files_to_upload[i]).name)
                             result["steps"].append(f"uploaded:{_P(files_to_upload[i]).name}")
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         result["errors"].append(f"Upload failed: {e}")
             elif cv or letter:
                 # Try generic file input selector
@@ -539,7 +539,7 @@ def apply_to_offer(
                     for i in range(min(inputs.count(), len(files_to_upload))):
                         inputs.nth(i).set_input_files(files_to_upload[i], timeout=3000)
                         result["uploaded"].append(_P(files_to_upload[i]).name)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     result["errors"].append(f"Generic upload failed: {e}")
 
     # ── Step 8: Highlight submit button ──
@@ -592,7 +592,7 @@ def apply_to_offer(
                     result["steps"].append(f"submit_highlighted_fallback:{sub2}")
                 else:
                     result["errors"].append("Submit button not found")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             result["errors"].append(f"Submit highlight error: {e}")
 
     result["success"] = filled > 0 or bool(result["uploaded"])
@@ -609,7 +609,7 @@ def smart_upload(page: Any, cv: Any, letter: Any) -> Any:
     done = []
     try:
         metas = page.evaluate(_FILEINPUT_JS)
-    except Exception:
+    except Exception:  # noqa: BLE001
         metas = []
     files: dict[str, Any] = {
         "cv": cv if cv and _P(cv).exists() else None,
@@ -624,7 +624,7 @@ def smart_upload(page: Any, cv: Any, letter: Any) -> Any:
                 page.locator(f'[data-wn-file="{m["i"]}"]').set_input_files(f, timeout=3000)
                 done.append(f"{m['kind']}:{_P(f).name}")
                 used.add(m["kind"])
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
     # 2) fallback: remaining inputs -> cv then letter in order of appearance
     order = [x for x in ("cv", "letter") if x not in used and files.get(x)]
@@ -637,7 +637,7 @@ def smart_upload(page: Any, cv: Any, letter: Any) -> Any:
             done.append(f"{k}:{_P(files[k]).name}")
             used.add(k)
             order.pop(0)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     return done
 
@@ -812,7 +812,7 @@ def accept_consent_dialog(page: Any) -> Any:
     """Clique Proceed/Continuer d'un dialogue de consentement obligatoire (≠ submit, ≠ Decline)."""
     try:
         return page.evaluate(_CONSENT_DIALOG_JS)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {"clicked": ""}
 
 
@@ -824,12 +824,12 @@ def _best_form_target(page: Any) -> Any:
     """
     try:
         best_n = page.evaluate(_COUNT_VISIBLE_INPUTS_JS)
-    except Exception:
+    except Exception:  # noqa: BLE001
         best_n = 0
     best = page
     try:
         main = page.main_frame
-    except Exception:
+    except Exception:  # noqa: BLE001
         main = None
     for fr in getattr(page, "frames", []):
         if fr is main:
@@ -837,11 +837,11 @@ def _best_form_target(page: Any) -> Any:
         try:
             if fr.is_detached():  # dead frame (page changed) → never a target
                 continue
-        except Exception:
+        except Exception:  # noqa: BLE001
             continue
         try:
             n = fr.evaluate(_COUNT_VISIBLE_INPUTS_JS)
-        except Exception:
+        except Exception:  # noqa: BLE001
             continue
         if n > best_n + 1:  # margin: does not switch for 1 isolated field
             best, best_n = fr, n
@@ -861,7 +861,7 @@ def fill_application(
     page = _best_form_target(page)  # switches to the form's iframe if needed
     try:
         fields = page.evaluate(_FILL_SCAN_JS)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {
             "total": 0,
             "filled": 0,
@@ -892,7 +892,7 @@ def fill_application(
             else:
                 loc.fill(str(val), timeout=2500)
                 filled += 1
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     # SELECT without a profile value: title -> Monsieur, country -> France
     for f in [x for x in fields if x["tag"] == "SELECT" and not x["filled"]]:
@@ -929,7 +929,7 @@ def fill_application(
                     page.locator(f'[data-wn-fa="{f["i"]}"]').first.check(timeout=1500)
                     filled += 1
                     break
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
     # mandatory consent CHECKBOX (T&Cs/GDPR) — not marketing
     consent = 0
@@ -938,14 +938,14 @@ def fill_application(
             try:
                 page.locator(f'[data-wn-fa="{f["i"]}"]').first.check(timeout=1500)
                 consent += 1
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
     # bug7: after ticking the T&Cs, a consent dialog (Proceed/Continuer) may open
     # (SuccessFactors #dataPrivacyId). Clicking Proceed = validating the mandatory box, NOT submitting.
     if consent:
         try:
             page.evaluate(_CONSENT_DIALOG_JS)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     # UPLOAD all documents: CV + letter by label + extra docs
     uploaded = smart_upload(page, cv, letter)
@@ -964,9 +964,9 @@ def fill_application(
                         uploaded.append("doc:" + _P(path).name)
                         free.remove(m)
                         break
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         pass
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     total = len([f for f in fields if f["vis"] and f["type"] not in ("radio", "checkbox")])
     cover = round(100 * filled / total) if total else 0
@@ -1023,6 +1023,6 @@ def _pick_option(loc: Any, options: Any, val: Any, extra: Any = (), iso: bool = 
         if meilleur is not None:
             loc.select_option(index=meilleur, timeout=2000)
             return True
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return False

@@ -49,7 +49,7 @@ from jobhunter import root as _racine
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
-except Exception:
+except Exception:  # noqa: BLE001
     pass
 
 
@@ -179,7 +179,7 @@ def autofill(page):
             else:
                 loc.fill(val, timeout=2000)
             filled += 1
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     filled += fill_selects_radios(page)  # title, country, level through <select>/radio
     # No password field is filled: project rule (ADR 0005).
@@ -199,7 +199,7 @@ def _select_match(loc, val):
             if v and (v in txt or txt in v or v == ov):
                 loc.select_option(index=i, timeout=2000)
                 return True
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return False
 
@@ -234,7 +234,7 @@ def fill_selects_radios(page):
     }"""
     try:
         n += int(page.evaluate(js) or 0)
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return n
 
@@ -248,7 +248,7 @@ def upload_files(page, cv, letter):
         try:
             inputs.nth(i).set_input_files(files[i], timeout=3000)
             done.append(Path(files[i]).name)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     if n == 1 and cv and Path(cv).exists():  # single input -> at least CV
         pass
@@ -285,7 +285,7 @@ def try_open_form(page):
             page.locator('[data-pw-apply="1"]').first.click(timeout=4000)
             page.wait_for_timeout(2500)
             return label
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return ""
 
@@ -320,7 +320,7 @@ def highlight_submit(page):
     }"""
     try:
         return page.evaluate(js, SUBMIT_RX)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return ""
 
 
@@ -353,7 +353,7 @@ class _Terminal:
                 "\n✅ Chrome reste OUVERT. Vérifie et clique ENVOYER sur chaque onglet.\n"
                 "   Quand tu as fini → [Entrée] pour fermer Chrome > "
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             time.sleep(120)  # no keyboard (stdin closed) → keep open for 2 min
 
 
@@ -421,7 +421,7 @@ def _decision_pilote(ui, page, d, marquer):
             marquer("ENVOYÉ")
             try:
                 ui.evenement("resultat", **declarer_envoi(page, d))
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 ui.evenement("resultat", etat="erreur", texte=type(e).__name__)
             return cmd
         if cmd == "k":
@@ -433,7 +433,7 @@ def _decision_pilote(ui, page, d, marquer):
         if cmd == "o":
             try:
                 page.goto(d["url"], timeout=45000)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
 
 
@@ -532,7 +532,7 @@ def main():
             _sel = _json.loads(Path(args.selection).read_text(encoding="utf-8"))
             sel_keys = {f"{s.get('entreprise', '')}|{s.get('poste', '')}" for s in _sel}
             print(f"Sélection : {len(sel_keys)} offre(s) cochée(s) depuis l'app.")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"! lecture --selection KO: {e}")
             return
     rows = []
@@ -619,9 +619,9 @@ def main():
                     print(
                         "🚀 TURBO : images/polices/pubs bloquées (plus rapide). --no-turbo pour désactiver."
                     )
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"\n! Échec lancement Chrome: {type(e).__name__}: {e}")
             return
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
@@ -652,7 +652,7 @@ def main():
                         from jobhunter.documents.checks import controler_dossier
 
                         _dossier = controler_dossier({"cv": d["cv"], "lettre": d["lt"]})
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         _dossier = [f"contrôle impossible ({type(e).__name__})"]
                     print(
                         "  🗂 dossier : prêt"
@@ -682,7 +682,7 @@ def main():
                                     writeback(d["url"], hf.get("homepage"), "HOMEPAGE_FALLBACK")
                                 else:
                                     writeback(d["url"], link_status="MORT")
-                            except Exception:
+                            except Exception:  # noqa: BLE001
                                 pass
                             if hf.get("ok"):
                                 print(
@@ -690,10 +690,10 @@ def main():
                                 )
                             else:
                                 print(f"  ✗ fallback homepage: {hf.get('note', '?')}")
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         try:
                             page.goto(d["url"], timeout=45000, wait_until="domcontentloaded")
-                        except Exception:
+                        except Exception:  # noqa: BLE001
                             print("  ! navigation:", type(e).__name__)
                     _fast = getattr(args, "fast", False)
                     time.sleep(0.5 if _fast else 1.5)
@@ -745,7 +745,7 @@ def main():
                             else:
                                 mark(ws, d, ix, "LinkedIn " + str(la.get("kind")))
                                 continue
-                        except Exception as e:
+                        except Exception as e:  # noqa: BLE001
                             print("  ! linkedin:", type(e).__name__)
                     # smart navigation + self-resolution LOOP (self-healing)
                     try:
@@ -767,7 +767,7 @@ def main():
                         if not _fast:
                             try:
                                 print("  🗺️ " + describe_page(page).replace("\n", "\n  "))
-                            except Exception:
+                            except Exception:  # noqa: BLE001
                                 pass
                         # task targeted by intent: apply (opens the form), handles register if detected
                         r = smart_step(page, task="apply", max_tries=5)
@@ -784,7 +784,7 @@ def main():
                                     from jobhunter.programs.queue_tools import writeback
 
                                     writeback(d["url"], hf.get("homepage"), "HOMEPAGE_FALLBACK")
-                                except Exception:
+                                except Exception:  # noqa: BLE001
                                     pass
                                 r = smart_step(page, task="apply", max_tries=4)
                         # corporate homepage -> Carrières/Nous rejoindre section before offer/login
@@ -848,7 +848,7 @@ def main():
                                 )
                         else:
                             print(f"  🔁 nav: {r['note']} (kind={r['kind']})")
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         print("  ! web_nav:", type(e).__name__)
                     # #6 wait for inputs rendered late (React/Vue: Wizbii, Meeschaert)
                     try:
@@ -859,7 +859,7 @@ def main():
                             print(
                                 "  ⏳ aucun champ visible (form dynamique non rendu) — vérifie à la main"
                             )
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         pass
                     # UNIVERSAL FILLING: all the fields + selects + radios + T&Cs + all the docs
                     try:
@@ -872,13 +872,13 @@ def main():
                             + (f" | ☑️ CGU {cons}" if cons else "")
                             + (f" | ⚠️ non-mappés: {fa['unmatched']}" if fa.get("unmatched") else "")
                         )
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         print("  ! fill:", type(e).__name__)
                         try:
                             f = autofill(page)
                             up = upload_files(page, d["cv"], d["lt"])
                             cons = accept_consent(page)
-                        except Exception as e2:
+                        except Exception as e2:  # noqa: BLE001
                             print(f"  ! autofill: {type(e2).__name__} — skip offre")
                             mark(ws, d, ix, "SKIP AUTOFILL")
                             continue
@@ -898,7 +898,7 @@ def main():
                             print(
                                 f"  🧩 wizard: {wz.get('screens', 0)} écran(s), stop={wz.get('stopped', '?')}"
                             )
-                        except Exception as e:
+                        except Exception as e:  # noqa: BLE001
                             print("  ! wizard:", type(e).__name__)
                     sub = ""
                     if args.auto:
@@ -927,7 +927,7 @@ def main():
                                 "  📨 page de code email (OTP) détectée — saisis le code reçu par mail, puis continue"
                             )
                             ui.evenement("bloque", raison="code reçu par courriel")
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         pass
                     while True:
                         if getattr(args, "fast", False):
@@ -947,7 +947,7 @@ def main():
                                 res = declarer_envoi(page, d)
                                 print(f"  📮 envoi {res['etat']} — {res['texte'][:90]}")
                                 ui.evenement("resultat", **res)
-                            except Exception as e:
+                            except Exception as e:  # noqa: BLE001
                                 print(
                                     f"  ! suivi non écrit ({type(e).__name__}) — confirme dans l'app"
                                 )
@@ -963,7 +963,7 @@ def main():
                                 from jobhunter.navigation import smart_upload as _su
 
                                 up = _su(page, d["cv"], d["lt"])
-                            except Exception:
+                            except Exception:  # noqa: BLE001
                                 up = upload_files(page, d["cv"], d["lt"])
                             print(f"  re-fill: {f} champs | upload: {up}")
                         elif cmd == "o":
@@ -973,11 +973,11 @@ def main():
                             print("Sauvegardé. Reprends avec --start", seen)
                             ctx.close()
                             return
-                except Exception as _e:
+                except Exception as _e:  # noqa: BLE001
                     print(f"  ! ERREUR offre: {type(_e).__name__}: {str(_e)[:80]} — skip")
                     try:
                         mark(ws, d, ix, "ERREUR SKIP")
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         pass
                     continue
         print("\nFini. Toutes les offres parcourues.")

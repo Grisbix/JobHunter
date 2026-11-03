@@ -70,7 +70,7 @@ def _ollama_generate(prompt: str) -> str | None:
         with urllib.request.urlopen(req, timeout=120) as r:  # nosec B310 : scheme checked by exiger_http
             reponse: str = _json.loads(r.read()).get("response", "")
             return reponse.strip()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         _log.info(
             f"  ! Ollama indispo ({type(e).__name__}) — lance `ollama serve` + `ollama pull {OLLAMA_MODEL}`"
         )
@@ -105,7 +105,7 @@ def llm_rewrite(offer: dict[str, Any], cv_docx: Any, letter_docx: Any) -> bool:
             )
             body = msg.content[0].text.strip()
             _log.info("  ✎ Claude API")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             _log.warning(f"  ! Claude API échec: {type(e).__name__}")
     # 2) sinon Ollama local (gratuit)
     if not body:

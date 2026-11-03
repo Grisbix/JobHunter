@@ -47,7 +47,7 @@ def check(u):
             if hit:
                 soft = hit.group(0)[:40]
         return u, r.status_code, soft
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         return u, type(e).__name__, None
 
 
@@ -70,7 +70,7 @@ def quick_check(url: str, timeout: float = 8.0) -> dict:
         return {"live": False, "status": 0, "soft_dead": None, "note": "timeout"}
     except httpx.ConnectError:
         return {"live": False, "status": 0, "soft_dead": None, "note": "connection_error"}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         return {"live": False, "status": 0, "soft_dead": None, "note": type(e).__name__}
 
     if status >= 500:
@@ -96,7 +96,7 @@ def quick_check(url: str, timeout: float = 8.0) -> dict:
             hit = SOFT_DEAD_RX.search(scan)
             if hit:
                 soft = hit.group(0)[:40]
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
     if soft:
@@ -114,7 +114,7 @@ def batch_check(urls: list, max_workers: int = 12) -> dict:
             url = futures[fut]
             try:
                 results[url] = fut.result()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 results[url] = {"live": False, "status": 0, "soft_dead": None, "note": str(e)}
     return results
 

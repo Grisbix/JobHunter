@@ -153,7 +153,7 @@ def _gd_cartes(mot: str) -> list[Any]:
             if e.code in (403, 429):
                 raise _IndeedBride(e.code)
             return []
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             _log.info(f"    ! {mot} : {type(e).__name__}")
             return []
 

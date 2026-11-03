@@ -45,7 +45,7 @@ def _vie_key() -> str:
             k = m.group(1).encode().decode("unicode_escape")
             if k.endswith("="):  # the civiweb key is base64
                 return k
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return _VIE_KEY_FALLBACK
 
@@ -71,7 +71,7 @@ def fetch_vie(limit: int = 1000) -> list[dict[str, Any]]:
                 _log.info(f"  ✗ VIE http {r.status_code} (clé rotée ? relancer probe)")
                 break
             d = r.json()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             _log.info(f"  ✗ VIE {type(e).__name__}")
             break
         res = d.get("result") or []

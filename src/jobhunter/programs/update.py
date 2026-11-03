@@ -234,7 +234,7 @@ def prete(version, timeout=5):
     try:
         _get(ASSET_URL.format(version, nom), timeout)
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False
 
 
@@ -299,7 +299,7 @@ def nouvelle_version(timeout=5, intervalle_h=24):
             return signee if signee and _cle_version(signee) > locale else None
         DERNIERE_VERIF.write_text(f"{time.strftime('%Y-%m-%d %H:%M')}|{distante}", encoding="utf-8")
         return distante or None
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 
@@ -362,7 +362,7 @@ def signaler_reglages():
             json.loads(p_ex.read_text(encoding="utf-8")),
             json.loads(p_moi.read_text(encoding="utf-8")),
         )
-    except Exception:
+    except Exception:  # noqa: BLE001
         return
     if manque:
         print(
@@ -654,7 +654,7 @@ def maj_paquet(verifier_seulement):
     locale = version_paquet()
     try:
         distante = version_proposee(30)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"! GitHub injoignable ({type(e).__name__}) : réessaie plus tard.")
         return 1
     print(f"Version installée : {locale} · disponible : {distante or '—'}", flush=True)
@@ -671,7 +671,7 @@ def maj_paquet(verifier_seulement):
     except _sig.SignatureInvalide as e:
         print(f"! Mise à jour refusée : {e}. Rien n'a été installé.")
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"! Téléchargement impossible ({type(e).__name__}) : réessaie plus tard.")
         return 1
     import tempfile
@@ -805,7 +805,7 @@ def maj_application(verifier_seulement):
     except _sig.SignatureInvalide as e:
         print(f"! Mise à jour refusée : {e}. Rien n'a été installé.")
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"! Téléchargement impossible ({type(e).__name__}) : la page des versions s'ouvre.")
         import webbrowser
 
@@ -878,12 +878,12 @@ def reference_installee(version):
     if MANIFESTE.exists():
         try:
             return json.loads(MANIFESTE.read_text(encoding="utf-8")), "manifeste"
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     try:
         data = _get(TAG_URL.format(version), 60)
         return {rel: _sha(b) for rel, b in fichiers_du_zip(data).items()}, f"v{version}"
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {}, None
 
 
@@ -958,7 +958,7 @@ def par_zip(args):
     except _sig.SignatureInvalide as e:
         print(f"! Mise à jour refusée : {e}. Rien n'a été modifié.")
         return 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"! Téléchargement impossible : {type(e).__name__}: {e}")
         return 1
     distante = (nouveaux.get("VERSION") or b"0").decode("utf-8").strip()

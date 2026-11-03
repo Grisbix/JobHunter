@@ -54,7 +54,7 @@ def analyze_url(url):
             return None, f"page inaccessible ({g.get('note', '')})"
         try:
             dismiss_cookies(pg)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         time.sleep(1.2)
         for _ in range(2):
@@ -62,16 +62,16 @@ def analyze_url(url):
                 if not pg.evaluate(_EXPAND_JS):
                     break
                 time.sleep(0.7)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 break
         try:
             m = pg.evaluate(_META_JS)
-        except Exception:
+        except Exception:  # noqa: BLE001
             m = {}
         try:
             d = pg.evaluate(_DESC_JS, CAP)
             out["description"] = (d or {}).get("text", "").strip()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         b.close()
     out["titre"], out["entreprise"] = titre_et_entreprise(m, url)
@@ -172,14 +172,14 @@ def make_docs(url):
             if cv:
                 x["cv"] = _url_of(pdf or cv)
                 x["cv_variant"] = None
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"  ! cv: {type(e).__name__}")
         try:
             lt = tailor_letter(offer, nom=nom_lt)
             if lt:
                 pdf = to_pdf(lt)
                 x["lettre"] = _url_of(pdf or lt)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"  ! lettre: {type(e).__name__}")
     return "docs générés"
 

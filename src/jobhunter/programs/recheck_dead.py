@@ -65,7 +65,7 @@ def linkedin_fast(url):
             headers=UA_H,
             follow_redirects=True,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
     if r.status_code == 404:
         return "EXPIREE", "guest 404 (offre retiree)"
@@ -85,7 +85,7 @@ def classify(page, url):
         return "MORT", g.get("note", "goto_fail")
     try:
         dismiss_cookies(page)
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     time.sleep(1.0)
     a = analyze(page)
@@ -141,7 +141,7 @@ def main():
             try:
                 if (today - datetime.date.fromisoformat(chk)).days < a.fresh_days:
                     continue
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
         if a.canal == "linkedin":
             if "linkedin.com" not in x["url"]:
@@ -178,7 +178,7 @@ def main():
                 from jobhunter.navigation import block_resources
 
                 block_resources(c, images=False)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
             return c, pg
 
@@ -195,18 +195,19 @@ def main():
             else:
                 try:
                     new, note = classify(page, url)
-                except Exception as e:  # a link that blows up does not kill the batch
+                # a link that blows up does not kill the batch
+                except Exception as e:  # noqa: BLE001
                     new, note = None, f"erreur: {type(e).__name__}"
                     # dead browser -> restart it, otherwise everything else scrolls by in error
                     if "TargetClosed" in type(e).__name__ or "Closed" in str(e):
                         try:
                             ctx.close()
-                        except Exception:
+                        except Exception:  # noqa: BLE001
                             pass
                         try:
                             ctx, page = launch()
                             note += " (navigateur relancé)"
-                        except Exception as e2:
+                        except Exception as e2:  # noqa: BLE001
                             print(f"  ✖ relance navigateur impossible : {e2}")
                             break
             old = x.get("link_status")
@@ -250,11 +251,11 @@ def main():
                     old_page = page
                     page = ctx.new_page()
                     old_page.close()
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
         try:
             ctx.close()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
     if not a.dry:

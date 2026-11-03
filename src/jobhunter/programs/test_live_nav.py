@@ -106,24 +106,24 @@ def test_site(page, name, url, role="analyste esg"):
         return r
     try:
         page.wait_for_load_state("networkidle", timeout=6000)
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     time.sleep(1.5)  # lets the JS render (React/Vue offer cards)
     try:
         ck = w.dismiss_cookies(page)
         r["cookies"] = ck.get("done", "?")
-    except Exception:
+    except Exception:  # noqa: BLE001
         r["cookies"] = "err"
     try:
         r["ats"] = w.detect_ats(page).get("name", "?")
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     try:
         seg = w.segment_page(page)
         r["kind"] = seg.get("byRole") and max(seg["byRole"], key=seg["byRole"].get) or "?"
         r["offers"] = seg.get("offers", 0)
         r["captcha"] = seg.get("overlays", {}).get("captcha", False)
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     if r["captcha"]:
         r["reached"] = "CAPTCHA"
@@ -137,7 +137,7 @@ def test_site(page, name, url, role="analyste esg"):
             fo = w.find_offer(page, role, max_tries=1)
             r["reached"] = fo.get("kind", "?")
             r["note"] = "via " + fo.get("via", "?")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         r["reached"] = "err:" + type(e).__name__
     return r
 
@@ -153,7 +153,7 @@ def main():
         for name, url in SITES:
             try:
                 r = test_site(page, name, url)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 r = {
                     "name": name,
                     "goto": "EXC",

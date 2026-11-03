@@ -130,7 +130,7 @@ class CandidatureMixin:
                 bufsize=1,
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self._cand_lbl["etat"].configure(text=f"Lancement impossible : {e}", text_color=BAD)
             return
         threading.Thread(target=self._cand_lire, args=(self._cand_proc,), daemon=True).start()
@@ -199,7 +199,7 @@ class CandidatureMixin:
             self.root.after(8000, lambda: proc.poll() is None and proc.terminate())
         try:
             self._cand_win.destroy()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         self._cand_lbl = {}
         self._cand_boutons = []

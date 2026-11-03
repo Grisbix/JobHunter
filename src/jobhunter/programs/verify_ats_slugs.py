@@ -95,7 +95,7 @@ def nom_du_flux(kind, slug):
         r = httpx.get(IDENTITE[kind](slug), timeout=20, headers=UA, follow_redirects=True)
         if r.status_code != 200:
             return ""
-    except Exception:
+    except Exception:  # noqa: BLE001
         return ""
 
     if kind in ("lever", "ashby"):
@@ -113,7 +113,7 @@ def nom_du_flux(kind, slug):
 
     try:
         d = r.json()
-    except Exception:
+    except Exception:  # noqa: BLE001
         return ""
     try:
         if kind == "greenhouse":
@@ -125,7 +125,7 @@ def nom_du_flux(kind, slug):
         if kind == "recruitee":
             offres = d.get("offers") or []
             return (offres[0].get("company_name") or "") if offres else ""
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return ""
 

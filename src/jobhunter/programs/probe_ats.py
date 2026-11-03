@@ -239,7 +239,7 @@ def count_jobs(kind, data):
             return data.count("<position>")
         if kind == "breezy":
             return len(data) if isinstance(data, list) else 0
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return 0
 
@@ -260,7 +260,7 @@ def titles(kind, data, n=3):
             return re.findall(r"<name>(.*?)</name>", data)[:n]
         if kind == "breezy":
             return [j.get("name", "") for j in data[:n]]
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return []
 
@@ -273,7 +273,7 @@ def probe(kind, slug):
         if r.status_code != 200:
             return None
         data = r.text if kind == "personio" else r.json()
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
     n = count_jobs(kind, data)
     if n <= 0:

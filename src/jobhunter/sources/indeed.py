@@ -239,7 +239,7 @@ def _indeed_cartes(mot: str, lieu: str) -> list[Any]:
                 raise _IndeedBride(429)
             _log.warning(f"    ~ {mot} / {lieu} : HTTP 429, repos {attente:g} s")
             time.sleep(attente)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             bloque(type(e).__name__)
     if re.search(r"<title[^>]*>[^<]*(?:security check|just a moment|captcha)", texte, re.I):
         bloque("challenge anti-bot")
@@ -278,7 +278,7 @@ def _indeed_date(ms: int) -> str:
     """
     try:
         s = float(ms) / 1000.0
-    except Exception:
+    except Exception:  # noqa: BLE001
         return ""
     if not (946684800 < s < time.time() + 86400):  # between 2000 and tomorrow
         return ""
@@ -317,7 +317,7 @@ def scan_indeed(
     depart = 0
     try:
         depart = int(INDEED_ETAT.read_text(encoding="utf-8").strip()) % len(couples)
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     tranche = [
         couples[(depart + i) % len(couples)] for i in range(min(INDEED_BUDGET, len(couples)))
@@ -390,7 +390,7 @@ def scan_indeed(
     try:
         if persist:
             INDEED_ETAT.write_text(str((depart + fait) % len(couples)), encoding="utf-8")
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
 
     etat = "indisponible" if bloque_raison else "quota atteint" if bride else "terminé"

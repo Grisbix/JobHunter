@@ -63,7 +63,7 @@ def _entreprises_by_letter():
             if u:
                 p = importlib.import_module("jobhunter.programs.util").chemin_de(u)
                 out[p.stem] = (x.get("entreprise") or "").strip()
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return out
 
@@ -111,7 +111,7 @@ def _nettoie_titre_dans(txt, ent=""):
 def fix_doc(path, ent="", dry=False):
     try:
         doc = Document(str(path))
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False
     paras = doc.paragraphs
     changed = False
@@ -254,7 +254,7 @@ def main():
                 timeout=90,
             )
             ok += r.returncode == 0
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         if (i + 1) % 100 == 0:
             print(f"  … {i + 1}/{len(todo)}")

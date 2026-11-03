@@ -219,7 +219,7 @@ def _merge_into_queue(
         suivies: set[str] | None = set(suivi_io.charger(strict=True))
     except suivi_io.SuiviIllisible as illisible:
         # Unreadable tracker: no purge today rather than one blind to the applications.
-        print(f"  ! {illisible} Purge du bruit sautée.")
+        print(f"  ! {illisible} Purge du bruit sautée.")  # noqa: T201
         suivies = None
     before = len(q)
     if suivies is not None:
@@ -343,7 +343,7 @@ def _merge_into_queue(
                             domaine=x.get("domaine", ""),
                         )
                     ).get("pct")
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
                 updated += 1
             # THE FRAME — contract, remote work, salary, publication date. A
@@ -406,7 +406,7 @@ def _merge_into_queue(
             ats = score_offer(
                 dict(role=o["titre"], missions=desc, profil="", domaine=o["domaine"])
             ).get("pct")
-        except Exception:
+        except Exception:  # noqa: BLE001
             ats = None
         ligne = {
             "entreprise": o["entreprise"],
@@ -483,7 +483,7 @@ def _merge_into_queue(
             deja = companies.chemin(_commun.QUEUE).exists()
             companies.noter(_commun.QUEUE, [*fresh, *([] if deja else q)])
         except Exception as e:  # noqa: BLE001
-            print(f"  ⚠ registre des entreprises non écrit : {e}")
+            print(f"  ⚠ registre des entreprises non écrit : {e}")  # noqa: T201
     return dict(
         added=added,
         updated=updated,

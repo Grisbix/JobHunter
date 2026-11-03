@@ -318,4 +318,4 @@ def modifier[T](
 
 if __name__ == "__main__":
     q = charger()
-    print(f"{len(q)} offres dans {CHEMIN.name}")
+    print(f"{len(q)} offres dans {CHEMIN.name}")  # noqa: T201

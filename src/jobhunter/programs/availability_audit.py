@@ -190,7 +190,7 @@ def controle_autre(url):
         return v
     try:
         r = job_sources._get_borne(client, url, timeout=20, headers=UA, follow_redirects=True)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         return None, type(e).__name__
     if r.status_code in (404, 410):
         return "FERMEE", f"HTTP {r.status_code}"
@@ -254,7 +254,7 @@ def verifier(cibles, etat, pauses_max, aujourd_hui, fin=None):
         url = f"https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{_RX_LI_ID.search(o['url']).group(1)}"
         try:
             r = cl.get(url)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             etat[oid] = [None, type(e).__name__, o["url"], aujourd_hui]
             i += 1
             continue
@@ -359,7 +359,7 @@ def _wtj_urls():
                     urls.update(
                         u.rstrip("/").lower() for u in re.findall(r"<loc>([^<]+)</loc>", page)
                     )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"  ~ WTJ : sitemap illisible ({type(e).__name__})")
         return None
     # A truncated sitemap would make all our offers look withdrawn.

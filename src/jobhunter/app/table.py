@@ -827,7 +827,7 @@ class TableauMixin:
         def _close_if_out() -> None:
             try:
                 f = win.focus_get()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 f = None
             # closes ONLY if the focus left the popup (not a click on a child)
             if f is None or not str(f).startswith(str(win)):
@@ -986,7 +986,7 @@ class TableauMixin:
         if getattr(self, "_search_job", None):
             try:
                 self.root.after_cancel(self._search_job)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
         self._search_job = self.root.after(300, self._search_now)
 
@@ -1084,7 +1084,7 @@ class TableauMixin:
         try:
             cfg = json.loads((SCRIPTS / "sources_config.json").read_text(encoding="utf-8"))
             return set(cfg.get("contrats_exclus") or [])
-        except Exception:
+        except Exception:  # noqa: BLE001
             return set()
 
     def _exclu(self: "AppTypee", o: Any) -> Any:

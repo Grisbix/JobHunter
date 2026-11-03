@@ -86,7 +86,7 @@ def scan_makesense(limite: int = 30) -> list[dict[str, Any]]:
     with httpx.Client(follow_redirects=True) as client:
         try:
             r = _commun._get_borne(client, MAKESENSE_SITEMAP, headers=UA, timeout=90)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             INCIDENTS.noter("makesense", type(e).__name__)
             _log.info(f"  ~ makesense : sitemap injoignable ({type(e).__name__})")
             return offers
@@ -116,7 +116,7 @@ def scan_makesense(limite: int = 30) -> list[dict[str, Any]]:
         for u, date in neuves[:limite]:
             try:
                 p = _commun._get_borne(client, u, headers=UA, timeout=30)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 continue
             if p.status_code in (403, 429):
                 INCIDENTS.noter("makesense", f"HTTP {p.status_code}")

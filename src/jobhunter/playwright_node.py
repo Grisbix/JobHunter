@@ -64,7 +64,7 @@ def cible(sha: str) -> Path:
 def _telecharger(url: str) -> bytes:
     from jobhunter.programs.update import _get  # same download, same « Téléchargement : 40 % »
 
-    print("Premier navigateur : téléchargement de Node.js (~30 Mo, une seule fois)", flush=True)
+    print("Premier navigateur : téléchargement de Node.js (~30 Mo, une seule fois)", flush=True)  # noqa: T201
     return _get(url, 120)
 
 

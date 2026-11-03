@@ -173,7 +173,7 @@ def _eures_offre(j: Any, _EX: Any, mots: list[str] | None = None) -> dict[str, A
     date = ""
     try:
         date = time.strftime("%Y-%m-%d", time.gmtime(int(j.get("creationDate")) / 1000))
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return _mk(
         titre,
@@ -217,7 +217,7 @@ def scan_eures(
                         },
                         timeout=40,
                     )
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     INCIDENTS["eures"][type(e).__name__] += 1
                     break
                 if r.status_code != 200:

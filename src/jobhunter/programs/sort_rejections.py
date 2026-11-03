@@ -33,14 +33,14 @@ def _lire(chemin):
     try:
         d = json.loads(Path(chemin).read_text(encoding="utf-8"))
         return d if isinstance(d, dict) else {}
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {}
 
 
 def _vivant(rec, jour):
     try:
         return (jour - datetime.date.fromisoformat(rec["d"])).days < DUREE_JOURS
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False
 
 

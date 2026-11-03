@@ -33,7 +33,7 @@ def main() -> int:
     except Exception as e:  # noqa: BLE001 — no web view here: the desktop window instead
         if os.environ.get("JOBHUNTER_EXIGER_WEB"):
             raise
-        print(f"interface web indisponible ({e}) : application de bureau", file=sys.stderr)
+        print(f"interface web indisponible ({e}) : application de bureau", file=sys.stderr)  # noqa: T201
     else:
         if os.environ.get("JOBHUNTER_EXIGER_WEB"):
             return 2  # pywebview missing, and the fallback is forbidden

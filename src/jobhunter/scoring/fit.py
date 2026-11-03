@@ -21,7 +21,7 @@ from typing import Any
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console : TextIOWrapper
-except Exception:
+except Exception:  # noqa: BLE001
     pass
 
 import importlib
@@ -65,7 +65,7 @@ def cv_text(variant_key: str) -> str:
         from jobhunter.cv_text import texte_fichier
 
         return " ".join(texte_fichier(p).split("\n")).lower()
-    except Exception:
+    except Exception:  # noqa: BLE001
         return ""
 
 
@@ -941,4 +941,4 @@ def expliquer(
 
 
 if __name__ == "__main__":
-    print("Module de scoring (score_offer/fit_score). CLI : rescore_ats.py")
+    print("Module de scoring (score_offer/fit_score). CLI : rescore_ats.py")  # noqa: T201

@@ -131,5 +131,6 @@ def tester(nom: str) -> Resultat:
             params={"motsCles": "analyste", "range": "0-0"},
         )
         return _classer(r.status_code)
-    except Exception as e:  # network: only the type, never the message (it holds the URL)
+    # network: only the type, never the message (it holds the URL)
+    except Exception as e:  # noqa: BLE001
         return Resultat("reseau", type(e).__name__)

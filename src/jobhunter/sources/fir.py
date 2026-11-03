@@ -38,7 +38,7 @@ def fetch_fir() -> list[dict[str, Any]]:
         if r.status_code != 200:
             _log.info(f"  ✗ FIR http {r.status_code}")
             return []
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         _log.info(f"  ✗ FIR {type(e).__name__}")
         return []
     out = []

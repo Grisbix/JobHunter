@@ -131,7 +131,7 @@ def valid(url, name):
         # the careers link in JS (Schneider/Allianz false negatives). The runner (goto_careers
         # + sitemap + robots) finds the careers section itself.
         return str(r.url).rstrip("/")
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 
@@ -166,7 +166,7 @@ def _ddg_results(query):
                     urls.append(u)
             if urls:
                 break
-        except Exception:
+        except Exception:  # noqa: BLE001
             continue
     return urls
 
@@ -192,7 +192,7 @@ def search_homepage(name):
                     rr = httpx.get(u, headers=UA, timeout=8, follow_redirects=True)
                     if rr.status_code < 400:
                         return str(rr.url).rstrip("/")
-            except Exception:
+            except Exception:  # noqa: BLE001
                 continue
     return None
 

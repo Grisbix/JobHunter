@@ -62,7 +62,7 @@ def _ft_token() -> str | None:
             return None
         jeton: str | None = r.json().get("access_token")
         return jeton
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         _log.info(f"  ✗ France Travail token {type(e).__name__}")
         return None
 
@@ -112,7 +112,7 @@ def fetch_france_travail(par_mot: int = 50) -> list[dict[str, Any]]:
             if r.status_code not in (200, 206):
                 continue
             res = r.json().get("resultats") or []
-        except Exception:
+        except Exception:  # noqa: BLE001
             continue
         got = 0
         for j in res:

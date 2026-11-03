@@ -297,6 +297,6 @@ if __name__ == "__main__":
 
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
     s = charger()
-    print(f"{len(s)} candidature(s) dans {CHEMIN.name}")
+    print(f"{len(s)} candidature(s) dans {CHEMIN.name}")  # noqa: T201
     for k, v in sorted(s.items())[:10]:
-        print(f"  {k[:52]:52s} {v}")
+        print(f"  {k[:52]:52s} {v}")  # noqa: T201

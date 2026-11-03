@@ -165,7 +165,7 @@ class FicheMixin:
             from jobhunter import postings
 
             p = postings.existante(o)
-        except Exception:  # no root, unreadable folder: the card shows the rest
+        except Exception:  # no root, unreadable folder: the card shows the rest  # noqa: BLE001
             return
         if p is None:
             return
@@ -199,7 +199,7 @@ class FicheMixin:
             from jobhunter.scoring.fit import expliquer
 
             raisons = expliquer(texte, o.get("poste", ""))
-        except Exception:  # the card is displayed even if the profile is incomplete
+        except Exception:  # the card is displayed even if the profile is incomplete  # noqa: BLE001
             return []
         raisons = [_langue.explication(r) for r in raisons]
         if raisons and str(o.get("fit")) not in ("", "None") and raisons[-1] != f"fit {o['fit']}":
@@ -328,7 +328,7 @@ class FicheMixin:
             return
         try:
             btn.configure(text=_t("Chargement…"), state="disabled")
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
         def work() -> None:
@@ -342,7 +342,7 @@ class FicheMixin:
                     creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                 )
                 out = (r.stdout or "") + (r.stderr or "")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 out = f"err {type(e).__name__}: {e}"
             self.root.after(0, lambda: done(out))
 
@@ -353,15 +353,15 @@ class FicheMixin:
                     if self._oid(x) == key:
                         o["description"] = x.get("description", "")
                         break
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
             try:
                 self._fill_detail(textwidget, o)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
             try:
                 btn.configure(text=_t("Description"), state="normal")
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
             self._log(
                 "✅ description récupérée\n"
@@ -398,7 +398,7 @@ class FicheMixin:
             self._log(f"Associer un compte ajouté: {host}\n")
         try:
             self._jwrite(_commun.COMPTES, self.comptes)
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             self._log(f"! écriture comptes_sites.json KO: {ex}\n")
         self.refresh_table()
         self._load_edit()
@@ -445,7 +445,7 @@ class FicheMixin:
         except suivi_io.VerrouIndisponible:
             self._log("✗ un autre programme écrit suivi.json — réessaie dans un instant.\n")
             return False
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             self._log(f"! écriture suivi.json KO: {ex}\n")
             return False
         # We reload from disk rather than patching memory: it is

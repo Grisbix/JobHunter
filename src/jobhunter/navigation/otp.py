@@ -72,7 +72,7 @@ def otp_present(page: Any) -> bool:
     """True if the page waits for an OTP code (code field / 1-digit boxes / text)."""
     try:
         return bool(page.evaluate(_OTP_DETECT_JS).get("otp"))
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False
 
 
@@ -82,7 +82,7 @@ def paste_otp(page: Any, code: Any) -> Any:
         return {"filled": 0, "mode": "no_code"}
     try:
         return page.evaluate(_OTP_FILL_JS, str(code).strip())
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         return {"filled": 0, "mode": "err:" + type(e).__name__}
 
 
@@ -93,7 +93,7 @@ def highlight_otp_verify(page: Any) -> Any:
     """
     try:
         return page.evaluate(_OTP_VERIFY_JS)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return ""
 
 

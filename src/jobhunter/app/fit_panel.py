@@ -374,7 +374,8 @@ class FitMixin:
 
             try:
                 lignes = expliquer(texte(o), o.get("poste", ""), p)
-            except Exception as ex:  # an incomplete profile must not break the panel
+            # an incomplete profile must not break the panel
+            except Exception as ex:  # noqa: BLE001
                 ecrire_raisons(f"! {type(ex).__name__}: {ex}")
                 return
             fit = lignes[-1].removeprefix("fit ")
@@ -398,7 +399,7 @@ class FitMixin:
                 try:
                     _axes, cs = lire_composantes()
                     err = ""
-                except Exception as ex:
+                except Exception as ex:  # noqa: BLE001
                     cs, err = [], f"! {_t('Lecture impossible')} ({type(ex).__name__})"
 
                 def fin() -> None:
@@ -419,7 +420,7 @@ class FitMixin:
             try:
                 _profil.recharger()
                 e = ponderation()
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 message.configure(text=f"! {type(ex).__name__}: {ex}")
                 return
             if (

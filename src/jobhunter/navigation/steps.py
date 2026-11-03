@@ -75,7 +75,7 @@ def click_portal_login(page: Any) -> bool:
             page.locator('[data-wn-portal="1"]').first.click(timeout=4000)
             page.wait_for_timeout(2000)
             return True
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return False
 
@@ -143,7 +143,7 @@ def expand_hamburger_menu(page: Any) -> dict[str, Any]:
     """
     try:
         r = page.evaluate(_HAMBURGER_JS)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {"expanded": False, "reason": "evaluate_error"}
     if not r or not r.get("found"):
         return {"expanded": False, "reason": "no_hamburger_found"}
@@ -153,7 +153,7 @@ def expand_hamburger_menu(page: Any) -> dict[str, Any]:
         page.locator('[data-wn-hamburger="1"]').first.click(timeout=3000)
         page.wait_for_timeout(800)
         clicked = True
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     if not clicked:
         try:
@@ -162,7 +162,7 @@ def expand_hamburger_menu(page: Any) -> dict[str, Any]:
             )
             page.wait_for_timeout(800)
             clicked = True
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     return {"expanded": clicked, "label": r.get("label", ""), "selector": r.get("selector", "")}
 
@@ -174,7 +174,7 @@ def hover_menus(page: Any) -> int:
     """
     try:
         n = page.evaluate(_HOVERTRIG_JS)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return 0
     hovered = 0
     for i in range(min(int(n or 0), 8)):
@@ -182,7 +182,7 @@ def hover_menus(page: Any) -> int:
             page.locator(f'[data-wn-hov="{i}"]').first.hover(timeout=1500)
             page.wait_for_timeout(400)
             hovered += 1
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     return hovered
 
@@ -207,9 +207,9 @@ def _unstick(page: Any, i: int) -> None:
                 page.reload(timeout=30000, wait_until="domcontentloaded")
                 page.wait_for_timeout(1800)
                 dismiss_cookies(page)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
 
 
@@ -223,13 +223,13 @@ def retry(page: Any, fn: Any, is_ok: Any, max_tries: int = 3) -> Any:
     for i in range(max(1, max_tries)):
         try:
             result = fn()
-        except Exception:
+        except Exception:  # noqa: BLE001
             result = None
         if result and is_ok(result):
             if i:  # records the number of attempts if available
                 try:
                     result["tries"] = i + 1
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
             return result
         _unstick(page, i)

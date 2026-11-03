@@ -61,7 +61,7 @@ def detect_ats(page: Any) -> Any:
     try:
         r = page.evaluate(_ATS_DETECT_JS)
         return r or {"name": "generic"}
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {"name": "generic"}
 
 
@@ -155,7 +155,7 @@ def segment_page(page: Any) -> Any:
     """
     try:
         return page.evaluate(_SEGMENT_JS)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         return {
             "error": type(e).__name__,
             "regions": {},
@@ -348,7 +348,7 @@ def try_open_form(page: Any) -> Any:
             page.locator('[data-pw-apply="1"]').first.click(timeout=4000)
             page.wait_for_timeout(2500)
             return label
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return ""
 
@@ -374,5 +374,5 @@ def highlight_submit(page: Any) -> Any:
     }"""
     try:
         return page.evaluate(js, _SUBMIT_RX)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return ""

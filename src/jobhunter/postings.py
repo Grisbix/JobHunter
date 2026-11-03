@@ -136,7 +136,7 @@ def archiver(
     cible.with_suffix(".txt").write_text(texte(offre, jour), encoding="utf-8")
     try:
         _pdf(cible, _html(offre, jour))
-    except Exception:  # no PDF (PyMuPDF missing, odd text): the .txt stays
+    except Exception:  # no PDF (PyMuPDF missing, odd text): the .txt stays  # noqa: BLE001
         cible.with_name(cible.name + ".tmp").unlink(missing_ok=True)
         return cible.with_suffix(".txt")
     return cible

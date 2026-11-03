@@ -167,7 +167,7 @@ class PanneauxMixin:
             # re-reads the DISK: the pipeline runs in the background, self.offers may be stale
             try:
                 q = queue_io.charger(QUEUE)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 q = list(self.offers)
             try:
                 sv = (
@@ -175,7 +175,7 @@ class PanneauxMixin:
                     if _commun.SUIVI.exists()
                     else {}
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001
                 sv = {}
             # Key "s", not "statut": it is what _set_statut and
             # suivi_io write. With "statut", the Postulé/Relancé/Entretien/
@@ -194,7 +194,7 @@ class PanneauxMixin:
                     return False
                 try:
                     return _doc_existe(u)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     return False
 
             _top = [o for o in ok if (o.get("fit") or 0) >= 8]
@@ -503,7 +503,8 @@ class PanneauxMixin:
 
                 try:
                     r = _cx.tester(nom)
-                except Exception as e:  # never the message: it may hold a URL with the key
+                # never the message: it may hold a URL with the key
+                except Exception as e:  # noqa: BLE001
                     r = _cx.Resultat("reseau", type(e).__name__)
                 texte = _t(MESSAGES_TEST.get(r.etat, r.etat)).format(nom=libelle)
                 ligne = ("✓ " if r.etat == "ok" else "✗ ") + texte
@@ -662,7 +663,7 @@ class PanneauxMixin:
                 comptes = json.loads(
                     (_racine.dans(SCRIPTS, "comptes.json")).read_text(encoding="utf-8")
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001
                 comptes = {}
             tv.delete(*tv.get_children())
             for host in m.SITES_CONNEXION:
@@ -728,7 +729,7 @@ class PanneauxMixin:
                 for l in F.read_text(encoding="utf-8").splitlines()
                 if l.strip()
             ]
-        except Exception:
+        except Exception:  # noqa: BLE001
             return F, []
 
     def _companies_panel(self: "AppTypee") -> None:
@@ -898,7 +899,7 @@ class PanneauxMixin:
             try:
                 c = json.loads(CFG.read_text(encoding="utf-8"))
                 return c if isinstance(c, dict) else {}
-            except Exception:
+            except Exception:  # noqa: BLE001
                 return {}
 
         def suivis() -> set[tuple[str, str]]:
@@ -1072,13 +1073,13 @@ class PanneauxMixin:
         def _cfg() -> Any:
             try:
                 return json.loads(CFG.read_text(encoding="utf-8"))
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # seed from the module defaults
                 try:
                     from jobhunter import sources as js
 
                     return {"keywords": list(js.KEYWORDS), "ats_slugs": dict(js.ATS_SLUGS)}  # type: ignore[attr-defined]  # KEYWORDS and ATS_SLUGS are lazy values
-                except Exception:
+                except Exception:  # noqa: BLE001
                     return {"keywords": [], "ats_slugs": {}}
 
         def _save(c: Any) -> None:
@@ -1311,7 +1312,7 @@ class PanneauxMixin:
                     creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                 )
                 out = (r.stdout or "") + (r.stderr or "")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 out = f"! {type(e).__name__}"
             self.root.after(0, lambda: done(out))
 

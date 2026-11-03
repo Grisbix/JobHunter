@@ -128,7 +128,7 @@ def main():
                         _RX_XML_T.findall(z.read("word/document.xml").decode("utf-8", "replace"))
                     )
                 )
-        except Exception:
+        except Exception:  # noqa: BLE001
             return False
         m = _RX_OBJET.search(t)
         if not m:
@@ -167,7 +167,7 @@ def main():
                         _RX_XML_T.findall(z.read("word/document.xml").decode("utf-8", "replace"))
                     )
                 )
-        except Exception:
+        except Exception:  # noqa: BLE001
             return False
         # The END-of-sentence full stop is followed by a blank. Without this condition, the
         # capture stopped at the first full stop met: "Chargé.e de mission"
@@ -310,7 +310,7 @@ def main():
                     x["lettre"] = _u(pdf or lt)
             done += 1
             print(f"  ✅ [{i + 1}/{len(todo)}] {x['entreprise'][:28]} — {x['poste'][:40]}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"  ! {x['entreprise'][:28]}: {type(e).__name__}")
         if (i + 1) % 10 == 0:
             importlib.import_module("jobhunter.programs.util").jwrite(QUEUE, q)  # checkpoint

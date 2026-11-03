@@ -111,13 +111,13 @@ def _lire(page: Any) -> tuple[str, str, bool]:
     for cadre in [page.main_frame, *[f for f in page.frames if f is not page.main_frame]]:
         try:
             morceaux.append(cadre.inner_text("body", timeout=2000)[:20000])
-        except Exception:
+        except Exception:  # noqa: BLE001
             continue
     formulaire = False
     try:
         r = page.evaluate(_FORMULAIRE_JS)
         formulaire = bool(r.get("bouton")) or int(r.get("champs") or 0) >= 3
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return "\n".join(morceaux), str(page.url or ""), formulaire
 
@@ -151,5 +151,5 @@ def capturer_preuve(page: Any, chemin: Path) -> str | None:
         chemin.parent.mkdir(parents=True, exist_ok=True)
         page.screenshot(path=str(chemin), full_page=True, timeout=15000)
         return str(chemin)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None

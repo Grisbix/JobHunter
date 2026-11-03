@@ -26,7 +26,7 @@ def linkedin_ready(page: Any) -> Any:
     }"""
     try:
         return page.evaluate(js)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return "unknown"
 
 
@@ -85,7 +85,7 @@ def linkedin_easy_apply(
     }"""
     try:
         kind = page.evaluate(open_js)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         return {"ok": False, "kind": "err", "screens": 0, "note": type(e).__name__}
     if kind == "external":
         return {
@@ -108,7 +108,7 @@ def linkedin_easy_apply(
     while screens < max_screens:
         try:
             fill_application(page, profile, cv=cv, letter=letter)
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         _t.sleep(0.3 if fast else 0.8)
         # FINAL submit button present → we stop (the human clicks)
@@ -122,7 +122,7 @@ def linkedin_easy_apply(
                     "if(s.test(t)){b.style.outline='4px solid red';b.scrollIntoView({block:'center'});return t.trim().slice(0,50);}}return '';}",
                     _LI_SUBMIT_RX,
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001
                 sub = ""
         if sub:
             return {
@@ -144,7 +144,7 @@ def linkedin_easy_apply(
         }"""
         try:
             nxt = page.evaluate(adv, _LI_NEXT_RX)
-        except Exception:
+        except Exception:  # noqa: BLE001
             nxt = ""
         if not nxt:
             return {

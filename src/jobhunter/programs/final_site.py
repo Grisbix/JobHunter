@@ -135,7 +135,7 @@ def lire_flux(kind, slug, requete=""):
         if r.status_code != 200:
             return None
         d = r.json()
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
     out = []
     try:
@@ -173,7 +173,7 @@ def lire_flux(kind, slug, requete=""):
                         (j.get("location") or {}).get("city", ""),
                     )
                 )
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
     return [x for x in out if x[0] and x[1]]
 
@@ -230,7 +230,7 @@ def _wd_jobs(tenant, hote, site, texte="", limite=20):
             timeout=15,
             headers=_WD_JSON,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 
@@ -251,13 +251,13 @@ def _wd_vitrine(tenant, hote, site):
         # contain the tenant and would confirm any site.
         for bloc in httpx.get(base + "/sidebar", timeout=15, headers=_WD_JSON).json() or []:
             morceaux += [str(bloc.get(k) or "") for k in ("title", "text", "altText")]
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     try:
         chemin = _wd_jobs(tenant, hote, site, limite=1).json()["jobPostings"][0]["externalPath"]
         d = httpx.get(base + chemin, timeout=15, headers=_WD_JSON).json()
         morceaux.append((d.get("hiringOrganization") or {}).get("name") or "")
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return _sans_accent(re.sub(r"<[^>]+>", " ", " ".join(morceaux)))
 
@@ -302,7 +302,7 @@ def flux_workday(entreprise):
                 r = _wd_jobs(t, h, site, limite=1)
                 try:
                     ok = r is not None and r.status_code == 200 and (r.json() or {}).get("total")
-                except Exception:
+                except Exception:  # noqa: BLE001
                     ok = False
                 if not ok:
                     continue
@@ -383,14 +383,14 @@ def flux_connus():
 def charger_etat():
     try:
         return json.loads(ETAT.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001
         return {}
 
 
 def _age(date, jour):
     try:
         return (jour - datetime.date.fromisoformat(date)).days
-    except Exception:
+    except Exception:  # noqa: BLE001
         return RESONDE_JOURS
 
 
@@ -480,7 +480,7 @@ def main():
             e = futs[f]
             try:
                 etat[e] = f.result()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass  # probed again at the next pass
             if n % 25 == 0:
                 # Written along the way: the pipeline may cut the step.

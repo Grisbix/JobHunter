@@ -152,7 +152,7 @@ def _resoudre_espacements(fenetre: Any) -> None:
     global PAD_PAGE, GAP
     try:
         fenetre.winfo_screenwidth()  # raises once the window is gone
-    except Exception:
+    except Exception:  # noqa: BLE001
         return
     PAD_PAGE = 20
     GAP = 12
@@ -164,7 +164,7 @@ def _resoudre_polices() -> None:
 
     try:
         dispo = set(_tkf.families())
-    except Exception:
+    except Exception:  # noqa: BLE001
         return
     # IBM Plex Sans first when installed (the design note of 21/10), Segoe UI otherwise.
     for n in ("IBM Plex Sans", "Segoe UI", "Segoe UI Variable Display"):

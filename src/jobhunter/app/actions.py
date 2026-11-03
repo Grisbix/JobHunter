@@ -61,7 +61,7 @@ class ActionsMixin:
         def tache() -> None:
             try:
                 p = postings.archiver(o)
-            except Exception as ex:  # disk full, rights: the pipeline will retry
+            except Exception as ex:  # disk full, rights: the pipeline will retry  # noqa: BLE001
                 nom = type(ex).__name__
                 self.root.after(0, lambda: self._log(f"! annonce non gardée ({nom})\n"))
                 return
@@ -124,7 +124,7 @@ class ActionsMixin:
         except suivi_io.VerrouIndisponible:
             self._log("✗ un autre programme écrit suivi.json — réessaie dans un instant.\n")
             return
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             self._log(f"! écriture suivi.json KO: {ex}\n")
             return
         self.suivi = suivi_io.charger(_commun.SUIVI)
@@ -149,7 +149,7 @@ class ActionsMixin:
 
         try:
             suivi_io.modifier(_f, _commun.SUIVI, attente=4)
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             self._annuler.append(geste)
             self._log(f"✗ annulation impossible pour l'instant ({type(ex).__name__}) — réessaie.\n")
             return
@@ -194,7 +194,7 @@ class ActionsMixin:
         SEL = SCRIPTS / "apply_selection.json"
         try:
             SEL.write_text(json.dumps(sel, ensure_ascii=False, indent=1), encoding="utf-8")
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             self._log(f"! écriture sélection KO: {ex}\n")
             return
         # Applications panel: the program fills in and stops on Send, the user
@@ -350,7 +350,7 @@ class ActionsMixin:
             else:
                 self.selbar.pack_forget()
                 self.lbl_aide.pack(side="right")
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
     def _partantes_permises(self: "AppTypee", oids: set[str]) -> set[str] | None:
@@ -394,7 +394,7 @@ class ActionsMixin:
             return
         try:
             from jobhunter.programs import exclusions
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             self._log(f"! exclusions.py introuvable: {ex}\n")
             return
         if not self._verrou_queue(True):
@@ -405,7 +405,7 @@ class ActionsMixin:
             # what the background jobs added since the last load.
             try:
                 fresh = queue_io.charger(QUEUE)
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 self._log(f"! lecture queue KO: {ex} — rien n'est écarté.\n")
                 return
             vises = [o for o in fresh if self._oid(o) in oids]
@@ -416,7 +416,7 @@ class ActionsMixin:
             retirees = len(fresh) - len(restant)
             try:
                 queue_io.sauver(restant, QUEUE)
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 self._log(f"! écriture queue KO: {ex}\n")
                 return
         finally:
@@ -442,7 +442,7 @@ class ActionsMixin:
             from jobhunter.programs import exclusions
 
             motifs = list(exclusions.MOTIFS)
-        except Exception:
+        except Exception:  # noqa: BLE001
             motifs = [
                 "Trop d'expérience demandée",
                 "Poste trop senior",
@@ -558,7 +558,7 @@ class ActionsMixin:
             # last load — otherwise we would overwrite their changes
             try:
                 fresh = queue_io.charger(QUEUE)
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 self._log(f"! lecture queue KO: {ex} — rien n'est supprimé.\n")
                 return
             before = len(fresh)
@@ -575,7 +575,7 @@ class ActionsMixin:
                 f = self.CORBEILLE / f"supprimees_{datetime.datetime.now():%Y-%m-%d_%H%M%S}.json"
                 self._jwrite(f, partantes)
                 sauvegarde = f.name
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 self._log(f"! copie de sauvegarde KO ({ex}) — suppression ANNULÉE.\n")
                 return
             # The refusal is remembered, as in the web window: otherwise the next
@@ -584,13 +584,13 @@ class ActionsMixin:
                 from jobhunter.programs import exclusions
 
                 exclusions.ajouter(partantes, exclusions.SUPPRIMEE)
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 self._log(f"! exclusion non retenue ({ex}) — l'offre peut revenir au scan.\n")
             try:
                 # sauver() moves the descriptions out to descriptions.json;
                 # _jwrite would write them back into the queue and undo the separation.
                 queue_io.sauver(fresh, QUEUE)
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 self._log(f"! écriture queue KO: {ex}\n")
                 return
         finally:
@@ -613,14 +613,14 @@ class ActionsMixin:
         """
         try:
             from jobhunter.programs import util as jutil
-        except Exception:
+        except Exception:  # noqa: BLE001
             return True  # jutil not found: we do not prevent acting
         try:
             if prendre:
                 return jutil.prendre_verrou(QUEUE, attente=_attente)
             jutil.rendre_verrou(QUEUE)
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001
             # A LOCK FAILURE IS NOT A GREEN LIGHT. This case returned True and
             # the destructive action went on without protection — the opposite of what
             # the lock exists to prevent. Giving control back carries no

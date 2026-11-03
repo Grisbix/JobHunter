@@ -122,13 +122,13 @@ def main():
         suivi = importlib.import_module("jobhunter.storage.applications").charger(
             _racine.dans(HERE, "suivi.json")
         )
-    except Exception:
+    except Exception:  # noqa: BLE001
         suivi = {}
     try:
         from jobhunter.programs import exclusions
 
         exc = exclusions.charger()
-    except Exception:
+    except Exception:  # noqa: BLE001
         exc = {}
     _EX = contrats_exclus()
     zones_ok = {a.zone} if a.zone else {"prioritaire", "secondaire"}

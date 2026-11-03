@@ -67,7 +67,7 @@ def main():
     for p in cibles:
         try:
             d = defauts(texte(p))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"  ! {p.name[:60]} : {type(e).__name__}")
             continue
         if not d:

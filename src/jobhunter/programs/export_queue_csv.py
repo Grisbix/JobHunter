@@ -91,7 +91,7 @@ def main():
             suivi = importlib.import_module("jobhunter.storage.applications").charger(
                 sp, strict=True
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"  (suivi.json illisible : {type(e).__name__} — export sans le suivi)")
 
     out = Path(a.out) if a.out else EXPORTS / f"queue_{datetime.date.today():%Y-%m-%d}.csv"

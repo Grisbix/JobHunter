@@ -85,7 +85,7 @@ class _Cadre:
             forme = self.fenetre.native
             forme.Invoke(Action(lambda: setattr(forme, "Icon", Icon(str(ICONE)))))
         except Exception as e:  # noqa: BLE001 — cosmetic only
-            print(f"icône : {e}")
+            print(f"icône : {e}")  # noqa: T201
 
     def installer(self) -> None:
         """The saved backdrop behind the transparent page, then the full size.
@@ -120,7 +120,7 @@ class _Cadre:
             # Opened by a profile switch: the size the previous window had.
             self._placer(os.environ.pop("JH_PLEIN", "1") != "0")
         except Exception as e:  # noqa: BLE001 — cosmetic only
-            print(f"cadre : {e}")
+            print(f"cadre : {e}")  # noqa: T201
 
     def fond(self, nom: str) -> None:
         """Acrylic, mica or no backdrop (FONDS), at start and from the settings screen."""
@@ -131,7 +131,7 @@ class _Cadre:
         try:
             self._attribut(_DWMWA_SYSTEMBACKDROP_TYPE, FONDS.get(nom, FONDS["acrylique"]))
         except Exception as e:  # noqa: BLE001 — cosmetic only
-            print(f"cadre : {e}")
+            print(f"cadre : {e}")  # noqa: T201
 
     def basculer(self) -> None:
         """Full screen <-> rounded window (title bar button, double click)."""
@@ -140,7 +140,7 @@ class _Cadre:
         try:
             self._placer(not self.plein)
         except Exception as e:  # noqa: BLE001 — cosmetic only
-            print(f"cadre : {e}")
+            print(f"cadre : {e}")  # noqa: T201
 
 
 def main() -> int:
@@ -166,7 +166,7 @@ def main() -> int:
     try:
         import webview
     except ImportError:
-        print('pywebview manque : python -m pip install "jobhunter[web]"')
+        print('pywebview manque : python -m pip install "jobhunter[web]"')  # noqa: T201
         return 1
     from jobhunter.profiles import appliquer
 

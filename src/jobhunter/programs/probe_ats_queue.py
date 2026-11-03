@@ -237,7 +237,7 @@ def _tous_les_titres(kind, slug):
         if r.status_code != 200:
             return []
         d = r.json()
-    except Exception:
+    except Exception:  # noqa: BLE001
         return []
     try:
         if kind == "greenhouse":
@@ -250,7 +250,7 @@ def _tous_les_titres(kind, slug):
             return [j.get("title", "") for j in d.get("offers", [])]
         if kind == "smartrecruiters":
             return [j.get("name", "") for j in d.get("content", [])]
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     return []
 

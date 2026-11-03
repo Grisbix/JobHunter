@@ -90,7 +90,7 @@ def scan_arbeitsagentur() -> list[dict[str, Any]]:
                     "page": 1,
                 },
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             INCIDENTS["arbeitsagentur"][type(e).__name__] += 1
             continue
         if not garde.reponse(r):

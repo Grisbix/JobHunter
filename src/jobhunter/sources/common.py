@@ -156,7 +156,7 @@ def _load_cfg() -> None:
             WORKDAY_FLUX = [tuple(x) for x in cfg["workday_flux"] or []]
         if "autres_flux" in cfg:
             AUTRES_FLUX = [tuple(x) for x in cfg["autres_flux"] or []]
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
 
 
@@ -268,7 +268,7 @@ def contrats_exclus() -> set[str]:
         import json as _j
 
         return set(_j.loads(SOURCES_CFG.read_text(encoding="utf-8")).get("contrats_exclus") or [])
-    except Exception:
+    except Exception:  # noqa: BLE001
         return set()
 
 
@@ -287,7 +287,7 @@ def pays_exclus() -> list[str]:
         import json as _j
 
         return list(_j.loads(SOURCES_CFG.read_text(encoding="utf-8")).get("pays_exclus") or [])
-    except Exception:
+    except Exception:  # noqa: BLE001
         return []
 
 
@@ -798,7 +798,7 @@ def _norm_url(u: str | None) -> str:
         return ""
     try:
         s = urlsplit(u)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return u.lower()
     host = s.netloc.lower()
     if host.startswith("www."):

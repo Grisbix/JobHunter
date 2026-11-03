@@ -129,20 +129,20 @@ def main() -> int:
     b = banque()
     if a.liste or not a.essai:
         if not b.get("faits"):
-            print("Aucun fait dans CV/Facts.json : le CV part tel que le modele.")
+            print("Aucun fait dans CV/Facts.json : le CV part tel que le modele.")  # noqa: T201
         for f in b.get("faits", []):
             etat = "valide " if f.get("valide") else "A VALIDER"
-            print(
+            print(  # noqa: T201
                 f"  [{etat}] {f['id']:28} prio {f.get('priorite', 0):>2} · "
                 f"{len(f.get('declencheurs', []))} declencheurs"
             )
         return 0
     r = retouches(a.essai, a.langue)
-    print("faits retenus :", r["faits"] or "aucun")
+    print("faits retenus :", r["faits"] or "aucun")  # noqa: T201
     for x in r["ajoute_apres"]:
-        print("  + ", x[1])
+        print("  + ", x[1])  # noqa: T201
     for x in r["remplace"]:
-        print("  ~ ", x[1])
+        print("  ~ ", x[1])  # noqa: T201
     return 0
 
 

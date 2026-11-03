@@ -46,7 +46,7 @@ def main() -> int:
     for o in queue_io.charger():
         try:
             c = _fit.composantes(texte(o), o.get("poste", ""))
-        except Exception:  # nosec B112 : one unreadable offer does not stop the panel
+        except Exception:  # nosec B112 : one unreadable offer does not stop the panel  # noqa: BLE001
             continue
         lignes.append(ligne(c, axes))
     json.dump({"axes": axes, "lignes": lignes}, sys.stdout, ensure_ascii=False)

@@ -134,7 +134,7 @@ def main():
                     if kind == "login"
                     else "OK"
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 etat, kind = "ERREUR", type(e).__name__
                 # Dead browser: without a restart, ALL the rest of the batch scrolls by in
                 # error (28 sites out of 106 during the first pass, including sites
@@ -142,12 +142,12 @@ def main():
                 if "Closed" in kind or "Closed" in str(e) or "crash" in str(e).lower():
                     try:
                         ctx.close()
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         pass
                     try:
                         ctx, page = lance()
                         kind += " (navigateur relance)"
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         print("  ✖ relance impossible — arret")
                         break
             # Recycled tab: avoids memory drift on long batches.
@@ -156,7 +156,7 @@ def main():
                     vieux = page
                     page = ctx.new_page()
                     vieux.close()
-                except Exception:
+                except Exception:  # noqa: BLE001
                     pass
             stats[etat] += 1
             ck_stats[str(ck.get("done"))] += 1
@@ -164,7 +164,7 @@ def main():
             print(f"  {h[:32]:<34}{etat:<12}{str(ck.get('done'))[:16]:<18}{kind}")
         try:
             ctx.close()
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
     tot = len(res)

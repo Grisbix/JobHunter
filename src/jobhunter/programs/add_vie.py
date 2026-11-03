@@ -80,7 +80,7 @@ def expire_le(d):
     try:
         d0 = datetime.date.fromisoformat(str(d.get("startBroadcastDate"))[:10])
         return (d0 + datetime.timedelta(days=int(d.get("durationBroadcast") or 30))).isoformat()
-    except Exception:
+    except Exception:  # noqa: BLE001
         return ""
 
 
@@ -155,7 +155,7 @@ def completer(a):
                 erreurs += 1
                 print(f"  ! {id_} : HTTP {e.code}")
             continue
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             erreurs += 1
             print(f"  ! {id_} : {type(e).__name__}")
             continue
@@ -277,7 +277,7 @@ def main():
         ats = score_offer(dict(role=poste, missions=missions, profil=profil, domaine=dom)).get(
             "pct"
         )
-    except Exception:
+    except Exception:  # noqa: BLE001
         ats = None
 
     print(f"{societe} — {poste}")

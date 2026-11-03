@@ -61,7 +61,7 @@ NO_JUST = tuple(
 def fix_doc(path, dry=False):
     try:
         doc = Document(str(path))
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False
     changed = False
     # 1) automatic hyphenation
@@ -70,7 +70,7 @@ def fix_doc(path, dry=False):
         if s.find(qn("w:autoHyphenation")) is None:
             s.append(s.makeelement(qn("w:autoHyphenation"), {qn("w:val"): "true"}))
             changed = True
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
     for p in doc.paragraphs:
         t = p.text.strip()
@@ -129,7 +129,7 @@ def main():
                 timeout=90,
             )
             ok += r.returncode == 0
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
         if (i + 1) % 50 == 0:
             print(f"  … {i + 1}/{len(pdfs)}")
