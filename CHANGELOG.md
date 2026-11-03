@@ -4,6 +4,14 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.79.0 — 2026-11-03
+
+LinkedIn covers all its searches and the morning collection is half an hour shorter.
+
+- **LinkedIn resumes where it stopped.** Each pass started again at the first keyword in your country: the time ran out in the same place every day, and the last keywords and the worldwide search were almost never asked. A pass now resumes at the search where the previous one stopped, and goes round.
+- **A shorter LinkedIn pass in the morning**: 15 minutes instead of 45, most of which were pauses on LinkedIn's rate limit. Short passes later in the day continue the round: `jobhunter collect --linkedin --linkedin-minutes 15`.
+- **A refused France Travail key now shows as refused.** When its credentials stop working, the yield says « refusé » and the log says to renew them, instead of « rien à prendre » every day.
+
 ## 3.78.0 — 2026-11-03
 
 The first launch now happens in the application's window: one look from the start.
