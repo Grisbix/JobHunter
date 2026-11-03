@@ -105,9 +105,14 @@ def mots_titre(t):
 
 
 def ville(o):
-    """First segment of the place: "Nimes, Occitanie" and "Nimes - 30" give "nimes"."""
+    """First segment of the place: "Nimes, Occitanie" and "Nimes - 30" give "nimes".
+
+    Hyphens inside the name count as spaces: Arkéa's « Le-Relecq-Kerhuon » and « Le
+    Relecq-Kerhuon » kept one posting twice, scored 7 and 10 (2026-11-03).
+    """
     l = _sans_accent(o.get("localisation") or "")
-    return re.split(r"\s*(?:,|\s-\s|\(|/)\s*", l.strip())[0].strip()
+    premier = re.split(r"\s*(?:,|\s-\s|\(|/)\s*", l.strip())[0].strip()
+    return re.sub(r"[\s-]+", " ", premier)
 
 
 def entreprise(o):

@@ -80,3 +80,27 @@ def test_le_contrat_se_lit_dans_une_description_arrivee_apres():
     o = {"contrat": "V.I.E", "description": "Poste en CDI basé à Paris. " * 5}
     C.completer_contrat(o)
     assert o["contrat"] == "V.I.E"  # an announced contract is never overwritten
+
+
+def test_doublon_meme_ville_ecrite_avec_ou_sans_trait_d_union():
+    """3.80: « Le-Relecq-Kerhuon » and « Le Relecq-Kerhuon » are one place."""
+    from jobhunter.programs import duplicates
+
+    titre = "Consolideur - reporting extra-financier H/F"
+    file = [
+        {
+            "entreprise": "Crédit Mutuel Arkea",
+            "poste": titre,
+            "localisation": "Le Relecq-Kerhuon, Bretagne",
+            "fit": 7,
+            "url": "https://a.fr/1",
+        },
+        {
+            "entreprise": "CREDIT MUTUEL ARKEA",
+            "poste": titre.replace("H/F", "F/H"),
+            "localisation": "Le-Relecq-Kerhuon",
+            "fit": 10,
+            "url": "https://a.fr/2",
+        },
+    ]
+    assert len(duplicates.doublons(file)) == 1
