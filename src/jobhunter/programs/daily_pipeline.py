@@ -366,8 +366,30 @@ def main(argv=None):
     return rc
 
 
+# Held for the whole run, apart from the queue's lock that each step takes and gives
+# back: an update found the queue free between two steps and replaced the engine under
+# a running pipeline, whose next steps ran the other version (2026-11-03). The update
+# checks it (update.file_libre) and this run waits for an update in progress.
+VERROU_PIPELINE = "_pipeline"
+
+
+def _prendre_verrou_pipeline(attente=900):
+    import atexit
+
+    from jobhunter.storage import lock as _verrou
+
+    chemin = SCRIPTS / VERROU_PIPELINE
+    if not _verrou.prendre_verrou(chemin, attente=attente):
+        return False
+    atexit.register(_verrou.rendre_verrou, chemin)
+    return True
+
+
 def _executer(a, journal):
     """The run itself. Returns (exit code, names of the steps in error)."""
+    if not _prendre_verrou_pipeline():
+        print("! Une mise à jour de JobHunter est en cours depuis 15 min : pipeline reporté.")
+        return 3, ["mise à jour de JobHunter en cours"]
     titre = f"Pipeline quotidien — {time.strftime('%Y-%m-%d %H:%M')}"
     print(f"╔{'═' * 60}╗")
     print(f"║ {titre:<58} ║")

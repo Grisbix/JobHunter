@@ -42,7 +42,9 @@ def test_un_moteur_installe_par_pip_se_met_a_jour_par_pip(monkeypatch, tmp_path)
     assert not mise_a_jour.paquet_pip()
 
 
-def test_maj_paquet_installe_les_fichiers_signes(monkeypatch, capsys):
+def test_maj_paquet_installe_les_fichiers_signes(monkeypatch, capsys, tmp_path):
+    monkeypatch.setattr(mise_a_jour, "PAQUET_AVANT", tmp_path / ".maj_paquet_avant")
+    monkeypatch.setattr(mise_a_jour, "paquet_charge", lambda: True)  # 3.80: load check
     monkeypatch.setattr(mise_a_jour, "version_paquet", lambda: "3.57.0")
     monkeypatch.setattr(mise_a_jour, "_get", lambda url, t: b"3.58.0\n")
     monkeypatch.setattr(mise_a_jour, "file_libre", lambda garder=True: True)

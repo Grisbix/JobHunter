@@ -16,6 +16,8 @@ A daily triage, internships kept out, and a clearer window.
 - **Documents**: each CV and letter shows its offer and status (a click opens it), and a filter keeps the applications sent.
 - **Old offers archived on request**: Maintenance → « Archiver N vieilles offres » takes out the offers collected over 60 days ago, under the threshold, never opened and never applied to. They are copied first and do not come back with the collection.
 - Readable names (« Non précisé », « Sites carrières », your domains' names), the statistics' response rates visible again, round ticks on the home chart, a narrow window that no longer overlaps, « Chargement… » when a screen takes time, the rarer actions of an offer under « Plus… », and Maintenance counting the applications followed and sent apart.
+- **Updates wait for the morning collection.** The collection gives the list back between its steps; an update clicked meanwhile installed the new version under it, and its next steps ran the other one. It now says « file occupée » until the collection ends.
+- **An update that does not load is undone** (pip installation): JobHunter checks the new version starts, and puts the previous one back if not. « Annuler la dernière mise à jour » (`python -m jobhunter.programs.update --annuler`) now works for this installation too.
 - One posting no longer stays twice because its town is written with or without hyphens (« Le-Relecq-Kerhuon »).
 - Windows tasks and shortcuts read in the console's code page: accents no longer garbled in the scheduled tasks' status.
 

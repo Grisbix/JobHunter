@@ -544,6 +544,9 @@ def file_libre(garder=True):
         racines = [RACINE]
     files = [_racine.dans(r / _racine.nom("Scripts", r), "apply_queue.json") for r in racines]
     files = [q for q in files if q.parent.is_dir()]  # no data folder: nothing writes there
+    # The morning pipeline's own lock first (daily_pipeline.VERROU_PIPELINE): it gives the
+    # queue back between its steps, where the queue's lock alone found it free.
+    files = [q.with_name("_pipeline") for q in files] + files
     pris = []
     for q in files:  # every profile: the morning collection runs them one after the other
         if not _verrou.prendre_verrou(q, attente=30, bavard=False):
@@ -666,9 +669,64 @@ def maj_paquet(verifier_seulement):
         return 0
     if not file_libre():
         return OCCUPE
+    try:
+        PAQUET_AVANT.write_text(locale, encoding="utf-8")  # for --annuler
+    except OSError:
+        pass
+    rc = installer_paquet(distante, locale)
+    if rc:
+        return rc
+    if not paquet_charge():
+        # pip went through, the new version does not load (a missing dependency, a
+        # broken file): the application would not start again. Back to the old one.
+        print(f"! La {distante} ne se charge pas : retour à la {locale}.", flush=True)
+        if installer_paquet(locale, locale) == 0 and paquet_charge():
+            print(f"La version {locale} est réinstallée : rien n'a changé.")
+        else:
+            print(f"! Retour impossible : réinstalle JobHunter depuis {PAGE_VERSIONS}")
+        return 1
+    print(f"\nJobHunter est à jour (version {version_paquet()}). Relance l'application.")
+    return 0
+
+
+# The version before the last update of the pip package (--annuler).
+PAQUET_AVANT = RACINE / ".maj_paquet_avant"
+
+
+def paquet_charge():
+    """Does the installed package load, in a fresh interpreter (the new files, not ours)?"""
+    r = _borne(  # nosec B603 : this interpreter, fixed code
+        [sys.executable, "-c", "import jobhunter.web.api, jobhunter.programs.daily_pipeline"],
+        300,
+    )
+    return r.returncode == 0
+
+
+def annuler_paquet():
+    """Puts back the version the last update replaced, from its signed files."""
+    try:
+        avant = PAQUET_AVANT.read_text(encoding="utf-8").strip()
+    except OSError:
+        avant = ""
+    locale = version_paquet()
+    if not avant or avant == locale:
+        print("Aucune mise à jour à annuler.")
+        return 1
+    if not file_libre():
+        return OCCUPE
+    print(f"Retour de la {locale} à la {avant}.", flush=True)
+    rc = installer_paquet(avant, locale)
+    if rc == 0:
+        PAQUET_AVANT.unlink(missing_ok=True)
+        print(f"\nJobHunter est revenu à la version {version_paquet()}. Relance l'application.")
+    return rc
+
+
+def installer_paquet(version, locale):
+    """Downloads `version`, checks it against the author's signature, installs it with pip."""
     print("Étape 1/2 : téléchargement et vérification", flush=True)
     try:
-        fichiers = fichiers_a_installer(distante)
+        fichiers = fichiers_a_installer(version)
     except _sig.SignatureInvalide as e:
         print(f"! Mise à jour refusée : {e}. Rien n'a été installé.")
         return 1
@@ -701,7 +759,6 @@ def maj_paquet(verifier_seulement):
     if r.returncode:
         print(f"! pip a échoué (code {r.returncode}) : la version {locale} reste installée.")
         return 1
-    print(f"\nJobHunter est à jour (version {version_paquet()}). Relance l'application.")
     return 0
 
 
@@ -1225,8 +1282,9 @@ def main(argv=None):
         # Installed application: no files to replace one by one, the new
         # version is a new installer, which keeps the data (Documents/JobHunter).
         return maj_application(args.verifier)
-    if paquet_pip() and not (args.controler or args.initialiser or args.annuler):
-        return maj_paquet(args.verifier)
+    if paquet_pip() and not (args.controler or args.initialiser):
+        # --annuler too: before 3.80 it fell through to « Pas de fichier VERSION ».
+        return annuler_paquet() if args.annuler else maj_paquet(args.verifier)
     if args.controler:
         if not controler():
             return 1
