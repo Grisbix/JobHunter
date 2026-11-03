@@ -4,6 +4,15 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.77.0 — 2026-11-03
+
+Under the hood: a faster, sturdier queue and one window instead of two.
+
+- **The queue lives in a database.** Your offers and their descriptions move into `queue.sqlite3`, next to the old files, at the first change after the update. Only the offers that change are written: loading the queue is about five times faster (1.1 s down to 0.2 s on 17,000 offers). The old files are kept, renamed `*.avant_sqlite`; the daily backup still saves readable JSON copies.
+- **One window.** The old desktop window, kept as a fallback since 3.29, is gone: the web window is the application. If it cannot open (pywebview or WebView2 missing), a message says why and how to fix it. `jobhunter bureau` no longer exists.
+- **Commands run faster.** Each command now runs in the same process as the CLI instead of being reloaded as a script.
+- Code quality: same line endings everywhere, no new blind `except` or stray `print`.
+
 ## 3.76.0 — 2026-11-03
 
 A deep audit of the engine's code: your applications are safer, forms are filled more carefully, and the morning sort is faster and fairer.
