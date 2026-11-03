@@ -45,7 +45,7 @@ from xml.sax.saxutils import escape
 ICI = Path(__file__).resolve().parent
 RACINE = ICI.parent.parent
 DIST = RACINE / "dist"
-ICONE = RACINE / "src" / "jobhunter" / "app" / "assets" / "jobhunter.png"
+ICONE = RACINE / "src" / "jobhunter" / "assets" / "jobhunter.png"
 # File name → side in pixels (scale 100 %).
 LOGOS = {"StoreLogo.png": 50, "Square44x44Logo.png": 44, "Square150x150Logo.png": 150}
 

@@ -216,19 +216,6 @@ def test_gmail_jeton_trop_large_refuse(tmp_path, faux_google):
     assert not (tmp_path / lecture.JETON).exists()  # never kept
 
 
-def test_fenetre_de_l_app_s_ouvre(racine_tk):
-    """The "Statuts depuis mes courriels" window builds, without reading or writing anything."""
-    import queue
-    import types
-
-    from jobhunter.app import mail as fenetre
-
-    fenetre.ouvrir(types.SimpleNamespace(root=racine_tk, q=queue.Queue()))
-    racine_tk.update()
-    titres = [w.title() for w in racine_tk.winfo_children() if hasattr(w, "title")]
-    assert "Statuts depuis mes courriels" in titres
-
-
 # ── writing: only what is validated ──────────────────────────────────
 
 

@@ -163,32 +163,6 @@ def page(navigateur):
     pg.close()
 
 
-@pytest.fixture(scope="session")
-def fenetre_tk():
-    """A single Tk window for the whole session, transparent but displayed.
-
-    Creating then destroying several Tk roots in one process makes Tcl
-    initialisation fail under Windows after a few of them ("Can't find a usable
-    init.tcl"), with Python 3.12 as with 3.14. Keyboard focus only exists on
-    a displayed window: hence zero opacity rather than withdraw().
-    """
-    import customtkinter as ctk
-
-    r = ctk.CTk()
-    r.attributes("-alpha", 0.0)
-    r.geometry("300x300+0+0")
-    yield r
-    r.destroy()
-
-
-@pytest.fixture
-def racine_tk(fenetre_tk):
-    """La fenêtre de session, vidée après chaque test."""
-    yield fenetre_tk
-    for w in fenetre_tk.winfo_children():
-        w.destroy()
-
-
 @pytest.fixture(autouse=True)
 def _compteur_api_jetable(tmp_path_factory, monkeypatch):
     """The shared API call counter (sources.quota) in a throwaway folder, for every test.

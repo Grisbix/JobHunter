@@ -21,9 +21,9 @@ def test_la_fenetre_a_son_icone_des_sa_creation():
 
 def test_l_installateur_porte_l_icone_et_l_identite():
     iss = (RACINE / "tools" / "installer" / "JobHunter.iss").read_text(encoding="utf-8")
-    assert r"SetupIconFile=..\..\src\jobhunter\app\assets\jobhunter.ico" in iss
+    assert r"SetupIconFile=..\..\src\jobhunter\assets\jobhunter.ico" in iss
     assert iss.count('AppUserModelID: "Grisbix.JobHunter"') == 2
-    assert (RACINE / "src" / "jobhunter" / "app" / "assets" / "jobhunter.ico").is_file()
+    assert (RACINE / "src" / "jobhunter" / "assets" / "jobhunter.ico").is_file()
 
 
 def test_install_bat_fait_le_raccourci():

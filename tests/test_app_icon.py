@@ -1,8 +1,8 @@
-"""JobHunter has its own icon, and its ⚑ column explains itself (3.19.1)."""
+"""JobHunter has its own icon (3.19.1), shipped in jobhunter/assets since 3.77."""
 
 import struct
 
-from jobhunter.app.window import ICONE
+from jobhunter.web.__main__ import ICONE
 
 
 def test_icone_livree_avec_le_paquet():
@@ -14,8 +14,8 @@ def test_icone_livree_avec_le_paquet():
     assert {16, 32, 48, 256} <= cotes
 
 
-def test_aide_du_drapeau_nomme_ses_trois_signes():
-    from jobhunter.app.table import ALERTE_AIDE
+def test_une_seule_icone_pour_tous():
+    from jobhunter import welcome
+    from jobhunter.programs import shortcut
 
-    texte = ALERTE_AIDE()
-    assert all(signe in texte for signe in ("⚑", "⚠", "↻", "≡"))
+    assert welcome.ICONE == shortcut.ICONE == ICONE

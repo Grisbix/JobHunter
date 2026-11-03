@@ -155,7 +155,7 @@ MODULES_CENTRAUX = (
     # would be cancelled instead of leaving a double-click without effect.
     "jobhunter.launch",
     "jobhunter.web.api",
-    "jobhunter.app",
+    "jobhunter.welcome",  # the first launch's window
 )
 
 

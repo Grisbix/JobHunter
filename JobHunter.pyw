@@ -31,6 +31,6 @@ if __name__ == "__main__":
         from jobhunter.cli import main as _commande
 
         sys.exit(_commande(sys.argv[1:]))
-    from jobhunter.launch import main  # the web window, the desktop one as fallback
+    from jobhunter.launch import main  # the web window
 
     sys.exit(main())

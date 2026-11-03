@@ -116,10 +116,10 @@ def test_opaque_a_la_premiere_ouverture():
 
 
 def test_un_seul_logo():
-    icone = Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "app" / "assets"
+    icone = Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "assets"
     assert (STATIQUE / "logo.png").read_bytes() == (icone / "jobhunter.png").read_bytes()
     assert re.search(r'\.logo \{[^}]*url\("logo\.png"\)', CSS)
-    welcome = (icone.parent.parent / "welcome.py").read_text(encoding="utf-8")
+    welcome = (icone.parent / "welcome.py").read_text(encoding="utf-8")
     assert "SetCurrentProcessExplicitAppUserModelID" in welcome
 
 

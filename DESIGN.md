@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: JobHunter
-description: Desktop application (Tkinter / CustomTkinter) that collects job offers, scores them against a profile and prepares the CV and letter for each one.
+description: Desktop application (a web window, pywebview) that collects job offers, scores them against a profile and prepares the CV and letter for each one.
 colors:
   bg: "#E9EFF7"
   work: "#F4F7FB"

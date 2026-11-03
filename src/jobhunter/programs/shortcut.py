@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 AUMID = "Grisbix.JobHunter"
-ICONE = Path(__file__).resolve().parents[1] / "app" / "assets" / "jobhunter.ico"
+ICONE = Path(__file__).resolve().parents[1] / "assets" / "jobhunter.ico"
 
 # The shortcut by WScript.Shell, then the window's identity (System.AppUserModel.ID)
 # through its property store: WScript.Shell cannot set it. Values come by environment

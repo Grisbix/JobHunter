@@ -32,10 +32,6 @@ from jobhunter import root as racine
 # command -> (module, what it does). The programs live in jobhunter.programs.
 COMMANDES = {
     "app": ("jobhunter.launch", "ouvre l'application (comme JobHunter.pyw)"),
-    "bureau": (
-        "jobhunter.app",
-        "l'ancienne fenêtre de bureau (panneau de candidature guidée)",
-    ),
     "collect": ("jobhunter.sources", "collecte les offres et les fusionne dans la file"),
     "companies-import": (
         "jobhunter.sources.directories",
@@ -180,7 +176,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if module is None:
         print(f"jobhunter : commande inconnue « {cmd} »\n\n{aide()}", file=sys.stderr)
         return 2
-    if module in ("jobhunter.launch", "jobhunter.app"):
+    if module == "jobhunter.launch":
         # The window has no options: `app --help` opened it, and its background
         # collection outlived a caller that closed it (22/10/2026).
         if any(a in ("-h", "--help") for a in reste):

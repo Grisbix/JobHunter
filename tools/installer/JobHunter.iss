@@ -33,7 +33,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayIcon={app}\JobHunter.exe
 ; JobHunter's icon on JobHunterSetup.exe and its pages, not Inno Setup's.
-SetupIconFile=..\..\src\jobhunter\app\assets\jobhunter.ico
+SetupIconFile=..\..\src\jobhunter\assets\jobhunter.ico
 CloseApplications=yes
 
 [Languages]

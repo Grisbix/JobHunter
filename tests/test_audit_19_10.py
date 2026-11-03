@@ -5,7 +5,6 @@ the data survives. The first four are data losses (P1).
 """
 
 import json
-import queue
 
 import pytest
 
@@ -164,26 +163,3 @@ def test_offre_reconnue_par_url_est_enrichie(file_de_fusion):
 
 
 # ── P2 — "TOUT FAIRE terminé" only if everything succeeded ────────────────────
-
-
-class _FausseApp:
-    def __init__(self, reussites):
-        self.q = queue.Queue()
-        self._reussites = list(reussites)
-
-    def _exec(self, cmd, label, announce=False):
-        return self._reussites.pop(0)
-
-
-@pytest.mark.parametrize(
-    ("reussites", "attendu"), [([True, True], None), ([True, False], "Étape 2")]
-)
-def test_tout_faire_dit_l_etape_en_echec(reussites, attendu):
-    from jobhunter.app.execution import ExecutionMixin
-
-    app = _FausseApp(reussites)
-    ExecutionMixin._exec_seq(app, [("Étape 1", ["a"]), ("Étape 2", ["b"])])  # type: ignore[arg-type]
-    evenements = []
-    while not app.q.empty():
-        evenements.append(app.q.get())
-    assert evenements[-1] == ("done_all", attendu)

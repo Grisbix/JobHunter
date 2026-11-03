@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Any
 
 STATIC = Path(__file__).parent / "static"
-# The desktop's icon file (a path only: jobhunter.web never imports jobhunter.app).
-ICONE = Path(__file__).parents[1] / "app" / "assets" / "jobhunter.ico"
+# The application's icon file (jobhunter/assets, also used by the shortcut and the welcome).
+ICONE = Path(__file__).parents[1] / "assets" / "jobhunter.ico"
 
 # DwmSetWindowAttribute codes (Windows 11).
 _DWMWA_USE_IMMERSIVE_DARK_MODE = 20

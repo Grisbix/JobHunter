@@ -5,7 +5,7 @@ every form of it, so that none is redrawn by hand:
 
 - ``docs/brand/``: the SVGs — the tile (the app icon), the mark alone for light
   and dark backgrounds and in one colour, and the name under or beside the mark;
-- ``src/jobhunter/app/assets/jobhunter.png`` and ``.ico``, ``web/static/logo.png``,
+- ``src/jobhunter/assets/jobhunter.png`` and ``.ico``, ``web/static/logo.png``,
   and ``docs/brand/store-300.png`` (the Store listing's logo).
 
 The name is set in Segoe UI Bold and written as outlines, so every SVG looks the
@@ -20,7 +20,7 @@ from pathlib import Path
 
 RACINE = Path(__file__).resolve().parent.parent
 BRAND = RACINE / "docs" / "brand"
-ASSETS = RACINE / "src" / "jobhunter" / "app" / "assets"
+ASSETS = RACINE / "src" / "jobhunter" / "assets"
 STATIC = RACINE / "src" / "jobhunter" / "web" / "static"
 POLICE = Path("C:/Windows/Fonts/segoeuib.ttf")
 

@@ -1,14 +1,13 @@
-"""Opening the application: the web interface, the desktop one only as a fallback.
+"""Opening the application: the web interface.
 
-Since 3.29 the web window (jobhunter.web) is the application: every page of the desktop
-one has moved there. The desktop window (jobhunter.app) opens only when the web view
-cannot: pywebview missing from an older installation, or no WebView2 on the machine.
-`jobhunter bureau` still opens it on purpose, for the guided application panel, which
-the web window does not have (applying stays a desktop step, the final click yours).
+Since 3.29 the web window (jobhunter.web) is the application; the desktop window
+(customtkinter) it replaced was removed in 3.77, guided application included
+(jobhunter.web.guided). When the web view cannot open (pywebview missing, no WebView2),
+the launcher says so and how to fix it, instead of opening another window.
 
 JobHunter.pyw, `jobhunter app` and the compiled JobHunter.exe all come here.
-JOBHUNTER_EXIGER_WEB=1 forbids the fallback: the installer's CI checks that the
-compiled app really opens the web window, not the classic one in its place.
+
+Decision: docs/adr/0017-desktop-window-removed.md
 """
 
 from __future__ import annotations
@@ -18,7 +17,7 @@ import sys
 
 
 def main() -> int:
-    """Ensures the profile, then opens the web window, else the desktop one."""
+    """Ensures the profile, then opens the web window."""
     from jobhunter.profiles import appliquer
 
     appliquer()  # the active profile, before any module builds its paths
@@ -30,17 +29,35 @@ def main() -> int:
 
         if web() == 0:
             return 0
-    except Exception as e:  # noqa: BLE001 — no web view here: the desktop window instead
+        raison = "pywebview n'est pas installé"
+    except Exception as e:  # noqa: BLE001 — said below, in a window: there is no console
         if os.environ.get("JOBHUNTER_EXIGER_WEB"):
             raise
-        print(f"interface web indisponible ({e}) : application de bureau", file=sys.stderr)  # noqa: T201
-    else:
-        if os.environ.get("JOBHUNTER_EXIGER_WEB"):
-            return 2  # pywebview missing, and the fallback is forbidden
-    from jobhunter.app.window import main as bureau
+        raison = str(e)
+    if os.environ.get("JOBHUNTER_EXIGER_WEB"):
+        return 2  # the installer's CI: the web window must open, nothing else
+    _dire_pourquoi(raison)
+    return 1
 
-    bureau()
-    return 0
+
+def _dire_pourquoi(raison: str) -> None:
+    """The window could not open: says why, in a dialog (JobHunter.pyw has no console)."""
+    texte = (
+        f"La fenêtre de JobHunter n'a pas pu s'ouvrir : {raison}.\n\n"
+        "Réinstalle les dépendances (install.bat, ou pip install --upgrade jobhunter), "
+        "et sous Windows le runtime Microsoft Edge WebView2."
+    )
+    print(texte, file=sys.stderr)  # noqa: T201
+    try:
+        import tkinter as tk
+        from tkinter import messagebox
+
+        racine = tk.Tk()
+        racine.withdraw()
+        messagebox.showerror("JobHunter", texte, parent=racine)
+        racine.destroy()
+    except Exception:  # noqa: BLE001 — no display either: the message went to stderr
+        pass
 
 
 if __name__ == "__main__":

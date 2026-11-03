@@ -98,7 +98,7 @@ RAD_PANNEAU = 18
 # The type scale (--t-xs … --t-5xl) and the spacing scale of style.css.
 TYPO = (11, 12, 13, 14, 16, 20, 24, 32, 44)
 ESPACEMENTS = (0, 4, 8, 12, 16, 20, 24, 32, 40, 48)
-ICONE = Path(__file__).parent / "app" / "assets" / "jobhunter.ico"
+ICONE = Path(__file__).parent / "assets" / "jobhunter.ico"
 
 
 def _police(taille: int = 13, gras: bool = False) -> Any:

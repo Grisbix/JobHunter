@@ -36,7 +36,7 @@ and Linux.
 
 **Types and docstrings.** mypy is strict on the whole package except the programs
 (`jobhunter.programs`), which are checked in normal mode. Every public function outside
-the programs and the window (`jobhunter.app`) has a Google-format docstring: ruff (`D`)
+the programs has a Google-format docstring: ruff (`D`)
 requires it.
 
 **A source changes its response?** `tests/test_source_replay.py` replays real recorded

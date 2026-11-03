@@ -47,12 +47,9 @@ change target, change the profile.
   English) and checks each profile end to end (identity, own job kept by the filter, the
   domain and the sorting, fit, letter and message); `tests/test_sweep_cv.py` runs four.
   After a change of `first_launch` or `skills_catalog`, run the full sweep.
-- `python tools/sweep_app.py --racine <data folder> [--oui] [--langue en]` clicks every
-  button of every panel and every "Outils" entry on a COPY of the data, nothing started
-  (programs, browser and dialogs are recorded); exit 1 if a Tk callback raises. Needs a
-  display (`xvfb-run -a` on a server). Run it after a change in `src/jobhunter/app/`.
-- `DESIGN.md` (root): the app's colours, fonts, shapes and rules, from `app/theme.py`;
-  keep both in step (`npx @google/design.md lint DESIGN.md`).
+- `DESIGN.md` (root): the app's colours, fonts, shapes and rules. Written from the desktop
+  window's theme (removed in 3.77); the reference is now `web/static/style.css`: keep
+  both in step (`npx @google/design.md lint DESIGN.md`).
 - CI: `.github/workflows/tests.yml` runs the network-free suites on every push.
 
 ## Read before touching the code
@@ -146,7 +143,7 @@ pattern to `ats_match` raises its count without any test having been written.
 | `jobhunter.sources` | `job_sources`: one source per module, `commun`, `fusion`, `cli` — assignment routed to the owner |
 | `jobhunter.documents` | `tailor_application` (`commun`, `cv`, `lettre`, `llm`, `rendu`), `message` (`message_offre`), `cv_auto` |
 | `jobhunter.navigation` | `web_nav`: one section per module (`page`, `carrieres`, `formulaires`…), `strategies` (`site_strategies`) |
-| `jobhunter.app` | `JobHunter.pyw` (now a launcher): `fenetre.App` = one mixin per domain, `theme`, `commun` |
+| `jobhunter.web` | the application's window (pywebview): `api` (one mixin per domain), `static/` (HTML, CSS, JS); the desktop window `jobhunter.app` was removed in 3.77 (ADR 0017) |
 | `jobhunter.programs` | the ~57 programs (former `Scripts/*.py`): `daily_pipeline`, `generate_docs`, `apply_runner`, `availability_audit`, `util`… |
 | `jobhunter` | `root`, `profil`, `network` (bounded requests), `paths`, `texte`, `liens`, `welcome`, `cli` (`python -m jobhunter <commande>`) |
 
@@ -281,7 +278,6 @@ them by following the link.
 | `.claude/rules/patterns.md` | `ats_match.py`, `job_sources.py`, `tri_file.py` — regex, heredoc, substrings, final `\b` |
 | `.claude/rules/documents.md` | `tailor_application.py`, `generate_docs.py`, `regenerate_docs.py`, `sync_docs.py`, `paths.py` |
 | `.claude/rules/web-navigation.md` | `web_nav.py`, `site_strategies.py`, `apply_runner.py`, `access.py` |
-| `.claude/rules/desktop-app.md` | `JobHunter.pyw` |
 | `.claude/rules/locks.md` | `util.py`, `job_sources.py`, `linkedin_desc.py`, `daily_pipeline.py`, `availability_audit.py` |
 
 ## Sites to try (decided 2026-10-24)

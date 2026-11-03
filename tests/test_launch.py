@@ -1,7 +1,4 @@
-"""jobhunter.launch: the web window first, the desktop one only when it cannot open."""
-
-import sys
-import types
+"""jobhunter.launch: the web window; when it cannot open, says why (no other window, 3.77)."""
 
 import pytest
 
@@ -14,9 +11,7 @@ def ouvertures(monkeypatch):
     vu = []
     monkeypatch.setattr("jobhunter.profiles.appliquer", lambda: None)
     monkeypatch.setattr("jobhunter.welcome.assurer_profil", lambda: vu.append("profil"))
-    bureau = types.ModuleType("jobhunter.app.window")
-    bureau.main = lambda: vu.append("bureau")
-    monkeypatch.setitem(sys.modules, "jobhunter.app.window", bureau)
+    monkeypatch.setattr(launch, "_dire_pourquoi", lambda raison: vu.append(f"message: {raison}"))
     return vu
 
 
@@ -34,32 +29,31 @@ def test_la_fenetre_web_s_ouvre(monkeypatch, ouvertures):
     assert ouvertures == ["profil", "web"]
 
 
-def test_sans_pywebview_la_fenetre_de_bureau(monkeypatch, ouvertures):
+def test_sans_pywebview_le_dit(monkeypatch, ouvertures):
     _web(monkeypatch, ouvertures, lambda: 1)
-    assert launch.main() == 0
-    assert ouvertures == ["profil", "web", "bureau"]
+    assert launch.main() == 1
+    assert ouvertures == ["profil", "web", "message: pywebview n'est pas installé"]
 
 
-def test_une_vue_web_en_panne_ouvre_le_bureau(monkeypatch, ouvertures, capsys):
+def test_une_vue_web_en_panne_le_dit(monkeypatch, ouvertures):
     def panne():
         raise RuntimeError("WebView2 absent")
 
     _web(monkeypatch, ouvertures, panne)
-    assert launch.main() == 0
-    assert ouvertures == ["profil", "web", "bureau"]
-    assert "WebView2 absent" in capsys.readouterr().err
+    assert launch.main() == 1
+    assert ouvertures == ["profil", "web", "message: WebView2 absent"]
 
 
-def test_les_commandes_app_et_bureau():
+def test_plus_de_commande_bureau():
     from jobhunter import cli
 
     assert cli.COMMANDES["app"][0] == "jobhunter.launch"
-    assert cli.COMMANDES["bureau"][0] == "jobhunter.app"
-    assert cli.main(["bureau", "--help"]) == 0
+    assert "bureau" not in cli.COMMANDES
+    assert cli.module_de("bureau") is None
 
 
-def test_repli_interdit_en_ci(monkeypatch, ouvertures):
+def test_en_ci_la_fenetre_web_est_exigee(monkeypatch, ouvertures):
     monkeypatch.setenv("JOBHUNTER_EXIGER_WEB", "1")
     _web(monkeypatch, ouvertures, lambda: 1)
     assert launch.main() == 2
-    assert "bureau" not in ouvertures
+    assert ouvertures == ["profil", "web"]  # no message box in CI

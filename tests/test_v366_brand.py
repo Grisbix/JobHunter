@@ -6,7 +6,7 @@ from pathlib import Path
 
 RACINE = Path(__file__).resolve().parent.parent
 BRAND = RACINE / "docs" / "brand"
-ASSETS = RACINE / "src" / "jobhunter" / "app" / "assets"
+ASSETS = RACINE / "src" / "jobhunter" / "assets"
 SVG = "{http://www.w3.org/2000/svg}"
 
 

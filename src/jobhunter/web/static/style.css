@@ -109,7 +109,7 @@ button.marque:hover { background: var(--verre-fort); }
 .menu-profils button .rond-profil { width: 28px; height: 28px; font-size: var(--t-xs); }
 .menu-profils button > span:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .menu-profils .gerer { margin-top: 4px; color: var(--gris); }
-/* The application's icon (app/assets/jobhunter.png), the same everywhere (the user, 2026-10-28). */
+/* The application's icon (jobhunter/assets/jobhunter.png), the same everywhere (the user, 2026-10-28). */
 .logo { width: 32px; height: 32px; background: url("logo.png") center / contain no-repeat; flex: none; }
 .groupe { font-size: var(--t-m); color: var(--gris-clair); padding: 20px 12px 8px; }
 .menu a {

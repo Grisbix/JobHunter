@@ -21,5 +21,6 @@ and points here. Overview: [`../architecture.md`](../architecture.md).
 | [0014](0014-open-questions-of-the-technical-plan.md) | The eight open questions of the technical plan, settled as implemented |
 | [0015](0015-microsoft-store-package.md) | An MSIX package for the Microsoft Store, signed by the Store |
 | [0016](0016-queue-in-sqlite.md) | The queue in SQLite, the tracking file stays JSON |
+| [0017](0017-desktop-window-removed.md) | The desktop window removed; the web window is the application |
 
 New decision: `NNNN-short-title.md`, next number, status and date at the top.

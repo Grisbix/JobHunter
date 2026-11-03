@@ -1,8 +1,9 @@
 """Architecture rules of the package, checked on the code (phase 3 of the plan).
 
-1. The ENGINE does not import the interface: neither tkinter, nor customtkinter, nor
-   jobhunter.app. Only `jobhunter.app`, `jobhunter.welcome` (the first launch,
-   which opens a file-choice window) and `jobhunter.welcome_tour` (its tour) are allowed to. An engine that pulls in Tkinter no longer
+1. The ENGINE does not import the interface: neither tkinter, nor customtkinter (nor
+   jobhunter.app, the desktop window removed in 3.77). Only `jobhunter.welcome` (the
+   first launch, which opens a file-choice window), `jobhunter.welcome_tour` (its tour)
+   and `jobhunter.launch` (its error box) are allowed to. An engine that pulls in Tkinter no longer
    runs in a scheduled task without a screen, nor in CI.
 2. No module of the package touches sys.path: the package is imported because it is
    installed (or because `JobHunter.pyw` adds src/, the only allowed place). Eight
@@ -20,7 +21,7 @@ import pytest
 
 SRC = Path(__file__).resolve().parent.parent / "src" / "jobhunter"
 INTERFACE = ("tkinter", "customtkinter", "jobhunter.app")
-DROIT_A_L_INTERFACE = ("app", "welcome", "welcome_tour", "launch")
+DROIT_A_L_INTERFACE = ("welcome", "welcome_tour", "launch")
 
 
 def modules():

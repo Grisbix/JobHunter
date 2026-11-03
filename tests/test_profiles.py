@@ -8,13 +8,11 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
 from jobhunter import profiles as P
 from jobhunter import root
-from jobhunter.app import profiles_menu as M
 from jobhunter.programs import daily_pipeline, update
 
 
@@ -48,12 +46,6 @@ def test_slug():
     assert P.slug("a" * 39 + " b") == "a" * 39  # cut, never a trailing dash
 
 
-def test_un_seul_profil_au_depart(principale):
-    assert [p.slug for p in P.liste()] == [""]
-    assert P.actif() == ""
-    assert M.profil_affiche() == ""  # nothing in the sidebar
-
-
 def test_creer_un_espace_complet_sans_les_cles(principale):
     r = P.creer("Chargée RSE à Lyon")
     assert r == principale / "profiles" / "chargee-rse-a-lyon"
@@ -67,19 +59,6 @@ def test_creer_un_espace_complet_sans_les_cles(principale):
     assert [p.slug for p in P.liste()] == [""]
     with pytest.raises(FileExistsError):
         P.creer("chargee rse a lyon")
-
-
-def test_nommer_puis_liste(principale):
-    r = P.creer("Chargée RSE à Lyon")
-    termine(r)
-    P.nommer(r)
-    assert not (r / "profile" / "_nom.txt").exists()
-    profils = P.liste()
-    assert [(p.slug, p.nom) for p in profils] == [
-        ("", "Principal"),
-        ("chargee-rse-a-lyon", "Chargée RSE à Lyon"),
-    ]
-    assert M.profil_affiche() == M.nom_affiche(profils[0])
 
 
 def test_activer_et_actif(principale):
@@ -145,59 +124,11 @@ def test_la_mise_a_jour_protege_les_profils():
     assert update.protege("profiles/b/profile/example_Facts.json")
 
 
-class _App(M.ProfilsMixin):
-    def __init__(self):
-        self.root = _Racine()
-        self.journal: list[str] = []
-
-    def _log(self, txt):
-        self.journal.append(txt)
-
-
 class _Racine:
     detruite = False
 
     def destroy(self):
         self.detruite = True
-
-
-def test_relancer_sur_la_principale(principale, monkeypatch):
-    monkeypatch.setenv(P.ENV_PRINCIPALE, str(principale))
-    app = _App()
-    with patch.object(M.subprocess, "Popen") as popen:
-        app._relancer()
-    env = popen.call_args.kwargs["env"]
-    assert env["JOBHUNTER_RACINE"] == str(principale.resolve())
-    assert P.ENV_PRINCIPALE not in env  # the new process applies the active profile itself
-    assert app.root.detruite
-
-
-def test_questions_non_terminees_aucun_profil(principale):
-    r = P.creer("B")
-    app = _App()
-    with patch.object(M.messagebox, "showwarning") as attention:
-        app._profil_cree(r)
-    assert attention.called and not r.exists()
-
-
-def test_profil_cree_puis_ouvert(principale):
-    r = P.creer("Bé")
-    termine(r)
-    app = _App()
-    with (
-        patch.object(M.messagebox, "askyesno", return_value=True),
-        patch.object(M.subprocess, "Popen"),
-    ):
-        app._profil_cree(r)
-    assert P.actif() == "be" and app.root.detruite
-    assert [p.nom for p in P.liste()][1] == "Bé"
-
-
-def test_changer_pour_le_profil_actif_ne_fait_rien(principale):
-    app = _App()
-    with patch.object(M.messagebox, "askyesno") as question:
-        app._changer_profil("")
-    assert not question.called
 
 
 # ── 3.5: names in a registry, rename, archive, the `profiles` command ──────────
@@ -282,61 +213,3 @@ def test_commande_new_sans_reponses_ne_laisse_rien(principale, monkeypatch, tmp_
     monkeypatch.setattr("sys.argv", ["jobhunter profiles", "new", str(cv), "--name", "C"])
     assert C.main() == 1
     assert not (principale / "profiles" / "c").exists()
-
-
-def test_nom_actif_meme_seul(principale):
-    """The sidebar names the active profile even when it is the only one (3.18.1)."""
-    assert M.nom_actif() == M.nom_affiche(P.liste()[0])
-    r = P.creer("Chargée RSE à Lyon")
-    termine(r)
-    P.nommer(r)
-    P.activer("chargee-rse-a-lyon")
-    assert M.nom_actif() == "Chargée RSE à Lyon"
-
-
-def test_lanceur_sans_profil_actif_relance(principale):
-    """An old launcher that skips appliquer() opened the main profile whatever was chosen.
-
-    The app now notices it and relaunches itself through `python -m jobhunter.app`.
-    """
-    from jobhunter.app import window
-
-    with patch.object(subprocess, "Popen") as lancer:
-        assert window._hors_profil_actif() is False  # main profile active: nothing to do
-        r = P.creer("B")
-        termine(r)
-        P.activer("b")
-        assert window._hors_profil_actif() is True
-        cmd = lancer.call_args.args[0]
-        assert cmd[1:] == ["-m", "jobhunter.app"]
-        assert lancer.call_args.kwargs["env"]["JOBHUNTER_RACINE"] == str(principale)
-        lancer.reset_mock()
-        os.environ[P.ENV_PRINCIPALE] = str(principale)  # applied by the launcher
-        try:
-            assert window._hors_profil_actif() is False
-        finally:
-            del os.environ[P.ENV_PRINCIPALE]
-        lancer.assert_not_called()
-
-
-def test_changer_de_profil_relance_tout_de_suite(principale):
-    """Choosing a profile opens it at once (no question), except while a task runs."""
-    r = P.creer("B")
-    termine(r)
-    app = object.__new__(M.ProfilsMixin)
-    app._profil_ouvert = ""
-    app.root = None
-    app.proc = None
-    with patch.object(M.ProfilsMixin, "_relancer") as relancer:
-        app._changer_profil("")  # the open one: nothing
-        relancer.assert_not_called()
-        app.proc = type("Proc", (), {"poll": lambda self: None})()  # a task running
-        with patch.object(M.messagebox, "showinfo") as dire:
-            app._changer_profil("b")
-        dire.assert_called_once()
-        relancer.assert_not_called()
-        assert P.actif() == ""
-        app.proc = None
-        app._changer_profil("b")
-        relancer.assert_called_once()
-        assert P.actif() == "b"

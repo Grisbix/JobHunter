@@ -85,8 +85,7 @@ ignore = [
 ]
 
 # Google-style docstrings (phase 8): required on the package's whole public API.
-# Exempt: the programs (jobhunter.programs, command lines) and the
-# window (jobhunter.app, interface mixins), which are not libraries.
+# Exempt: the programs (jobhunter.programs, command lines), which are not libraries.
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
@@ -96,7 +95,6 @@ convention = "google"
 "src/jobhunter/programs/*" = ["D", "T20"]
 "src/jobhunter/cli.py" = ["T20"]
 "src/jobhunter/__main__.py" = ["T20"]
-"src/jobhunter/app/*" = ["D"]
 
 [tool.ruff.lint.isort]
 # _profil_test must stay a test's FIRST import: it sets the example
@@ -148,7 +146,6 @@ module = [
     "jobhunter.documents.*",
     "jobhunter.navigation.*",
     "jobhunter.sources.*",
-    "jobhunter.app.*",
 ]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

@@ -4,54 +4,8 @@ Each case was first reproduced on the 3.75 engine (essay or real queue); the tes
 the fixed behaviour.
 """
 
-from jobhunter.app import actions
-from jobhunter.app import common as app_common
-from jobhunter.storage import applications
 
 # --- 01: the Tk app removed applied offers ---------------------------------------------
-
-
-class _FauxTk:
-    """The few attributes the Tk delete / set-aside paths read before writing."""
-
-    _partantes_permises = actions.ActionsMixin._partantes_permises
-    _delete_checked = actions.ActionsMixin._delete_checked
-    _ecarter_checked = actions.ActionsMixin._ecarter_checked
-
-    def __init__(self, coches):
-        self.checked = set(coches)
-        self.journal = []
-
-    def _log(self, texte):
-        self.journal.append(texte)
-
-    def _demander_motif(self, n):
-        raise AssertionError("aucune offre ne peut partir : pas de dialogue")
-
-
-def test_tk_garde_les_offres_suivies(tmp_path, monkeypatch):
-    suivi = tmp_path / "applications.json"
-    suivi.write_text('{"A|B": {"s": "postulé"}}', encoding="utf-8")
-    monkeypatch.setattr(app_common, "SUIVI", suivi)
-    monkeypatch.setattr(
-        actions.messagebox,
-        "askyesno",
-        lambda *a, **k: (_ for _ in ()).throw(AssertionError("pas de dialogue")),
-    )
-    app = _FauxTk({"A|B"})
-    app._delete_checked()
-    app._ecarter_checked()
-    assert any("candidature" in j for j in app.journal)
-    assert app._partantes_permises({"A|B", "C|D"}) == {"C|D"}
-
-
-def test_tk_suivi_illisible_ne_retire_rien(tmp_path, monkeypatch):
-    suivi = tmp_path / "applications.json"
-    suivi.write_text('{"A|B": ', encoding="utf-8")
-    monkeypatch.setattr(app_common, "SUIVI", suivi)
-    app = _FauxTk({"C|D"})
-    assert app._partantes_permises({"C|D"}) is None
-    assert applications.hors_suivi({"C|D"}, tmp_path / "absent.json") == ({"C|D"}, 0)
 
 
 # --- 05: react_submit sent the page's first form ----------------------------------------
