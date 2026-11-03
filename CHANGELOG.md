@@ -4,6 +4,15 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.81.0 — 2026-11-03
+
+Faster checks of closed offers.
+
+- **One request instead of two.** When the morning reads a LinkedIn description, the offer counts as checked: the closed-offers step no longer asks LinkedIn the same page again (509 requests saved on a usual morning).
+- **Weak offers checked less often.** An offer at 4/10 or less never shows in the daily triage: it is now checked every 20 days instead of 5 to 10.
+- **A steadier pace with LinkedIn.** When LinkedIn says « too many requests », JobHunter now waits and slows down, then speeds up again when LinkedIn answers. The log says how many times it happened.
+- PyMuPDF 2 is allowed (tested on real CVs: same text).
+
 ## 3.80.1 — 2026-11-03
 
 Maintenance: nothing changes on screen.
