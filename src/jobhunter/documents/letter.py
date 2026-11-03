@@ -531,7 +531,6 @@ def tailor_letter(offer: dict[str, Any], nom: str | None = None, langue: str = "
     # No title at all: a spontaneous application, not "au poste de ce poste".
     _sans_titre = not str(offer["role"] or "").strip()
     skills = match_skills(offer["offer_text"])
-    missions = (offer["missions"] or "").strip()
     profil = (offer["profil"] or "").strip()
     # WHO we write to. Returns the generic one when the `rh` field does not carry a
     # person — the case of 4501 offers out of 4917, hence the usual case.

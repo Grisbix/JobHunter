@@ -262,33 +262,6 @@ SUBMIT_RX = r"(envoyer|soumettre|submit|valider|confirmer|envoyer ma candidature
 REGISTER_RX = r"(créer un compte|creer un compte|s'inscrire|sign ?up|register|créer mon espace|nouveau compte|create an account|inscription)"
 
 
-def try_click_register(page):
-    """Click a 'create account / register' control to open the signup form. Never the final submit."""
-    js = r"""
-    ([regRx, submitRx]) => {
-      const g = new RegExp(regRx, 'i'), s = new RegExp(submitRx, 'i');
-      const els = [...document.querySelectorAll('a,button,[role=button],input[type=button]')];
-      for (const el of els) {
-        const t = (el.innerText||el.value||el.getAttribute('aria-label')||'').trim();
-        if (!t || s.test(t)) continue;
-        if (g.test(t)) {
-          const r = el.getBoundingClientRect();
-          if (r.width>0 && r.height>0) { el.setAttribute('data-pw-reg','1'); return t; }
-        }
-      }
-      return '';
-    }"""
-    try:
-        label = page.evaluate(js, [REGISTER_RX, SUBMIT_RX])
-        if label:
-            page.locator('[data-pw-reg="1"]').first.click(timeout=4000)
-            page.wait_for_timeout(2000)
-            return label
-    except Exception:
-        pass
-    return ""
-
-
 def try_open_form(page):
     """Click an 'apply/postuler' control to reach the form. Never clicks a submit button."""
     js = r"""

@@ -478,11 +478,6 @@ def cmd_set_key(nom):
     return 0
 
 
-def get_key(nom):
-    """Programmatic read of a key (for the other scripts)."""
-    return (_load(KEYS, {}) or {}).get(nom)
-
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--list", action="store_true")

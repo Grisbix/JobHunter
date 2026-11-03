@@ -12,7 +12,6 @@ linkedin      Easy Apply: fills in, the human sends
 llm           fallback through a local model (Ollama): vision, step-by-step agent
 otp           code received by email: pastes, highlights Verify, the human clicks
 navigateur    standard Playwright only, typing helpers, robust loading, session
-categories    strategies per site category; their tables are in strategies
 confirmation  after the send (done by the human): does the page confirm? proof
 
 Captcha and anti-bot are DETECTED to hand over to the human, never bypassed;
@@ -37,7 +36,6 @@ _MODULES = _facade.installer(
         "linkedin",
         "browser",
         "otp",
-        "categories",
         "confirmation",
     ),
 )

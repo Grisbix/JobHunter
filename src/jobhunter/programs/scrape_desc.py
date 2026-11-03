@@ -349,7 +349,6 @@ def main():
 
     from playwright.sync_api import sync_playwright
 
-    eng = "playwright"
     ok = 0
     with sync_playwright() as p:
 

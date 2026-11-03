@@ -58,12 +58,6 @@ def charger():
         return {}
 
 
-def est_exclu(offre, table=None):
-    from jobhunter.storage import queue as queue_io
-
-    return queue_io.oid(offre) in (charger() if table is None else table)
-
-
 def ajouter(offres, motif, note=""):
     """Sets offers aside. Returns the number of NEW exclusions.
 

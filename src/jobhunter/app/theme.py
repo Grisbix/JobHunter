@@ -151,7 +151,7 @@ GAP = 16  # entre widgets       clamp(16px, 1.5vw, 28px)
 def _resoudre_espacements(fenetre: Any) -> None:
     global PAD_PAGE, GAP
     try:
-        w = fenetre.winfo_screenwidth()
+        fenetre.winfo_screenwidth()  # raises once the window is gone
     except Exception:
         return
     PAD_PAGE = 20

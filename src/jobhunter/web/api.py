@@ -1924,17 +1924,6 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
             self._fenetre.destroy()
         return {"ok": True, "dossier": str(dossier)}
 
-    # Actions that only open things.
-    def ouvrir_profil(self) -> bool:
-        """Opens profile.json in its editor (no password lives there)."""
-        from jobhunter import profile
-
-        p = Path(profile.FICHIER)
-        if not p.is_file():
-            return False
-        os.startfile(p)  # type: ignore[attr-defined,unused-ignore]  # Windows only
-        return True
-
     # Settings: language, daily collection, profiles (the desktop's Paramètres page).
     def parametres(self) -> dict[str, Any]:
         """Interface language, daily collection state, profiles."""

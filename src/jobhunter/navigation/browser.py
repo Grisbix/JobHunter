@@ -263,19 +263,6 @@ class BrowserSession:
         self._crashed = True
         return self.start()
 
-    def is_alive(self) -> bool:
-        """Checks whether the browser is still connected."""
-        try:
-            return (
-                self._browser is not None
-                and self._browser.is_connected()
-                and self._page is not None
-                and not self._page.is_closed()
-                and not self._page.evaluate("() => true").get("_bogus") == 1
-            )
-        except Exception:
-            return False
-
     def close(self) -> None:
         """Closes the page, the context, the browser and Playwright, without raising."""
         try:

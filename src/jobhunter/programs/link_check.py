@@ -31,10 +31,6 @@ UA = {
 }
 
 
-def is_live(st):
-    return isinstance(st, int) and st < 400
-
-
 def check(u):
     """Returns (url, status, soft): HTTP status or exception name;
     soft = 'dead offer' phrase detected in the body despite 200, otherwise None."""

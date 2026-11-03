@@ -95,7 +95,6 @@ from jobhunter.programs.util import url_de as _url_of
 def rename_orphans(dry=False):
     """Files NOT linked to the queue (old names) → same format by pattern:
     "X_cover_letter" → Prenom_Nom_Lettre_X · "CV_X" → Prenom_Nom_CV_X."""
-    ROOT = HERE.parent
     dirs = [(chemins.LT_PAR_OFFRE, "Lettre"), (chemins.CV_PAR_OFFRE, "CV")]
     n = 0
     for d, kind in dirs:

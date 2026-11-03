@@ -46,14 +46,6 @@ _WTJ_JS = r"""
 }"""
 
 
-def _wtj_429(pg: Any) -> bool:
-    """Is WTJ throttling us? Readable EVEN when navigation failed: the error page carries "Too Many Requests" while robust_goto returns ok=False."""
-    try:
-        return "too many requests" in pg.evaluate("document.body.innerText.slice(0,200)").lower()
-    except Exception:
-        return False
-
-
 WTJ_SITEMAP = "https://www.welcometothejungle.com/sitemaps/index.xml.gz"
 
 # Measured: WTJ's CloudFront challenge drops after ~3 minutes (202, 202, 200

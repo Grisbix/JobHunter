@@ -322,22 +322,6 @@ def _titre_une_passe(t: str | None, maxlen: int) -> str:
     return t
 
 
-def _coupe_mot(t: str | None, n: int) -> str:
-    """Truncates to n characters WITHOUT cutting a word, and without leaving dangling punctuation.
-
-    "…help to build a better wor" went out in a real letter: a quotation cut in
-    the middle of a word is more visible than a missing quotation.
-    """
-    t = " ".join((t or "").split())
-    if len(t) <= n:
-        return t.rstrip(" ,;:.-")
-    coupe = t[:n]
-    i = coupe.rfind(" ")
-    if i > n * 0.6:
-        coupe = coupe[:i]
-    return coupe.rstrip(" ,;:.-") + "…"
-
-
 def company_value(company: str | None) -> str:
     """Known hook for this company, or "": when the company is unknown, the letter lends it NO commitment, it talks about the job."""
     c = (company or "").lower()
@@ -376,27 +360,6 @@ _PARESSEUX["SKILL_EN"] = lambda: ({lab: v.get("en") or lab for lab, v in _ici._C
 
 
 _SKILL_EN_NORM = None
-
-
-def skills_en(labels: list[str]) -> list[str]:
-    """Translated labels.
-
-    The search ignores ACCENTS: the keys of SKILL_EN are written without them, the
-    real labels carry them ("Analyse financière" versus "Analyse financiere").
-    Comparing them as they are found nothing and the English letter stayed stuffed
-    with French.
-
-    An unknown label is RETURNED AS IS rather than removed: better a visible French
-    word than a skill that disappeared.
-    """
-    global _SKILL_EN_NORM
-    if _SKILL_EN_NORM is None:
-        from jobhunter.programs.util import sans_accent
-
-        _SKILL_EN_NORM = {sans_accent(k).lower(): v for k, v in _ici.SKILL_EN.items()}
-    from jobhunter.programs.util import sans_accent
-
-    return [_SKILL_EN_NORM.get(sans_accent(x).lower(), x) for x in labels]
 
 
 # Labels used for SCORING but not written in a letter: they

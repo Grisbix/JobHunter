@@ -120,7 +120,6 @@ def preuve(offre: dict[str, Any], langue: str, ton: str = "sobre") -> str:
             p = (parcours.split(". ")[0].rstrip(".") + ".") if parcours else ""
         return p
 
-    lien = " and " if langue == "en" else " et "
     phrases: list[str] = []
     # Two sources at most: three make an enumeration, not a sentence.
     for src in _ici._SOURCES:

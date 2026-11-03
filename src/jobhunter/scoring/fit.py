@@ -405,11 +405,6 @@ _PARESSEUX["_MALUS_EXP"] = lambda: sorted(
 )
 
 
-def _malus_experience(yrs: int) -> float:
-    """Penalty for `yrs` years required: the highest step reached."""
-    return next((m for seuil, m in _ici._MALUS_EXP if yrs >= seuil), 0.0)
-
-
 def fit_score(text: str | None, title: str | None = "") -> tuple[int, int]:
     """(fit entier 1-10, annees d'experience exigees). Voir fit_detail."""
     fit, yrs, _fin = fit_detail(text, title)

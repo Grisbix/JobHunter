@@ -41,7 +41,6 @@ SOUS_MODULES = [
     "linkedin",
     "navigateur",
     "otp",
-    "categories",
     "strategies",
 ]
 

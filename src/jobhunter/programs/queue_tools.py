@@ -146,7 +146,7 @@ def _selftest():
         "https://dead.test/2": {"live": False, "status": 404, "soft_dead": None},
         "https://expired.test/3": {"live": False, "status": 200, "soft_dead": "offre pourvue"},
     }
-    r = mark_dead(tf, verbose=False, _checker=lambda urls: fake)
+    mark_dead(tf, verbose=False, _checker=lambda urls: fake)
     got = {x["entreprise"]: x.get("link_status") for x in load(tf)}
     P = F = 0
 

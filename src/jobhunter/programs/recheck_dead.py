@@ -166,7 +166,6 @@ def main():
 
     from playwright.sync_api import sync_playwright
 
-    eng = "playwright"
     counts = {}
     with sync_playwright() as p:
 
