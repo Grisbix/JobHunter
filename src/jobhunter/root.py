@@ -51,7 +51,11 @@ NOMS = {**DOSSIERS, **SOUS_DOSSIERS, **FICHIERS}
 
 
 def _a_des_donnees(d: Path, donnees: str, profil: str, fichier_profil: str) -> bool:
-    return (d / donnees / "apply_queue.json").exists() or (d / profil / fichier_profil).exists()
+    return (
+        (d / donnees / "apply_queue.json").exists()
+        or (d / donnees / "queue.sqlite3").exists()  # the queue since 3.77
+        or (d / profil / fichier_profil).exists()
+    )
 
 
 def anglais(d: Path) -> bool:

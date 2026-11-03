@@ -222,7 +222,7 @@ def main():
 
     q = (
         importlib.import_module("jobhunter.storage.queue").charger(QUEUE, descriptions=False)
-        if QUEUE.exists()
+        if importlib.import_module("jobhunter.storage.queue").existe(QUEUE)
         else []
     )
     have = {norm_url(o.get("url")) for o in q if o.get("url")}

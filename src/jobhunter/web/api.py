@@ -929,7 +929,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
     def _file(self) -> list[Any]:
         from jobhunter.storage import queue
 
-        return self._lire("file", queue.CHEMIN, lambda: queue.charger(descriptions=False))
+        return self._lire("file", queue.fichier(), lambda: queue.charger(descriptions=False))
 
     def _suivi(self) -> Mapping[str, Any]:
         from jobhunter.storage import applications
@@ -939,7 +939,9 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
     def _descriptions(self) -> Mapping[str, str]:
         from jobhunter.storage import queue
 
-        return self._lire("desc", queue.DESCRIPTIONS, queue._lire_descriptions)
+        # The database holds both: its time stands for the descriptions too.
+        f = queue.fichier() if queue.base().is_file() else queue.DESCRIPTIONS
+        return self._lire("desc", f, queue._lire_descriptions)
 
     # Screens.
     def tableau(self) -> dict[str, Any]:
@@ -1190,7 +1192,12 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi):
             c = {}
         sauvegardes = root.dans(donnees, "_sauvegardes")
         tailles = []
-        for nom in ("apply_queue.json", "descriptions.json", root.nom("suivi.json")):
+        for nom in (
+            "queue.sqlite3",
+            "apply_queue.json",
+            "descriptions.json",
+            root.nom("suivi.json"),
+        ):
             p = donnees / nom
             if p.exists():
                 tailles.append({"nom": nom, "octets": p.stat().st_size})

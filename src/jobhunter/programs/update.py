@@ -116,6 +116,7 @@ PROTEGES_PREFIXES = (
 _DONNEES = (
     "apply_queue.json",
     "descriptions.json",
+    "queue.sqlite3",  # the queue since 3.77
     "adzuna.json",
     "francetravail.json",
     "gmail_client.json",

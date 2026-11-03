@@ -121,9 +121,8 @@ def _copier_etat_actuel() -> Path:
         datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S") + "_avant_restauration"
     )
     cible.mkdir(parents=True, exist_ok=True)
-    for src in (Path(queue_io.CHEMIN), Path(queue_io.DESCRIPTIONS)):
-        if src.is_file():
-            backups.ecrire(src, cible)
+    if queue_io.existe():
+        queue_io.exporter(cible)
     return cible
 
 

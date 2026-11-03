@@ -6,8 +6,10 @@ Scripts/test_queue_io.py.
 """
 
 import json
+import sqlite3
 import subprocess
 import sys
+from contextlib import closing
 
 import pytest
 from conftest import SRC
@@ -136,20 +138,22 @@ def deux_offres(file_temporaire):
 
 
 def _annexe():
-    return json.loads(queue_io.DESCRIPTIONS.read_text(encoding="utf-8"))
+    """The descriptions table, read straight from the database."""
+    with closing(sqlite3.connect(queue_io.base())) as c:
+        return dict(c.execute("SELECT oid, texte FROM descriptions"))
+
+
+def _lignes_brutes():
+    with closing(sqlite3.connect(queue_io.base())) as c:
+        return [json.loads(d) for (d,) in c.execute("SELECT data FROM offres ORDER BY rang")]
 
 
 def test_file_sans_descriptions(deux_offres):
-    brut = json.loads(queue_io.CHEMIN.read_text(encoding="utf-8"))
-    assert not any("description" in o for o in brut)
+    assert not any("description" in o for o in _lignes_brutes())
 
 
 def test_annexe_contient_les_descriptions(deux_offres):
     assert len(_annexe()) == 1
-
-
-def test_file_pese_moins_que_l_annexe(deux_offres):
-    assert queue_io.CHEMIN.stat().st_size < queue_io.DESCRIPTIONS.stat().st_size
 
 
 def test_charger_reinjecte(deux_offres):
@@ -166,8 +170,8 @@ def test_chemin_relatif_vers_la_file_reinjecte(deux_offres, monkeypatch):
 def test_chemin_relatif_garde_la_file_sans_descriptions(deux_offres, monkeypatch):
     monkeypatch.chdir(deux_offres.parent)
     queue_io.sauver(queue_io.charger(), queue_io.Path("apply_queue.json"))
-    brut = json.loads(queue_io.CHEMIN.read_text(encoding="utf-8"))
-    assert not any("description" in o for o in brut)
+    assert not any("description" in o for o in _lignes_brutes())
+    assert not queue_io.CHEMIN.exists()  # never a JSON queue beside the database
 
 
 def test_description_vide_non_stockee(deux_offres):
@@ -256,3 +260,99 @@ def test_fit_en_texte_lu_comme_un_nombre(tmp_path):
     assert (a["fit"], a["fit_fin"]) == (9, 9.2)
     assert (b["fit"], b["fit_fin"]) == (None, None)
     assert (c["fit"], c["fit_fin"]) == (7, 7.1)
+
+
+# ── H. the JSON queue of 3.76 moves into the database at the first write ────────
+@pytest.fixture
+def file_json(file_temporaire):
+    """A data folder as 3.76 left it: apply_queue.json + descriptions.json, format 1."""
+    file_temporaire.write_text(
+        json.dumps(
+            [{"entreprise": "A", "poste": "x", "fit": 9}, {"entreprise": "B", "poste": "y"}]
+        ),
+        encoding="utf-8",
+    )
+    queue_io.DESCRIPTIONS.write_text(json.dumps({"A|x": "texte de A"}), encoding="utf-8")
+    (file_temporaire.parent / "_format.json").write_text('{"format": 1}', encoding="utf-8")
+    return file_temporaire
+
+
+def test_lire_ne_migre_pas(file_json):
+    assert queue_io.charger()[0]["description"] == "texte de A"
+    assert not queue_io.base().exists()  # a read never changes the data folder
+
+
+def test_premiere_ecriture_migre(file_json):
+    with queue_io.transaction() as offres:
+        offres[1]["fit"] = 4
+    assert queue_io.base().is_file()
+    assert not file_json.exists()
+    assert queue_io.fichier() == queue_io.base()
+    lu = queue_io.charger()
+    assert [(o["entreprise"], o.get("fit"), o.get("description")) for o in lu] == [
+        ("A", 9, "texte de A"),
+        ("B", 4, None),
+    ]
+
+
+def test_migration_garde_les_json(file_json):
+    avant = file_json.read_bytes()
+    queue_io.modifier(lambda offres: None)
+    assert file_json.with_name("apply_queue.json.avant_sqlite").read_bytes() == avant
+    assert queue_io.DESCRIPTIONS.with_name("descriptions.json.avant_sqlite").is_file()
+
+
+def test_migration_monte_le_format(file_json):
+    from jobhunter.storage import data_format
+
+    queue_io.modifier(lambda offres: None)
+    assert data_format.lire(file_json.parent) == data_format.FORMAT == 2
+
+
+def test_disposition_2x_reste_en_json(tmp_path, monkeypatch):
+    # programs/migrate rewrites the document links inside the JSON: Scripts/ waits for it.
+    scripts = tmp_path / "Scripts"
+    scripts.mkdir()
+    monkeypatch.setattr(queue_io, "CHEMIN", scripts / "apply_queue.json")
+    monkeypatch.setattr(queue_io, "DESCRIPTIONS", scripts / "descriptions.json")
+    with queue_io.transaction() as offres:
+        offres.append({"entreprise": "A", "poste": "x", "description": "t"})
+    assert not queue_io.base().exists()
+    assert json.loads(queue_io.DESCRIPTIONS.read_text(encoding="utf-8")) == {"A|x": "t"}
+    assert queue_io.charger()[0]["description"] == "t"
+
+
+def test_exception_n_ecrit_rien_dans_la_base(deux_offres):
+    with pytest.raises(ValueError), queue_io.transaction() as offres:
+        offres.clear()
+        raise ValueError("boum")
+    assert len(queue_io.charger()) == 2
+    assert len(_annexe()) == 1
+
+
+def test_ordre_et_retrait_au_milieu(deux_offres):
+    with queue_io.transaction() as offres:
+        offres.reverse()
+        offres.append({"entreprise": "C", "poste": "z"})
+    assert [o["entreprise"] for o in queue_io.charger()] == ["BNP", "Amundi", "C"]
+    with queue_io.transaction() as offres:
+        del offres[0]
+    assert [o["entreprise"] for o in queue_io.charger()] == ["Amundi", "C"]
+    assert len(queue_io.charger()[0]["description"]) == 4000
+
+
+def test_exporter_ecrit_le_format_des_sauvegardes(deux_offres, tmp_path):
+    from jobhunter.storage import backups
+
+    ecrits = queue_io.exporter(tmp_path / "sauv")
+    assert [f.name for f in ecrits] == ["apply_queue.json.gz", "descriptions.json.gz"]
+    offres = json.loads(backups.lire_texte(ecrits[0]))
+    assert [o["entreprise"] for o in offres] == ["Amundi", "BNP"]
+    assert not any("description" in o for o in offres)
+    assert json.loads(backups.lire_texte(ecrits[1])) == {"Amundi|Analyste ESG": "x" * 4000}
+
+
+def test_existe(file_temporaire):
+    assert not queue_io.existe()
+    queue_io.modifier(lambda offres: offres.append({"entreprise": "A"}))
+    assert queue_io.existe()

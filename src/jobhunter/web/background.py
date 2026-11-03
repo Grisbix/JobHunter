@@ -257,7 +257,7 @@ class FondApi:
 
         f = self._fond
         fichiers = 0
-        for chemin in (queue.CHEMIN, applications.CHEMIN):
+        for chemin in (queue.fichier(), applications.CHEMIN):
             try:
                 fichiers += int(chemin.stat().st_mtime)
             except OSError:

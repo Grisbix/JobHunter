@@ -9,6 +9,7 @@ time.sleep for the whole process.
 """
 
 import datetime
+import json
 
 import httpx
 import pytest
@@ -322,15 +323,19 @@ def test_fiche_fermee_reperee(fiche_fermee):
 
 
 # ── the day's backup is never overwritten ─────────────────────────────────
-def test_premiere_sauvegarde_du_jour_gagne(tmp_path, monkeypatch):
+def test_premiere_sauvegarde_du_jour_gagne(tmp_path, monkeypatch, file_temporaire):
+    from jobhunter.storage import queue as queue_io
+
     monkeypatch.setattr(pq, "SCRIPTS", tmp_path)
-    (tmp_path / "apply_queue.json").write_text("matin", encoding="utf-8")
+    queue_io.modifier(lambda q: q.append({"entreprise": "matin"}))
     copie = pq.sauvegarder()
-    (tmp_path / "apply_queue.json").write_text("soir", encoding="utf-8")
+    queue_io.modifier(lambda q: q[0].update(entreprise="soir"))
     pq.sauvegarder()
     from jobhunter.storage import backups
 
-    assert backups.lire_texte(copie / "apply_queue.json.gz") == "matin"  # gzip since 3.61
+    # gzip since 3.61, exported as JSON from the database since 3.77
+    lu = json.loads(backups.lire_texte(copie / "apply_queue.json.gz"))
+    assert lu == [{"entreprise": "matin"}]
 
 
 # ── duration: stop by itself, to get to the deletion ────────────

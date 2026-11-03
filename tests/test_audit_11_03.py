@@ -128,7 +128,7 @@ def test_ajout_manuel_nomme_sans_collision(file_temporaire, monkeypatch):
     lien = next(o for o in queue_io.charger(file_temporaire) if o["url"] == "https://a/2")
     assert lien["cv"] and lien["lettre"]
     # the queue file does not carry the descriptions back
-    assert "description" not in file_temporaire.read_text(encoding="utf-8")
+    assert not any("description" in o for o in queue_io.charger(descriptions=False))
 
 
 # --- 10: two programs both broke the same orphan lock -----------------------------------

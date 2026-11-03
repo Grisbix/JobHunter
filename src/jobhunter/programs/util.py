@@ -50,13 +50,13 @@ def jwrite(path, obj, _brut=False):
     # the write. Without this flag, its own write went through the guard again and
     # called itself forever (RecursionError) as soon as the path was not the
     # canonical file — a test file, for example.
-    if (
-        not _brut
-        and path.name == "apply_queue.json"
-        and isinstance(obj, list)
-        and any(isinstance(x, dict) and (x.get("description") or "").strip() for x in obj)
-    ):
+    if not _brut and path.name == "apply_queue.json" and isinstance(obj, list):
         from jobhunter.storage import queue as file
 
-        return file.sauver(obj, path)
+        # THE queue lives in a database since 3.77: written as JSON here, it would be
+        # a stale file beside it. Another apply_queue.json keeps the old rule.
+        if file._est_la_file(path) or any(
+            isinstance(x, dict) and (x.get("description") or "").strip() for x in obj
+        ):
+            return file.sauver(obj, path)
     _atomique.ecrire_json(path, obj)

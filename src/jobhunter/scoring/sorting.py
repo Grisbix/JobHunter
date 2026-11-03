@@ -53,7 +53,6 @@ import argparse
 import hashlib
 import importlib
 import re
-import shutil
 import sys
 import time
 from pathlib import Path  # noqa: F401  (annotations and callers)
@@ -666,7 +665,10 @@ def main() -> int:
         return 0
 
     sauv = QUEUE.with_suffix(f".json.avant_tri_{time.strftime('%Y%m%d_%H%M%S')}")
-    shutil.copy2(QUEUE, sauv)
+    # The queue as JSON (it lives in a database since 3.77): restore reads it as is.
+    importlib.import_module("jobhunter.storage.atomic").ecrire_json(
+        sauv, importlib.import_module("jobhunter.storage.queue").charger(QUEUE, descriptions=False)
+    )
     print(f"\nsauvegarde : {sauv.name}")  # noqa: T201
     # ONE PER DAY SINCE THE PIPELINE SORTS. 9 MB each, endlessly: we keep
     # the last five. The name carries the timestamp, so alphabetical order

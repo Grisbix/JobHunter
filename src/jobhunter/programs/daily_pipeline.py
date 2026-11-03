@@ -124,9 +124,9 @@ class _Journal:
         self.fichier.flush()
 
 
+# The queue and its descriptions are exported (storage.queue.exporter): since 3.77 they
+# live in a database, and the backups stay JSON, readable by restore and reposts.
 _A_SAUVER = (
-    "apply_queue.json",
-    "descriptions.json",
     _racine.nom("suivi.json"),
     "companies_seen.json",
 )
@@ -155,6 +155,10 @@ def sauvegarder(garder=7):
         # missing files are completed, the ones there are never replaced (audit
         # 2026-10-29: the day's tracker was missing and never copied again).
         cible.mkdir(parents=True, exist_ok=True)
+        from jobhunter.storage import queue as queue_io
+
+        if queue_io.existe() and not backups.fichier(cible, "apply_queue.json"):
+            queue_io.exporter(cible)
         for nom in _A_SAUVER:
             src = SCRIPTS / nom
             if src.exists() and not backups.fichier(cible, nom):

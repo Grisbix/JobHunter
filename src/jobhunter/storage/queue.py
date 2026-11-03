@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""jobhunter.storage.queue — single access to apply_queue.json (formerly Scripts/queue_io.py).
+"""jobhunter.storage.queue — single access to the queue of offers (formerly Scripts/queue_io.py).
 
 WHY THIS MODULE. Fourteen programs write the queue, and each reimplemented
 the same sequence: take the lock, reread the disk, modify, write
@@ -13,18 +13,30 @@ data loss. A sequence copied fourteen times always ends up diverging.
     with transaction() as offres:          # lock + fresh reread
         for o in offres:
             o["fit"] = 10
-    # leaving the block: atomic write, then lock released
+    # leaving the block: one write, then lock released
 
-FILE NAME. Above all not `queue.py`: `queue` is a standard library module,
+STORAGE. Since 3.77 the queue lives in a SQLite database, `queue.sqlite3`, next to
+where `apply_queue.json` was: one table of offers, one of descriptions, written in ONE
+transaction (two JSON files never made one: `sauver` needed a three-step order to
+stand in for it), and only the rows that changed are written. The first write of a
+3.77 migrates the JSON files and keeps them as `*.avant_sqlite`. `CHEMIN` keeps
+naming `apply_queue.json`: it is the queue's identity, the lock file's name, and the
+name of its JSON exports (backups, `exporter`). Any OTHER path stays a plain JSON
+file (a test queue, a backup being read).
+
+FILE NAME. Above all not `queue.py` in Scripts/: `queue` is a standard library module,
 `Scripts/` is in sys.path, and JobHunter.pyw does `import queue`.
 Shadowing it would break the application.
 
-Decision: docs/adr/0002-three-files-three-contracts.md
+Decision: docs/adr/0002-three-files-three-contracts.md, docs/adr/0016-queue-in-sqlite.md
 """
 
+import gzip
 import json
+import os
+import sqlite3
 from collections.abc import Callable, Iterator
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -41,12 +53,21 @@ CHEMIN = HERE / "apply_queue.json"
 # The descriptions weighed 8.3 MB of the queue's 11.6 MB, i.e. 64 %. Yet the 13
 # programs that modify ONE offer rewrote the WHOLE file: 142 ms per
 # cycle, most of it copying texts nobody had touched.
-# So they live in an annex file, indexed by offer.
+# So they live apart (a JSON annex until 3.76, a table since), indexed by offer.
 #
 # The separation is INVISIBLE to callers: `charger` reinjects the
 # `description` field, writing takes it out. None of the 22 uses of `o["description"]`
 # needed to change.
 DESCRIPTIONS = HERE / "descriptions.json"
+
+NOM_BASE = "queue.sqlite3"
+SUFFIXE_ANCIEN = ".avant_sqlite"  # the JSON files once migrated, kept as they were
+_SCHEMA = """
+CREATE TABLE offres (rang INTEGER PRIMARY KEY, oid TEXT NOT NULL, data TEXT NOT NULL);
+CREATE INDEX offres_oid ON offres (oid);
+CREATE TABLE descriptions (oid TEXT PRIMARY KEY, texte TEXT NOT NULL);
+PRAGMA user_version = 1;
+"""
 
 
 def oid(offre: Offre) -> str:
@@ -64,7 +85,50 @@ def oid(offre: Offre) -> str:
     return f"{(offre.get('entreprise') or '').strip()}|{(offre.get('poste') or '').strip()}"
 
 
+def base() -> Path:
+    """The SQLite database of the queue (it may not exist yet: JSON before migration)."""
+    return Path(CHEMIN).with_name(NOM_BASE)
+
+
+def fichier() -> Path:
+    """The file that holds the queue now: the database once migrated, else the JSON.
+
+    For whoever watches the queue's modification time (the web interface's caches).
+    """
+    b = base()
+    return b if b.is_file() else Path(CHEMIN)
+
+
+def existe(chemin: Chemin | None = None) -> bool:
+    """Is there a queue at `chemin` (None = the data folder's), in either storage?"""
+    p = Path(chemin or CHEMIN)
+    return p.is_file() or (_est_la_file(p) and base().is_file())
+
+
+def _connexion(p: Path) -> sqlite3.Connection:
+    # autocommit (isolation_level=None): the transactions are opened explicitly.
+    # timeout: a reader waits for a writer's commit instead of failing at once.
+    return sqlite3.connect(p, timeout=60, isolation_level=None)
+
+
+def _en_base() -> bool:
+    return base().is_file()
+
+
+def _lire_base(descriptions: bool) -> tuple[list[Offre], dict[str, str]]:
+    with closing(_connexion(base())) as c:
+        c.execute("BEGIN")  # one snapshot for both tables
+        offres: list[Offre] = [
+            json.loads(d) for (d,) in c.execute("SELECT data FROM offres ORDER BY rang")
+        ]
+        textes = dict(c.execute("SELECT oid, texte FROM descriptions")) if descriptions else {}
+        c.execute("COMMIT")
+    return offres, textes
+
+
 def _lire_descriptions() -> dict[str, str]:
+    if _en_base():
+        return _lire_base(True)[1]
     try:
         textes: dict[str, str] = json.loads(DESCRIPTIONS.read_text(encoding="utf-8"))
         return textes
@@ -112,35 +176,94 @@ def _nombres(offres: list[Offre]) -> None:
 def charger(chemin: Chemin | None = None, descriptions: bool = True) -> list[Offre]:
     """The offers, READ ONLY, descriptions reinjected.
 
-    No lock: since writes are atomic (tmp + os.replace), a read
-    never sees a half-written file. Do not use if you intend to
-    rewrite — see `transaction`.
+    No lock: a write is one SQLite transaction (or, for a JSON file, tmp +
+    os.replace), so a read never sees a half-written queue. Do not use if you
+    intend to rewrite — see `transaction`.
 
-    `descriptions=False` avoids reading the annex file when it is not
+    `descriptions=False` avoids reading the postings' text when it is not
     needed: that is where the time saving is.
 
     Args:
-        chemin: the queue to read; None = `Scripts/apply_queue.json` of the data folder.
-        descriptions: reinject the postings' text (annex file).
+        chemin: the queue to read; None = the queue of the data folder.
+        descriptions: reinject the postings' text.
 
     Returns:
-        The offers; an empty list if the file is missing.
+        The offers; an empty list if there is no queue.
     """
     p = Path(chemin or CHEMIN)
-    try:
-        offres: list[Offre] = json.loads(p.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        return []
+    la_file = _est_la_file(p)
+    textes: dict[str, str] = {}
+    if la_file and _en_base():
+        offres, textes = _lire_base(descriptions)
+    else:
+        try:
+            offres = json.loads(p.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            if not (la_file and _en_base()):  # migrated between the two checks
+                return []
+            offres, textes = _lire_base(descriptions)
+        else:
+            if descriptions and la_file:
+                textes = _lire_descriptions()
     _nombres(offres)
-    if descriptions and _est_la_file(p):
-        textes = _lire_descriptions()
-        if textes:
-            for o in offres:
-                if not (o.get("description") or "").strip():
-                    t = textes.get(oid(o))
-                    if t:
-                        o["description"] = t
+    if textes:
+        for o in offres:
+            if not (o.get("description") or "").strip():
+                t = textes.get(oid(o))
+                if t:
+                    o["description"] = t
     return offres
+
+
+def _ligne(o: Offre) -> str:
+    return json.dumps(o, ensure_ascii=False, separators=(",", ":"))
+
+
+def _migrer() -> None:
+    """The JSON queue and its annex into a new database; caller holds the lock.
+
+    Built under a temporary name, then put in place in one rename: a failure leaves
+    the JSON files as they were. They are then renamed `*.avant_sqlite`, never
+    deleted, and the data folder's format goes up: a JSON-only JobHunter (3.76 or
+    older) would read an empty queue there and must not write over it.
+    """
+    try:
+        offres: list[Offre] = json.loads(Path(CHEMIN).read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        offres = []
+    try:
+        textes: dict[str, str] = json.loads(DESCRIPTIONS.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        textes = {}
+    b = base()
+    tmp = b.with_name(f"{b.name}.{os.getpid()}.tmp")
+    tmp.unlink(missing_ok=True)
+    try:
+        with closing(_connexion(tmp)) as c:
+            c.executescript(_SCHEMA)
+            c.execute("BEGIN")
+            c.executemany(
+                "INSERT INTO offres VALUES (?, ?, ?)",
+                ((i, oid(o), _ligne(o)) for i, o in enumerate(offres)),
+            )
+            c.executemany(
+                "INSERT INTO descriptions VALUES (?, ?)",
+                ((k, t) for k, t in textes.items() if isinstance(t, str) and t.strip()),
+            )
+            c.execute("COMMIT")
+        os.replace(tmp, b)
+    finally:
+        tmp.unlink(missing_ok=True)
+    for f in (Path(CHEMIN), DESCRIPTIONS):
+        if f.is_file():
+            os.replace(f, f.with_name(f.name + SUFFIXE_ANCIEN))
+    _format.marquer(b.parent)
+
+
+def _migrable() -> bool:
+    # The 2.x layout (Scripts/) stays in JSON: its migration to 3.0 (programs/migrate)
+    # rewrites the document links inside apply_queue.json, and runs first.
+    return Path(CHEMIN).parent.name != "Scripts"
 
 
 def sauver(
@@ -149,35 +272,72 @@ def sauver(
     _avant: dict[str, str] | None = None,
     _purger: bool = True,
 ) -> None:
-    """Atomic write, WITHOUT lock.
+    """One write, WITHOUT lock.
 
     Reserved for cases where the caller already holds the lock. When in doubt, use
-    `transaction`. The postings' text goes into the annex file, which is only
-    rewritten if it changed.
+    `transaction`. The offers and their postings' text are written in ONE SQLite
+    transaction, and only the rows that changed.
 
     Args:
         offres: all the offers; their `description` field is removed then put back.
         chemin: the queue to write; None = the one of the data folder.
-        _avant: the descriptions already read by the caller. `transaction` passes
-            them on — without that, `sauver` reread the 8.8 MB that `charger` had just
-            read, 63 ms thrown away at each write.
-        _purger: remove the orphan descriptions (False: the offers were not all loaded
-            with their text, an orphan cannot be told from a text not read).
+        _avant: kept for the JSON layout (2.x): the descriptions the caller already read.
+        _purger: remove the descriptions of offers no longer in the queue.
     """
     p = Path(chemin or CHEMIN)
     _format.verifier_ecriture(p.parent)  # never over a newer JobHunter's data
-    if not _est_la_file(p):  # test file: no separation
+    if not _est_la_file(p):  # another file (a test queue, an export): plain JSON
         atomique.ecrire_json(p, offres)
         return
+    if not _en_base():
+        if not _migrable():
+            _sauver_json(offres, p, _avant, _purger)
+            return
+        _migrer()
+    retires: dict[int, str] = {}
+    for i, o in enumerate(offres):
+        t = (o.pop("description", "") or "").strip()
+        if t:
+            retires[i] = t
+    try:
+        lignes = [_ligne(o) for o in offres]
+        with closing(_connexion(base())) as c:
+            c.execute("BEGIN IMMEDIATE")
+            try:
+                avant = dict(c.execute("SELECT rang, data FROM offres"))
+                c.executemany(
+                    "INSERT OR REPLACE INTO offres VALUES (?, ?, ?)",
+                    ((i, oid(offres[i]), d) for i, d in enumerate(lignes) if avant.get(i) != d),
+                )
+                c.execute("DELETE FROM offres WHERE rang >= ?", (len(lignes),))
+                # Unchanged texts are not rewritten: the WHERE keeps the row as it is.
+                c.executemany(
+                    "INSERT INTO descriptions VALUES (?, ?) ON CONFLICT (oid) DO UPDATE "
+                    "SET texte = excluded.texte WHERE texte != excluded.texte",
+                    ((oid(offres[i]), t) for i, t in retires.items()),
+                )
+                if _purger:
+                    # An orphan is a text whose offer left the queue, read from the
+                    # table itself: a transaction that did not load the texts cannot
+                    # mistake "not loaded" for "orphan".
+                    c.execute("DELETE FROM descriptions WHERE oid NOT IN (SELECT oid FROM offres)")
+                c.execute("COMMIT")
+            except BaseException:
+                c.execute("ROLLBACK")
+                raise
+    finally:
+        for i, t in retires.items():  # the caller keeps its complete object, even after a failure
+            offres[i]["description"] = t
 
+
+def _sauver_json(
+    offres: list[Offre], p: Path, _avant: dict[str, str] | None, _purger: bool
+) -> None:
+    """The JSON layout (before 3.77, kept for a 2.x folder until its migration)."""
     # THREE STEPS, so that no failure loses a description still
     # in use. 1) the annex receives the new texts, WITHOUT removing anything; 2) the
     # queue is published; 3) only then are the orphans purged. A failure
-    # between two steps only leaves orphans, harmless. The previous order
-    # (purge then queue) lost the description of a removed offer if writing
-    # the queue then failed: the queue kept the offer, the annex no longer had its
-    # text (audit of 19/10/2026). Two atomic files do not make a
-    # transaction; this order stands in for one.
+    # between two steps only leaves orphans, harmless (audit of 19/10/2026).
     avant = _lire_descriptions() if _avant is None else _avant
     textes = dict(avant)
     vivants = set()
@@ -189,27 +349,50 @@ def sauver(
             textes[cle_o] = t
     purgees = textes
     if _purger and (_avant is None or avant):
-        # purge of the orphans. Skipped when the caller did not read the annex
-        # file (transaction descriptions=False): we could not tell
-        # "orphan" from "not loaded", and we would erase everything.
+        # Skipped when the caller did not read the annex (transaction
+        # descriptions=False): "orphan" and "not loaded" look the same.
         purgees = {k: v for k, v in textes.items() if k in vivants}
-
-    # WRITE ONLY WHAT CHANGED. Systematically rewriting the 8.8 MB of
-    # descriptions cost 230 ms per transaction — more expensive than the old
-    # single file. Yet almost all writes touch NO
-    # description: they change a fit, a status, a URL. The purge, for its part,
-    # only happens when offers leave the queue.
     try:
         if textes != avant:
-            atomique.ecrire_json(DESCRIPTIONS, textes)  # 1) ajouts seulement
+            atomique.ecrire_json(DESCRIPTIONS, textes)  # 1) additions only
         atomique.ecrire_json(p, offres)  # 2) the queue
         if purgees != textes:
             atomique.ecrire_json(DESCRIPTIONS, purgees)  # 3) purge
     finally:
-        for o in offres:  # the caller keeps its complete object, even after a failure
+        for o in offres:
             texte = textes.get(oid(o))
             if texte:
                 o["description"] = texte
+
+
+def exporter(dossier: Path, compresser: bool = True) -> list[Path]:
+    """The queue and its descriptions as JSON files in `dossier`: the backups' format.
+
+    `apply_queue.json` and `descriptions.json` (`.gz` when `compresser`), as the
+    queue was before 3.77, so the backups, `jobhunter restore` and `reposts` read
+    every day alike, before and after the database.
+
+    Returns:
+        The files written.
+    """
+    from jobhunter.storage import backups
+
+    offres = charger(descriptions=False)
+    textes = _lire_descriptions()
+    dossier.mkdir(parents=True, exist_ok=True)
+    ecrits = []
+    for nom, obj in ((Path(CHEMIN).name, offres), (DESCRIPTIONS.name, textes)):
+        if compresser:
+            dest = dossier / (nom + backups.SUFFIXE)
+            tmp = dest.with_name(dest.name + ".tmp")
+            with gzip.open(tmp, "wt", encoding="utf-8", compresslevel=6) as f:
+                json.dump(obj, f, ensure_ascii=False, indent=1)
+            os.replace(tmp, dest)
+        else:
+            dest = dossier / nom
+            atomique.ecrire_json(dest, obj)
+        ecrits.append(dest)
+    return ecrits
 
 
 class VerrouIndisponible(RuntimeError):
@@ -223,7 +406,7 @@ def transaction(
     relire: bool = True,
     descriptions: bool = True,
 ) -> Iterator[list[Offre]]:
-    """Lock + fresh reread + atomic write on leaving the block.
+    """Lock + fresh reread + one write on leaving the block.
 
     `relire`: rereads the disk INSIDE the lock. That is the essential point.
     Loading the queue then taking the lock leaves a window during which another
@@ -233,11 +416,10 @@ def transaction(
     An exception in the block CANCELS the write: better to write nothing
     than to write a half-transformed state.
 
-    `descriptions=False`: does NOT read the annex file (8.8 MB, 63 ms) and
-    leaves it as is. That is where the speed gain is — for programs that
-    change a fit, a status or a URL without touching the postings' text.
-    The offers will then have no `description` field, and orphan descriptions
-    are not purged: that is the job of a complete write.
+    `descriptions=False`: does NOT read the postings' text and leaves it as is.
+    That is where the speed gain is — for programs that change a fit, a status or
+    a URL without touching it. The offers will then have no `description` field;
+    a text the block sets is still written.
 
     Args:
         chemin: the queue; None = the one of the data folder.
@@ -262,34 +444,37 @@ def transaction(
             f"{p.name} est modifié par un autre programme (attente {attente}s dépassée)"
         )
     try:
-        # A single read of the descriptions for the whole transaction: it
-        # serves to reinject them on entry, THEN to know on exit whether they
-        # changed. Rereading them in sauver cost 63 ms for nothing.
-        lues = relire and descriptions and _est_la_file(p)
-        textes = _lire_descriptions() if lues else {}
-        offres = charger(p, descriptions=False) if relire else []
-        if textes:
-            for o in offres:
-                if not (o.get("description") or "").strip():
-                    t = textes.get(oid(o))
-                    if t:
-                        o["description"] = t
+        if _est_la_file(p) and not _en_base() and not _migrable():
+            yield from _transaction_json(p, relire, descriptions)
+            return
+        offres = charger(p, descriptions=descriptions) if relire else []
         yield offres
         # reached only if the block did not raise
-        if (
-            not lues
-            and _est_la_file(p)
-            and any((o.get("description") or "").strip() for o in offres)
-        ):
-            # A text set in a block that did not read the annex: merged INTO it. With the
-            # empty `textes`, the annex was rewritten with only the new texts — every
-            # other offer lost its posting (audit 2026-10-29).
-            sauver(offres, p, _avant=None, _purger=False)
-        else:
-            sauver(offres, p, _avant=textes)
+        sauver(offres, p)
     finally:
         if a_nous:
             verrou.rendre_verrou(p)
+
+
+def _transaction_json(p: Path, relire: bool, descriptions: bool) -> Iterator[list[Offre]]:
+    # A single read of the descriptions for the whole transaction: it serves to
+    # reinject them on entry, THEN to know on exit whether they changed.
+    lues = relire and descriptions
+    textes = _lire_descriptions() if lues else {}
+    offres = charger(p, descriptions=False) if relire else []
+    if textes:
+        for o in offres:
+            if not (o.get("description") or "").strip():
+                t = textes.get(oid(o))
+                if t:
+                    o["description"] = t
+    yield offres
+    if not lues and any((o.get("description") or "").strip() for o in offres):
+        # A text set in a block that did not read the annex: merged INTO it (audit
+        # 2026-10-29: with the empty `textes`, every other offer lost its posting).
+        _sauver_json(offres, p, None, False)
+    else:
+        _sauver_json(offres, p, textes, True)
 
 
 def modifier[T](
@@ -318,4 +503,4 @@ def modifier[T](
 
 if __name__ == "__main__":
     q = charger()
-    print(f"{len(q)} offres dans {CHEMIN.name}")  # noqa: T201
+    print(f"{len(q)} offres dans {fichier().name}")  # noqa: T201

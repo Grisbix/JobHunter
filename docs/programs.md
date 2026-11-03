@@ -13,8 +13,9 @@ operations: `python JobHunter.pyw <commande>` (or `python -m jobhunter
 <commande>` once installed), and any program by its name
 (`python JobHunter.pyw probe_ats`).
 
-**The file that matters: `apply_queue.json`.** All the offers are in it — except their
-descriptions, which live apart in `descriptions.json` (they weighed 64% of the file,
+**The file that matters: the queue** (`queue.sqlite3` since 3.77, `apply_queue.json`
+before: ADR 0016). All the offers are in it — their descriptions in a table apart
+(`descriptions.json` until 3.76; they weighed 64% of the file,
 which 13 programs rewrote in full to modify a single offer). The separation is
 invisible: `queue_io.charger()` reinjects them.
 

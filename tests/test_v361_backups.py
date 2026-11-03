@@ -52,11 +52,11 @@ def test_en_clair_donne_un_chemin_lisible(tmp_path):
     assert not clair.exists()
 
 
-def test_le_pipeline_compresse_aussi_les_anciennes(tmp_path, monkeypatch):
+def test_le_pipeline_compresse_aussi_les_anciennes(tmp_path, monkeypatch, file_temporaire):
     from jobhunter.programs import daily_pipeline as pq
 
     monkeypatch.setattr(pq, "SCRIPTS", tmp_path)
-    (tmp_path / "apply_queue.json").write_text("[]", encoding="utf-8")
+    file_temporaire.write_text("[]", encoding="utf-8")
     vieux = tmp_path / "_backups" / "2026-10-20"
     vieux.mkdir(parents=True)
     (vieux / "apply_queue.json").write_text("[0]", encoding="utf-8")

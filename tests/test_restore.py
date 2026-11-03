@@ -55,9 +55,9 @@ def test_plan_garde_les_offres_suivies():
 
 def test_inspection_n_ecrit_rien(file_temporaire, suivi_temporaire, capsys):
     _situation(file_temporaire, suivi_temporaire)
-    avant = file_temporaire.read_bytes()
+    avant = queue_io.charger()
     assert r.main(["2026-10-19"]) == 0
-    assert file_temporaire.read_bytes() == avant
+    assert queue_io.charger() == avant
     sortie = capsys.readouterr().out
     assert "+ B|b" in sortie and "- D|d" in sortie and "rien n'a été écrit" in sortie
     assert not list((file_temporaire.parent / "_sauvegardes").glob("*_avant_restauration"))

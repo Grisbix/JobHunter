@@ -80,17 +80,16 @@ def test_panne_pendant_l_ecriture_de_la_file_garde_les_descriptions(file_tempora
             {"entreprise": "A", "poste": "x", "description": "texte A"},
             {"entreprise": "B", "poste": "y", "description": "texte B"},
         ]
-    vrai = atomique.ecrire_json
+    vrai = queue_io.oid
 
-    def panne_sur_la_file(chemin, obj):
-        if str(chemin) == str(file_temporaire):
-            raise PermissionError("fichier verrouillé par l'antivirus")
-        vrai(chemin, obj)
+    def panne(o):  # fails in the middle of the database's transaction
+        raise PermissionError("disque plein")
 
-    monkeypatch.setattr(atomique, "ecrire_json", panne_sur_la_file)
     with pytest.raises(PermissionError), queue_io.transaction() as rows:
         rows[:] = [r for r in rows if r["entreprise"] == "A"]  # B removed
-    monkeypatch.setattr(atomique, "ecrire_json", vrai)
+        rows.append({"entreprise": "C", "poste": "z", "description": "texte C"})
+        monkeypatch.setattr(queue_io, "oid", panne)
+    monkeypatch.setattr(queue_io, "oid", vrai)
     # The queue has not changed: B is still there, and its description too.
     textes = {o["entreprise"]: o.get("description") for o in queue_io.charger()}
     assert textes == {"A": "texte A", "B": "texte B"}
@@ -104,8 +103,7 @@ def test_retrait_reussi_purge_l_orpheline(file_temporaire, tmp_path):
         ]
     with queue_io.transaction() as rows:
         rows[:] = [r for r in rows if r["entreprise"] == "A"]
-    annexe = json.loads((tmp_path / "descriptions.json").read_text(encoding="utf-8"))
-    assert annexe == {"A|x": "texte A"}
+    assert queue_io._lire_descriptions() == {"A|x": "texte A"}
 
 
 # ── P1 — the merge does not remove an offer of the tracker ───────────────────────────

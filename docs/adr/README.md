@@ -20,5 +20,6 @@ and points here. Overview: [`../architecture.md`](../architecture.md).
 | [0013](0013-one-workspace-per-profile.md) | Several profiles: one complete workspace each, switching restarts the app |
 | [0014](0014-open-questions-of-the-technical-plan.md) | The eight open questions of the technical plan, settled as implemented |
 | [0015](0015-microsoft-store-package.md) | An MSIX package for the Microsoft Store, signed by the Store |
+| [0016](0016-queue-in-sqlite.md) | The queue in SQLite, the tracking file stays JSON |
 
 New decision: `NNNN-short-title.md`, next number, status and date at the top.

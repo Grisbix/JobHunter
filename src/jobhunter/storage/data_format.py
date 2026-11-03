@@ -16,7 +16,8 @@ from pathlib import Path
 
 from jobhunter.storage import atomic as atomique
 
-FORMAT = 1
+# 2 (3.77): the queue moved into SQLite (queue.sqlite3); a 3.76 reads it as empty.
+FORMAT = 2
 FICHIER = "_format.json"
 
 
@@ -57,3 +58,21 @@ def verifier_ecriture(dossier: Path) -> None:
             atomique.ecrire_json(dossier / FICHIER, {"format": FORMAT, "par": par})
         except OSError:
             pass  # a read-only folder: the write that follows will say so
+
+
+def marquer(dossier: Path) -> None:
+    """Records our format in `dossier` when the one recorded there is older.
+
+    Called by a change of structure (the queue's move into SQLite): from then on, an
+    older JobHunter refuses to write there instead of writing over what it cannot read.
+    """
+    v = lire(dossier)
+    if v is not None and v >= FORMAT:
+        return
+    try:
+        from importlib.metadata import version
+
+        par = version("jobhunter")
+    except Exception:  # running from the source code, not installed  # noqa: BLE001
+        par = "?"
+    atomique.ecrire_json(dossier / FICHIER, {"format": FORMAT, "par": par})

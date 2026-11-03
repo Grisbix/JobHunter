@@ -204,4 +204,4 @@ def test_texte_ajoute_sans_lire_l_annexe(monkeypatch, tmp_path):
     monkeypatch.setattr(queue_io, "_est_la_file", lambda p: Path(p) == q)
     with queue_io.transaction(q, descriptions=False) as offres:
         offres[1]["description"] = "texte de C"
-    assert json.loads(d.read_text()) == {"A|B": "texte de A", "C|D": "texte de C"}
+    assert queue_io._lire_descriptions() == {"A|B": "texte de A", "C|D": "texte de C"}

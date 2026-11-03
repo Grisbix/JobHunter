@@ -79,7 +79,7 @@ def main():
     ap.add_argument("--keep", type=int, default=8, help="nb d'exports à conserver (0 = tous)")
     a = ap.parse_args()
 
-    if not QUEUE.exists():
+    if not importlib.import_module("jobhunter.storage.queue").existe(QUEUE):
         print("! apply_queue.json introuvable")
         return 1
     q = importlib.import_module("jobhunter.storage.queue").charger(QUEUE, descriptions=False)

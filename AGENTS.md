@@ -194,12 +194,18 @@ APIs count their calls for the day, all profiles together (`sources/quota.py`,
 ### Three data files, three access contracts
 
 ```
-data/apply_queue.json    the offers          → go through queue_io
-data/descriptions.json   their text, apart   → queue_io reinjects it, transparently
-data/applications.json          the applications    → go through suivi_io
+data/queue.sqlite3       the offers + their text → go through queue_io
+data/applications.json   the applications        → go through suivi_io
 ```
 
-**Never read or write these files with a direct `json.load`/`json.dump`.**
+Since 3.77 (ADR 0016) the queue is a SQLite database: tables `offres` and
+`descriptions`, one transaction per write, only changed rows written. Until the first
+write of 3.77 it is still `apply_queue.json` + `descriptions.json`, migrated then and
+kept as `*.avant_sqlite`. `queue_io.CHEMIN` still names `apply_queue.json` (identity,
+lock file, JSON exports). Test a queue's presence with `queue_io.existe()`, watch it
+with `queue_io.fichier()`, copy it with `queue_io.exporter()` — never as a file.
+
+**Never read or write these files directly (`json.load`/`json.dump`, `sqlite3`, a copy).**
 
 - `queue_io.charger()` reads without a lock (writes are atomic, so a read never sees a
   half-written file) and reinjects the descriptions.

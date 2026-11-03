@@ -1272,7 +1272,7 @@ def reclasser_domaines():
     from jobhunter.scoring.domains import classify_domaine
     from jobhunter.storage import queue as _file
 
-    if not (HERE / "apply_queue.json").exists():
+    if not _file.existe(HERE / "apply_queue.json"):
         return 0
     n = 0
     try:
@@ -1630,8 +1630,12 @@ def main():
 
     # Empty data files: the queue of offers and the application tracking.
     # The app finds its root through Scripts/apply_queue.json.
+    from jobhunter.storage import queue as _file
+
     for nom, vide in (("apply_queue.json", "[]"), (_racine.nom("suivi.json"), "{}")):
-        if not (HERE / nom).exists():
+        if not (HERE / nom).exists() and not (
+            nom == "apply_queue.json" and _file.existe(HERE / nom)
+        ):
             (HERE / nom).write_text(vide, encoding="utf-8")
     n = reclasser_domaines()
     if n:

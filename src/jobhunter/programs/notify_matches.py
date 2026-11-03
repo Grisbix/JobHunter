@@ -115,7 +115,7 @@ def main():
         print("historique de notification remis à zéro")
         return 0
 
-    if not QUEUE.exists():
+    if not importlib.import_module("jobhunter.storage.queue").existe(QUEUE):
         print("! apply_queue.json introuvable")
         return 1
     q = importlib.import_module("jobhunter.storage.queue").charger(QUEUE, descriptions=False)

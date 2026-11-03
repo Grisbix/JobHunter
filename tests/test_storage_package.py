@@ -123,7 +123,8 @@ def test_jwrite_redirige_toujours_la_file_vers_la_separation(file_temporaire):
     """Historical safeguard: writing apply_queue.json directly never puts the
     descriptions back into the queue."""
     jutil.jwrite(file_temporaire, [{"entreprise": "A", "poste": "B", "description": "texte"}])
-    assert "description" not in file_temporaire.read_text(encoding="utf-8")
+    assert not any("description" in o for o in file.charger(descriptions=False))
+    assert not file_temporaire.exists()  # never a JSON queue beside the database
     assert file.charger()[0]["description"] == "texte"
 
 

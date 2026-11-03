@@ -19,8 +19,8 @@ choice has its own ADR in [`docs/adr/`](adr/); the plan that led here is
   │  fusion ── dedupes, scores, writes ──┼──┐  └─────────────────────────────┘
   └──────────────────────────────────────┘  │
                                             ▼
-                         data/apply_queue.json  ◀── jobhunter.storage.queue
-                         data/descriptions.json      (lock, atomic write,
+                         data/queue.sqlite3     ◀── jobhunter.storage.queue
+                         (offers + descriptions)     (lock, one transaction,
                          data/applications.json        ◀──   descriptions apart)
                                             │          jobhunter.storage.applications
              ┌──────────────────────────────┼───────────────────────────┐
@@ -73,10 +73,11 @@ from the current folder ([ADR 0008](adr/0008-programs-in-the-package.md)).
 Three JSON files in `data/`, three access contracts
 ([ADR 0002](adr/0002-three-files-three-contracts.md)):
 
-- **`apply_queue.json`** — the offers. Identity: `oid = "entreprise|poste"`, never
-  the URL. Written only by `stockage.file.transaction()`.
-- **`descriptions.json`** — the text of the postings, apart: it weighed 64% of the queue.
-  Reinjected on read, taken out again on write, transparently.
+- **`queue.sqlite3`** (until 3.76 `apply_queue.json`) — the offers. Identity: `oid =
+  "entreprise|poste"`, never the URL. Written only by `storage.queue.transaction()`,
+  one SQLite transaction (ADR 0016).
+- **its `descriptions` table** (until 3.76 `descriptions.json`) — the text of the postings,
+  apart: it weighed 64% of the queue. Reinjected on read, taken out again on write.
 - **`applications.json`** — the applications. The least reconstructible data: the only versioned
   file, written entry by entry (`stockage.suivi.poser`) on the state re-read under lock.
 

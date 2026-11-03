@@ -103,7 +103,7 @@ def test_supprimer_memorise_le_refus(monkeypatch, tmp_path):
     r = api.Api().supprimer(["A|a"])
     assert r["ok"] and r["n"] == 1
     assert exclusions.charger()["A|a"]["motif"] == exclusions.SUPPRIMEE
-    assert [o["entreprise"] for o in json.loads(q.read_text())] == ["B"]
+    assert [o["entreprise"] for o in queue_io.charger(q)] == ["B"]
 
 
 @pytest.mark.parametrize(
