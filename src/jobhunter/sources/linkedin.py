@@ -5,8 +5,10 @@ Part of jobhunter.sources (formerly Scripts/job_sources.py, phase 3.4).
 Decision: docs/adr/0004-429-wait-403-stop.md
 """
 
+import json
 import re
 import time
+from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
@@ -128,7 +130,21 @@ LI_ATTENTES = (60, 120, 240)
 
 LI_DUREE_MAX = 2700
 
-_LI: dict[str, Any] = {"stop": None, "attendu": 0.0, "suite_429": 0, "debut": 0.0}
+# THE CURSOR (3.79). Every pass started again at the first keyword, in France: the
+# 45 min ran out in the same place each day, and the last keywords and "Worldwide"
+# were almost never asked (the message said "la suite à la prochaine collecte", which
+# was not true). The pass now starts at the (place, keyword) where the previous one
+# stopped, and goes round. Several short passes in the day (`--linkedin-minutes`)
+# then cover everything, with the rate limit recovering in between.
+CURSEUR = "_linkedin_cursor.json"
+
+_LI: dict[str, Any] = {
+    "stop": None,
+    "attendu": 0.0,
+    "suite_429": 0,
+    "debut": 0.0,
+    "duree_max": LI_DUREE_MAX,
+}
 
 _dormir = time.sleep  # the tests replace it
 
@@ -146,7 +162,7 @@ def _li_pause_429(r: Any) -> bool:
     n = _LI["suite_429"]
     pause = int(ra) if str(ra).isdigit() else LI_ATTENTES[min(n, len(LI_ATTENTES) - 1)]
     pause = min(pause, max(LI_ATTENTES))
-    if _li_ecoule() + pause > LI_DUREE_MAX:
+    if _li_ecoule() + pause > _LI["duree_max"]:
         return False
     _log.warning(f"  ⏳ linkedin : limite de débit (429), pause {pause} s puis reprise")
     _dormir(pause)
@@ -182,8 +198,50 @@ def lieux_par_defaut() -> dict[str, int]:
     return {_pays.nom(): LIEUX_MONDE["France"], "Worldwide": LIEUX_MONDE["Worldwide"]}
 
 
+def _fichier() -> Path | None:
+    """Where the cursor is kept: the data folder; None without one (nothing kept)."""
+    from jobhunter import root as _racine
+
+    try:
+        return _racine.dans(_racine.scripts(), CURSEUR)
+    except RuntimeError:
+        return None
+
+
+def _lire_curseur() -> tuple[str, str] | None:
+    f = _fichier()
+    try:
+        d = json.loads(f.read_text(encoding="utf-8")) if f else None
+    except (OSError, ValueError):
+        return None
+    if isinstance(d, dict) and isinstance(d.get("lieu"), str) and isinstance(d.get("mot"), str):
+        return d["lieu"], d["mot"]
+    return None
+
+
+def _ecrire_curseur(paire: tuple[str, str] | None) -> None:
+    """The pair to start with next time; None: the round is complete, start again."""
+    from jobhunter.storage import atomic
+
+    f = _fichier()
+    if f is None:
+        return
+    try:
+        if paire is None:
+            f.unlink(missing_ok=True)
+        else:
+            atomic.ecrire_json(
+                f, {"lieu": paire[0], "mot": paire[1], "le": time.strftime("%Y-%m-%d %H:%M")}
+            )
+    except OSError as e:
+        _log.warning(f"  ⚠ linkedin : curseur non enregistré ({e})")
+
+
 def scan_linkedin(
-    pages: int = 2, days: int = 7, lieux: list[str] | dict[str, int] | None = None
+    pages: int = 2,
+    days: int = 7,
+    lieux: list[str] | dict[str, int] | None = None,
+    duree_max: float | None = None,
 ) -> list[dict[str, Any]]:
     """Days = LinkedIn freshness window (f_TPR).
 
@@ -192,6 +250,9 @@ def scan_linkedin(
 
     `lieux`: the zones queried. In a worldwide search we cannot just
     remove the entrance filter — the other countries must be ASKED for.
+
+    `duree_max`: the pass's length in seconds (LI_DUREE_MAX by default). The pass starts
+    where the previous one stopped (CURSEUR) and goes round the (place, keyword) pairs.
     """
     if lieux is None:
         from jobhunter.sources import countries as _pays
@@ -201,27 +262,46 @@ def scan_linkedin(
     profondeur = dict(lieux) if isinstance(lieux, dict) else {x: pages for x in lieux}
     offers: list[dict[str, Any]] = []
     seen: set[str] = set()
-    _LI.update(stop=None, attendu=0.0, suite_429=0, debut=_horloge())
-    for lieu in profondeur:
-        n_lieu = 0
-        for kw in _commun.KEYWORDS:
-            if not _LI["stop"] and _li_ecoule() >= LI_DUREE_MAX:
-                _LI["stop"] = "durée"
-            if _LI["stop"]:
-                break
-            got = linkedin_guest_search(kw, pages=profondeur[lieu], days=days, lieu=lieu)
-            new = [o for o in got if o["url"] not in seen]
-            seen.update(o["url"] for o in new)
-            n_lieu += len(new)
-            if new and len(profondeur) == 1:
-                _log.info(f"  ✓ linkedin «{kw}» → {len(new)} offres")
-            offers.extend(new)
-        if len(profondeur) > 1:
-            _log.info(f"  ✓ linkedin {lieu} → {n_lieu} offres")
+    _LI.update(
+        stop=None,
+        attendu=0.0,
+        suite_429=0,
+        debut=_horloge(),
+        duree_max=LI_DUREE_MAX if duree_max is None else duree_max,
+    )
+    paires = [(lieu, kw) for lieu in profondeur for kw in _commun.KEYWORDS]
+    depart = _lire_curseur()
+    i0 = paires.index(depart) if depart in paires else 0
+    if i0:
+        _log.info(f"  ↻ linkedin : reprise à {paires[i0][0]} «{paires[i0][1]}»")
+    par_lieu: dict[str, int] = {}
+    suivante: tuple[str, str] | None = None
+    for k in range(len(paires)):
+        lieu, kw = paires[(i0 + k) % len(paires)]
+        if not _LI["stop"] and _li_ecoule() >= _LI["duree_max"]:
+            _LI["stop"] = "durée"
+        if _LI["stop"]:
+            suivante = suivante or (lieu, kw)
+            break
+        got = linkedin_guest_search(kw, pages=profondeur[lieu], days=days, lieu=lieu)
+        if _LI["stop"] and suivante is None:
+            suivante = (lieu, kw)  # cut inside its pages: asked again next time
+        new = [o for o in got if o["url"] not in seen]
+        seen.update(o["url"] for o in new)
+        par_lieu[lieu] = par_lieu.get(lieu, 0) + len(new)
+        if new and len(profondeur) == 1:
+            _log.info(f"  ✓ linkedin «{kw}» → {len(new)} offres")
+        offers.extend(new)
+    if len(profondeur) > 1:
+        for lieu, n in par_lieu.items():
+            _log.info(f"  ✓ linkedin {lieu} → {n} offres")
+    _ecrire_curseur(suivante)
     if _LI["stop"] in ("429", "durée"):
+        fait = len(paires) if suivante is None else (paires.index(suivante) - i0) % len(paires)
         _log.warning(
             f"  ⚠ linkedin : durée maximale atteinte ({_li_ecoule():.0f} s, dont "
-            f"{_LI['attendu']:.0f} s d'attente sur 429) — la suite à la prochaine collecte"
+            f"{_LI['attendu']:.0f} s d'attente sur 429), {fait}/{len(paires)} recherches"
+            " — la prochaine collecte reprend là"
         )
     elif _LI["stop"]:
         _log.warning(f"  ⚠ linkedin : refus HTTP {_LI['stop']}, collecte LinkedIn arrêtée")

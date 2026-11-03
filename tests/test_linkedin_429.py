@@ -130,3 +130,68 @@ def test_date_de_publication_de_la_carte(li):
     offres, _, _ = li(Reponse(carte))
     assert offres and offres[0]["date"] == "2026-10-08"
     assert li(page())[0][0]["date"] == ""  # a card without a date: none invented
+
+
+# ── The cursor (3.79): the next pass resumes where this one stopped ──────────────
+def _mots(appels):
+    return [u.split("keywords=")[1].split("&")[0] for u in appels]
+
+
+def test_la_passe_suivante_reprend_au_mot_coupe(li, faux_reseau):
+    li(page(), Reponse("", 403), mots=("esg", "csrd", "isr"))
+    faux_reseau.appels.clear()
+    li(page(), page(), page(), mots=("esg", "csrd", "isr"))
+    assert _mots(faux_reseau.appels) == ["csrd", "isr", "esg"]
+
+
+def test_un_tour_complet_efface_le_curseur(li, faux_reseau):
+    from jobhunter.sources import linkedin
+
+    li(page(), page(), mots=("esg", "csrd"))
+    assert linkedin._lire_curseur() is None
+    faux_reseau.appels.clear()
+    li(page(), page(), mots=("esg", "csrd"))
+    assert _mots(faux_reseau.appels) == ["esg", "csrd"]
+
+
+def test_le_curseur_traverse_les_lieux(li, faux_reseau):
+    li(page(), page(), Reponse("", 403), mots=("esg", "csrd"), lieux={"France": 1, "Worldwide": 1})
+    faux_reseau.appels.clear()
+    li(page(), page(), page(), page(), mots=("esg", "csrd"), lieux={"France": 1, "Worldwide": 1})
+    assert [u.split("location=")[1].split("&")[0] for u in faux_reseau.appels][:2] == [
+        "Worldwide",
+        "Worldwide",
+    ]
+
+
+def test_un_curseur_inconnu_repart_du_debut(li, faux_reseau):
+    from jobhunter.sources import linkedin
+
+    linkedin._ecrire_curseur(("Mars", "rien"))
+    li(page(), page(), mots=("esg", "csrd"))
+    assert _mots(faux_reseau.appels) == ["esg", "csrd"]
+
+
+def test_une_duree_courte_s_arrete_plus_tot(faux_reseau, horloge, monkeypatch):
+    monkeypatch.setattr(J, "LI_PAUSE", 0)
+    monkeypatch.setattr(J, "KEYWORDS", ["esg", "csrd", "isr"])
+
+    def page_de_dix_minutes(_client, url, **kw):
+        faux_reseau.appels.append(url)
+        horloge.t += 600
+        return page()
+
+    monkeypatch.setattr(J, "_get_borne", page_de_dix_minutes)
+    J.scan_linkedin(lieux={"France": 1}, duree_max=900)
+    assert len(faux_reseau.appels) == 2
+
+
+def test_la_duree_se_regle_en_ligne_de_commande():
+    from jobhunter.programs import daily_pipeline
+    from jobhunter.sources import cli
+
+    source = open(cli.__file__, encoding="utf-8").read()
+    assert '"--linkedin-minutes"' in source and "duree_max=" in source
+    pipe = open(daily_pipeline.__file__, encoding="utf-8").read()
+    assert '["--linkedin", "--linkedin-minutes", str(LINKEDIN_MINUTES)]' in pipe
+    assert daily_pipeline.LINKEDIN_MINUTES * 60 < J.LI_DUREE_MAX

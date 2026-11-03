@@ -76,6 +76,9 @@ ROOT = _racine.racine()
 SCRIPTS = _racine.scripts()
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
+# The morning LinkedIn pass, in minutes (pass 1b); see the five passes below.
+LINKEDIN_MINUTES = 15
+
 # Career site readers that only bring back the title: their offer page
 # is public, scrape_desc reads it. Closed list — an anti-bot source does not get in.
 DESC_SOURCES_PUBLIQUES = (
@@ -418,7 +421,15 @@ def _executer(a, journal):
                 ["--ats", "--workday", "--vie", "--fir"],
                 1800,
             ),
-            ("1b/5 Collecte — LinkedIn", ["--linkedin"], 3600),
+            # 15 min since 3.79, not 45: LinkedIn's guest search limits by the hour
+            # and the 45 min were mostly 429 pauses (1.3 relevant offers an hour
+            # over 14 days). Shorter passes later in the day (`collect --linkedin
+            # --linkedin-minutes 15`) resume where this one stopped.
+            (
+                "1b/5 Collecte — LinkedIn",
+                ["--linkedin", "--linkedin-minutes", str(LINKEDIN_MINUTES)],
+                1800,
+            ),
             (
                 "1c/5 Collecte — eFinancialCareers x9, EURES, Arbeitsagentur, makesense",
                 [

@@ -192,6 +192,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     ap.add_argument("--pages", type=int, default=2)
     ap.add_argument(
+        "--linkedin-minutes",
+        type=float,
+        default=None,
+        help="durée de la passe LinkedIn (défaut 45) ; la suivante reprend où elle s'arrête",
+    )
+    ap.add_argument(
         "--days", type=int, default=7, help="fraicheur LinkedIn en jours (31 = rattraper un mois)"
     )
     ap.add_argument("--dry", action="store_true")
@@ -332,7 +338,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "── LinkedIn recherche publique (guest) ──",
                 "linkedin",
                 scan_linkedin,
-                dict(pages=a.pages, days=a.days),
+                dict(
+                    pages=a.pages,
+                    days=a.days,
+                    duree_max=None if a.linkedin_minutes is None else a.linkedin_minutes * 60,
+                ),
             )
         )
     if (a.all or a.vie) and du_pays("vie"):

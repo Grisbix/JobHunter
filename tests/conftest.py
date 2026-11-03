@@ -177,6 +177,15 @@ def _compteur_api_jetable(tmp_path_factory, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _curseur_linkedin_jetable(tmp_path_factory, monkeypatch):
+    """LinkedIn's cursor (3.79) in a throwaway folder: a test never resumes another's."""
+    from jobhunter.sources import linkedin
+
+    d = tmp_path_factory.mktemp("li")
+    monkeypatch.setattr(linkedin, "_fichier", lambda: d / linkedin.CURSEUR)
+
+
+@pytest.fixture(autouse=True)
 def _sans_principale_residuelle():
     """No main folder left in the environment by a test that ran `profiles.appliquer()`.
 
