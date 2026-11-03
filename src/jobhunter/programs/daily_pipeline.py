@@ -366,19 +366,13 @@ def main(argv=None):
     return rc
 
 
-# Held for the whole run, apart from the queue's lock that each step takes and gives
-# back: an update found the queue free between two steps and replaced the engine under
-# a running pipeline, whose next steps ran the other version (2026-11-03). The update
-# checks it (update.file_libre) and this run waits for an update in progress.
-VERROU_PIPELINE = "_pipeline"
-
-
 def _prendre_verrou_pipeline(attente=900):
+    """The pipeline's lock for the whole run (storage.lock.PIPELINE); False if held."""
     import atexit
 
     from jobhunter.storage import lock as _verrou
 
-    chemin = SCRIPTS / VERROU_PIPELINE
+    chemin = SCRIPTS / _verrou.PIPELINE
     if not _verrou.prendre_verrou(chemin, attente=attente):
         return False
     atexit.register(_verrou.rendre_verrou, chemin)

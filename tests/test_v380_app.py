@@ -121,3 +121,15 @@ def test_maintenance_distingue_suivies_et_envoyees(donnees, monkeypatch):
     )
     m = a.maintenance()
     assert (m["candidatures"], m["envoyees"], m["archivables"]) == (3, 2, 0)
+
+
+def test_kanban_compte_les_jours_depuis_le_jour_donne():
+    """The board's pure function takes the day, like tableau(): no clock in the test."""
+    suivi = {
+        "A|P": {"s": "postulé", "d": "2026-11-01"},
+        "B|P": {"s": "relancé", "d": "2026-10-27"},
+    }
+    d = api_mod.candidatures([], suivi, aujourd_hui=date(2026, 11, 3))
+    cartes = {e["entreprise"]: e for c in d["colonnes"] for e in c["entrees"]}
+    assert (cartes["A"]["jours"], cartes["A"]["relance_due"]) == (2, False)
+    assert (cartes["B"]["jours"], cartes["B"]["relance_due"]) == (7, True)

@@ -16,7 +16,7 @@ from os import PathLike
 from pathlib import Path
 
 
-def ecrire_json(path: str | PathLike[str], obj: object) -> None:
+def ecrire_json(path: str | PathLike[str], obj: object, indent: int | None = 1) -> None:
     """Writes `obj` as JSON atomically: temporary file then os.replace.
 
     A concurrent read sees the old file or the new one, never a half-written
@@ -24,7 +24,8 @@ def ecrire_json(path: str | PathLike[str], obj: object) -> None:
 
     Args:
         path: the file to write.
-        obj: what is serialised (UTF-8, indent 1).
+        obj: what is serialised (UTF-8).
+        indent: json.dumps's; None for one line (small state files read by programs).
     """
     path = Path(path)
     # A temporary file OWN to this writer: two processes writing the same file
@@ -32,7 +33,7 @@ def ecrire_json(path: str | PathLike[str], obj: object) -> None:
     # replacement wins; the caller's lock, if one is needed, decides the order.
     tmp = path.with_name(f"{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
     try:
-        tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
+        tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=indent), encoding="utf-8")
         for essai in range(6):
             try:
                 os.replace(str(tmp), str(path))

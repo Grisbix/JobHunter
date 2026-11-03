@@ -19,10 +19,10 @@ the sorting again with the rules of the day.
 
 import datetime
 import json
-import os
 from pathlib import Path
 
 from jobhunter import root as _racine
+from jobhunter.storage import atomic as _atomique
 
 HERE = _racine.scripts()
 FICHIER = _racine.dans(HERE, "_rejets_tri.json")
@@ -67,7 +67,5 @@ def ajouter(rejets, chemin=None, jour=None, extraits=None):
         x = (extraits or {}).get(oid)
         if x and "x" not in e:
             e["x"] = x[:200]
-    tmp = chemin.with_suffix(".tmp")
-    tmp.write_text(json.dumps(d, ensure_ascii=False, indent=0), encoding="utf-8")
-    os.replace(tmp, chemin)
+    _atomique.ecrire_json(chemin, d, indent=0)
     return len(d)

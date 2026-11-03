@@ -28,6 +28,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from jobhunter import root as _racine
+from jobhunter.storage import atomic as _atomique
 
 DOSSIER = "profiles"
 FICHIER_ACTIF = "_active_profile.json"
@@ -214,9 +215,7 @@ def renommer(slug_: str, nom: str, p: Path | None = None) -> None:
     noms[slug_] = nom
     f = _fichier_noms(p)
     f.parent.mkdir(parents=True, exist_ok=True)
-    tmp = f.with_name(f.name + ".tmp")
-    tmp.write_text(json.dumps(noms, ensure_ascii=False, indent=1), encoding="utf-8")
-    os.replace(tmp, f)
+    _atomique.ecrire_json(f, noms)
 
 
 def archiver(slug_: str, p: Path | None = None) -> Path:

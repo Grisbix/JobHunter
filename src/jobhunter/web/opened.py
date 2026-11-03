@@ -7,11 +7,11 @@ more: it is a convenience, not a record like applications.json.
 """
 
 import json
-import os
 from datetime import date
 from pathlib import Path
 
 from jobhunter import root
+from jobhunter.storage import atomic as _atomique
 
 FICHIER = "_ouvertes.json"
 
@@ -38,10 +38,10 @@ def noter(oids: str | list[str], chemin: Path | None = None) -> bool:
         return False
     jour = date.today().isoformat()
     d.update(dict.fromkeys(nouveaux, jour))
-    tmp = p.with_suffix(".tmp")
     try:
-        tmp.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
-        os.replace(tmp, p)
+        # A writer's own temporary file: the window serves each page call on its own
+        # thread, and two openings at once shared one « .tmp » before.
+        _atomique.ecrire_json(p, d, indent=None)
     except OSError:
         return False
     return True

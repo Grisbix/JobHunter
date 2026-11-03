@@ -51,7 +51,6 @@ import argparse
 import collections
 import datetime
 import json
-import os
 import re
 import sys
 import time
@@ -64,6 +63,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True) 
 HERE = _racine.scripts()
 
 from jobhunter.storage import applications as suivi_io  # noqa: E402
+from jobhunter.storage import atomic as _atomique  # noqa: E402
 from jobhunter.storage import queue as queue_io  # noqa: E402
 
 ETAT = _racine.dans(HERE, "_audit_dispo.json")
@@ -158,9 +158,7 @@ def charger_etat():
 
 
 def sauver_etat(etat):
-    tmp = ETAT.with_suffix(".tmp")
-    tmp.write_text(json.dumps(etat, ensure_ascii=False), encoding="utf-8")
-    os.replace(tmp, ETAT)
+    _atomique.ecrire_json(ETAT, etat, indent=None)
 
 
 def _attente(r, n):

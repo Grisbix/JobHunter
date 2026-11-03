@@ -85,6 +85,8 @@ JOURNAL = "_journal.json"
 # The version the next start must run (confirmer_demarrage). In the data folder:
 # the installed application's installer replaces the program, not the data.
 ATTENDUE = RACINE / ".maj_attendue.json"
+# The version before the last update of the pip package (--annuler).
+PAQUET_AVANT = RACINE / ".maj_paquet_avant"
 # Exit code of a program that finds the queue busy (project convention).
 OCCUPE = 3
 # The example profile, in the English layout (3.0) or the French one (2.x): right after
@@ -544,9 +546,9 @@ def file_libre(garder=True):
         racines = [RACINE]
     files = [_racine.dans(r / _racine.nom("Scripts", r), "apply_queue.json") for r in racines]
     files = [q for q in files if q.parent.is_dir()]  # no data folder: nothing writes there
-    # The morning pipeline's own lock first (daily_pipeline.VERROU_PIPELINE): it gives the
-    # queue back between its steps, where the queue's lock alone found it free.
-    files = [q.with_name("_pipeline") for q in files] + files
+    # The morning pipeline's own lock first: it gives the queue back between its steps,
+    # where the queue's lock alone found it free.
+    files = [q.with_name(_verrou.PIPELINE) for q in files] + files
     pris = []
     for q in files:  # every profile: the morning collection runs them one after the other
         if not _verrou.prendre_verrou(q, attente=30, bavard=False):
@@ -687,10 +689,6 @@ def maj_paquet(verifier_seulement):
         return 1
     print(f"\nJobHunter est à jour (version {version_paquet()}). Relance l'application.")
     return 0
-
-
-# The version before the last update of the pip package (--annuler).
-PAQUET_AVANT = RACINE / ".maj_paquet_avant"
 
 
 def paquet_charge():

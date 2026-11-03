@@ -83,3 +83,25 @@ def test_page_carriere_generique_n_unit_rien():
     u = "https://www.acme.com/careers"
     file = [ligne("Acme", "Analyste ESG", u), ligne("Acme", "Juriste", u)]
     assert D.doublons(file, oid=oid, rang_source=lambda u: 0) == {}
+
+
+def test_doublon_meme_ville_ecrite_avec_ou_sans_trait_d_union():
+    """3.80: « Le-Relecq-Kerhuon » and « Le Relecq-Kerhuon » are one place."""
+    titre = "Consolideur - reporting extra-financier H/F"
+    file = [
+        {
+            "entreprise": "Crédit Mutuel Arkea",
+            "poste": titre,
+            "localisation": "Le Relecq-Kerhuon, Bretagne",
+            "fit": 7,
+            "url": "https://a.fr/1",
+        },
+        {
+            "entreprise": "CREDIT MUTUEL ARKEA",
+            "poste": titre.replace("H/F", "F/H"),
+            "localisation": "Le-Relecq-Kerhuon",
+            "fit": 10,
+            "url": "https://a.fr/2",
+        },
+    ]
+    assert len(D.doublons(file)) == 1

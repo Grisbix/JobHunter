@@ -28,6 +28,12 @@ from jobhunter import log as _journal
 
 _log = _journal.journal(__name__)
 
+# The morning pipeline's own lock, next to the queue, held for the whole run apart from
+# the queue's lock that each step takes and gives back: an update found the queue free
+# between two steps and replaced the engine under a running pipeline, whose next steps
+# ran the other version (2026-11-03). The update takes it first (update.file_libre) and
+# the pipeline waits for an update in progress (daily_pipeline._executer).
+PIPELINE = "_pipeline"
 
 # Who holds each lock in this process: the thread that took it, or _PROCESSUS for a
 # lock kept for the whole run (`garder`), which every thread of the program shares.

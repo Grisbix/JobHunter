@@ -544,17 +544,15 @@ def pas_une_offre(o: Offre) -> str | None:
     return None
 
 
-_CONTRATS_EXCLUS: set[str] | None = None
+def _lire_contrats_exclus() -> set[str]:
+    from jobhunter.sources.common import contrats_exclus
+
+    return contrats_exclus()
 
 
-def _contrats_exclus() -> set[str]:
-    """sources_config's excluded contracts, read once per run (motif sees every offer)."""
-    global _CONTRATS_EXCLUS
-    if _CONTRATS_EXCLUS is None:
-        from jobhunter.sources.common import contrats_exclus
-
-        _CONTRATS_EXCLUS = contrats_exclus()
-    return _CONTRATS_EXCLUS
+# sources_config's excluded contracts, read once (motif sees every offer) and again
+# after a change of profile, like the other lazy values.
+_PARESSEUX["_CONTRATS_EXCLUS"] = _lire_contrats_exclus
 
 
 def motif(o: Offre, proteges: set[str]) -> str | None:
@@ -591,7 +589,7 @@ def motif(o: Offre, proteges: set[str]) -> str | None:
     # A contract the user excluded (sources_config « contrats_exclus ») is filtered at
     # the sources' entrance, but only on the contract they announce: an internship
     # labelled CDD, or said only in the text, got through and stayed at fit 10.
-    exclus = _contrats_exclus()
+    exclus = _ici._CONTRATS_EXCLUS
     if exclus:
         if (o.get("contrat") or "") in exclus:
             return "contrat_exclu"

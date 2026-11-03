@@ -21,6 +21,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
+from jobhunter.storage import atomic as _atomique
 from jobhunter.storage.applications import SuiviIllisible as _SuiviIllisible
 from jobhunter.storage.queue import oid as _oid  # one key definition (audit 2026-11-03)
 from jobhunter.web.background import FondApi
@@ -395,8 +396,13 @@ def fiche(o: Mapping[str, Any], suivi: Mapping[str, Any], description: str) -> d
 COLONNES = ("à postuler", "postulé", "relancé", "entretien", "refus")
 
 
-def candidatures(offres: Sequence[Any], suivi: Mapping[str, Any]) -> dict[str, Any]:
+def candidatures(
+    offres: Sequence[Any],
+    suivi: Mapping[str, Any],
+    aujourd_hui: date | None = None,
+) -> dict[str, Any]:
     """The applications grouped by status, most recent first in each column."""
+    jour = aujourd_hui or date.today()
     par_oid = {_oid(o): o for o in offres}
     colonnes: dict[str, list[dict[str, Any]]] = {c: [] for c in (*COLONNES, "autres")}
     ecartees = 0
@@ -410,7 +416,7 @@ def candidatures(offres: Sequence[Any], suivi: Mapping[str, Any]) -> dict[str, A
         entreprise, _, poste = k.partition("|")
         o = par_oid.get(k, {})
         envoi = _date(v.get("d")) if s in EN_ATTENTE else None
-        jours = (date.today() - envoi).days if envoi else None
+        jours = (jour - envoi).days if envoi else None
         colonnes[s if s in colonnes else "autres"].append(
             {
                 "id": k,
@@ -548,9 +554,7 @@ def ecrire_reglages(valeurs: Any) -> dict[str, Any]:
         return propres
     tout["web"] = propres
     f.parent.mkdir(parents=True, exist_ok=True)
-    tmp = f.with_name(f.name + ".tmp")
-    tmp.write_text(json.dumps(tout, ensure_ascii=False), encoding="utf-8")
-    os.replace(tmp, f)
+    _atomique.ecrire_json(f, tout, indent=None)
     return propres
 
 

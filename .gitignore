@@ -130,6 +130,7 @@ _sauvegarde_maj/
 .maj_derniere_verif
 .maj_git_avant
 .maj_attendue.json
+.maj_paquet_avant
 
 # Development (uv, pytest, ruff)
 .venv/
