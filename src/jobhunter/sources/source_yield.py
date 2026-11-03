@@ -30,7 +30,7 @@ from jobhunter import run_id as _execution
 from jobhunter.network import INCIDENTS
 
 REFUSE, LIMITE, PARTIEL, VIDE, OK = "refusé", "limité", "partiel", "rien à prendre", "ok"
-_RX_REFUS = re.compile(r"\b(?:401|403|999)\b|captcha|challenge|anti-?bot|bloqu", re.I)
+_RX_REFUS = re.compile(r"\b(?:401|403|999)\b|captcha|challenge|anti-?bot|bloqu|refus", re.I)
 _RX_LIMITE = re.compile(r"\b429\b")
 
 # Measurements of the current collection: {source: {"ramenees", "duree", "incidents"}}.

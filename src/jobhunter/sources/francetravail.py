@@ -58,7 +58,14 @@ def _ft_token() -> str | None:
             },
         )
         if r.status_code != 200:
-            _log.info(f"  ✗ France Travail token http {r.status_code} — verifie les identifiants")
+            # A REFUSED TOKEN IS A REFUSAL, not a calm day: counted, the yield says
+            # « refusé ». From 20/10 to 03/11/2026 every collection read « rien à
+            # prendre » while the token answered 400 (credentials no longer valid).
+            _commun.INCIDENTS["francetravail"][f"jeton refusé HTTP {r.status_code}"] += 1
+            _log.warning(
+                f"  ✗ France Travail : jeton refusé (HTTP {r.status_code}) — identifiants à "
+                "renouveler sur francetravail.io"
+            )
             return None
         jeton: str | None = r.json().get("access_token")
         return jeton

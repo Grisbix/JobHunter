@@ -75,3 +75,17 @@ def test_france_travail_ok(cles, monkeypatch):
     monkeypatch.setattr(FT, "_ft_token", lambda: "jeton")
     repondre(monkeypatch, 206)
     assert X.tester("francetravail").etat == "ok"
+
+
+def test_jeton_refuse_compte_comme_refus(cles, monkeypatch):
+    # 20/10 -> 03/11/2026: a token answering 400 read « rien à prendre » every day.
+    from jobhunter.sources import source_yield as R
+
+    monkeypatch.setattr(FT, "FT_CFG", cles / "francetravail.json")
+    repondre(monkeypatch, 400)
+    C.INCIDENTS.clear()
+    assert FT._ft_token() is None
+    incidents = dict(C.INCIDENTS["francetravail"])
+    assert incidents == {"jeton refusé HTTP 400": 1}
+    assert R.verdict(0, incidents) == R.REFUSE
+    C.INCIDENTS.clear()
