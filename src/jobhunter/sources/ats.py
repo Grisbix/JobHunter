@@ -22,6 +22,10 @@ _log = _journal.journal(__name__)
 
 
 # ═══════════════ 1. ATS APIs (pure httpx, no browser) — WITH descriptions ═══════════════
+# Seconds without a byte before a Lever feed is given up (see the lever branch).
+LEVER_DELAI = 40
+
+
 def _ats_ko(kind: str, slug: str, r: Any) -> bool:
     """Unusable response? And if so, should it be a concern?
 
@@ -146,14 +150,19 @@ def fetch_ats(kind: str, slug: str) -> list[dict[str, Any]]:
         elif kind == "lever":
             # Lever hosts some companies in its European region: their feed
             # returns 404 on api.lever.co and answers on api.eu.lever.co.
+            # Lever builds the whole feed before the first byte: theodo's (3.4 MB)
+            # took 25 s on 03/11/2026, and 15 s ended in ReadTimeout three times a day.
             r = _commun._get_borne(
-                httpx, f"https://api.lever.co/v0/postings/{slug}?mode=json", timeout=15, headers=UA
+                httpx,
+                f"https://api.lever.co/v0/postings/{slug}?mode=json",
+                timeout=LEVER_DELAI,
+                headers=UA,
             )
             if getattr(r, "status_code", 0) == 404:
                 r = _commun._get_borne(
                     httpx,
                     f"https://api.eu.lever.co/v0/postings/{slug}?mode=json",
-                    timeout=15,
+                    timeout=LEVER_DELAI,
                     headers=UA,
                 )
             if _ats_ko(kind, slug, r):
@@ -192,8 +201,14 @@ def fetch_ats(kind: str, slug: str) -> list[dict[str, Any]]:
                     )
                 )
         elif kind == "recruitee":
+            # A company that renames its account answers 302 to the new one
+            # (emerton → emertongroup, paipartners → paipartnerssas, 03/11/2026).
             r = _commun._get_borne(
-                httpx, f"https://{slug}.recruitee.com/api/offers/", timeout=15, headers=UA
+                httpx,
+                f"https://{slug}.recruitee.com/api/offers/",
+                timeout=15,
+                headers=UA,
+                follow_redirects=True,
             )
             if _ats_ko(kind, slug, r):
                 return []

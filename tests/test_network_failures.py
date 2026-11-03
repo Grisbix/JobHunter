@@ -95,3 +95,29 @@ def test_un_json_vide_ou_illisible_est_compte(lire, kind, corps):
 @pytest.mark.parametrize("kind", ["greenhouse", "workable", "peoplesoft"])
 def test_un_404_reste_silencieux(lire, kind):
     assert lire(kind, ("", 404)) == ([], 0)
+
+
+def test_recruitee_suit_un_compte_renomme(monkeypatch):
+    # emerton → emertongroup (302, 03/11/2026): the redirect must be followed.
+    vus = {}
+
+    def envoi(_httpx, url, **kw):
+        vus.update(kw)
+        return Reponse('{"offers": []}', 200)
+
+    monkeypatch.setattr(J, "_get_borne", envoi)
+    assert J.fetch_ats("recruitee", "emerton") == []
+    assert vus.get("follow_redirects") is True
+
+
+def test_lever_attend_un_gros_flux(monkeypatch):
+    # theodo's 3.4 MB feed took 25 s before its first byte: 15 s timed out.
+    vus = []
+
+    def envoi(_httpx, url, **kw):
+        vus.append(kw.get("timeout"))
+        return Reponse("[]", 200)
+
+    monkeypatch.setattr(J, "_get_borne", envoi)
+    assert J.fetch_ats("lever", "theodo") == []
+    assert vus and min(vus) >= 30

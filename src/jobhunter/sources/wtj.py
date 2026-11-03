@@ -53,7 +53,9 @@ WTJ_SITEMAP = "https://www.welcometothejungle.com/sitemaps/index.xml.gz"
 # pass; stopping at the first 202 brought zero.
 WTJ_REPOS = 200  # seconds of waiting when the wall goes up
 
-WTJ_PATIENCE = 2  # maximum number of waits per pass
+# One wait, not two: over 14 days (20/10-03/11/2026) WTJ brought 3 relevant
+# postings for a median 6.9 min a day, nearly all of it spent waiting.
+WTJ_PATIENCE = 1  # maximum number of waits per pass
 
 # 2 and no longer 6 (2026-10-02): six waits of 200 s made 20 min of idleness
 # in a pass capped at 60, for a wall that most of the time came straight back down.
