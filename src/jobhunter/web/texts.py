@@ -2473,4 +2473,64 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Version {v} wartet auf die Signatur ihres Autors: versuche es später erneut.",
         "La versión {v} espera la firma de su autor: inténtalo más tarde.",
     ),
+    # --- 3.80: daily triage, archiving, documents' offers ---
+    "Tri du jour": ("Daily triage", "Tägliche Sichtung", "Selección del día"),
+    "Trier les nouvelles offres": (
+        "Sort the new offers",
+        "Neue Angebote sichten",
+        "Ordenar las ofertas nuevas",
+    ),
+    "{n} offres notées {s}+ jamais ouvertes": (
+        "{n} offers scored {s}+ never opened",
+        "{n} Angebote mit {s}+ nie geöffnet",
+        "{n} ofertas con {s}+ nunca abiertas",
+    ),
+    "{n} à trier · → ou Entrée : garder · X : pas intéressé": (
+        "{n} to sort · → or Enter: keep · X: not interested",
+        "{n} zu sichten · → oder Enter: behalten · X: kein Interesse",
+        "{n} por ordenar · → o Intro: conservar · X: no me interesa",
+    ),
+    "Garder": ("Keep", "Behalten", "Conservar"),
+    "Tri terminé": ("Triage done", "Sichtung fertig", "Selección terminada"),
+    "Plus de nouvelle offre bien notée à regarder. La prochaine collecte en apportera d'autres.": (
+        "No new well-scored offer left to look at. The next collection will bring more.",
+        "Kein neues gut bewertetes Angebot mehr. Die nächste Sammlung bringt weitere.",
+        "No quedan ofertas nuevas bien puntuadas. La próxima recogida traerá más.",
+    ),
+    "Voir les offres": ("See the offers", "Angebote ansehen", "Ver las ofertas"),
+    "Tout le détail": ("Full detail", "Alle Details", "Todo el detalle"),
+    "Plus…": ("More…", "Mehr…", "Más…"),
+    "Retirer de la file, avec un motif…": (
+        "Remove from the queue, with a reason…",
+        "Aus der Liste nehmen, mit Grund…",
+        "Quitar de la lista, con un motivo…",
+    ),
+    "Relance due": ("Follow-up due", "Nachfassen fällig", "Recordatorio pendiente"),
+    "Brouillon prêt": ("Draft ready", "Entwurf bereit", "Borrador listo"),
+    "{n} suivies · {e} envoyées": (
+        "{n} tracked · {e} sent",
+        "{n} verfolgt · {e} gesendet",
+        "{n} seguidas · {e} enviadas",
+    ),
+    "Archiver {n} vieilles offres…": (
+        "Archive {n} old offers…",
+        "{n} alte Angebote archivieren…",
+        "Archivar {n} ofertas antiguas…",
+    ),
+    "Archiver les vieilles offres ?": (
+        "Archive the old offers?",
+        "Alte Angebote archivieren?",
+        "¿Archivar las ofertas antiguas?",
+    ),
+    "{n} offres archivées.": (
+        "{n} offers archived.",
+        "{n} Angebote archiviert.",
+        "{n} ofertas archivadas.",
+    ),
+    "Ouvrir l'offre": ("Open the offer", "Angebot öffnen", "Abrir la oferta"),
+    "Aucun document d'une candidature envoyée.": (
+        "No document from a sent application.",
+        "Kein Dokument einer gesendeten Bewerbung.",
+        "Ningún documento de una candidatura enviada.",
+    ),
 }

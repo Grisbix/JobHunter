@@ -659,6 +659,20 @@ async function declarerEnvoi(id) {
 const bouton = (texte, icone, onclick, classe = "") =>
   h("button", { class: `bouton ${classe}`, onclick }, icone ? svg(icone) : null, texte);
 
+// « Plus… »: a list of [text, icon, action] behind one button; closes on a choice or
+// on a click elsewhere. It opens in the flow, on its own line: a floating menu was cut
+// by the drawer's edge in a narrow window (2026-11-03).
+function plus(entrees) {
+  const d = h("details", { class: "plus" }, h("summary", { class: "bouton" }, "Plus…"),
+    h("div", { class: "menu-plus" }, entrees.map(([t, ic, f]) => bouton(t, ic, () => { d.open = false; f(); }))));
+  const dehors = (e) => { if (!d.contains(e.target)) d.open = false; };
+  d.addEventListener("toggle", () => {
+    if (d.open) document.addEventListener("mousedown", dehors);
+    else document.removeEventListener("mousedown", dehors);
+  });
+  return d;
+}
+
 function segment(options, valeur, onchange) {
   return h("div", { class: "seg" }, options.map(([v, lib]) =>
     h("button", { class: v === valeur ? "on" : "", onclick: () => onchange(v) }, lib)));
@@ -829,14 +843,19 @@ async function ouvrirOffre(id) {
       ["pas intéressé", "expiré", "mauvaise"].includes(o.suivi)
         ? bouton("Finalement intéressé", "fleche", () => marquer(o.id, ""))
         : bouton("Pas intéressé", "", () => marquer(o.id, "pas intéressé")),
-      bouton("Écarter…", "", () => ecarter([o.id])),
       ["postulé", "relancé"].includes(o.suivi) ? bouton("Brouillon de relance", "cloche", () => lancer("relance", o.id)) : null,
-      bouton("Chercher sur le web", "loupe", () => ecrire("chercher_web", o.id)),
-      bouton(o.description ? "Recharger la description" : "Récupérer la description", "fleche", () => lancer("description", o.id)),
-      bouton("J'ai un compte sur ce site", "cle", async () => {
-        const r = await ecrire("compte", o.id);
-        if (r) toast(r.compte ? `Compte noté pour ${r.site}.` : `Compte retiré pour ${r.site}.`);
-      })),
+      // « Pas intéressé » and « Écarter… » side by side read as the same button (2026-11-03):
+      // the first keeps the offer, set aside, undoable; the second takes it out of the
+      // queue for good, with a reason. That one goes with the rarer actions.
+      plus([
+        ["Retirer de la file, avec un motif…", "", () => ecarter([o.id])],
+        ["Chercher sur le web", "loupe", () => ecrire("chercher_web", o.id)],
+        [o.description ? "Recharger la description" : "Récupérer la description", "fleche", () => lancer("description", o.id)],
+        ["J'ai un compte sur ce site", "cle", async () => {
+          const r = await ecrire("compte", o.id);
+          if (r) toast(r.compte ? `Compte noté pour ${r.site}.` : `Compte retiré pour ${r.site}.`);
+        }],
+      ])),
     (() => {
       const st = h("select", { class: "choix" }, h("option", { value: "" }, "Pas de statut"),
         STATUTS.map((s) => h("option", { value: s, selected: s === o.suivi }, majuscule(s))));
@@ -879,8 +898,12 @@ ECRANS.accueil = {
     const dernier = col.length ? col[col.length - 1] : { n: 0 };
     const avant = col.slice(0, -1);
     const moyenne = avant.length ? avant.reduce((s, c) => s + c.n, 0) / avant.length : 0;
-    // A multiple of 4: five distinct whole ticks (an empty week showed 1, 1, 1, 0, 0).
-    const max = Math.max(4, Math.ceil(Math.max(0, ...col.map((c) => c.n)) / 4) * 4);
+    // Four steps of a round size, 1, 2, 5 or 25 times a power of ten: five distinct
+    // whole ticks (an empty week showed 1, 1, 1, 0, 0), and no 0, 712, 1 424, 2 136.
+    const brut = Math.max(1, Math.max(0, ...col.map((c) => c.n)) / 4);
+    const puissance = 10 ** Math.floor(Math.log10(brut));
+    const pas = (puissance >= 10 ? [1, 2, 2.5, 5, 10] : [1, 2, 5, 10]).map((m) => m * puissance).find((x) => x >= brut);
+    const max = pas * 4;
     const pleins = [];
     const barres = h("div", { class: "barres" },
       [100, 75, 50, 25, 0].map((p) => h("div", { class: "axe", style: `top:calc(${1 - p / 100} * (100% - 22px))` },
@@ -927,13 +950,16 @@ ECRANS.accueil = {
             d.cle_conseillee ? h("li", { onclick: () => saisirCle(d.cle_conseillee.nom, () => aller("accueil")) },
               h("div", { class: "t" }, `Ajouter la clé ${d.cle_conseillee.libelle}`),
               h("div", { class: "s" }, "Gratuite, 5 minutes : beaucoup plus d'offres")) : null,
+            d.a_trier ? h("li", { onclick: () => aller("tri") },
+              h("div", { class: "t" }, "Trier les nouvelles offres"),
+              h("div", { class: "s" }, `${nombre(d.a_trier)} offres notées ${d.seuil || 8}+ jamais ouvertes`)) : null,
             // Offers with their CV and letter ready, not applied to yet: what to do next.
             // The follow-ups left this list (the user, 2026-11-02: « pas très importantes »).
             (d.a_postuler || []).length
             ? d.a_postuler.map((o) => h("li", { onclick: () => ouvrirOffre(`${o.entreprise}|${o.poste}`) },
                 h("div", { class: "t" }, `Postuler chez ${o.entreprise}`),
                 h("div", { class: "s", title: o.poste }, `${nombre(o.fit)} · ${o.poste}`)))
-            : h("li", { class: "vide" }, "Rien à faire pour l'instant"))),
+            : d.a_trier ? null : h("li", { class: "vide" }, "Rien à faire pour l'instant"))),
         h("div", { class: "zones" }, h("h2", {}, "Par zone"), h("div", { class: "sous", style: "margin-bottom:16px" }, `offres notées ${d.seuil || 8} et plus`),
           d.zones.map((z) => h("div", { class: "zone" },
             h("div", {}, h("div", { class: "lab" }, z.zone), h("div", { class: "val" }, nombre(z.n))),
@@ -1126,6 +1152,7 @@ ECRANS.offres = {
   titre: "Offres",
   plein: true,
   actions: () => [
+    bouton("Tri du jour", "etoile", () => aller("tri")),
     bouton("Ajouter une offre", "sortie", ajouterOffre),
     action("Vérifier les offres", "loupe", "disponibilite"),
     action("Lancer la collecte", "eclair", "collecte", "plein")],
@@ -1253,7 +1280,8 @@ ECRANS.candidatures = {
             ondragstart: (ev) => { tiree = e; ev.dataTransfer.effectAllowed = "move"; ev.dataTransfer.setData("text/plain", e.id); ev.currentTarget.classList.add("tiree"); },
             ondragend: (ev) => { ev.currentTarget.classList.remove("tiree"); } },
             h("div", { class: "t", title: e.poste }, e.poste), h("div", { class: "s" }, e.entreprise),
-            h("div", { class: "bas" }, h("span", {}, dateFr(e.date) || "—"),
+            h("div", { class: "bas" }, h("span", { title: dateFr(e.date) }, e.jours != null ? `J+${e.jours}` : (dateFr(e.date) || "—")),
+              e.relance_due ? h("span", { class: e.brouillon ? "etiq gris" : "etiq" }, e.brouillon ? "Brouillon prêt" : "Relance due") : null,
               e.fit == null ? null : h("div", { class: "prog", title: `${e.fit}/10` }, h("i", { style: `width:${e.fit * 10}%` }))))),
             c.entrees.length > 1 ? h("button", { class: "bouton deplier-k", onclick: () => {
               deroulees.has(c.statut) ? deroulees.delete(c.statut) : deroulees.add(c.statut);
@@ -1264,6 +1292,64 @@ ECRANS.candidatures = {
     ajusterKanban(vue);
   },
 };
+
+// The daily triage (3.80): the good offers never opened, one at a time, best first.
+// Opening one marks it seen (api.offre), so the next draw shows the next one.
+let triGeste = null;
+ECRANS.tri = {
+  titre: "Tri du jour",
+  actions: () => [bouton("Toutes les offres", "", () => aller("offres"))],
+  async dessiner(vue) {
+    triGeste = null;
+    const d = await appel("a_trier");
+    const id = d && d.ids[0];
+    const o = id ? await appel("offre", id) : null;
+    if (courant !== "tri") return;
+    if (!o) {
+      vue.replaceChildren(h("div", { class: "tri" }, h("div", { class: "verre panneau tri-fin" },
+        h("h2", {}, "Tri terminé"),
+        h("p", { class: "sous" }, "Plus de nouvelle offre bien notée à regarder. La prochaine collecte en apportera d'autres."),
+        h("div", { class: "boutons" }, bouton("Voir les offres", "", () => aller("offres"), "plein")))));
+      return;
+    }
+    const garder = () => redessiner();
+    const rejeter = () => marquer(id, "pas intéressé", false);
+    triGeste = { garder, rejeter };
+    vue.replaceChildren(h("div", { class: "tri" },
+      h("div", { class: "sous" }, `${nombre(d.total)} à trier · → ou Entrée : garder · X : pas intéressé`),
+      h("div", { class: "verre panneau tri-carte" },
+        h("div", { class: "fiche-tete" },
+          h("span", { class: `${classeScore(o.fit)} grand-score` }, nombre(o.fit)),
+          h("div", { style: "min-width:0" }, h("h2", {}, o.poste), h("div", { class: "sous" }, o.entreprise))),
+        h("div", { class: "puces" },
+          [o.lieu, o.contrat !== "non precise" && lisible(o.contrat), o.zone, o.date && `publiée le ${dateFr(o.date)}`]
+            .filter(Boolean).map((t) => h("span", { class: "puce" }, t))),
+        o.pourquoi ? h("div", { class: "carte description" }, h("h3", {}, "Pourquoi ce score"),
+          h("div", { translate: "no" }, traduireFit(o.pourquoi))) : null,
+        h("div", { class: "carte description tri-texte" },
+          o.description ? h("div", { translate: "no" }, o.description) : "Pas de description enregistrée pour cette offre."),
+        h("div", { class: "boutons" },
+          bouton("Garder", "fleche", garder, "plein"),
+          bouton("Pas intéressé", "", rejeter),
+          bouton(o.cv ? "Refaire CV et lettre" : "Préparer CV et lettre", "eclair", async () => { await lancer("documents", id); garder(); }),
+          bouton("Voir l'annonce", "sortie", () => ouvrir(o.url)),
+          plus([
+            ["Retirer de la file, avec un motif…", "", () => ecarter([id])],
+            ["Tout le détail", "doc", () => ouvrirOffre(id)],
+          ])))));
+  },
+};
+document.addEventListener("keydown", (e) => {
+  if (courant !== "tri" || !triGeste || e.ctrlKey || e.altKey || e.metaKey) return;
+  if (e.target && e.target.closest && e.target.closest("input, textarea, select, [contenteditable], button, summary")) return;
+  if ($("tiroir").classList.contains("ouvert") || document.querySelector(".dialogue")) return;
+  const geste = e.key === "ArrowRight" || e.key === "Enter" ? triGeste.garder
+    : e.key === "x" || e.key === "X" ? triGeste.rejeter : null;
+  if (!geste) return;
+  e.preventDefault();
+  triGeste = null;  // one key, one offer: a held key does not run through the list
+  geste();
+});
 
 ECRANS.relances = {
   titre: "Relances",
@@ -1309,7 +1395,7 @@ ECRANS.relances = {
   },
 };
 
-const filtresDocs = { texte: "", genre: "", page: 0 };
+const filtresDocs = { texte: "", genre: "", en_cours: false, page: 0 };
 ECRANS.documents = {
   titre: "Documents",
   plein: true,
@@ -1336,16 +1422,23 @@ ECRANS.documents = {
       () => ecrire("ouvrir_dossier_documents", x.genre)));
     vue.replaceChildren(h("div", { class: "colonne" },
       h("div", { class: "barre-outils" }, h("label", { class: "champ", style: "max-width:460px" }, svg("loupe"), champ),
-        segment([["", "Tous"], ["CV", "CV"], ["Lettre", "Lettres"]], f.genre, (v) => { f.genre = v; f.page = 0; relancer(); }), ...dossiers,
+        segment([["", "Tous"], ["CV", "CV"], ["Lettre", "Lettres"]], f.genre, (v) => { f.genre = v; f.page = 0; relancer(); }),
+        segment([["", "Toutes les offres"], ["oui", "Candidatures envoyées"]], f.en_cours ? "oui" : "", (v) => { f.en_cours = !!v; f.page = 0; relancer(); }),
+        ...dossiers,
         h("span", { class: "sous", title: (d.dossiers || []).map((x) => x.chemin).join(" · ") }, `${nombre(d.total)} documents`)),
       h("div", { class: "verre panneau remplit" },
         d.fichiers.length ? h("div", { class: "defile" }, h("table", {},
-          h("colgroup", {}, h("col", { style: "width:12%" }), h("col", {}), h("col", { style: "width:14%" })),
-          h("thead", {}, h("tr", {}, ["Type", "Document", "Le"].map((t) => h("th", {}, t)))),
+          h("colgroup", {}, h("col", { style: "width:12%" }), h("col", {}), h("col", { style: "width:16%" }), h("col", { style: "width:14%" })),
+          h("thead", {}, h("tr", {}, ["Type", "Document", "Offre", "Le"].map((t) => h("th", {}, t)))),
           h("tbody", {}, d.fichiers.map((x) => h("tr", { onclick: () => voir(x), title: x.modifiable ? "Voir et modifier" : "Ouvrir" },
             h("td", {}, h("span", { class: x.genre === "CV" ? "etiq" : "etiq gris" }, x.genre)),
-            h("td", { title: x.nom }, x.nom), h("td", {}, dateFr(x.date)))))))
-        : (ex.CV || ex.Lettre) ? h("div", { class: "vide" }, "Aucun document pour cette recherche.")
+            h("td", { title: x.nom }, x.nom),
+            // The offer it was made for, with its status: a click opens it.
+            h("td", {}, x.offre ? h("button", { class: "lien", title: "Ouvrir l'offre",
+              onclick: (e) => { e.stopPropagation(); ouvrirOffre(x.offre); } },
+              x.statut ? majuscule(x.statut) : "Ouvrir") : "—"),
+            h("td", {}, dateFr(x.date)))))))
+        : (ex.CV || ex.Lettre) ? h("div", { class: "vide" }, f.en_cours ? "Aucun document d'une candidature envoyée." : "Aucun document pour cette recherche.")
         : premiersDocuments(),
         d.fichiers.length ? pagination(d, (p) => { f.page = p; relancer(); vue.scrollTop = 0; }) : null)));
     if (f.texte) { champ.focus(); champ.setSelectionRange(f.texte.length, f.texte.length); }
@@ -2295,12 +2388,24 @@ ECRANS.maintenance = {
           h("dt", {}, "Erreurs"), h("dd", {}, String(c.erreurs)), h("dt", {}, "Dernier succès"), h("dd", {}, c.dernier_succes || "—"))),
       carte("Données",
         h("dl", { class: "paires" },
-          h("dt", {}, "Offres"), h("dd", {}, nombre(m.offres)), h("dt", {}, "Candidatures"), h("dd", {}, nombre(m.candidatures)),
+          h("dt", {}, "Offres"), h("dd", {}, nombre(m.offres)), h("dt", {}, "Candidatures"), h("dd", {}, `${nombre(m.candidatures)} suivies · ${nombre(m.envoyees)} envoyées`),
           m.tailles.map((t) => [h("dt", {}, t.nom), h("dd", {}, taille(t.octets))])),
+        m.archivables ? h("div", { class: "actions-col" }, bouton(`Archiver ${nombre(m.archivables)} vieilles offres…`, "corbeille", () => archiverVieilles(m.archivables))) : null,
         m.effacable ? h("div", { class: "actions-col" }, bouton("Effacer mes données…", "corbeille", () => effacerDonnees(m))) : null),
       carteOutils(await appel("outils"))));
   },
 };
+
+// Old offers nobody will read: a button, never a nightly job (api.archiver says why).
+async function archiverVieilles(n) {
+  const ok = await dialogue("Archiver les vieilles offres ?",
+    `${nombre(n)} offres collectées il y a plus de 60 jours, notées sous le seuil, jamais ouvertes et sans candidature ` +
+    "quittent la file. Elles sont d'abord copiées dans la corbeille de JobHunter et la collecte ne les reprend pas.",
+    null, [["Archiver", "plein", () => true]]);
+  if (!ok) return;
+  const r = await ecrire("archiver", 60);
+  if (r) { toast(`${nombre(r.n)} offres archivées.${gardees(r)}`); redessiner(); }
+}
 
 // Uninstalling keeps Documents/JobHunter: this starts again from nothing (Recycle Bin).
 async function effacerDonnees(m) {
@@ -2555,7 +2660,8 @@ async function aller(nom) {
   if (!ECRANS[nom]) nom = "accueil";
   courant = nom;
   fermerTiroir();
-  const lien = nom === "relances" ? "candidatures" : nom;  // Relances: a page of Candidatures
+  // Relances: a page of Candidatures; the daily triage, one of Offres.
+  const lien = { relances: "candidatures", tri: "offres" }[nom] || nom;
   for (const a of document.querySelectorAll(".menu a")) {
     a.classList.toggle("actif", a.dataset.ecran === lien);
     if (a.dataset.ecran === lien) a.setAttribute("aria-current", "page");
@@ -2570,11 +2676,18 @@ async function aller(nom) {
   // page (the user, 2026-10-27). style.css: .vue.plein.
   vue.classList.toggle("plein", typeof e.plein === "function" ? e.plein() : !!e.plein);
   try { localStorage.setItem("jh-ecran", nom); } catch (_) { /* no storage: fine */ }
+  // A screen reading the whole queue takes a second: the old one stayed in place under
+  // the new title, as if the click had done nothing (2026-11-03). Past 150 ms, say so.
+  const attente = setTimeout(() => {
+    if (courant === nom) vue.replaceChildren(h("div", { class: "vide chargement" }, "Chargement…"));
+  }, 150);
   try {
     await e.dessiner(vue);
   } catch (err) {
     console.error(err);
     vue.replaceChildren(h("div", { class: "vide" }, "Impossible de charger cet écran."));
+  } finally {
+    clearTimeout(attente);
   }
 }
 

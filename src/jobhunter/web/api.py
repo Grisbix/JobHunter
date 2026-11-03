@@ -16,7 +16,7 @@ import time
 import webbrowser
 from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from functools import cache
 from pathlib import Path
 from typing import Any
@@ -33,6 +33,7 @@ from jobhunter.web.workshop import AtelierApi
 
 # Statuses of an application still waiting for an answer (same as the follow-ups).
 EN_ATTENTE = ("postulé", "relancé")
+ENVOYEES = ("postulé", "relancé", "entretien", "refus")
 # Entries of the follow-up file that are not applications (offer set aside).
 ECARTEES = ("mauvaise", "pas intéressé", "expiré")
 # A follow-up is due after this many days (the J+7 template).
@@ -408,6 +409,8 @@ def candidatures(offres: Sequence[Any], suivi: Mapping[str, Any]) -> dict[str, A
             continue
         entreprise, _, poste = k.partition("|")
         o = par_oid.get(k, {})
+        envoi = _date(v.get("d")) if s in EN_ATTENTE else None
+        jours = (date.today() - envoi).days if envoi else None
         colonnes[s if s in colonnes else "autres"].append(
             {
                 "id": k,
@@ -418,6 +421,10 @@ def candidatures(offres: Sequence[Any], suivi: Mapping[str, Any]) -> dict[str, A
                 "note": v.get("n") or "",
                 "fit": _fit(o) if o else None,
                 "url": o.get("url") or "",
+                # Sent and waiting: days since, and whether a follow-up is due (the
+                # board showed only a date, the follow-ups lived on another screen).
+                "jours": jours,
+                "relance_due": jours is not None and jours >= JOURS_RELANCE,
             }
         )
     for c in colonnes.values():
@@ -973,6 +980,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
             "prets": prets,
             "a_preparer": len(bonnes) - prets,
         }
+        d["a_trier"] = self.a_trier()["total"]
         from jobhunter import api_keys, root
         from jobhunter.sources import countries
 
@@ -1040,14 +1048,77 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
 
     def offre(self, ident: str) -> dict[str, Any] | None:
         """The detail sheet of one offer, by its "entreprise|poste" identity."""
+        from jobhunter.web import opened
+
         for o in self._file():
             if _oid(o) == ident:
+                opened.noter(ident)
                 return fiche(o, self._suivi(), self._descriptions().get(ident, ""))
         return None
 
+    def a_trier(self) -> dict[str, Any]:
+        """The daily triage: good offers to process, never opened, best first.
+
+        One at a time, keep or set aside (the user went through 2 855 offers at 8 or
+        more in a table, 2026-11-03). Opening one, here or elsewhere, takes it out.
+        """
+        from jobhunter.web import opened
+
+        vues = opened.lire()
+        suivi = self._suivi()
+        seuil = seuil_bon()
+        nouvelles = [
+            o
+            for o in self._file()
+            if _RX_SCAN.match(str(o.get("statut") or ""))
+            and _fit(o) >= seuil
+            and _oid(o) not in vues
+            and not (suivi.get(_oid(o)) or {}).get("s")
+        ]
+        nouvelles.sort(key=lambda o: (-_fit(o), -_fit(o, "fit_fin"), str(o.get("statut") or "")))
+        return {"total": len(nouvelles), "ids": [_oid(o) for o in nouvelles[:100]]}
+
+    def _archivables(self, jours: int) -> list[str]:
+        """What nobody will read again: old, under the threshold, never opened, never applied."""
+        from jobhunter.web import opened
+
+        vues = opened.lire()
+        suivi = self._suivi()
+        seuil = seuil_bon()
+        limite = (date.today() - timedelta(days=max(14, int(jours)))).isoformat()
+        ids = []
+        for o in self._file():
+            m = _RX_SCAN.match(str(o.get("statut") or ""))
+            k = _oid(o)
+            if m and m.group(1) < limite and _fit(o) < seuil and k not in vues and k not in suivi:
+                ids.append(k)
+        return ids
+
+    def archivables(self, jours: int = 60) -> int:
+        """How many offers « Archiver les vieilles offres » would take out."""
+        return len(self._archivables(jours))
+
+    def archiver(self, jours: int = 60) -> dict[str, Any]:
+        """Old offers never opened leave the queue, copied first to _corbeille/ (supprimer).
+
+        A button, not a nightly job: opened offers are counted only since 3.80, so the
+        first run would take every old offer, read or not, without asking.
+        """
+        ids = self._archivables(jours)
+        if not ids:
+            return {"ok": True, "n": 0, "gardees": 0}
+        return self.supprimer(ids)
+
     def candidatures(self) -> dict[str, Any]:
-        """The applications board."""
-        return candidatures(self._file(), self._suivi())
+        """The applications board, each card knowing whether its follow-up draft exists."""
+        d = candidatures(self._file(), self._suivi())
+        dossier = _dossier_relances()
+        noms = [_compact(p.stem) for p in dossier.glob("*.txt")] if dossier.is_dir() else []
+        for c in d["colonnes"]:
+            for e in c["entrees"]:
+                cle = _compact(e["entreprise"])
+                e["brouillon"] = bool(cle) and any(cle in n for n in noms)
+        return d
 
     def relances(self) -> dict[str, Any]:
         """Follow-ups due, and the drafts already written in Letters/Follow_ups."""
@@ -1083,6 +1154,19 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         f = filtres or {}
         mots = [m for m in str(f.get("texte") or "").lower().split() if m]
         seul = f.get("genre")  # "CV" or "Lettre"; anything else: both
+        # Whose document is it: the offer whose cv/lettre points to it, and its status
+        # (the screen listed file names only; « which ones did I send? », 2026-11-03).
+        suivi = self._suivi()
+        a_qui: dict[str, tuple[str, str]] = {}
+        for o in self._file():
+            for champ in ("cv", "lettre"):
+                if o.get(champ):
+                    k = _oid(o)
+                    a_qui[Path(str(o[champ])).stem.lower()] = (
+                        k,
+                        (suivi.get(k) or {}).get("s") or "",
+                    )
+        en_cours = bool(f.get("en_cours"))
         par_doc: dict[tuple[str, str], dict[str, Any]] = {}
         # How many exist, whatever the filters: « Refaire » shows only when there is
         # something to redo (the user, 2026-10-28).
@@ -1098,12 +1182,21 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
                     continue
                 if mots and not all(m in p.stem.lower() for m in mots):
                     continue
+                offre, statut = a_qui.get(p.stem.lower(), ("", ""))
+                if en_cours and statut not in ENVOYEES:
+                    continue
                 st = p.stat()
                 date = datetime.fromtimestamp(st.st_mtime).date().isoformat()
                 # Windows ignores case: « CV_X.pdf » and « cv_x.docx » are one document.
                 d = par_doc.setdefault(
                     (genre, p.stem.lower()),
-                    {"genre": genre, "nom": p.stem.replace("_", " "), "date": date},
+                    {
+                        "genre": genre,
+                        "nom": p.stem.replace("_", " "),
+                        "date": date,
+                        "offre": offre,
+                        "statut": statut,
+                    },
                 )
                 d["date"] = max(d["date"], date)
                 d[p.suffix[1:].lower()] = str(p)
@@ -1237,6 +1330,10 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
             "tailles": tailles,
             "offres": len(self._file()),
             "candidatures": sum(1 for e in self._suivi().values() if e.get("s")),
+            # « Candidatures 49 » counted the offers set aside too; the board showed 19
+            # and the home 15 (2026-11-03). Sent = left the user's hands.
+            "envoyees": sum(1 for e in self._suivi().values() if e.get("s") in ENVOYEES),
+            "archivables": self.archivables(),
         }
 
     def reglages(self) -> dict[str, Any]:
@@ -2281,6 +2378,11 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
             f.destroy()
             return None
         return bool(self._plein()) if self._plein else None
+
+
+def _compact(s: str) -> str:
+    """Letters and digits only, lower case: « DAHER BUSINESS » matches « Relance_J7_DAHER_BUSINESS_… »."""
+    return re.sub(r"[\W_]+", "", str(s or "").lower())
 
 
 def _dossier_relances() -> Path:

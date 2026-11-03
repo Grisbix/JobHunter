@@ -88,3 +88,25 @@ def test_bienvenue_en_echec_jamais_de_fenetre_vide(fenetre):
     p = fenetre(bienvenue={"rejette": "API absente"})
     p.wait_for_function("window.__appels.some((a) => a[0] === 'annonce_maj')")
     assert p.locator("#vue").inner_text().strip()
+
+
+def test_tri_du_jour_au_clavier(fenetre):
+    """3.80: X sets the shown offer aside, → keeps it; a key in a dialog does nothing."""
+    offre = {"id": "A|P", "poste": "Analyste ESG", "entreprise": "A", "fit": 9, "contrat": "CDI"}
+    p = fenetre(
+        bienvenue={"profil": True},
+        a_trier={"total": 1, "ids": ["A|P"]},
+        offre=offre,
+        marquer={"ok": True},
+    )
+    p.wait_for_function("window.__appels.some((a) => a[0] === 'annonce_maj')")
+    p.evaluate("aller('tri')")
+    p.get_by_text("Analyste ESG").wait_for()
+    p.keyboard.press("x")
+    p.wait_for_function("window.__appels.some((a) => a[0] === 'marquer')")
+    assert appels(p, "marquer") == [["A|P", "pas intéressé"]]
+    avant = len(appels(p, "a_trier"))
+    p.get_by_text("Analyste ESG").wait_for()  # redrawn
+    p.keyboard.press("ArrowRight")
+    p.wait_for_function(f"window.__appels.filter((a) => a[0] === 'a_trier').length > {avant}")
+    assert len(appels(p, "marquer")) == 1
