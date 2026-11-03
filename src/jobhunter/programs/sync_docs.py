@@ -104,15 +104,33 @@ def pass_links(dry=False):
     return fixed, broken
 
 
+def _fix_dashes():
+    """The user's own `fix_dashes.py`, in the data folder; None if there is none.
+
+    It used to be a plain `import fix_dashes`: the data folder is never on sys.path,
+    so the pass was skipped in silence every time (audit 2026-11-03)."""
+    import importlib.util
+
+    f = _racine.scripts() / "fix_dashes.py"
+    if not f.is_file():
+        print("  dashes: skipped (no fix_dashes.py in the data folder)")
+        return None
+    try:
+        spec = importlib.util.spec_from_file_location("fix_dashes", f)
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
+        return m if callable(getattr(m, "fix_doc", None)) else None
+    except Exception as e:
+        print(f"  dashes: skipped ({f.name} does not load: {type(e).__name__}: {e})")
+        return None
+
+
 def pass_format(dry=False):
     """Homogeneous format of the letters: justified+hyphenation+formulas (fix_letters),
     dashes (fix_dashes), date/order/recipient (refresh_letters)."""
     from jobhunter.programs import fix_letters, refresh_letters
 
-    try:  # personal script, missing from the shared version
-        import fix_dashes
-    except ImportError:
-        fix_dashes = None
+    fix_dashes = _fix_dashes()
     ents = refresh_letters._entreprises_by_letter()
     n = 0
     docs = sorted(LT_DIR.glob("*.docx"))

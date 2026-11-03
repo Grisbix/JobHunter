@@ -122,7 +122,39 @@ def dossier_donnees() -> Path:
     env = os.environ.get("JOBHUNTER_RACINE")
     if env:
         return Path(env)
-    return Path.home() / "Documents" / "JobHunter"
+    ancien = Path.home() / "Documents" / "JobHunter"
+    if ancien.is_dir():  # an installation made before 3.76 keeps its folder
+        return ancien
+    return documents() / "JobHunter"
+
+
+def documents() -> Path:
+    """The user's Documents folder as Windows knows it.
+
+    Under OneDrive backup (Windows 11's default) it is `…/OneDrive/Documents`, not
+    `~/Documents`: the uninstaller's `{userdocs}` is the known folder, so the
+    application must use it too, or the uninstaller never sees the data
+    (audit 2026-11-03). `~/Documents` off Windows or when the call fails.
+    """
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            from uuid import UUID
+
+            guid = (ctypes.c_byte * 16).from_buffer_copy(
+                UUID("{FDD39AD0-238F-46AF-ADB4-6C85480369C7}").bytes_le  # FOLDERID_Documents
+            )
+            chemin = ctypes.c_wchar_p()
+            shell32 = ctypes.windll.shell32  # type: ignore[attr-defined,unused-ignore]
+            if shell32.SHGetKnownFolderPath(ctypes.byref(guid), 0, None, ctypes.byref(chemin)) == 0:
+                try:
+                    if chemin.value:
+                        return Path(chemin.value)
+                finally:
+                    ctypes.windll.ole32.CoTaskMemFree(chemin)  # type: ignore[attr-defined,unused-ignore]
+        except Exception:
+            pass
+    return Path.home() / "Documents"
 
 
 def preparer_donnees(dest: Path, squelette: Path) -> list[Path]:

@@ -371,3 +371,28 @@ def test_outils_gardes_sur_l_offre(monkeypatch):
     vide = {"description": ""}
     S._outils_offre(vide)
     assert "outils_vus" not in vide
+
+
+def test_dossier_donnees_suit_documents_connu(tmp_path, monkeypatch):
+    """13 : sans ancien dossier, l'appli installée suit le Documents de Windows."""
+    from jobhunter import frozen
+
+    monkeypatch.delenv("JOBHUNTER_RACINE", raising=False)
+    monkeypatch.setattr(frozen.Path, "home", lambda: tmp_path / "maison")
+    monkeypatch.setattr(frozen, "documents", lambda: tmp_path / "OneDrive" / "Documents")
+    assert frozen.dossier_donnees() == tmp_path / "OneDrive" / "Documents" / "JobHunter"
+    (tmp_path / "maison" / "Documents" / "JobHunter").mkdir(parents=True)
+    assert frozen.dossier_donnees() == tmp_path / "maison" / "Documents" / "JobHunter"
+
+
+def test_sync_docs_charge_fix_dashes_du_dossier(tmp_path, monkeypatch, capsys):
+    """07 : le script perso des tirets se charge depuis le dossier de données."""
+    from jobhunter.programs import sync_docs
+
+    monkeypatch.setattr(sync_docs._racine, "scripts", lambda: tmp_path)
+    assert sync_docs._fix_dashes() is None
+    assert "skipped" in capsys.readouterr().out
+    (tmp_path / "fix_dashes.py").write_text(
+        "def fix_doc(f, dry=False):\n    return 1\n", encoding="utf-8"
+    )
+    assert sync_docs._fix_dashes().fix_doc("x") == 1

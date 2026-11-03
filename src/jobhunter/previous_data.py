@@ -39,8 +39,12 @@ def profil_de(d: Path) -> Path | None:
 
 
 def _lieux() -> list[Path]:
+    from jobhunter import frozen
+
     home = Path.home()
-    return [home / "Documents", home / "Downloads", home / "Desktop", home]
+    lieux = [home / "Documents", home / "Downloads", home / "Desktop", home]
+    connu = frozen.documents()  # under OneDrive, not ~/Documents (audit 2026-11-03)
+    return lieux if connu in lieux else [connu, *lieux]
 
 
 def candidats(ici: Path, lieux: list[Path] | None = None) -> list[Path]:

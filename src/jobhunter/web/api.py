@@ -823,8 +823,11 @@ def _dossier_effacable() -> Path | None:
     if not frozen.est_gele():
         return None
     dossier = profiles.principale().resolve()
-    defaut = (Path.home() / "Documents" / "JobHunter").resolve()
-    return dossier if dossier == defaut and dossier.is_dir() else None
+    defauts = {
+        (Path.home() / "Documents" / "JobHunter").resolve(),
+        (frozen.documents() / "JobHunter").resolve(),
+    }
+    return dossier if dossier in defauts and dossier.is_dir() else None
 
 
 def _derniere_version(timeout: float = 6) -> str:
