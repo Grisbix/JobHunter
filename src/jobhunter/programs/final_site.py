@@ -37,10 +37,10 @@ import json
 import re
 import sys
 import time
-import unicodedata
 
 from jobhunter import links as _liens
 from jobhunter import root as _racine
+from jobhunter.text import sans_accent
 
 HERE = _racine.scripts()
 
@@ -98,9 +98,7 @@ _VIDES = {
 }
 
 
-def _sans_accent(s):
-    s = unicodedata.normalize("NFD", str(s or "").lower())
-    return "".join(c for c in s if not unicodedata.combining(c))
+_sans_accent = sans_accent  # jobhunter.text, one copy (audit 2026-11-03)
 
 
 def titre_cle(t):

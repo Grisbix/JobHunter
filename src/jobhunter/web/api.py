@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from jobhunter.storage.applications import SuiviIllisible as _SuiviIllisible
+from jobhunter.storage.queue import oid as _oid  # one key definition (audit 2026-11-03)
 from jobhunter.web.background import FondApi
 from jobhunter.web.guided import CandidatureApi
 from jobhunter.web.messages import echec
@@ -59,10 +60,6 @@ def _python() -> str:
     from jobhunter import frozen
 
     return frozen.interpreteur()
-
-
-def _oid(o: dict[str, Any]) -> str:
-    return f"{(o.get('entreprise') or '').strip()}|{(o.get('poste') or '').strip()}"
 
 
 def _date(texte: Any) -> date | None:

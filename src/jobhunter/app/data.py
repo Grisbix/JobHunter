@@ -21,7 +21,7 @@ from jobhunter.storage import queue as queue_io
 class DonneesMixin:
     # ── data ──
     def _oid(self: "AppTypee", o: Any) -> Any:
-        return f"{(o.get('entreprise') or '').strip()}|{(o.get('poste') or '').strip()}"
+        return queue_io.oid(o)
 
     def _host(self: "AppTypee", o: Any) -> Any:
         u = o.get("url") or ""

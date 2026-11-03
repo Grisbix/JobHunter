@@ -88,7 +88,9 @@ def main():
     sp = _racine.dans(HERE, "suivi.json")
     if sp.exists():
         try:
-            suivi = json.loads(sp.read_text(encoding="utf-8"))
+            suivi = importlib.import_module("jobhunter.storage.applications").charger(
+                sp, strict=True
+            )
         except Exception as e:
             print(f"  (suivi.json illisible : {type(e).__name__} — export sans le suivi)")
 

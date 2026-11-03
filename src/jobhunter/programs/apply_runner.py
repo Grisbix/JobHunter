@@ -551,12 +551,12 @@ def main():
 
     q = queue_io.charger(descriptions=False)
     if QUEUE_DONE.exists():
-        queue_done = _json.load(open(QUEUE_DONE, encoding="utf-8"))
+        queue_done = _json.loads(QUEUE_DONE.read_text(encoding="utf-8"))
     # --selection: explicit list of ticked offers (takes precedence, ignores canal/prio)
     sel_keys = None
     if args.selection:
         try:
-            _sel = _json.load(open(args.selection, encoding="utf-8"))
+            _sel = _json.loads(Path(args.selection).read_text(encoding="utf-8"))
             sel_keys = {f"{s.get('entreprise', '')}|{s.get('poste', '')}" for s in _sel}
             print(f"Sélection : {len(sel_keys)} offre(s) cochée(s) depuis l'app.")
         except Exception as e:

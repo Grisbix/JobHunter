@@ -13,12 +13,13 @@ Run: python JobHunter.pyw relances            # all the 'prio' offers
 
 import argparse
 import importlib
-import json
 import re
 import sys
 from pathlib import Path
 
 from jobhunter import root as _racine
+from jobhunter.storage import queue as queue_io
+from jobhunter.storage.queue import oid as _oid
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console : TextIOWrapper
@@ -82,16 +83,12 @@ SUIVI = _racine.dans(_racine.scripts(), "suivi.json")
 RELANCE_STATUTS = ("postulé", "relancé")
 
 
-def _oid(o):
-    return f"{(o.get('entreprise') or '').strip()}|{(o.get('poste') or '').strip()}"
-
-
 def a_relancer(days=10):
     """ "postulé/relancé" applications for ≥ days days (suivi.json).
     Returns [(offer, status, date, age_days)] from oldest to most recent."""
     from datetime import date, datetime
 
-    q = json.load(open(Q, encoding="utf-8"))
+    q = queue_io.charger(Q, descriptions=False)
     try:
         s = importlib.import_module("jobhunter.storage.applications").charger(SUIVI)
     except Exception:
@@ -132,7 +129,7 @@ def ecrire_brouillon(o, j=7, dossier=None):
 
 def make_draft(key, j=7, open_mailto=True):
     """Écrit le brouillon .txt + ouvre mailto: (TON client mail — TU envoies)."""
-    q = json.load(open(Q, encoding="utf-8"))
+    q = queue_io.charger(Q)
     o = next((x for x in q if _oid(x) == key), None)
     if o is None:
         print(f"offre introuvable : {key}")
@@ -248,7 +245,7 @@ def main():
         mark(a.mark)
         return
     if a.company:  # legacy
-        q = json.load(open(Q, encoding="utf-8"))
+        q = queue_io.charger(Q, descriptions=False)
         for x in [x for x in q if a.company.lower() in (x["entreprise"] or "").lower()]:
             make_draft(_oid(x), j=a.jours, open_mailto=False)
         return

@@ -32,6 +32,7 @@ from jobhunter import root as _racine
 from jobhunter.programs import (
     _example_profile as _profil_exemple,  # noqa: F401  — at the top: example profile
 )
+from jobhunter.storage import queue as queue_io
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -65,7 +66,7 @@ _OFFRE_RX = re.compile(r"/jobs?/view|[?&]jk=|/o/|/job-offers?/|/offres/\d+", re.
 
 
 def cibles(mode, limit):
-    q = json.loads(QUEUE.read_text(encoding="utf-8"))
+    q = queue_io.charger(QUEUE, descriptions=False)
     vus = {}
     for o in q:
         u = str(o.get("url") or "")

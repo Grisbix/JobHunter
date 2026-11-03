@@ -60,6 +60,7 @@ from pathlib import Path  # noqa: F401  (annotations and callers)
 
 from jobhunter import links as _liens
 from jobhunter import root as _racine
+from jobhunter.storage.queue import oid as _oid  # one key definition (audit 2026-11-03)
 from jobhunter.types import Offre
 
 HERE = _racine.scripts()
@@ -539,10 +540,6 @@ def pas_une_offre(o: Offre) -> str | None:
     if _RX_PORTAIL.match(s.path or "/") and not s.query:
         return "pas_une_offre:accueil_ou_portail"
     return None
-
-
-def _oid(o: Offre) -> str:
-    return f"{(o.get('entreprise') or '').strip()}|{(o.get('poste') or '').strip()}"
 
 
 def motif(o: Offre, proteges: set[str]) -> str | None:

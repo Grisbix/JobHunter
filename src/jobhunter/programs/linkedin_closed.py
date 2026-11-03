@@ -40,6 +40,7 @@ import sys
 import time
 
 from jobhunter import root as _racine
+from jobhunter.storage.queue import oid as _oid_offre
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -118,11 +119,6 @@ def etat(jid, client, essais=2):
 
 ETAT = _racine.dans(HERE, "_linkedin_etat.json")  # memory of the checks (not versioned)
 SUIVI = _racine.dans(HERE, "suivi.json")  # candidatures : statut, note, date
-
-
-def _oid_offre(offre):
-    """Same key as the app and suivi.json: "entreprise|poste"."""
-    return f"{(offre.get('entreprise') or '').strip()}|{(offre.get('poste') or '').strip()}"
 
 
 def _oids_suivis():

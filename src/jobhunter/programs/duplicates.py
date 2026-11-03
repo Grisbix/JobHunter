@@ -29,7 +29,8 @@ Decision: docs/adr/0010-offer-identity-company-job.md
 """
 
 import re
-import unicodedata
+
+from jobhunter.text import sans_accent
 
 JACCARD_MIN = 0.6
 # A URL that designates ONE posting: numeric identifier or UUID, or offer path.
@@ -82,9 +83,7 @@ _MOTS_LANGUE = {
 }
 
 
-def _sans_accent(s):
-    s = unicodedata.normalize("NFD", str(s or "").lower())
-    return "".join(c for c in s if not unicodedata.combining(c))
+_sans_accent = sans_accent  # jobhunter.text, one copy (audit 2026-11-03)
 
 
 _RX_NON_LATIN = re.compile(r"[^\x00-ɏ\s\W]")

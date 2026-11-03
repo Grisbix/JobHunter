@@ -8,10 +8,10 @@ Run: python JobHunter.pyw test_live_nav
 import sys
 import time
 
-from jobhunter import root as _racine
 from jobhunter.programs import (
     _example_profile as _profil_exemple,  # noqa: F401  — at the top: example profile
 )
+from jobhunter.storage import queue as queue_io
 
 sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console : TextIOWrapper
 from playwright.sync_api import sync_playwright
@@ -25,9 +25,8 @@ ENG = "playwright"
 def _sample_sites(per_cat=5):
     """Samples real URLs from apply_queue.json, N per automatic url_type."""
     import collections
-    import json
 
-    q = json.loads((_racine.scripts() / "apply_queue.json").read_text(encoding="utf-8"))
+    q = queue_io.charger(descriptions=False)
     cats = ("ATS_DIRECT", "CAREERS_PORTAL", "HOMEPAGE", "BOARD_DIRECT")
     seen = collections.defaultdict(list)
     urls_used = set()
@@ -45,10 +44,9 @@ def _sample_sites(per_cat=5):
 def _all_sites():
     """ALL the unique domains of the queue (except HARD_BOARD = LinkedIn/Indeed, personal ban).
     1 representative URL per (domain, url_type)."""
-    import json
     from urllib.parse import urlparse
 
-    q = json.loads((_racine.scripts() / "apply_queue.json").read_text(encoding="utf-8"))
+    q = queue_io.charger(descriptions=False)
     doms = {}
     for o in q:
         u = o.get("url") or ""

@@ -19,10 +19,10 @@ import difflib
 import json
 import re
 import sys
-import unicodedata
 from pathlib import Path
 
 from jobhunter import root as _racine
+from jobhunter.text import sans_accent
 
 HERE = _racine.scripts()
 
@@ -48,9 +48,7 @@ IDENTITE = {
 RX_TITRE = re.compile(r"<title[^>]*>(.*?)</title>", re.S | re.I)
 
 
-def _sans_accent(s):
-    s = unicodedata.normalize("NFD", str(s or "").lower())
-    return "".join(c for c in s if not unicodedata.combining(c))
+_sans_accent = sans_accent  # jobhunter.text, one copy (audit 2026-11-03)
 
 
 def _cle(s):

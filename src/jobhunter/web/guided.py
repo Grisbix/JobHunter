@@ -19,6 +19,7 @@ import time
 from typing import Any
 
 from jobhunter import guided_apply as guidee
+from jobhunter.storage.queue import oid as _oid  # one key definition (audit 2026-11-03)
 
 ZONES = ("offre", "dossier", "etat", "resultat")
 
@@ -183,7 +184,3 @@ class CandidatureApi:
         except subprocess.TimeoutExpired:
             s.proc.terminate()
             s.proc.wait(timeout=5)
-
-
-def _oid(o: dict[str, Any]) -> str:
-    return f"{(o.get('entreprise') or '').strip()}|{(o.get('poste') or '').strip()}"
