@@ -47,9 +47,9 @@ change target, change the profile.
   English) and checks each profile end to end (identity, own job kept by the filter, the
   domain and the sorting, fit, letter and message); `tests/test_sweep_cv.py` runs four.
   After a change of `first_launch` or `skills_catalog`, run the full sweep.
-- `DESIGN.md` (root): the app's colours, fonts, shapes and rules. Written from the desktop
-  window's theme (removed in 3.77); the reference is now `web/static/style.css`: keep
-  both in step (`npx @google/design.md lint DESIGN.md`).
+- `DESIGN.md` (root): the app's colours, fonts, shapes and rules, from
+  `web/static/style.css` (the reference); keep both in step
+  (`npx @google/design.md lint DESIGN.md`).
 - CI: `.github/workflows/tests.yml` runs the network-free suites on every push.
 
 ## Read before touching the code

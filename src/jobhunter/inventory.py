@@ -1,6 +1,6 @@
 """What the Companies, Access and My CVs panels show: data, without a window.
 
-Part of jobhunter.app (step F2 of the roadmap). The three panels displayed wrong or
+Step F2 of the roadmap; read by the web window (jobhunter.web.panels). The three panels displayed wrong or
 stale figures: companies counted by URL substring ("Bil": 546 offers), an empty ATS
 column, sources removed weeks ago, 1,983 CVs listed flat. Everything they compute
 lives here, in pure tested functions; the panels only display it.

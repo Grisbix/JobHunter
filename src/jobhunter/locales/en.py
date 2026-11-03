@@ -1,7 +1,7 @@
 """English interface texts, indexed by the displayed French text.
 
-Shared by both windows (jobhunter.app.language, jobhunter.web.i18n) since 3.29;
-it was jobhunter.app.texts_en. The French text stays the source: a text missing
+Read by the web window (jobhunter.web.i18n); it was the desktop window's
+texts_en until 3.29. The French text stays the source: a text missing
 from here is displayed in French. English is also the fallback of the other
 languages (see `langue`), so this catalogue is the reference list of the texts to
 translate: tests/test_language.py checks that every language covers it.

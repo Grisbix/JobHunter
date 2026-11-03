@@ -1,8 +1,8 @@
 """The interface texts in English, German and Spanish, indexed by the French text.
 
 One module per language (`NOM`, `RELANCER`, `TEXTES`, `JOURNAL`, `SORTIE`, `FIT`).
-They import nothing: the desktop window (jobhunter.app.language) and the web one
-(jobhunter.web.i18n) both read them, and the web one may not import jobhunter.app.
+They import nothing. The web window reads them (jobhunter.web.i18n), as did the
+desktop window until 3.77; the texts only it showed were dropped then.
 """
 
 

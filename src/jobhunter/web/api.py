@@ -483,8 +483,7 @@ def reglages(brut: Any) -> dict[str, Any]:
 def _fichier_reglages() -> Path | None:
     """The main folder's settings file, the same as the interface language's.
 
-    Same path as `jobhunter.app.language._fichier()`, rebuilt here: only the desktop
-    app may import jobhunter.app (tests/test_architecture.py).
+    `_interface.json` in the main folder's data, shared by all profiles.
     """
     from jobhunter import profiles, root
 
@@ -677,7 +676,7 @@ TACHES: dict[str, tuple[str, list[str]]] = {
     "description": ("Description de l'offre", ["jobhunter.programs.scrape_desc", "--key"]),
 }
 
-# Interface languages (jobhunter.app.language.noms; that module is the desktop's).
+# Interface languages, by code.
 LANGUES = {"fr": "Français", "en": "English", "de": "Deutsch", "es": "Español"}
 
 # Statuses the page may set on an application: the desktop's list ("" clears it).

@@ -9,7 +9,7 @@ waits while a task started by a button or a guided application runs.
 
 JOBHUNTER_SANS_FOND=1 turns it off, as on the desktop (visual checks, the installer's
 CI). Each program takes the queue's lock itself (code 3 when it is busy).
-Nothing here imports jobhunter.app (tests/test_architecture).
+Nothing here imports tkinter (tests/test_architecture).
 """
 
 from __future__ import annotations

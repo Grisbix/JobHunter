@@ -3,88 +3,102 @@ version: alpha
 name: JobHunter
 description: Desktop application (a web window, pywebview) that collects job offers, scores them against a profile and prepares the CV and letter for each one.
 colors:
-  bg: "#E9EFF7"
-  work: "#F4F7FB"
-  card: "#FFFFFF"
-  line: "#D8E2EF"
-  line-saisie: "#74869F"
-  tx: "#19283F"
-  mut: "#52647B"
-  row0: "#FFFFFF"
-  row1: "#F5F8FC"
-  acc: "#325EDF"
-  acc-h: "#234FC7"
-  acc-tx: "#FFFFFF"
-  focus: "#325EDF"
-  ok: "#25704F"
-  bad: "#AC3E49"
-  purp: "#70549C"
-  teal: "#246B76"
-  ambre: "#8A5B19"
-  side: "#172B50"
-  side-card: "#223963"
-  side-tx: "#F5F8FE"
-  side-mut: "#C3D3EC"
-  side-h: "#304C80"
-  side-alerte: "#F6C467"
-  btn: "#E7EDF7"
-  btn-h: "#D4E1F7"
-  del: "#FBECEF"
-  del-h: "#F4DADF"
-  del-tx: "#AC3E49"
+  fond-page: "#DDDBDA"
+  carte: "#FFFFFF"
+  surface: "#FFFFFF"
+  encre: "#1C1917"
+  texte-desc: "#3B3431"
+  texte-doux: "#6F6763"
+  gris: "#8A817C"
+  gris-clair: "#B3AAA5"
+  icone: "#B9B0AB"
+  sombre: "#151312"
+  sable: "#BFAEA4"
+  tan: "#B68B70"
+  rose: "#9B7362"
+  c1: "#EAA476"
+  c1b: "#E39A6C"
+  c2: "#C98366"
+  c3: "#A8766B"
+  terre: "#B96D49"
+  brun: "#5C3C2E"
+  moyen1: "#D9C2B4"
+  moyen2: "#B9A194"
+  blob1: "#E9B48E"
+  blob2: "#CFC6C4"
+  blob3: "#F1D9C8"
 typography:
   ui:
-    fontFamily: IBM Plex Sans
-  mono:
-    fontFamily: IBM Plex Mono
+    fontFamily: Inter Display
+  t-xs: 11px
+  t-s: 12px
+  t-m: 13px
+  t-l: 14px
+  t-xl: 16px
+  t-2xl: 20px
+  t-3xl: 24px
+  t-4xl: 32px
+  t-5xl: 44px
 rounded:
-  btn: 6px
-  card: 10px
+  bouton: 12px
+  carte: 14px
+  panneau: 18px
 spacing:
-  pad-page: 20px
+  panneau: 24px
   gap: 12px
 ---
 
 ## Overview
 
-A recruitment-CRM layout adapted to one person's job search: navy navigation on the
-left, a pale blue workspace, the data on white. The application is light only.
+Frosted glass over a warm background: a page of soft colour blobs, panels of
+translucent white (`--verre`, `--verre-fort`) edged with a white hairline (`--filet`),
+the data on opaque cards (`carte`). Light by default, with a dark mode
+(`:root.mode-sombre`). The reference is `src/jobhunter/web/static/style.css`: this file
+follows it, never the reverse.
 
 ## Colors
 
-- The side bar uses its own set (`side`, `side-card`, `side-tx`, `side-mut`, `side-h`).
-  The colours of the light surfaces are not reused on it: a warning there is
-  `side-alerte`, because `ambre` is unreadable on navy.
-- An input field's outline is `line-saisie`, which keeps at least 3:1 on `card`, `bg`
-  and `work` (WCAG 1.4.11). `line` is for the borders of surfaces only.
-- The keyboard focus ring is the accent (`focus`), on every background.
-- A button's text colour follows its background role (`acc` → `acc-tx`, `del` →
-  `del-tx`, the side bar → `side-tx`), so that a button can never be unreadable.
-- Each button role has its own hover tint (`acc-h`, `btn-h`, `del-h`, `side-h`), never
-  the toolkit's default blue.
-- Table rows alternate `row0` and `row1`.
+- The accent family (`c1`, `c1b`, `c2`, `c3`, `terre`, `brun`, `moyen1`, `moyen2`,
+  the blobs) is the « teinte » chosen in Réglages: terre (above, the default), vert,
+  bleu, noir (`body[data-teinte=…]`). Each teinte redefines the whole family, its
+  `-rgb` twins included; nothing else changes.
+- Text: `encre` for content, `texte-desc` for descriptions, `texte-doux` and `gris`
+  for secondary lines, `gris-clair` for hints.
+- `sombre` is the filled button (`.bouton.plein`): the one main action of a screen.
+- Dark mode redefines the neutrals and the glass from `--blanc-rgb`; the teinte keeps
+  its accent.
 
 ## Typography
 
-- `ui` is IBM Plex Sans when installed, otherwise Segoe UI; `mono` is IBM Plex Mono,
-  otherwise Cascadia Mono or Consolas. The family is resolved at start-up among the
-  installed fonts: never name a family that may be missing, Tk then falls back to an
-  arbitrary font.
+- One family: Inter Display, then Inter, Segoe UI Variable Display, Segoe UI, the
+  system's. A family missing on the machine falls back down the list; never name one
+  outside it.
+- Sizes come from the scale `--t-xs` … `--t-5xl` only; body text is `t-l` (14 px).
 
 ## Layout
 
-- Spacing is set once at start-up (`pad-page`, `gap`); it does not follow window
-  resizes.
+- A navigation column on the left (folds to 64 px icons, `body.menu-replie`), the
+  current view on the right, scrolling on its own.
+- Panels have 24 px of padding; elements in a row are 8 to 12 px apart.
+- Every screen holds at 1280 × 720 and at 900 × 560 without horizontal scrolling:
+  rows wrap, they are not cut.
 
 ## Shapes
 
-- A surface on another surface is not one more card: a row of buttons inside a card is a
-  plain container, without border or corners.
-- One border per surface (`line`, 1 px), only on a `card` placed on a different
-  background; sub-containers get none.
+- Buttons 40 px high, 12 px corners; cards 14 px; panels 18 px.
+- A surface on another surface is not one more card: a row of buttons inside a card is
+  a plain container, without border or corners.
+
+## Motion and effects
+
+- Blur and transitions go away under Remote Desktop (`body.leger`) and with
+  `prefers-reduced-motion`.
+- In the app window (`body.natif`) the glass is more opaque, so text stays readable
+  over whatever is behind the window.
 
 ## Do's and Don'ts
 
-- Do make every button reachable and operable by keyboard (Tab, Enter, Space).
-- Don't name a font family without checking it is installed.
-- Don't put the amber of the light surfaces on the dark side bar.
+- Do show a focus ring on everything Tab reaches (`:focus-visible`, 2 px `c2`); a
+  mouse click draws none. Text fields keep their own glow.
+- Do take colours from the variables, so that the teintes and dark mode follow.
+- Don't name a font family outside the `--police` list.

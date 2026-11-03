@@ -2,8 +2,8 @@
 
 Statistics, access and keys, followed companies, job boards.
 
-The same data and the same files as `jobhunter.app.panels`, without a window: the
-desktop module draws Tk widgets, this one returns JSON for the page. `Api` (api.py)
+They return JSON for the page (they were Tk panels of the desktop window, removed
+in 3.77). `Api` (api.py)
 inherits these methods; they use its `_file()`, `_suivi()` and task runner.
 """
 

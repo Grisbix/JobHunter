@@ -7,7 +7,7 @@ user checks and clicks Send IN CHROME, then « J'ai envoyé » in the page. Noth
 clicks anything, and the page cannot send a command the program does not know
 (guided_apply.COMMANDES). The events and their texts are jobhunter.guided_apply's.
 
-Nothing here imports jobhunter.app (tests/test_architecture).
+Nothing here imports tkinter (tests/test_architecture).
 """
 
 from __future__ import annotations

@@ -1,6 +1,6 @@
 """Spanish interface texts, indexed by the displayed French text.
 
-Shared by both windows since 3.29 (it was jobhunter.app.texts_es). A text missing from
+Read by the web window (it was the desktop window's texts_es until 3.29). A text missing from
 here is displayed in English, then in French. The keys are those of `en.TEXTES`,
 `JOURNAL` and `SORTIE`.
 """

@@ -4,7 +4,7 @@ Fit weights, cleaning recipes, documents to compare, CV and letters in bulk, the
 CV. Mixed into `Api` (jobhunter.web.api). The logic of these windows lived in their Tk
 code (app.fit_panel, app.recipes, app.compare, app.cv_drop); what the web needs of it
 is written here as plain calls, or moved to a module both use (base_cv,
-cleanup_recipes.EXEMPLE). Nothing here imports jobhunter.app (tests/test_architecture).
+cleanup_recipes.EXEMPLE). Nothing here imports tkinter (tests/test_architecture).
 """
 
 from __future__ import annotations

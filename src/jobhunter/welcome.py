@@ -8,8 +8,8 @@ itself on an error: an unreadable CV ended in "the profile was not created" with
 reason shown.
 
 Former start of JobHunter.pyw (phase 3.7). It ran at IMPORT of the .pyw; it is now a
-function, called by the launcher BEFORE loading jobhunter.app (which reads the profile
-as soon as it loads) -- hence this module outside the app package.
+function, called by the launcher (jobhunter.launch) BEFORE the window, which reads the
+profile as soon as it loads.
 """
 
 import os
