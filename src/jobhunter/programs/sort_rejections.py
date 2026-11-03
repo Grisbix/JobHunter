@@ -50,16 +50,23 @@ def charger(chemin=None, jour=None):
     return {k: v for k, v in _lire(chemin or FICHIER).items() if _vivant(v, jour)}
 
 
-def ajouter(rejets, chemin=None, jour=None):
+def ajouter(rejets, chemin=None, jour=None, extraits=None):
     """Remembers {oid: reason}. Purges the expired rejections. Atomic write.
 
     A rejection already known keeps its original date: otherwise an offer removed
-    every day would never see its rejection expire."""
+    every day would never see its rejection expire.
+
+    `extraits`: {oid: the text that decided} — the sort purges the posting's text, and
+    without it a removal for « experience » could not be checked afterwards (audit
+    2026-11-03). Kept as "x", 200 characters."""
     chemin = Path(chemin or FICHIER)
     jour = jour or datetime.date.today()
     d = charger(chemin, jour)
     for oid, motif in rejets.items():
-        d.setdefault(oid, {"m": motif, "d": jour.isoformat()})
+        e = d.setdefault(oid, {"m": motif, "d": jour.isoformat()})
+        x = (extraits or {}).get(oid)
+        if x and "x" not in e:
+            e["x"] = x[:200]
     tmp = chemin.with_suffix(".tmp")
     tmp.write_text(json.dumps(d, ensure_ascii=False, indent=0), encoding="utf-8")
     os.replace(tmp, chemin)

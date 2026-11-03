@@ -50,6 +50,7 @@ Run:
 """
 
 import argparse
+import hashlib
 import importlib
 import re
 import shutil
@@ -119,6 +120,35 @@ _RX_RESP_ADJ = re.compile(
 def _sans_resp_adjectif(titre: str | None) -> str:
     """The title stripped of its adjective "responsable", for the seniority test."""
     return _RX_RESP_ADJ.sub(" ", titre or "")
+
+
+# HARD WORDS THAT DO NOT SAY SENIORITY HERE (audit 2026-11-03, file of the day: six
+# « Finance Business Partner » at fit ≥ 5 removed, Believ fit 7). Erased from the title
+# before both lists, the way the adjective « responsable » is:
+#   - « Business Partner », « Partner Success », « partnerships »: a finance role
+#     open to juniors (and V.I.E), not a firm's partner;
+#   - « Principal Investments »: the desk, not the grade;
+#   - the person served, not the person hired: « auprès du Directeur Financier »,
+#     « Assistant to the Chief Investment Officer », « Office of the CFO »;
+#   - both levels offered: « junior ou confirmé », « Junior/Senior ».
+_RX_SENIOR_NEUTRE = re.compile(
+    r"\bbusiness[\s-]+partners?\b|\bpartner\s+success\b|\bpartnerships?\b|\bchannel\s+partners?\b"
+    r"|\bprincipal\s+invest\w*"
+    r"|\b(?:aupr[eè]s|rattach[ée]e?s?)\s+(?:du|de\s+la|des|au|aux|de\s+l')\s*\S+(?:\s+\S+)?"
+    r"|\b(?:to|for)\s+the\s+(?:chief|director|head|vp|vice[\s-]?president|cfo|ceo|cio|coo"
+    r"|managing\s+director)\b(?:\s+\w+){0,2}"
+    r"|\boffice\s+of\s+the\s+\w+(?:\s+\w+){0,2}"
+    r"|\b(?:junior|jr|d[ée]butant)e?s?\s*(?:/|ou|or|&|et|and|-|–|à|to)\s*"
+    r"(?:senior|sr|confirm[ée]{1,2}s?|exp[ée]riment[ée]{1,2}s?|mid)\b"
+    r"|\b(?:senior|sr|confirm[ée]{1,2}s?|exp[ée]riment[ée]{1,2}s?)\s*(?:/|ou|or|&|et|and|-|–)\s*"
+    r"(?:junior|jr|d[ée]butant)e?s?\b",
+    re.I,
+)
+
+
+def _titre_seniorite(titre: str | None) -> str:
+    """The title as the seniority test reads it: neutral uses of the words erased."""
+    return _RX_SENIOR_NEUTRE.sub(" ", _sans_resp_adjectif(titre))
 
 
 # Beginner marks. They neutralise the SOFT list, never the HARD list.
@@ -426,6 +456,32 @@ def outils_techniques(desc: str | None) -> set[str]:
     return {k for k, rx in _RX_OUTILS.items() if rx.search(t)}
 
 
+# The ~70 patterns above cost 87 % of the sort: 46 s of 53 over 18 193 offers, every
+# day, on texts that had not changed (audit 2026-11-03). No pattern is slow on its own,
+# and one big alternation is no faster in `re`. So the result is kept on the offer with
+# a fingerprint of its text AND of the patterns: only a new or changed description, or
+# a change of the list, is read again.
+_EMPREINTE_OUTILS = hashlib.blake2b(
+    repr(sorted(_OUTILS.items())).encode("utf-8"), digest_size=4
+).hexdigest()
+
+
+def _outils_offre(o: Offre) -> set[str]:
+    """outils_techniques of the offer's description, reused while text and rules hold."""
+    texte = str(o.get("description") or "")
+    cle = (
+        _EMPREINTE_OUTILS
+        + hashlib.blake2b(texte.encode("utf-8", "replace"), digest_size=6).hexdigest()
+    )
+    vus = o.get("outils_vus")
+    if isinstance(vus, dict) and vus.get("h") == cle:
+        return set(vus.get("o") or ())
+    trouves = outils_techniques(texte)
+    if texte:  # an empty text proves nothing: the description may arrive tomorrow
+        o["outils_vus"] = {"h": cle, "o": sorted(trouves)}  # type: ignore[typeddict-unknown-key]
+    return trouves
+
+
 # ── 3. EXPERIENCE ───────────────────────────────────────────────────────────
 # Five years. Below that, a junior application can hold its own; above, the posting
 # asks for a background that does not exist yet.
@@ -521,12 +577,13 @@ def motif(o: Offre, proteges: set[str]) -> str | None:
         return "etudiant"
 
     propre = _P.cherche(_ici._RX_PROPRE_METIER, titre)
-    if _ici._SENIORITE and not propre and _RX_SENIOR_DUR.search(titre):
+    lu = _titre_seniorite(titre)
+    if _ici._SENIORITE and not propre and _RX_SENIOR_DUR.search(lu):
         return "seniorite"
     if (
         _ici._SENIORITE
         and not propre
-        and _RX_SENIOR_MOU.search(_sans_resp_adjectif(titre))
+        and _RX_SENIOR_MOU.search(lu)
         and not _RX_JUNIOR.search(titre)
     ):
         return "seniorite"
@@ -535,7 +592,7 @@ def motif(o: Offre, proteges: set[str]) -> str | None:
     for famille, rx in _ici._METIERS.items():
         if rx.search(titre) and (famille in _ici._METIERS_DURS or not sauve):
             return f"metier:{famille}"
-    if _ici.OUTILS_MAX and len(outils_techniques(o.get("description"))) >= _ici.OUTILS_MAX:
+    if _ici.OUTILS_MAX and len(_outils_offre(o)) >= _ici.OUTILS_MAX:
         return "outils_techniques"
     return None
 
@@ -623,6 +680,7 @@ def main() -> int:
         except OSError:
             pass
 
+    from jobhunter.scoring import fit as _fit
     from jobhunter.scoring import zones as _zones
     from jobhunter.storage import queue as queue_io
 
@@ -637,11 +695,17 @@ def main() -> int:
             # now that the descriptions are fetched.
             lieux = sum(_zones.reparer_lieu(o) for o in file)
             retires = {}
+            extraits = {}
             gardes = []
             for o in file:
                 m = motif(o, proteges)
                 if m:
                     retires[queue_io.oid(o)] = m
+                    # The text goes with the offer: the excerpt that decided stays.
+                    if m == "experience":
+                        extraits[queue_io.oid(o)] = _fit.experience_detail(
+                            o.get("description"), o.get("poste")
+                        )[1]
                 else:
                     gardes.append(o)
             dbl = doublons.doublons(gardes, proteges)
@@ -663,7 +727,7 @@ def main() -> int:
     # The collection must not take them back tomorrow: see rejets_tri.py.
     from jobhunter.programs import sort_rejections as rejets_tri
 
-    n = rejets_tri.ajouter(retires)
+    n = rejets_tri.ajouter(retires, extraits=extraits)
     print(f"rejets memorises : {n} (la collecte les ignore {rejets_tri.DUREE_JOURS} jours)")
     return 0
 

@@ -1241,6 +1241,27 @@ def _code_etranger(job_sources: Any, lieu: str) -> bool:
 
 _RX_N_LIEUX = re.compile(r"\d+ (?:locations?|lieux|sites|standorte)")
 
+# A place abroad by its SHAPE, whatever the city: written in a non-Latin script
+# (« 港区, 東京都 »), ending with a country code (« Bratislava, SK », « Gelang Patah, …,
+# my »), or starting with one (« US-Tennessee-Piney Flats », « CAN, ON, Mississauga »).
+# Each fell into « France, prioritaire » (audit 2026-11-03).
+_RX_ECRITURE = re.compile(r"[Ͱ-ϿЀ-ӿ֐-ۿऀ-෿฀-๿"
+                          r"ᄀ-ᇿ぀-ヿ㐀-鿿가-힯]")  # fmt: skip
+_RX_CODE_TETE = re.compile(
+    r"^\s*(?:US|USA|CAN|GBR|UK|IND|DEU|ESP|ITA|BRA|MEX|CHN|JPN|SGP|AUS|POL|NLD|BEL|CHE|IRL|PRT"
+    r"|PHL|MYS|ZAF|ARE)\s*[-,]"
+)
+
+
+def _etranger_par_forme(lieu: str) -> bool:
+    """Abroad by the shape of the place string (script, country code first or last)."""
+    if _RX_ECRITURE.search(lieu) or _RX_CODE_TETE.match(lieu):
+        return True
+    if "," in lieu:
+        fin = _n(lieu.rsplit(",", 1)[1])
+        return len(fin) == 2 and fin != "fr" and fin in _ISO_PAYS
+    return False
+
 
 def zone_lieu(lieu: str | None) -> str:
     """Zone of a place: prioritaire / secondaire / ailleurs / international / inconnu.
@@ -1344,7 +1365,7 @@ def zone_france(lieu: str | None) -> str:
         )
     except Exception:
         etranger = False
-    if etranger:
+    if etranger or _etranger_par_forme(lieu or ""):
         return INTERNATIONAL
     # Department: only 75 and 92 were known, as tokens. "Bobigny - 93",
     # "Melun - 77" or "Bron - 69" fell into "the rest of France".
@@ -1561,6 +1582,15 @@ _PAYS_CANON = {
     "Djibouti": ("djibouti",),
     "Sierra Leone": ("sierra leone",),
 }
+# Missing on the queue of 2026-11-03 (913 offers stored « France » without a single
+# French clue, ~60 % of a sample abroad): spellings and countries nobody had listed.
+for _pays, _alias in {
+    "Brésil": ("brasil",),
+    "Monaco": ("monaco",),
+    "Micronésie": ("micronesia",),
+    "Belgique": ("belgie", "belgien"),
+}.items():
+    _PAYS_CANON[_pays] = tuple(dict.fromkeys((*_PAYS_CANON.get(_pays, ()), *_alias)))
 # For zone_lieu. Without "maurice": Saint-Maurice is a French commune.
 _PAYS_TOUS = tuple(a for al in _PAYS_CANON.values() for a in al if a != "maurice")
 # American states spelled out ("Green Bay, Wisconsin Metropolitan Area").
@@ -1774,6 +1804,31 @@ _VILLE_PAYS = {
         "rhein-neckar",
     ),
 }
+# Cities of the queue of 2026-11-03 that fell into « France, prioritaire ». None is
+# also a French commune name (Laval, Mons, Valence, Reading were left out on purpose).
+for _pays, _villes in {
+    "Allemagne": ("dortmund", "essen", "bonn", "bremen", "hannover", "hanover", "leipzig",
+                  "dresden", "mannheim", "wiesbaden", "mainz", "heidelberg", "duisburg",
+                  "bochum", "aachen", "darmstadt", "eschborn", "augsburg"),
+    "Belgique": ("bruxelles", "brussels", "brussel", "leuven", "louvain", "namur", "wavre"),
+    "Inde": ("gurugram", "gurgaon", "noida", "jaipur", "coimbatore", "ahmedabad", "chandigarh",
+             "indore", "kochi", "nagpur", "mysuru", "visakhapatnam"),
+    "Philippines": ("makati", "pasig", "quezon city", "mandaluyong"),
+    "Malaisie": ("johor", "penang", "bukit jalil", "cyberjaya", "petaling jaya"),
+    "Japon": ("osaka", "yokohama", "kyoto", "nagoya", "fukuoka"),
+    "Pologne": ("katowice", "gdansk", "szczecin", "lublin"),
+    "Ukraine": ("kyiv", "kiev", "lviv", "kharkiv", "odesa"),
+    "Slovaquie": ("bratislava", "kosice"),
+    "Maurice": ("ebene", "port louis", "quatre bornes"),
+    "Espagne": ("boadilla del monte", "alcobendas", "las rozas", "zaragoza"),
+    "Portugal": ("moscavide", "oeiras", "braga", "coimbra"),
+    "Pays-Bas": ("zeist", "arnhem", "nijmegen", "groningen", "haarlem", "leiden", "maastricht",
+                 "tilburg", "breda"),
+    "Canada": ("mississauga", "halifax", "burnaby"),
+    "Brésil": ("curitiba", "carapicuiba", "campinas", "porto alegre", "recife", "brasilia"),
+    "Royaume-Uni": ("poole", "bournemouth", "milton keynes"),
+}.items():  # fmt: skip
+    _VILLE_PAYS[_pays] = tuple(dict.fromkeys((*_VILLE_PAYS.get(_pays, ()), *_villes)))
 _VILLES_TOUTES = tuple(v for vs in _VILLE_PAYS.values() for v in vs)
 _WTJ_PAYS = {
     "be": "Belgique",

@@ -108,8 +108,38 @@ _EXP_CTX = re.compile(
     re.I,
 )
 # Years that describe someone else: "une équipe apportant en moyenne 10 ans
-# d'expérience" (BNP AM) is the team's, the posting asked for 2.
-_EXP_AUTRUI = re.compile(r"(en moyenne|on average|cumul[ée]e?s?|apportant|combined team)\W*$", re.I)
+# d'expérience" (BNP AM) is the team's, the posting asked for 2. Right before the
+# number: the firm's age (« fort de 12 ans », « depuis 10 ans »), an average.
+_EXP_AUTRUI = re.compile(
+    r"(en moyenne|on average|average of|moyenne de|cumul[ée]e?s?|cumulant|apportant|combined team"
+    r"|fort(?:e|s|es)? de(?: plus de)?|riche de(?: plus de)?|depuis(?: plus de)?|since|"
+    r"for (?:over|more than)|existence de)\W*$",
+    re.I,
+)
+# Right after the number: « 10 ans d'expérience en moyenne », « … years on average ».
+_EXP_AUTRUI_APRES = re.compile(
+    r"^\W*\w*\W*(?:d'|de |of )?(?:exp[ée]rience|experience)?\W*(?:\w+\W+){0,2}"
+    r"(?:en moyenne|on average)"
+)
+# Years held by the firm's clients or staff, said right before the number:
+# « nos clients ayant plus de 10 ans d'expérience », « consultants with over 8 years ».
+# Narrow on purpose: a whole-sentence test (« we… team… ») also caught « what we are
+# looking for: 4+ years of experience » on the real queue.
+_EXP_SUJET_AUTRE = re.compile(
+    r"\b(?:clients?|customers?|investisseurs|investors|consultants|associ[ée]s|partners|"
+    r"collaborateurs|experts|employees|salari[ée]s|membres|members)\s+(?:\w+\s+){0,3}?"
+    r"(?:ayant|with|cumulant|totalisant|avec|qui ont|who have|having)"
+    r"(?:\s+(?:plus de|over|more than|au moins))?\W*$"
+)
+# A preference, not a requirement: « idéalement 5 ans », « 5 years is a plus ».
+_EXP_PREF_AVANT = re.compile(
+    r"(id[ée]alement|ideally|preferably|de pr[ée]f[ée]rence|preferred|plus id[ée]al|nice to have|"
+    r"bonus)\W*(?:\w+\W+){0,3}$"
+)
+_EXP_PREF_APRES = re.compile(
+    r"^[^.;]{0,40}?(appr[ée]ci[ée]e?s?|un plus|is a plus|a plus|preferred|souhaitable|bienvenue?s?|"
+    r"nice to have|is an asset|un atout)"
+)
 # Target level: profil.json, "niveau" section. Searched in the TITLE alone
 # (see fit_detail); "lead" is not there as a substring — it catches "Lead
 # Generation" — it is `senior_en_fin` that handles it, with the right negation.
@@ -187,17 +217,34 @@ def experience_years(text: str | None, titre: str | None = None) -> int:
     requirement went to 0, the offer to fit 10. Seven of the twenty offers the user set
     aside by October 2026 asked for experience the engine had not seen.
     """
+    return experience_detail(text, titre)[0]
+
+
+def experience_detail(text: str | None, titre: str | None = None) -> tuple[int, str]:
+    """experience_years, and the excerpt that decided it ("" if none).
+
+    The sort removes an offer at 5 years and then purges its text: the excerpt is
+    what is left to check the decision afterwards (sort_rejections keeps it).
+
+    Not counted (audit 2026-11-03: 6 phrases out of 8 removed a junior offer):
+    the firm's age or its team's average (`_EXP_AUTRUI`), years held by its clients or
+    staff (`_EXP_SUJET_AUTRE`), and a PREFERENCE when a requirement is also written —
+    « minimum 2 ans, idéalement 5 » asks for 2.
+    """
     t = re.sub(r"\s+", " ", (text or "")).replace("’", "'").lower()
     # A range asks for its LOWER bound: "3 à 5 ans" is met with 3. Read as 5, it reached
     # the sort's experience_max and removed offers a three-year candidate qualifies for.
     t = _EXP_FOURCHETTE.sub(r"\1 ", t)  # the unit stays: "1-2 years of" → "1 years of"
     porte = re.sub(r"\s+", " ", titre).lower() if titre is not None else t
     if any(k in porte for k in _JUNIOR_OFFRE):
-        return 0  # junior offer: an isolated '10 ans' = noise
-    yrs = 0
+        return 0, ""  # junior offer: an isolated '10 ans' = noise
+    yrs, extrait = 0, ""
     for rx, n in _EXP_QUALITATIVE:
-        if rx.search(t):
-            yrs = max(yrs, n)
+        q = rx.search(t)
+        if q and n > yrs:
+            yrs, extrait = n, t[max(0, q.start() - 40) : q.end() + 20]
+    exiges: list[tuple[int, str]] = []
+    preferes: list[tuple[int, str]] = []
     for m in _EXP_NUM.finditer(t):
         a, b = m.start(), m.end()
         # WINDOW WIDER ON THE LEFT THAN ON THE RIGHT. The requirement is almost
@@ -209,11 +256,27 @@ def experience_years(text: str | None, titre: str | None = None) -> int:
         # followed thirty characters further by an "expérience" belonging to
         # the next sentence says nothing about that number.
         ctx = t[max(0, a - 70) : min(len(t), b + 28)]
-        if _EXP_CTX.search(ctx) and not _EXP_AUTRUI.search(t[max(0, a - 30) : a]):
-            n = int(m.group(1))
-            if 1 <= n <= 15:  # realistic exp; >15 = age/seniority → ignored
-                yrs = max(yrs, n)
-    return yrs
+        if not _EXP_CTX.search(ctx) or _EXP_AUTRUI.search(t[max(0, a - 30) : a]):
+            continue
+        apres = t[b : b + 50]
+        if _EXP_AUTRUI_APRES.search(apres):
+            continue
+        if _EXP_SUJET_AUTRE.search(t[max(0, a - 70) : a]):
+            continue
+        n = int(m.group(1))
+        if not 1 <= n <= 15:  # realistic exp; >15 = age/seniority → ignored
+            continue
+        lot = (
+            preferes
+            if _EXP_PREF_AVANT.search(t[max(0, a - 40) : a]) or _EXP_PREF_APRES.search(apres)
+            else exiges
+        )
+        lot.append((n, t[max(0, a - 60) : b + 30]))
+    # A preference counts only when nothing is required: then its lowest value.
+    retenu = max(exiges) if exiges else (min(preferes) if preferes else None)
+    if retenu and retenu[0] > yrs:
+        yrs, extrait = retenu
+    return yrs, extrait.strip()
 
 
 # ── VECTOR scoring: weighted axes, instead of "+1 per skill" ──

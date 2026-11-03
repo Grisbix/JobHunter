@@ -259,3 +259,115 @@ def test_consentement_regle():
     assert not c("i agree to share my data with partners", True)
     assert not c("j'accepte de recevoir la newsletter", True)
     assert c("j'ai lu la procedure de recrutement et j'accepte", False)
+
+
+# --- 16: required experience read from the firm, the team or a preference --------------
+
+
+def test_experience_exigee():
+    from jobhunter.scoring.fit import experience_detail, experience_years
+
+    cas = {
+        "Cabinet de conseil fort de 12 ans d'expérience, nous recrutons. "
+        "Profil : première expérience bienvenue.": 0,
+        "Une équipe de 15 consultants cumulant 10 ans d'expérience en moyenne.": 0,
+        "You will join a team with an average of 8 years of experience.": 0,
+        "Minimum 2 years of experience required, ideally 5 years of experience.": 2,
+        "Expérience souhaitée : 2 ans (5 ans d'expérience appréciés).": 2,
+        "Depuis 10 ans, notre expérience au service des investisseurs fait référence.": 0,
+        "Accompagner nos clients ayant plus de 10 ans d'expérience. Profil : 1 an d'expérience.": 1,
+        # still read
+        "What we are looking for 4+ years of experience in AI engineering": 4,
+        "Vous avez au moins 5 ans d'expérience en gestion d'actifs.": 5,
+        "Au sein de notre équipe, vous justifiez de 7 ans d'expérience.": 7,
+        "Highly preferred work experience 3+ years of experience in equity research": 3,
+    }
+    for texte, attendu in cas.items():
+        assert experience_years(texte) == attendu, texte
+    n, extrait = experience_detail("Vous avez au moins 5 ans d'expérience en gestion d'actifs.")
+    assert n == 5 and "5 ans" in extrait
+
+
+def test_rejet_garde_l_extrait(tmp_path):
+    import datetime
+
+    from jobhunter.programs import sort_rejections
+
+    f = tmp_path / "rejets.json"
+    sort_rejections.ajouter(
+        {"A|B": "experience", "C|D": "seniorite"},
+        f,
+        datetime.date(2026, 11, 3),
+        extraits={"A|B": "au moins 5 ans d'expérience"},
+    )
+    d = sort_rejections.charger(f, datetime.date(2026, 11, 3))
+    assert d["A|B"]["x"] == "au moins 5 ans d'expérience" and "x" not in d["C|D"]
+
+
+# --- 17: seniority read in « Business Partner », « junior ou confirmé »… -----------------
+
+
+def test_seniorite_mots_neutres():
+    from jobhunter.scoring import sorting
+
+    def m(titre):
+        return sorting.motif(
+            {"poste": titre, "entreprise": "X", "url": "https://x/" + titre}, set()
+        )
+
+    for titre in (
+        "Finance Business Partner",
+        "V.I.E - Finance Business Partner",
+        "Analyste ESG junior ou confirmé (H/F)",
+        "Kreditanalyst Junior & Senior (m/w/d)",
+        "Chargé de mission auprès du Directeur Financier",
+        "Executive Assistant to the Chief Investment Officer",
+        "ESG Analyst - Principal Investments team",
+    ):
+        assert m(titre) != "seniorite", titre
+    for titre in ("Senior ESG Analyst", "Director, Sustainable Finance", "Partner - Deal Advisory"):
+        assert m(titre) == "seniorite", titre
+
+
+# --- 18: an unknown place was « France, prioritaire » ------------------------------------
+
+
+def test_lieux_etrangers_reconnus():
+    from jobhunter.scoring import zones
+
+    for lieu in (
+        "Bratislava, SK",
+        "Gelang Patah, Johor Darul Ta'zim, my",
+        "港区, 東京都",
+        "US-Tennessee-Piney Flats",
+        "CAN, ON, Mississauga",
+        "Carapicuíba, SP, Brasil",
+        "Pohnpei, Micronesia, Federated States of",
+        "Dortmund",
+        "Gurugram",
+        "Ebene",
+        "Monaco",
+    ):
+        assert zones.zone_france(lieu) == zones.INTERNATIONAL, lieu
+    assert zones.pays_lieu("Bruxelles") == "Belgique"
+    for lieu in ("Puteaux", "Maisons-Alfort", "Valence, Drôme", "Paris, FR", "Lyon"):
+        assert zones.pays_lieu(lieu) == "France", lieu
+
+
+def test_outils_gardes_sur_l_offre(monkeypatch):
+    """19 : les outils d'une description inchangée ne sont pas recherchés deux fois."""
+    from jobhunter.scoring import sorting as S
+
+    o = {"description": "Python, SQL and Tableau daily."}
+    attendu = S.outils_techniques(o["description"])
+    assert S._outils_offre(o) == attendu
+    assert o["outils_vus"]["o"] == sorted(attendu)
+    appels = []
+    monkeypatch.setattr(S, "outils_techniques", lambda t: appels.append(t) or set())
+    assert S._outils_offre(o) == attendu and not appels
+    o["description"] = "Excel only."
+    S._outils_offre(o)
+    assert appels == ["Excel only."]
+    vide = {"description": ""}
+    S._outils_offre(vide)
+    assert "outils_vus" not in vide

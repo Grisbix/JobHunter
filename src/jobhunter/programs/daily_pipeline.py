@@ -512,7 +512,7 @@ def _executer(a, journal):
     # see it close (jobhunter.postings). The app keeps it at the "postulé" click;
     # this catches the statuses set elsewhere (apply runner, emails).
     pa = ["-m", "jobhunter.programs.archive_postings"] + (["--dry"] if a.rapide else [])
-    code, n, _ = etape("4a/5 Annonces des candidatures", pa, "postings", timeout=10 * 60)
+    code, n, _ = etape("4a2/5 Annonces des candidatures", pa, "postings", timeout=10 * 60)
     bilan.append(("annonces", code, n))
 
     # 4b, BEFORE THE FOLDERS: we do not generate a CV for a closed offer.

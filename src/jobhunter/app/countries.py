@@ -110,6 +110,8 @@ NOMS: dict[str, tuple[str, str, str]] = {
     "Portugal": ("Portugal", "Portugal", "Portugal"),
     "Qatar": ("Qatar", "Katar", "Catar"),
     "Koweït": ("Kuwait", "Kuwait", "Kuwait"),
+    "Monaco": ("Monaco", "Monaco", "Monaco"),
+    "Micronésie": ("Micronesia", "Mikronesien", "Micronesia"),
     "République dominicaine": (
         "Dominican Republic",
         "Dominikanische Republik",
