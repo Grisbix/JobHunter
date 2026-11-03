@@ -11,7 +11,7 @@ dependencies = [
     "pywebview>=6.2,<7",
     "playwright>=1.60,<2",
     "python-docx>=1.2,<2",
-    "PyMuPDF>=1.27,<2",
+    "PyMuPDF>=1.27,<3",
     "httpx>=0.28.1,<0.29",
     # The CA bundle httpx uses. 2026.10.19 removes emSign roots whose
     # intermediate keys were compromised (GHSA, critical): a floor, not a pin.
