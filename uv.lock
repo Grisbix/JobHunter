@@ -798,7 +798,7 @@ requires-dist = [
     { name = "google-auth-oauthlib", marker = "extra == 'gmail'", specifier = ">=1.2,<2" },
     { name = "httpx", specifier = ">=0.28.1,<0.29" },
     { name = "playwright", specifier = ">=1.60,<2" },
-    { name = "pymupdf", specifier = ">=1.27,<2" },
+    { name = "pymupdf", specifier = ">=1.27,<3" },
     { name = "python-docx", specifier = ">=1.2,<2" },
     { name = "pywebview", specifier = ">=6.2,<7" },
     { name = "pywebview", marker = "extra == 'web'", specifier = ">=6.2,<7" },
