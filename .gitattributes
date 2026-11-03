@@ -1,2 +1,13 @@
-*.sh text eol=lf
+# LF everywhere, CRLF only where Windows needs it (audit 2026-11-03: a mix of
+# both made every Python patch rewrite whole files).
+* text=auto eol=lf
 *.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.iss text eol=crlf
+*.png binary
+*.ico binary
+*.jpg binary
+*.pdf binary
+*.docx binary
+*.zip binary
