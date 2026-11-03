@@ -2788,7 +2788,7 @@ function natif() {
     if (b && b.message) toast(b.message.replace(/^!/, ""), b.message.startsWith("!"));
     demarrer();
     annonceMaj();
-  });
+  }).catch(() => { demarrer(); annonceMaj(); });  // never a blank window
   window.pywebview.api.demarrage().then((m) => { if (m) toast(m, m.startsWith("!")); });
   suivreFond();
 }
