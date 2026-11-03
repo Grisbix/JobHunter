@@ -4,6 +4,23 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.76.0 — 2026-11-03
+
+A deep audit of the engine's code: your applications are safer, forms are filled more carefully, and the morning sort is faster and fairer.
+
+- **An offer you applied to is never deleted.** Setting aside or deleting ticked offers in the window now spares those in your tracking, says how many it kept, and stops if the tracking cannot be read. The LinkedIn « closed offers » pass and the cleanup recipes stop the same way instead of reading an unreadable tracking as « no application ».
+- **Nothing is sent behind your back.** The search-box fallback only submits the search form it filled, never the first form of the page, and never a form with a file or a free text. At a login, the password field is only focused: the program no longer writes into it nor clicks « log in ».
+- **Forms filled more carefully.** No more phone number in a « numéro de rue » field, no birthplace in an address, no answer about someone else (referrer, emergency contact). Consent boxes: required ones and terms are ticked, data sharing with third parties, partners and newsletters is left unticked. Drop-down lists pick the best match, not the first close one.
+- **Undo after « Écarter ».** The toast now carries an « Annuler » button, and Ctrl+Z undoes outside a text field.
+- **Required experience read right.** « 5 years ideally » or « a plus » no longer counts as required; years that describe a client, a team average or a company's age are ignored. Each removal for experience keeps the sentence that decided it.
+- **Fewer good offers removed for seniority.** « Business Partner », « Junior & Senior » or « Assistant to the CIO » are not senior titles.
+- **Foreign offers stay abroad.** Cities such as Dortmund, Gurugram or Mississauga, non-Latin scripts and country-code prefixes no longer land in « France prioritaire ».
+- **Faster morning sort.** The tools named in each description are remembered with a fingerprint of the text: 49 s down to a fraction of a second once known.
+- **Documents of a pasted offer** no longer overwrite those of another offer with the same name.
+- **Installed app under OneDrive.** A new installation keeps its data in the Documents folder Windows shows (OneDrive's when backup is on), where the uninstaller looks; an existing folder stays where it is.
+- **Update never hangs** on a git asking for a login or on pip stuck on the network.
+- The dash pass of the letters, skipped in silence until now, really runs when your data folder has `fix_dashes.py`.
+
 ## 3.75.0 — 2026-11-02
 
 An audit of the whole window: no button that leads nowhere, no button twice, and words a user reads instead of file names and error codes.
