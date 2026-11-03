@@ -502,7 +502,7 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "Lancer la collecte": ("Start the collection", "Sammlung starten", "Iniciar la recogida"),
     "{n} offres le {d}": ("{n} offers on {d}", "{n} Angebote am {d}", "{n} ofertas el {d}"),
     "Offres en file": ("Offers in queue", "Angebote in der Liste", "Ofertas en la lista"),
-    "Notées 9 à traiter": ("Rated 9, to process", "Note 9, offen", "Con 9, por tratar"),
+    "Notées {n}+ à traiter": ("Rated {n}+, to process", "Note {n}+, offen", "Con {n}+, por tratar"),
     "prioritaire": ("priority", "vorrangig", "prioritaria"),
     "secondaire": ("secondary", "nachrangig", "secundaria"),
     "international": ("international", "international", "internacional"),
@@ -612,10 +612,10 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "Relancer {e}": ("Follow up with {e}", "Bei {e} nachfassen", "Recordar a {e}"),
     "{j} j · {poste}": ("{j} d · {poste}", "{j} T. · {poste}", "{j} d · {poste}"),
     "Par zone": ("By area", "Nach Zone", "Por zona"),
-    "offres notées 7 et plus": (
-        "offers rated 7 and above",
-        "Angebote mit 7 und mehr",
-        "ofertas con 7 o más",
+    "offres notées {n} et plus": (
+        "offers rated {n} and above",
+        "Angebote mit {n} und mehr",
+        "ofertas con {n} o más",
     ),
     "Aucune candidature pour l'instant.": (
         "No application yet.",
@@ -1268,7 +1268,7 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "Déconnecté": ("Signed out", "Abgemeldet", "Desconectado"),
     "Bloqué": ("Blocked", "Blockiert", "Bloqueado"),
     "Erreur": ("Error", "Fehler", "Error"),
-    "fit {n}": ("fit {n}", "Fit {n}", "fit {n}"),
+    "score {n}": ("score {n}", "Score {n}", "puntuación {n}"),
     # --- Fit workshop, CV, cleanup ---
     "Lecture de la file…": ("Reading the queue…", "Liste wird gelesen…", "Leyendo la lista…"),
     "Lecture de la file impossible ({e}).": (
@@ -1302,10 +1302,10 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "ofertas con 8 o más",
     ),
     "Prêtes": ("Ready", "Fertig", "Listas"),
-    "offres notées 8 et plus · {n} à préparer": (
-        "offers scored 8 and more · {n} to prepare",
-        "Angebote ab 8 · {n} vorzubereiten",
-        "ofertas con 8 o más · {n} por preparar",
+    "offres notées {s} et plus · {n} à préparer": (
+        "offers scored {s} and more · {n} to prepare",
+        "Angebote ab {s} · {n} vorzubereiten",
+        "ofertas con {s} o más · {n} por preparar",
     ),
     "Voir": ("View", "Ansehen", "Ver"),
     "absent": ("missing", "fehlt", "ausente"),
@@ -2281,11 +2281,11 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Bereiche der Angebote",
         "Áreas de las ofertas",
     ),
-    "Score ≥ 8": ("Score ≥ 8", "Score ≥ 8", "Puntuación ≥ 8"),
-    "Sur les offres à score ≥ 8": (
-        "On offers scoring ≥ 8",
-        "Bei Angeboten mit Score ≥ 8",
-        "En las ofertas con puntuación ≥ 8",
+    "Score ≥ {n}": ("Score ≥ {n}", "Score ≥ {n}", "Puntuación ≥ {n}"),
+    "Sur les offres à score ≥ {n}": (
+        "On offers scoring ≥ {n}",
+        "Bei Angeboten mit Score ≥ {n}",
+        "En las ofertas con puntuación ≥ {n}",
     ),
     "Score des offres en ligne": (
         "Score of the offers online",

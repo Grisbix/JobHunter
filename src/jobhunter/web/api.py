@@ -70,6 +70,20 @@ def _date(texte: Any) -> date | None:
         return None
 
 
+def seuil_bon() -> int:
+    """The score from which an offer is « good », the same on every screen.
+
+    The home counted « notées 9 », its zones 7, its documents and the statistics 8
+    (2026-11-03): three numbers for one question. Profile: scoring.seuil_bonnes (8).
+    """
+    from jobhunter import profile as _P
+
+    try:
+        return int(_P.get("scoring.seuil_bonnes", 8) or 8)
+    except (TypeError, ValueError):
+        return 8
+
+
 def tableau(
     offres: Sequence[Any],
     suivi: Mapping[str, Any],
@@ -77,6 +91,7 @@ def tableau(
 ) -> dict[str, Any]:
     """Everything the home screen draws, as JSON-ready data."""
     jour = aujourd_hui or date.today()
+    seuil = seuil_bon()
     par_oid = {_oid(o): o for o in offres}
     postulees = [k for k, v in suivi.items() if v.get("s") in EN_ATTENTE]
 
@@ -100,7 +115,7 @@ def tableau(
     pretes = [o for o in a_traiter if o.get("cv") and o.get("lettre") and _oid(o) not in suivi]
     pretes.sort(key=lambda o: (-_fit(o), -_fit(o, "fit_fin")))
 
-    zones = Counter(str(o.get("zone") or "inconnu") for o in offres if _fit(o) >= 7)
+    zones = Counter(str(o.get("zone") or "inconnu") for o in offres if _fit(o) >= seuil)
     total_zones = sum(zones.values()) or 1
 
     candidatures = []
@@ -123,9 +138,10 @@ def tableau(
     return {
         "stats": {
             "file": len(offres),
-            "neuf": sum(1 for o in a_traiter if _fit(o) >= 9),
+            "neuf": sum(1 for o in a_traiter if _fit(o) >= seuil),
             "postulees": len(postulees),
         },
+        "seuil": seuil,
         "collecte": collecte,
         "meilleures": [
             {
@@ -949,9 +965,14 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         from jobhunter.links import existe
 
         d = tableau(self._file(), self._suivi())
-        bonnes = [o for o in self._file() if (o.get("fit") or 0) >= 8]
+        bonnes = [o for o in self._file() if (o.get("fit") or 0) >= seuil_bon()]
         prets = sum(1 for o in bonnes if existe(o.get("cv")) and existe(o.get("lettre")))
-        d["documents"] = {"bonnes": len(bonnes), "prets": prets, "a_preparer": len(bonnes) - prets}
+        d["documents"] = {
+            "seuil": seuil_bon(),
+            "bonnes": len(bonnes),
+            "prets": prets,
+            "a_preparer": len(bonnes) - prets,
+        }
         from jobhunter import api_keys, root
         from jobhunter.sources import countries
 

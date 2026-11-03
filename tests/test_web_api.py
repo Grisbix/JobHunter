@@ -62,10 +62,12 @@ def test_relances_apres_sept_jours_et_candidatures_sans_les_ecartees():
     assert d["stats"]["postulees"] == 3
 
 
-def test_zones_des_offres_notees_sept_et_plus():
+def test_zones_des_offres_au_seuil_unique():
+    # 3.80: one threshold for every screen (scoring.seuil_bonnes, 8), not 7 here.
     offres = [_offre("A", str(i), 8, zone="international") for i in range(3)]
-    offres += [_offre("B", "b", 7), _offre("C", "c", 3, zone="ailleurs")]
+    offres += [_offre("B", "b", 9), _offre("B", "c", 7), _offre("C", "c", 3, zone="ailleurs")]
     d = tableau(offres, {}, JOUR)
+    assert d["seuil"] == 8
     assert d["zones"] == [
         {"zone": "international", "n": 3, "pct": 75},
         {"zone": "prioritaire", "n": 1, "pct": 25},

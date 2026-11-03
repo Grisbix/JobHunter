@@ -51,4 +51,4 @@ def test_accueil_compte_les_documents(monkeypatch, tmp_path):
         {"entreprise": "B", "poste": "P", "fit": 8},
         {"entreprise": "C", "poste": "P", "fit": 5},
     ]
-    assert a.tableau()["documents"] == {"bonnes": 2, "prets": 1, "a_preparer": 1}
+    assert a.tableau()["documents"] == {"bonnes": 2, "prets": 1, "a_preparer": 1, "seuil": 8}

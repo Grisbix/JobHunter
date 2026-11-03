@@ -242,6 +242,21 @@ function observerTraduction(changes) {
 }
 
 const nombre = (n) => Number(n || 0).toLocaleString(LOCALE);
+// The engine's keys, as a person reads them: « non precise », « ESG_Finance_Durable »,
+// « sites-carrieres », « en_cours » showed as such on five screens (2026-11-03).
+const NOMS_LISIBLES = {
+  "non precise": "Non précisé", "en_cours": "En cours", linkedin: "LinkedIn", ats: "ATS",
+  "sites-carrieres": "Sites carrières", wtj: "Welcome to the Jungle", efc: "eFinancialCareers",
+  francetravail: "France Travail", ft: "France Travail", vie: "V.I.E", apec: "APEC", eures: "EURES",
+  smartrecruiters: "SmartRecruiters", successfactors: "SuccessFactors", workday: "Workday",
+  glassdoor: "Glassdoor", adzuna: "Adzuna", jooble: "Jooble", arbeitsagentur: "Arbeitsagentur",
+  usajobs: "USAJOBS", hellowork: "HelloWork", indeed: "Indeed", talent: "Talent.com",
+};
+let NOMS_DOMAINES = {};  // the profile's domain names, from the offers screen's answer
+const lisible = (v) => {
+  const s = String(v ?? "");
+  return NOMS_DOMAINES[s] || NOMS_LISIBLES[s.toLowerCase()] || s.replace(/_/g, " ");
+};
 const taille = (o) => (o < 1e6 ? `${Math.max(1, Math.round(o / 1024))} Ko` : `${(o / 1e6).toLocaleString(LOCALE, { maximumFractionDigits: 1 })} Mo`);
 const JOURS = ["di", "lu", "ma", "me", "je", "ve", "sa"];
 const jourCourt = (iso) => {
@@ -841,8 +856,8 @@ async function ouvrirOffre(id) {
     h("div", { class: "carte description" },
       o.description ? h("div", { translate: "no" }, o.description) : "Pas de description enregistrée pour cette offre."),
     h("dl", { class: "paires" },
-      h("dt", {}, "Domaine"), h("dd", {}, o.domaine || "—"),
-      h("dt", {}, "Source"), h("dd", { title: o.source, class: "avec-logo" }, logoSource(o.source), o.source || "—"),
+      h("dt", {}, "Domaine"), h("dd", {}, o.domaine ? lisible(o.domaine) : "—"),
+      h("dt", {}, "Source"), h("dd", { title: o.source, class: "avec-logo" }, logoSource(o.source), o.source ? lisible(o.source.split(":")[0]) : "—"),
       h("dt", {}, "Statut"), h("dd", {}, o.statut || "—"),
       h("dt", {}, "Score fin"), h("dd", {}, o.fit_fin ? o.fit_fin.toFixed(2) : "—"),
       h("dt", {}, "Expérience"), h("dd", {}, o.exp_requise ? `${o.exp_requise} ans` : "—"),
@@ -880,7 +895,7 @@ ECRANS.accueil = {
     vue.replaceChildren(h("div", { class: "accueil" },
       h("div", { class: "colonne" },
         h("div", { class: "verre stats" },
-          [["valise", "Offres en file", d.stats.file], ["etoile", "Notées 9 à traiter", d.stats.neuf],
+          [["valise", "Offres en file", d.stats.file], ["etoile", `Notées ${d.seuil || 8}+ à traiter`, d.stats.neuf],
            ["avion", "En attente de réponse", d.stats.postulees]].map(([ic, lab, val]) =>
             h("div", { class: "stat" }, h("span", { class: "rond" }, svg(ic)),
               h("div", {}, h("div", { class: "lab" }, lab), h("div", { class: "val" }, nombre(val)))))),
@@ -919,7 +934,7 @@ ECRANS.accueil = {
                 h("div", { class: "t" }, `Postuler chez ${o.entreprise}`),
                 h("div", { class: "s", title: o.poste }, `${nombre(o.fit)} · ${o.poste}`)))
             : h("li", { class: "vide" }, "Rien à faire pour l'instant"))),
-        h("div", { class: "zones" }, h("h2", {}, "Par zone"), h("div", { class: "sous", style: "margin-bottom:16px" }, "offres notées 7 et plus"),
+        h("div", { class: "zones" }, h("h2", {}, "Par zone"), h("div", { class: "sous", style: "margin-bottom:16px" }, `offres notées ${d.seuil || 8} et plus`),
           d.zones.map((z) => h("div", { class: "zone" },
             h("div", {}, h("div", { class: "lab" }, z.zone), h("div", { class: "val" }, nombre(z.n))),
             h("div", { class: "tuile" }, h("i", { style: `width:${z.pct}%` }), h("span", {}, `${z.pct} %`))))),
@@ -965,7 +980,7 @@ function carteDocumentsAccueil(d) {
   if (!d) return null;
   const pct = d.bonnes ? Math.round(100 * d.prets / d.bonnes) : 0;
   return h("div", { class: "zones documents-accueil" }, h("h2", {}, "CV et lettres"),
-    h("div", { class: "sous", style: "margin-bottom:16px" }, `offres notées 8 et plus · ${nombre(d.a_preparer)} à préparer`),
+    h("div", { class: "sous", style: "margin-bottom:16px" }, `offres notées ${d.seuil || 8} et plus · ${nombre(d.a_preparer)} à préparer`),
     h("div", { class: "zone" },
       h("div", {}, h("div", { class: "lab" }, "Prêtes"), h("div", { class: "val" }, nombre(d.prets))),
       h("div", { class: "tuile" }, h("i", { style: `width:${pct}%` }), h("span", {}, `${pct} %`))),
@@ -1050,8 +1065,8 @@ const COLONNES_OFFRES = [
   ["zone", "Zone", (o) => (o.zone ? h("span", { class: "etiq gris" }, o.zone) : "—")],
   ["date", "Date", (o) => dateFr(o.date) || "—"],
   ["suivi", "Suivi", (o) => (o.suivi ? h("span", { class: `etiq ${o.suivi}` }, o.suivi) : "")],
-  ["domaine", "Domaine", (o) => o.domaine || "—"],
-  ["contrat", "Contrat", (o) => o.contrat || "—"],
+  ["domaine", "Domaine", (o) => (o.domaine ? lisible(o.domaine) : "—")],
+  ["contrat", "Contrat", (o) => (o.contrat ? lisible(o.contrat) : "—")],
   ["pays", "Pays", (o) => o.pays || "—"],
   ["region", "Région", (o) => o.region || "—"],
 ];
@@ -1125,6 +1140,7 @@ ECRANS.offres = {
     const changer = (cle, v) => { f[cle] = v; f.page = 0; relancer(); };
     if (!vuesOffres) vuesOffres = (await appel("vues")) || { vues: {}, colonnes: ["lieu", "zone", "date", "suivi"] };
     const d = await appel("offres", { ...f });
+    if (d && d.noms_domaines) NOMS_DOMAINES = d.noms_domaines;
     if (d.choisis) f.pays = d.choisis.pays;  // a country outside the chosen regions is dropped
     // A column empty on the whole page (no zone set, nothing applied to) is left out.
     const cols = COLONNES_OFFRES.filter(([c]) => vuesOffres.colonnes.includes(c)
@@ -1164,7 +1180,7 @@ ECRANS.offres = {
           segment(d.statuts.map((s) => [s, s[0].toUpperCase() + s.slice(1)]), f.statut, (v) => changer("statut", v)),
           tri, menuVues(), bouton("Colonnes…", "", choisirColonnes)),
         h("div", { class: "grille-filtres" },
-          liste("zone", "Toutes les zones", d.zones, reglerZones), liste("domaine", "Tous les domaines", d.domaines, null, d.noms_domaines || {}), liste("contrat", "Tous les contrats", d.contrats),
+          liste("zone", "Toutes les zones", d.zones, reglerZones), liste("domaine", "Tous les domaines", d.domaines, null, d.noms_domaines || {}), liste("contrat", "Tous les contrats", d.contrats, null, Object.fromEntries((d.contrats || []).map((c) => [c, lisible(c)]))),
           liste("region", "Toutes les régions", d.regions), liste("pays", "Tous les pays", d.pays))),
       barreSel,
       h("div", { class: "verre panneau remplit" },
@@ -1603,7 +1619,7 @@ ONGLETS_SOURCES.recherche = async (vue) => {
           h("colgroup", {}, h("col", { style: "width:20%" }), h("col", { style: "width:14%" }), h("col", { style: "width:14%" }), h("col", { style: "width:30%" }), h("col", {})),
           h("thead", {}, h("tr", {}, ["Source", "Ramenées", "Nouvelles", "", "Dernier passage"].map((t) => h("th", {}, t)))),
           h("tbody", {}, s.rendement.map((r) => h("tr", {},
-            h("td", { style: "text-transform:capitalize" }, h("span", { class: "avec-logo" }, logoSource(r.source), r.source)), h("td", {}, nombre(r.ramenees)), h("td", {}, nombre(r.nouvelles)),
+            h("td", {}, h("span", { class: "avec-logo" }, logoSource(r.source), lisible(r.source))), h("td", {}, nombre(r.ramenees)), h("td", {}, nombre(r.nouvelles)),
             h("td", {}, h("div", { class: "prog" }, h("i", { style: `width:${100 * r.nouvelles / max}%` }))),
             h("td", {}, `${dateFr(r.dernier)} `, r.verdict ? h("span", { class: r.verdict === "ok" ? "etiq gris" : "etiq" }, r.verdict) : null)))))
         : h("div", { class: "vide" }, "Pas encore de journal de rendement.")),
@@ -1614,7 +1630,7 @@ ONGLETS_SOURCES.recherche = async (vue) => {
         carte("Exclusions", sousTitre("Contrats", "0 0 8px"), editeurPuces(excl.contrats_exclus, bE.sale, "type de contrat…"),
           sousTitre("Pays"), editeurPuces(excl.pays_exclus, bE.sale, "pays…"), bE.el),
         carte("Sites carrières (ATS)", h("dl", { class: "paires" }, Object.entries(s.ats).map(([k, v]) =>
-          [h("dt", { style: "text-transform:capitalize" }, k), h("dd", {}, `${v} entreprises`)]))))));
+          [h("dt", {}, lisible(k)), h("dd", {}, `${v} entreprises`)]))))));
   }
 };
 
@@ -1928,7 +1944,7 @@ ECRANS.stats = {
       const max = Math.max(1, ...s.lignes.map((l) => (typeof l.n === "number" ? l.n : 0)));
       return h("div", { class: "verre panneau" }, h("div", { class: "titre-ligne" }, h("h2", {}, s.titre)),
         s.lignes.map((l) => h("div", { class: "ligne-barre" },
-          h("span", { class: "nom", title: l.nom }, l.nom),
+          h("span", { class: "nom", title: lisible(l.nom) }, lisible(l.nom)),
           h("span", { class: "piste" }, h("span", { class: "rempli", style: `width:${100 * l.n / max}%` })),
           h("span", { class: "num" }, `${nombre(l.n)} ${pc(l.part)}`))));
     };
@@ -2273,7 +2289,7 @@ ECRANS.maintenance = {
           h("div", { class: "sous etat-maj", style: "color:#8f8783;margin-top:8px" })),
         carte("Sauvegardes", h("div", { class: "sous", style: "margin:0 0 10px" }, "une par jour, sept jours glissants"), puces(m.sauvegardes))),
       carte("Dernière collecte",
-        h("div", { class: c.etat === "ok" ? "etat ok" : "etat" }, c.etat === "ok" ? "Réussie" : (c.etat || "inconnue")),
+        h("div", { class: c.etat === "ok" ? "etat ok" : "etat" }, c.etat === "ok" ? "Réussie" : (c.etat ? lisible(c.etat) : "inconnue")),
         h("dl", { class: "paires", style: "margin-top:14px" },
           h("dt", {}, "Début"), h("dd", {}, c.debut || "—"), h("dt", {}, "Fin"), h("dd", {}, c.fin || "—"),
           h("dt", {}, "Erreurs"), h("dd", {}, String(c.erreurs)), h("dt", {}, "Dernier succès"), h("dd", {}, c.dernier_succes || "—"))),

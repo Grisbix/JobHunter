@@ -184,7 +184,10 @@ def statistiques(
             return str(o.get("description") or "x" * 200)
         return str(descriptions.get(queue_io.oid(o)) or o.get("description") or "")
 
-    top = [o for o in ok if (o.get("fit") or 0) >= 8]
+    from jobhunter.web.api import seuil_bon
+
+    seuil = seuil_bon()
+    top = [o for o in ok if (o.get("fit") or 0) >= seuil]
     pretes, sans_doc, sans_desc, douteux = [], [], [], []
     for o in top:
         if not (fichier(o.get("cv")) and fichier(o.get("lettre"))):
@@ -198,7 +201,7 @@ def statistiques(
     e = funnel.entonnoir(sv, {queue_io.oid(o): o for o in q})
     cartes = [
         ("Offres en ligne", len(ok)),
-        ("Score ≥ 8", len(top)),
+        (f"Score ≥ {seuil}", len(top)),
         ("Dossiers prêts", len(pretes)),
         ("Candidatures envoyées", e["envoyees"]),
         ("Réponses", e["reponses"]),
@@ -232,7 +235,7 @@ def statistiques(
         return sorted(d.items(), key=lambda x: -x[1])
 
     section(
-        "Sur les offres à score ≥ 8",
+        f"Sur les offres à score ≥ {seuil}",
         [
             ("dossiers prêts (CV, lettre, lien vérifié)", len(pretes)),
             ("sans CV ou lettre", len(sans_doc)),
@@ -259,7 +262,9 @@ def statistiques(
                 for champ in ("contrat", "domaine")
             },
         }
-    fits = [(f"fit {i}", sum(1 for o in ok if (o.get("fit") or 0) == i)) for i in range(10, 0, -1)]
+    fits = [
+        (f"score {i}", sum(1 for o in ok if (o.get("fit") or 0) == i)) for i in range(10, 0, -1)
+    ]
     section("Score des offres en ligne", [p for p in fits if p[1]], base=len(ok))
     libelles = {d["cle"]: str(d.get("libelle") or d["cle"]) for d in profile.domaines()}
     par_domaine: dict[str, int] = {}
