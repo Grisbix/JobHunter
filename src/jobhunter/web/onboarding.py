@@ -16,6 +16,8 @@ Giving up there puts the empty folder in the archives and goes back to the main 
 
 The logic lives in jobhunter.welcome, which has no window; this module only answers the
 page. Before 3.78 the same steps were customtkinter windows (ADR 0017).
+
+Decision: docs/adr/0018-welcome-in-the-web-window.md
 """
 
 from __future__ import annotations
