@@ -544,17 +544,17 @@ def pas_une_offre(o: Offre) -> str | None:
     return None
 
 
-_EXCLUS: set[str] | None = None
+_CONTRATS_EXCLUS: set[str] | None = None
 
 
 def _contrats_exclus() -> set[str]:
     """sources_config's excluded contracts, read once per run (motif sees every offer)."""
-    global _EXCLUS
-    if _EXCLUS is None:
+    global _CONTRATS_EXCLUS
+    if _CONTRATS_EXCLUS is None:
         from jobhunter.sources.common import contrats_exclus
 
-        _EXCLUS = contrats_exclus()
-    return _EXCLUS
+        _CONTRATS_EXCLUS = contrats_exclus()
+    return _CONTRATS_EXCLUS
 
 
 def motif(o: Offre, proteges: set[str]) -> str | None:

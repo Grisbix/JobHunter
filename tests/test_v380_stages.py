@@ -55,19 +55,20 @@ def _offre(**kw):
 
 
 def test_le_tri_retire_un_stage_exclu(monkeypatch):
-    monkeypatch.setattr(sorting, "_EXCLUS", {"Stage", "Alternance"})
+    monkeypatch.setattr(sorting, "_CONTRATS_EXCLUS", {"Stage", "Alternance"})
     assert sorting.motif(_offre(description=CA, contrat="CDD"), set()) == "contrat_exclu"
     assert sorting.motif(_offre(contrat="Stage"), set()) == "contrat_exclu"
 
 
-def test_le_tri_garde_le_stage_si_rien_n_est_exclu():
+def test_le_tri_garde_le_stage_si_rien_n_est_exclu(monkeypatch):
+    monkeypatch.setattr(sorting, "_CONTRATS_EXCLUS", set())
     assert sorting.motif(_offre(description=CA, contrat="CDD"), set()) is None
 
 
 def test_une_candidature_n_est_jamais_retiree(monkeypatch):
     from jobhunter.storage.queue import oid
 
-    monkeypatch.setattr(sorting, "_EXCLUS", {"Stage"})
+    monkeypatch.setattr(sorting, "_CONTRATS_EXCLUS", {"Stage"})
     o = _offre(description=CA)
     assert sorting.motif(o, {oid(o)}) is None
 
