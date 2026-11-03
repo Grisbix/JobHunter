@@ -4,6 +4,20 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.80.0 — 2026-11-03
+
+A daily triage, internships kept out, and a clearer window.
+
+- **Tri du jour.** Offres → « Tri du jour » (also in the home's « À faire »): the good offers you have never opened, one at a time, best first. Enter or → keeps it, X sets it aside, and the CV and letter are one click away.
+- **Internships stay out** when you excluded them (« Stage », « Alternance »): a posting that offers one in its text (« Vous recherchez un stage… ») is now sorted out even when labelled CDD. Four internships stood at 10, first of the list. Your applications are never touched.
+- **Contracts read later**: when the description arrives after the offer (LinkedIn), its CDI, CDD or Stage fills « non précisé ».
+- **One threshold everywhere**: the home, its zones, the documents and the statistics count the offers from the same score (8 by default, `scoring.seuil_bonnes`). They said 9, 7 and 8.
+- **Applications board**: « J+12 » since sent, « Relance due » or « Brouillon prêt » on each card, and more cards visible at once.
+- **Documents**: each CV and letter shows its offer and status (a click opens it), and a filter keeps the applications sent.
+- **Old offers archived on request**: Maintenance → « Archiver N vieilles offres » takes out the offers collected over 60 days ago, under the threshold, never opened and never applied to. They are copied first and do not come back with the collection.
+- Readable names (« Non précisé », « Sites carrières », your domains' names), the statistics' response rates visible again, round ticks on the home chart, a narrow window that no longer overlaps, « Chargement… » when a screen takes time, the rarer actions of an offer under « Plus… », and Maintenance counting the applications followed and sent apart.
+- Windows tasks and shortcuts read in the console's code page: accents no longer garbled in the scheduled tasks' status.
+
 ## 3.79.0 — 2026-11-03
 
 LinkedIn covers all its searches and the morning collection is half an hour shorter.
