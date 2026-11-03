@@ -4,6 +4,15 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.78.0 — 2026-11-03
+
+The first launch now happens in the application's window: one look from the start.
+
+- **The welcome is in the window.** Without a profile, JobHunter opens its usual window on a welcome screen: take back the data of a previous JobHunter folder, or drop your CV on the window (or choose it), then check the form prefilled from it. Once the profile is created, the application opens on it. The separate first-launch windows and their three-step tour are gone; the home screen's « À faire » already shows what to do next.
+- **A new profile from the menu** (Profil → « Nouveau profil… ») goes through the same welcome. « Plus tard » there puts the empty profile in the archives and comes back to yours.
+- **Lighter installation.** customtkinter and tkinterdnd2 are no longer needed.
+- Under the hood: 280 texts only the old desktop window showed are removed from the translations; `DESIGN.md` now describes the web window's style; pyasn1 updated (security alert).
+
 ## 3.77.0 — 2026-11-03
 
 Under the hood: a faster, sturdier queue and one window instead of two.
