@@ -470,13 +470,13 @@ def sonde_site(entree, faire_sitemap=True):
     return res
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--domaines", help="filtre, séparé par des virgules")
     ap.add_argument("--json", help="écrit le résultat complet dans ce fichier")
     ap.add_argument("--sans-sitemap", action="store_true", help="saute la passe 2")
     ap.add_argument("--fils", type=int, default=8, help="requêtes en parallèle")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     from jobhunter.programs.scrape_jobs import load_domains
 

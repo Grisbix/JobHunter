@@ -158,11 +158,11 @@ def rapport(bs, bp, aujourdhui, jours=7):
     return "\n".join(l)
 
 
-def main():
+def main(argv=None):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--jours", type=int, default=7)
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     auj = date.today()
     print(
         rapport(

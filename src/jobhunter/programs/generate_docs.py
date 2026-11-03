@@ -7,7 +7,6 @@ Run: python JobHunter.pyw documents --top 30        # top fit without docs
      python JobHunter.pyw documents --dry"""
 
 import argparse
-import importlib
 import sys
 
 from jobhunter import root as _racine
@@ -18,16 +17,17 @@ HERE = _racine.scripts()
 QUEUE = HERE / "apply_queue.json"
 
 
+from jobhunter.programs import util as jutil
 from jobhunter.programs.util import chemin_de as _p  # helpers partages (voir util.py)
 from jobhunter.programs.util import url_de as _u
 from jobhunter.scoring import ranking as _ranking
 
 
-def main():
+def main(argv=None):
     # Inter-process lock: this program rewrites the ENTIRE queue. If
     # another one does it at the same time (scheduled task vs app), the last one
     # to write erases the other's work.
-    if not importlib.import_module("jobhunter.programs.util").garder(QUEUE):
+    if not jutil.garder(QUEUE):
         return 3
     ap = argparse.ArgumentParser()
     ap.add_argument("--top", type=int, default=30, help="N offres max (tri fit desc)")
@@ -69,7 +69,7 @@ def main():
         help="remplace les CV pointant sur un gabarit partage (CV/Modeles) "
         "par un CV adapte a l'offre",
     )
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     from jobhunter.storage import queue as queue_io
 
@@ -313,8 +313,8 @@ def main():
         except Exception as e:  # noqa: BLE001
             print(f"  ! {x['entreprise'][:28]}: {type(e).__name__}")
         if (i + 1) % 10 == 0:
-            importlib.import_module("jobhunter.programs.util").jwrite(QUEUE, q)  # checkpoint
-    importlib.import_module("jobhunter.programs.util").jwrite(QUEUE, q)
+            jutil.jwrite(QUEUE, q)  # checkpoint
+    jutil.jwrite(QUEUE, q)
     print(f"\n{done}/{len(todo)} offres équipées (CV+lettre générés, liens à jour).")
     if n_en:
         print(f"   dont {n_en} en ANGLAIS (annonce rédigée en anglais).")

@@ -125,12 +125,12 @@ def probe_site(tenant, host, site):
     }
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--tenants", help="liste CSV (sinon liste integree)")
     ap.add_argument("--json", help="ecrit les resultats dans ce fichier")
     ap.add_argument("--workers", type=int, default=24)
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     tenants = [t.strip() for t in a.tenants.split(",")] if a.tenants else TENANTS
     paires = [(t, h) for t in tenants for h in HOSTS]

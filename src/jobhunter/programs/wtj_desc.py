@@ -108,12 +108,12 @@ def _cible(u):
     return links.sur_site(u, "welcometothejungle.com") and "/jobs/" in u and "?query=" not in u
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--workers", type=int, default=2)  # WTJ bride vite
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     from jobhunter.storage import queue as queue_io
 

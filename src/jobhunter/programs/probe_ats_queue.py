@@ -75,7 +75,7 @@ def variantes(nom):
     return [s for s in dict.fromkeys(out) if len(s) >= 3]
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--fit", type=int, default=8)
     ap.add_argument("--workers", type=int, default=16)
@@ -91,7 +91,7 @@ def main():
         action="store_true",
         help="suivre les flux CONFIRMES (sources_config.json) ; les autres restent au rapport",
     )
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     q = queue_io.charger(descriptions=False)
     ents = sorted(

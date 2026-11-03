@@ -14,7 +14,6 @@ Run: python JobHunter.pyw sync_docs            # 1+2+3
      python JobHunter.pyw sync_docs --dry      # shows without touching"""
 
 import argparse
-import importlib
 import subprocess
 import sys
 
@@ -29,6 +28,8 @@ QUEUE = HERE / "apply_queue.json"
 from jobhunter import links as liens
 from jobhunter import paths as chemins
 from jobhunter.documents import rendering as _rendu
+from jobhunter.programs import util as jutil
+from jobhunter.storage import queue as queue_io
 
 DIRS = [chemins.CV_PAR_OFFRE, chemins.LT_PAR_OFFRE]
 LT_DIR = chemins.LT_PAR_OFFRE
@@ -74,7 +75,7 @@ def pass_pairs_freshness(dry=False):
 def pass_links(dry=False):
     """Broken cv/letter links in the queue → re-match by stem in the right folder."""
     try:
-        q = importlib.import_module("jobhunter.storage.queue").charger(QUEUE, descriptions=False)
+        q = queue_io.charger(QUEUE, descriptions=False)
     except Exception:  # noqa: BLE001
         return 0, 0
     fixed = broken = 0
@@ -83,7 +84,7 @@ def pass_links(dry=False):
             u = x.get(key)
             if not u:
                 continue
-            p = importlib.import_module("jobhunter.programs.util").chemin_de(u)
+            p = jutil.chemin_de(u)
             if p.exists():
                 continue
             # re-match: same stem, other extension or expected folder
@@ -100,7 +101,7 @@ def pass_links(dry=False):
             else:
                 broken += 1
     if fixed and not dry:
-        importlib.import_module("jobhunter.programs.util").jwrite(QUEUE, q)
+        jutil.jwrite(QUEUE, q)
     return fixed, broken
 
 
@@ -149,16 +150,16 @@ def pass_format(dry=False):
     return n
 
 
-def main():
+def main(argv=None):
     # Inter-process lock: this program rewrites the ENTIRE queue. If
     # another one does it at the same time (scheduled task vs app), the last one
     # to write erases the other's work.
-    if not importlib.import_module("jobhunter.programs.util").garder(QUEUE):
+    if not jutil.garder(QUEUE):
         return 3
     ap = argparse.ArgumentParser()
     ap.add_argument("--format", action="store_true", help="homogénéise aussi le format des lettres")
     ap.add_argument("--dry", action="store_true")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     tag = "[DRY] " if a.dry else ""
     if a.format:
         n = pass_format(dry=a.dry)

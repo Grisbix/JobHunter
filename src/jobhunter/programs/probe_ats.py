@@ -281,12 +281,12 @@ def probe(kind, slug):
     return {"ats": kind, "slug": slug, "n": n, "titres": titles(kind, data)}
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--slugs", help="liste CSV de slugs à tester (sinon liste intégrée)")
     ap.add_argument("--json", help="écrit les résultats dans ce fichier")
     ap.add_argument("--workers", type=int, default=16)
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     slugs = [s.strip() for s in a.slugs.split(",")] if a.slugs else CANDIDATS
     jobs = [(k, s) for s in slugs for k in APIS]

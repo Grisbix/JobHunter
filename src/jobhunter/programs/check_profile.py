@@ -34,8 +34,8 @@ def intitules_du_profil():
     return titres or ["Assistant administratif"]
 
 
-def main():
-    titres = sys.argv[1:] or intitules_du_profil()
+def main(argv=None):
+    titres = list(sys.argv[1:] if argv is None else argv) or intitules_du_profil()
     print(f"Profil : {profil.FICHIER}\n")
     print(f"{'intitule':<48} {'collecte':<9} {'note':>4}  domaine")
     for t in titres:

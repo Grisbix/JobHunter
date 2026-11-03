@@ -1355,7 +1355,7 @@ def propositions(txt):
     }
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser(description="Creates the profile (profile.json) from your CV.")
     ap.add_argument("cv", help="your CV, .pdf or .docx")
     ap.add_argument("--auto", action="store_true", help="accept every proposed answer")
@@ -1383,7 +1383,7 @@ def main():
         help="CV as PDF: rebuild a .docx adapted to each offer (o), or send it as is (n)",
     )
     ap.add_argument("--parcours", help="the letters' background paragraph (else read in the CV)")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     sortie = Path(a.profil)
     if sortie.exists() and not a.force:

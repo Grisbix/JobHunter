@@ -26,6 +26,7 @@ Run:
 import argparse
 import re
 import sys
+from collections.abc import Sequence
 from typing import Any, cast
 
 from jobhunter import root as _racine
@@ -506,7 +507,7 @@ def _de_titre(t: str) -> str:
     return _de(t) if t else "proposé"
 
 
-def main() -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """Command line: writes an offer's short message into Lettres/Messages."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--url", default="", help="fragment de l'URL de l'offre")
@@ -527,7 +528,7 @@ def main() -> int:
         default="sobre",
         help="registre : detente = moins raide, memes faits",
     )
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     if not (a.url or a.contient):
         ap.error("donner --url ou --contient")
 

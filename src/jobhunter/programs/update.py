@@ -1197,7 +1197,7 @@ def annuler_git():
     return 0
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser(description="Met JobHunter à jour depuis GitHub.")
     ap.add_argument(
         "--verifier",
@@ -1220,7 +1220,7 @@ def main():
         action="store_true",
         help="(installeur) noter l'empreinte des fichiers tels qu'installés",
     )
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     if _gele.est_gele():
         # Installed application: no files to replace one by one, the new
         # version is a new installer, which keeps the data (Documents/JobHunter).

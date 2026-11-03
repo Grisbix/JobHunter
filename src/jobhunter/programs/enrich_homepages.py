@@ -9,7 +9,6 @@ Run: python JobHunter.pyw enrich_homepages        (all the companies without a U
 """
 
 import concurrent.futures as cf
-import importlib
 import json
 import re
 import sys
@@ -18,6 +17,8 @@ import unicodedata
 import httpx
 
 from jobhunter import root as _racine
+from jobhunter.programs import util as _jutil_m
+from jobhunter.storage import queue as queue_io
 
 sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -208,15 +209,15 @@ def resolve(name):
     return name, got
 
 
-def main():
+def main(argv=None):
     # Inter-process lock: this program rewrites the ENTIRE queue. If
     # another one does it at the same time (scheduled task vs app), the last one
     # to write erases the other's work.
-    if not importlib.import_module("jobhunter.programs.util").garder(QUEUE):
+    if not _jutil_m.garder(QUEUE):
         return 3
-    force = "--force" in sys.argv
+    force = "--force" in (sys.argv[1:] if argv is None else argv)
     cache = json.loads(CACHE.read_text(encoding="utf-8")) if CACHE.exists() else {}
-    Q = importlib.import_module("jobhunter.storage.queue").charger(QUEUE, descriptions=False)
+    Q = queue_io.charger(QUEUE, descriptions=False)
     need = []
     for o in Q:
         if (o.get("url") or "").startswith("http"):

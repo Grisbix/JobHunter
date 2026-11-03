@@ -18,7 +18,10 @@ No command sends an application: the final click stays the user's.
 Decision: docs/adr/0008-programs-in-the-package.md
 """
 
+import importlib
 import importlib.util
+import inspect
+import re
 import runpy
 import sys
 from collections.abc import Sequence
@@ -188,15 +191,48 @@ def main(argv: Sequence[str] | None = None) -> int:
         assurer_profil()
     # The steps launched as subprocesses (pipeline, application) do `python -m ...`.
     racine.exporter_paquet()
-    sys.argv = [f"jobhunter {cmd}", *reste]
+    sys.argv = [f"jobhunter {cmd}", *reste]  # argparse's prog, and the few that read it
     try:
-        runpy.run_module(module, run_name="__main__", alter_sys=True)
+        return executer(module, reste)
     except SystemExit as e:
         if e.code is None or isinstance(e.code, int):
             return e.code or 0
         print(e.code, file=sys.stderr)  # sys.exit("message"): display it, like Python
         return 1
-    return 0
+
+
+# The `__main__` block a program must end with to be called as a function: `main()` or
+# `sys.exit(main())`, nothing else. Anything more (a self-test, a console set up) runs
+# as a script, as before.
+_BLOC_MAIN = re.compile(r'\nif __name__ == "__main__":\n\s+(sys\.exit\()?main\(\)\)?\s*$')
+
+
+def executer(module: str, argv: Sequence[str]) -> int:
+    """Runs the program `module` with `argv`, in this process.
+
+    A program whose `__main__` block only calls `main` is imported and its
+    `main(argv)` called: a function with arguments and an exit code, which a test or
+    another program calls the same way. The others (a package, a self-test in the
+    block) run as `python -m` would.
+
+    Returns:
+        The exit code: what `sys.exit(main())` would give.
+    """
+    spec = importlib.util.find_spec(module)
+    source = spec.loader.get_source(module) if spec and spec.loader else None  # type: ignore[attr-defined]
+    canon = (
+        _BLOC_MAIN.search(source or "") if spec and not spec.submodule_search_locations else None
+    )
+    if canon is None:
+        runpy.run_module(module, run_name="__main__", alter_sys=True)
+        return 0
+    principal = importlib.import_module(module).main
+    code = principal(argv) if inspect.signature(principal).parameters else principal()
+    if not canon.group(1):  # a bare `main()`: its return value was never the exit code
+        return 0
+    if code is None or isinstance(code, int):
+        return int(code or 0)
+    raise SystemExit(code)
 
 
 if __name__ == "__main__":

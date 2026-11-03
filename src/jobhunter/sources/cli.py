@@ -7,6 +7,7 @@ import argparse
 import importlib
 import json
 import sys
+from collections.abc import Sequence
 from typing import Any
 
 from jobhunter import lazy as _paresseux
@@ -77,7 +78,7 @@ _PARESSEUX["INDEED_LIEUX"] = lambda: (
 )
 
 
-def main() -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """The collection's command line: chosen sources, deduplication, merge.
 
     Returns:
@@ -209,7 +210,7 @@ def main() -> int:
         action="store_true",
         help="refusionne le dernier scan (offres_scan.json) sans rien collecter",
     )
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     _rendement.MESURES.clear()  # one measurement per collection, even if called several times
 
     # TWO LOCKS, TWO ROLES. There used to be only one, on the QUEUE, taken at

@@ -106,7 +106,7 @@ def description(jid, client, essais=4):
     return ""
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--limit", type=int, default=0)
@@ -121,7 +121,7 @@ def main():
     # we collect outside the lock, and each batch is written in a few seconds on a
     # queue RE-READ inside the lock. A stop only costs the batch in progress.
     ap.add_argument("--lot", type=int, default=500)
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     from jobhunter.storage import queue as queue_io
 

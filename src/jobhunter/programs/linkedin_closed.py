@@ -33,13 +33,15 @@ Run:
 import argparse
 import concurrent.futures as cf
 import datetime as _dt
-import importlib
 import json
 import re
 import sys
 import time
 
 from jobhunter import root as _racine
+from jobhunter.programs import util as jutil
+from jobhunter.storage import applications as _suivi_io_m
+from jobhunter.storage import queue as queue_io
 from jobhunter.storage.queue import oid as _oid_offre
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
@@ -128,7 +130,7 @@ def _oids_suivis():
     read as « no application » protected nothing, and the purge removed the closed
     offers applied to (audit 2026-11-03). The caller then deletes nothing.
     """
-    suivi_io = importlib.import_module("jobhunter.storage.applications")
+    suivi_io = _suivi_io_m
     try:
         return set(suivi_io.charger(SUIVI, strict=True))
     except suivi_io.SuiviIllisible as e:
@@ -154,7 +156,7 @@ def _frais(entree, jours):
     return (_dt.date.today() - vu).days < jours
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true", help="compte sans rien supprimer")
     ap.add_argument("--workers", type=int, default=6)
@@ -177,17 +179,17 @@ def main():
         default=40,
         help="arrete apres N indeterminees d'affilee : LinkedIn nous a coupes",
     )
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     import httpx
 
     # With --dry we do not write the queue: taking the write lock would make
     # us wait 3 min behind a document generation, for nothing. The
     # writes being atomic (tmp + replace), the read stays consistent.
-    if not a.dry and not importlib.import_module("jobhunter.programs.util").garder(QUEUE):
+    if not a.dry and not jutil.garder(QUEUE):
         return 3
 
-    q = importlib.import_module("jobhunter.storage.queue").charger(QUEUE, descriptions=False)
+    q = queue_io.charger(QUEUE, descriptions=False)
     cibles = []
     for i, o in enumerate(q):
         if "linkedin.com" not in (o.get("url") or ""):
@@ -285,9 +287,7 @@ def main():
         json.dumps([q[i] for i in sorted(perdus)], ensure_ascii=False, indent=1), encoding="utf-8"
     )
     neuf = [o for i, o in enumerate(q) if i not in perdus]
-    importlib.import_module("jobhunter.programs.util").jwrite(
-        QUEUE, neuf
-    )  # ecriture atomique (tmp + replace)
+    jutil.jwrite(QUEUE, neuf)  # ecriture atomique (tmp + replace)
     print(f"\n{len(perdus)} offre(s) retiree(s). Sauvegarde : {sauv.name}")
     print(f"Queue : {len(q)} -> {len(neuf)}")
     return 0

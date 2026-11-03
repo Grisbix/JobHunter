@@ -249,7 +249,7 @@ def _recent(x, jour):
     return (jour - d).days < REPOS_ECHEC_J
 
 
-def main():
+def main(argv=None):
     # Inter-process lock: this program rewrites the ENTIRE queue. If
     # another one does it at the same time (scheduled task vs app), the last one
     # to write erases the other's work.
@@ -270,7 +270,7 @@ def main():
         "seulement ces offres — pour ne viser que des pages publiques, "
         "jamais Glassdoor/Indeed qui refusent les robots",
     )
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     sources = tuple(s.strip() for s in (args.source or "").split(",") if s.strip())
 
     from jobhunter.storage import queue as queue_io

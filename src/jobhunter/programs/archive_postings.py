@@ -20,6 +20,8 @@ from jobhunter.storage import queue as queue_io
 
 
 def main(argv: list[str] | None = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):  # redirected output: never cp1252
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[1])
     ap.add_argument("--dry", action="store_true", help="lister sans rien écrire")
     a = ap.parse_args(argv)
@@ -45,5 +47,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
     sys.exit(main())

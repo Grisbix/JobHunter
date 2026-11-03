@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import sys
 import time
+from collections.abc import Sequence
 from typing import Any
 
 from jobhunter import network as _reseau
@@ -277,7 +278,7 @@ def importer(n: int = 300, tous_secteurs: bool = False, dry: bool = False) -> di
     return {"lus": len(lus), "gardes": len(gardes), "ajoutes": ajoutes}
 
 
-def main() -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """The command line: `python -m jobhunter companies-import`."""
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
     ap = argparse.ArgumentParser(
@@ -289,7 +290,7 @@ def main() -> int:
         "--tous-secteurs", action="store_true", help="every industry, not only the profile's"
     )
     ap.add_argument("--dry", action="store_true", help="count only, write nothing")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     from jobhunter.sources import countries
 
     print(f"Annuaires — {countries.nom()} · familles : {', '.join(familles_du_profil()) or '—'}")  # noqa: T201

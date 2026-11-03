@@ -35,14 +35,15 @@ Decision: docs/adr/0005-no-automatic-submission.md
 """
 
 import argparse
-import importlib
 import os
 import sys
 import time
 from pathlib import Path
 
 from jobhunter import links as _liens
+from jobhunter import profile as _profil
 from jobhunter import root as _racine
+from jobhunter.programs import util as _jutil_m
 
 # Windows console = cp1252 → the emoji/accent prints (describe_page, fill…) raised
 # UnicodeEncodeError and broke the filling. Forces UTF-8 (replaces if impossible).
@@ -64,7 +65,7 @@ def _unquote_path(u):
 ROOT = _racine.racine()
 # Profil de formulaire : profil/profil.json (identite + section « formulaire »),
 # without any password. See profil.formulaire().
-PROFILE = importlib.import_module("jobhunter.profile").formulaire()
+PROFILE = _profil.formulaire()
 # persistent login store — MUST be off OneDrive (sync breaks Chrome's profile lock -> exit 21)
 PW_USER_DIR = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "apply_runner_chrome"
 
@@ -437,7 +438,7 @@ def _decision_pilote(ui, page, d, marquer):
                 pass
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "--canal",
@@ -500,7 +501,7 @@ def main():
         action="store_true",
         help="piloté par l'application (événements sur stdout, commandes sur stdin) — aucun clic d'envoi",
     )
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     ui = _Pilote() if args.pilote else _Terminal()
     if args.pilote:
         args.auto = True  # surligne Envoyer ; « envoye » vient de l'application
@@ -586,7 +587,7 @@ def main():
         them apply again. jutil writes next to it then switches in one go.
         """
         queue_done[f"{d['comp']}|{d['role']}"] = val
-        importlib.import_module("jobhunter.programs.util").jwrite(QUEUE_DONE, queue_done)
+        _jutil_m.jwrite(QUEUE_DONE, queue_done)
 
     total = sum(len(r) for _, _, r, _ in queues)
     print(f"Offres chargées: {total}  (feuilles: {', '.join(s for s, _, _, _ in queues)})")

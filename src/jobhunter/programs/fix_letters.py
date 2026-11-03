@@ -98,11 +98,11 @@ def fix_doc(path, dry=False):
     return changed
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--no-pdf", action="store_true")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     docs = sorted(LT_DIR.glob("*.docx"))
     print(f"{len(docs)} lettres docx à traiter…")
     touched = []

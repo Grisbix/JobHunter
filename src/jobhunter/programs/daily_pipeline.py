@@ -264,7 +264,7 @@ def dispo_aujourd_hui(a, jour):
     return a.dispo or a.rapide or jour == a.dispo_jour
 
 
-def tous_les_profils(profils):
+def tous_les_profils(profils, argv=None):
     """The pipeline of each profile, one after the other, each in its own process.
 
     Each profile has its own root (queue, lock, logs): the process of a profile runs
@@ -285,7 +285,7 @@ def tous_les_profils(profils):
                 _gele.interpreteur(),
                 "-m",
                 "jobhunter.programs.daily_pipeline",
-                *sys.argv[1:],
+                *(sys.argv[1:] if argv is None else argv),
                 "--un-profil",
             ],
             env=env,
@@ -296,7 +296,7 @@ def tous_les_profils(profils):
     return max(codes, default=0)
 
 
-def main():
+def main(argv=None):
     _racine.exporter_paquet()  # the steps run `python -m jobhunter...`
     # One run identifier for every step: the offers, scores and yield lines of this
     # morning say they come from it (run_id).
@@ -331,10 +331,10 @@ def main():
         action="store_true",
         help="seulement le profil actif (par defaut : chaque profil, l'un apres l'autre)",
     )
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     if not a.un_profil and len(profils := _profils.liste()) > 1:
-        return tous_les_profils(profils)
+        return tous_les_profils(profils, argv)
 
     journaux = SCRIPTS / "_logs"
     journaux.mkdir(exist_ok=True)

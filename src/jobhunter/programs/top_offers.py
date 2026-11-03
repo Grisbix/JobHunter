@@ -23,7 +23,6 @@ Run:
 """
 
 import argparse
-import importlib
 import re
 import sys
 from urllib.parse import urlparse
@@ -34,9 +33,11 @@ HERE = _racine.scripts()
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
+from jobhunter.scoring import zones as _zones
 from jobhunter.scoring.ranking import rang
 from jobhunter.sources.common import contrat_du_titre, contrats_exclus
 from jobhunter.sources.merge import rang_source
+from jobhunter.storage import applications as suivi_io
 
 # Title that really talks about the target profession, and entry level.
 RX_ESG = re.compile(
@@ -108,20 +109,18 @@ def lien_direct(url):
     return len(seg) >= 2 or any(c.isdigit() for c in "".join(seg))
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=10)
     ap.add_argument("--zone", default="", help="prioritaire | secondaire")
     ap.add_argument("--fit-min", type=int, default=9)
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     from jobhunter.storage import queue as queue_io
 
     q = queue_io.charger()
     try:
-        suivi = importlib.import_module("jobhunter.storage.applications").charger(
-            _racine.dans(HERE, "suivi.json")
-        )
+        suivi = suivi_io.charger(_racine.dans(HERE, "suivi.json"))
     except Exception:  # noqa: BLE001
         suivi = {}
     try:
@@ -212,12 +211,8 @@ def main():
             s += 8
         s += rang_source(o.get("url")) * 2  # lien employeur > agregateur
         # The FIRST priority sector of the profile goes before the others.
-        _sz = importlib.import_module("jobhunter.scoring.zones").sous_zone(
-            o.get("localisation") or ""
-        )
-        if _sz and _sz == (
-            importlib.import_module("jobhunter.scoring.zones").SECTEURS_PRIORITAIRES or [{}]
-        )[0].get("cle"):
+        _sz = _zones.sous_zone(o.get("localisation") or "")
+        if _sz and _sz == (_zones.SECTEURS_PRIORITAIRES or [{}])[0].get("cle"):
             s += 15
         return s
 

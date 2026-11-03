@@ -56,3 +56,54 @@ def test_app_help_n_ouvre_pas_la_fenetre(monkeypatch, capsys):
     monkeypatch.setattr(runpy, "run_module", lambda *a, **k: pytest.fail("fenêtre ouverte"))
     assert cli.main(["app", "--help"]) == 0
     assert "Aucune option" in capsys.readouterr().out
+
+
+# ── a program is a function: main(argv) called in this process ──────────────────────
+@pytest.fixture
+def programme(tmp_path, monkeypatch):
+    """Writes a throwaway module `jh_essai_<n>` and returns its name."""
+    monkeypatch.syspath_prepend(str(tmp_path))
+    import uuid
+
+    def ecrire(source):
+        nom = f"jh_essai_{uuid.uuid4().hex[:12]}"  # a name never imported before
+        (tmp_path / f"{nom}.py").write_text(source, encoding="utf-8")
+        return nom
+
+    return ecrire
+
+
+def test_main_appele_avec_argv_et_son_code(programme):
+    nom = programme(
+        "import sys\nVU = []\ndef main(argv=None):\n    VU.append(list(argv))\n    return 7\n"
+        'if __name__ == "__main__":\n    sys.exit(main())\n'
+    )
+    assert cli.executer(nom, ["--x", "1"]) == 7
+    import importlib
+
+    assert importlib.import_module(nom).VU == [["--x", "1"]]  # imported, not re-run
+
+
+def test_main_nu_son_retour_n_est_pas_un_code(programme):
+    nom = programme('def main():\n    return 5\nif __name__ == "__main__":\n    main()\n')
+    assert cli.executer(nom, []) == 0
+
+
+def test_bloc_main_avec_plus_tourne_en_script(programme, capsys):
+    nom = programme(
+        'import sys\ndef main(argv=None):\n    return 1\nif __name__ == "__main__":\n'
+        '    print("script", sys.argv[1:])\n'
+    )
+    import sys
+
+    sys.argv = ["jobhunter essai", "a"]
+    assert cli.executer(nom, ["a"]) == 0
+    assert "script ['a']" in capsys.readouterr().out
+
+
+def test_message_de_sortie_affiche(programme):
+    nom = programme(
+        'def main(argv=None):\n    return "refus"\nif __name__ == "__main__":\n    sys.exit(main())\n'
+    )
+    with pytest.raises(SystemExit, match="refus"):
+        cli.executer(nom, [])

@@ -166,11 +166,11 @@ def verdict(attendu, trouve):
     return "HOMONYME", ratio
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", default=str(HERE / "_ats_candidats.json"))
     ap.add_argument("--workers", type=int, default=10)
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     d = json.loads(Path(a.json).read_text(encoding="utf-8"))
     utiles = [r for r in d if r.get("pertinents")]

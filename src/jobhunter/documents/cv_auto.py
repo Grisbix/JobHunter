@@ -26,6 +26,7 @@ Run:
 import json
 import re
 import sys
+from collections.abc import Sequence
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -116,7 +117,7 @@ def nb_allegements(langue: str = "fr", b: dict[str, Any] | None = None) -> int:
     return len((b.get("allegements") or {}).get(langue, []))
 
 
-def main() -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """Command line: lists the fact bank or tries a posting."""
     import argparse
 
@@ -125,7 +126,7 @@ def main() -> int:
     ap.add_argument("--essai", default="", help="texte d'annonce a tester")
     ap.add_argument("--langue", default="fr")
     ap.add_argument("--liste", action="store_true")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     b = banque()
     if a.liste or not a.essai:
         if not b.get("faits"):

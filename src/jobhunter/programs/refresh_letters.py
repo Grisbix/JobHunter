@@ -9,7 +9,6 @@
 Idempotent. Run: python JobHunter.pyw refresh_letters [--dry] [--no-pdf]"""
 
 import argparse
-import importlib
 import re
 import sys
 from datetime import date
@@ -26,6 +25,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union
 ROOT = _racine.racine()
 
 from jobhunter import paths as chemins
+from jobhunter.programs import util as jutil
+from jobhunter.storage import queue as queue_io
 
 LT_DIR = chemins.LT_PAR_OFFRE
 QUEUE = _racine.scripts() / "apply_queue.json"
@@ -57,11 +58,11 @@ def _entreprises_by_letter():
     """letter stem -> company (from the queue) to remove the recipient line."""
     out = {}
     try:
-        q = importlib.import_module("jobhunter.storage.queue").charger(QUEUE, descriptions=False)
+        q = queue_io.charger(QUEUE, descriptions=False)
         for x in q:
             u = x.get("lettre") or ""
             if u:
-                p = importlib.import_module("jobhunter.programs.util").chemin_de(u)
+                p = jutil.chemin_de(u)
                 out[p.stem] = (x.get("entreprise") or "").strip()
     except Exception:  # noqa: BLE001
         pass
@@ -200,16 +201,16 @@ def fix_doc(path, ent="", dry=False):
     return changed
 
 
-def main():
+def main(argv=None):
     # Inter-process lock: this program rewrites the ENTIRE queue. If
     # another one does it at the same time (scheduled task vs app), the last one
     # to write erases the other's work.
-    if not importlib.import_module("jobhunter.programs.util").garder(QUEUE):
+    if not jutil.garder(QUEUE):
         return 3
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--no-pdf", action="store_true")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     ents = _entreprises_by_letter()
     docs = sorted(LT_DIR.glob("*.docx"))
     print(f"{len(docs)} lettres — date du jour : {TODAY}")

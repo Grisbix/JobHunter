@@ -83,13 +83,13 @@ def cibles(mode, limit):
     return items[:limit] if limit else items
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--boards", action="store_true", help="job boards au lieu des sites carriere")
     ap.add_argument("--all", action="store_true", help="les deux")
     ap.add_argument("--limit", type=int, default=25, help="0 = sans plafond")
     ap.add_argument("--json", help="ecrit le detail dans ce fichier")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     mode = "tous" if a.all else ("boards" if a.boards else "carrieres")
 
     lots = cibles(mode, a.limit)

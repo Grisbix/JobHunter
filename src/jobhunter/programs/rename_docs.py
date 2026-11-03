@@ -9,7 +9,6 @@ Source of truth = apply_queue.json (cv/lettre fields) → renames docx + twin PD
 Run: python JobHunter.pyw rename_docs [--dry]"""
 
 import argparse
-import importlib
 import re
 import sys
 
@@ -20,6 +19,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union
 HERE = _racine.scripts()
 
 from jobhunter import paths as chemins
+from jobhunter.programs import util as jutil
+from jobhunter.storage import queue as queue_io
 
 QUEUE = HERE / "apply_queue.json"
 
@@ -127,16 +128,16 @@ def rename_orphans(dry=False):
     print(f"{'[DRY] ' if dry else ''}orphelins renommés (même format) : {n}")
 
 
-def main():
+def main(argv=None):
     # Inter-process lock: this program rewrites the ENTIRE queue. If
     # another one does it at the same time (scheduled task vs app), the last one
     # to write erases the other's work.
-    if not importlib.import_module("jobhunter.programs.util").garder(QUEUE):
+    if not jutil.garder(QUEUE):
         return 3
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true")
-    a = ap.parse_args()
-    q = importlib.import_module("jobhunter.storage.queue").charger(QUEUE, descriptions=False)
+    a = ap.parse_args(argv)
+    q = queue_io.charger(QUEUE, descriptions=False)
     ren = upd = miss = 0
 
     def free(parent, base, suffix, old):
@@ -194,9 +195,9 @@ def main():
                 x[key] = _url_of(newp)
             ren += 1
         if not a.dry and (ren + upd) % 200 == 0 and (ren + upd):
-            importlib.import_module("jobhunter.programs.util").jwrite(QUEUE, q)  # checkpoint
+            jutil.jwrite(QUEUE, q)  # checkpoint
     if not a.dry:
-        importlib.import_module("jobhunter.programs.util").jwrite(QUEUE, q)
+        jutil.jwrite(QUEUE, q)
     print(
         f"{'[DRY] ' if a.dry else ''}{ren} fichiers renommés · {upd} liens réalignés · {miss} introuvables"
     )

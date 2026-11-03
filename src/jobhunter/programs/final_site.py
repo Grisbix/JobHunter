@@ -432,13 +432,13 @@ def sonder(e, x, connus, jour):
     return x
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--fit", type=int, default=9)
     ap.add_argument("--limite", type=int, default=0, help="nombre max d'entreprises")
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--dry", action="store_true", help="n'ecrit rien dans la file")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     q = queue_io.charger(descriptions=False)
     cibles = [

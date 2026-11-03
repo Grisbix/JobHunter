@@ -15,7 +15,6 @@ Usage:
 """
 
 import argparse
-import importlib
 import json
 import random
 import sys
@@ -38,6 +37,7 @@ except Exception:  # noqa: BLE001
 
 # An offer's domain and wide lexicon: jobhunter.scoring.domains (phase 3.4).
 from jobhunter.navigation.browser import lancer as _lancer  # noqa: E402
+from jobhunter.programs import util as jutil
 from jobhunter.scoring.domains import (  # noqa: E402, F401
     DOMAINE_MAP,
     ESG_FINANCE_KEYWORDS,
@@ -905,9 +905,7 @@ def scrape_all_sites(
                         # switch: a direct write_text left a file
                         # truncated if the scan died during the write, and
                         # it is the RESUME file (--skip) that was lost.
-                        importlib.import_module("jobhunter.programs.util").jwrite(
-                            output_path, all_offers
-                        )
+                        jutil.jwrite(output_path, all_offers)
                         print(f"  ✅ {len(offers)} offres retenues — total: {total_offers}")
                     else:
                         print("  ⚠️ Aucune offre retenue")
@@ -933,7 +931,7 @@ def scrape_all_sites(
             seen_urls.add(u)
             unique_offers.append(o)
 
-    importlib.import_module("jobhunter.programs.util").jwrite(output_path, unique_offers)
+    jutil.jwrite(output_path, unique_offers)
 
     # Stats
     domaines: dict[str, int] = {}
@@ -984,7 +982,7 @@ def merger(offres, dry=False):
     return r
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Scrapes the fresh offers of the followed companies' career sites"
     )
@@ -1027,7 +1025,7 @@ def main():
     parser.add_argument(
         "--dry", action="store_true", help="Montre ce que le merge ferait, sans écrire la file"
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     # Determine the path of the domains file
     scripts_dir = _racine.scripts()

@@ -586,7 +586,7 @@ def rapport(etat):
     print(f"{len(etat)} offres controlees : {dict(c)}")
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--supprime", action="store_true", help="retire les offres fermees")
     ap.add_argument(
@@ -631,7 +631,7 @@ def main():
         action="store_true",
         help="ne pas retrouver les invérifiables par leur canal (APEC, WTJ)",
     )
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     etat = charger_etat()
     if a.rapport:

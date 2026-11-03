@@ -140,10 +140,10 @@ def _rapport():
     return 0
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--liste", action="store_true", help="tout afficher, ligne par ligne")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     if a.liste:
         t = charger()

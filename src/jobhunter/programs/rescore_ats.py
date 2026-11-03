@@ -18,10 +18,10 @@ HERE = _racine.scripts()
 QUEUE = HERE / "apply_queue.json"
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     from jobhunter.storage import queue as queue_io
 

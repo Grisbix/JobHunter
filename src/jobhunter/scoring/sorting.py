@@ -51,14 +51,17 @@ Run:
 
 import argparse
 import hashlib
-import importlib
 import re
 import sys
 import time
+from collections.abc import Sequence
 from pathlib import Path  # noqa: F401  (annotations and callers)
 
 from jobhunter import links as _liens
 from jobhunter import root as _racine
+from jobhunter.storage import applications as suivi_io
+from jobhunter.storage import atomic as atomique
+from jobhunter.storage import queue as queue_io
 from jobhunter.storage.queue import oid as _oid  # one key definition (audit 2026-11-03)
 from jobhunter.types import Offre
 
@@ -593,23 +596,17 @@ def motif(o: Offre, proteges: set[str]) -> str | None:
     return None
 
 
-def main() -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """Command line: sorting of the queue (inspection, or purge with --supprime)."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--supprime", action="store_true", help="ecrit la file purgee")
     ap.add_argument("--motifs", action="store_true", help="echantillon par motif")
     ap.add_argument("--garde", action="store_true", help="echantillon de ce qui reste")
     ap.add_argument("--echantillon", type=int, default=20)
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
-    q = importlib.import_module("jobhunter.storage.queue").charger(
-        QUEUE
-    )  # descriptions: outils_techniques reads them
-    proteges = (
-        set(importlib.import_module("jobhunter.storage.applications").charger(SUIVI, strict=True))
-        if SUIVI.exists()
-        else set()
-    )
+    q = queue_io.charger(QUEUE)  # descriptions: outils_techniques reads them
+    proteges = set(suivi_io.charger(SUIVI, strict=True)) if SUIVI.exists() else set()
 
     garde: list[tuple[str | None, Offre]] = []
     jette: list[tuple[str | None, Offre]] = []
@@ -666,9 +663,7 @@ def main() -> int:
 
     sauv = QUEUE.with_suffix(f".json.avant_tri_{time.strftime('%Y%m%d_%H%M%S')}")
     # The queue as JSON (it lives in a database since 3.77): restore reads it as is.
-    importlib.import_module("jobhunter.storage.atomic").ecrire_json(
-        sauv, importlib.import_module("jobhunter.storage.queue").charger(QUEUE, descriptions=False)
-    )
+    atomique.ecrire_json(sauv, queue_io.charger(QUEUE, descriptions=False))
     print(f"\nsauvegarde : {sauv.name}")  # noqa: T201
     # ONE PER DAY SINCE THE PIPELINE SORTS. 9 MB each, endlessly: we keep
     # the last five. The name carries the timestamp, so alphabetical order
@@ -681,7 +676,6 @@ def main() -> int:
 
     from jobhunter.scoring import fit as _fit
     from jobhunter.scoring import zones as _zones
-    from jobhunter.storage import queue as queue_io
 
     # THE REASON IS RECOMPUTED HERE, inside the lock, on the RE-READ queue. The objects
     # of the inspection come from another read: their Python identity says

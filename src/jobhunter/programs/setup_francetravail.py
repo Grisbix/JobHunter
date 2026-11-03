@@ -50,10 +50,10 @@ def test():
     return 0
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--test", action="store_true", help="teste les identifiants deja installes")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     if a.test:
         if not CFG.exists():

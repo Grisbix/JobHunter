@@ -32,7 +32,6 @@ Run:
 import argparse
 import datetime
 import getpass
-import importlib
 import json
 import sys
 import time
@@ -52,6 +51,8 @@ KEYS = HERE / "api_keys.json"  # gitignore: contains secrets
 # work — Chrome starts another instance and drops Playwright (TargetClosedError).
 # A dedicated profile also avoids having to close the everyday Chrome.
 import os as _os
+
+from jobhunter.programs import util as jutil
 
 PROFIL = Path(_os.environ.get("LOCALAPPDATA", str(Path.home()))) / "apply_runner_chrome"
 
@@ -74,7 +75,7 @@ def _load(p, default):
 
 
 def _save(p, obj):
-    importlib.import_module("jobhunter.programs.util").jwrite(p, obj)
+    jutil.jwrite(p, obj)
 
 
 def cmd_list():
@@ -478,7 +479,7 @@ def cmd_set_key(nom):
     return 0
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--open", metavar="HOST")
@@ -497,7 +498,7 @@ def main():
     ap.add_argument("--set-id", metavar="HOST")
     ap.add_argument("--email")
     ap.add_argument("--set-key", metavar="SOURCE", help="francetravail, adzuna ou jooble")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     if a.close:
         return cmd_close(a.force)
     if a.open:

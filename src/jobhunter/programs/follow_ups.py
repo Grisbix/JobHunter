@@ -12,12 +12,12 @@ Run: python JobHunter.pyw relances            # all the 'prio' offers
 """
 
 import argparse
-import importlib
 import re
 import sys
 from pathlib import Path
 
 from jobhunter import root as _racine
+from jobhunter.storage import applications as suivi_io
 from jobhunter.storage import queue as queue_io
 from jobhunter.storage.queue import oid as _oid
 
@@ -90,7 +90,7 @@ def a_relancer(days=10):
 
     q = queue_io.charger(Q, descriptions=False)
     try:
-        s = importlib.import_module("jobhunter.storage.applications").charger(SUIVI)
+        s = suivi_io.charger(SUIVI)
     except Exception:  # noqa: BLE001
         s = {}
     today = date.today()
@@ -192,8 +192,6 @@ def mark(key):
     """
     from datetime import date
 
-    from jobhunter.storage import applications as suivi_io
-
     def _f(s):
         rec = dict(s.get(key, {}))
         rec["s"] = "relancé"
@@ -209,7 +207,7 @@ def mark(key):
     return True
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--days", type=int, default=10, help="seuil jours sans réponse (défaut 10)")
     ap.add_argument("--jours", type=int, default=7, choices=[7, 10], help="template J+7 ou J+10")
@@ -225,12 +223,12 @@ def main():
         "--brouillon-de",
         help='"Entreprise|Poste" → son brouillon .txt seul, J+7 ou J+10 selon le suivi (n\'ouvre rien)',
     )
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     if a.brouillon_de:
         # The offer drawer's « Brouillon de relance » (web window): one offer, nothing opened.
         try:
-            s = importlib.import_module("jobhunter.storage.applications").charger(SUIVI)
+            s = suivi_io.charger(SUIVI)
         except Exception:  # noqa: BLE001
             s = {}
         j = 10 if s.get(a.brouillon_de, {}).get("s") == "relancé" else 7

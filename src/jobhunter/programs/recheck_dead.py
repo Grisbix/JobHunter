@@ -17,13 +17,14 @@ Run:
 
 import argparse
 import datetime
-import importlib
 import re
 import sys
 import time
 
 from jobhunter import root as _racine
 from jobhunter.navigation.browser import lancer as _lancer
+from jobhunter.programs import util as jutil
+from jobhunter.storage import queue as queue_io
 
 # line_buffering: otherwise nothing comes out when the output is redirected (background run = blind)
 sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
@@ -96,11 +97,11 @@ def classify(page, url):
     return "OK", "vivante (kind=%s)" % a.get("kind", "?")
 
 
-def main():
+def main(argv=None):
     # Inter-process lock: this program rewrites the ENTIRE queue. If
     # another one does it at the same time (scheduled task vs app), the last one
     # to write erases the other's work.
-    if not importlib.import_module("jobhunter.programs.util").garder(QUEUE):
+    if not jutil.garder(QUEUE):
         return 3
     ap = argparse.ArgumentParser()
     ap.add_argument(
@@ -126,9 +127,9 @@ def main():
     ap.add_argument(
         "--recycle", type=int, default=40, help="recrée l'onglet tous les N liens (fuite mémoire)"
     )
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
-    q = importlib.import_module("jobhunter.storage.queue").charger(QUEUE, descriptions=False)
+    q = queue_io.charger(QUEUE, descriptions=False)
     want = {s.strip().upper() for s in a.status.split(",") if s.strip()}
     today = datetime.date.today()
     targets = []
@@ -237,7 +238,7 @@ def main():
                 )
             # checkpoint: never lose the batch if it crashes/is cut
             if not a.dry and a.every > 0 and i % a.every == 0:
-                importlib.import_module("jobhunter.programs.util").jwrite(QUEUE, q)
+                jutil.jwrite(QUEUE, q)
                 rate = (time.time() - t0) / i
                 print(
                     f"  ── checkpoint {i}/{len(targets)} — {rate:.1f}s/lien, "
@@ -259,7 +260,7 @@ def main():
             pass
 
     if not a.dry:
-        importlib.import_module("jobhunter.programs.util").jwrite(QUEUE, q)
+        jutil.jwrite(QUEUE, q)
     print(f"\n=== {'[DRY] ' if a.dry else ''}changements: {counts or 'aucun'} ===")
 
 

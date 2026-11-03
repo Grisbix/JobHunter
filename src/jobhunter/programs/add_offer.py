@@ -7,7 +7,6 @@ Run: python JobHunter.pyw add --url "https://…"           # analysis + queue +
 """
 
 import argparse
-import importlib
 import re
 import sys
 import time
@@ -15,6 +14,7 @@ from urllib.parse import urlparse
 
 from jobhunter import root as _racine
 from jobhunter.navigation.browser import lancer as _lancer
+from jobhunter.programs import util as jutil
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -184,16 +184,16 @@ def make_docs(url):
     return "docs générés"
 
 
-def main():
+def main(argv=None):
     # Inter-process lock: this program rewrites the ENTIRE queue. If
     # another one does it at the same time (scheduled task vs app), the last one
     # to write erases the other's work.
-    if not importlib.import_module("jobhunter.programs.util").garder(QUEUE):
+    if not jutil.garder(QUEUE):
         return 3
     ap = argparse.ArgumentParser()
     ap.add_argument("--url", required=True)
     ap.add_argument("--no-docs", action="store_true")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     url = a.url.strip()
     if not url.startswith("http"):
         print("URL invalide.")

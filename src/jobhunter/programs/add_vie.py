@@ -234,7 +234,7 @@ def completer(a):
     return 0
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("offre", nargs="?", default="", help="identifiant ou URL mon-vie-via")
     ap.add_argument(
@@ -247,7 +247,7 @@ def main():
         "--pause", type=float, default=0.5, help="secondes entre deux appels a l'API (defaut 0,5)"
     )
     ap.add_argument("--dry", action="store_true")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     if a.completer:
         return completer(a)

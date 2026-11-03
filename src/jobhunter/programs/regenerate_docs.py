@@ -83,13 +83,13 @@ def convertir(fichiers, exe, dossier):
     return faits
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--limite", type=int)
     ap.add_argument("--sans-pdf", action="store_true")
     ap.add_argument("--cv", action="store_true", help="refaire les CV au lieu des lettres")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     from jobhunter.documents import SOFFICE, tailor_cv, tailor_letter
     from jobhunter.scoring.language import langue_offre

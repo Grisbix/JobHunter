@@ -18,13 +18,14 @@ Run:
 """
 
 import argparse
-import importlib
 import json
 import re
 import sys
 import time
 
 from jobhunter import root as _racine
+from jobhunter.programs import util as jutil
+from jobhunter.storage import queue as queue_io
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -179,7 +180,7 @@ def norm_url(u):
     return _norm_url(u)
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--kw", help="liste CSV de mots-clés (sinon liste intégrée)")
     ap.add_argument(
@@ -214,17 +215,13 @@ def main():
     ap.add_argument(
         "--config", action="store_true", help="AJOUTE les mots-clés rentables à sources_config.json"
     )
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     rx = re.compile(a.relevant_rx, re.I) if a.relevant_rx else None
 
     from jobhunter.sources import linkedin_guest_search
 
-    q = (
-        importlib.import_module("jobhunter.storage.queue").charger(QUEUE, descriptions=False)
-        if importlib.import_module("jobhunter.storage.queue").existe(QUEUE)
-        else []
-    )
+    q = queue_io.charger(QUEUE, descriptions=False) if queue_io.existe(QUEUE) else []
     have = {norm_url(o.get("url")) for o in q if o.get("url")}
     cfg = json.loads(CFG.read_text(encoding="utf-8")) if CFG.exists() else {"keywords": []}
     deja = {k.lower() for k in cfg.get("keywords", [])}
@@ -294,7 +291,7 @@ def main():
 
     if a.config and bons:
         cfg.setdefault("keywords", []).extend(r["kw"] for r in bons)
-        importlib.import_module("jobhunter.programs.util").jwrite(CFG, cfg)
+        jutil.jwrite(CFG, cfg)
         print(
             f"\n-> sources_config.json : +{len(bons)} mots-clés ({len(cfg['keywords'])} au total)"
         )

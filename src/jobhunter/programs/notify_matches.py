@@ -18,13 +18,14 @@ Run:
 """
 
 import argparse
-import importlib
 import json
 import subprocess
 import sys
 
 from jobhunter import root as _racine
+from jobhunter.programs import util as jutil
 from jobhunter.scoring.ranking import rang
+from jobhunter.storage import queue as queue_io
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -102,12 +103,12 @@ def key_of(o):
     return f"{o.get('entreprise', '')}|{o.get('poste', '')}"
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--min-fit", type=int, default=8)
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--reset", action="store_true", help="oublie l'historique des notifications")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     if a.reset:
         if SEEN.exists():
@@ -115,10 +116,10 @@ def main():
         print("historique de notification remis à zéro")
         return 0
 
-    if not importlib.import_module("jobhunter.storage.queue").existe(QUEUE):
+    if not queue_io.existe(QUEUE):
         print("! apply_queue.json introuvable")
         return 1
-    q = importlib.import_module("jobhunter.storage.queue").charger(QUEUE, descriptions=False)
+    q = queue_io.charger(QUEUE, descriptions=False)
 
     seen = set()
     if SEEN.exists():
@@ -162,7 +163,7 @@ def main():
     # We mark even if the toast failed: otherwise each run retries the whole batch
     # and the day the toast works again you get 200 alerts at once.
     seen |= {key_of(o) for o in hits}
-    importlib.import_module("jobhunter.programs.util").jwrite(SEEN, sorted(seen))
+    jutil.jwrite(SEEN, sorted(seen))
     print(
         f"{'notifié' if ok else 'non notifié (toast KO)'} — {len(hits)} marquée(s), historique {len(seen)}"
     )

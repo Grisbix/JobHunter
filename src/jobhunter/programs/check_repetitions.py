@@ -47,12 +47,12 @@ from jobhunter.documents.proofreading import (  # noqa: E402  (moved in 2.13, re
 )
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--toutes", action="store_true")
     ap.add_argument("--fichier")
     ap.add_argument("--echantillon", type=int, default=40)
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     if a.fichier:
         cibles = [Path(a.fichier) if Path(a.fichier).is_absolute() else ROOT / a.fichier]

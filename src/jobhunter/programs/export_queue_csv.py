@@ -18,12 +18,13 @@ Run:
 import argparse
 import csv
 import datetime
-import importlib
 import json
 import sys
 from pathlib import Path
 
 from jobhunter import root as _racine
+from jobhunter.storage import applications as suivi_io
+from jobhunter.storage import queue as queue_io
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)  # type: ignore[union-attr]  # console : TextIOWrapper
 
@@ -73,24 +74,22 @@ def rows(q, suivi):
         yield r
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", help="chemin du CSV (défaut : _exports/queue_AAAA-MM-JJ.csv)")
     ap.add_argument("--keep", type=int, default=8, help="nb d'exports à conserver (0 = tous)")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
-    if not importlib.import_module("jobhunter.storage.queue").existe(QUEUE):
+    if not queue_io.existe(QUEUE):
         print("! apply_queue.json introuvable")
         return 1
-    q = importlib.import_module("jobhunter.storage.queue").charger(QUEUE, descriptions=False)
+    q = queue_io.charger(QUEUE, descriptions=False)
 
     suivi = {}
     sp = _racine.dans(HERE, "suivi.json")
     if sp.exists():
         try:
-            suivi = importlib.import_module("jobhunter.storage.applications").charger(
-                sp, strict=True
-            )
+            suivi = suivi_io.charger(sp, strict=True)
         except Exception as e:  # noqa: BLE001
             print(f"  (suivi.json illisible : {type(e).__name__} — export sans le suivi)")
 
