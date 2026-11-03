@@ -459,7 +459,7 @@ class ActionsMixin:
         carte.pack(fill="both", expand=True, padx=16, pady=16)
         CL(
             carte,
-            text=f"Pourquoi écarter ces {n} offre(s) ?",
+            text=_t("Pourquoi écarter ces {n} offre(s) ?").format(n=n),
             bg=CARD,
             fg=TX,
             font=(_theme.FONT_UI, 15, "bold"),
@@ -467,8 +467,10 @@ class ActionsMixin:
         ).pack(fill="x", padx=18, pady=(16, 2))
         CL(
             carte,
-            text="Retirées de la file et bloquées au prochain scan. Le motif sert à "
-            "corriger la notation.",
+            text=_t(
+                "Retirées de la file et bloquées au prochain scan. Le motif sert à "
+                "corriger la notation."
+            ),
             bg=CARD,
             fg=MUT,
             font=(_theme.FONT_UI, 11),

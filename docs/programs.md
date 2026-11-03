@@ -62,7 +62,7 @@ found again by the scan tomorrow; a lost application never comes back.
 | `recheck_dead.py` | Soft-404s rendered in JavaScript (HTTP 200 but empty body). |
 | `availability_audit.py` | Checks the whole queue without a browser and removes closed offers; Workday, Ashby and Greenhouse through their public API first (`ats_liveness.py`, their pages are the same JavaScript shell open or closed); waits and resumes on 429; `--duree` stops it by itself before removing. Step 4b of the pipeline, on Sunday. |
 | `reposts.py` | « Signal » column: knock-out conditions first (`scoring.knockouts`: licence, nationality, right to work, clearance; profile section `eliminatoires`), an offer back under a new address on the same site (history `_offres_vues.json`, 90 days; count in `republiee`, used by the rank), and the same text under another company (64-bit SimHash, agencies and job boards). Observations only. Step 4a. Limit: two identical titles opened in parallel at one company look like a repost. |
-| `archive_postings.py` | A copy of the posting of every application (PDF + .txt in `Letters/Postings/`, engine `jobhunter.postings`), written once from the queue's text, never rewritten. Also done by the app at the « postulé » click. Step 4a'. `jobhunter postings`. |
+| `archive_postings.py` | A copy of the posting of every application (PDF + .txt in `Letters/Postings/`, engine `jobhunter.postings`), written once from the queue's text, never rewritten. Also done by the app at the « postulé » click. Step 4a2. `jobhunter postings`. |
 | `restore.py` | Puts the queue back as it was in a backup (daily, before the audit, before the sort): `--liste`, then a name; inspection by default, `--appliquer` writes. Never restores the tracker, keeps the tracked offers, loses no description, and copies the state before so the restoration can be undone. `jobhunter restore`. |
 | `queue_tools.py` | Queue maintenance. |
 | `rescore_ats.py` | Recomputes `ats_pct` and `skills_match` over the whole queue. |
@@ -112,6 +112,36 @@ found again by the scan tomorrow; a lost application never comes back.
 | `test_live_nav.py` | Real read-only test on real career sites. |
 
 The first five run without network: `python test_patterns.py`, etc.
+
+## The rest — pipeline, profile, maintenance
+
+Added by the audit of 2026-11-03: 23 programs were missing from this page.
+
+| Program | Role |
+|---|---|
+| `daily_pipeline.py` | **The morning scan**, one entry point: backup, collection in five merged passes, descriptions, sort, reposts and postings (4a, 4a2), availability (4b, Sunday), documents, checks. |
+| `sort_rejections.py` | The offers the sort removed, remembered 30 days so the collection does not take them back; keeps the excerpt that decided an « experience » removal. |
+| `exclusions.py` | The offers the user set aside, and why: blocks their return, and the reasons correct the scoring. |
+| `recipes.py` | Replays the cleanup recipes (`_recettes.json`) on the queue; preview by default, `--appliquer` writes under the lock. Spares tracked offers. |
+| `reclassify_domains.py` | Gives each offer the domain its title calls, after the trades changed. |
+| `top_offers.py` | The N offers to handle now, not the N best scores: usable link, experience, already applied, closed. |
+| `search_preview.py` | Which offers a title filter keeps, as JSON — collects and changes nothing. |
+| `final_site.py` | Finds a LinkedIn-only offer again on the employer's site. |
+| `probe_ats_queue.py` | Which companies of the queue expose a readable ATS feed. |
+| `verify_ats_slugs.py` | Does a guessed ATS feed really belong to the targeted company (lever/cic is not the CIC bank). |
+| `wtj_desc.py` | Welcome to the Jungle descriptions, from the JSON the page carries. |
+| `add_vie.py` | Adds a V.I.E offer (single-page site the scan cannot read) with CV and letter. |
+| `regenerate_docs.py` | Redoes existing letters and CVs with the current generator. |
+| `proofread_letters.py` | Re-reads the generated letters and reports what is wrong, changing nothing. |
+| `check_repetitions.py` | Repetitions in the generated letters. |
+| `first_launch.py` | Creates the profile from the CV (`jobhunter profile <cv>`). |
+| `skills_catalog.py` | Generic skills library, all professions, searched by `first_launch`. |
+| `check_profile.py` | How the profile treats offer titles, without network. |
+| `profiles_cli.py` | `jobhunter profiles`: list, switch, create profiles from a terminal. |
+| `migrate.py` | Moves a 2.x data folder (French names) to the 3.x layout. |
+| `update.py` | Updates JobHunter (signed release or git), never touching the data; git and pip are time-bounded. |
+| `shortcut.py` | Start-menu and desktop shortcut for a source or pip installation. |
+| `_example_profile.py` | Imported first by the live tests: they run on the example profile, never the real one. |
 
 ## Out of scope
 

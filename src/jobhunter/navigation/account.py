@@ -21,7 +21,7 @@ _LOGIN_JS = r"""
     const r=el.getBoundingClientRect(); if(r.width===0&&r.height===0)continue;
     const key=norm([el.name,el.id,el.placeholder,el.getAttribute('aria-label'),lab(el)].join(' '));
     if(type==='email'||/e-?mail|courriel|identifiant|username|login/.test(key)){ el.focus(); el.value=P.email; el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); el.dispatchEvent(new Event('blur',{bubbles:true})); email++; }
-    else if(type==='password'){ el.focus(); el.value=P.password; el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); el.dispatchEvent(new Event('blur',{bubbles:true})); pwd++; }
+    else if(type==='password'){ pwd++; }  // never written: the human types it
   }
   // TalentSoft / ASP.NET fallback: explicit name selectors (Login/Password/MotDePasse)
   if(email===0){
@@ -39,15 +39,11 @@ _LOGIN_JS = r"""
   if(pwd===0){
     for(const sel of ['input[name=\"Password\" i]','input[name=\"password\"]','input[name=\"MotDePasse\" i]','input[name=\"txtPassword\" i]']){
       const el=document.querySelector(sel);
-      if(el&&!el.value.trim()&&el.getBoundingClientRect().width>0){
-        el.focus(); el.value=P.password;
-        el.dispatchEvent(new Event('input',{bubbles:true}));
-        el.dispatchEvent(new Event('change',{bubbles:true}));
-        el.dispatchEvent(new Event('blur',{bubbles:true}));
-        pwd++; break;
-      }
+      if(el&&!el.value.trim()&&el.getBoundingClientRect().width>0){ pwd++; break; }
     }
   }
+  // The password step is the human's: focus it, click nothing.
+  if(pwd){ const el=document.querySelector('input[type=password]'); if(el)el.focus(); return {email,pwd,btn:''}; }
   const NEXT=/(continuer|continue|suivant|next|se connecter|log ?in|sign ?in|valider|connexion)/i;
   const NOT=/(créer|creer|s'?inscrire|register|sign ?up|forgot|oublié)/i;
   document.querySelectorAll('[data-wn-next]').forEach(e=>e.removeAttribute('data-wn-next'));
@@ -104,7 +100,9 @@ def login_flow(page: Any, email: str, pwd: str, max_steps: int = 3) -> dict[str,
 
     Fills the empty fields + clicks continue/login at each step. requestSubmit()
     fallback if the click does not move forward (React). The password is NEVER typed:
-    project rule, whatever pwd is.
+    project rule, whatever pwd is. At the password step it focuses the field and
+    stops, without clicking: before, it wrote "" there and clicked « log in »
+    (audit 2026-11-03).
     """
     pwd = ""
     import json as _json
@@ -112,7 +110,7 @@ def login_flow(page: Any, email: str, pwd: str, max_steps: int = 3) -> dict[str,
     steps = []
     for _ in range(max_steps):
         try:
-            r = page.evaluate(f"({_LOGIN_JS})({_json.dumps({'email': email, 'password': pwd})})")
+            r = page.evaluate(f"({_LOGIN_JS})({_json.dumps({'email': email})})")
         except Exception:
             break
         steps.append(r)
@@ -137,7 +135,7 @@ def login_flow(page: Any, email: str, pwd: str, max_steps: int = 3) -> dict[str,
                         page.wait_for_timeout(2000)
             except Exception:
                 pass
-        if submitted_pwd:  # password submitted -> login sent, stop
+        if submitted_pwd:  # password step reached: the human's turn, stop
             break
         if not r.get("email") and not r.get("btn"):
             break

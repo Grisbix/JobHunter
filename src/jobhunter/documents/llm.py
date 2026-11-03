@@ -99,7 +99,7 @@ def llm_rewrite(offer: dict[str, Any], cv_docx: Any, letter_docx: Any) -> bool:
             import anthropic
 
             msg = anthropic.Anthropic(api_key=key).messages.create(
-                model="claude-sonnet-5",
+                model="claude-sonnet-5-5",
                 max_tokens=700,
                 messages=[{"role": "user", "content": prompt}],
             )

@@ -56,7 +56,7 @@ def test_maj_paquet_installe_les_fichiers_signes(monkeypatch, capsys):
     class Fait:
         returncode = 0
 
-    def pip(cmd):
+    def pip(cmd, **kw):
         vus["cmd"] = cmd
         vus["fichiers"] = sorted(p.name for p in Path(cmd[-1]).iterdir())
         return Fait()

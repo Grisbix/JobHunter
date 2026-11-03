@@ -520,8 +520,9 @@ def installer_dependances(changes_requirements):
     if not changes_requirements:
         return True
     print("\nLes dépendances ont changé : installation…")
-    r = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-q", "-r", str(RACINE / "requirements.txt")]
+    r = _borne(
+        [sys.executable, "-m", "pip", "install", "-q", "-r", str(RACINE / "requirements.txt")],
+        1800,
     )
     if r.returncode:
         print(f"\n! L'installation des dépendances a échoué (pip, code {r.returncode}).")
@@ -681,7 +682,7 @@ def maj_paquet(verifier_seulement):
             f = Path(d, rel)
             f.parent.mkdir(parents=True, exist_ok=True)
             f.write_bytes(b)
-        r = subprocess.run(  # nosec B603 : this interpreter, a folder checked above
+        r = _borne(  # nosec B603 : this interpreter, a folder checked above
             [
                 sys.executable,
                 "-m",
@@ -693,7 +694,8 @@ def maj_paquet(verifier_seulement):
                 "off",
                 "-q",
                 d,
-            ]
+            ],
+            1800,
         )
     if r.returncode:
         print(f"! pip a échoué (code {r.returncode}) : la version {locale} reste installée.")
@@ -1081,9 +1083,22 @@ def annuler_zip():
 # ── Chemin git ──────────────────────────────────────────────────────────────
 
 
+def _borne(cmd, timeout, **kw):
+    """subprocess.run that cannot hang: git asking for a login (no terminal to answer
+    it) or pip stuck on the network blocked the update for ever (audit 2026-11-03).
+    On timeout: returncode 124 and a message, like a failed command."""
+    env = {**os.environ, **kw.pop("env", {}), "GIT_TERMINAL_PROMPT": "0"}
+    try:
+        return subprocess.run(cmd, timeout=timeout, env=env, **kw)
+    except subprocess.TimeoutExpired:
+        print(f"\n! {cmd[0]} ne répond plus après {timeout // 60} min : arrêté.")
+        return subprocess.CompletedProcess(cmd, 124, "", "")
+
+
 def _git(*a, **kw):
-    return subprocess.run(
+    return _borne(
         ["git", *a],
+        kw.pop("timeout", 120),
         cwd=RACINE,
         capture_output=True,
         text=True,
@@ -1144,7 +1159,7 @@ def par_git(args):
             return OCCUPE
         avant = _git("rev-parse", "HEAD").stdout.strip()
         GIT_AVANT.write_text(avant, encoding="utf-8")
-        r = subprocess.run(["git", "pull", "--rebase", "--autostash"], cwd=RACINE)
+        r = _borne(["git", "pull", "--rebase", "--autostash"], 600, cwd=RACINE)
     if r.returncode:
         GIT_AVANT.unlink(missing_ok=True)  # nothing installed: nothing to cancel
         print((getattr(r, "stderr", "") or "").strip())

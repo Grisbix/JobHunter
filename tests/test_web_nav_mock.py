@@ -199,3 +199,16 @@ def test_homepage_fallback_sans_homepage(page, monkeypatch):
     assert (
         w.homepage_fallback(page, "Entreprise Inconnue XYZ 999", "x").get("note") == "no_homepage"
     )
+
+
+def test_login_flow_s_arrete_au_mot_de_passe(page):
+    """Audit 2026-11-03 : à l'étape du mot de passe, ni écriture ni clic."""
+    page.set_content(
+        '<form onsubmit="window.envoye=1;return false"><input type=password id=p>'
+        "<button>Se connecter</button></form>"
+    )
+    page.evaluate("window.envoye=0")
+    s0 = w.login_flow(page, "a@b.fr", "SECRET", max_steps=2)["steps"]
+    assert len(s0) == 1 and s0[0]["pwd"] == 1 and not s0[0]["btn"]
+    assert page.evaluate("window.envoye") == 0
+    assert page.evaluate("document.activeElement.id") == "p"

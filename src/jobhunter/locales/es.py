@@ -635,6 +635,8 @@ TEXTES: dict[str, str] = {
     "⛔ a refusé l'accès : pas de nouvel essai": "⛔ denegó el acceso: no se vuelve a intentar",
     "∅ rien de nouveau à prendre": "∅ nada nuevo que recoger",
     "… en cours": "… en curso",
+    "Pourquoi écarter ces {n} offre(s) ?": "¿Por qué descartar estas {n} oferta(s)?",
+    "Retirées de la file et bloquées au prochain scan. Le motif sert à corriger la notation.": "Retiradas de la lista y bloqueadas en el próximo escaneo. El motivo sirve para corregir la puntuación.",
 }
 
 
