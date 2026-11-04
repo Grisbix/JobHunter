@@ -737,6 +737,7 @@ async function voirDocument(o, chemin, titre, mode = "apercu", focus = -1) {
     mode = d.docx ? m : "apercu";  // a PDF alone: shown, not edited
     $("tiroir").classList.toggle("large", mode === "texte");
     onglets.replaceChildren(d.docx ? segment([["apercu", "Aperçu"], ["texte", "Modifier"]], mode, montrer) : "");
+    place.classList.toggle("remplit-doc", mode === "apercu");  // style.css: the pages fill the drawer
     if (mode === "apercu") return place.replaceChildren(pagesDoc());
     const ajuster = (t) => { t.style.height = "auto"; t.style.height = `${t.scrollHeight + 2}px`; };
     const zones = [];
