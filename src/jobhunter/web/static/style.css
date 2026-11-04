@@ -184,6 +184,8 @@ h3 { font-size: var(--t-xl); font-weight: 500; }
 .panneau { padding: 24px 24px; }
 .titre-ligne { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
 
+/* Profil never scrolls sideways (the user, 2026-11-04: « interdit le déplacement horizontal »). */
+.vue[data-ecran="profil"] { overflow-x: hidden; }
 .vue { min-height: 0; overflow-y: auto; padding-bottom: 32px; scrollbar-width: thin; scrollbar-color: rgba(120,114,110,.25) transparent; }
 .colonne { display: flex; flex-direction: column; gap: 20px; }
 .colonne > * { flex: none; }
@@ -360,8 +362,8 @@ body.relais::after {
   background: rgba(var(--blanc-rgb), .55); backdrop-filter: blur(8px); color: var(--texte-doux); font-size: var(--t-l);
 }
 /* Trades: one CV and one letter each (3.74). */
-.metiers { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
-.metier { display: grid; gap: 8px; padding: 12px 16px; border: 1px solid var(--filet); border-radius: 12px; background: rgba(var(--blanc-rgb), .5); }
+.metiers { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); gap: 12px; }
+.metier { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 12px 16px; border: 1px solid var(--filet); border-radius: 12px; background: rgba(var(--blanc-rgb), .5); }
 .metier-tete { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
 .metier-tete .t { font-weight: 600; }
 .metier-tete .sous { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -471,12 +473,15 @@ td > .score { width: 34px; height: 34px; font-size: var(--t-m); }
 .apercu { padding: 24px 32px; white-space: pre-wrap; font-size: var(--t-l); line-height: 1.6; height: calc(100vh - 300px); min-height: 260px; overflow-y: auto; }
 
 /* Profile, sources, maintenance: card grids */
-.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; align-items: stretch; grid-auto-flow: row dense; }
+/* min-width 0: a card holding one long unbroken word (a re: pattern) stretched its column
+   to 2 900 px, past the window (the user, 2026-11-04: Profil). */
+.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); gap: 20px; align-items: stretch; grid-auto-flow: row dense; }
 /* Cards stacked in one grid cell: the last one takes what is left, so the cell has no hole. */
 .grille .pile { display: flex; flex-direction: column; gap: 20px; }
 .grille .pile > :last-child { flex: 1; }
 @media (min-width: 1000px) { #carte-profils { grid-column: span 2; } }
 .grille .large { grid-column: 1 / -1; }
+.grille > *, .grille .pile > * { min-width: 0; }
 .identite { display: flex; gap: 20px; align-items: center; }
 .identite .avatar { width: 64px; height: 64px; font-size: var(--t-3xl); }
 .identite .nom { font-size: var(--t-3xl); font-weight: 500; letter-spacing: -0.01em; }
