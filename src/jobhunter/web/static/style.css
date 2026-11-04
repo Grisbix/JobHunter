@@ -481,6 +481,12 @@ td > .score { width: 34px; height: 34px; font-size: var(--t-m); }
 .grille .pile > :last-child { flex: 1; }
 @media (min-width: 1000px) { #carte-profils { grid-column: span 2; } }
 .grille .large { grid-column: 1 / -1; }
+/* Profil: two columns at most, the third stayed empty beside the identity on a wide
+   window; the tools card, with no basis of its own, fills what the identity leaves. */
+.grille.grille-profil { grid-template-columns: repeat(auto-fit, minmax(min(max(320px, calc(50% - 10px)), 100%), 1fr)); container-type: inline-size; }
+/* One column: nothing beside to match, the tools card shows them all. */
+@container (max-width: 659px) { .grille-profil .pile-profil > .outils-profil.outils-profil { flex: none; overflow: visible; } }
+.grille .pile-profil > .outils-profil { flex: 1 1 0; min-height: 180px; overflow-y: auto; scrollbar-width: thin; }
 .grille > *, .grille .pile > * { min-width: 0; }
 .identite { display: flex; gap: 20px; align-items: center; }
 .identite .avatar { width: 64px; height: 64px; font-size: var(--t-3xl); }
@@ -765,9 +771,9 @@ body[data-teinte="noir"] {
 .champ-form input:focus, .puces-edit:focus-within { box-shadow: 0 0 0 2px rgba(var(--c2-rgb), .45); }
 .deux-colonnes { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 @media (max-width: 1100px) { .deux-colonnes { grid-template-columns: 1fr; } }
-.liste-comp { display: grid; gap: 8px; }
+.liste-comp { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(520px, 100%), 1fr)); gap: 8px; }  /* two side by side when the card is wide */
 .ligne-comp {
-  display: grid; grid-template-columns: 190px 230px minmax(0, 1fr) 28px; gap: 12px; align-items: center;
+  display: grid; grid-template-columns: minmax(0, 1fr) max-content 28px; gap: 8px 12px; align-items: center;
   padding: 8px 12px; border-radius: 12px; background: rgba(var(--blanc-rgb), .35);
 }
 .ligne-comp .puces-edit { min-height: 38px; padding: 4px; }
@@ -777,7 +783,11 @@ body[data-teinte="noir"] {
 .bascule.on { background: var(--degrade-h); color: #fff; }
 .retirer { width: 26px; height: 26px; border-radius: 50%; font-size: var(--t-xl); color: var(--gris); }
 .retirer:hover { background: rgba(var(--terre-rgb), .15); color: var(--brun); }
-@media (max-width: 1100px) { .ligne-comp { grid-template-columns: 1fr; } }
+/* Name, axes and × on one line, the words the full width under them: in four columns the
+   words wrapped in what was left, and below 1 100 px each part had its own line, the ×
+   alone on the last (38 skills, 7 400 px; the user, 2026-11-04: « des parties vides »). */
+.ligne-comp > .puces-edit { grid-column: 1 / -1; grid-row: 2; }
+@media (max-width: 640px) { .ligne-comp { grid-template-columns: minmax(0, 1fr) 28px; } .ligne-comp > .axes-comp { grid-column: 1 / -1; grid-row: 2; } .ligne-comp > .puces-edit { grid-row: 3; } }
 .proposition { padding: 16px 16px; }
 .proposition .t { font-weight: 500; }
 

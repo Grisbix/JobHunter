@@ -1666,16 +1666,20 @@ ECRANS.profil = {
 
     // CVs and letters first, side by side (the user, 2026-11-02: « mettre ajout lettre
     // de motivation plus haut dans le panneau profil à côté de CV »).
-    vue.replaceChildren(h("div", { class: "grille" },
+    vue.replaceChildren(h("div", { class: "grille grille-profil" },
       carteId,
-      h("div", { class: "pile" },
+      // Beside the identity, the score settings and the tools: alone, the first stretched
+      // to the identity's height and the tools sat by themselves on the last row (the
+      // user, 2026-11-04: « adapte l'espace pour éviter qu'il y ait des parties vides »).
+      // style.css: the tools take the height left and scroll inside it.
+      h("div", { class: "pile pile-profil" },
         carte("Score : réglages", h("dl", { class: "paires" }, Object.entries(p.scoring).map(([k, v]) =>
-          [h("dt", {}, k.replaceAll("_", " ")), h("dd", {}, String(v))])))),
+          [h("dt", {}, k.replaceAll("_", " ")), h("dd", {}, String(v))]))),
+        Object.assign(carte("Outils", puces(p.outils)), { className: "verre panneau outils-profil" })),
       await carteMetiers(),
       carteRech,
       carteComp,
-      await cartePoids(),
-      carte("Outils", puces(p.outils))));
+      await cartePoids()));
   },
 };
 
