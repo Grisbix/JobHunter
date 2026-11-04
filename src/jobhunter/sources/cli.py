@@ -216,8 +216,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="refusionne le dernier scan (offres_scan.json) sans rien collecter",
     )
+    ap.add_argument(
+        "--budget-source",
+        type=float,
+        default=0,
+        help="secondes max par source lue fiche par fiche (eFC, WTJ) ; 0 = sans plafond",
+    )
+    ap.add_argument(
+        "--arret-vides",
+        type=int,
+        default=_rendement.VIDES,
+        help="arrete ces sources apres N fiches de suite sans offre nouvelle ; 0 = jamais",
+    )
     a = ap.parse_args(argv)
     _rendement.MESURES.clear()  # one measurement per collection, even if called several times
+    _rendement.BUDGET, _rendement.VIDES = a.budget_source, a.arret_vides
 
     # TWO LOCKS, TWO ROLES. There used to be only one, on the QUEUE, taken at
     # start-up and kept for the whole collection — more than an hour with --all. On the

@@ -79,6 +79,10 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True) 
 # The morning LinkedIn pass, in minutes (pass 1b); see the five passes below.
 LINKEDIN_MINUTES = 15
 
+# Seconds at most for eFC and WTJ, read posting by posting (passes 1c, 1e). Measured on
+# 2026-11-04: eFC 418 s for 1 new offer, WTJ 210 s for none.
+BUDGET_SOURCE = 180
+
 # Career site readers that only bring back the title: their offer page
 # is public, scrape_desc reads it. Closed list — an anti-bot source does not get in.
 DESC_SOURCES_PUBLIQUES = (
@@ -457,6 +461,8 @@ def _executer(a, journal):
                     "--eures",
                     "--arbeitsagentur",
                     "--makesense",
+                    "--budget-source",
+                    str(BUDGET_SOURCE),
                 ],
                 1800,
             ),
@@ -469,7 +475,7 @@ def _executer(a, journal):
                 + (["--usajobs"] if _pays_usajobs() else []),
                 2700,
             ),
-            ("1e/5 Collecte — WTJ", ["--wtj"], 2400),
+            ("1e/5 Collecte — WTJ", ["--wtj", "--budget-source", str(BUDGET_SOURCE)], 2400),
             ("1f/5 Collecte — sites carrières des entreprises vues", ["--entreprises-vues"], 2400),
         ]
     ajoutees = 0

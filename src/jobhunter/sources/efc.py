@@ -11,6 +11,7 @@ from urllib.parse import unquote, urlparse
 
 from jobhunter import log as _journal
 from jobhunter.sources import common as _commun
+from jobhunter.sources import source_yield as _rendement
 from jobhunter.sources.common import (
     INCIDENTS,
     _mk,
@@ -227,8 +228,12 @@ def scan_efc(
         # An offer published on two sites carries the same identifier: we only
         # read it once.
         toutes, ids = [], set()
+        g = _rendement.garde()
         for i, site in enumerate(sites):
             if i:
+                if not g.continuer():
+                    _log.info(f"  ~ eFC : {g.arret}, sitemaps arrêtés à {i}/{len(sites)}")
+                    break
                 time.sleep(EFC_DELAI)  # crawl-delay, sitemaps compris
             for url, approx in _efc_urls(client, site):
                 m = _RX_EFC_SLUG.search(url)
@@ -258,7 +263,11 @@ def scan_efc(
         # merge_into_queue aurait de toute facon deduplique.
         from jobhunter.storage import queue as queue_io
 
-        connues = {_norm_url(x.get("url")) for x in queue_io.charger(_commun.QUEUE) if x.get("url")}
+        file_ = queue_io.charger(_commun.QUEUE, descriptions=False)
+        connues = {_norm_url(x.get("url")) for x in file_ if x.get("url")}
+        # A posting unknown by its URL is often an offer the queue has from elsewhere
+        # (27 read for 1 new on 2026-11-04): the merge's key tells them apart.
+        deja_vues = {_rendement.cle_offre(x.get("entreprise"), x.get("poste")) for x in file_}
         neuves = [u for u in cibles if _norm_url(u) not in connues]
         deja = len(cibles) - len(neuves)
         # IN TURN between the sites. Taken in the order of the sitemaps, the
@@ -278,9 +287,14 @@ def scan_efc(
             f"({deja} deja en file) "
             f"({EFC_DELAI} s entre chaque, {len(cibles) * EFC_DELAI // 60} min)"
         )
+        neuve = 0
         for n, url in enumerate(cibles, 1):
             if n > 1:
+                if not g.continuer(neuve):
+                    _log.info(f"  ~ eFC : {g.arret}, fiches arrêtées à {n - 1}/{len(cibles)}")
+                    break
                 time.sleep(EFC_DELAI)  # crawl-delay: 10
+            neuve = 0
             try:
                 jp = _efc_fiche(url, client)
             except _EfcRefus as e:
@@ -314,6 +328,8 @@ def scan_efc(
                     _strip_html(str(jp.get("description") or "")),
                 )
             )
+            o = offers[-1]
+            neuve = int(_rendement.cle_offre(o["entreprise"], o["titre"]) not in deja_vues)
             if n % 10 == 0:
                 _log.info(f"    … {n}/{len(cibles)} ({len(offers)} retenues)")
     _log.info(f"  ✓ eFinancialCareers → {len(offers)} offres (avec description)")
