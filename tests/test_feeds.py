@@ -68,6 +68,66 @@ def test_scan_ats_saute_les_suspendus(tmp_path, monkeypatch):
     assert F.MESURES == {"greenhouse:a": {"offres": 1, "incident": ""}}
 
 
+# ── in parallel: one request at a time per domain, same offers, own incidents ──
+@pytest.mark.parametrize(
+    ("kind", "cle", "attendu"),
+    [
+        ("greenhouse", "anthropic", "greenhouse"),
+        ("ashby", "checkout.com", "ashby"),
+        ("workable", "j", "workable"),
+        ("sfrss", "careers.ey.com", "ey.com"),
+        ("oracle", "estm.fa.em2.oraclecloud.com", "oraclecloud.com"),
+        ("sitemap", "https://www.kbc.be/jobs/en.sitemap.xml", "kbc.be"),
+        ("phenom", "jobs.bureauveritas.com/gb/en", "bureauveritas.com"),
+        ("sfrss", "a.ey.com|b.ey.com", "ey.com"),
+    ],
+)
+def test_domaine(kind, cle, attendu):
+    from jobhunter.sources import ats
+
+    assert ats.domaine(kind, cle) == attendu
+
+
+def test_en_chaines_un_domaine_a_la_fois(monkeypatch):
+    import threading
+    import time
+
+    from jobhunter.sources import ats
+
+    monkeypatch.setattr(ats, "ATS_PAUSE", 0)
+    en_cours: dict[str, int] = {}
+    pic: dict[str, int] = {}
+    verrou = threading.Lock()
+
+    def lire(dom, n):
+        with verrou:
+            en_cours[dom] = en_cours.get(dom, 0) + 1
+            pic[dom] = max(pic.get(dom, 0), en_cours[dom])
+        time.sleep(0.01)
+        with verrou:
+            en_cours[dom] -= 1
+        return [n]
+
+    taches = [(d, lire, (d, i)) for i, d in enumerate(["a", "b", "a", "c", "a", "b"])]
+    res = ats._en_chaines(taches)
+    assert [r[0] for r in res] == [[0], [1], [2], [3], [4], [5]]
+    assert pic == {"a": 1, "b": 1, "c": 1}
+
+
+def test_en_chaines_incidents_par_flux(monkeypatch):
+    from jobhunter.sources import ats
+
+    monkeypatch.setattr(ats, "ATS_PAUSE", 0)
+
+    def lire(n):
+        for _ in range(n):
+            ats._incident("testchaines", "HTTP 429")
+        return []
+
+    res = ats._en_chaines([("x", lire, (2,)), ("y", lire, (0,)), ("z", lire, (1,))])
+    assert [r[1] for r in res] == ["HTTP 429 ×2", "", "HTTP 429"]
+
+
 # ── silent feeds (3.15): a company whose page moved does not fail loudly ──────────
 def _muet(e, jour="2026-11-30T08:00"):
     import datetime
