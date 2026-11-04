@@ -2391,7 +2391,8 @@ ECRANS.maintenance = {
           h("dt", {}, "Offres"), h("dd", {}, nombre(m.offres)), h("dt", {}, "Candidatures"), h("dd", {}, `${nombre(m.candidatures)} suivies · ${nombre(m.envoyees)} envoyées`),
           m.tailles.map((t) => [h("dt", {}, t.nom), h("dd", {}, taille(t.octets))])),
         m.archivables ? h("div", { class: "actions-col" }, bouton(`Archiver ${nombre(m.archivables)} vieilles offres…`, "corbeille", () => archiverVieilles(m.archivables))) : null,
-        m.effacable ? h("div", { class: "actions-col" }, bouton("Effacer mes données…", "corbeille", () => effacerDonnees(m))) : null),
+        m.effacable ? h("div", { class: "actions-col" }, bouton("Effacer mes données…", "corbeille", () => effacerDonnees(m))) : null,
+        m.desinstallable ? h("div", { class: "actions-col" }, bouton("Désinstaller JobHunter…", "corbeille", () => desinstaller(m))) : null),
       carteOutils(await appel("outils"))));
   },
 };
@@ -2416,6 +2417,17 @@ async function effacerDonnees(m) {
     null, [["Effacer et fermer", "plein", () => true]]);
   if (!ok) return;
   const r = await appel("effacer_donnees");
+  if (r && !r.ok) toast(r.message, true);
+}
+
+// Uninstalling from Windows kept the data (2026-11-04): this removes both at once.
+async function desinstaller(m) {
+  const sous = m.effacable
+    ? `JobHunter est retiré de cet ordinateur. Le profil, les CV, les lettres, les ${nombre(m.offres)} offres et les ${nombre(m.candidatures)} candidatures suivies partent à la Corbeille, d'où on peut les restaurer tant qu'elle n'est pas vidée.`
+    : "JobHunter est retiré de cet ordinateur. Tes données restent dans leur dossier : il n'est pas celui de l'application.";
+  const ok = await dialogue("Désinstaller JobHunter ?", sous, null, [["Désinstaller", "plein", () => true]]);
+  if (!ok) return;
+  const r = await appel("desinstaller");
   if (r && !r.ok) toast(r.message, true);
 }
 

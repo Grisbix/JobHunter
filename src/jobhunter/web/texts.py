@@ -2045,6 +2045,27 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Mientras no se vacíe la Papelera, todo se puede restaurar.",
     ),
     "Effacer et fermer": ("Erase and close", "Löschen und schließen", "Borrar y cerrar"),
+    "Désinstaller JobHunter…": (
+        "Uninstall JobHunter…",
+        "JobHunter deinstallieren…",
+        "Desinstalar JobHunter…",
+    ),
+    "Désinstaller JobHunter ?": (
+        "Uninstall JobHunter?",
+        "JobHunter deinstallieren?",
+        "¿Desinstalar JobHunter?",
+    ),
+    "Désinstaller": ("Uninstall", "Deinstallieren", "Desinstalar"),
+    "JobHunter est retiré de cet ordinateur. Le profil, les CV, les lettres, les {n} offres et les {c} candidatures suivies partent à la Corbeille, d'où on peut les restaurer tant qu'elle n'est pas vidée.": (
+        "JobHunter is removed from this computer. The profile, the CVs, the letters, the {n} offers and the {c} tracked applications go to the Recycle Bin, where they can be restored until it is emptied.",
+        "JobHunter wird von diesem Computer entfernt. Das Profil, die Lebensläufe, die Anschreiben, die {n} Angebote und die {c} verfolgten Bewerbungen kommen in den Papierkorb, aus dem sie sich wiederherstellen lassen, solange er nicht geleert ist.",
+        "JobHunter se quita de este ordenador. El perfil, los CV, las cartas, las {n} ofertas y las {c} candidaturas seguidas van a la Papelera, desde donde se pueden restaurar mientras no se vacíe.",
+    ),
+    "JobHunter est retiré de cet ordinateur. Tes données restent dans leur dossier : il n'est pas celui de l'application.": (
+        "JobHunter is removed from this computer. Your data stays in its folder: it is not the application's own.",
+        "JobHunter wird von diesem Computer entfernt. Deine Daten bleiben in ihrem Ordner: Er ist nicht der der Anwendung.",
+        "JobHunter se quita de este ordenador. Tus datos se quedan en su carpeta: no es la de la aplicación.",
+    ),
     "Impossible de joindre le serveur des mises à jour : réessaie plus tard.": (
         "The update server cannot be reached: try again later.",
         "Der Update-Server ist nicht erreichbar: versuch es später noch einmal.",
