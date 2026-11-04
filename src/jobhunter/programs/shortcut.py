@@ -17,6 +17,7 @@ deleted.
 """
 
 import argparse
+import contextlib
 import os
 import subprocess
 import sys
@@ -106,11 +107,30 @@ def existe() -> bool:
     return (dossiers(False)[0] / "JobHunter.lnk").is_file()
 
 
+def _temoin() -> Path:
+    """Notes the icon the shortcuts were last made with."""
+    from jobhunter import root
+
+    return root.scripts() / "_raccourci_icone.txt"
+
+
+def _icone_notee() -> bool:
+    """The shortcuts carry the icon of this installation, and it is still there."""
+    try:
+        return ICONE.is_file() and _temoin().read_text(encoding="utf-8") == str(ICONE)
+    except OSError:
+        return False
+
+
 def assurer() -> None:
-    """Makes the Start menu shortcut once, when missing, for a source or pip installation.
+    """Makes the Start menu shortcut, or remakes it when its icon moved, for a source or
+    pip installation.
 
     Called at the window's opening, in the background: an installation from before 3.59
-    gets it without running anything. Silent on failure: cosmetic only.
+    gets it without running anything. 3.78 moved the icon out of app/assets: the existing
+    shortcuts kept the old path and showed Python's logo (the user, 2026-11-04), so a
+    shortcut made with another icon is remade, and the desktop one with it — never added
+    to a desktop it is not on. Silent on failure: cosmetic only.
     """
     if sys.platform != "win32":
         return
@@ -120,10 +140,14 @@ def assurer() -> None:
         if frozen.paquet_msix():
             bureau_msix()
         return
-    if existe():
+    if existe() and _icone_notee():
         return
     try:
-        creer(dossiers(False)[0] / "JobHunter.lnk", *cible())
+        menu, *autres = dossiers(True)
+        for lien in [menu / "JobHunter.lnk"] + [d / "JobHunter.lnk" for d in autres]:
+            if lien.parent == menu or lien.is_file():
+                creer(lien, *cible())
+        _temoin().write_text(str(ICONE), encoding="utf-8")
     except (OSError, subprocess.SubprocessError):
         pass
 
@@ -214,6 +238,9 @@ def main(argv: list[str] | None = None) -> int:
             detail = getattr(e, "stderr", "") or str(e)
             print(f"Raccourci impossible ({lien}) : {detail.strip()[:200]}")
             code = 1
+    if code == 0:
+        with contextlib.suppress(OSError):
+            _temoin().write_text(str(ICONE), encoding="utf-8")
     return code
 
 
