@@ -22,7 +22,7 @@ page, a subsidiary publishes elsewhere, a title is reworded. An offer missing fr
 confirmed feed is only NOTED (`final_site` = "absente du flux"), never removed.
 
 State: `_site_final.json`, one entry per company (feeds found, date). A company without
-a feed is only probed again after 30 days.
+a feed is only probed again after 30 days, then 60, then 120 (`delai`).
 
 Run:
   python JobHunter.pyw site_final --dry               # measures, writes nothing in the queue
@@ -36,6 +36,7 @@ import datetime
 import json
 import re
 import sys
+import threading
 import time
 
 from jobhunter import links as _liens
@@ -292,7 +293,7 @@ def flux_workday(entreprise):
     tenants = list(dict.fromkeys(([compact] if len(compact) >= 3 else []) + variantes(entreprise)))
     for t in tenants:
         for h in WD_HOTES:
-            if not tenant_workday(t, h):
+            if not _sonde(("workday", t, h), lambda: tenant_workday(t, h)):  # noqa: B023
                 continue
             # "Lombard_Odier_Careers": the words of the name, joined by "_".
             bases = list(
@@ -311,6 +312,7 @@ def flux_workday(entreprise):
                 if meme_employeur(entreprise, t, _wd_vitrine(t, h, site)):
                     return [["workday", f"{t}.{h}/{site}"]]
                 break  # the site exists but does not name the company
+            break  # a tenant lives on one host: the other hosts would answer 422
     return []
 
 
@@ -351,6 +353,25 @@ FAUX_FLUX = {
 }
 
 
+# Probes that answered nothing during this pass, shared by the workers. Two companies
+# often share a slug variant ("BNP Paribas" and "BNP Paribas Cardif" both try "bnp"):
+# a dead address is asked once per pass, not once per company.
+_MORTS: set = set()
+_MORTS_VERROU = threading.Lock()
+
+
+def _sonde(cle, f):
+    """`f()` unless `cle` already answered nothing in this pass."""
+    with _MORTS_VERROU:
+        if cle in _MORTS:
+            return None
+    r = f()
+    if not r:
+        with _MORTS_VERROU:
+            _MORTS.add(cle)
+    return r
+
+
 def flux_de(entreprise, connus):
     """CONFIRMED ATS feeds for this company: [[kind, slug], ...]."""
     trouves = []
@@ -359,11 +380,15 @@ def flux_de(entreprise, connus):
     for kind, slug in candidats:
         if (kind, slug) in FAUX_FLUX:
             continue
-        if not connus and not probe_ats.probe(kind, slug):
+        if not connus and not _sonde((kind, slug), lambda: probe_ats.probe(kind, slug)):
             continue
         v, _ = verdict(entreprise, nom_du_flux(kind, slug))
         if v == "CONFIRME" and not coquille(lire_flux(kind, slug) or []):
             trouves.append([kind, slug])
+            if not connus:
+                # Guessed slugs: the first confirmed feed is the company's. Going on
+                # cost ~16 more requests for a second feed found 10 times in 2,334.
+                break
     return trouves
 
 
@@ -394,16 +419,25 @@ def _age(date, jour):
         return RESONDE_JOURS
 
 
+def delai(vides):
+    """Days before probing again a company found without a feed `vides` times in a row:
+    30, 60, then 120. Measured on 2026-11-04: the 223 companies probed again after their
+    30 days gave 14 feeds — each pass on a dead name costs ~40 requests."""
+    return RESONDE_JOURS * 2 ** (min(max(vides, 1), 3) - 1)
+
+
 def a_resonder(x, jour):
     """(public ATS, Workday): which ones to probe for this company?
-    A found feed is not probed again; an absence, after 30 days."""
+    A found feed is not probed again; an absence, after `delai()` days."""
     if not x:
         return True, True
     fl = x.get("flux") or []
-    ats = not any(k != "workday" for k, _ in fl) and _age(x.get("date"), jour) >= RESONDE_JOURS
+    ats = not any(k != "workday" for k, _ in fl) and _age(x.get("date"), jour) >= delai(
+        x.get("vides", 1)
+    )
     # `wd_date` missing: entry from before Workday (2026-10-07), never probed.
     wd = not any(k == "workday" for k, _ in fl) and (
-        "wd_date" not in x or _age(x["wd_date"], jour) >= RESONDE_JOURS
+        "wd_date" not in x or _age(x["wd_date"], jour) >= delai(x.get("wd_vides", 1))
     )
     return ats, wd
 
@@ -423,9 +457,12 @@ def sonder(e, x, connus, jour):
     ]
     if wd and not fl_wd:
         fl_wd = flux_workday(e)
+    # Empty probes in a row; an entry from before the counter was probed once.
     if ats:
+        x["vides"] = 0 if fl_ats else x.get("vides", 1 if "date" in x else 0) + 1
         x["date"] = jour.isoformat()
     if wd:
+        x["wd_vides"] = 0 if fl_wd else x.get("wd_vides", 1 if "wd_date" in x else 0) + 1
         x["wd_date"] = jour.isoformat()
     x.setdefault("date", jour.isoformat())
     x["flux"] = fl_ats + fl_wd
@@ -439,6 +476,7 @@ def main(argv=None):
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--dry", action="store_true", help="n'ecrit rien dans la file")
     a = ap.parse_args(argv)
+    _MORTS.clear()
 
     q = queue_io.charger(descriptions=False)
     cibles = [
@@ -488,11 +526,10 @@ def main(argv=None):
                 print(f"  … {n}/{len(a_sonder)} sondees ({time.time() - t0:.0f} s)")
     ETAT.write_text(json.dumps(etat, ensure_ascii=False, indent=1), encoding="utf-8")
 
-    # Search for the titles in the confirmed feeds.
-    trouvees, absentes = {}, {}
-    avec_flux = [e for e in ents if (etat.get(e) or {}).get("flux")]
-    for e in avec_flux:
-        cache = {}
+    # Search for the titles in the confirmed feeds, one company per worker: done one
+    # after the other, this part took 7 of the step's 19 minutes (2026-11-04).
+    def chercher(e):
+        trouvees, absentes, cache = {}, {}, {}
         for o in par_ent[e]:
             for kind, slug in etat[e]["flux"]:
                 # These two APIs search server side: the full list is
@@ -509,6 +546,14 @@ def main(argv=None):
                     break
             else:
                 absentes[queue_io.oid(o)] = "absente du flux"
+        return trouvees, absentes
+
+    trouvees, absentes = {}, {}
+    avec_flux = [e for e in ents if (etat.get(e) or {}).get("flux")]
+    with cf.ThreadPoolExecutor(max_workers=a.workers) as ex:
+        for t, ab in ex.map(chercher, avec_flux):
+            trouvees.update(t)
+            absentes.update(ab)
 
     print(f"\n{len(avec_flux)} entreprise(s) avec un flux ATS confirme sur {len(ents)}")
     print(f"  {len(trouvees)} offre(s) retrouvee(s) sur le site final")

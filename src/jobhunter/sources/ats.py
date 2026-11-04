@@ -3,10 +3,12 @@
 Part of jobhunter.sources (formerly Scripts/job_sources.py, phase 3.4).
 """
 
+import collections
 import datetime
 import html
 import json
 import re
+import threading
 import time
 from typing import Any
 from urllib.parse import quote, unquote, urlparse
@@ -26,6 +28,20 @@ _log = _journal.journal(__name__)
 LEVER_DELAI = 40
 
 
+# The incidents of the feed the current thread is reading (see `_lire_flux`): read in
+# parallel, two feeds of the same kind would mix their counts under INCIDENTS["ats:<kind>"].
+_APPEL = threading.local()
+_INCIDENTS_VERROU = threading.Lock()
+
+
+def _incident(kind: str, cause: str) -> None:
+    with _INCIDENTS_VERROU:
+        INCIDENTS[f"ats:{kind}"][cause] += 1
+    compte = getattr(_APPEL, "compte", None)
+    if compte is not None:
+        compte[cause] += 1
+
+
 def _ats_ko(kind: str, slug: str, r: Any) -> bool:
     """Unusable response? And if so, should it be a concern?
 
@@ -38,7 +54,7 @@ def _ats_ko(kind: str, slug: str, r: Any) -> bool:
     if r.status_code == 200:
         return False
     if r.status_code != 404:
-        INCIDENTS[f"ats:{kind}"][f"HTTP {r.status_code}"] += 1
+        _incident(kind, f"HTTP {r.status_code}")
     return True
 
 
@@ -289,7 +305,7 @@ def fetch_ats(kind: str, slug: str) -> list[dict[str, Any]]:
             _feeds.brut(kind, slug, len(out))
             return [o for o in kept if o["titre"] and o["url"]]
     except Exception as e:  # noqa: BLE001
-        INCIDENTS[f"ats:{kind}"][type(e).__name__] += 1
+        _incident(kind, type(e).__name__)
         return []
     _feeds.brut(kind, slug, len(out))
     return [o for o in out if o["titre"] and o["url"] and title_ok(o["titre"])]
@@ -297,30 +313,102 @@ def fetch_ats(kind: str, slug: str) -> list[dict[str, Any]]:
 
 ATS_PAUSE = 0.5  # between two slugs: 40 calls in a row, better space them out
 
+# Feeds read at the same time, each on ANOTHER domain. One after the other, the ATS
+# then the other feeds took 1,003 s on 2026-11-04 (SmartRecruiters alone 340 s).
+ATS_PARALLELE = 6
+
+# One domain at a time across both pools (ATS, other feeds): a domain is asked
+# exactly as often as when everything ran in series, pause included.
+_DOMAINES: dict[str, threading.Lock] = {}
+_DOMAINES_VERROU = threading.Lock()
+
+
+def domaine(kind: str, cle: str) -> str:
+    """The domain a feed is read from, by which the feeds are spaced out.
+
+    A bare account name ("alan", "j") is read on the vendor's API: the domain is the
+    kind. A feed on its own address ("careers.ey.com", "https://www.kbc.be/jobs/…")
+    keeps the last two labels of its host — "fa.em2.oraclecloud.com" and
+    "estm.fa.em2.oraclecloud.com" are both "oraclecloud.com", read one after the other.
+    """
+    c = re.sub(r"^https?://", "", str(cle).split("|")[0]).split("/")[0]
+    if kind in ("greenhouse", "lever", "ashby", "recruitee", "smartrecruiters") or "." not in c:
+        return kind
+    return ".".join(c.lower().split(".")[-2:])
+
+
+def _lire_flux(f: Any, *args: Any) -> tuple[list[dict[str, Any]], str]:
+    """`f(*args)` and the incidents it counted, without those of the other threads."""
+    from jobhunter.sources import feeds as _flux
+
+    _APPEL.compte = collections.Counter()
+    try:
+        return f(*args), _flux.decrire(_APPEL.compte)
+    finally:
+        _APPEL.compte = None
+
+
+def _en_chaines(taches: list[tuple[str, Any, tuple[Any, ...]]]) -> list[Any]:
+    """Runs `(domain, f, args)` tasks, in series within a domain and in parallel across.
+
+    ATS_PAUSE between two tasks of a domain, ATS_PARALLELE domains at once. Returns the
+    `(offers, incidents)` of each task, in the order of `taches`.
+    """
+    import concurrent.futures as cf
+
+    chaines: dict[str, list[int]] = {}
+    for i, (dom, _, _) in enumerate(taches):
+        chaines.setdefault(dom, []).append(i)
+    res: list[Any] = [None] * len(taches)
+
+    def chaine(dom: str) -> None:
+        with _DOMAINES_VERROU:
+            verrou = _DOMAINES.setdefault(dom, threading.Lock())
+        with verrou:
+            for i in chaines[dom]:
+                _, f, args = taches[i]
+                res[i] = _lire_flux(f, *args)
+                time.sleep(ATS_PAUSE)
+
+    # The longest chains first: they set the duration.
+    ordre = sorted(chaines, key=lambda d: -len(chaines[d]))
+    with cf.ThreadPoolExecutor(max_workers=ATS_PARALLELE) as ex:
+        for fut in [ex.submit(chaine, d) for d in ordre]:
+            fut.result()
+    return res
+
 
 def scan_ats() -> list[dict[str, Any]]:
     """Collects all the ATS accounts of the configuration.
 
+    The other feeds (`scan_autres`) are read at the same time: none shares a domain
+    with an ATS API, and `_en_chaines` holds each domain to one request at a time.
+
     Returns:
-        The offers of all the accounts.
+        The offers of all the accounts, in the order of the configuration.
     """
+    import concurrent.futures as cf
+
     from jobhunter.sources import feeds as _flux
 
-    offers = []
     suspendus = _flux.suspendus()
-    for kind, slugs in _commun.ATS_SLUGS.items():
-        for slug in slugs:
-            ident = _flux.cle(kind, slug)
-            if ident in suspendus:
-                continue  # suspended in the Companies panel: kept, not collected
-            avant = _flux.instantane(f"ats:{kind}")
-            got = fetch_ats(kind, slug)
-            _flux.noter(ident, len(got), _flux.nouveaux(f"ats:{kind}", avant))
+    comptes = [
+        (kind, slug)
+        for kind, slugs in _commun.ATS_SLUGS.items()
+        for slug in slugs
+        # suspended in the Companies panel: kept, not collected
+        if _flux.cle(kind, slug) not in suspendus
+    ]
+    with cf.ThreadPoolExecutor(max_workers=1) as fond:
+        autres = fond.submit(scan_autres)
+        lus = _en_chaines([(domaine(k, s), fetch_ats, (k, s)) for k, s in comptes])
+        offers = []
+        for (kind, slug), (got, incident) in zip(comptes, lus, strict=True):
+            _flux.noter(_flux.cle(kind, slug), len(got), incident)
             if got:
                 _log.info(f"  ✓ {kind}:{slug} → {len(got)} offres")
             offers.extend(got)
-            time.sleep(ATS_PAUSE)
-    offers.extend(scan_autres())
+        offers.extend(autres.result())
     return offers
 
 
@@ -682,7 +770,7 @@ def fetch_autre(kind: str, cle: str, nom: str) -> list[dict[str, Any]]:
                         )
                 time.sleep(_workday.WORKDAY_PAUSE)
     except Exception as e:  # noqa: BLE001
-        INCIDENTS[f"ats:{kind}"][type(e).__name__] += 1
+        _incident(kind, type(e).__name__)
         return []
     # No raw count here: several of these feeds are searched by keyword, so an
     # empty answer does not mean an empty page (feeds.muet then says "nothing for you").
@@ -1151,16 +1239,12 @@ def scan_autres() -> list[dict[str, Any]]:
 
     offres = []
     suspendus = _flux.suspendus()
-    for kind, cle, nom in _commun.AUTRES_FLUX:
-        ident = _flux.cle(kind, cle)
-        if ident in suspendus:
-            continue
-        avant = _flux.instantane(f"ats:{kind}")
-        got = fetch_autre(kind, cle, nom)
-        _flux.noter(ident, len(got), _flux.nouveaux(f"ats:{kind}", avant))
+    flux = [f for f in _commun.AUTRES_FLUX if _flux.cle(f[0], f[1]) not in suspendus]
+    lus = _en_chaines([(domaine(k, c), fetch_autre, (k, c, n)) for k, c, n in flux])
+    for (kind, cle, _nom), (got, incident) in zip(flux, lus, strict=True):
+        _flux.noter(_flux.cle(kind, cle), len(got), incident)
         _log.info(f"  ✓ {kind}:{cle.split('|')[0]} → {len(got)} offres")
         offres.extend(got)
-        time.sleep(ATS_PAUSE)
     from jobhunter.sources import countries as _pays
 
     if _pays.en_france():  # the French civil service: for a profile in France

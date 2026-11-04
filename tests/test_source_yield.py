@@ -167,3 +167,64 @@ def test_fusion_compte_les_nouvelles_par_source(tmp_path, monkeypatch):
     assert bilan["added"] >= 1 and set(par) <= {"ats", "linkedin"}
     assert sum(c["nouvelles"] for c in par.values()) == bilan["added"] == len(file)
     assert sum(c["pertinentes"] for c in par.values()) == sum(o["fit"] >= 8 for o in file)
+
+
+# ── early stop: time cap, units in a row without a new offer ─────────────────
+def _lit(n_unites, neuves, journal):
+    def source():
+        g = R.garde()
+        for i in range(n_unites):
+            if not g.continuer(neuves(i - 1) if i else None):
+                break
+            journal.append(i)
+        return [{"titre": "x"}]
+
+    return source
+
+
+def test_arret_rendement_nul(monkeypatch):
+    monkeypatch.setattr(R, "VIDES", 3)
+    monkeypatch.setattr(R, "BUDGET", 0)
+    lues = []
+    R.mesurer("efc", _lit(10, lambda i: 0, lues))
+    assert lues == [0, 1, 2] and R.MESURES["efc"]["arret"] == R.ARRET_VIDE
+    assert "arrêt : rendement nul" in R.resume()[0]
+
+
+def test_une_nouvelle_remet_le_compte_a_zero(monkeypatch):
+    monkeypatch.setattr(R, "VIDES", 3)
+    lues = []
+    R.mesurer("wtj", _lit(6, lambda i: int(i == 1), lues))
+    assert lues == [0, 1, 2, 3, 4] and R.MESURES["wtj"]["arret"] == R.ARRET_VIDE
+
+
+def test_arret_budget(monkeypatch):
+    monkeypatch.setattr(R, "BUDGET", 5)
+    horloge = iter([0.0, 0.0, 1.0, 6.0, 7.0, 8.0, 9.0])
+    monkeypatch.setattr(R.time, "monotonic", lambda: next(horloge))
+    lues = []
+    R.mesurer("efc", _lit(10, lambda i: 1, lues))
+    assert lues == [0, 1] and R.MESURES["efc"]["arret"] == R.ARRET_BUDGET
+
+
+def test_sans_arret_ni_hors_mesure(monkeypatch):
+    monkeypatch.setattr(R, "VIDES", 0)
+    lues = []
+    R.mesurer("efc", _lit(5, lambda i: 0, lues))
+    assert lues == [0, 1, 2, 3, 4] and "arret" not in R.MESURES["efc"]
+    monkeypatch.setattr(R, "VIDES", 1)
+    assert all(R.garde().continuer(0) for _ in range(5))  # outside mesurer: never stops
+
+
+def test_efc_les_sites_tournent_chaque_jour():
+    """With a budget, a fixed order never reached the last eFC sites."""
+    import datetime
+
+    from jobhunter.sources import efc
+
+    sites = ["fr", "uk", "de"]
+    jour = datetime.date(2026, 11, 4)
+    premiers = {efc.ordre_du_jour(sites, jour + datetime.timedelta(days=d))[0] for d in range(3)}
+    assert premiers == set(sites)
+    assert sorted(efc.ordre_du_jour(sites, jour)) == sorted(sites)
+    assert efc.ordre_du_jour([], jour) == []

@@ -66,12 +66,12 @@ def instantane(prefixe: str) -> dict[str, int]:
 
 def nouveaux(prefixe: str, avant: dict[str, int]) -> str:
     """The incidents added since `avant`: 'HTTP 404 ×2, ReadTimeout' ('' if none)."""
-    out = []
-    for k, n in instantane(prefixe).items():
-        d = n - avant.get(k, 0)
-        if d > 0:
-            out.append(f"{k} ×{d}" if d > 1 else k)
-    return ", ".join(out)
+    return decrire({k: n - avant.get(k, 0) for k, n in instantane(prefixe).items()})
+
+
+def decrire(compte: dict[Any, int]) -> str:
+    """'HTTP 404 ×2, ReadTimeout' for {cause: count} ('' if none)."""
+    return ", ".join(f"{k} ×{n}" if n > 1 else str(k) for k, n in compte.items() if n > 0)
 
 
 def noter(ident: str, offres: int, incident: str = "") -> None:

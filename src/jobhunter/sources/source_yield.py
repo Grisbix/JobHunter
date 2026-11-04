@@ -36,6 +36,53 @@ _RX_LIMITE = re.compile(r"\b429\b")
 # Measurements of the current collection: {source: {"ramenees", "duree", "incidents"}}.
 MESURES: dict[str, dict[str, Any]] = {}
 
+# A SOURCE THAT BRINGS NOTHING STOPS EARLY. Measured on 2026-11-04: eFC read 30 postings
+# in 418 s for 1 new offer, WTJ 210 s for none. A source that reads unit by unit (a
+# posting, a page) asks `garde().continuer(new)` before the next one; it is told to
+# stop after BUDGET seconds (0: no cap) or after VIDES units in a row without a new
+# offer (0: never). The reason goes into the summary next to the verdict.
+BUDGET = 0.0
+VIDES = 3
+ARRET_BUDGET, ARRET_VIDE = "budget", "rendement nul"
+
+
+class Garde:
+    """The time and yield cap of the source being measured (see BUDGET, VIDES)."""
+
+    def __init__(self, nom: str = "", debut: float | None = None) -> None:
+        """A cap for `nom`, counted from `debut` (now by default)."""
+        self.nom = nom
+        self.debut = time.monotonic() if debut is None else debut
+        self.vides = 0
+        self.arret = ""
+
+    def continuer(self, nouvelles: int | None = None) -> bool:
+        """May the source read its next unit? `nouvelles`: new offers of the last one."""
+        if nouvelles is not None:
+            self.vides = 0 if nouvelles else self.vides + 1
+        if self.nom and not self.arret:
+            if BUDGET and time.monotonic() - self.debut >= BUDGET:
+                self.arret = ARRET_BUDGET
+            elif VIDES and self.vides >= VIDES:
+                self.arret = ARRET_VIDE
+        return not self.arret
+
+
+def cle_offre(entreprise: Any, poste: Any) -> str:
+    """The key by which the merge recognises an offer already in the queue."""
+    from jobhunter.text import cle
+
+    return cle(str(entreprise or "")) + "|" + cle(str(poste or ""))
+
+
+_GARDE: Garde | None = None
+
+
+def garde() -> Garde:
+    """The cap of the source `mesurer` is running; outside of it, one that never stops."""
+    return _GARDE or Garde()
+
+
 # PROGRESS LINES, read by the application (app.progress) to show each source's state
 # while the collection runs, without a console:
 #   »» source linkedin début
@@ -122,14 +169,17 @@ def mesurer(
 
     An exception from the source propagates as before; the measurement is recorded anyway.
     """
+    global _GARDE
     avant = instantane()
     debut = time.monotonic()
     offres: list[dict[str, Any]] = []
     progres(f"source {nom} début")
+    _GARDE = g = Garde(nom, debut)
     try:
         offres = fn(*args, **kw) or []
         return offres
     finally:
+        _GARDE = None
         for o in offres:
             o["_passe"] = nom
         MESURES[nom] = {
@@ -138,6 +188,8 @@ def mesurer(
             "incidents": ecart(avant),
         }
         m = MESURES[nom]
+        if g.arret:
+            m["arret"] = g.arret
         progres(
             f"source {nom} fin {verdict(m['ramenees'], m['incidents'])} "
             f"{m['ramenees']} {m['duree']}"
@@ -174,7 +226,7 @@ def resume() -> list[str]:
         lignes.append(
             f"  {nom:<14} {m.get('verdict', '?'):<15} {m['ramenees']:>5} ramenées"
             f" · {m.get('nouvelles', 0):>4} nouvelles · {m.get('pertinentes', 0):>3} pertinentes"
-            f" · {m['duree']:>6.1f} s"
+            f" · {m['duree']:>6.1f} s" + (f" · arrêt : {m['arret']}" if m.get("arret") else "")
         )
     return lignes
 

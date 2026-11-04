@@ -10,6 +10,7 @@ from typing import Any
 
 from jobhunter import log as _journal
 from jobhunter.sources import common as _commun
+from jobhunter.sources import source_yield as _rendement
 from jobhunter.sources.common import (
     _mk,
     _norm_url,
@@ -180,11 +181,10 @@ def scan_wtj(pages: int = 2) -> list[dict[str, Any]]:
         # request on a very limited rate.
         from jobhunter.storage import queue as queue_io
 
-        connues = {
-            _norm_url(x.get("url"))
-            for x in queue_io.charger(_commun.QUEUE, descriptions=False)
-            if x.get("url")
-        }
+        file_ = queue_io.charger(_commun.QUEUE, descriptions=False)
+        connues = {_norm_url(x.get("url")) for x in file_ if x.get("url")}
+        deja_vues = {_rendement.cle_offre(x.get("entreprise"), x.get("poste")) for x in file_}
+        g = _rendement.garde()
         neuves = [u for u in cibles if _norm_url(u) not in connues]
         plafond = max(1, pages) * 5
         _log.info(
@@ -212,11 +212,19 @@ def scan_wtj(pages: int = 2) -> list[dict[str, Any]]:
                     if etat["attentes"] >= WTJ_PATIENCE:
                         _log.info(f"  ~ {e} — arret WTJ apres {etat['attentes']} attente(s).")
                         return None
+                    if not g.continuer():  # no wait past the source's time cap
+                        _log.info(f"  ~ {e} — arret WTJ ({g.arret}).")
+                        return None
                     etat["attentes"] += 1
                     _log.info(f"  ~ {e} — pause {WTJ_REPOS} s ({etat['attentes']}/{WTJ_PATIENCE})…")
                     time.sleep(WTJ_REPOS)
 
+        neuve: int | None = None
         for u in neuves[:plafond]:
+            if not g.continuer(neuve):
+                _log.info(f"  ~ WTJ : {g.arret}, lecture des fiches arrêtée")
+                break
+            neuve = 0
             jp = _fiche_patiente(u)
             if jp is None:  # lasting wall: we hand back
                 break
@@ -239,5 +247,7 @@ def scan_wtj(pages: int = 2) -> list[dict[str, Any]]:
             offers.append(
                 _mk(titre, u, soc, lieu, str(jp.get("datePosted") or "")[:10], "wtj-sitemap", d)
             )
+            o = offers[-1]
+            neuve = int(_rendement.cle_offre(o["entreprise"], o["titre"]) not in deja_vues)
     _log.info(f"  \u2713 Welcome to the Jungle \u2192 {len(offers)} offres (avec description)")
     return offers
