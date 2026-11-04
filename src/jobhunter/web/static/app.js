@@ -1086,7 +1086,11 @@ function listeMulti(choisis, tous, valeurs, appliquer, lien = null, noms = {}) {
   return bouton_;
 }
 
-const filtresOffres = { texte: "", statut: "à traiter", zone: [], domaine: [], contrat: [], pays: [], region: [], fit_min: 0, tri: "fit", page: 0, par_page: 40 };
+const filtresOffres = { texte: "", statut: "à traiter", zone: [], domaine: [], contrat: [], pays: [], region: [], fit_min: 0, jours: 0, tri: "fit", page: 0, par_page: 40 };
+// The offer's age (the user, 2026-11-04: « il n'y a pas de filtre sur la date de l'offre »):
+// its publication, else the day it was seen. Days; 0 = any date.
+const AGES_OFFRES = [[0, "Toutes les dates"], [1, "Dernières 24 h"], [3, "3 derniers jours"], [7, "7 derniers jours"],
+  [14, "14 derniers jours"], [30, "30 derniers jours"]];
 // The table's optional columns (the desktop's COLS); the offer itself is always shown.
 const COLONNES_OFFRES = [
   ["lieu", "Lieu", (o) => h("span", { class: "cellule-lieu", title: o.lieu }, o.lieu || "—")],
@@ -1138,7 +1142,7 @@ function menuVues() {
       if (ok && await ecrire("supprimer_vue", nom)) { delete vuesOffres.vues[nom]; redessiner(); }
       return;
     }
-    if (v === "*") Object.assign(filtresOffres, { texte: "", statut: "à traiter", zone: [], domaine: [], contrat: [], pays: [], region: [], fit_min: 0, tri: "fit" });
+    if (v === "*") Object.assign(filtresOffres, { texte: "", statut: "à traiter", zone: [], domaine: [], contrat: [], pays: [], region: [], fit_min: 0, jours: 0, tri: "fit" });
     else Object.assign(filtresOffres, vuesOffres.vues[v]);
     filtresOffres.page = 0;
     redessiner();
@@ -1160,10 +1164,11 @@ ECRANS.offres = {
     action("Lancer la collecte", "eclair", "collecte", "plein")],
   async dessiner(vue) {
     const f = filtresOffres;
-    // No score or date filter any more (the user, 2026-10-27): the queue keeps only fresh
-    // offers, and sorted by score the 7+ / 8+ buttons showed the same list. A saved view
-    // that still carries them is read without them.
+    // No score filter any more (the user, 2026-10-27): sorted by score the 7+ / 8+ buttons
+    // showed the same list. A saved view that still carries one is read without it. The
+    // date filter is back (2026-11-04): the queue holds 17 000 offers, not only fresh ones.
     f.fit_min = 0;
+    if (!AGES_OFFRES.some(([v]) => v === Number(f.jours))) f.jours = 0;
     if (!TRIS_OFFRES.some(([v]) => v === f.tri)) f.tri = "fit";
     const relancer = () => ECRANS.offres.dessiner(vue);
     const changer = (cle, v) => { f[cle] = v; f.page = 0; relancer(); };
@@ -1210,7 +1215,9 @@ ECRANS.offres = {
           tri, menuVues(), bouton("Colonnes…", "", choisirColonnes)),
         h("div", { class: "grille-filtres" },
           liste("zone", "Toutes les zones", d.zones, reglerZones), liste("domaine", "Tous les domaines", d.domaines, null, d.noms_domaines || {}), liste("contrat", "Tous les contrats", d.contrats, null, Object.fromEntries((d.contrats || []).map((c) => [c, lisible(c)]))),
-          liste("region", "Toutes les régions", d.regions), liste("pays", "Tous les pays", d.pays))),
+          liste("region", "Toutes les régions", d.regions), liste("pays", "Tous les pays", d.pays),
+          h("select", { class: `choix${f.jours ? " pris" : ""}`, "aria-label": "Date de l'offre", onchange: (e) => changer("jours", Number(e.target.value)) },
+            AGES_OFFRES.map(([v, l]) => h("option", { value: v, selected: v === Number(f.jours) }, l))))),
       barreSel,
       h("div", { class: "verre panneau remplit" },
         d.lignes.length ? h("div", { class: "defile" }, h("table", {},

@@ -232,7 +232,7 @@ h3 { font-size: var(--t-xl); font-weight: 500; }
 .filtres-offres { display: grid; gap: 12px; }
 .filtres-offres > .barre-outils { margin-bottom: 0; }
 .grille-filtres { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-.grille-filtres button.choix.multi { max-width: none; width: 100%; }
+.grille-filtres button.choix.multi, .grille-filtres select.choix { max-width: none; width: 100%; }
 .vide { color: var(--gris); font-size: var(--t-l); padding: 24px 0; text-align: center; }
 
 /* Tags and chips */
@@ -341,7 +341,7 @@ button.choix.multi {
   color: var(--encre); font-family: inherit; text-align: left; max-width: 220px; flex: none;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-button.choix.multi.pris { border-color: var(--c2); font-weight: 500; }
+button.choix.multi.pris, select.choix.pris { border-color: var(--c2); font-weight: 500; }
 .menu-multi { display: grid; gap: 8px; width: 260px; max-height: none; overflow: visible; }
 .menu-multi .champ-texte { height: 34px; }
 .menu-multi .cases { max-height: 300px; overflow-y: auto; }
