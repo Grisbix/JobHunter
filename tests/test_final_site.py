@@ -86,6 +86,77 @@ def test_a_resonder(etat, attendu):
     assert S.a_resonder(etat, J) == attendu
 
 
+@pytest.mark.parametrize(
+    ("etat", "attendu"),
+    [
+        ({"date": "2026-08-20", "flux": [], "wd_date": "2026-08-20", "vides": 2}, (False, True)),
+        ({"date": "2026-07-01", "flux": [], "wd_date": "2026-07-01", "wd_vides": 3}, (True, False)),
+        ({"date": "2026-05-01", "flux": [], "wd_date": "2026-05-01", "vides": 9}, (True, True)),
+    ],
+    ids=["2e vide: 60 j", "3e vide: 120 j", "plafond 120 j"],
+)
+def test_a_resonder_delai_croissant(etat, attendu):
+    assert S.a_resonder(etat, J) == attendu
+
+
+@pytest.mark.parametrize(
+    ("avant", "vides"),
+    [(None, 1), ({"date": "2026-09-01", "flux": [], "wd_date": "2026-09-01"}, 2)],
+    ids=["neuve", "ancienne sans compteur"],
+)
+def test_sonder_compte_les_vides(monkeypatch, avant, vides):
+    monkeypatch.setattr(S, "flux_de", lambda e, c: [])
+    monkeypatch.setattr(S, "flux_workday", lambda e: [])
+    x = S.sonder("D", avant, [], J)
+    assert (x["vides"], x["wd_vides"]) == (vides, vides)
+
+
+def test_sonder_flux_trouve_remet_a_zero(appels):
+    x = S.sonder("E", {"date": "2026-07-01", "flux": [], "vides": 2, "wd_vides": 2}, [], J)
+    assert (x["vides"], x["wd_vides"]) == (0, 0)
+
+
+# ── fewer probes: first confirmed feed wins, a dead address is asked once ─────
+@pytest.fixture
+def sondes(monkeypatch):
+    vues = []
+    monkeypatch.setattr(S, "_MORTS", set())
+    monkeypatch.setattr(S, "variantes", lambda e: ["acme", "acmegroup"])
+    monkeypatch.setattr(
+        S.probe_ats, "probe", lambda k, s: vues.append((k, s)) or (k in ("lever", "ashby"))
+    )
+    monkeypatch.setattr(S, "nom_du_flux", lambda k, s: "Acme")
+    monkeypatch.setattr(S, "verdict", lambda e, n: ("CONFIRME", ""))
+    monkeypatch.setattr(S, "lire_flux", lambda *a: [("Analyst", "u", "")])
+    return vues
+
+
+def test_flux_de_premier_confirme(sondes):
+    assert S.flux_de("Acme", []) == [["lever", "acme"]]
+    assert sondes == [("greenhouse", "acme"), ("lever", "acme")]
+
+
+def test_flux_de_connus_tous_gardes(sondes):
+    connus = [("lever", "acme"), ("ashby", "acme")]
+    assert S.flux_de("Acme", connus) == [list(c) for c in connus]
+
+
+def test_sonde_morte_une_fois(sondes):
+    S.flux_de("Acme", [])
+    S.flux_de("Acme Group", [])
+    assert sondes.count(("greenhouse", "acme")) == 1
+
+
+def test_workday_un_hote_par_tenant(monkeypatch):
+    hotes = []
+    monkeypatch.setattr(S, "_MORTS", set())
+    monkeypatch.setattr(S, "variantes", lambda e: [])
+    monkeypatch.setattr(S, "tenant_workday", lambda t, h: hotes.append(h) or h == "wd3")
+    monkeypatch.setattr(S, "_wd_jobs", lambda *a, **k: None)
+    assert S.flux_workday("Acme") == []
+    assert hotes == ["wd1", "wd3"]
+
+
 # ── probe: keeps what is found, only probes again what is due ─────────────
 @pytest.fixture
 def appels(monkeypatch):
