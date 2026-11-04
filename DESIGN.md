@@ -63,7 +63,8 @@ follows it, never the reverse.
   bleu, noir (`body[data-teinte=…]`). Each teinte redefines the whole family, its
   `-rgb` twins included; nothing else changes.
 - Text: `encre` for content, `texte-desc` for descriptions, `texte-doux` and `gris`
-  for secondary lines, `gris-clair` for hints.
+  for secondary lines, `gris-clair` for placeholders only: as a label it reads at
+  about 2:1 on the page.
 - `sombre` is the filled button (`.bouton.plein`): the one main action of a screen.
 - Dark mode redefines the neutrals and the glass from `--blanc-rgb`; the teinte keeps
   its accent.
@@ -74,6 +75,9 @@ follows it, never the reverse.
   system's. A family missing on the machine falls back down the list; never name one
   outside it.
 - Sizes come from the scale `--t-xs` … `--t-5xl` only; body text is `t-l` (14 px).
+- Weights 400 and 500; 600 for a rare emphasis in a line, never for a big figure or
+  a title: size does the hierarchy.
+- Sentence case: no labels in tracked capitals.
 
 ## Layout
 
@@ -85,7 +89,9 @@ follows it, never the reverse.
 
 ## Shapes
 
-- Buttons 40 px high, 12 px corners; cards 14 px; panels 18 px.
+- Buttons 40 px high, 12 px corners; cards 14 px; panels 18 px (the drawer and the
+  dialogs too).
+- A floating panel casts a small, soft shadow (`0 12px 32px -12px`, 22 %).
 - A surface on another surface is not one more card: a row of buttons inside a card is
   a plain container, without border or corners.
 
