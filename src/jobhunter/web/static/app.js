@@ -407,7 +407,9 @@ function dessinerActivite() {
     activiteDepliee = !activiteDepliee;
     try { localStorage.setItem("jh-activite", activiteDepliee ? "1" : ""); } catch (_) { /* no storage */ }
     dessinerActivite();
-  } }, activiteDepliee ? "Masquer le détail" : "Voir le détail");
+  } }, activiteDepliee ? (e ? "Masquer ce qu'écrit le programme" : "Masquer l'historique")
+    // « Voir le détail » said nothing of what unfolds (the user, 2026-11-04: « pas clair »).
+    : e ? `Voir ce qu'écrit le programme (${detail.length} dernières lignes)` : `Voir l'historique (${detail.length} messages)`);
   p.replaceChildren(...lignes,
     ...(detail.length ? [plier] : []),
     ...(detail.length && activiteDepliee ? [h("div", { class: "activite-detail" }, detail.map((l) => h("div", {}, l)))] : []));
@@ -1493,10 +1495,10 @@ function editeurPuces(liste, sale, placeholder = "Ajouter…") {
       },
     });
     const f = filtre.trim().toLowerCase();
-    const vus = liste.map((x, i) => [x, i]).filter(([x]) => !f || x.toLowerCase().includes(f));
+    const vus = liste.map((x, i) => [x, i]).filter(([x]) => !f || x.toLowerCase().includes(f) || motLisible(x).toLowerCase().includes(f));
     const montres = f || tout ? vus : vus.slice(0, PUCES_MAX);
     const reste = vus.length - montres.length;
-    boite.replaceChildren(...montres.map(([x, i]) => h("span", { class: "puce modifiable", title: x }, x,
+    boite.replaceChildren(...montres.map(([x, i]) => h("span", { class: "puce modifiable", title: x }, motLisible(x),
       h("button", { title: "Retirer", onclick: () => { liste.splice(i, 1); sale(); dessiner(); } }, "×"))),
       reste ? h("button", { class: "lien", onclick: () => { tout = true; dessiner(); } }, `+ ${reste} autres`)
         : tout && !f && liste.length > PUCES_MAX ? h("button", { class: "lien", onclick: () => { tout = false; dessiner(); } }, "Replier") : "",
@@ -2142,6 +2144,16 @@ async function choixFichier(nom, ...args) {
   return r;
 }
 
+// A title word as the user reads it: « re:\b(isr|(?<![a-z])csrd(?![a-z]))\b » shows as
+// « isr · csrd » (the user, 2026-11-04: the raw patterns ran over the card). The chip's
+// tooltip keeps the pattern itself.
+function motLisible(mot) {
+  if (!mot.startsWith("re:")) return mot;
+  const s = mot.slice(3).replace(/\(\?<?[!=][^)]*\)/g, "").replace(/\\b/g, "").replace(/\(\?:/g, "(")
+    .replace(/\\(.)/g, "$1").replace(/[()^$?+*]/g, "");
+  return s.split("|").map((x) => x.trim()).filter(Boolean).join(" · ");
+}
+
 async function carteMetiers() {
   const m = (await appel("metiers")) || { metiers: [] };
   const vrais = m.metiers.filter((x) => x.cle !== "General");
@@ -2204,7 +2216,7 @@ async function carteMetiers() {
     h("div", { class: "metiers" }, m.metiers.map((x) => h("div", { class: "metier" },
       h("div", { class: "metier-tete" },
         h("div", { style: "min-width:0" }, h("div", { class: "t" }, x.cle === "General" ? `${x.libelle} (le reste)` : x.libelle),
-          h("div", { class: "sous", title: x.mots.join(", ") }, x.cle === "General" ? "les offres qu'aucun métier ne prend" : x.mots.join(" · "))),
+          h("div", { class: "sous", title: x.mots.map(motLisible).join(" · ") }, x.cle === "General" ? "les offres qu'aucun métier ne prend" : x.mots.map(motLisible).join(" · "))),
         h("div", { class: "outils-metier" },
           h("button", { class: "lien", onclick: () => modifier(x) }, "Modifier"),
           x.cle !== "General" && vrais.length > 1 ? h("button", { class: "lien", onclick: () => retirer(x) }, "Retirer") : null)),
@@ -2689,6 +2701,7 @@ async function aller(nom) {
   // A list screen keeps its filters in place: its list scrolls inside its panel, not the
   // page (the user, 2026-10-27). style.css: .vue.plein.
   vue.classList.toggle("plein", typeof e.plein === "function" ? e.plein() : !!e.plein);
+  vue.dataset.ecran = nom;  // style.css: .vue[data-ecran=…]
   try { localStorage.setItem("jh-ecran", nom); } catch (_) { /* no storage: fine */ }
   // A screen reading the whole queue takes a second: the old one stayed in place under
   // the new title, as if the click had done nothing (2026-11-03). Past 150 ms, say so.
