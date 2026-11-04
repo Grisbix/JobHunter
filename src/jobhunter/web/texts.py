@@ -710,6 +710,18 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "14 derniers jours": ("Last 14 days", "Letzte 14 Tage", "Últimos 14 días"),
     "30 derniers jours": ("Last 30 days", "Letzte 30 Tage", "Últimos 30 días"),
     "Date de l'offre": ("Offer date", "Datum des Angebots", "Fecha de la oferta"),
+    "Pourcentages dans Statistiques": (
+        "Percentages in Statistics",
+        "Prozente in Statistik",
+        "Porcentajes en Estadísticas",
+    ),
+    "La part de chaque ligne et les taux de réponse.": (
+        "Each line's share and the reply rates.",
+        "Der Anteil jeder Zeile und die Antwortquoten.",
+        "La parte de cada línea y las tasas de respuesta.",
+    ),
+    "Masqués": ("Hidden", "Ausgeblendet", "Ocultos"),
+    "Affichés": ("Shown", "Angezeigt", "Mostrados"),
     "Chercher…": ("Search…", "Suchen…", "Buscar…"),
     "Tout effacer": ("Clear all", "Alles löschen", "Borrar todo"),
     "Régler les zones…": ("Set the areas…", "Zonen einstellen…", "Ajustar las zonas…"),

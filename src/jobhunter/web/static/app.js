@@ -2040,7 +2040,9 @@ ECRANS.stats = {
   async dessiner(vue) {
     const d = await appel("stats");
     if (!d) return vue.replaceChildren(h("div", { class: "vide" }, HORS_APPLI));
-    const pc = (p) => (p == null ? "" : `${Math.round(p * 100)} %`);
+    // The shares only when asked for, in Réglages (the user, 2026-11-04: too busy).
+    const avecPc = !!(reglagesCourants && reglagesCourants.pourcentages);
+    const pc = (p) => (p == null || !avecPc ? "" : `${Math.round(p * 100)} %`);
     const e = d.entonnoir;
     const barres = (s) => {
       const max = Math.max(1, ...s.lignes.map((l) => (typeof l.n === "number" ? l.n : 0)));
@@ -2048,7 +2050,7 @@ ECRANS.stats = {
         s.lignes.map((l) => h("div", { class: "ligne-barre" },
           h("span", { class: "nom", title: lisible(l.nom) }, lisible(l.nom)),
           h("span", { class: "piste" }, h("span", { class: "rempli", style: `width:${100 * l.n / max}%` })),
-          h("span", { class: "num" }, `${nombre(l.n)} ${pc(l.part)}`))));
+          h("span", { class: "num" }, `${nombre(l.n)} ${pc(l.part)}`.trim()))));
     };
     // No hole between panels (the user, 2026-10-27): the sections go into three stacks of
     // about the same height, the longest first, and the last panel of each stack grows.
@@ -2058,13 +2060,13 @@ ECRANS.stats = {
       .forEach((s) => piles.reduce((m, p) => (hauteur(p) < hauteur(m) ? p : m)).push(s));
     const parChamp = (ch, titre) => (e.par[ch].length < 2 ? null : h("div", {}, h("h3", {}, titre),
       h("dl", { class: "paires alignees" }, e.par[ch].map((x) => [h("dt", {}, x.val),
-        h("dd", {}, `${x.env} envoyée(s) · ${x.rep} réponse(s), ${x.ent} entretien(s) · ${pc(x.rep / x.env)}`)]))));
+        h("dd", {}, `${x.env} envoyée(s) · ${x.rep} réponse(s), ${x.ent} entretien(s)${avecPc ? ` · ${pc(x.rep / x.env)}` : ""}`)]))));
     // The applications sent make a fourth stack, on the left, instead of a full-width band:
     // the screen holds in a 1280 × 720 window when it opens (the user, 2026-10-28).
     const envoyees = e ? h("div", { class: "verre panneau envoyees" },
         h("div", {}, h("h2", {}, "Candidatures envoyées"),
           h("dl", { class: "paires alignees" },
-            h("dt", {}, "Taux de réponse"), h("dd", {}, e.taux != null ? pc(e.taux) : "—"),
+            avecPc ? [h("dt", {}, "Taux de réponse"), h("dd", {}, e.taux != null ? pc(e.taux) : "—")] : null,
             h("dt", {}, "Sans réponse depuis 30 jours"), h("dd", {}, String(e.silence)),
             h("dt", {}, "Délai médian de réponse"), h("dd", {}, e.delai_median == null ? "—" : `${Math.round(e.delai_median)} j (sur ${e.n_delais} réponse(s) datée(s))`))),
         parChamp("contrat", "Par contrat"), parChamp("domaine", "Par domaine")) : null;
@@ -2553,6 +2555,10 @@ ECRANS.reglages = {
       h("button", { class: `police ${v === r.police ? "on" : ""}`, onclick: async () => { await enregistrer({ police: v }); dessinerPolices(); } },
         h("span", { class: "exemple", style: `font-family:${pile}` }, "Aa"), lib)));
     dessinerPolices();
+    const placePc = h("div");
+    const dessinerPc = () => placePc.replaceChildren(segment([["non", "Masqués"], ["oui", "Affichés"]], r.pourcentages ? "oui" : "non",
+      async (v) => { await enregistrer({ pourcentages: v === "oui" }); dessinerPc(); }));
+    dessinerPc();
     vue.replaceChildren(h("div", { class: "grille" },
       h("div", { class: "verre panneau" },
         h("div", { class: "titre-ligne" }, h("h2", {}, "Apparence")),
@@ -2568,7 +2574,11 @@ ECRANS.reglages = {
         h("div", { class: "titre-ligne" }, h("h2", {}, "Couleurs et police")),
         h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Mode"), placeMode),
         h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Couleur"), teintes),
-        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Police"), polices)),
+        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Police"), polices),
+        h("div", { class: "reglage" },
+          h("div", {}, h("div", { class: "nom-reglage" }, "Pourcentages dans Statistiques"),
+            h("div", { class: "sous" }, "La part de chaque ligne et les taux de réponse.")),
+          placePc)),
       await cartesParametres(),
       ...(await cartesMaintenance()),
       window.pywebview ? null : h("div", { class: "verre panneau" },
