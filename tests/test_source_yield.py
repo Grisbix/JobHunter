@@ -214,3 +214,17 @@ def test_sans_arret_ni_hors_mesure(monkeypatch):
     assert lues == [0, 1, 2, 3, 4] and "arret" not in R.MESURES["efc"]
     monkeypatch.setattr(R, "VIDES", 1)
     assert all(R.garde().continuer(0) for _ in range(5))  # outside mesurer: never stops
+
+
+def test_efc_les_sites_tournent_chaque_jour():
+    """With a budget, a fixed order never reached the last eFC sites."""
+    import datetime
+
+    from jobhunter.sources import efc
+
+    sites = ["fr", "uk", "de"]
+    jour = datetime.date(2026, 11, 4)
+    premiers = {efc.ordre_du_jour(sites, jour + datetime.timedelta(days=d))[0] for d in range(3)}
+    assert premiers == set(sites)
+    assert sorted(efc.ordre_du_jour(sites, jour)) == sorted(sites)
+    assert efc.ordre_du_jour([], jour) == []

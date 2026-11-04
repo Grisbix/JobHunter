@@ -3,9 +3,11 @@
 Part of jobhunter.sources (formerly Scripts/job_sources.py, phase 3.4).
 """
 
+import datetime
 import json
 import re
 import time
+from collections.abc import Iterable
 from typing import Any
 from urllib.parse import unquote, urlparse
 
@@ -203,6 +205,19 @@ def _efc_lieu(jp: Any) -> str:
     )
 
 
+def ordre_du_jour(sites: Iterable[str], jour: datetime.date | None = None) -> list[str]:
+    """The sites, starting from another one each day.
+
+    The source's time budget can stop the sitemaps before the end: in a fixed order the
+    last sites would never be read. Turning, each one comes first once every len(sites) days.
+    """
+    sites = list(sites)
+    if not sites:
+        return sites
+    debut = (jour or datetime.date.today()).toordinal() % len(sites)
+    return sites[debut:] + sites[:debut]
+
+
 def scan_efc(
     limit: int = 40, filtre: str = "esg", sites: tuple[str, ...] = ("fr",)
 ) -> list[dict[str, Any]]:
@@ -229,7 +244,7 @@ def scan_efc(
         # read it once.
         toutes, ids = [], set()
         g = _rendement.garde()
-        for i, site in enumerate(sites):
+        for i, site in enumerate(ordre_du_jour(sites)):
             if i:
                 if not g.continuer():
                     _log.info(f"  ~ eFC : {g.arret}, sitemaps arrêtés à {i}/{len(sites)}")
