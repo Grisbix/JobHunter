@@ -838,6 +838,49 @@ Add-Type -AssemblyName Microsoft.VisualBasic
 """
 
 
+# Waits for the application to close, sends its data to the Recycle Bin (when it may),
+# then removes the application: the Store package, or the installer's uninstaller run
+# silently (its own question about the data is not asked then: it was asked here).
+_DESINSTALLER = r"""
+try { Wait-Process -Id ([int]$env:JH_PID) -Timeout 120 -ErrorAction Stop } catch {}
+Add-Type -AssemblyName Microsoft.VisualBasic
+if ($env:JH_DOSSIER -and (Test-Path -LiteralPath $env:JH_DOSSIER)) {
+  [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory(
+    $env:JH_DOSSIER, 'OnlyErrorDialogs', 'SendToRecycleBin')
+}
+if ($env:JH_LIEN -and (Test-Path -LiteralPath $env:JH_LIEN)) {
+  Remove-Item -LiteralPath $env:JH_LIEN -Force
+}
+if ($env:JH_FAMILLE) {
+  Get-AppxPackage | Where-Object PackageFamilyName -eq $env:JH_FAMILLE | Remove-AppxPackage
+} else {
+  Start-Process -FilePath $env:JH_DESINSTALLEUR -Wait `
+    -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
+}
+"""
+
+
+def _desinstalleur() -> dict[str, str] | None:
+    """How « Désinstaller JobHunter » removes this installation, None when it cannot.
+
+    The Store package by its family name; the installer's copy by the unins000.exe
+    beside JobHunter.exe. A source or pip installation has neither: pip uninstalls it.
+    """
+    from jobhunter import frozen
+
+    if not frozen.est_gele():
+        return None
+    famille = frozen.famille_msix()
+    if famille:
+        from jobhunter.programs import shortcut
+
+        # the desktop icon made at the first start (shortcut.bureau_msix): ours to remove
+        lien = shortcut.dossier_bureau() / "JobHunter.lnk"
+        return {"JH_FAMILLE": famille, "JH_LIEN": str(lien) if lien.is_file() else ""}
+    exe = Path(sys.executable).with_name("unins000.exe")
+    return {"JH_DESINSTALLEUR": str(exe)} if exe.is_file() else None
+
+
 def _dossier_effacable() -> Path | None:
     """The data folder « Effacer mes données » may remove, None when there is none.
 
@@ -1329,6 +1372,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         return {
             "version": v,
             "effacable": _dossier_effacable() is not None,
+            "desinstallable": _desinstalleur() is not None,
             "collecte": collecte,
             "sauvegardes": jours,
             "tailles": tailles,
@@ -2036,6 +2080,29 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         dossier = _dossier_effacable()
         if dossier is None:
             return {"ok": False, "message": "Réservé à l'application installée."}
+        refus = self._partir(_CORBEILLE, {"JH_DOSSIER": str(dossier)})
+        return refus or {"ok": True, "dossier": str(dossier)}
+
+    def desinstaller(self) -> dict[str, Any]:
+        """Removes the installed application and sends its data to the Recycle Bin.
+
+        Uninstalling from Windows kept everything (the user, 2026-11-04: reinstalled on
+        another computer, the offers and CVs were still there): the installer asks with
+        « No » by default, the Store cannot ask. A data folder named by JOBHUNTER_RACINE
+        stays where it is (see _dossier_effacable).
+        """
+        moyen = _desinstalleur()
+        if moyen is None:
+            return {"ok": False, "message": "Réservé à l'application installée."}
+        dossier = _dossier_effacable()
+        refus = self._partir(_DESINSTALLER, {"JH_DOSSIER": str(dossier or ""), **moyen})
+        return refus or {"ok": True, "dossier": str(dossier or "")}
+
+    def _partir(self, script: str, valeurs: dict[str, str]) -> dict[str, Any] | None:
+        """Closes the application and runs `script` after it; a refusal if a task runs.
+
+        The daily collection is unscheduled first, else it would make the folder again.
+        """
         from jobhunter import scheduling
         from jobhunter.programs import update
 
@@ -2043,18 +2110,18 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
             return {"ok": False, "message": "Une tâche tourne : réessaie quand elle est finie."}
         if scheduling.disponible() and scheduling.planifiee():
             scheduling.supprimer()
-        env = dict(os.environ, JH_PID=str(os.getpid()), JH_DOSSIER=str(dossier))
+        env = dict(os.environ, JH_PID=str(os.getpid()), **valeurs)
         drapeaux = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(
             subprocess, "DETACHED_PROCESS", 0
         )
         subprocess.Popen(  # nosec B603 B607 : fixed script, values by environment
-            ["powershell", "-NoProfile", "-NonInteractive", "-Command", _CORBEILLE],
+            ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
             env=env,
             creationflags=drapeaux,
         )
         if self._fenetre is not None:
             self._fenetre.destroy()
-        return {"ok": True, "dossier": str(dossier)}
+        return None
 
     # Settings: language, daily collection, profiles (the desktop's Paramètres page).
     def parametres(self) -> dict[str, Any]:
