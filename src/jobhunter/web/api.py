@@ -294,11 +294,14 @@ def offres(
     pays: str | Sequence[str] = "",
     region: str | Sequence[str] = "",
     par_page: int = PAR_PAGE,
+    jours: int = 0,
 ) -> dict[str, Any]:
     """One page of the offers screen, filtered and sorted, with the filter choices.
 
     Each list filter takes one value or several (any of them matches). The countries
     offered are those of the chosen regions; a chosen country outside them is dropped.
+    jours > 0 keeps the offers published (else seen) in the last `jours` days; an offer
+    with no date at all is left out then.
     """
     mots = [m for m in (texte or "").lower().split() if m]
     zones_, domaines, contrats = _choix(zone), _choix(domaine), _choix(contrat)
@@ -307,6 +310,7 @@ def offres(
     proposes = {p for p in tous_pays if not regions or _region_du_pays(p) in regions}
     pays_ = _choix(pays) & proposes if regions else _choix(pays)
     par_page = _par_page(par_page)
+    depuis = (date.today() - timedelta(days=int(jours))).isoformat() if int(jours or 0) > 0 else ""
     gardees = []
     for o in offres:
         st = str(o.get("statut") or "")
@@ -328,6 +332,8 @@ def offres(
         if regions and _region(str(o.get("localisation") or "")) not in regions:
             continue
         if fit_min and _fit(o) < fit_min:
+            continue
+        if depuis and (_date_offre(o) or "0") < depuis:
             continue
         if mots:
             botte = f"{o.get('poste') or ''} {o.get('entreprise') or ''} {o.get('localisation') or ''}".lower()
@@ -1075,7 +1081,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         return {"ok": True}
 
     def offres(self, filtres: dict[str, Any] | None = None) -> dict[str, Any]:
-        """One page of the offers screen; filtres: texte, zone, fit_min, statut, tri, page, par_page."""
+        """One page of the offers screen; filtres: texte, zone, fit_min, statut, tri, page, par_page, jours."""
         f = filtres or {}
         return offres(
             self._file(),
@@ -1091,6 +1097,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
             tri=str(f.get("tri") or "fit"),
             page=int(f.get("page") or 0),
             par_page=_par_page(f.get("par_page")),
+            jours=int(f.get("jours") or 0),
         )
 
     def offre(self, ident: str) -> dict[str, Any] | None:
