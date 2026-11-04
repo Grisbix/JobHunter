@@ -109,8 +109,9 @@ rate-limited, or refused — an empty day is never mistaken for a quiet one.
 
 Your data (profile, CV, letters, offers, application log) lives in `Documents\JobHunter`:
 updates never touch it. Uninstalling keeps it unless you say otherwise (the installer
-asks, « No » by default); to start again from nothing, *Maintenance → Effacer mes
-données* sends it to the Recycle Bin, Store version included. The app offers each new
+asks, « No » by default); to start again from nothing, *Réglages → Effacer mes
+données* sends it to the Recycle Bin, Store version included, and *Réglages →
+Désinstaller JobHunter* removes the app and its data at once. The app offers each new
 version at start-up.
 
 Recommended: [LibreOffice](https://www.libreoffice.org/download/) (CVs and letters as PDF)
@@ -230,7 +231,7 @@ sentence that proves it.
 
 Check it, offline: `jobhunter check-profile "Communications officer" "Java developer"`.
 
-**Several searches?** Maintenance → "Profils…" → "Nouveau profil…": a CV, a name, the
+**Several searches?** Réglages → "Profils…" → "Nouveau profil…": a CV, a name, the
 same questions as the first time. Each profile has its own folder (`profiles/<name>/`:
 queue, applications, CVs, letters); the API keys stay shared. Switching restarts the app;
 the morning collection runs every profile. From a terminal: `jobhunter profiles` (list),

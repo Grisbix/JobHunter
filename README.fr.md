@@ -118,8 +118,9 @@ avec une journée calme.
 
 Tes données (profil, CV, lettres, offres, suivi) vivent dans `Documents\JobHunter` : la
 mise à jour n'y touche jamais. La désinstallation les garde sauf si tu dis le contraire
-(l'installateur le demande, « Non » par défaut) ; pour repartir de zéro, *Maintenance →
-Effacer mes données* les envoie à la Corbeille, version Store comprise. Pour mettre à jour, l'application te
+(l'installateur le demande, « Non » par défaut) ; pour repartir de zéro, *Réglages →
+Effacer mes données* les envoie à la Corbeille, version Store comprise, et *Réglages →
+Désinstaller JobHunter* retire l'application et ses données d'un coup. Pour mettre à jour, l'application te
 propose la nouvelle version au démarrage ; télécharge et lance le nouvel installateur.
 
 Conseillés : [LibreOffice](https://www.libreoffice.org/download/) (CV et lettres en PDF) et

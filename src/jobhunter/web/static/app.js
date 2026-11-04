@@ -2368,34 +2368,34 @@ ACTIONS_OUTILS.comparer = async () => {
   remplir();
 };
 
-ECRANS.maintenance = {
-  titre: "Maintenance",
-  actions: () => [],
-  async dessiner(vue) {
-    const m = await appel("maintenance");
-    const c = m.collecte;
-    vue.replaceChildren(h("div", { class: "grille" },
-      h("div", { class: "pile" },
-        h("div", { class: "sombre" }, h("h2", {}, "Moteur"), h("div", { class: "chiffre", style: "margin-top:14px" }, m.version),
-          h("div", { class: "sous", style: "color:#8f8783" }, "version installée"),
-          h("div", { class: "actions-col" }, bouton("Chercher une mise à jour", "fleche", verifierMaj, "plein bouton-maj")),
-          h("div", { class: "sous etat-maj", style: "color:#8f8783;margin-top:8px" })),
-        carte("Sauvegardes", h("div", { class: "sous", style: "margin:0 0 10px" }, "une par jour, sept jours glissants"), puces(m.sauvegardes))),
-      carte("Dernière collecte",
-        h("div", { class: c.etat === "ok" ? "etat ok" : "etat" }, c.etat === "ok" ? "Réussie" : (c.etat ? lisible(c.etat) : "inconnue")),
-        h("dl", { class: "paires", style: "margin-top:14px" },
-          h("dt", {}, "Début"), h("dd", {}, c.debut || "—"), h("dt", {}, "Fin"), h("dd", {}, c.fin || "—"),
-          h("dt", {}, "Erreurs"), h("dd", {}, String(c.erreurs)), h("dt", {}, "Dernier succès"), h("dd", {}, c.dernier_succes || "—"))),
-      carte("Données",
-        h("dl", { class: "paires" },
-          h("dt", {}, "Offres"), h("dd", {}, nombre(m.offres)), h("dt", {}, "Candidatures"), h("dd", {}, `${nombre(m.candidatures)} suivies · ${nombre(m.envoyees)} envoyées`),
-          m.tailles.map((t) => [h("dt", {}, t.nom), h("dd", {}, taille(t.octets))])),
-        m.archivables ? h("div", { class: "actions-col" }, bouton(`Archiver ${nombre(m.archivables)} vieilles offres…`, "corbeille", () => archiverVieilles(m.archivables))) : null,
-        m.effacable ? h("div", { class: "actions-col" }, bouton("Effacer mes données…", "corbeille", () => effacerDonnees(m))) : null,
-        m.desinstallable ? h("div", { class: "actions-col" }, bouton("Désinstaller JobHunter…", "corbeille", () => desinstaller(m))) : null),
-      carteOutils(await appel("outils"))));
-  },
-};
+// Maintenance's cards, at the end of Réglages (the user, 2026-11-04: « maintenance et
+// réglages dans le même panneau »): engine, backups, last collection, data, tools.
+async function cartesMaintenance() {
+  const m = await appel("maintenance");
+  if (!m) return [];
+  const c = m.collecte;
+  return [
+    h("div", { class: "pile" },
+      h("div", { class: "sombre" }, h("h2", {}, "Moteur"), h("div", { class: "chiffre", style: "margin-top:14px" }, m.version),
+        h("div", { class: "sous", style: "color:#8f8783" }, "version installée"),
+        h("div", { class: "actions-col" }, bouton("Chercher une mise à jour", "fleche", verifierMaj, "plein bouton-maj")),
+        h("div", { class: "sous etat-maj", style: "color:#8f8783;margin-top:8px" })),
+      carte("Sauvegardes", h("div", { class: "sous", style: "margin:0 0 10px" }, "une par jour, sept jours glissants"), puces(m.sauvegardes))),
+    carte("Dernière collecte",
+      h("div", { class: c.etat === "ok" ? "etat ok" : "etat" }, c.etat === "ok" ? "Réussie" : (c.etat ? lisible(c.etat) : "inconnue")),
+      h("dl", { class: "paires", style: "margin-top:14px" },
+        h("dt", {}, "Début"), h("dd", {}, c.debut || "—"), h("dt", {}, "Fin"), h("dd", {}, c.fin || "—"),
+        h("dt", {}, "Erreurs"), h("dd", {}, String(c.erreurs)), h("dt", {}, "Dernier succès"), h("dd", {}, c.dernier_succes || "—"))),
+    carte("Données",
+      h("dl", { class: "paires" },
+        h("dt", {}, "Offres"), h("dd", {}, nombre(m.offres)), h("dt", {}, "Candidatures"), h("dd", {}, `${nombre(m.candidatures)} suivies · ${nombre(m.envoyees)} envoyées`),
+        m.tailles.map((t) => [h("dt", {}, t.nom), h("dd", {}, taille(t.octets))])),
+      m.archivables ? h("div", { class: "actions-col" }, bouton(`Archiver ${nombre(m.archivables)} vieilles offres…`, "corbeille", () => archiverVieilles(m.archivables))) : null,
+      m.effacable ? h("div", { class: "actions-col" }, bouton("Effacer mes données…", "corbeille", () => effacerDonnees(m))) : null,
+      m.desinstallable ? h("div", { class: "actions-col" }, bouton("Désinstaller JobHunter…", "corbeille", () => desinstaller(m))) : null),
+    carteOutils(await appel("outils")),
+  ];
+}
 
 // Old offers nobody will read: a button, never a nightly job (api.archiver says why).
 async function archiverVieilles(n) {
@@ -2551,6 +2551,7 @@ ECRANS.reglages = {
         h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Couleur"), teintes),
         h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Police"), polices)),
       await cartesParametres(),
+      ...(await cartesMaintenance()),
       window.pywebview ? null : h("div", { class: "verre panneau" },
         h("div", { class: "sous" }, "Aperçu navigateur : ces réglages ne s'enregistrent que dans l'application."))));
   },
@@ -2669,6 +2670,7 @@ async function nouveauProfil() {
 }
 
 async function aller(nom) {
+  if (nom === "maintenance") nom = "reglages";  // merged into Réglages (3.82): a saved screen
   if (!ECRANS[nom]) nom = "accueil";
   courant = nom;
   fermerTiroir();
