@@ -65,6 +65,7 @@ def test_le_raccourci_passe_les_valeurs_par_l_environnement(monkeypatch, tmp_pat
 
 def test_assurer_ne_refait_pas_un_raccourci_present(monkeypatch, tmp_path):
     monkeypatch.setattr(shortcut, "dossiers", lambda bureau: [tmp_path])
+    monkeypatch.setattr(shortcut, "_temoin", lambda: tmp_path / "_raccourci_icone.txt")
     monkeypatch.setattr(shortcut.sys, "platform", "win32")
     faits = []
     monkeypatch.setattr(shortcut, "creer", lambda *a: faits.append(a))
@@ -86,6 +87,7 @@ def test_le_toast_prend_l_identite_de_jobhunter_avec_le_raccourci(monkeypatch, t
 
 def test_l_echec_du_raccourci_est_silencieux(monkeypatch, tmp_path):
     monkeypatch.setattr(shortcut, "dossiers", lambda bureau: [tmp_path])
+    monkeypatch.setattr(shortcut, "_temoin", lambda: tmp_path / "_raccourci_icone.txt")
     monkeypatch.setattr(shortcut.sys, "platform", "win32")
     monkeypatch.setattr(shortcut, "cible", lambda: (Path("p"), "", tmp_path))
 
@@ -94,3 +96,37 @@ def test_l_echec_du_raccourci_est_silencieux(monkeypatch, tmp_path):
 
     monkeypatch.setattr(shortcut, "creer", echec)
     shortcut.assurer()  # no exception
+
+
+def test_un_raccourci_a_l_icone_disparue_est_refait_bureau_compris(monkeypatch, tmp_path):
+    """3.78 moved the icon: the old shortcuts showed Python's logo (2026-11-04)."""
+    menu, bureau, temoin = tmp_path / "menu", tmp_path / "bureau", tmp_path / "t.txt"
+    for d in (menu, bureau):
+        d.mkdir()
+        (d / "JobHunter.lnk").write_bytes(b"")
+    monkeypatch.setattr(shortcut, "dossiers", lambda b: [menu, bureau] if b else [menu])
+    monkeypatch.setattr(shortcut, "_temoin", lambda: temoin)
+    monkeypatch.setattr(shortcut.sys, "platform", "win32")
+    monkeypatch.setattr(shortcut, "cible", lambda: (Path("p"), "", tmp_path))
+    faits = []
+    monkeypatch.setattr(shortcut, "creer", lambda lien, *a: faits.append(lien.parent))
+    temoin.write_text("C:/ailleurs/app/assets/jobhunter.ico", encoding="utf-8")
+    shortcut.assurer()
+    assert faits == [menu, bureau]
+    assert temoin.read_text(encoding="utf-8") == str(shortcut.ICONE)
+    shortcut.assurer()  # noted: nothing more
+    assert faits == [menu, bureau]
+
+
+def test_la_reparation_n_ajoute_rien_a_un_bureau_sans_raccourci(monkeypatch, tmp_path):
+    menu, bureau = tmp_path / "menu", tmp_path / "bureau"
+    menu.mkdir()
+    bureau.mkdir()
+    monkeypatch.setattr(shortcut, "dossiers", lambda b: [menu, bureau] if b else [menu])
+    monkeypatch.setattr(shortcut, "_temoin", lambda: tmp_path / "t.txt")
+    monkeypatch.setattr(shortcut.sys, "platform", "win32")
+    monkeypatch.setattr(shortcut, "cible", lambda: (Path("p"), "", tmp_path))
+    faits = []
+    monkeypatch.setattr(shortcut, "creer", lambda lien, *a: faits.append(lien.parent))
+    shortcut.assurer()
+    assert faits == [menu]
