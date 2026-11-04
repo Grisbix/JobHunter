@@ -17,8 +17,9 @@ prépare un CV et une lettre de motivation sur mesure pour chacune.
 - Suit tes candidatures et tes relances.
 - Tes données restent sur ton ordinateur : pas de compte, pas de serveur, pas de
   publicité. L'envoi d'une candidature reste toujours ton clic.
-- Tes données vivent dans Documents\JobHunter et survivent à une désinstallation :
-  pour tout effacer, Maintenance → Effacer mes données (vers la Corbeille).
+- Tes données vivent dans Documents\JobHunter et survivent à une désinstallation
+  depuis Windows : Réglages → Désinstaller JobHunter retire l'application et ses données
+  (vers la Corbeille).
 
 **Fonctionnalités** (une par ligne)
 
@@ -48,8 +49,8 @@ tailored CV and cover letter for each one.
 - Tracks your applications and follow-ups.
 - Your data stays on your computer: no account, no server, no ads. Sending an
   application is always your click.
-- Your data lives in Documents\JobHunter and survives uninstalling: to remove it all,
-  Maintenance → Effacer mes données (to the Recycle Bin).
+- Your data lives in Documents\JobHunter and survives uninstalling from Windows:
+  Réglages → Désinstaller JobHunter removes the app and its data (to the Recycle Bin).
 
 **Features** (one per line)
 
