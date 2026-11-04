@@ -102,3 +102,16 @@ def test_bouton_dans_la_maintenance():
     assert 'bouton("Désinstaller JobHunter…", "corbeille", () => desinstaller(m))' in JS
     assert "m.desinstallable ? h(" in JS
     assert 'appel("desinstaller")' in JS
+
+
+def test_maintenance_est_dans_les_reglages():
+    """The user, 2026-11-04: maintenance and settings in one panel."""
+    html = (RACINE / "src" / "jobhunter" / "web" / "static" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert 'data-ecran="maintenance"' not in html and 'data-ecran="reglages"' in html
+    assert "ECRANS.maintenance" not in JS
+    reglages = JS[JS.index("ECRANS.reglages = {") :][:6000]
+    assert "...(await cartesMaintenance())" in reglages
+    # a screen saved as "maintenance" opens Réglages, not the home page
+    assert 'if (nom === "maintenance") nom = "reglages";' in JS
