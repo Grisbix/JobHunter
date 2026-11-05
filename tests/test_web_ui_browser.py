@@ -110,3 +110,17 @@ def test_tri_du_jour_au_clavier(fenetre):
     p.keyboard.press("ArrowRight")
     p.wait_for_function(f"window.__appels.filter((a) => a[0] === 'a_trier').length > {avant}")
     assert len(appels(p, "marquer")) == 1
+
+
+def test_la_fenetre_ouverte_revoit_les_mises_a_jour_toutes_les_6_heures(page, fenetre):
+    """Audit of 2026-11-06: checked only at start, a window left open saw no release."""
+    page.clock.install()
+    p = fenetre(bienvenue={"profil": True})
+    p.wait_for_function("window.__appels.some((a) => a[0] === 'annonce_maj')")
+    assert len(appels(p, "annonce_maj")) == 1
+    p.clock.run_for(5 * 3600 * 1000)
+    assert len(appels(p, "annonce_maj")) == 1
+    p.clock.run_for(3600 * 1000 + 1000)
+    p.wait_for_function("window.__appels.filter((a) => a[0] === 'annonce_maj').length === 2")
+    p.clock.run_for(6 * 3600 * 1000)
+    p.wait_for_function("window.__appels.filter((a) => a[0] === 'annonce_maj').length === 3")

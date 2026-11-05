@@ -2769,7 +2769,13 @@ async function installerMaj() {
 }
 
 // At start-up: a newer signed version shows as a button in the title bar.
+// Again every 6 hours while the window stays open: a window left open for days saw no
+// release at all (audit of 2026-11-06; Chrome checks every 5 h at most, MSIX every 8).
+// annonce_maj downloads a version once: asked again, a ready one is only confirmed.
+const MAJ_TOUTES_LES = 6 * 3600 * 1000;
+let majMinuteur = null;
 async function annonceMaj() {
+  if (!majMinuteur) majMinuteur = setInterval(annonceMaj, MAJ_TOUTES_LES);
   const v = await appel("annonce_maj").catch(() => null);
   if (!v) return;
   const b = $("maj");
