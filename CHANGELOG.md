@@ -4,6 +4,14 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.83.0 — 2026-11-05
+
+Updates install in the background, like other desktop apps.
+
+- **Microsoft Store: offered only once it is in the Store.** A new version reaches the Store hours or days after GitHub, once Microsoft has checked it. Before, the app offered it right away and the click failed with « pas de réponse ». Now it says the version is on its way, and nothing else.
+- **No Store window.** The update downloads while you work and installs when you close JobHunter. The Store page no longer opens; a failure shows the Store's error code.
+- **Installer version: downloaded in the background, installed silently.** Once the new version is downloaded and its signature checked, the title bar offers « Redémarrer pour mettre à jour ». Click it and JobHunter closes, updates without any window, and opens again. Or just close it: the update installs then.
+
 ## 3.82.0 — 2026-11-05
 
 One settings screen, an Uninstall button, faster collection, and a lighter window.
