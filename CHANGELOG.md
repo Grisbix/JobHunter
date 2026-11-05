@@ -4,6 +4,23 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.82.0 — 2026-11-05
+
+One settings screen, an Uninstall button, faster collection, and a lighter window.
+
+- **Maintenance is now in Réglages.** One screen for the look, the language, the daily collection, the engine, the backups and the tools.
+- **Uninstall from the app.** Réglages → « Désinstaller JobHunter… » removes the app *and* your data (to the Recycle Bin). Before, uninstalling kept your offers and CVs, and a reinstall found them all again.
+- **A filter on the offer's date.** Offers: the last 24 h, 3, 7, 14 or 30 days, by publication date, else the day the offer was seen.
+- **The daily triage shows the whole description** on demand (« Lire la description en entier »); the choice stays from one offer to the next.
+- **The CV preview is no longer cut at the bottom**, with a small gap above the edge, in « Aperçu » and in « Modifier ».
+- **Statistiques without percentages by default**; Réglages → « Pourcentages dans Statistiques » shows them again.
+- **Profil without empty parts or sideways scroll.** Long title patterns no longer stretch the page, show as plain words (« isr · csrd · sri »), the tools sit beside your identity, and skills take half the height.
+- **Clearer activity panel:** « Voir ce qu'écrit le programme (12 dernières lignes) » or « Voir l'historique (N messages) » instead of « Voir le détail ».
+- **Faster collection.** Company job feeds are read six at a time (one at a time per site), fewer probes of final job pages, and eFC and Welcome to the Jungle have a time budget so one slow site no longer holds up the morning. The eFC sites start from a different one each day, so none is always cut off.
+- **The desktop icon comes back.** A shortcut whose icon moved with an update is remade with the right logo.
+- The example profile's acronyms (ESG, CSRD, UX…) no longer match inside other words (« Diverse », « climatisation »).
+- Window details from a design review: spacing, contrast, labels.
+
 ## 3.81.0 — 2026-11-03
 
 Faster checks of closed offers.
