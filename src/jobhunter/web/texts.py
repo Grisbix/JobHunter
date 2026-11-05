@@ -2642,4 +2642,19 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Kein Dokument einer gesendeten Bewerbung.",
         "Ningún documento de una candidatura enviada.",
     ),
+    "Pas encore de candidature": (
+        "No application yet",
+        "Noch keine Bewerbung",
+        "Todavía no hay candidaturas",
+    ),
+    "Une offre arrive ici quand tu changes son statut dans Offres : « à postuler » pour la garder, « postulé » une fois envoyée. Glisse ensuite sa fiche d'une colonne à l'autre.": (
+        "An offer arrives here when you change its status in Offers: “to apply” to keep it, “applied” once sent. Then drag its card from one column to another.",
+        "Ein Angebot erscheint hier, wenn du seinen Status unter Angebote änderst: „zu bewerben“, um es zu behalten, „beworben“, sobald gesendet. Ziehe seine Karte dann von Spalte zu Spalte.",
+        "Una oferta llega aquí cuando cambias su estado en Ofertas: «por postular» para guardarla, «postulado» una vez enviada. Luego arrastra su ficha de una columna a otra.",
+    ),
+    "Aucune entreprise suivie sur son site carrières. Ajoute celles qui t'intéressent : leurs offres arrivent dès leur publication.": (
+        "No company followed on its careers site. Add the ones you like: their offers arrive as soon as they are published.",
+        "Keinem Unternehmen wird auf seiner Karriereseite gefolgt. Füge die hinzu, die dich interessieren: Ihre Angebote kommen, sobald sie erscheinen.",
+        "Ninguna empresa seguida en su sitio de empleo. Añade las que te interesen: sus ofertas llegan en cuanto se publican.",
+    ),
 }

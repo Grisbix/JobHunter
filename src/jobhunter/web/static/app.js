@@ -1282,9 +1282,18 @@ ECRANS.candidatures = {
         tiree = null;
       },
     } : {};
+    // No application yet: a word on how one gets here, and the columns over the whole
+    // window rather than five small boxes in a corner of an empty page (the user,
+    // 2026-11-05: « aussi dans candidatures quand il n'y en a pas encore »).
+    const aucune = d.colonnes.every((c) => !c.entrees.length);
     vue.replaceChildren(h("div", { class: "colonne" },
-      h("div", { class: "tableau-kanban" }, d.colonnes.map((c) =>
-        h("div", { class: c.entrees.length ? "verre colonne-k" : "verre colonne-k vide-k", "data-statut": c.statut, ...cible(c) },
+      aucune ? h("div", { class: "verre panneau debut-k" },
+        h("div", {}, h("h2", {}, "Pas encore de candidature"),
+          h("div", { class: "sous" }, "Une offre arrive ici quand tu changes son statut dans Offres : « à postuler » pour la garder, « postulé » une fois envoyée. Glisse ensuite sa fiche d'une colonne à l'autre.")),
+        h("div", { class: "boutons" }, bouton("Voir les offres", "valise", () => aller("offres"), "plein"),
+          bouton("Tri du jour", "etoile", () => aller("tri")))) : null,
+      h("div", { class: aucune ? "tableau-kanban debut" : "tableau-kanban" }, d.colonnes.map((c) =>
+        h("div", { class: c.entrees.length || aucune ? "verre colonne-k" : "verre colonne-k vide-k", "data-statut": c.statut, ...cible(c) },
           h("div", { class: "entete" }, h("h3", {}, c.statut[0].toUpperCase() + c.statut.slice(1)),h("span", { class: "compte" }, c.entrees.length)),
           c.entrees.length ? [...c.entrees.map((e) => h("div", { class: "carte fiche-k", draggable: "true", onclick: () => ouvrirOffre(e.id),
             ondragstart: (ev) => { tiree = e; ev.dataTransfer.effectAllowed = "move"; ev.dataTransfer.setData("text/plain", e.id); ev.currentTarget.classList.add("tiree"); },
@@ -1697,7 +1706,8 @@ ECRANS.profil = {
       // user, 2026-11-04: « adapte l'espace pour éviter qu'il y ait des parties vides »).
       // style.css: the tools take the height left and scroll inside it.
       h("div", { class: "pile pile-profil" },
-        carte("Score : réglages", h("dl", { class: "paires" }, Object.entries(p.scoring).map(([k, v]) =>
+        // Two pairs a line: one a line left the card's right two-thirds empty.
+        carte("Score : réglages", h("dl", { class: "paires deux" }, Object.entries(p.scoring).map(([k, v]) =>
           [h("dt", {}, k.replaceAll("_", " ")), h("dd", {}, String(v))]))),
         Object.assign(carte("Outils", puces(p.outils)), { className: "verre panneau outils-profil" })),
       await carteMetiers(),
@@ -1753,14 +1763,17 @@ ONGLETS_SOURCES.recherche = async (vue) => {
             h("td", {}, h("div", { class: "prog" }, h("i", { style: `width:${100 * r.nouvelles / max}%` }))),
             h("td", {}, `${dateFr(r.dernier)} `, r.verdict ? h("span", { class: r.verdict === "ok" ? "etiq gris" : "etiq" }, r.verdict) : null)))))
         : h("div", { class: "vide" }, "Pas encore de journal de rendement.")),
-      h("div", { class: "grille" },
-        h("div", { class: "verre panneau large" },
-          h("div", { class: "titre-ligne" }, h("h2", {}, "Mots-clés de collecte"), h("span", { class: "compte" }, mots.length)),
-          editeurPuces(mots, bM.sale, "nouveau mot-clé…"), bM.el),
+      h("div", { class: "verre panneau" },
+        h("div", { class: "titre-ligne" }, h("h2", {}, "Mots-clés de collecte"), h("span", { class: "compte" }, mots.length)),
+        editeurPuces(mots, bM.sale, "nouveau mot-clé…"), bM.el),
+      // auto-fit: Exclusions and the career sites share the row, no empty third column.
+      h("div", { class: "grille ajustee" },
         carte("Exclusions", sousTitre("Contrats", "0 0 8px"), editeurPuces(excl.contrats_exclus, bE.sale, "type de contrat…"),
           sousTitre("Pays"), editeurPuces(excl.pays_exclus, bE.sale, "pays…"), bE.el),
-        carte("Sites carrières (ATS)", h("dl", { class: "paires" }, Object.entries(s.ats).map(([k, v]) =>
-          [h("dt", {}, lisible(k)), h("dd", {}, `${v} entreprises`)]))))));
+        carte("Sites carrières (ATS)", ats ? h("dl", { class: "paires" }, Object.entries(s.ats).map(([k, v]) =>
+          [h("dt", {}, lisible(k)), h("dd", {}, `${v} entreprises`)]))
+          : [h("div", { class: "sous", style: "margin-bottom:12px" }, "Aucune entreprise suivie sur son site carrières. Ajoute celles qui t'intéressent : leurs offres arrivent dès leur publication."),
+            bouton("Entreprises suivies", "valise", () => { ongletSources = "entreprises"; ECRANS.sources.dessiner($("vue")); })]))));
   }
 };
 
@@ -2587,7 +2600,21 @@ ECRANS.reglages = {
     const dessinerPc = () => placePc.replaceChildren(segment([["non", "Masqués"], ["oui", "Affichés"]], r.pourcentages ? "oui" : "non",
       async (v) => { await enregistrer({ pourcentages: v === "oui" }); dessinerPc(); }));
     dessinerPc();
-    vue.replaceChildren(h("div", { class: "grille" },
+    // Columns of cards at their own height (style.css .mosaique): in the grid, each card
+    // stretched to the tallest of its row (Langue, three lines, as tall as Couleurs) and
+    // Données sat alone on the last row (the user, 2026-11-05: « tous les espaces vides,
+    // dans et en dehors des widgets »). Outils, full width, comes after.
+    const cartes = [
+      // The tallest first: the browser balances the columns in this order.
+      h("div", { class: "verre panneau" },
+        h("div", { class: "titre-ligne" }, h("h2", {}, "Couleurs et police")),
+        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Mode"), placeMode),
+        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Couleur"), teintes),
+        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Police"), polices),
+        h("div", { class: "reglage" },
+          h("div", {}, h("div", { class: "nom-reglage" }, "Pourcentages dans Statistiques"),
+            h("div", { class: "sous" }, "La part de chaque ligne et les taux de réponse.")),
+          placePc)),
       h("div", { class: "verre panneau" },
         h("div", { class: "titre-ligne" }, h("h2", {}, "Apparence")),
         h("div", { class: "reglage" },
@@ -2598,17 +2625,13 @@ ECRANS.reglages = {
           h("div", { class: "titre-ligne" }, h("div", { class: "nom-reglage" }, "Transparence"), valeur),
           h("div", { class: "ligne-curseur" }, h("span", {}, "Opaque"), curseur, h("span", {}, "Verre")),
           h("div", { class: "sous" }, "Combien le bureau transparaît derrière le fond de la fenêtre ; les cartes et les textes restent nets. La force du flou acrylique est fixée par Windows."))),
-      h("div", { class: "verre panneau" },
-        h("div", { class: "titre-ligne" }, h("h2", {}, "Couleurs et police")),
-        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Mode"), placeMode),
-        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Couleur"), teintes),
-        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Police"), polices),
-        h("div", { class: "reglage" },
-          h("div", {}, h("div", { class: "nom-reglage" }, "Pourcentages dans Statistiques"),
-            h("div", { class: "sous" }, "La part de chaque ligne et les taux de réponse.")),
-          placePc)),
-      await cartesParametres(),
+      ...((await cartesParametres()) || []),
       ...(await cartesMaintenance()),
+    ].flatMap((c) => c.classList.contains("pile") ? [...c.children] : [c]);  // the grid's piles: one card each here
+    const larges = cartes.filter((c) => c.classList.contains("large"));
+    vue.replaceChildren(h("div", { class: "colonne" },
+      h("div", { class: "mosaique" }, cartes.filter((c) => !larges.includes(c))),
+      larges,
       window.pywebview ? null : h("div", { class: "verre panneau" },
         h("div", { class: "sous" }, "Aperçu navigateur : ces réglages ne s'enregistrent que dans l'application."))));
   },
