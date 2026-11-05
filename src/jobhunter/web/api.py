@@ -1157,7 +1157,16 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
             and not (suivi.get(_oid(o)) or {}).get("s")
         ]
         nouvelles.sort(key=lambda o: (-_fit(o), -_fit(o, "fit_fin"), str(o.get("statut") or "")))
+        # Passed ones last, in the order they were passed.
+        rang = {k: i for i, k in enumerate(opened.passees())}
+        nouvelles.sort(key=lambda o: rang.get(_oid(o), -1))
         return {"total": len(nouvelles), "ids": [_oid(o) for o in nouvelles[:100]]}
+
+    def passer(self, ident: str) -> dict[str, Any]:
+        """« Passer » in the daily triage: the offer comes back after the others, unchanged."""
+        from jobhunter.web import opened
+
+        return {"ok": opened.passer(ident)}
 
     def _archivables(self, jours: int) -> list[str]:
         """What nobody will read again: old, under the threshold, never opened, never applied."""

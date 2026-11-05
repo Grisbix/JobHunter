@@ -2594,12 +2594,28 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "{n} Angebote mit {s}+ nie geöffnet",
         "{n} ofertas con {s}+ nunca abiertas",
     ),
-    "{n} à trier · → ou Entrée : garder · X : pas intéressé": (
-        "{n} to sort · → or Enter: keep · X: not interested",
-        "{n} zu sichten · → oder Enter: behalten · X: kein Interesse",
-        "{n} por ordenar · → o Intro: conservar · X: no me interesa",
-    ),
     "Garder": ("Keep", "Behalten", "Conservar"),
+    "{n} à trier · → ou Entrée : garder · P : passer · X : pas intéressé": (
+        "{n} to sort · → or Enter: keep · P: skip · X: not interested",
+        "{n} zu sichten · → oder Enter: behalten · P: überspringen · X: kein Interesse",
+        "{n} por ordenar · → o Intro: conservar · P: saltar · X: no me interesa",
+    ),
+    "Passer": ("Skip", "Überspringen", "Saltar"),
+    "Elle reste dans tes offres à traiter ; offre suivante.": (
+        "It stays in your offers to process; next offer.",
+        "Es bleibt in deinen offenen Angeboten; nächstes Angebot.",
+        "Sigue en tus ofertas por tratar; siguiente oferta.",
+    ),
+    "Pas de décision : elle revient à la fin du tri.": (
+        "No decision: it comes back at the end of the triage.",
+        "Keine Entscheidung: es kommt am Ende der Sichtung wieder.",
+        "Sin decisión: vuelve al final de la selección.",
+    ),
+    "Classée « pas intéressé », toujours visible dans Offres. Rien n'est supprimé.": (
+        "Marked « not interested », still visible in Offers. Nothing is deleted.",
+        "Als « kein Interesse » markiert, weiter in Angebote sichtbar. Nichts wird gelöscht.",
+        "Marcada « no me interesa », sigue visible en Ofertas. No se borra nada.",
+    ),
     "Tri terminé": ("Triage done", "Sichtung fertig", "Selección terminada"),
     "Plus de nouvelle offre bien notée à regarder. La prochaine collecte en apportera d'autres.": (
         "No new well-scored offer left to look at. The next collection will bring more.",

@@ -1069,6 +1069,9 @@ details.plus > summary::-webkit-details-marker { display: none; }
 /* The daily triage (3.80): one offer, centred, its text scrolling inside. */
 .tri { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
 .tri-carte { display: flex; flex-direction: column; gap: 16px; }
+.tri-aide { font-size: var(--t-s); gap: 8px 16px; color: var(--texte-doux); border-top: 1px solid var(--filet); padding-top: 12px; }
+.tri-aide dt { color: var(--encre); }
+.tri-aide dd { white-space: normal; color: var(--texte-doux); }
 .tri-texte { max-height: 40vh; overflow-y: auto; scrollbar-width: thin; }
 .tri-texte.entier { max-height: none; overflow: visible; }
 .tri-description { display: grid; gap: 8px; }

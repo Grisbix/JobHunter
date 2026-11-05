@@ -1347,9 +1347,10 @@ ECRANS.tri = {
     }
     const garder = () => redessiner();
     const rejeter = () => marquer(id, "pas intéressé", false);
-    triGeste = { garder, rejeter };
+    const passer = async () => { await appel("passer", id); redessiner(); };
+    triGeste = { garder, rejeter, passer };
     vue.replaceChildren(h("div", { class: "tri" },
-      h("div", { class: "sous" }, `${nombre(d.total)} à trier · → ou Entrée : garder · X : pas intéressé`),
+      h("div", { class: "sous" }, `${nombre(d.total)} à trier · → ou Entrée : garder · P : passer · X : pas intéressé`),
       h("div", { class: "verre panneau tri-carte" },
         h("div", { class: "fiche-tete" },
           h("span", { class: `${classeScore(o.fit)} grand-score` }, nombre(o.fit)),
@@ -1362,13 +1363,20 @@ ECRANS.tri = {
         o.description ? texteTri(o.description) : h("div", { class: "carte description tri-texte" }, "Pas de description enregistrée pour cette offre."),
         h("div", { class: "boutons" },
           bouton("Garder", "fleche", garder, "plein"),
+          bouton("Passer", "", passer),
           bouton("Pas intéressé", "", rejeter),
           bouton(o.cv ? "Refaire CV et lettre" : "Préparer CV et lettre", "plume", async () => { await lancer("documents", id); garder(); }),
           bouton("Voir l'annonce", "sortie", () => ouvrir(o.url)),
           plus([
             ["Retirer de la file, avec un motif…", "", () => ecarter([id])],
             ["Tout le détail", "doc", () => ouvrirOffre(id)],
-          ])))));
+          ])),
+        // What each button does to the offer (the user, 2026-11-05: « mieux expliquer
+        // les boutons »): none of the three deletes it.
+        h("dl", { class: "paires tri-aide" },
+          h("dt", {}, "Garder"), h("dd", {}, "Elle reste dans tes offres à traiter ; offre suivante."),
+          h("dt", {}, "Passer"), h("dd", {}, "Pas de décision : elle revient à la fin du tri."),
+          h("dt", {}, "Pas intéressé"), h("dd", {}, "Classée « pas intéressé », toujours visible dans Offres. Rien n'est supprimé.")))));
   },
 };
 function texteTri(description) {
@@ -1396,7 +1404,8 @@ document.addEventListener("keydown", (e) => {
   if (e.target && e.target.closest && e.target.closest("input, textarea, select, [contenteditable], button, summary")) return;
   if ($("tiroir").classList.contains("ouvert") || document.querySelector(".dialogue")) return;
   const geste = e.key === "ArrowRight" || e.key === "Enter" ? triGeste.garder
-    : e.key === "x" || e.key === "X" ? triGeste.rejeter : null;
+    : e.key === "x" || e.key === "X" ? triGeste.rejeter
+    : e.key === "p" || e.key === "P" ? triGeste.passer : null;
   if (!geste) return;
   e.preventDefault();
   triGeste = null;  // one key, one offer: a held key does not run through the list

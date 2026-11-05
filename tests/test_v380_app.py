@@ -133,3 +133,23 @@ def test_kanban_compte_les_jours_depuis_le_jour_donne():
     cartes = {e["entreprise"]: e for c in d["colonnes"] for e in c["entrees"]}
     assert (cartes["A"]["jours"], cartes["A"]["relance_due"]) == (2, False)
     assert (cartes["B"]["jours"], cartes["B"]["relance_due"]) == (7, True)
+
+
+def test_passer_remet_l_offre_a_la_fin_du_tri(donnees):
+    """« Passer » (the user, 2026-11-05): next offer, nothing deleted, back at the end."""
+    a = _api(
+        [
+            {"entreprise": "A", "poste": "P", "fit": 10, "statut": _scan(1)},
+            {"entreprise": "B", "poste": "P", "fit": 9, "statut": _scan(1)},
+            {"entreprise": "C", "poste": "P", "fit": 8, "statut": _scan(1)},
+        ]
+    )
+    a.offre("A|P")  # shown: opened
+    assert a.passer("A|P") == {"ok": True}
+    assert a.a_trier() == {"total": 3, "ids": ["B|P", "C|P", "A|P"]}
+    a.offre("B|P")
+    a.passer("B|P")
+    assert a.a_trier()["ids"] == ["C|P", "A|P", "B|P"]
+    a.offre("A|P")
+    a.passer("A|P")  # passed again: to the very end
+    assert a.a_trier()["ids"] == ["C|P", "B|P", "A|P"]
