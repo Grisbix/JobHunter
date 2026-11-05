@@ -4,6 +4,20 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.84.0 — 2026-11-05
+
+A home screen that shows your pace and your answers, no empty areas, and a quicker window.
+
+- **Home: your pace and your answers.** « Envoyées en 7 jours » (with the 7 days before) replaces the queue's size. A « Retours » card replaces « Par zone »: answers, interviews and applications with no answer after 30 days, as shares of those sent, with the median time to an answer.
+- **Home: no hole beside the chart.** « Meilleures offres » shows as many offers as the chart beside it is tall, and the screen no longer hides an item that gives back no room.
+- **Daily triage: a « Passer » button** (key P) shows the next offer and keeps this one for later, at the end of the list.
+- **Help on hover.** Rest the mouse on a triage button for a moment: a short explanation appears, instead of text under the buttons.
+- **« À faire » no longer always pushes a missing key.** The suggestion comes back one day in three, after the real tasks.
+- **No empty areas, no text against an edge.** Réglages cards at their own height, Sources and Profil without holes, Candidatures with no application filled with a short guide, long lists that fade instead of cutting a row, table buttons no longer cut in a narrow window.
+- **Faster opening** (about 1.9 s): the offers are read while the window starts. Once after this update, the app forgets the last screen it showed and a few display choices.
+- **Smoother profile switch:** the new window opens in place of the old one, at the same size, without a grey or blank flash.
+- **Desktop icon** also for an installation from source (`install.bat`).
+
 ## 3.83.0 — 2026-11-05
 
 Updates install in the background, like other desktop apps.
