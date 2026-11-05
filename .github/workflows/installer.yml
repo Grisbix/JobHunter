@@ -112,6 +112,7 @@ jobs:
           Start-Sleep -Seconds 10
           if ($p.HasExited) { Write-Error "fermée après ouverture"; exit 1 }
           Write-Output "fenêtre : $titre"
+          Stop-Process -Id $p.Id -Force
       # 3.83: the update from inside the application (setup_update): its own script waits
       # for the window's process, runs the installer silently over the installed copy,
       # and the installer starts JobHunter again (/RELANCER, JobHunter.iss).
@@ -142,7 +143,6 @@ jobs:
           if (-not $fenetre.HasExited) { Write-Error "installé avant la fin de la fenêtre"; exit 1 }
           Write-Output "relancé : $($relance.Path)"
           $relance | Stop-Process -Force
-          Stop-Process -Id $p.Id -Force
       - name: Mise à jour par-dessus l'installation, données gardées
         shell: pwsh
         run: |
