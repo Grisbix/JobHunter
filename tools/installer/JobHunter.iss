@@ -58,6 +58,9 @@ Name: "{autodesktop}\JobHunter"; Filename: "{app}\JobHunter.exe"; Tasks: bureau;
 
 [Run]
 Filename: "{app}\JobHunter.exe"; Description: "{cm:LaunchProgram,JobHunter}"; Flags: nowait postinstall skipifsilent
+; The update from inside JobHunter (setup_update.py) runs silently with /RELANCER:
+; JobHunter opens again once it is in.
+Filename: "{app}\JobHunter.exe"; Flags: nowait; Check: Relancer
 
 [CustomMessages]
 fr.EffacerDonnees=Supprimer aussi tes données JobHunter (profil, CV, lettres, offres, candidatures suivies) ?%n%n%1%n%nOui : elles partent à la Corbeille, d'où on peut les restaurer tant qu'elle n'est pas vidée.%nNon : elles restent pour une prochaine installation.
@@ -75,6 +78,12 @@ begin
   Result := Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
     '-NoProfile -NonInteractive -Command "' + Script + '"', '', SW_HIDE,
     ewWaitUntilTerminated, Code) and (Code = 0);
+end;
+
+// Silent, and asked by JobHunter's own update (/RELANCER): start it again afterwards.
+function Relancer: Boolean;
+begin
+  Result := WizardSilent and (Pos('/RELANCER', UpperCase(GetCmdTail)) > 0);
 end;
 
 // A PowerShell single-quoted string: the only character to double is the quote.

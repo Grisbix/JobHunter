@@ -2638,10 +2638,24 @@ async function verifierMaj(ev) {
   // v.attente: the latest, published but not signed yet (its author signs within the hour)
   const suite = v.attente ? ` La ${v.attente} sera proposée dès que son auteur l'aura signée.` : "";
   if (!v.nouvelle) return toast(`À jour : ${v.installee}.${suite}`);
+  if (v.silencieux) {
+    // The installer's copy: installed without its window, then JobHunter opens again.
+    const oui = await dialogue(`Version ${v.derniere} disponible`, `Installée : ${v.installee}. Elle est vérifiée (signature), installée sans fenêtre, puis JobHunter se rouvre.${suite}`,
+      null, [["Installer", "plein", () => true]]);
+    if (oui) await installerMaj();
+    return;
+  }
   const ok = await dialogue(`Version ${v.derniere} disponible`, `Installée : ${v.installee}. Elle est vérifiée (signature) avant d'être installée ; relance JobHunter ensuite.${suite}`,
     null, [["Installer", "plein", () => true]]);
   if (!ok) return;
   await lancer("maj");  // suivreTache → suivreMaj: the button and the Moteur card follow it
+}
+
+// The downloaded installer runs once the window has closed (setup_update).
+async function installerMaj() {
+  toast("Vérification de la mise à jour…");
+  const r = await appel("installer_maj").catch(() => null);
+  if (!r || !r.ok) toast((r && r.message) || "Mise à jour impossible : réessaie plus tard.", true);
 }
 
 // At start-up: a newer signed version shows as a button in the title bar.
@@ -2649,10 +2663,11 @@ async function annonceMaj() {
   const v = await appel("annonce_maj").catch(() => null);
   if (!v) return;
   const b = $("maj");
-  b.textContent = `Mettre à jour (${v.derniere})`;
-  b.title = `Version installée : ${v.installee}`;
+  // v.pret: downloaded and checked in the background; closing the window installs it too.
+  b.textContent = v.pret ? `Redémarrer pour mettre à jour (${v.derniere})` : `Mettre à jour (${v.derniere})`;
+  b.title = v.pret ? `Version installée : ${v.installee}. Prête : elle s'installe aussi à la fermeture de JobHunter.` : `Version installée : ${v.installee}`;
   b.hidden = false;
-  b.onclick = clicMaj;
+  b.onclick = v.pret ? (() => installerMaj()) : clicMaj;
 }
 function clicMaj(ev) {
   if (ev.currentTarget.dataset.fait) return toast("Ferme JobHunter puis rouvre-le : la nouvelle version démarre.");

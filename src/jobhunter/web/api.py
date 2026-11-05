@@ -870,6 +870,13 @@ if ($env:JH_FAMILLE) {
 """
 
 
+def _setup_silencieux() -> bool:
+    """The installer's copy: its updates download in the background (setup_update)."""
+    from jobhunter import setup_update
+
+    return setup_update.concerne()
+
+
 def _desinstalleur() -> dict[str, str] | None:
     """How « Désinstaller JobHunter » removes this installation, None when it cannot.
 
@@ -986,6 +993,8 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
     # and the background's news never reached the page (found 2026-10-28).
     _toile: Any = None
     _tache: Tache | None = None
+    # The installer of a newer version, downloaded and checked (setup_update): (path, version)
+    _setup_pret: tuple[Path, str] | None = None
 
     def __init__(self) -> None:
         """An empty cache: each data file is read on first use."""
@@ -2086,13 +2095,82 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
             "attente": attente,
             "store": store,
             "erreur": erreur,
+            "silencieux": not store and _setup_silencieux(),
         }
 
     def annonce_maj(self) -> dict[str, Any] | None:
-        """A newer signed version, for the button of the title bar; None otherwise."""
+        """A newer signed version, for the button of the title bar; None otherwise.
+
+        The installer's copy downloads and checks it first, then shows the button as
+        « Redémarrer pour mettre à jour » (`pret`); a failed download shows nothing,
+        the next start tries again.
+        """
         v = self.mise_a_jour()
         # The Store's package: no signature to wait for, the Store checked it (3.74).
-        return v if v["signee"] or (v["store"] and v["nouvelle"]) else None
+        if v["store"]:
+            return v if v["nouvelle"] else None
+        if not v["signee"]:
+            return None
+        if v.get("silencieux"):
+            if not self._preparer_setup(v["derniere"]):
+                return None
+            v["pret"] = True
+        return v
+
+    def _preparer_setup(self, version: str) -> bool:
+        """Downloads and checks the installer of `version` once; True when it is ready."""
+        if self._setup_pret and self._setup_pret[1] == version:
+            return True
+        from jobhunter import setup_update
+
+        try:
+            self._setup_pret = (setup_update.preparer(version), version)
+        except Exception:  # noqa: BLE001 — offline, refused signature: no button
+            return False
+        return True
+
+    def installer_maj(self) -> dict[str, Any]:
+        """Installs the ready version without a window, then JobHunter opens again.
+
+        From « Redémarrer pour mettre à jour » or Réglages. Downloads it first when the
+        start-up did not (Réglages' « Chercher une mise à jour »).
+        """
+        v = self.mise_a_jour()
+        if not (v["signee"] and v.get("silencieux")):
+            return {"ok": False, "message": "Aucune mise à jour à installer ici."}
+        if not self._preparer_setup(v["derniere"]):
+            return {
+                "ok": False,
+                "message": "Téléchargement ou signature refusés : rien n'a été installé.",
+            }
+        from jobhunter.programs import update
+
+        if not update.file_libre(garder=False):
+            return {"ok": False, "message": "Une tâche tourne : réessaie quand elle est finie."}
+        self._lancer_setup(relancer=True)
+        return {"ok": True}
+
+    def _lancer_setup(self, relancer: bool) -> None:
+        from jobhunter import setup_update
+
+        assert self._setup_pret is not None
+        chemin, version = self._setup_pret
+        self._setup_pret = None
+        setup_update.appliquer(chemin, version, relancer)
+        if relancer and self._fenetre is not None:
+            self._fenetre.destroy()
+
+    def _maj_a_la_fermeture(self) -> None:
+        """Closing the window installs a ready version, silently, as Chrome does.
+
+        Not during a collection (the queue's lock): the next start offers it again.
+        """
+        if self._setup_pret is None:
+            return
+        from jobhunter.programs import update
+
+        if update.file_libre(garder=False):
+            self._lancer_setup(relancer=False)
 
     def effacer_donnees(self) -> dict[str, Any]:
         """Sends the installed application's data to the Recycle Bin, then closes it.
@@ -2470,6 +2548,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
                 self._basculer()
         elif action == "fermer":
             self._fermer_seance()  # a guided application running: stopped, Chrome closed
+            self._maj_a_la_fermeture()  # a downloaded update installs now (setup_update)
             f.destroy()
             return None
         return bool(self._plein()) if self._plein else None

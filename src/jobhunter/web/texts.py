@@ -2131,6 +2131,41 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "{v} kommt in den Microsoft Store, sobald Microsoft sie geprüft hat (einige Stunden bis einige Tage).",
         "La {v} llega a Microsoft Store tras la revisión de Microsoft (de unas horas a unos días).",
     ),
+    "Installée : {v}. Elle est vérifiée (signature), installée sans fenêtre, puis JobHunter se rouvre.{x}": (
+        "Installed: {v}. It is checked (signature), installed without a window, then JobHunter opens again.{x}",
+        "Installiert: {v}. Sie wird geprüft (Signatur), ohne Fenster installiert, dann öffnet sich JobHunter wieder.{x}",
+        "Instalada: {v}. Se comprueba (firma), se instala sin ventana y JobHunter se vuelve a abrir.{x}",
+    ),
+    "Vérification de la mise à jour…": (
+        "Checking the update…",
+        "Update wird geprüft…",
+        "Comprobando la actualización…",
+    ),
+    "Mise à jour impossible : réessaie plus tard.": (
+        "Update impossible: try again later.",
+        "Update nicht möglich: versuch es später noch einmal.",
+        "Actualización imposible: vuelve a intentarlo más tarde.",
+    ),
+    "Redémarrer pour mettre à jour ({v})": (
+        "Restart to update ({v})",
+        "Neu starten zum Aktualisieren ({v})",
+        "Reiniciar para actualizar ({v})",
+    ),
+    "Version installée : {v}. Prête : elle s'installe aussi à la fermeture de JobHunter.": (
+        "Installed version: {v}. Ready: it also installs when JobHunter closes.",
+        "Installierte Version: {v}. Bereit: Sie wird auch beim Schließen von JobHunter installiert.",
+        "Versión instalada: {v}. Lista: también se instala al cerrar JobHunter.",
+    ),
+    "Aucune mise à jour à installer ici.": (
+        "No update to install here.",
+        "Hier gibt es kein Update zu installieren.",
+        "No hay ninguna actualización que instalar aquí.",
+    ),
+    "Téléchargement ou signature refusés : rien n'a été installé.": (
+        "Download or signature refused: nothing was installed.",
+        "Download oder Signatur abgelehnt: Es wurde nichts installiert.",
+        "Descarga o firma rechazadas: no se ha instalado nada.",
+    ),
     "La {v} sera proposée dès que son auteur l'aura signée.": (
         "{v} will be offered as soon as its author has signed it.",
         "{v} wird angeboten, sobald sein Autor sie signiert hat.",
