@@ -1069,9 +1069,6 @@ details.plus > summary::-webkit-details-marker { display: none; }
 /* The daily triage (3.80): one offer, centred, its text scrolling inside. */
 .tri { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
 .tri-carte { display: flex; flex-direction: column; gap: 16px; }
-.tri-aide { font-size: var(--t-s); gap: 8px 16px; color: var(--texte-doux); border-top: 1px solid var(--filet); padding-top: 12px; }
-.tri-aide dt { color: var(--encre); }
-.tri-aide dd { white-space: normal; color: var(--texte-doux); }
 .tri-texte { max-height: 40vh; overflow-y: auto; scrollbar-width: thin; }
 .tri-texte.entier { max-height: none; overflow: visible; }
 .tri-description { display: grid; gap: 8px; }
@@ -1081,3 +1078,9 @@ details.plus > summary::-webkit-details-marker { display: none; }
 .lien { border: 0; background: none; padding: 0; color: var(--brun); text-decoration: underline; cursor: pointer; font: inherit; }
 
 .vide.chargement { opacity: .7; }
+
+/* The bubble of `data-aide` (app.js): what a button does, after a moment on it. */
+.bulle-aide { position: fixed; z-index: 1000; max-width: 320px; padding: 8px 12px; border-radius: 12px;
+  background: var(--sombre); color: #f4efec; font-size: var(--t-s); line-height: 1.4;
+  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, .22); pointer-events: none; }
+.bulle-aide[hidden] { display: none; }

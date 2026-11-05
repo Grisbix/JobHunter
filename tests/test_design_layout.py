@@ -83,3 +83,19 @@ def test_candidatures_vides_sur_toute_la_fenetre(outil, fenetre):
     assert k["lignes"] == 1, k  # one line: wrapped, Refus sat alone across the window
     assert k["somme"] > 0.9 * k["large"], k  # the columns fill the width
     assert k["haut"] > 0.5 * k["vue"], k  # and the height
+
+
+def test_l_aide_d_un_bouton_vient_au_survol_apres_un_moment(outil, fenetre):
+    """`data-aide`: the user, 2026-11-05, « au bout de quelques secondes », not under the buttons."""
+    page = fenetre(1000)
+    outil.aller(page, "accueil")
+    page.evaluate("""() => document.getElementById('vue').prepend(
+      aide(bouton('Essai', '', () => {}), 'Ce que fait ce bouton.'))""")
+    bulle = "(() => { const b = document.getElementById('bulle-aide'); return b && !b.hidden ? b.innerText : null; })()"
+    page.hover("#vue > button")
+    page.wait_for_timeout(400)
+    assert page.evaluate(bulle) is None  # not at once
+    page.wait_for_timeout(1200)
+    assert page.evaluate(bulle) == "Ce que fait ce bouton."
+    page.mouse.move(2, 2)
+    assert page.evaluate(bulle) is None

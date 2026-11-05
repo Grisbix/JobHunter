@@ -182,7 +182,7 @@ function chargerCatalogue(c) {
   FIT = (c.fit || []).map(compiler).sort(precis);
   traduireSous(document.body);
   new MutationObserver(observerTraduction).observe(document.body,
-    { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "title"] });
+    { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "title", "data-aide"] });
 }
 
 // One text (without its edge spaces) in the interface language, or null if unknown.
@@ -227,7 +227,7 @@ function traduireNoeud(n) {
 
 function traduireAttributs(e) {
   if (e.closest("[translate=no]")) return;
-  for (const a of ["placeholder", "title"]) {
+  for (const a of ["placeholder", "title", "data-aide"]) {
     const v = e.getAttribute(a);
     if (v) { const t = traduire(v); if (t !== v) e.setAttribute(a, t); }
   }
@@ -237,7 +237,7 @@ function traduireSous(racine) {
   if (racine.nodeType === Node.TEXT_NODE) return traduireNoeud(racine);
   if (racine.nodeType !== Node.ELEMENT_NODE) return;
   traduireAttributs(racine);
-  for (const e of racine.querySelectorAll("[placeholder], [title]")) traduireAttributs(e);
+  for (const e of racine.querySelectorAll("[placeholder], [title], [data-aide]")) traduireAttributs(e);
   const w = document.createTreeWalker(racine, NodeFilter.SHOW_TEXT);
   for (let n = w.nextNode(); n; n = w.nextNode()) traduireNoeud(n);
 }
@@ -669,6 +669,42 @@ async function declarerEnvoi(id) {
 
 const bouton = (texte, icone, onclick, classe = "") =>
   h("button", { class: `bouton ${classe}`, onclick }, icone ? svg(icone) : null, texte);
+
+// What a button does, in a bubble after a moment on it (the user, 2026-11-05: « quand on
+// passe la souris dessus une explication s'affiche au bout de quelques secondes »):
+// `data-aide` on the element. Not in the page under the buttons: it took room for what
+// one reads once.
+const AIDE_DELAI = 1200;
+let aideMinuteur = 0;
+let aideCible = null;
+function cacherAide() {
+  clearTimeout(aideMinuteur);
+  aideCible = null;
+  const b = $("bulle-aide");
+  if (b) b.hidden = true;
+}
+document.addEventListener("mouseover", (e) => {
+  const cible = e.target.closest && e.target.closest("[data-aide]");
+  if (cible === aideCible) return;
+  cacherAide();
+  if (!cible) return;
+  aideCible = cible;
+  aideMinuteur = setTimeout(() => {
+    if (!cible.isConnected) return;
+    let b = $("bulle-aide");
+    if (!b) { b = h("div", { id: "bulle-aide", class: "bulle-aide", role: "tooltip" }); document.body.append(b); }
+    b.textContent = cible.dataset.aide;
+    b.hidden = false;
+    const r = cible.getBoundingClientRect();
+    const l = b.offsetWidth, ht = b.offsetHeight;
+    const x = Math.min(Math.max(8, r.left + r.width / 2 - l / 2), innerWidth - l - 8);
+    const y = r.top - ht - 8 >= 8 ? r.top - ht - 8 : r.bottom + 8;
+    b.style.left = `${x}px`;
+    b.style.top = `${y}px`;
+  }, AIDE_DELAI);
+});
+for (const ev of ["mousedown", "keydown", "scroll"]) document.addEventListener(ev, cacherAide, true);
+const aide = (el, texte) => { el.dataset.aide = texte; return el; };
 
 // « Plus… »: a list of [text, icon, action] behind one button; closes on a choice or
 // on a click elsewhere. It opens in the flow, on its own line: a floating menu was cut
@@ -1362,21 +1398,15 @@ ECRANS.tri = {
           h("div", { translate: "no" }, traduireFit(o.pourquoi))) : null,
         o.description ? texteTri(o.description) : h("div", { class: "carte description tri-texte" }, "Pas de description enregistrée pour cette offre."),
         h("div", { class: "boutons" },
-          bouton("Garder", "fleche", garder, "plein"),
-          bouton("Passer", "", passer),
-          bouton("Pas intéressé", "", rejeter),
+          aide(bouton("Garder", "fleche", garder, "plein"), "Elle reste dans tes offres à traiter ; offre suivante."),
+          aide(bouton("Passer", "", passer), "Pas de décision : elle revient à la fin du tri."),
+          aide(bouton("Pas intéressé", "", rejeter), "Classée « pas intéressé », toujours visible dans Offres. Rien n'est supprimé."),
           bouton(o.cv ? "Refaire CV et lettre" : "Préparer CV et lettre", "plume", async () => { await lancer("documents", id); garder(); }),
           bouton("Voir l'annonce", "sortie", () => ouvrir(o.url)),
           plus([
             ["Retirer de la file, avec un motif…", "", () => ecarter([id])],
             ["Tout le détail", "doc", () => ouvrirOffre(id)],
-          ])),
-        // What each button does to the offer (the user, 2026-11-05: « mieux expliquer
-        // les boutons »): none of the three deletes it.
-        h("dl", { class: "paires tri-aide" },
-          h("dt", {}, "Garder"), h("dd", {}, "Elle reste dans tes offres à traiter ; offre suivante."),
-          h("dt", {}, "Passer"), h("dd", {}, "Pas de décision : elle revient à la fin du tri."),
-          h("dt", {}, "Pas intéressé"), h("dd", {}, "Classée « pas intéressé », toujours visible dans Offres. Rien n'est supprimé.")))));
+          ])))));
   },
 };
 function texteTri(description) {

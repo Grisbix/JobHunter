@@ -136,6 +136,9 @@ follows it, never the reverse.
   `collecte` (arrow into a tray), daily schedule `horloge`, CV, letter or draft `plume`,
   a tool that runs `lancer`, the daily triage `entonnoir`, score `cible`, following
   `signet`, statistics `graphique`, adding `plus`.
+- Do explain a button whose effect is not obvious with `aide(bouton(…), "…")`
+  (`data-aide`): a bubble after 1.2 s on it. Not a line of text under the buttons (the
+  user, 2026-11-05): it takes room for what one reads once.
 - Don't use a decorative star or lightning bolt (the user, 2026-11-05): they say
   nothing about the button. `tests/test_design_scale.py` checks that every icon used
   exists and that neither comes back.
