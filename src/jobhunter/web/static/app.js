@@ -958,10 +958,6 @@ ECRANS.accueil = {
       h("div", { class: "colonne" },
         h("div", { class: "sombre" }, h("h2", {}, "À faire"),
           h("ul", { class: "fil" },
-            // A free key missing: for a waiter or a nurse, most of the offers.
-            d.cle_conseillee ? h("li", { onclick: () => saisirCle(d.cle_conseillee.nom, () => aller("accueil")) },
-              h("div", { class: "t" }, `Ajouter la clé ${d.cle_conseillee.libelle}`),
-              h("div", { class: "s" }, "Gratuite, 5 minutes : beaucoup plus d'offres")) : null,
             d.a_trier ? h("li", { onclick: () => aller("tri") },
               h("div", { class: "t" }, "Trier les nouvelles offres"),
               h("div", { class: "s" }, `${nombre(d.a_trier)} offres notées ${d.seuil || 8}+ jamais ouvertes`)) : null,
@@ -971,7 +967,12 @@ ECRANS.accueil = {
             ? d.a_postuler.map((o) => h("li", { onclick: () => ouvrirOffre(`${o.entreprise}|${o.poste}`) },
                 h("div", { class: "t" }, `Postuler chez ${o.entreprise}`),
                 h("div", { class: "s", title: o.poste }, `${nombre(o.fit)} · ${o.poste}`)))
-            : d.a_trier ? null : h("li", { class: "vide" }, "Rien à faire pour l'instant"))),
+            : d.a_trier || d.cle_conseillee ? null : h("li", { class: "vide" }, "Rien à faire pour l'instant"),
+            // A free key missing: for a waiter or a nurse, most of the offers. Last, and
+            // one day in three when there is something else to do (api.cle_du_jour).
+            d.cle_conseillee ? h("li", { onclick: () => saisirCle(d.cle_conseillee.nom, () => aller("accueil")) },
+              h("div", { class: "t" }, `Ajouter la clé ${d.cle_conseillee.libelle}`),
+              h("div", { class: "s" }, "Gratuite, 5 minutes : beaucoup plus d'offres")) : null)),
         h("div", { class: "zones" }, h("h2", {}, "Par zone"), h("div", { class: "sous", style: "margin-bottom:16px" }, `offres notées ${d.seuil || 8} et plus`),
           d.zones.map((z) => h("div", { class: "zone" },
             h("div", {}, h("div", { class: "lab" }, z.zone), h("div", { class: "val" }, nombre(z.n))),

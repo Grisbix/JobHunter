@@ -178,6 +178,16 @@ PAR_PAGE = 40
 PAR_PAGE_CHOIX = (20, 40, 100, 200)
 
 
+def cle_du_jour(autres: bool, jour: date | None = None) -> bool:
+    """Whether « À faire » suggests the missing key today.
+
+    Every day it sat first in the list, over the real to-dos (the user, 2026-11-05:
+    « qu'il y ait un roulement »). With other things to do, it comes back one day in
+    three, after them; with nothing else, it fills the empty list.
+    """
+    return not autres or (jour or date.today()).toordinal() % 3 == 0
+
+
 def _date_offre(o: Mapping[str, Any]) -> str:
     """The most telling date of an offer: its publication, else when it was seen, else its scan."""
     for champ in ("date_publication", "vu_le"):
@@ -1053,6 +1063,8 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         from jobhunter.sources import countries
 
         nom = api_keys.conseillee(root.dossier_cles(), countries.maison())
+        if not cle_du_jour(bool(d["a_trier"] or d.get("a_postuler"))):
+            nom = None
         d["cle_conseillee"] = (
             {
                 "nom": nom,
