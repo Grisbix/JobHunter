@@ -2047,6 +2047,8 @@ ONGLETS_SOURCES.acces = async (vue) => {
       h("div", { class: "titre-ligne" }, h("h2", {}, "Connexions pour candidater")),
       h("div", { class: "sous", style: "margin:4px 0 12px" }, "Tu te connectes toi-même ; les mots de passe restent dans le navigateur."),
       h("table", { class: "tableau-simple" },
+        // The button's column at its width: a fifth of a narrow window cut it at the card's edge.
+        h("colgroup", {}, h("col", {}), h("col", {}), h("col", {}), h("col", {}), h("col", { style: "width:210px" })),
         h("thead", {}, h("tr", {}, ["Site", "Identifiant", "Session", "Vérifiée le", ""].map((t) => h("th", {}, t)))),
         h("tbody", {}, d.connexions.map((c) => h("tr", {},
           h("td", {}, c.site), h("td", {}, c.identifiant || "—"),

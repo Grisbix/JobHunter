@@ -208,6 +208,10 @@ h3 { font-size: var(--t-xl); font-weight: 500; }
    list takes the panel's side padding back as its own, and the header's end cells paint
    their band over it; the rows keep their places. */
 .vue.plein .remplit > .defile, .vue.plein .panneau > .defile { margin: 0 -24px; padding: 0 24px; }
+/* A long list fades out at its bottom instead of cutting a row in half against the
+   footer; the extra padding lets its last row clear the fade (the user, 2026-11-05). */
+.vue.plein .remplit > .defile, .vue.plein .panneau > .defile { padding-bottom: 24px;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent); }
 .vue.plein .defile thead th:first-child::before, .vue.plein .defile thead th:last-child::after {
   content: ""; position: absolute; top: 0; bottom: 0; width: 24px; background: inherit; box-shadow: inherit;
 }
@@ -499,8 +503,12 @@ td > .score { width: 34px; height: 34px; font-size: var(--t-m); }
    window; the tools card, with no basis of its own, fills what the identity leaves. */
 .grille.grille-profil { grid-template-columns: repeat(auto-fit, minmax(min(max(320px, calc(50% - 10px)), 100%), 1fr)); container-type: inline-size; }
 /* One column: nothing beside to match, the tools card shows them all. */
-@container (max-width: 659px) { .grille-profil .pile-profil > .outils-profil.outils-profil { flex: none; overflow: visible; } }
-.grille .pile-profil > .outils-profil { flex: 1 1 0; min-height: 180px; overflow-y: auto; scrollbar-width: thin; }
+@container (max-width: 659px) { .grille-profil .pile-profil > .outils-profil.outils-profil, .grille-profil .pile-profil > .outils-profil > .puces.puces { flex: none; overflow: visible; mask-image: none; } }
+.grille .pile-profil > .outils-profil { flex: 1 1 0; min-height: 180px; display: flex; flex-direction: column; overflow: hidden; }
+/* The list scrolls, not the card: the card kept its padding, the tags no longer run
+   into its bottom edge (the user, 2026-11-05); a fade says there is more. */
+.grille .pile-profil > .outils-profil > .puces { flex: 1 1 0; min-height: 0; overflow-y: auto; scrollbar-width: thin; align-content: flex-start;
+  padding-bottom: 8px; mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent); }
 .grille > *, .grille .pile > * { min-width: 0; }
 /* auto-fit: two cards share the whole row instead of leaving a third column empty. */
 .grille.ajustee { grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); }
@@ -876,6 +884,10 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
 .tableau-simple tr.sous-ligne td:first-child { padding-left: 24px; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .defile { max-height: 60vh; overflow: auto; }
 .actions-ligne { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+/* In a table, the cell stays a cell: in flex, it left the row's line and its height,
+   and a button ran past the card's edge in a narrow window (2026-11-05). */
+td.actions-ligne { display: table-cell; text-align: right; white-space: normal; }
+td.actions-ligne > * { margin: 4px 0 4px 8px; vertical-align: middle; }
 .actions-ligne .bouton { height: 30px; font-size: var(--t-m); padding: 0 12px; }
 .bouton.icone { width: 30px; padding: 0; justify-content: center; }
 .ligne-ajout { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
