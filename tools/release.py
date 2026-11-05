@@ -7,13 +7,16 @@
 `publier` refuses while a check of the PR is not green, or when CHANGELOG.md has no
 section for the version. It never signs: the signature stays the author's act
 (tools/signature.py). `--installer <dossier>` then upgrades the package installed for
-that data folder's interpreter, from the tag just published.
+that data folder's interpreter, from the tag just published: the first `python` on PATH
+outside this venv (which has no pip), or `--python <exe>`.
 """
 
 import argparse
 import datetime
 import json
+import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -56,7 +59,25 @@ def preparer(version: str) -> int:
     return 0
 
 
-def publier(pr: int, installer: str = "") -> int:
+def python_hors_venv() -> str:
+    """The `python` a data folder runs: the first on PATH outside the venv running this tool.
+
+    3.84.0: `sys.executable` was the engine's venv, which has no pip, and the install
+    failed after the release was published.
+    """
+    venv = Path(sys.prefix).resolve()
+    dossiers = []
+    for d in os.environ.get("PATH", "").split(os.pathsep):
+        try:
+            chemin = Path(d).resolve()
+        except OSError:
+            continue
+        if d and chemin != venv and venv not in chemin.parents:
+            dossiers.append(d)
+    return shutil.which("python", path=os.pathsep.join(dossiers)) or ""
+
+
+def publier(pr: int, installer: str = "", python: str = "") -> int:
     info = json.loads(
         _run("gh", "pr", "view", str(pr), "--json", "headRefName,state", capture=True)
     )
@@ -93,13 +114,16 @@ def publier(pr: int, installer: str = "") -> int:
     subprocess.run(["git", "branch", "-d", branche], cwd=RACINE, capture_output=True)
     print(f"v{version} publiée : {DEPOT}/releases/tag/v{version}")
     if installer:
+        exe = python or python_hors_venv()
+        if not exe:
+            sys.exit("aucun python hors du venv sur le PATH : relancer avec --python <exe>")
         cible = f"jobhunter @ git+{DEPOT}@v{version}"
         subprocess.run(
-            [sys.executable, "-m", "pip", "install", "-q", "--upgrade", cible],
+            [exe, "-m", "pip", "install", "-q", "--upgrade", cible],
             cwd=installer,
             check=True,
         )
-        print(f"installée pour {installer}")
+        print(f"installée pour {installer} ({exe})")
     print("La signature reste à faire par son auteur (tools/signature.py).")
     return 0
 
@@ -113,8 +137,11 @@ def main() -> int:
     p.add_argument(
         "--installer", default="", help="dossier de données dont mettre à jour le paquet"
     )
+    p.add_argument("--python", default="", help="interpréteur de ce dossier (défaut : hors venv)")
     a = ap.parse_args()
-    return preparer(a.version) if a.action == "preparer" else publier(a.pr, a.installer)
+    if a.action == "preparer":
+        return preparer(a.version)
+    return publier(a.pr, a.installer, a.python)
 
 
 if __name__ == "__main__":
