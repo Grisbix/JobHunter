@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -248,15 +249,15 @@ def main() -> int:
 
     if welcome.a_un_profil():  # without one, the welcome first (web.onboarding)
         api.demarrer_fond()  # the desktop's background work (web.background)
+        # The first screen's data, read while WebView2 starts.
+        threading.Thread(target=api._prechauffer, daemon=True).start()
     # The Start menu shortcut, once: pinned, the window keeps JobHunter's logo (shortcut.py).
-    import threading
-
     from jobhunter.programs import shortcut
 
     threading.Thread(target=shortcut.assurer, daemon=True).start()
     fenetre = webview.create_window(
         "JobHunter",
-        str(STATIC / "index.html"),
+        (STATIC / "index.html").as_uri(),
         js_api=api,
         width=1280,
         height=800,

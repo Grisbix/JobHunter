@@ -227,3 +227,41 @@ def test_bascule_sous_l_ancienne_a_sa_place(monkeypatch, tmp_path):
     nouvelle._relais = env["JH_RELAIS"]
     assert nouvelle.affiche() is True and nouvelle.affiche() is False
     assert ferme.wait(1)
+
+
+def test_la_file_se_lit_pendant_que_la_fenetre_demarre(monkeypatch, tmp_path):
+    """The user, 2026-11-05: « regarde le temps d'ouverture de l'app ». The queue is read
+    while WebView2 starts; the page's first call takes it from there, read once."""
+    import threading
+    import time
+
+    from jobhunter.storage import queue
+
+    lus = []
+    f = tmp_path / "apply_queue.json"
+    f.write_text("[]")
+    monkeypatch.setattr(queue, "fichier", lambda: f)
+
+    def charger(descriptions=True):
+        lus.append(1)
+        time.sleep(0.2)
+        return [{"entreprise": "A", "poste": "P"}]
+
+    monkeypatch.setattr(queue, "charger", charger)
+    a = api.Api()
+    a._suivi = lambda: {}
+    t = threading.Thread(target=a._prechauffer)
+    t.start()
+    time.sleep(0.05)
+    assert a._file() == [{"entreprise": "A", "poste": "P"}]  # waits for the start-up read
+    t.join()
+    assert len(lus) == 1
+
+
+def test_la_page_s_ouvre_sans_serveur():
+    """file://, not pywebview's HTTP server: no server to start, no port shared by the two
+    windows of a profile switch."""
+    from jobhunter.web import __main__ as M
+
+    texte = Path(M.__file__).read_text(encoding="utf-8")
+    assert '(STATIC / "index.html").as_uri()' in texte

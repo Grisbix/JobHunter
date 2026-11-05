@@ -2915,10 +2915,18 @@ async function demarrer() {
 }
 
 // The first screen is drawn: after a profile switch, the previous window, above this
-// one, closes and shows it ready (Api.affiche). A timer, not a frame: a window under
-// another may get no frame until it is uncovered.
+// one, closes and shows it ready (Api.affiche). Two painted frames, not the DOM built:
+// one switch in three showed the bare menu for 150 ms (filmed 2026-11-05). A timer as
+// a net: a covered window might get no frame at all.
 function affiche() {
-  setTimeout(() => { if (window.pywebview) window.pywebview.api.affiche().catch(() => {}); }, 50);
+  let dit = false;
+  const dire = () => {
+    if (dit || !window.pywebview) return;
+    dit = true;
+    window.pywebview.api.affiche().catch(() => {});
+  };
+  requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(dire, 30)));
+  setTimeout(dire, 400);
 }
 
 // --- The welcome (3.78): a folder without a profile, before the application ---------

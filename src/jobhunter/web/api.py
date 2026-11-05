@@ -40,6 +40,8 @@ ECARTEES = ("mauvaise", "pas intéressé", "expiré")
 # A follow-up is due after this many days (the J+7 template).
 JOURS_RELANCE = 7
 _RX_SCAN = re.compile(r"^Scan (\d{4}-\d{2}-\d{2})$")
+# A profile switch: seconds the old window stays once the new one says it is drawn.
+RELAIS_MARGE = 0.25
 
 
 def _fit(o: dict[str, Any], champ: str = "fit") -> float:
@@ -1014,21 +1016,38 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
     def __init__(self) -> None:
         """An empty cache: each data file is read on first use."""
         self._cache: dict[str, tuple[float, Any]] = {}
+        # One reader per file: the page's first call waits for the start-up read
+        # (_prechauffer) instead of reading the same file a second time.
+        self._verrous: dict[str, threading.RLock] = {}
         self._propositions: list[Any] = []  # last email suggestions, applied by index
         # Undo (the desktop's Ctrl+Z): per gesture, each application as it was before.
         self._annuler: list[list[tuple[str, dict[str, Any]]]] = []
 
     # Data, reloaded only when its file changed.
     def _lire(self, cle: str, fichier: Path, charger: Any) -> Any:
+        with self._verrous.setdefault(cle, threading.RLock()):
+            try:
+                mtime = fichier.stat().st_mtime
+            except OSError:
+                mtime = 0.0
+            vu = self._cache.get(cle)
+            if vu is None or vu[0] != mtime:
+                vu = (mtime, charger())
+                self._cache[cle] = vu
+            return vu[1]
+
+    def _prechauffer(self) -> None:
+        """Reads the queue and the applications while the window starts (__main__).
+
+        The first screen waited for them: 0.3 s for 17 000 offers, read only once the
+        page had loaded, after a second of WebView2 starting with Python idle (the user,
+        2026-11-05: « regarde le temps d'ouverture de l'app »).
+        """
         try:
-            mtime = fichier.stat().st_mtime
-        except OSError:
-            mtime = 0.0
-        vu = self._cache.get(cle)
-        if vu is None or vu[0] != mtime:
-            vu = (mtime, charger())
-            self._cache[cle] = vu
-        return vu[1]
+            self._file()
+            self._suivi()
+        except Exception:  # noqa: BLE001 — the page reads them again and says what failed
+            pass
 
     def _file(self) -> list[Any]:
         from jobhunter.storage import queue
@@ -2409,6 +2428,9 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
             while time.time() < fin and not relais.exists():
                 time.sleep(0.03)
             relais.unlink(missing_ok=True)
+            # Drawn is not yet shown: uncovered at once, the new window showed its bare
+            # page for up to 0.15 s, one switch in three (filmed 2026-11-05).
+            time.sleep(RELAIS_MARGE)
             fenetre.destroy()
 
         threading.Thread(target=fermer, daemon=True).start()
