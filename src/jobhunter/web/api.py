@@ -40,6 +40,8 @@ ECARTEES = ("mauvaise", "pas intéressé", "expiré")
 # A follow-up is due after this many days (the J+7 template).
 JOURS_RELANCE = 7
 _RX_SCAN = re.compile(r"^Scan (\d{4}-\d{2}-\d{2})$")
+# A profile switch: seconds the old window stays once the new one says it is drawn.
+RELAIS_MARGE = 0.25
 
 
 def _fit(o: dict[str, Any], champ: str = "fit") -> float:
@@ -176,6 +178,16 @@ def tableau(
 FILTRES_STATUT = ("à traiter", "postulées", "écartées", "toutes")
 PAR_PAGE = 40
 PAR_PAGE_CHOIX = (20, 40, 100, 200)
+
+
+def cle_du_jour(autres: bool, jour: date | None = None) -> bool:
+    """Whether « À faire » suggests the missing key today.
+
+    Every day it sat first in the list, over the real to-dos (the user, 2026-11-05:
+    « qu'il y ait un roulement »). With other things to do, it comes back one day in
+    three, after them; with nothing else, it fills the empty list.
+    """
+    return not autres or (jour or date.today()).toordinal() % 3 == 0
 
 
 def _date_offre(o: Mapping[str, Any]) -> str:
@@ -988,6 +1000,9 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
     _fenetre: Any = None
     _basculer: Any = None  # full screen <-> rounded window
     _plein: Any = None  # () -> bool: is the window full screen
+    _rect: Any = None  # () -> (x, y, w, h) | None: the window's place, for the next one
+    _devant: Any = None  # () -> None: keeps the window above the one opening under it
+    _relais = ""  # a profile switch's file: written once the first screen is drawn
     # Applies a backdrop by name, see FONDS. Not `_fond`: that is the background loop
     # (web.background), which this attribute overwrote — every fond_etat call failed
     # and the background's news never reached the page (found 2026-10-28).
@@ -1001,21 +1016,38 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
     def __init__(self) -> None:
         """An empty cache: each data file is read on first use."""
         self._cache: dict[str, tuple[float, Any]] = {}
+        # One reader per file: the page's first call waits for the start-up read
+        # (_prechauffer) instead of reading the same file a second time.
+        self._verrous: dict[str, threading.RLock] = {}
         self._propositions: list[Any] = []  # last email suggestions, applied by index
         # Undo (the desktop's Ctrl+Z): per gesture, each application as it was before.
         self._annuler: list[list[tuple[str, dict[str, Any]]]] = []
 
     # Data, reloaded only when its file changed.
     def _lire(self, cle: str, fichier: Path, charger: Any) -> Any:
+        with self._verrous.setdefault(cle, threading.RLock()):
+            try:
+                mtime = fichier.stat().st_mtime
+            except OSError:
+                mtime = 0.0
+            vu = self._cache.get(cle)
+            if vu is None or vu[0] != mtime:
+                vu = (mtime, charger())
+                self._cache[cle] = vu
+            return vu[1]
+
+    def _prechauffer(self) -> None:
+        """Reads the queue and the applications while the window starts (__main__).
+
+        The first screen waited for them: 0.3 s for 17 000 offers, read only once the
+        page had loaded, after a second of WebView2 starting with Python idle (the user,
+        2026-11-05: « regarde le temps d'ouverture de l'app »).
+        """
         try:
-            mtime = fichier.stat().st_mtime
-        except OSError:
-            mtime = 0.0
-        vu = self._cache.get(cle)
-        if vu is None or vu[0] != mtime:
-            vu = (mtime, charger())
-            self._cache[cle] = vu
-        return vu[1]
+            self._file()
+            self._suivi()
+        except Exception:  # noqa: BLE001 — the page reads them again and says what failed
+            pass
 
     def _file(self) -> list[Any]:
         from jobhunter.storage import queue
@@ -1053,6 +1085,8 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         from jobhunter.sources import countries
 
         nom = api_keys.conseillee(root.dossier_cles(), countries.maison())
+        if not cle_du_jour(bool(d["a_trier"] or d.get("a_postuler"))):
+            nom = None
         d["cle_conseillee"] = (
             {
                 "nom": nom,
@@ -1145,7 +1179,16 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
             and not (suivi.get(_oid(o)) or {}).get("s")
         ]
         nouvelles.sort(key=lambda o: (-_fit(o), -_fit(o, "fit_fin"), str(o.get("statut") or "")))
+        # Passed ones last, in the order they were passed.
+        rang = {k: i for i, k in enumerate(opened.passees())}
+        nouvelles.sort(key=lambda o: rang.get(_oid(o), -1))
         return {"total": len(nouvelles), "ids": [_oid(o) for o in nouvelles[:100]]}
+
+    def passer(self, ident: str) -> dict[str, Any]:
+        """« Passer » in the daily triage: the offer comes back after the others, unchanged."""
+        from jobhunter.web import opened
+
+        return {"ok": opened.passer(ident)}
 
     def _archivables(self, jours: int) -> list[str]:
         """What nobody will read again: old, under the threshold, never opened, never applied."""
@@ -2352,23 +2395,56 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         relais.unlink(missing_ok=True)
         env["JH_RELAIS"] = str(relais)
         env["JH_PLEIN"] = "1" if (self._plein is None or self._plein()) else "0"
-        subprocess.Popen(cmd, cwd=str(principale), env=env)  # nosec B603 : our own program
+        rect = self._rect() if self._rect else None
+        if rect:
+            env["JH_RECT"] = ",".join(str(v) for v in rect)
+        # Drawn under this window, the new page was not painted at all (Chromium skips a
+        # covered window) and showed grey for 0.4 s once uncovered. pywebview's own
+        # arguments are repeated: this variable may replace them.
+        env["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = (
+            "--disable-features=ElasticOverscroll,CalculateNativeWinOcclusion"
+            " --allow-file-access-from-files"
+        )
         fenetre = self._fenetre
+        if fenetre is not None:
+            try:
+                fenetre.evaluate_js("document.body.classList.add('relais')")
+            except Exception:  # noqa: BLE001 — only the veil
+                pass
+            # The new window opens under this one, at its place, and draws there unseen:
+            # it appeared at once, empty and at the default size, then jumped to its
+            # size (the user, 2026-11-05: « plus rapide et plus smooth »).
+            if self._devant:
+                try:
+                    self._devant()
+                except Exception:  # noqa: BLE001 — only the order of the windows
+                    pass
+        subprocess.Popen(cmd, cwd=str(principale), env=env)  # nosec B603 : our own program
         if fenetre is None:
             return
-        try:
-            fenetre.evaluate_js("document.body.classList.add('relais')")
-        except Exception:  # noqa: BLE001 — only the veil
-            pass
 
         def fermer() -> None:
             fin = time.time() + 45  # a new window that never says ready: close anyway
             while time.time() < fin and not relais.exists():
-                time.sleep(0.2)
+                time.sleep(0.03)
             relais.unlink(missing_ok=True)
+            # Drawn is not yet shown: uncovered at once, the new window showed its bare
+            # page for up to 0.15 s, one switch in three (filmed 2026-11-05).
+            time.sleep(RELAIS_MARGE)
             fenetre.destroy()
 
         threading.Thread(target=fermer, daemon=True).start()
+
+    def affiche(self) -> bool:
+        """The page's first screen is drawn: the previous window (a profile switch) closes."""
+        relais, self._relais = self._relais, ""
+        if not relais:
+            return False
+        try:
+            Path(relais).write_text("pret", encoding="utf-8")
+        except OSError:
+            return False
+        return True
 
     def changer_profil(self, slug: str) -> dict[str, Any]:
         """Opens another profile: the window restarts on its data (paths are fixed at start)."""

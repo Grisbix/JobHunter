@@ -15,10 +15,19 @@ the user never runs them. Run them from the repository root with `uv run python 
 | `check_version.py` | Checks that `VERSION` and `pyproject.toml` carry the same version (CI and pre-commit). |
 | `signature.py` | Signs a published release with the author's private key (`cle` once, then `signer X.Y.Z --publier`). ADR 0012. |
 | `installer/` | Standalone application and Windows installer: `build.py` builds them, `JobHunter.spec` (PyInstaller) and `JobHunter.iss` (Inno Setup) describe them, `launcher.py` is the executables' entry point, `check_installed.py` is the CI trial of the installed app. ADR 0011. |
+| `screenshots.py` | The README and Store screenshots, on a fictitious profile, with the real engine and the real web window. |
+| `design_check.py` | The window's layout on that fictitious profile, every screen and Sources tab, scrolled top to bottom: reports any text less than 8 px from its card's edge or cut by its container without a fade, and saves one screenshot per screen to judge the empty space by eye. `tests/test_design_layout.py` runs it in CI. DESIGN.md « Layout ». |
 
 Typical release check, after a change to the engine:
 
 ```bash
 uv run python tools/bench.py comparer tools/bench_reference.json
 uv run python tools/check_version.py
+```
+
+After a change to the window (`src/jobhunter/web/static/`):
+
+```bash
+uv run python tools/design_check.py --out captures          # 0 défaut, then look at the captures
+uv run python tools/design_check.py --vide --out captures   # the same with no application
 ```

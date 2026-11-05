@@ -208,6 +208,10 @@ h3 { font-size: var(--t-xl); font-weight: 500; }
    list takes the panel's side padding back as its own, and the header's end cells paint
    their band over it; the rows keep their places. */
 .vue.plein .remplit > .defile, .vue.plein .panneau > .defile { margin: 0 -24px; padding: 0 24px; }
+/* A long list fades out at its bottom instead of cutting a row in half against the
+   footer; the extra padding lets its last row clear the fade (the user, 2026-11-05). */
+.vue.plein .remplit > .defile, .vue.plein .panneau > .defile { padding-bottom: 24px;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent); }
 .vue.plein .defile thead th:first-child::before, .vue.plein .defile thead th:last-child::after {
   content: ""; position: absolute; top: 0; bottom: 0; width: 24px; background: inherit; box-shadow: inherit;
 }
@@ -450,6 +454,13 @@ td > .score { width: 34px; height: 34px; font-size: var(--t-m); }
 .colonne-k .entete > :first-child { white-space: nowrap; }
 .colonne-k .entete > .compte { flex: none; }
 .colonne-k.vide-k .vide { padding: 8px 0; font-size: var(--t-m); }
+/* No application yet: how one gets here, and the empty columns over the window. */
+.debut-k { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; }
+.debut-k .sous { margin-top: 8px; max-width: 720px; }
+/* Empty, the five columns stay on one line: wrapped, Refus sat alone across the window. */
+.tableau-kanban.debut { flex-wrap: nowrap; }
+.tableau-kanban.debut .colonne-k { min-width: 0; }
+.vue.plein .colonne-k > .vide:last-child { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; }
 .compte { font-size: var(--t-s); min-width: 24px; height: 22px; padding: 0 8px; border-radius: 11px; display: grid; place-items: center; background: var(--piste); color: var(--gris); }
 .fiche-k { padding: 12px; overflow-wrap: anywhere; cursor: pointer; transition: transform .12s, box-shadow .12s; }
 /* Two lines of title at most: more cards fit before « Voir les N autres » (3.80). */
@@ -492,9 +503,21 @@ td > .score { width: 34px; height: 34px; font-size: var(--t-m); }
    window; the tools card, with no basis of its own, fills what the identity leaves. */
 .grille.grille-profil { grid-template-columns: repeat(auto-fit, minmax(min(max(320px, calc(50% - 10px)), 100%), 1fr)); container-type: inline-size; }
 /* One column: nothing beside to match, the tools card shows them all. */
-@container (max-width: 659px) { .grille-profil .pile-profil > .outils-profil.outils-profil { flex: none; overflow: visible; } }
-.grille .pile-profil > .outils-profil { flex: 1 1 0; min-height: 180px; overflow-y: auto; scrollbar-width: thin; }
+@container (max-width: 659px) { .grille-profil .pile-profil > .outils-profil.outils-profil, .grille-profil .pile-profil > .outils-profil > .puces.puces { flex: none; overflow: visible; mask-image: none; } }
+.grille .pile-profil > .outils-profil { flex: 1 1 0; min-height: 180px; display: flex; flex-direction: column; overflow: hidden; }
+/* The list scrolls, not the card: the card kept its padding, the tags no longer run
+   into its bottom edge (the user, 2026-11-05); a fade says there is more. */
+.grille .pile-profil > .outils-profil > .puces { flex: 1 1 0; min-height: 0; overflow-y: auto; scrollbar-width: thin; align-content: flex-start;
+  padding-bottom: 8px; mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent); }
 .grille > *, .grille .pile > * { min-width: 0; }
+/* auto-fit: two cards share the whole row instead of leaving a third column empty. */
+.grille.ajustee { grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); }
+/* Réglages: columns of cards each at its own height, balanced by the browser; a grid
+   row stretched every card to the tallest one (2026-11-05). */
+.mosaique { column-width: 320px; column-gap: 20px; }
+.mosaique > * { break-inside: avoid; margin-bottom: 20px; }
+/* Score: two pairs a line, the card no wider than its text. */
+.paires.deux { grid-template-columns: auto 1fr auto 1fr; }
 .identite { display: flex; gap: 20px; align-items: center; }
 .identite .avatar { width: 64px; height: 64px; font-size: var(--t-3xl); }
 .identite .nom { font-size: var(--t-3xl); font-weight: 500; letter-spacing: -0.01em; }
@@ -852,7 +875,9 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
 .champ-bloc textarea { width: 100%; resize: vertical; }
 
 /* Panels: companies, boards, access, statistics. */
-.tableau-simple { width: 100%; border-collapse: collapse; font-size: var(--t-m); }
+/* Columns sized by their content: in the global fixed layout, equal columns left the
+   actions cell narrower than its button, cut under 1000 px (and at 1000 on macOS). */
+.tableau-simple { width: 100%; border-collapse: collapse; font-size: var(--t-m); table-layout: auto; }
 .tableau-simple th { text-align: left; font-weight: 500; color: var(--gris); padding: 8px 12px; border-bottom: 1px solid var(--filet); }
 .tableau-simple td { padding: 8px 12px; border-bottom: 1px solid var(--filet); vertical-align: middle; }
 .tableau-simple td.num { text-align: right; font-variant-numeric: tabular-nums; }
@@ -861,6 +886,10 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
 .tableau-simple tr.sous-ligne td:first-child { padding-left: 24px; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .defile { max-height: 60vh; overflow: auto; }
 .actions-ligne { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+/* In a table, the cell stays a cell: in flex, it left the row's line and its height,
+   and a button ran past the card's edge in a narrow window (2026-11-05). */
+td.actions-ligne { display: table-cell; text-align: right; white-space: normal; }
+td.actions-ligne > * { margin: 4px 0 4px 8px; vertical-align: middle; }
 .actions-ligne .bouton { height: 30px; font-size: var(--t-m); padding: 0 12px; }
 .bouton.icone { width: 30px; padding: 0; justify-content: center; }
 .ligne-ajout { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
@@ -1051,3 +1080,9 @@ details.plus > summary::-webkit-details-marker { display: none; }
 .lien { border: 0; background: none; padding: 0; color: var(--brun); text-decoration: underline; cursor: pointer; font: inherit; }
 
 .vide.chargement { opacity: .7; }
+
+/* The bubble of `data-aide` (app.js): what a button does, after a moment on it. */
+.bulle-aide { position: fixed; z-index: 1000; max-width: 320px; padding: 8px 12px; border-radius: 12px;
+  background: var(--sombre); color: #f4efec; font-size: var(--t-s); line-height: 1.4;
+  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, .22); pointer-events: none; }
+.bulle-aide[hidden] { display: none; }

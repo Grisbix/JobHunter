@@ -14,6 +14,9 @@ from jobhunter import root
 from jobhunter.storage import atomic as _atomique
 
 FICHIER = "_ouvertes.json"
+# The offers passed in the daily triage: back at the end of the list (the user,
+# 2026-11-05: « un bouton passer pour voir l'offre suivante sans supprimer l'offre »).
+PASSEES = "_passees.json"
 
 
 def _chemin(chemin: Path | None = None) -> Path:
@@ -41,6 +44,28 @@ def noter(oids: str | list[str], chemin: Path | None = None) -> bool:
     try:
         # A writer's own temporary file: the window serves each page call on its own
         # thread, and two openings at once shared one « .tmp » before.
+        _atomique.ecrire_json(p, d, indent=None)
+    except OSError:
+        return False
+    return True
+
+
+def passees(chemin: Path | None = None) -> dict[str, str]:
+    """{oid: date it was passed}: the triage shows them after the others."""
+    return lire(chemin if chemin is not None else root.scripts() / PASSEES)
+
+
+def passer(oid: str, chemin: Path | None = None, vues: Path | None = None) -> bool:
+    """Puts an offer back in the triage, after the others: no longer opened, passed."""
+    p = chemin if chemin is not None else root.scripts() / PASSEES
+    v = _chemin(vues)
+    try:
+        ouvertes = lire(v)
+        if ouvertes.pop(oid, None) is not None:
+            _atomique.ecrire_json(v, ouvertes, indent=None)
+        d = lire(p)
+        d.pop(oid, None)  # passed again: to the very end
+        d[oid] = date.today().isoformat()
         _atomique.ecrire_json(p, d, indent=None)
     except OSError:
         return False

@@ -189,3 +189,79 @@ def test_relais_ferme_quand_la_nouvelle_est_prete(monkeypatch, tmp_path):
     assert not ferme.wait(0.5)  # still open: the new one is not drawn yet
     Path(env["JH_RELAIS"]).write_text("pret")
     assert ferme.wait(3)
+
+
+def test_bascule_sous_l_ancienne_a_sa_place(monkeypatch, tmp_path):
+    """The user, 2026-11-05: « plus rapide et plus smooth ». The new window opens under the
+    old one, at its place, painted though covered; the page's first screen closes the old."""
+    import threading
+
+    from jobhunter.web import __main__ as M
+
+    ordre = []
+    monkeypatch.setattr(api.subprocess, "Popen", lambda cmd, **k: ordre.append(("lance", k["env"])))
+    monkeypatch.setattr("jobhunter.profiles.principale", lambda: tmp_path)
+    monkeypatch.setattr("tempfile.gettempdir", lambda: str(tmp_path))
+    ferme = threading.Event()
+
+    class Fenetre:
+        def evaluate_js(self, js):
+            pass
+
+        def destroy(self):
+            ferme.set()
+
+    a = api.Api()
+    a._fenetre = Fenetre()
+    a._plein = lambda: False
+    a._rect = lambda: (10, 20, 1200, 700)
+    a._devant = lambda: ordre.append(("devant", None))
+    a._relancer()
+    assert [o for o, _ in ordre] == ["devant", "lance"]  # above before the new one opens
+    env = ordre[1][1]
+    assert env["JH_RECT"] == "10,20,1200,700"
+    assert M._rect(env["JH_RECT"]) == (10, 20, 1200, 700) and M._rect("") is None
+    assert "CalculateNativeWinOcclusion" in env["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"]
+    # The new window's page says it is drawn: once, then nothing more to say.
+    nouvelle = api.Api()
+    nouvelle._relais = env["JH_RELAIS"]
+    assert nouvelle.affiche() is True and nouvelle.affiche() is False
+    assert ferme.wait(1)
+
+
+def test_la_file_se_lit_pendant_que_la_fenetre_demarre(monkeypatch, tmp_path):
+    """The user, 2026-11-05: « regarde le temps d'ouverture de l'app ». The queue is read
+    while WebView2 starts; the page's first call takes it from there, read once."""
+    import threading
+    import time
+
+    from jobhunter.storage import queue
+
+    lus = []
+    f = tmp_path / "apply_queue.json"
+    f.write_text("[]")
+    monkeypatch.setattr(queue, "fichier", lambda: f)
+
+    def charger(descriptions=True):
+        lus.append(1)
+        time.sleep(0.2)
+        return [{"entreprise": "A", "poste": "P"}]
+
+    monkeypatch.setattr(queue, "charger", charger)
+    a = api.Api()
+    a._suivi = lambda: {}
+    t = threading.Thread(target=a._prechauffer)
+    t.start()
+    time.sleep(0.05)
+    assert a._file() == [{"entreprise": "A", "poste": "P"}]  # waits for the start-up read
+    t.join()
+    assert len(lus) == 1
+
+
+def test_la_page_s_ouvre_sans_serveur():
+    """file://, not pywebview's HTTP server: no server to start, no port shared by the two
+    windows of a profile switch."""
+    from jobhunter.web import __main__ as M
+
+    texte = Path(M.__file__).read_text(encoding="utf-8")
+    assert '(STATIC / "index.html").as_uri()' in texte

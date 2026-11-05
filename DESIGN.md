@@ -86,6 +86,30 @@ follows it, never the reverse.
 - Panels have 24 px of padding; elements in a row are 8 to 12 px apart.
 - Every screen holds at 1280 × 720 and at 900 × 560 without horizontal scrolling:
   rows wrap, they are not cut.
+- **No empty areas, inside or outside the cards** (the user, 2026-11-04 and 11-05):
+  - A grid row stretches every card to the tallest one. When the cards differ a lot in
+    height (Réglages), lay them out in balanced columns at their own height
+    (`.mosaique`, CSS columns, the tallest card first) rather than in a grid.
+  - Two or three cards on a row: `.grille.ajustee` (auto-fit) so they share the whole
+    row. A card spanning the row (`.large`) occupies every track and stops auto-fit from
+    collapsing the empty one: put it outside that grid.
+  - A list of short pairs (`.paires`) in a wide card: two pairs a line (`.paires.deux`).
+  - An empty card or screen says what it is for and gives the way to fill it (a
+    button), never a bare « — » or a blank card. An empty board (Candidatures) spreads
+    its columns over the window, on one line.
+- **No text against an edge.** Nothing within 8 px of its card's edge, nothing cut in
+  two by its container:
+  - A long list in a card scrolls inside the card (the list has the overflow, not the
+    card), so the card keeps its padding; it fades out at its bottom (`mask-image`)
+    with 24 px of padding for its last row to clear the fade.
+  - A table cell stays a table cell (`td` never `display: flex`: it leaves the row's
+    line and height); a column of buttons gets a fixed width in a `<colgroup>`.
+  - `mask-image` only on a container without glass inside: on an ancestor of
+    `backdrop-filter`, it would take the cards' blur away.
+- Check: `uv run python tools/design_check.py --out captures` (every screen at 1440
+  and 1000 px, `--vide` with no application), then look at the captures for empty
+  space. `tests/test_design_layout.py` keeps the edge rule, Réglages' card heights and
+  the empty Candidatures in CI.
 
 ## Shapes
 
@@ -108,3 +132,13 @@ follows it, never the reverse.
   mouse click draws none. Text fields keep their own glow.
 - Do take colours from the variables, so that the teintes and dark mode follow.
 - Don't name a font family outside the `--police` list.
+- Do give a button the icon of what it does, from `ICONES` in app.js: collection
+  `collecte` (arrow into a tray), daily schedule `horloge`, CV, letter or draft `plume`,
+  a tool that runs `lancer`, the daily triage `entonnoir`, score `cible`, following
+  `signet`, statistics `graphique`, adding `plus`.
+- Do explain a button whose effect is not obvious with `aide(bouton(…), "…")`
+  (`data-aide`): a bubble after 1.2 s on it. Not a line of text under the buttons (the
+  user, 2026-11-05): it takes room for what one reads once.
+- Don't use a decorative star or lightning bolt (the user, 2026-11-05): they say
+  nothing about the button. `tests/test_design_scale.py` checks that every icon used
+  exists and that neither comes back.

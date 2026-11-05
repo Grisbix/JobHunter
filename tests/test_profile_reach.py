@@ -128,3 +128,14 @@ def test_le_profil_garde_les_pays_et_les_villes(tmp_path):
     assert profil["monde"] == ["Suisse", "Europe"]
     assert profil["zones"]["prioritaires"] == ["bordeaux"]  # Mérignac's sector
     assert "Suisse" in [s.get("libelle") for s in profil["zones"]["secondaires"]]
+
+
+def test_la_cle_tourne_avec_le_reste_a_faire():
+    """« À faire » no longer puts the key first every day (the user, 2026-11-05)."""
+    from datetime import date, timedelta
+
+    from jobhunter.web.api import cle_du_jour
+
+    jours = [date(2026, 11, 5) + timedelta(days=i) for i in range(9)]
+    assert sum(cle_du_jour(True, j) for j in jours) == 3  # one day in three
+    assert all(cle_du_jour(False, j) for j in jours)  # nothing else: always

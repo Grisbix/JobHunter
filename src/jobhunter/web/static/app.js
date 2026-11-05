@@ -12,11 +12,20 @@ const ICONES = {
   profil: "M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zm-8 8.2C4 16.8 7.6 14 12 14s8 2.8 8 6.2c0 .4-.4.8-.8.8H4.8c-.4 0-.8-.4-.8-.8z",
   sources: "M5 4h14a2 2 0 0 1 2 2v3H3V6a2 2 0 0 1 2-2zm-2 7h18v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
   cle: "M20.5 6.6 17 10.1l-3.1-3.1 3.5-3.5a5.5 5.5 0 0 0-7 7L3.6 17.3a1.9 1.9 0 0 0 2.7 2.7l6.8-6.8a5.5 5.5 0 0 0 7.4-6.6z",
-  etoile: "m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z",
   loupe: "M10.5 3a7.5 7.5 0 0 1 6 12l4.3 4.3-1.5 1.5-4.3-4.3A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z",
   sortie: "M14 3h7v7h-2V6.4l-8.3 8.3-1.4-1.4L17.6 5H14zM5 5h6v2H5v12h12v-6h2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z",
   copie: "M8 3h10a2 2 0 0 1 2 2v12h-2V5H8zM5 7h10a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z",
-  eclair: "M13 2 4 14h6l-1 8 9-12h-6z",
+  // No star nor lightning (the user, 2026-11-05: « trouve autre chose qui est plus cohérent
+  // avec ce à quoi c'est lié »): each icon says what its button does.
+  collecte: "M11 3h2v9.2l3.3-3.3 1.4 1.4L12 16 6.3 10.3l1.4-1.4 3.3 3.3zM4 14h2v4h12v-4h2v4.5A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5z",
+  horloge: "M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm0 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM11 7h2v4.6l3.2 3.2-1.4 1.4-3.8-3.8z",
+  plume: "M16.5 3.5a2.1 2.1 0 0 1 3 0l1 1a2.1 2.1 0 0 1 0 3L9 19l-5 1.5L5.5 15.5z",
+  lancer: "M8 4.5v15c0 .8.9 1.3 1.6.8l11-7.5a1 1 0 0 0 0-1.6l-11-7.5C8.9 3.2 8 3.7 8 4.5z",
+  entonnoir: "M3 4h18l-7 8.5V19l-4 2v-8.5z",
+  cible: "M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zm0 2a7 7 0 1 0 0 14 7 7 0 0 0 0-14zm0 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0 1.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z",
+  signet: "M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z",
+  graphique: "M4 13h4v7H4zm6-9h4v16h-4zm6 5h4v11h-4z",
+  plus: "M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z",
   fleche: "M12 4a8 8 0 1 1-7.7 10h2.1A6 6 0 1 0 12 6V9L7.5 5 12 1z",
   dossier: "M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2h8.5A1.5 1.5 0 0 1 21 8.5v10a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z",
   clavier: "M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm1 3v2h2V9zm4 0v2h2V9zm4 0v2h2V9zm4 0v2h2V9zM7 13v2h10v-2z",
@@ -173,7 +182,7 @@ function chargerCatalogue(c) {
   FIT = (c.fit || []).map(compiler).sort(precis);
   traduireSous(document.body);
   new MutationObserver(observerTraduction).observe(document.body,
-    { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "title"] });
+    { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "title", "data-aide"] });
 }
 
 // One text (without its edge spaces) in the interface language, or null if unknown.
@@ -218,7 +227,7 @@ function traduireNoeud(n) {
 
 function traduireAttributs(e) {
   if (e.closest("[translate=no]")) return;
-  for (const a of ["placeholder", "title"]) {
+  for (const a of ["placeholder", "title", "data-aide"]) {
     const v = e.getAttribute(a);
     if (v) { const t = traduire(v); if (t !== v) e.setAttribute(a, t); }
   }
@@ -228,7 +237,7 @@ function traduireSous(racine) {
   if (racine.nodeType === Node.TEXT_NODE) return traduireNoeud(racine);
   if (racine.nodeType !== Node.ELEMENT_NODE) return;
   traduireAttributs(racine);
-  for (const e of racine.querySelectorAll("[placeholder], [title]")) traduireAttributs(e);
+  for (const e of racine.querySelectorAll("[placeholder], [title], [data-aide]")) traduireAttributs(e);
   const w = document.createTreeWalker(racine, NodeFilter.SHOW_TEXT);
   for (let n = w.nextNode(); n; n = w.nextNode()) traduireNoeud(n);
 }
@@ -326,7 +335,7 @@ async function lancerOutil(libelle) {
 }
 function carteOutils(groupes) {
   const outil = (o) => h("button", { class: "outil-ligne", onclick: () => lancerOutil(o.libelle) },
-    svg(o.genre === "console" ? "clavier" : o.genre === "action" ? "fenetre" : "eclair"),
+    svg(o.genre === "console" ? "clavier" : o.genre === "action" ? "fenetre" : "lancer"),
     h("span", {}, h("span", { class: "t" }, o.nom), h("span", { class: "sous" }, o.aide)));
   const groupe = (g) => h("div", { class: "groupe-outils" }, h("h3", {}, g.groupe), g.outils.map(outil));
   const simples = (groupes || []).filter((g) => !g.avance);
@@ -661,6 +670,42 @@ async function declarerEnvoi(id) {
 const bouton = (texte, icone, onclick, classe = "") =>
   h("button", { class: `bouton ${classe}`, onclick }, icone ? svg(icone) : null, texte);
 
+// What a button does, in a bubble after a moment on it (the user, 2026-11-05: « quand on
+// passe la souris dessus une explication s'affiche au bout de quelques secondes »):
+// `data-aide` on the element. Not in the page under the buttons: it took room for what
+// one reads once.
+const AIDE_DELAI = 1200;
+let aideMinuteur = 0;
+let aideCible = null;
+function cacherAide() {
+  clearTimeout(aideMinuteur);
+  aideCible = null;
+  const b = $("bulle-aide");
+  if (b) b.hidden = true;
+}
+document.addEventListener("mouseover", (e) => {
+  const cible = e.target.closest && e.target.closest("[data-aide]");
+  if (cible === aideCible) return;
+  cacherAide();
+  if (!cible) return;
+  aideCible = cible;
+  aideMinuteur = setTimeout(() => {
+    if (!cible.isConnected) return;
+    let b = $("bulle-aide");
+    if (!b) { b = h("div", { id: "bulle-aide", class: "bulle-aide", role: "tooltip" }); document.body.append(b); }
+    b.textContent = cible.dataset.aide;
+    b.hidden = false;
+    const r = cible.getBoundingClientRect();
+    const l = b.offsetWidth, ht = b.offsetHeight;
+    const x = Math.min(Math.max(8, r.left + r.width / 2 - l / 2), innerWidth - l - 8);
+    const y = r.top - ht - 8 >= 8 ? r.top - ht - 8 : r.bottom + 8;
+    b.style.left = `${x}px`;
+    b.style.top = `${y}px`;
+  }, AIDE_DELAI);
+});
+for (const ev of ["mousedown", "keydown", "scroll"]) document.addEventListener(ev, cacherAide, true);
+const aide = (el, texte) => { el.dataset.aide = texte; return el; };
+
 // « Plus… »: a list of [text, icon, action] behind one button; closes on a choice or
 // on a click elsewhere. It opens in the flow, on its own line: a floating menu was cut
 // by the drawer's edge in a narrow window (2026-11-03).
@@ -839,7 +884,7 @@ async function ouvrirOffre(id) {
       bouton("Voir l'annonce", "sortie", () => ouvrir(o.url), "plein"),
       o.cv ? bouton("CV", "doc", () => voirDocument(o, o.cv, "CV")) : null,
       o.lettre ? bouton("Lettre", "doc", () => voirDocument(o, o.lettre, "Lettre")) : null,
-      bouton(o.cv ? "Refaire CV et lettre" : "Préparer CV et lettre", "eclair", () => lancer("documents", o.id)),
+      bouton(o.cv ? "Refaire CV et lettre" : "Préparer CV et lettre", "plume", () => lancer("documents", o.id)),
       ["postulé", "relancé", "entretien", "refus"].includes(o.suivi) ? null
         : bouton("J'ai envoyé cette candidature", "avion", () => declarerEnvoi(o.id), "chaud")),
     h("div", { class: "boutons secondaires" },
@@ -921,7 +966,7 @@ ECRANS.accueil = {
     vue.replaceChildren(h("div", { class: "accueil" },
       h("div", { class: "colonne" },
         h("div", { class: "verre stats" },
-          [["valise", "Offres en file", d.stats.file], ["etoile", `Notées ${d.seuil || 8}+ à traiter`, d.stats.neuf],
+          [["valise", "Offres en file", d.stats.file], ["cible", `Notées ${d.seuil || 8}+ à traiter`, d.stats.neuf],
            ["avion", "En attente de réponse", d.stats.postulees]].map(([ic, lab, val]) =>
             h("div", { class: "stat" }, h("span", { class: "rond" }, svg(ic)),
               h("div", {}, h("div", { class: "lab" }, lab), h("div", { class: "val" }, nombre(val)))))),
@@ -949,10 +994,6 @@ ECRANS.accueil = {
       h("div", { class: "colonne" },
         h("div", { class: "sombre" }, h("h2", {}, "À faire"),
           h("ul", { class: "fil" },
-            // A free key missing: for a waiter or a nurse, most of the offers.
-            d.cle_conseillee ? h("li", { onclick: () => saisirCle(d.cle_conseillee.nom, () => aller("accueil")) },
-              h("div", { class: "t" }, `Ajouter la clé ${d.cle_conseillee.libelle}`),
-              h("div", { class: "s" }, "Gratuite, 5 minutes : beaucoup plus d'offres")) : null,
             d.a_trier ? h("li", { onclick: () => aller("tri") },
               h("div", { class: "t" }, "Trier les nouvelles offres"),
               h("div", { class: "s" }, `${nombre(d.a_trier)} offres notées ${d.seuil || 8}+ jamais ouvertes`)) : null,
@@ -962,7 +1003,12 @@ ECRANS.accueil = {
             ? d.a_postuler.map((o) => h("li", { onclick: () => ouvrirOffre(`${o.entreprise}|${o.poste}`) },
                 h("div", { class: "t" }, `Postuler chez ${o.entreprise}`),
                 h("div", { class: "s", title: o.poste }, `${nombre(o.fit)} · ${o.poste}`)))
-            : d.a_trier ? null : h("li", { class: "vide" }, "Rien à faire pour l'instant"))),
+            : d.a_trier || d.cle_conseillee ? null : h("li", { class: "vide" }, "Rien à faire pour l'instant"),
+            // A free key missing: for a waiter or a nurse, most of the offers. Last, and
+            // one day in three when there is something else to do (api.cle_du_jour).
+            d.cle_conseillee ? h("li", { onclick: () => saisirCle(d.cle_conseillee.nom, () => aller("accueil")) },
+              h("div", { class: "t" }, `Ajouter la clé ${d.cle_conseillee.libelle}`),
+              h("div", { class: "s" }, "Gratuite, 5 minutes : beaucoup plus d'offres")) : null)),
         h("div", { class: "zones" }, h("h2", {}, "Par zone"), h("div", { class: "sous", style: "margin-bottom:16px" }, `offres notées ${d.seuil || 8} et plus`),
           d.zones.map((z) => h("div", { class: "zone" },
             h("div", {}, h("div", { class: "lab" }, z.zone), h("div", { class: "val" }, nombre(z.n))),
@@ -1014,7 +1060,7 @@ function carteDocumentsAccueil(d) {
       h("div", {}, h("div", { class: "lab" }, "Prêtes"), h("div", { class: "val" }, nombre(d.prets))),
       h("div", { class: "tuile" }, h("i", { style: `width:${pct}%` }), h("span", {}, `${pct} %`))),
     h("div", { class: "boutons", style: "margin-top:14px" },
-      d.a_preparer ? action("Préparer les 30 meilleures", "eclair", "documents_top", "plein") : null,
+      d.a_preparer ? action("Préparer les 30 meilleures", "plume", "documents_top", "plein") : null,
       bouton("Documents", "doc", () => aller("documents"))));
 }
 
@@ -1159,10 +1205,10 @@ ECRANS.offres = {
   titre: "Offres",
   plein: true,
   actions: () => [
-    bouton("Tri du jour", "etoile", () => aller("tri")),
+    bouton("Tri du jour", "entonnoir", () => aller("tri")),
     bouton("Ajouter une offre", "sortie", ajouterOffre),
     action("Vérifier les offres", "loupe", "disponibilite"),
-    action("Lancer la collecte", "eclair", "collecte", "plein")],
+    action("Lancer la collecte", "collecte", "collecte", "plein")],
   async dessiner(vue) {
     const f = filtresOffres;
     // No score filter any more (the user, 2026-10-27): sorted by score the 7+ / 8+ buttons
@@ -1282,9 +1328,18 @@ ECRANS.candidatures = {
         tiree = null;
       },
     } : {};
+    // No application yet: a word on how one gets here, and the columns over the whole
+    // window rather than five small boxes in a corner of an empty page (the user,
+    // 2026-11-05: « aussi dans candidatures quand il n'y en a pas encore »).
+    const aucune = d.colonnes.every((c) => !c.entrees.length);
     vue.replaceChildren(h("div", { class: "colonne" },
-      h("div", { class: "tableau-kanban" }, d.colonnes.map((c) =>
-        h("div", { class: c.entrees.length ? "verre colonne-k" : "verre colonne-k vide-k", "data-statut": c.statut, ...cible(c) },
+      aucune ? h("div", { class: "verre panneau debut-k" },
+        h("div", {}, h("h2", {}, "Pas encore de candidature"),
+          h("div", { class: "sous" }, "Une offre arrive ici quand tu changes son statut dans Offres : « à postuler » pour la garder, « postulé » une fois envoyée. Glisse ensuite sa fiche d'une colonne à l'autre.")),
+        h("div", { class: "boutons" }, bouton("Voir les offres", "valise", () => aller("offres"), "plein"),
+          bouton("Tri du jour", "entonnoir", () => aller("tri")))) : null,
+      h("div", { class: aucune ? "tableau-kanban debut" : "tableau-kanban" }, d.colonnes.map((c) =>
+        h("div", { class: c.entrees.length || aucune ? "verre colonne-k" : "verre colonne-k vide-k", "data-statut": c.statut, ...cible(c) },
           h("div", { class: "entete" }, h("h3", {}, c.statut[0].toUpperCase() + c.statut.slice(1)),h("span", { class: "compte" }, c.entrees.length)),
           c.entrees.length ? [...c.entrees.map((e) => h("div", { class: "carte fiche-k", draggable: "true", onclick: () => ouvrirOffre(e.id),
             ondragstart: (ev) => { tiree = e; ev.dataTransfer.effectAllowed = "move"; ev.dataTransfer.setData("text/plain", e.id); ev.currentTarget.classList.add("tiree"); },
@@ -1328,9 +1383,10 @@ ECRANS.tri = {
     }
     const garder = () => redessiner();
     const rejeter = () => marquer(id, "pas intéressé", false);
-    triGeste = { garder, rejeter };
+    const passer = async () => { await appel("passer", id); redessiner(); };
+    triGeste = { garder, rejeter, passer };
     vue.replaceChildren(h("div", { class: "tri" },
-      h("div", { class: "sous" }, `${nombre(d.total)} à trier · → ou Entrée : garder · X : pas intéressé`),
+      h("div", { class: "sous" }, `${nombre(d.total)} à trier · → ou Entrée : garder · P : passer · X : pas intéressé`),
       h("div", { class: "verre panneau tri-carte" },
         h("div", { class: "fiche-tete" },
           h("span", { class: `${classeScore(o.fit)} grand-score` }, nombre(o.fit)),
@@ -1342,9 +1398,10 @@ ECRANS.tri = {
           h("div", { translate: "no" }, traduireFit(o.pourquoi))) : null,
         o.description ? texteTri(o.description) : h("div", { class: "carte description tri-texte" }, "Pas de description enregistrée pour cette offre."),
         h("div", { class: "boutons" },
-          bouton("Garder", "fleche", garder, "plein"),
-          bouton("Pas intéressé", "", rejeter),
-          bouton(o.cv ? "Refaire CV et lettre" : "Préparer CV et lettre", "eclair", async () => { await lancer("documents", id); garder(); }),
+          aide(bouton("Garder", "fleche", garder, "plein"), "Elle reste dans tes offres à traiter ; offre suivante."),
+          aide(bouton("Passer", "", passer), "Pas de décision : elle revient à la fin du tri."),
+          aide(bouton("Pas intéressé", "", rejeter), "Classée « pas intéressé », toujours visible dans Offres. Rien n'est supprimé."),
+          bouton(o.cv ? "Refaire CV et lettre" : "Préparer CV et lettre", "plume", async () => { await lancer("documents", id); garder(); }),
           bouton("Voir l'annonce", "sortie", () => ouvrir(o.url)),
           plus([
             ["Retirer de la file, avec un motif…", "", () => ecarter([id])],
@@ -1377,7 +1434,8 @@ document.addEventListener("keydown", (e) => {
   if (e.target && e.target.closest && e.target.closest("input, textarea, select, [contenteditable], button, summary")) return;
   if ($("tiroir").classList.contains("ouvert") || document.querySelector(".dialogue")) return;
   const geste = e.key === "ArrowRight" || e.key === "Enter" ? triGeste.garder
-    : e.key === "x" || e.key === "X" ? triGeste.rejeter : null;
+    : e.key === "x" || e.key === "X" ? triGeste.rejeter
+    : e.key === "p" || e.key === "P" ? triGeste.passer : null;
   if (!geste) return;
   e.preventDefault();
   triGeste = null;  // one key, one offer: a held key does not run through the list
@@ -1388,7 +1446,7 @@ ECRANS.relances = {
   titre: "Relances",
   // Held in the window: the lists and the draft scroll inside their panels (2026-10-28).
   plein: true,
-  actions: () => [action("Écrire les brouillons du jour", "eclair", "brouillons", "plein")],
+  actions: () => [action("Écrire les brouillons du jour", "plume", "brouillons", "plein")],
   async dessiner(vue) {
     const d = await appel("relances");
     const apercu = h("div", { class: "carte apercu" }, h("div", { class: "vide" }, "Choisis un brouillon pour le lire."));
@@ -1489,7 +1547,7 @@ function premiersDocuments() {
       h("li", {}, "Prépare les documents : « Préparer des CV et lettres… », ou depuis une offre."),
       h("li", {}, "Relis-les ici : un clic ouvre le document pour le lire ou modifier son texte.")),
     h("div", { class: "boutons" },
-      action("Lancer la collecte", "eclair", "collecte", "plein"),
+      action("Lancer la collecte", "collecte", "collecte", "plein"),
       bouton("Préparer des CV et lettres…", "doc", () => ACTIONS_OUTILS.documents())));
 }
 
@@ -1685,7 +1743,7 @@ ECRANS.profil = {
       h("div", { class: "titre-ligne" }, h("h2", {}, "Compétences"), h("span", { class: "compte" }, liste.length)),
       h("div", { class: "sous", style: "margin:-6px 0 14px" }, "Les mots cherchés dans les annonces, et les axes du score pour lesquels chaque compétence compte."),
       corps,
-      h("label", { class: "champ", style: "margin-top:14px" }, svg("etoile"), nouvelle),
+      h("label", { class: "champ", style: "margin-top:14px" }, svg("plus"), nouvelle),
       bC.el);
 
     // CVs and letters first, side by side (the user, 2026-11-02: « mettre ajout lettre
@@ -1697,7 +1755,8 @@ ECRANS.profil = {
       // user, 2026-11-04: « adapte l'espace pour éviter qu'il y ait des parties vides »).
       // style.css: the tools take the height left and scroll inside it.
       h("div", { class: "pile pile-profil" },
-        carte("Score : réglages", h("dl", { class: "paires" }, Object.entries(p.scoring).map(([k, v]) =>
+        // Two pairs a line: one a line left the card's right two-thirds empty.
+        carte("Score : réglages", h("dl", { class: "paires deux" }, Object.entries(p.scoring).map(([k, v]) =>
           [h("dt", {}, k.replaceAll("_", " ")), h("dd", {}, String(v))]))),
         Object.assign(carte("Outils", puces(p.outils)), { className: "verre panneau outils-profil" })),
       await carteMetiers(),
@@ -1711,7 +1770,7 @@ let ongletSources = "recherche";
 ECRANS.sources = {
   titre: "Sources",
   plein: () => ongletSources !== "recherche",
-  actions: () => [action("Lancer la collecte", "eclair", "collecte", "plein")],
+  actions: () => [action("Lancer la collecte", "collecte", "collecte", "plein")],
   async dessiner(vue) {
     const tete = segment([["recherche", "Mots-clés et rendement"], ["entreprises", "Entreprises suivies"], ["vues", "Entreprises vues"],
       ["sites", "Sites d'offres"], ["acces", "Accès et clés"]], ongletSources, (v) => { ongletSources = v; ECRANS.sources.dessiner(vue); });
@@ -1753,14 +1812,17 @@ ONGLETS_SOURCES.recherche = async (vue) => {
             h("td", {}, h("div", { class: "prog" }, h("i", { style: `width:${100 * r.nouvelles / max}%` }))),
             h("td", {}, `${dateFr(r.dernier)} `, r.verdict ? h("span", { class: r.verdict === "ok" ? "etiq gris" : "etiq" }, r.verdict) : null)))))
         : h("div", { class: "vide" }, "Pas encore de journal de rendement.")),
-      h("div", { class: "grille" },
-        h("div", { class: "verre panneau large" },
-          h("div", { class: "titre-ligne" }, h("h2", {}, "Mots-clés de collecte"), h("span", { class: "compte" }, mots.length)),
-          editeurPuces(mots, bM.sale, "nouveau mot-clé…"), bM.el),
+      h("div", { class: "verre panneau" },
+        h("div", { class: "titre-ligne" }, h("h2", {}, "Mots-clés de collecte"), h("span", { class: "compte" }, mots.length)),
+        editeurPuces(mots, bM.sale, "nouveau mot-clé…"), bM.el),
+      // auto-fit: Exclusions and the career sites share the row, no empty third column.
+      h("div", { class: "grille ajustee" },
         carte("Exclusions", sousTitre("Contrats", "0 0 8px"), editeurPuces(excl.contrats_exclus, bE.sale, "type de contrat…"),
           sousTitre("Pays"), editeurPuces(excl.pays_exclus, bE.sale, "pays…"), bE.el),
-        carte("Sites carrières (ATS)", h("dl", { class: "paires" }, Object.entries(s.ats).map(([k, v]) =>
-          [h("dt", {}, lisible(k)), h("dd", {}, `${v} entreprises`)]))))));
+        carte("Sites carrières (ATS)", ats ? h("dl", { class: "paires" }, Object.entries(s.ats).map(([k, v]) =>
+          [h("dt", {}, lisible(k)), h("dd", {}, `${v} entreprises`)]))
+          : [h("div", { class: "sous", style: "margin-bottom:12px" }, "Aucune entreprise suivie sur son site carrières. Ajoute celles qui t'intéressent : leurs offres arrivent dès leur publication."),
+            bouton("Entreprises suivies", "valise", () => { ongletSources = "entreprises"; ECRANS.sources.dessiner($("vue")); })]))));
   }
 };
 
@@ -1953,7 +2015,7 @@ ONGLETS_SOURCES.vues = async (vue) => {
   vue.replaceChildren(h("div", { class: "verre panneau" },
     h("div", { class: "titre-ligne" }, h("h2", {}, "Entreprises vues"), compte,
       bouton("Chercher leurs offres", "loupe", () => lancer("sites_carrieres")),
-      bouton("Suivre celles à score ≥ 7", "etoile", async () => {
+      bouton("Suivre celles à score ≥ 7", "signet", async () => {
         const n = d.lignes.filter((l) => l.url_flux && !l.suivie && (l.fit || 0) >= 7).length;
         if (!n) return toast("Aucune entreprise bien notée à suivre.");
         const ok = await dialogue(`Suivre ${n} entreprise(s) ?`, "Chacune est d'abord vérifiée : une requête à son outil de recrutement, suivie seulement si elle a des offres ouvertes.", null, [["Suivre", "", () => true]]);
@@ -2028,12 +2090,14 @@ ONGLETS_SOURCES.acces = async (vue) => {
           h("td", { class: "actions-ligne" },
             s.cle ? bouton("Saisir la clé", "cle", () => saisirCle(s.source, recharger)) : null,
             s.cle ? bouton("Tester", "", async () => { const r = await ecrire("tester_cle", s.source); if (r) toast(r.message, !r.reussi); }) : null,
-            bouton("Collecter", "eclair", async () => { if (await ecrire("collecter_source", s.source)) suivreTache(); }, s.bloque ? "" : "plein")))))),
+            bouton("Collecter", "collecte", async () => { if (await ecrire("collecter_source", s.source)) suivreTache(); }, s.bloque ? "" : "plein")))))),
       h("div", { class: "boutons", style: "margin-top:12px" }, bouton("Rendement des sources", "", async () => { if (await ecrire("rendement_sources")) suivreTache(); }))),
     h("div", { class: "verre panneau large" },
       h("div", { class: "titre-ligne" }, h("h2", {}, "Connexions pour candidater")),
       h("div", { class: "sous", style: "margin:4px 0 12px" }, "Tu te connectes toi-même ; les mots de passe restent dans le navigateur."),
       h("table", { class: "tableau-simple" },
+        // The button's column at its width: a fifth of a narrow window cut it at the card's edge.
+        h("colgroup", {}, h("col", {}), h("col", {}), h("col", {}), h("col", {}), h("col", { style: "width:210px" })),
         h("thead", {}, h("tr", {}, ["Site", "Identifiant", "Session", "Vérifiée le", ""].map((t) => h("th", {}, t)))),
         h("tbody", {}, d.connexions.map((c) => h("tr", {},
           h("td", {}, c.site), h("td", {}, c.identifiant || "—"),
@@ -2587,7 +2651,21 @@ ECRANS.reglages = {
     const dessinerPc = () => placePc.replaceChildren(segment([["non", "Masqués"], ["oui", "Affichés"]], r.pourcentages ? "oui" : "non",
       async (v) => { await enregistrer({ pourcentages: v === "oui" }); dessinerPc(); }));
     dessinerPc();
-    vue.replaceChildren(h("div", { class: "grille" },
+    // Columns of cards at their own height (style.css .mosaique): in the grid, each card
+    // stretched to the tallest of its row (Langue, three lines, as tall as Couleurs) and
+    // Données sat alone on the last row (the user, 2026-11-05: « tous les espaces vides,
+    // dans et en dehors des widgets »). Outils, full width, comes after.
+    const cartes = [
+      // The tallest first: the browser balances the columns in this order.
+      h("div", { class: "verre panneau" },
+        h("div", { class: "titre-ligne" }, h("h2", {}, "Couleurs et police")),
+        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Mode"), placeMode),
+        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Couleur"), teintes),
+        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Police"), polices),
+        h("div", { class: "reglage" },
+          h("div", {}, h("div", { class: "nom-reglage" }, "Pourcentages dans Statistiques"),
+            h("div", { class: "sous" }, "La part de chaque ligne et les taux de réponse.")),
+          placePc)),
       h("div", { class: "verre panneau" },
         h("div", { class: "titre-ligne" }, h("h2", {}, "Apparence")),
         h("div", { class: "reglage" },
@@ -2598,17 +2676,13 @@ ECRANS.reglages = {
           h("div", { class: "titre-ligne" }, h("div", { class: "nom-reglage" }, "Transparence"), valeur),
           h("div", { class: "ligne-curseur" }, h("span", {}, "Opaque"), curseur, h("span", {}, "Verre")),
           h("div", { class: "sous" }, "Combien le bureau transparaît derrière le fond de la fenêtre ; les cartes et les textes restent nets. La force du flou acrylique est fixée par Windows."))),
-      h("div", { class: "verre panneau" },
-        h("div", { class: "titre-ligne" }, h("h2", {}, "Couleurs et police")),
-        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Mode"), placeMode),
-        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Couleur"), teintes),
-        h("div", { class: "reglage" }, h("div", { class: "nom-reglage" }, "Police"), polices),
-        h("div", { class: "reglage" },
-          h("div", {}, h("div", { class: "nom-reglage" }, "Pourcentages dans Statistiques"),
-            h("div", { class: "sous" }, "La part de chaque ligne et les taux de réponse.")),
-          placePc)),
-      await cartesParametres(),
+      ...((await cartesParametres()) || []),
       ...(await cartesMaintenance()),
+    ].flatMap((c) => c.classList.contains("pile") ? [...c.children] : [c]);  // the grid's piles: one card each here
+    const larges = cartes.filter((c) => c.classList.contains("large"));
+    vue.replaceChildren(h("div", { class: "colonne" },
+      h("div", { class: "mosaique" }, cartes.filter((c) => !larges.includes(c))),
+      larges,
       window.pywebview ? null : h("div", { class: "verre panneau" },
         h("div", { class: "sous" }, "Aperçu navigateur : ces réglages ne s'enregistrent que dans l'application."))));
   },
@@ -2692,7 +2766,7 @@ async function cartesParametres() {
             if (ok && await ecrire("planifier", "")) { toast("Collecte automatique retirée."); relire(); }
           }))
       : h("div", { class: "ligne-actions" }, h("span", { class: "etat" }, "Pas planifiée"), heure,
-          bouton("Collecter chaque jour à cette heure", "eclair", async () => {
+          bouton("Collecter chaque jour à cette heure", "horloge", async () => {
             const r = await ecrire("planifier", heure.value);
             if (r) { toast(r.message || "Collecte planifiée."); relire(); }
           }, "plein"));
@@ -2836,7 +2910,23 @@ async function demarrer() {
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") fermerTiroir(); });
   let debut = "accueil";
   try { debut = localStorage.getItem("jh-ecran") || debut; } catch (_) { /* no storage */ }
-  aller(debut);
+  await aller(debut);
+  affiche();
+}
+
+// The first screen is drawn: after a profile switch, the previous window, above this
+// one, closes and shows it ready (Api.affiche). Two painted frames, not the DOM built:
+// one switch in three showed the bare menu for 150 ms (filmed 2026-11-05). A timer as
+// a net: a covered window might get no frame at all.
+function affiche() {
+  let dit = false;
+  const dire = () => {
+    if (dit || !window.pywebview) return;
+    dit = true;
+    window.pywebview.api.affiche().catch(() => {});
+  };
+  requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(dire, 30)));
+  setTimeout(dire, 400);
 }
 
 // --- The welcome (3.78): a folder without a profile, before the application ---------
@@ -2854,6 +2944,7 @@ async function bienvenue(b) {
   if (b.cv) formulaireProfil(b.cv);
   else if (b.reprise && b.reprise.length) ecranReprise(b);
   else ecranCv();
+  affiche();
 }
 
 function carteBienvenue(...enfants) {

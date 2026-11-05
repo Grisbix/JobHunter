@@ -43,8 +43,8 @@ set "PY=.venv\Scripts\python.exe"
 "%PY%" -m playwright install chromium || goto erreur
 rem Fingerprint of the files as installed: the update will recognise your changes.
 "%PY%" JobHunter.pyw update --initialiser
-rem JobHunter in the Start menu, with its icon (not Python's once pinned).
-"%PY%" JobHunter.pyw shortcut
+rem JobHunter in the Start menu and on the desktop, with its icon (not Python's once pinned).
+"%PY%" JobHunter.pyw shortcut --bureau
 echo.
 echo Installation terminee. Depose ton CV dans My_CV (ou glisse-le sur la fenetre) puis lance start.bat.
 echo Ensuite : schedule.bat lance la collecte chaque matin, update.bat recupere les nouveautes.
