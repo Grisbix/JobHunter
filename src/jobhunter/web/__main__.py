@@ -24,6 +24,19 @@ _DWMWCP_ROUND = 2
 _SPI_GETWORKAREA = 0x0030
 _SWP_NOZORDER = 0x0004
 _SWP_FRAMECHANGED = 0x0020
+_SWP_NOSIZE = 0x0001
+_SWP_NOMOVE = 0x0002
+_SWP_NOACTIVATE = 0x0010
+_HWND_TOPMOST = -1
+
+
+def _rect(texte: str) -> tuple[int, int, int, int] | None:
+    """JH_RECT, "x,y,w,h" set by a profile switch, as a tuple; None when malformed."""
+    try:
+        x, y, lg, ht = (int(v) for v in texte.split(","))
+    except ValueError:
+        return None
+    return x, y, lg, ht
 
 
 class _Cadre:
@@ -48,7 +61,36 @@ class _Cadre:
             self.hwnd, code, ctypes.byref(v), ctypes.sizeof(v)
         )
 
-    def _placer(self, plein: bool) -> None:
+    def rect(self) -> tuple[int, int, int, int] | None:
+        """The window's place and size (x, y, width, height), for the next window."""
+        import ctypes
+        from ctypes import wintypes
+
+        if not self.hwnd:
+            return None
+        r = wintypes.RECT()
+        if not ctypes.windll.user32.GetWindowRect(self.hwnd, ctypes.byref(r)):  # type: ignore[attr-defined,unused-ignore]
+            return None
+        return r.left, r.top, r.right - r.left, r.bottom - r.top
+
+    def devant(self) -> None:
+        """Above every window until it closes: a profile switch opens the next one under it."""
+        import ctypes
+
+        if self.hwnd:
+            # As pointers: a bare -1 goes as a 32-bit int, not as HWND_TOPMOST on 64 bits,
+            # and the call failed silently (the new window opened over this one).
+            ctypes.windll.user32.SetWindowPos(  # type: ignore[attr-defined,unused-ignore]
+                ctypes.c_void_p(self.hwnd),
+                ctypes.c_void_p(_HWND_TOPMOST),
+                0,
+                0,
+                0,
+                0,
+                _SWP_NOMOVE | _SWP_NOSIZE | _SWP_NOACTIVATE,
+            )
+
+    def _placer(self, plein: bool, rect: tuple[int, int, int, int] | None = None) -> None:
         import ctypes
         from ctypes import wintypes
 
@@ -66,6 +108,8 @@ class _Cadre:
                 ctypes.windll.user32.GetSystemMetrics(1),  # type: ignore[attr-defined,unused-ignore]
             ):
                 ht -= 1
+        elif rect and rect[2] >= 900 and rect[3] >= 560:
+            x, y, lg, ht = rect  # where the previous window was (a profile switch)
         else:
             lg, ht = int(lz * 0.9), int(hz * 0.9)
             x, y = zone.left + (lz - lg) // 2, zone.top + (hz - ht) // 2
@@ -118,8 +162,9 @@ class _Cadre:
             from System.Drawing import Color
 
             forme.Invoke(Action(lambda: setattr(forme, "BackColor", Color.Black)))
-            # Opened by a profile switch: the size the previous window had.
-            self._placer(os.environ.pop("JH_PLEIN", "1") != "0")
+            # Opened by a profile switch: the size and place the previous window had.
+            plein = os.environ.pop("JH_PLEIN", "1") != "0"
+            self._placer(plein, _rect(os.environ.pop("JH_RECT", "")))
         except Exception as e:  # noqa: BLE001 — cosmetic only
             print(f"cadre : {e}")  # noqa: T201
 
@@ -233,23 +278,24 @@ def main() -> int:
 
         store_update.redemarrer_apres_maj()
     api._plein = lambda: cadre.plein
+    api._rect = cadre.rect
+    api._devant = cadre.devant
     api._toile = cadre.fond
     fenetre.events.shown += cadre.installer
     if not welcome.a_un_profil():
         fenetre.events.loaded += lambda: _depot_cv(fenetre)
-    relais = os.environ.pop("JH_RELAIS", "")
-    if relais:
-        # Opened by a profile switch: the previous window closes once this page is drawn.
-        def pret() -> None:
+    api._relais = os.environ.pop("JH_RELAIS", "")
+    if api._relais:
+        # Opened by a profile switch, under the previous window: that one closes once
+        # this page says its first screen is drawn (Api.affiche). A page that never says
+        # so still takes over a few seconds after loading.
+        def secours() -> None:
             import time
 
-            time.sleep(0.6)  # the page's first screen, not only its HTML
-            try:
-                Path(relais).write_text("pret", encoding="utf-8")
-            except OSError:
-                pass
+            time.sleep(6)
+            api.affiche()
 
-        fenetre.events.loaded += pret
+        fenetre.events.loaded += secours
     # The icon from the window's creation: set at "shown", the taskbar first showed
     # pythonw.exe's, Python's logo (the user, 2026-10-28).
     webview.start(icon=str(ICONE if sys.platform == "win32" else ICONE.with_suffix(".png")))

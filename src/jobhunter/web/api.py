@@ -998,6 +998,9 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
     _fenetre: Any = None
     _basculer: Any = None  # full screen <-> rounded window
     _plein: Any = None  # () -> bool: is the window full screen
+    _rect: Any = None  # () -> (x, y, w, h) | None: the window's place, for the next one
+    _devant: Any = None  # () -> None: keeps the window above the one opening under it
+    _relais = ""  # a profile switch's file: written once the first screen is drawn
     # Applies a backdrop by name, see FONDS. Not `_fond`: that is the background loop
     # (web.background), which this attribute overwrote — every fond_etat call failed
     # and the background's news never reached the page (found 2026-10-28).
@@ -2373,23 +2376,53 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         relais.unlink(missing_ok=True)
         env["JH_RELAIS"] = str(relais)
         env["JH_PLEIN"] = "1" if (self._plein is None or self._plein()) else "0"
-        subprocess.Popen(cmd, cwd=str(principale), env=env)  # nosec B603 : our own program
+        rect = self._rect() if self._rect else None
+        if rect:
+            env["JH_RECT"] = ",".join(str(v) for v in rect)
+        # Drawn under this window, the new page was not painted at all (Chromium skips a
+        # covered window) and showed grey for 0.4 s once uncovered. pywebview's own
+        # arguments are repeated: this variable may replace them.
+        env["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = (
+            "--disable-features=ElasticOverscroll,CalculateNativeWinOcclusion"
+            " --allow-file-access-from-files"
+        )
         fenetre = self._fenetre
+        if fenetre is not None:
+            try:
+                fenetre.evaluate_js("document.body.classList.add('relais')")
+            except Exception:  # noqa: BLE001 — only the veil
+                pass
+            # The new window opens under this one, at its place, and draws there unseen:
+            # it appeared at once, empty and at the default size, then jumped to its
+            # size (the user, 2026-11-05: « plus rapide et plus smooth »).
+            if self._devant:
+                try:
+                    self._devant()
+                except Exception:  # noqa: BLE001 — only the order of the windows
+                    pass
+        subprocess.Popen(cmd, cwd=str(principale), env=env)  # nosec B603 : our own program
         if fenetre is None:
             return
-        try:
-            fenetre.evaluate_js("document.body.classList.add('relais')")
-        except Exception:  # noqa: BLE001 — only the veil
-            pass
 
         def fermer() -> None:
             fin = time.time() + 45  # a new window that never says ready: close anyway
             while time.time() < fin and not relais.exists():
-                time.sleep(0.2)
+                time.sleep(0.03)
             relais.unlink(missing_ok=True)
             fenetre.destroy()
 
         threading.Thread(target=fermer, daemon=True).start()
+
+    def affiche(self) -> bool:
+        """The page's first screen is drawn: the previous window (a profile switch) closes."""
+        relais, self._relais = self._relais, ""
+        if not relais:
+            return False
+        try:
+            Path(relais).write_text("pret", encoding="utf-8")
+        except OSError:
+            return False
+        return True
 
     def changer_profil(self, slug: str) -> dict[str, Any]:
         """Opens another profile: the window restarts on its data (paths are fixed at start)."""

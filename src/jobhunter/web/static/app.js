@@ -2910,7 +2910,15 @@ async function demarrer() {
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") fermerTiroir(); });
   let debut = "accueil";
   try { debut = localStorage.getItem("jh-ecran") || debut; } catch (_) { /* no storage */ }
-  aller(debut);
+  await aller(debut);
+  affiche();
+}
+
+// The first screen is drawn: after a profile switch, the previous window, above this
+// one, closes and shows it ready (Api.affiche). A timer, not a frame: a window under
+// another may get no frame until it is uncovered.
+function affiche() {
+  setTimeout(() => { if (window.pywebview) window.pywebview.api.affiche().catch(() => {}); }, 50);
 }
 
 // --- The welcome (3.78): a folder without a profile, before the application ---------
@@ -2928,6 +2936,7 @@ async function bienvenue(b) {
   if (b.cv) formulaireProfil(b.cv);
   else if (b.reprise && b.reprise.length) ecranReprise(b);
   else ecranCv();
+  affiche();
 }
 
 function carteBienvenue(...enfants) {
