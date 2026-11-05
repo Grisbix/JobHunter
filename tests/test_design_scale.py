@@ -79,3 +79,27 @@ def test_le_bureau_a_distance_retire_flous_et_animations():
 def test_un_rafraichissement_garde_la_position_de_defilement():
     corps = JS[JS.index("async function redessinerDonnees") :][:1500]
     assert "scrollTop" in corps
+
+
+def test_chaque_icone_existe_et_dit_ce_que_fait_son_bouton():
+    # The user, 2026-11-05: no star, no lightning — an icon says what its button does
+    # (collection, pen, clock, funnel…). An icon name missing from ICONES draws nothing.
+    html = (
+        Path(__file__).resolve().parent.parent
+        / "src"
+        / "jobhunter"
+        / "web"
+        / "static"
+        / "index.html"
+    ).read_text(encoding="utf-8")
+    table = JS[JS.index("const ICONES = {") : JS.index("};", JS.index("const ICONES = {"))]
+    connues = set(re.findall(r"^\s+([a-z]+):", table, re.M))
+    utilisees = set(re.findall(r'svg\("([a-z]+)"\)', JS))
+    utilisees |= set(
+        re.findall(r'(?:bouton|action)\((?:"[^"]*"|`[^`]*`|[^,()]+),\s*"([a-z]+)"', JS)
+    )
+    utilisees |= set(re.findall(r'data-icone="([a-z]+)"', html))
+    utilisees |= set(re.findall(r'\["([a-z]+)", (?:"|`)', JS[JS.index("ECRANS.accueil") :][:6000]))
+    assert utilisees, "aucune icône trouvée : l'expression a changé"
+    assert not utilisees - connues, utilisees - connues
+    assert not {"etoile", "eclair"} & (connues | utilisees)

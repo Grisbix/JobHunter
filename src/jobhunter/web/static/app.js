@@ -12,11 +12,20 @@ const ICONES = {
   profil: "M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zm-8 8.2C4 16.8 7.6 14 12 14s8 2.8 8 6.2c0 .4-.4.8-.8.8H4.8c-.4 0-.8-.4-.8-.8z",
   sources: "M5 4h14a2 2 0 0 1 2 2v3H3V6a2 2 0 0 1 2-2zm-2 7h18v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
   cle: "M20.5 6.6 17 10.1l-3.1-3.1 3.5-3.5a5.5 5.5 0 0 0-7 7L3.6 17.3a1.9 1.9 0 0 0 2.7 2.7l6.8-6.8a5.5 5.5 0 0 0 7.4-6.6z",
-  etoile: "m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z",
   loupe: "M10.5 3a7.5 7.5 0 0 1 6 12l4.3 4.3-1.5 1.5-4.3-4.3A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z",
   sortie: "M14 3h7v7h-2V6.4l-8.3 8.3-1.4-1.4L17.6 5H14zM5 5h6v2H5v12h12v-6h2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z",
   copie: "M8 3h10a2 2 0 0 1 2 2v12h-2V5H8zM5 7h10a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z",
-  eclair: "M13 2 4 14h6l-1 8 9-12h-6z",
+  // No star nor lightning (the user, 2026-11-05: « trouve autre chose qui est plus cohérent
+  // avec ce à quoi c'est lié »): each icon says what its button does.
+  collecte: "M11 3h2v9.2l3.3-3.3 1.4 1.4L12 16 6.3 10.3l1.4-1.4 3.3 3.3zM4 14h2v4h12v-4h2v4.5A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5z",
+  horloge: "M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm0 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM11 7h2v4.6l3.2 3.2-1.4 1.4-3.8-3.8z",
+  plume: "M16.5 3.5a2.1 2.1 0 0 1 3 0l1 1a2.1 2.1 0 0 1 0 3L9 19l-5 1.5L5.5 15.5z",
+  lancer: "M8 4.5v15c0 .8.9 1.3 1.6.8l11-7.5a1 1 0 0 0 0-1.6l-11-7.5C8.9 3.2 8 3.7 8 4.5z",
+  entonnoir: "M3 4h18l-7 8.5V19l-4 2v-8.5z",
+  cible: "M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zm0 2a7 7 0 1 0 0 14 7 7 0 0 0 0-14zm0 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0 1.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z",
+  signet: "M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z",
+  graphique: "M4 13h4v7H4zm6-9h4v16h-4zm6 5h4v11h-4z",
+  plus: "M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z",
   fleche: "M12 4a8 8 0 1 1-7.7 10h2.1A6 6 0 1 0 12 6V9L7.5 5 12 1z",
   dossier: "M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2h8.5A1.5 1.5 0 0 1 21 8.5v10a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z",
   clavier: "M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm1 3v2h2V9zm4 0v2h2V9zm4 0v2h2V9zm4 0v2h2V9zM7 13v2h10v-2z",
@@ -326,7 +335,7 @@ async function lancerOutil(libelle) {
 }
 function carteOutils(groupes) {
   const outil = (o) => h("button", { class: "outil-ligne", onclick: () => lancerOutil(o.libelle) },
-    svg(o.genre === "console" ? "clavier" : o.genre === "action" ? "fenetre" : "eclair"),
+    svg(o.genre === "console" ? "clavier" : o.genre === "action" ? "fenetre" : "lancer"),
     h("span", {}, h("span", { class: "t" }, o.nom), h("span", { class: "sous" }, o.aide)));
   const groupe = (g) => h("div", { class: "groupe-outils" }, h("h3", {}, g.groupe), g.outils.map(outil));
   const simples = (groupes || []).filter((g) => !g.avance);
@@ -839,7 +848,7 @@ async function ouvrirOffre(id) {
       bouton("Voir l'annonce", "sortie", () => ouvrir(o.url), "plein"),
       o.cv ? bouton("CV", "doc", () => voirDocument(o, o.cv, "CV")) : null,
       o.lettre ? bouton("Lettre", "doc", () => voirDocument(o, o.lettre, "Lettre")) : null,
-      bouton(o.cv ? "Refaire CV et lettre" : "Préparer CV et lettre", "eclair", () => lancer("documents", o.id)),
+      bouton(o.cv ? "Refaire CV et lettre" : "Préparer CV et lettre", "plume", () => lancer("documents", o.id)),
       ["postulé", "relancé", "entretien", "refus"].includes(o.suivi) ? null
         : bouton("J'ai envoyé cette candidature", "avion", () => declarerEnvoi(o.id), "chaud")),
     h("div", { class: "boutons secondaires" },
@@ -921,7 +930,7 @@ ECRANS.accueil = {
     vue.replaceChildren(h("div", { class: "accueil" },
       h("div", { class: "colonne" },
         h("div", { class: "verre stats" },
-          [["valise", "Offres en file", d.stats.file], ["etoile", `Notées ${d.seuil || 8}+ à traiter`, d.stats.neuf],
+          [["valise", "Offres en file", d.stats.file], ["cible", `Notées ${d.seuil || 8}+ à traiter`, d.stats.neuf],
            ["avion", "En attente de réponse", d.stats.postulees]].map(([ic, lab, val]) =>
             h("div", { class: "stat" }, h("span", { class: "rond" }, svg(ic)),
               h("div", {}, h("div", { class: "lab" }, lab), h("div", { class: "val" }, nombre(val)))))),
@@ -1014,7 +1023,7 @@ function carteDocumentsAccueil(d) {
       h("div", {}, h("div", { class: "lab" }, "Prêtes"), h("div", { class: "val" }, nombre(d.prets))),
       h("div", { class: "tuile" }, h("i", { style: `width:${pct}%` }), h("span", {}, `${pct} %`))),
     h("div", { class: "boutons", style: "margin-top:14px" },
-      d.a_preparer ? action("Préparer les 30 meilleures", "eclair", "documents_top", "plein") : null,
+      d.a_preparer ? action("Préparer les 30 meilleures", "plume", "documents_top", "plein") : null,
       bouton("Documents", "doc", () => aller("documents"))));
 }
 
@@ -1159,10 +1168,10 @@ ECRANS.offres = {
   titre: "Offres",
   plein: true,
   actions: () => [
-    bouton("Tri du jour", "etoile", () => aller("tri")),
+    bouton("Tri du jour", "entonnoir", () => aller("tri")),
     bouton("Ajouter une offre", "sortie", ajouterOffre),
     action("Vérifier les offres", "loupe", "disponibilite"),
-    action("Lancer la collecte", "eclair", "collecte", "plein")],
+    action("Lancer la collecte", "collecte", "collecte", "plein")],
   async dessiner(vue) {
     const f = filtresOffres;
     // No score filter any more (the user, 2026-10-27): sorted by score the 7+ / 8+ buttons
@@ -1291,7 +1300,7 @@ ECRANS.candidatures = {
         h("div", {}, h("h2", {}, "Pas encore de candidature"),
           h("div", { class: "sous" }, "Une offre arrive ici quand tu changes son statut dans Offres : « à postuler » pour la garder, « postulé » une fois envoyée. Glisse ensuite sa fiche d'une colonne à l'autre.")),
         h("div", { class: "boutons" }, bouton("Voir les offres", "valise", () => aller("offres"), "plein"),
-          bouton("Tri du jour", "etoile", () => aller("tri")))) : null,
+          bouton("Tri du jour", "entonnoir", () => aller("tri")))) : null,
       h("div", { class: aucune ? "tableau-kanban debut" : "tableau-kanban" }, d.colonnes.map((c) =>
         h("div", { class: c.entrees.length || aucune ? "verre colonne-k" : "verre colonne-k vide-k", "data-statut": c.statut, ...cible(c) },
           h("div", { class: "entete" }, h("h3", {}, c.statut[0].toUpperCase() + c.statut.slice(1)),h("span", { class: "compte" }, c.entrees.length)),
@@ -1353,7 +1362,7 @@ ECRANS.tri = {
         h("div", { class: "boutons" },
           bouton("Garder", "fleche", garder, "plein"),
           bouton("Pas intéressé", "", rejeter),
-          bouton(o.cv ? "Refaire CV et lettre" : "Préparer CV et lettre", "eclair", async () => { await lancer("documents", id); garder(); }),
+          bouton(o.cv ? "Refaire CV et lettre" : "Préparer CV et lettre", "plume", async () => { await lancer("documents", id); garder(); }),
           bouton("Voir l'annonce", "sortie", () => ouvrir(o.url)),
           plus([
             ["Retirer de la file, avec un motif…", "", () => ecarter([id])],
@@ -1397,7 +1406,7 @@ ECRANS.relances = {
   titre: "Relances",
   // Held in the window: the lists and the draft scroll inside their panels (2026-10-28).
   plein: true,
-  actions: () => [action("Écrire les brouillons du jour", "eclair", "brouillons", "plein")],
+  actions: () => [action("Écrire les brouillons du jour", "plume", "brouillons", "plein")],
   async dessiner(vue) {
     const d = await appel("relances");
     const apercu = h("div", { class: "carte apercu" }, h("div", { class: "vide" }, "Choisis un brouillon pour le lire."));
@@ -1498,7 +1507,7 @@ function premiersDocuments() {
       h("li", {}, "Prépare les documents : « Préparer des CV et lettres… », ou depuis une offre."),
       h("li", {}, "Relis-les ici : un clic ouvre le document pour le lire ou modifier son texte.")),
     h("div", { class: "boutons" },
-      action("Lancer la collecte", "eclair", "collecte", "plein"),
+      action("Lancer la collecte", "collecte", "collecte", "plein"),
       bouton("Préparer des CV et lettres…", "doc", () => ACTIONS_OUTILS.documents())));
 }
 
@@ -1694,7 +1703,7 @@ ECRANS.profil = {
       h("div", { class: "titre-ligne" }, h("h2", {}, "Compétences"), h("span", { class: "compte" }, liste.length)),
       h("div", { class: "sous", style: "margin:-6px 0 14px" }, "Les mots cherchés dans les annonces, et les axes du score pour lesquels chaque compétence compte."),
       corps,
-      h("label", { class: "champ", style: "margin-top:14px" }, svg("etoile"), nouvelle),
+      h("label", { class: "champ", style: "margin-top:14px" }, svg("plus"), nouvelle),
       bC.el);
 
     // CVs and letters first, side by side (the user, 2026-11-02: « mettre ajout lettre
@@ -1721,7 +1730,7 @@ let ongletSources = "recherche";
 ECRANS.sources = {
   titre: "Sources",
   plein: () => ongletSources !== "recherche",
-  actions: () => [action("Lancer la collecte", "eclair", "collecte", "plein")],
+  actions: () => [action("Lancer la collecte", "collecte", "collecte", "plein")],
   async dessiner(vue) {
     const tete = segment([["recherche", "Mots-clés et rendement"], ["entreprises", "Entreprises suivies"], ["vues", "Entreprises vues"],
       ["sites", "Sites d'offres"], ["acces", "Accès et clés"]], ongletSources, (v) => { ongletSources = v; ECRANS.sources.dessiner(vue); });
@@ -1966,7 +1975,7 @@ ONGLETS_SOURCES.vues = async (vue) => {
   vue.replaceChildren(h("div", { class: "verre panneau" },
     h("div", { class: "titre-ligne" }, h("h2", {}, "Entreprises vues"), compte,
       bouton("Chercher leurs offres", "loupe", () => lancer("sites_carrieres")),
-      bouton("Suivre celles à score ≥ 7", "etoile", async () => {
+      bouton("Suivre celles à score ≥ 7", "signet", async () => {
         const n = d.lignes.filter((l) => l.url_flux && !l.suivie && (l.fit || 0) >= 7).length;
         if (!n) return toast("Aucune entreprise bien notée à suivre.");
         const ok = await dialogue(`Suivre ${n} entreprise(s) ?`, "Chacune est d'abord vérifiée : une requête à son outil de recrutement, suivie seulement si elle a des offres ouvertes.", null, [["Suivre", "", () => true]]);
@@ -2041,7 +2050,7 @@ ONGLETS_SOURCES.acces = async (vue) => {
           h("td", { class: "actions-ligne" },
             s.cle ? bouton("Saisir la clé", "cle", () => saisirCle(s.source, recharger)) : null,
             s.cle ? bouton("Tester", "", async () => { const r = await ecrire("tester_cle", s.source); if (r) toast(r.message, !r.reussi); }) : null,
-            bouton("Collecter", "eclair", async () => { if (await ecrire("collecter_source", s.source)) suivreTache(); }, s.bloque ? "" : "plein")))))),
+            bouton("Collecter", "collecte", async () => { if (await ecrire("collecter_source", s.source)) suivreTache(); }, s.bloque ? "" : "plein")))))),
       h("div", { class: "boutons", style: "margin-top:12px" }, bouton("Rendement des sources", "", async () => { if (await ecrire("rendement_sources")) suivreTache(); }))),
     h("div", { class: "verre panneau large" },
       h("div", { class: "titre-ligne" }, h("h2", {}, "Connexions pour candidater")),
@@ -2717,7 +2726,7 @@ async function cartesParametres() {
             if (ok && await ecrire("planifier", "")) { toast("Collecte automatique retirée."); relire(); }
           }))
       : h("div", { class: "ligne-actions" }, h("span", { class: "etat" }, "Pas planifiée"), heure,
-          bouton("Collecter chaque jour à cette heure", "eclair", async () => {
+          bouton("Collecter chaque jour à cette heure", "horloge", async () => {
             const r = await ecrire("planifier", heure.value);
             if (r) { toast(r.message || "Collecte planifiée."); relire(); }
           }, "plein"));

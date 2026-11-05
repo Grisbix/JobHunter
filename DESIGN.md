@@ -132,3 +132,10 @@ follows it, never the reverse.
   mouse click draws none. Text fields keep their own glow.
 - Do take colours from the variables, so that the teintes and dark mode follow.
 - Don't name a font family outside the `--police` list.
+- Do give a button the icon of what it does, from `ICONES` in app.js: collection
+  `collecte` (arrow into a tray), daily schedule `horloge`, CV, letter or draft `plume`,
+  a tool that runs `lancer`, the daily triage `entonnoir`, score `cible`, following
+  `signet`, statistics `graphique`, adding `plus`.
+- Don't use a decorative star or lightning bolt (the user, 2026-11-05): they say
+  nothing about the button. `tests/test_design_scale.py` checks that every icon used
+  exists and that neither comes back.
