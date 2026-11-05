@@ -387,9 +387,16 @@ body.relais::after {
 .tiroir.document.large { width: min(1320px, 94vw); }
 .edition-cote { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
 .cote-apercu { position: sticky; top: 0; }
-.cote-apercu .apercu-pages { max-height: calc(100vh - 200px); }
+.cote-apercu .apercu-pages { max-height: calc(100vh - 252px); }  /* ends above the drawer's foot, not on it */
 @media (max-width: 1000px) { .edition-cote { grid-template-columns: minmax(0, 1fr); } .cote-apercu { position: static; } }
-.apercu-pages { display: grid; gap: 12px; max-height: calc(100vh - 220px); overflow: auto; scrollbar-width: thin; }
+.apercu-pages { display: grid; gap: 12px; max-height: calc(100vh - 220px); overflow: auto; scrollbar-width: thin; padding-bottom: 16px; }
+/* The preview takes the drawer's height left under its buttons, not a guess of it: at
+   100vh - 220px the box ran past the drawer and the CV's foot was cut on its edge (the
+   user, 2026-11-04: « coupe les cv en bas, met un petit écart avec la marge »). The
+   drawer's padding is the gap; the pages' own padding lets the last one end clear. */
+.remplit-doc { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.remplit-doc > .apercu-pages { flex: 1 1 auto; min-height: 0; max-height: none; }
+.remplit-doc > .apercu-doc { flex: 1 1 auto; min-height: 0; height: auto; }
 .apercu-pages img { width: 100%; height: auto; display: block; background: #fff; border-radius: 8px; box-shadow: 0 8px 24px -12px rgba(var(--ombre-rgb), .35); }
 .ligne-doc { display: flex; gap: 8px; align-items: flex-start; }
 .ligne-doc .champ-texte { flex: 1; }
