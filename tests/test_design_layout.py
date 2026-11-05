@@ -99,3 +99,28 @@ def test_l_aide_d_un_bouton_vient_au_survol_apres_un_moment(outil, fenetre):
     assert page.evaluate(bulle) == "Ce que fait ce bouton."
     page.mouse.move(2, 2)
     assert page.evaluate(bulle) is None
+
+
+@pytest.mark.parametrize("largeur", [1440, 1000])
+def test_meilleures_offres_a_la_hauteur_du_graphique(outil, fenetre, largeur):
+    """As many best offers as the chart beside them is tall (the user, 2026-11-05).
+
+    Fewer left a hole under the list; more stretched the card past the chart. An offer
+    put away is one that did not fit.
+    """
+    page = fenetre(largeur)
+    outil.aller(page, "accueil")
+    m = page.evaluate("""() => {
+      const kpi = document.querySelector('.kpi'), liste = kpi.querySelector('.liste-meilleures');
+      const contenu = (el) => el.lastElementChild.getBoundingClientRect().bottom - el.getBoundingClientRect().top
+        + parseFloat(getComputedStyle(el).paddingBottom);
+      const lis = [...liste.querySelectorAll('li')], ranges = lis.filter((l) => l.classList.contains('range'));
+      const r = { vues: lis.length - ranges.length, liste: contenu(liste), graphe: contenu(kpi.firstElementChild) };
+      if (ranges.length) { ranges[0].classList.remove('range'); r.avec_une_de_plus = contenu(liste); }
+      return r;
+    }""")
+    assert m["vues"] >= 3, m
+    if m["vues"] > 3:
+        assert m["liste"] <= m["graphe"] + 1, m
+    if "avec_une_de_plus" in m:
+        assert m["avec_une_de_plus"] > m["graphe"] + 1, m

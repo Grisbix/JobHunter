@@ -24,8 +24,9 @@ def _offre(entreprise, poste, fit, statut="Scan 2026-10-25", zone="prioritaire",
 
 def test_vide():
     d = tableau([], {}, JOUR)
-    assert d["stats"] == {"file": 0, "neuf": 0, "postulees": 0}
-    assert d["collecte"] == [] and d["meilleures"] == [] and d["zones"] == []
+    assert d["stats"] == {"semaine": 0, "semaine_avant": 0, "neuf": 0, "postulees": 0}
+    assert d["collecte"] == [] and d["meilleures"] == []
+    assert d["retours"]["envoyees"] == 0 and d["retours"]["delai_median"] is None
 
 
 def test_collecte_par_scan_sept_derniers():
@@ -62,16 +63,36 @@ def test_relances_apres_sept_jours_et_candidatures_sans_les_ecartees():
     assert d["stats"]["postulees"] == 3
 
 
-def test_zones_des_offres_au_seuil_unique():
-    # 3.80: one threshold for every screen (scoring.seuil_bonnes, 8), not 7 here.
-    offres = [_offre("A", str(i), 8, zone="international") for i in range(3)]
-    offres += [_offre("B", "b", 9), _offre("B", "c", 7), _offre("C", "c", 3, zone="ailleurs")]
-    d = tableau(offres, {}, JOUR)
+def test_rythme_et_retours_des_candidatures_envoyees():
+    # The home screen's pace and answers (2026-11-05), in place of « Par zone ».
+    suivi = {
+        "A|a": {"s": "postulé", "d": "2026-10-25"},  # 1 day before JOUR: this week
+        "B|b": {
+            "s": "entretien",
+            "d": "2026-10-20",
+            "h": [["2026-10-14", "postulé"], ["2026-10-20", "entretien"]],
+        },
+        "C|c": {
+            "s": "refus",
+            "d": "2026-10-01",
+            "h": [["2026-09-01", "postulé"], ["2026-10-01", "refus"]],
+        },
+        "D|d": {"s": "postulé", "d": "2026-09-10"},  # 46 days: silence
+        "E|e": {"s": "à postuler", "d": "2026-10-25"},  # not sent
+    }
+    d = tableau([], suivi, JOUR)
     assert d["seuil"] == 8
-    assert d["zones"] == [
-        {"zone": "international", "n": 3, "pct": 75},
-        {"zone": "prioritaire", "n": 1, "pct": 25},
-    ]
+    assert (d["stats"]["semaine"], d["stats"]["semaine_avant"]) == (1, 1)
+    r = d["retours"]
+    assert (r["envoyees"], r["reponses"], r["entretiens"], r["refus"], r["silence"]) == (
+        4,
+        2,
+        1,
+        1,
+        1,
+    )
+    assert r["delai_median"] == 18  # 6 and 30 days
+    assert "zones" not in d
 
 
 def test_ouvrir_refuse_ce_qui_n_est_pas_un_lien_web(monkeypatch):
