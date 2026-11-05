@@ -73,6 +73,7 @@ def test_annonce_pour_le_store(monkeypatch):
         "mise_a_jour",
         lambda: {"signee": False, "store": True, "nouvelle": True, "derniere": "9"},
     )
+    monkeypatch.setattr(store_update, "telecharger", lambda: "Completed")  # no PowerShell
     assert a.annonce_maj()
 
 
