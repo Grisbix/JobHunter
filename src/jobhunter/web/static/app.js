@@ -2663,11 +2663,12 @@ async function annonceMaj() {
   const v = await appel("annonce_maj").catch(() => null);
   if (!v) return;
   const b = $("maj");
-  // v.pret: downloaded and checked in the background; closing the window installs it too.
+  // v.pret: downloaded (and checked) in the background; closing the window installs it too.
+  // The Store's: its click installs through the Store task (verifierMaj), JobHunter reopens.
   b.textContent = v.pret ? `Redémarrer pour mettre à jour (${v.derniere})` : `Mettre à jour (${v.derniere})`;
   b.title = v.pret ? `Version installée : ${v.installee}. Prête : elle s'installe aussi à la fermeture de JobHunter.` : `Version installée : ${v.installee}`;
   b.hidden = false;
-  b.onclick = v.pret ? (() => installerMaj()) : clicMaj;
+  b.onclick = v.pret && !v.store ? (() => installerMaj()) : clicMaj;
 }
 function clicMaj(ev) {
   if (ev.currentTarget.dataset.fait) return toast("Ferme JobHunter puis rouvre-le : la nouvelle version démarre.");

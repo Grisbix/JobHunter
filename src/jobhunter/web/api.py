@@ -995,6 +995,8 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
     _tache: Tache | None = None
     # The installer of a newer version, downloaded and checked (setup_update): (path, version)
     _setup_pret: tuple[Path, str] | None = None
+    # The Store's update, downloaded and waiting for the window to close (store_update)
+    _store_pret = False
 
     def __init__(self) -> None:
         """An empty cache: each data file is read on first use."""
@@ -2108,7 +2110,14 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         v = self.mise_a_jour()
         # The Store's package: no signature to wait for, the Store checked it (3.74).
         if v["store"]:
-            return v if v["nouvelle"] else None
+            if not v["nouvelle"]:
+                return None
+            # Downloaded now, JobHunter running; installed at closing (store_update).
+            from jobhunter import store_update
+
+            if self._store_pret or store_update.telecharger() == "Completed":
+                self._store_pret = v["pret"] = True
+            return v
         if not v["signee"]:
             return None
         if v.get("silencieux"):
@@ -2163,14 +2172,25 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
     def _maj_a_la_fermeture(self) -> None:
         """Closing the window installs a ready version, silently, as Chrome does.
 
-        Not during a collection (the queue's lock): the next start offers it again.
+        Not during a collection (the queue's lock): the next start offers it again. The
+        Store's update installs here, the window hidden: Windows ends JobHunter to put
+        it in, and does not open it again (the user closed it).
         """
-        if self._setup_pret is None:
+        if self._setup_pret is None and not self._store_pret:
             return
         from jobhunter.programs import update
 
-        if update.file_libre(garder=False):
+        if not update.file_libre(garder=False):
+            return
+        if self._setup_pret is not None:
             self._lancer_setup(relancer=False)
+            return
+        from jobhunter import store_update
+
+        store_update.ne_pas_redemarrer()
+        if self._fenetre is not None:
+            self._fenetre.hide()
+        store_update.installer(300)  # returns only if it failed: the window closes anyway
 
     def effacer_donnees(self) -> dict[str, Any]:
         """Sends the installed application's data to the Recycle Bin, then closes it.

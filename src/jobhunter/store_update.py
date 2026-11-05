@@ -21,8 +21,9 @@ the author's submission.
 
 import subprocess
 
-# One PowerShell script, two actions: "verifier" prints the number of updates and their
-# versions (the Store's, which may be older than GitHub's latest), "installer"
+# One PowerShell script, three actions: "verifier" prints the number of updates and their
+# versions (the Store's, which may be older than GitHub's latest), "telecharger" only
+# downloads them (JobHunter keeps running), "installer"
 # downloads and installs them and prints the final state (Completed, …). WinRT's
 # asynchronous operations are awaited through System.WindowsRuntimeSystemExtensions.AsTask.
 # A failure prints « ERREUR 0x… message », the innermost exception: before, PowerShell's
@@ -54,6 +55,10 @@ if ($env:JH_ACTION -eq 'verifier') {
   exit 0
 }
 if ($maj.Count -eq 0) { "ETAT Aucune"; exit 0 }
+if ($env:JH_ACTION -eq 'telecharger') {
+  $r = Attendre2 ($ctx.TrySilentDownloadStorePackageUpdatesAsync($maj)) ([Windows.Services.Store.StorePackageUpdateResult]) ([Windows.Services.Store.StorePackageUpdateStatus])
+  "ETAT " + $r.OverallState; exit 0
+}
 $r = Attendre2 ($ctx.TrySilentDownloadAndInstallStorePackageUpdatesAsync($maj)) ([Windows.Services.Store.StorePackageUpdateResult]) ([Windows.Services.Store.StorePackageUpdateStatus])
 "ETAT " + $r.OverallState
 """
@@ -115,6 +120,33 @@ def verifier(delai: int = 60) -> tuple[int | None, str, str]:
 
 def _cle(v: str) -> tuple[int, ...]:
     return tuple(int(x) if x.isdigit() else 0 for x in v.split("."))
+
+
+def telecharger(delai: int = 1800) -> str:
+    """Downloads the Store's updates without installing them: JobHunter keeps running.
+
+    The installation, quick once downloaded, waits for the window to close (the user,
+    2026-11-05: « possible sans redémarrer l'app ? »). Same returns as installer().
+    """
+    sortie = _lancer("telecharger", delai)
+    for ligne in sortie.splitlines():
+        if ligne.startswith("ETAT "):
+            return ligne[5:].strip()
+    return _erreur(sortie)
+
+
+def ne_pas_redemarrer() -> None:
+    """Cancels the restart after the update: installed at closing, JobHunter stays closed."""
+    import sys
+
+    if sys.platform != "win32":
+        return
+    import ctypes
+
+    try:
+        ctypes.windll.kernel32.UnregisterApplicationRestart()  # type: ignore[attr-defined,unused-ignore]
+    except (AttributeError, OSError):
+        pass
 
 
 def installer(delai: int = 1800) -> str:

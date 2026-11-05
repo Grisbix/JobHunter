@@ -98,3 +98,73 @@ def test_fenetre_dit_l_attente_et_l_erreur():
         "La {v} arrive dans le Microsoft Store après sa vérification par Microsoft (quelques heures à quelques jours).",
     ):
         assert cle in TEXTES
+
+
+def test_telecharger_sans_installer(monkeypatch):
+    vu = {}
+
+    def faux(cmd, **k):
+        vu["action"] = k["env"]["JH_ACTION"]
+        return subprocess.CompletedProcess(cmd, 0, "ETAT Completed\n", "")
+
+    monkeypatch.setattr(store_update.subprocess, "run", faux)
+    assert store_update.telecharger() == "Completed" and vu["action"] == "telecharger"
+    assert "TrySilentDownloadStorePackageUpdatesAsync" in store_update.SCRIPT
+
+
+class _Fenetre:
+    def __init__(self):
+        self.vu = []
+
+    def hide(self):
+        self.vu.append("cachee")
+
+    def destroy(self):
+        self.vu.append("fermee")
+
+
+@pytest.fixture
+def appli_store(monkeypatch):
+    a = api.Api()
+    a._fenetre = _Fenetre()
+    fait = []
+    monkeypatch.setattr(
+        a,
+        "mise_a_jour",
+        lambda: {"signee": False, "store": True, "nouvelle": True, "derniere": "3.83.0"},
+    )
+    monkeypatch.setattr(
+        store_update, "telecharger", lambda: fait.append("telecharge") or "Completed"
+    )
+    monkeypatch.setattr(store_update, "ne_pas_redemarrer", lambda: fait.append("sans relance"))
+    monkeypatch.setattr(store_update, "installer", lambda delai=0: fait.append("installe") or "")
+    monkeypatch.setattr(update, "file_libre", lambda garder=True: True)
+    return a, fait
+
+
+def test_store_telecharge_au_demarrage(appli_store):
+    a, fait = appli_store
+    assert a.annonce_maj()["pret"] and fait == ["telecharge"]
+    a.annonce_maj()
+    assert fait == ["telecharge"]  # once per session
+
+
+def test_store_installe_a_la_fermeture_sans_rouvrir(appli_store):
+    a, fait = appli_store
+    a.annonce_maj()
+    a.fenetre("fermer")
+    assert fait == ["telecharge", "sans relance", "installe"]
+    assert a._fenetre.vu == ["cachee", "fermee"]
+
+
+def test_store_rien_de_pret_rien_a_la_fermeture(appli_store):
+    a, fait = appli_store
+    a.fenetre("fermer")
+    assert fait == [] and a._fenetre.vu == ["fermee"]
+
+
+def test_store_bouton_passe_par_le_store():
+    from pathlib import Path
+
+    js = (Path(api.__file__).parent / "static" / "app.js").read_text(encoding="utf-8")
+    assert "v.pret && !v.store ? (() => installerMaj()) : clicMaj" in js
