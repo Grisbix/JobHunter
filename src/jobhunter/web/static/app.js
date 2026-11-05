@@ -1305,6 +1305,10 @@ ECRANS.candidatures = {
 // The daily triage (3.80): the good offers never opened, one at a time, best first.
 // Opening one marks it seen (api.offre), so the next draw shows the next one.
 let triGeste = null;
+// The whole description, unfolded, kept from one offer to the next (the user, 2026-11-04:
+// « pouvoir voir la description en entier »; it was held in a box 40 % of the window high).
+let triEntier = false;
+try { triEntier = localStorage.getItem("jh-tri-entier") === "1"; } catch (_) { /* no storage */ }
 ECRANS.tri = {
   titre: "Tri du jour",
   actions: () => [bouton("Toutes les offres", "", () => aller("offres"))],
@@ -1335,8 +1339,7 @@ ECRANS.tri = {
             .filter(Boolean).map((t) => h("span", { class: "puce" }, t))),
         o.pourquoi ? h("div", { class: "carte description" }, h("h3", {}, "Pourquoi ce score"),
           h("div", { translate: "no" }, traduireFit(o.pourquoi))) : null,
-        h("div", { class: "carte description tri-texte" },
-          o.description ? h("div", { translate: "no" }, o.description) : "Pas de description enregistrée pour cette offre."),
+        o.description ? texteTri(o.description) : h("div", { class: "carte description tri-texte" }, "Pas de description enregistrée pour cette offre."),
         h("div", { class: "boutons" },
           bouton("Garder", "fleche", garder, "plein"),
           bouton("Pas intéressé", "", rejeter),
@@ -1348,6 +1351,26 @@ ECRANS.tri = {
           ])))));
   },
 };
+function texteTri(description) {
+  const boite = h("div", { class: `carte description tri-texte ${triEntier ? "entier" : ""}` }, h("div", { translate: "no" }, description));
+  const lien = h("button", { class: "lien-plier", "aria-expanded": String(triEntier) });
+  const poser = () => {
+    boite.classList.toggle("entier", triEntier);
+    lien.setAttribute("aria-expanded", String(triEntier));
+    lien.textContent = triEntier ? "Réduire la description" : "Lire la description en entier";
+    // Short enough to fit: nothing to unfold.
+    lien.hidden = !triEntier && boite.scrollHeight <= boite.clientHeight + 4;
+  };
+  lien.onclick = () => {
+    triEntier = !triEntier;
+    try { localStorage.setItem("jh-tri-entier", triEntier ? "1" : ""); } catch (_) { /* no storage */ }
+    poser();
+    if (!triEntier) boite.scrollIntoView({ block: "nearest" });
+  };
+  requestAnimationFrame(poser);  // its height is known once in the page
+  return h("div", { class: "tri-description" }, boite, lien);
+}
+
 document.addEventListener("keydown", (e) => {
   if (courant !== "tri" || !triGeste || e.ctrlKey || e.altKey || e.metaKey) return;
   if (e.target && e.target.closest && e.target.closest("input, textarea, select, [contenteditable], button, summary")) return;

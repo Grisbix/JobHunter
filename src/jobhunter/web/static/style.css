@@ -1026,6 +1026,8 @@ details.plus > summary::-webkit-details-marker { display: none; }
 .tri { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
 .tri-carte { display: flex; flex-direction: column; gap: 16px; }
 .tri-texte { max-height: 40vh; overflow-y: auto; scrollbar-width: thin; }
+.tri-texte.entier { max-height: none; overflow: visible; }
+.tri-description { display: grid; gap: 8px; }
 .tri-fin { text-align: center; display: flex; flex-direction: column; gap: 12px; align-items: center; padding: 48px 24px; }
 
 /* A link-looking button inside a table row (Documents → its offer). */

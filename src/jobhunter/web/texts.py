@@ -1765,6 +1765,16 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Verlauf anzeigen ({n} Meldungen)",
         "Ver el historial ({n} mensajes)",
     ),
+    "Lire la description en entier": (
+        "Read the whole description",
+        "Ganze Beschreibung lesen",
+        "Leer la descripción completa",
+    ),
+    "Réduire la description": (
+        "Shrink the description",
+        "Beschreibung verkleinern",
+        "Reducir la descripción",
+    ),
     "terminée": ("finished", "beendet", "terminada"),
     "Échec : {x}": ("Failed: {x}", "Fehlgeschlagen: {x}", "Error: {x}"),
     "Échec.": ("Failed.", "Fehlgeschlagen.", "Error."),
