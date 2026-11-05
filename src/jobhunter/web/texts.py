@@ -611,11 +611,43 @@ TEXTES: dict[str, tuple[str, str, str]] = {
     "À faire": ("To do", "Zu tun", "Por hacer"),
     "Relancer {e}": ("Follow up with {e}", "Bei {e} nachfassen", "Recordar a {e}"),
     "{j} j · {poste}": ("{j} d · {poste}", "{j} T. · {poste}", "{j} d · {poste}"),
-    "Par zone": ("By area", "Nach Zone", "Por zona"),
-    "offres notées {n} et plus": (
-        "offers rated {n} and above",
-        "Angebote mit {n} und mehr",
-        "ofertas con {n} o más",
+    "Envoyées en 7 jours": ("Sent in 7 days", "In 7 Tagen gesendet", "Enviadas en 7 días"),
+    "{n} les 7 jours d'avant": (
+        "{n} the 7 days before",
+        "{n} in den 7 Tagen davor",
+        "{n} los 7 días anteriores",
+    ),
+    "Retours": ("Answers", "Rückmeldungen", "Respuestas recibidas"),
+    "Aucune candidature envoyée pour l'instant.": (
+        "No application sent yet.",
+        "Noch keine Bewerbung gesendet.",
+        "Ninguna candidatura enviada por ahora.",
+    ),
+    "{n} candidatures envoyées": (
+        "{n} applications sent",
+        "{n} Bewerbungen gesendet",
+        "{n} candidaturas enviadas",
+    ),
+    "{n} candidatures envoyées · réponse en {j} j (médiane)": (
+        "{n} applications sent · answer in {j} d (median)",
+        "{n} Bewerbungen gesendet · Antwort in {j} T. (Median)",
+        "{n} candidaturas enviadas · respuesta en {j} d (mediana)",
+    ),
+    "Sans réponse": ("No answer", "Ohne Antwort", "Sin respuesta"),
+    "Entretien ou refus": (
+        "Interview or rejection",
+        "Gespräch oder Absage",
+        "Entrevista o rechazo",
+    ),
+    "Les réponses qui ont mené à un entretien": (
+        "The answers that led to an interview",
+        "Die Antworten, die zu einem Gespräch führten",
+        "Las respuestas que llevaron a una entrevista",
+    ),
+    "Envoyées il y a 30 jours et plus, sans réponse": (
+        "Sent 30 days ago or more, with no answer",
+        "Vor 30 Tagen oder länger gesendet, ohne Antwort",
+        "Enviadas hace 30 días o más, sin respuesta",
     ),
     "Aucune candidature pour l'instant.": (
         "No application yet.",

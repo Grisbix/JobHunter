@@ -105,7 +105,8 @@ def tableau(
     collecte = [{"jour": j, "n": scans[j]} for j in derniers]
 
     a_traiter = [o for o in offres if _RX_SCAN.match(str(o.get("statut") or ""))]
-    meilleures = sorted(a_traiter, key=lambda o: (-_fit(o), -_fit(o, "fit_fin")))[:5]
+    # Six at most: the page shows as many as the chart beside them is tall (ajusterAccueil).
+    meilleures = sorted(a_traiter, key=lambda o: (-_fit(o), -_fit(o, "fit_fin")))[:6]
 
     relances: list[dict[str, Any]] = []
     for k in postulees:
@@ -119,8 +120,12 @@ def tableau(
     pretes = [o for o in a_traiter if o.get("cv") and o.get("lettre") and _oid(o) not in suivi]
     pretes.sort(key=lambda o: (-_fit(o), -_fit(o, "fit_fin")))
 
-    zones = Counter(str(o.get("zone") or "inconnu") for o in offres if _fit(o) >= seuil)
-    total_zones = sum(zones.values()) or 1
+    # The pace and the answers (the user, 2026-11-05: the home screen lacked them; « Par
+    # zone » and the queue's size, which call for nothing, gave them their place).
+    from jobhunter import funnel
+
+    envois = [e for v in suivi.values() if isinstance(v, Mapping) and (e := funnel.envoi(v))]
+    retours = funnel.entonnoir(suivi, jour=jour, par=())
 
     candidatures = []
     for k, v in suivi.items():
@@ -141,9 +146,15 @@ def tableau(
 
     return {
         "stats": {
-            "file": len(offres),
+            # Sent in the last 7 days, and in the 7 before: the pace.
+            "semaine": sum(1 for e in envois if 0 <= (jour - e).days < 7),
+            "semaine_avant": sum(1 for e in envois if 7 <= (jour - e).days < 14),
             "neuf": sum(1 for o in a_traiter if _fit(o) >= seuil),
             "postulees": len(postulees),
+        },
+        "retours": {
+            k: retours[k]
+            for k in ("envoyees", "reponses", "entretiens", "refus", "delai_median", "silence")
         },
         "seuil": seuil,
         "collecte": collecte,
@@ -163,10 +174,6 @@ def tableau(
             for o in pretes[:4]
         ],
         "relances_toutes": relances,
-        "zones": [
-            {"zone": z, "n": n, "pct": round(100 * n / total_zones)}
-            for z, n in zones.most_common(3)
-        ],
         "candidatures": candidatures[:6],
     }
 

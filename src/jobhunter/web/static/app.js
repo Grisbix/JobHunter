@@ -966,10 +966,13 @@ ECRANS.accueil = {
     vue.replaceChildren(h("div", { class: "accueil" },
       h("div", { class: "colonne" },
         h("div", { class: "verre stats" },
-          [["valise", "Offres en file", d.stats.file], ["cible", `Notées ${d.seuil || 8}+ à traiter`, d.stats.neuf],
-           ["avion", "En attente de réponse", d.stats.postulees]].map(([ic, lab, val]) =>
+          // The pace first (the user, 2026-11-05): the queue's size called for nothing.
+          [["avion", "Envoyées en 7 jours", d.stats.semaine, `${nombre(d.stats.semaine_avant)} les 7 jours d'avant`],
+           ["cible", `Notées ${d.seuil || 8}+ à traiter`, d.stats.neuf],
+           ["horloge", "En attente de réponse", d.stats.postulees]].map(([ic, lab, val, note]) =>
             h("div", { class: "stat" }, h("span", { class: "rond" }, svg(ic)),
-              h("div", {}, h("div", { class: "lab" }, lab), h("div", { class: "val" }, nombre(val)))))),
+              h("div", { style: "min-width:0" }, h("div", { class: "lab" }, lab),
+                h("div", { class: "val" }, nombre(val), note ? h("span", { class: "note" }, note) : null))))),
         h("div", { class: "verre kpi" },
           h("div", {},
             h("div", { class: "titre-ligne", style: "margin:0" }, h("h2", {}, "Collecte du matin"),
@@ -1009,10 +1012,7 @@ ECRANS.accueil = {
             d.cle_conseillee ? h("li", { onclick: () => saisirCle(d.cle_conseillee.nom, () => aller("accueil")) },
               h("div", { class: "t" }, `Ajouter la clé ${d.cle_conseillee.libelle}`),
               h("div", { class: "s" }, "Gratuite, 5 minutes : beaucoup plus d'offres")) : null)),
-        h("div", { class: "zones" }, h("h2", {}, "Par zone"), h("div", { class: "sous", style: "margin-bottom:16px" }, `offres notées ${d.seuil || 8} et plus`),
-          d.zones.map((z) => h("div", { class: "zone" },
-            h("div", {}, h("div", { class: "lab" }, z.zone), h("div", { class: "val" }, nombre(z.n))),
-            h("div", { class: "tuile" }, h("i", { style: `width:${z.pct}%` }), h("span", {}, `${z.pct} %`))))),
+        carteRetours(d.retours),
         carteDocumentsAccueil(d.documents))));
     requestAnimationFrame(() => requestAnimationFrame(() => pleins.forEach(([e, p]) => { e.style.height = `${p}%`; })));
     ajusterAccueil(vue);
@@ -1029,6 +1029,20 @@ function ajusterAccueil(vue) {
   const accueil = vue.querySelector(".accueil");
   if (!accueil) return;
   accueil.querySelectorAll(".range").forEach((e) => e.classList.remove("range"));
+  // The best offers, as many as the chart beside them is tall: more stretched the card
+  // past the chart, fewer left a hole under them (the user, 2026-11-05: « des endroits vides »).
+  const kpi = accueil.querySelector(".kpi");
+  const liste = kpi && kpi.querySelector(".liste-meilleures");
+  if (liste && getComputedStyle(kpi).gridTemplateColumns.split(" ").length > 1) {
+    const contenu = (el) => {
+      const r = el.getBoundingClientRect();
+      return el.lastElementChild.getBoundingClientRect().bottom - r.top + parseFloat(getComputedStyle(el).paddingBottom);
+    };
+    for (const li of [...liste.querySelectorAll("li")].slice(3).reverse()) {
+      if (contenu(liste) <= contenu(kpi.firstElementChild) + 1) break;
+      li.classList.add("range");
+    }
+  }
   if (getComputedStyle(accueil).gridTemplateColumns.split(" ").length < 2) return;
   // The visible edge, padding included (3.67: a fixed 8 px let the left column run 7 px
   // past the bottom of a low window, whose padding is 16).
@@ -1036,18 +1050,40 @@ function ajusterAccueil(vue) {
   const apres = (col, sel, garder) => [...col.querySelectorAll(sel)].slice(garder).reverse();
   const [gauche, droite] = accueil.querySelectorAll(":scope > .colonne");
   const etapes = [
-    [gauche, [...apres(gauche, ".liste-meilleures li", 3), ...apres(gauche, "tbody tr", 1)]],
-    [droite, [...apres(droite, ".zones:not(.documents-accueil) .zone", 1), ...apres(droite, ".fil > li", 2),
+    [gauche, [...apres(gauche, ".liste-meilleures li:not(.range)", 3), ...apres(gauche, "tbody tr", 1)]],
+    [droite, [...apres(droite, ".retours .zone", 2), ...apres(droite, ".fil > li", 2),
               ...droite.querySelectorAll(".documents-accueil .boutons > :last-child")]],
   ];
   for (const [col, elements] of etapes) {
     for (const e of elements) {
-      if (col.getBoundingClientRect().bottom <= bas + 1) break;
+      const avant = col.getBoundingClientRect().bottom;
+      if (avant <= bas + 1) break;
       e.classList.add("range");
+      // Put away only what gives back height: a best offer beside a taller chart gave
+      // none, and only left a hole.
+      if (col.getBoundingClientRect().bottom >= avant - 0.5) e.classList.remove("range");
     }
   }
 }
 window.addEventListener("resize", () => { if (courant === "accueil") ajusterAccueil($("vue")); });
+
+// What the applications sent brought back (the user, 2026-11-05: « il manque quelque
+// chose »), in place of « Par zone »: answers, interviews, silence, each as a share of
+// the applications sent (funnel.entonnoir, as the Statistics screen).
+function carteRetours(r) {
+  if (!r) return null;
+  const titre = [h("h2", {}, "Retours")];
+  if (!r.envoyees) return h("div", { class: "zones retours" }, ...titre, h("div", { class: "sous" }, "Aucune candidature envoyée pour l'instant."));
+  const part = (n) => Math.round(100 * n / r.envoyees);
+  const delai = r.delai_median == null ? "" : ` · réponse en ${nombre(Math.round(r.delai_median))} j (médiane)`;
+  return h("div", { class: "zones retours" }, ...titre,
+    h("div", { class: "sous", style: "margin-bottom:16px" }, `${nombre(r.envoyees)} candidatures envoyées${delai}`),
+    [["Réponses", r.reponses, "Entretien ou refus"], ["Entretiens", r.entretiens, "Les réponses qui ont mené à un entretien"],
+     ["Sans réponse", r.silence, "Envoyées il y a 30 jours et plus, sans réponse"]].map(([lab, n, explication]) =>
+      aide(h("div", { class: "zone" },
+        h("div", {}, h("div", { class: "lab" }, lab), h("div", { class: "val" }, nombre(n))),
+        h("div", { class: "tuile" }, h("i", { style: `width:${part(n)}%` }), h("span", {}, `${part(n)} %`))), explication)));
+}
 
 // Bottom right of the home screen (the user, 2026-10-27: « remplissons le bas droit »):
 // how many well-scored offers have their CV and letter, and the button to prepare more.

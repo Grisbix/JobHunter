@@ -260,6 +260,7 @@ h3 { font-size: var(--t-xl); font-weight: 500; }
 .stat .rond svg { width: 19px; height: 19px; fill: var(--terre); }
 .stat .lab { font-size: var(--t-m); color: var(--gris); white-space: nowrap; }
 .stat .val { font-size: var(--t-2xl); font-weight: 500; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.stat .val .note { margin-left: 8px; font-size: var(--t-s); font-weight: 400; color: var(--gris); }
 
 /* Home */
 .accueil { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 24px; align-items: start; }
