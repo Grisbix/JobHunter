@@ -2626,7 +2626,10 @@ async function verifierMaj(ev) {
   if (!v.derniere) return toast("Impossible de joindre le serveur des mises à jour : réessaie plus tard.", true);
   if (v.store) {
     // Installed from here, no Store window (3.74): JobHunter closes and opens again.
-    if (!v.nouvelle) return toast(`À jour : ${v.installee}.`);
+    // The Store's answer, not GitHub's: a release reaches it once Microsoft certified it.
+    if (v.erreur) return toast(`Le Microsoft Store ne répond pas (${v.erreur}) : sa page Bibliothèque installe aussi les mises à jour.`, true);
+    const certif = v.attente ? ` La ${v.attente} arrive dans le Microsoft Store après sa vérification par Microsoft (quelques heures à quelques jours).` : "";
+    if (!v.nouvelle) return toast(`À jour : ${v.installee}.${certif}`);
     const ok = await dialogue(`Version ${v.derniere} disponible`, `Installée : ${v.installee}. JobHunter se ferme pendant l'installation puis se rouvre de lui-même.`,
       null, [["Installer", "plein", () => true]]);
     if (ok) await lancer("maj");

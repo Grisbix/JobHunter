@@ -24,8 +24,15 @@ import subprocess
 # One PowerShell script, two actions: "verifier" prints the number of updates, "installer"
 # downloads and installs them and prints the final state (Completed, …). WinRT's
 # asynchronous operations are awaited through System.WindowsRuntimeSystemExtensions.AsTask.
+# A failure prints « ERREUR 0x… message », the innermost exception: before, PowerShell's
+# error went to stderr, which was dropped, and the window said only « pas de réponse »
+# (the user, 2026-11-05).
 SCRIPT = r"""
 $ErrorActionPreference = 'Stop'
+trap {
+  $e = $_.Exception; while ($e.InnerException) { $e = $e.InnerException }
+  "ERREUR 0x{0:X8} {1}" -f $e.HResult, $e.Message; exit 1
+}
 Add-Type -AssemblyName System.Runtime.WindowsRuntime
 $m = [System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object { $_.Name -eq 'AsTask' -and $_.IsGenericMethod }
 function Attendre1($op, [Type]$t) {
@@ -48,7 +55,7 @@ $r = Attendre2 ($ctx.TrySilentDownloadAndInstallStorePackageUpdatesAsync($maj)) 
 
 
 def _lancer(action: str, delai: int) -> str:
-    """Runs the script; its output, or "" when PowerShell or the Store did not answer."""
+    """Runs the script; its output (« ERREUR … » included), "" when PowerShell did not run."""
     import os
 
     try:
@@ -64,31 +71,51 @@ def _lancer(action: str, delai: int) -> str:
         )
     except (OSError, subprocess.SubprocessError):
         return ""
-    return r.stdout if r.returncode == 0 else ""
+    return r.stdout or ""
+
+
+def _erreur(sortie: str) -> str:
+    """« erreur 0x803F6101 … » from the script's output, "" when it printed none."""
+    for ligne in sortie.splitlines():
+        if ligne.startswith("ERREUR "):
+            return "erreur " + ligne[7:].strip()
+    return ""
 
 
 def mises_a_jour(delai: int = 60) -> int | None:
     """The number of updates the Store has for this package; None if it did not say."""
-    for ligne in _lancer("verifier", delai).splitlines():
+    return verifier(delai)[0]
+
+
+def verifier(delai: int = 60) -> tuple[int | None, str]:
+    """The Store's number of updates for this package, and why it gave none ("" if it did).
+
+    The Store, not GitHub: a release reaches the Store's users only once Microsoft has
+    certified it, hours or days later. Before, the window offered the GitHub version
+    right away and the click failed (the user, 2026-11-05).
+    """
+    sortie = _lancer("verifier", delai)
+    for ligne in sortie.splitlines():
         if ligne.startswith("MAJ "):
             try:
-                return int(ligne[4:])
+                return int(ligne[4:]), ""
             except ValueError:
-                return None
-    return None
+                break
+    return None, _erreur(sortie) or "pas de réponse"
 
 
 def installer(delai: int = 1800) -> str:
     """Downloads and installs the Store's updates, without a window.
 
-    Returns the final state ("Completed", "Aucune" when nothing was waiting, …), "" if
-    the Store did not answer. When it completes, Windows closes JobHunter to replace
-    it: this call may never return.
+    Returns the final state ("Completed", "Aucune" when nothing was waiting, …), the
+    Store's error (« erreur 0x… ») or "" if it did not answer. When it completes, Windows
+    closes JobHunter to replace it: this call may never return.
     """
-    for ligne in _lancer("installer", delai).splitlines():
+    sortie = _lancer("installer", delai)
+    for ligne in sortie.splitlines():
         if ligne.startswith("ETAT "):
             return ligne[5:].strip()
-    return ""
+    return _erreur(sortie)
 
 
 def redemarrer_apres_maj() -> None:

@@ -2042,7 +2042,10 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
     def mise_a_jour(self) -> dict[str, Any]:
         """Installed engine version and the latest published one (a check only).
 
-        `store`: the Microsoft Store installed it and installs its updates.
+        `store`: the Microsoft Store installed it and installs its updates. Then the
+        Store says whether one is there, not GitHub: a release reaches it once Microsoft
+        has certified it, and `attente` is the published one still on its way;
+        `erreur`, why the Store did not answer.
         """
         from jobhunter import frozen
 
@@ -2051,7 +2054,14 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         nouvelle = installee != "?" and _plus_recente(derniere, installee)
         store = frozen.paquet_msix() and frozen.msix_du_store()
         signee = nouvelle and not store and _signee(derniere)
-        attente = ""
+        attente = erreur = ""
+        if store:
+            from jobhunter import store_update
+
+            n, erreur = store_update.verifier()
+            if nouvelle and not n:
+                attente = derniere if n == 0 else ""
+                nouvelle = False
         if nouvelle and not store and not signee:
             # The latest waits for its author's signature (up to an hour): an earlier
             # signed one newer than the installed one is offered meanwhile.
@@ -2073,6 +2083,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
             "signee": signee,
             "attente": attente,
             "store": store,
+            "erreur": erreur,
         }
 
     def annonce_maj(self) -> dict[str, Any] | None:
