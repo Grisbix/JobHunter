@@ -76,7 +76,6 @@ RELEASES_URL = f"https://api.github.com/repos/{DEPOT}/releases?per_page=10"
 # Files attached to the release v<version>: the signature and the installer.
 ASSET_URL = f"https://github.com/{DEPOT}/releases/download/v{{}}/{{}}"
 SETUP = "JobHunterSetup.exe"
-STORE_MISES_A_JOUR = "ms-windows-store://downloadsandupdates"  # the Store's updates page
 MANIFESTE = RACINE / ".maj_manifeste.json"
 SAUVEGARDES = RACINE / "_sauvegarde_maj"
 DERNIERE_VERIF = RACINE / ".maj_derniere_verif"
@@ -812,7 +811,9 @@ def maj_application(verifier_seulement):
         import webbrowser
 
         if _gele.msix_du_store():
-            # Installed here, without the Store's window (3.74): see store_update.
+            # Installed here, without the Store's window (3.74): see store_update. A
+            # failure says why and opens nothing (the user, 2026-11-05: « en background
+            # sans ouvrir Microsoft Store en visible »).
             from jobhunter import store_update
 
             if verifier_seulement:
@@ -828,9 +829,9 @@ def maj_application(verifier_seulement):
                 print("Le Microsoft Store n'a pas encore reçu cette version : réessaie demain.")
                 return 0
             print(
-                f"! Le Store n'a pas pu l'installer ({etat or 'pas de réponse'}) : sa page s'ouvre."
+                f"! Le Store n'a pas pu l'installer ({etat or 'pas de réponse'}) : "
+                "réessaie plus tard."
             )
-            webbrowser.open(STORE_MISES_A_JOUR)
             return 1
         # Installed from the release's JobHunter.msix: the Store does not know it, and
         # its page said nothing (the user, 2026-10-28). The new .msix installs over it

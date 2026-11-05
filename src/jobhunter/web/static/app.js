@@ -2626,7 +2626,10 @@ async function verifierMaj(ev) {
   if (!v.derniere) return toast("Impossible de joindre le serveur des mises à jour : réessaie plus tard.", true);
   if (v.store) {
     // Installed from here, no Store window (3.74): JobHunter closes and opens again.
-    if (!v.nouvelle) return toast(`À jour : ${v.installee}.`);
+    // The Store's answer, not GitHub's: a release reaches it once Microsoft certified it.
+    if (v.erreur) return toast(`Le Microsoft Store ne répond pas (${v.erreur}) : réessaie plus tard.`, true);
+    const certif = v.attente ? ` La ${v.attente} arrive dans le Microsoft Store après sa vérification par Microsoft (quelques heures à quelques jours).` : "";
+    if (!v.nouvelle) return toast(`À jour : ${v.installee}.${certif}`);
     const ok = await dialogue(`Version ${v.derniere} disponible`, `Installée : ${v.installee}. JobHunter se ferme pendant l'installation puis se rouvre de lui-même.`,
       null, [["Installer", "plein", () => true]]);
     if (ok) await lancer("maj");
@@ -2635,10 +2638,24 @@ async function verifierMaj(ev) {
   // v.attente: the latest, published but not signed yet (its author signs within the hour)
   const suite = v.attente ? ` La ${v.attente} sera proposée dès que son auteur l'aura signée.` : "";
   if (!v.nouvelle) return toast(`À jour : ${v.installee}.${suite}`);
+  if (v.silencieux) {
+    // The installer's copy: installed without its window, then JobHunter opens again.
+    const oui = await dialogue(`Version ${v.derniere} disponible`, `Installée : ${v.installee}. Elle est vérifiée (signature), installée sans fenêtre, puis JobHunter se rouvre.${suite}`,
+      null, [["Installer", "plein", () => true]]);
+    if (oui) await installerMaj();
+    return;
+  }
   const ok = await dialogue(`Version ${v.derniere} disponible`, `Installée : ${v.installee}. Elle est vérifiée (signature) avant d'être installée ; relance JobHunter ensuite.${suite}`,
     null, [["Installer", "plein", () => true]]);
   if (!ok) return;
   await lancer("maj");  // suivreTache → suivreMaj: the button and the Moteur card follow it
+}
+
+// The downloaded installer runs once the window has closed (setup_update).
+async function installerMaj() {
+  toast("Vérification de la mise à jour…");
+  const r = await appel("installer_maj").catch(() => null);
+  if (!r || !r.ok) toast((r && r.message) || "Mise à jour impossible : réessaie plus tard.", true);
 }
 
 // At start-up: a newer signed version shows as a button in the title bar.
@@ -2646,10 +2663,12 @@ async function annonceMaj() {
   const v = await appel("annonce_maj").catch(() => null);
   if (!v) return;
   const b = $("maj");
-  b.textContent = `Mettre à jour (${v.derniere})`;
-  b.title = `Version installée : ${v.installee}`;
+  // v.pret: downloaded (and checked) in the background; closing the window installs it too.
+  // The Store's: its click installs through the Store task (verifierMaj), JobHunter reopens.
+  b.textContent = v.pret ? `Redémarrer pour mettre à jour (${v.derniere})` : `Mettre à jour (${v.derniere})`;
+  b.title = v.pret ? `Version installée : ${v.installee}. Prête : elle s'installe aussi à la fermeture de JobHunter.` : `Version installée : ${v.installee}`;
   b.hidden = false;
-  b.onclick = clicMaj;
+  b.onclick = v.pret && !v.store ? (() => installerMaj()) : clicMaj;
 }
 function clicMaj(ev) {
   if (ev.currentTarget.dataset.fait) return toast("Ferme JobHunter puis rouvre-le : la nouvelle version démarre.");
