@@ -47,7 +47,7 @@ def fenetre(outil, navigateur, tmp_path, monkeypatch):
         p.close()
 
 
-@pytest.mark.parametrize("largeur", [1440, 1000])
+@pytest.mark.parametrize("largeur", [1440, 1000, 900])
 def test_aucun_texte_contre_un_bord(outil, fenetre, largeur):
     page = fenetre(largeur)
     defauts = {}

@@ -875,7 +875,9 @@ tr.cochee td { background: rgba(var(--c1-rgb), .12); }
 .champ-bloc textarea { width: 100%; resize: vertical; }
 
 /* Panels: companies, boards, access, statistics. */
-.tableau-simple { width: 100%; border-collapse: collapse; font-size: var(--t-m); }
+/* Columns sized by their content: in the global fixed layout, equal columns left the
+   actions cell narrower than its button, cut under 1000 px (and at 1000 on macOS). */
+.tableau-simple { width: 100%; border-collapse: collapse; font-size: var(--t-m); table-layout: auto; }
 .tableau-simple th { text-align: left; font-weight: 500; color: var(--gris); padding: 8px 12px; border-bottom: 1px solid var(--filet); }
 .tableau-simple td { padding: 8px 12px; border-bottom: 1px solid var(--filet); vertical-align: middle; }
 .tableau-simple td.num { text-align: right; font-variant-numeric: tabular-nums; }
