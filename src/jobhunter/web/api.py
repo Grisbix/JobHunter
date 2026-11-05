@@ -489,6 +489,9 @@ REGLAGES: dict[str, Any] = {
     "mode": "auto",
     "menu": "large",
     "par_page": PAR_PAGE,
+    # Shares in Statistiques, off at first (the user, 2026-11-04: « de base ils ne doivent
+    # pas y être, ça fait trop chargé »).
+    "pourcentages": False,
 }
 
 
@@ -513,6 +516,7 @@ def reglages(brut: Any) -> dict[str, Any]:
         # the side menu folded to its icons, for more room (the user, 2026-10-27)
         "menu": d.get("menu") if d.get("menu") in ("large", "etroit") else REGLAGES["menu"],
         "par_page": _par_page(d.get("par_page")),
+        "pourcentages": d.get("pourcentages") is True,
     }
 
 
