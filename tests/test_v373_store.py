@@ -60,10 +60,10 @@ def test_maj_store_installee_ici(monkeypatch):
     assert update.maj_application(False) == 0 and not ouvert
 
 
-def test_maj_store_echec_ouvre_le_store(monkeypatch):
+def test_maj_store_echec_n_ouvre_rien(monkeypatch):
     ouvert = _store(monkeypatch, "")
     assert update.maj_application(False) == 1
-    assert ouvert == [update.STORE_MISES_A_JOUR]
+    assert ouvert == []  # never the Store's window (the user, 2026-11-05)
 
 
 def test_annonce_pour_le_store(monkeypatch):

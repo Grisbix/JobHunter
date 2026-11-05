@@ -21,7 +21,8 @@ the author's submission.
 
 import subprocess
 
-# One PowerShell script, two actions: "verifier" prints the number of updates, "installer"
+# One PowerShell script, two actions: "verifier" prints the number of updates and their
+# versions (the Store's, which may be older than GitHub's latest), "installer"
 # downloads and installs them and prints the final state (Completed, …). WinRT's
 # asynchronous operations are awaited through System.WindowsRuntimeSystemExtensions.AsTask.
 # A failure prints « ERREUR 0x… message », the innermost exception: before, PowerShell's
@@ -47,7 +48,11 @@ $null = [Windows.Services.Store.StoreContext, Windows.Services.Store, ContentTyp
 $ctx = [Windows.Services.Store.StoreContext]::GetDefault()
 $liste = [System.Collections.Generic.IReadOnlyList[Windows.Services.Store.StorePackageUpdate]]
 $maj = Attendre1 ($ctx.GetAppAndOptionalStorePackageUpdatesAsync()) $liste
-if ($env:JH_ACTION -eq 'verifier') { "MAJ " + $maj.Count; exit 0 }
+if ($env:JH_ACTION -eq 'verifier') {
+  "MAJ " + $maj.Count
+  foreach ($u in $maj) { $v = $u.Package.Id.Version; "VERSION {0}.{1}.{2}" -f $v.Major, $v.Minor, $v.Build }
+  exit 0
+}
 if ($maj.Count -eq 0) { "ETAT Aucune"; exit 0 }
 $r = Attendre2 ($ctx.TrySilentDownloadAndInstallStorePackageUpdatesAsync($maj)) ([Windows.Services.Store.StorePackageUpdateResult]) ([Windows.Services.Store.StorePackageUpdateStatus])
 "ETAT " + $r.OverallState
@@ -87,21 +92,29 @@ def mises_a_jour(delai: int = 60) -> int | None:
     return verifier(delai)[0]
 
 
-def verifier(delai: int = 60) -> tuple[int | None, str]:
-    """The Store's number of updates for this package, and why it gave none ("" if it did).
+def verifier(delai: int = 60) -> tuple[int | None, str, str]:
+    """The Store's updates: their number, why none was given, the version to install.
+
+    The error is "" when the Store answered; the version "" when it has none.
 
     The Store, not GitHub: a release reaches the Store's users only once Microsoft has
     certified it, hours or days later. Before, the window offered the GitHub version
     right away and the click failed (the user, 2026-11-05).
     """
     sortie = _lancer("verifier", delai)
-    for ligne in sortie.splitlines():
+    lignes = sortie.splitlines()
+    versions = [x[8:].strip() for x in lignes if x.startswith("VERSION ")]
+    for ligne in lignes:
         if ligne.startswith("MAJ "):
             try:
-                return int(ligne[4:]), ""
+                return int(ligne[4:]), "", max(versions, key=_cle, default="")
             except ValueError:
                 break
-    return None, _erreur(sortie) or "pas de réponse"
+    return None, _erreur(sortie) or "pas de réponse", ""
+
+
+def _cle(v: str) -> tuple[int, ...]:
+    return tuple(int(x) if x.isdigit() else 0 for x in v.split("."))
 
 
 def installer(delai: int = 1800) -> str:

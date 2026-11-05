@@ -2058,10 +2058,12 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         if store:
             from jobhunter import store_update
 
-            n, erreur = store_update.verifier()
-            if nouvelle and not n:
-                attente = derniere if n == 0 else ""
-                nouvelle = False
+            # Shown only when the Store has it, with the Store's number (the user,
+            # 2026-11-05: « affiché que quand c'est disponible sur le store »).
+            n, erreur, version_store = store_update.verifier()
+            attente = derniere if nouvelle and n == 0 else ""
+            nouvelle = bool(n)
+            derniere = version_store or derniere
         if nouvelle and not store and not signee:
             # The latest waits for its author's signature (up to an hour): an earlier
             # signed one newer than the installed one is offered meanwhile.

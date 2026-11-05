@@ -81,7 +81,7 @@ def test_le_store_installe_ses_mises_a_jour(monkeypatch):
     monkeypatch.setattr(api, "_signee", lambda v: True)
     from jobhunter import store_update
 
-    monkeypatch.setattr(store_update, "verifier", lambda: (1, ""))
+    monkeypatch.setattr(store_update, "verifier", lambda: (1, "", "3.68.0"))
     v = api.Api.mise_a_jour(None)  # type: ignore[arg-type]
     assert v["store"] and v["nouvelle"]
     assert not v["signee"]  # no « Mettre à jour » button: the Store does it

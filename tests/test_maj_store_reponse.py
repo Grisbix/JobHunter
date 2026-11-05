@@ -25,15 +25,18 @@ def test_le_script_ecrit_son_erreur():
 def test_erreur_du_store_rendue(monkeypatch):
     _sortie(monkeypatch, "ERREUR 0x803F6101 Exception de HRESULT : 0x803F6101\n", code=1)
     assert store_update.installer() == "erreur 0x803F6101 Exception de HRESULT : 0x803F6101"
-    assert store_update.verifier() == (None, "erreur 0x803F6101 Exception de HRESULT : 0x803F6101")
+    erreur = "erreur 0x803F6101 Exception de HRESULT : 0x803F6101"
+    assert store_update.verifier() == (None, erreur, "")
     assert store_update.mises_a_jour() is None
 
 
 def test_verifier(monkeypatch):
     _sortie(monkeypatch, "MAJ 0\n")
-    assert store_update.verifier() == (0, "")
+    assert store_update.verifier() == (0, "", "")
+    _sortie(monkeypatch, "MAJ 2\nVERSION 3.82.0\nVERSION 3.9.0\n")
+    assert store_update.verifier() == (2, "", "3.82.0")
     _sortie(monkeypatch, "", code=1)
-    assert store_update.verifier() == (None, "pas de réponse")
+    assert store_update.verifier() == (None, "pas de réponse", "")
 
 
 def test_echec_dit_l_erreur(monkeypatch, capsys):
@@ -55,8 +58,8 @@ def store(monkeypatch):
     monkeypatch.setattr(frozen, "msix_du_store", lambda: True)
     monkeypatch.setattr(api, "_signee", lambda v: True)
 
-    def reponse(n, erreur=""):
-        monkeypatch.setattr(store_update, "verifier", lambda: (n, erreur))
+    def reponse(n, erreur="", version=""):
+        monkeypatch.setattr(store_update, "verifier", lambda: (n, erreur, version))
         return api.Api.mise_a_jour(None)  # type: ignore[arg-type]
 
     return reponse
@@ -70,6 +73,11 @@ def test_pas_encore_dans_le_store(store):
 def test_dans_le_store(store):
     v = store(1)
     assert v["nouvelle"] and not v["attente"]
+
+
+def test_la_version_du_store_pas_celle_de_github(store):
+    v = store(1, version="3.81.5")
+    assert v["nouvelle"] and v["derniere"] == "3.81.5"
 
 
 def test_store_muet_rien_propose(store):
@@ -86,7 +94,7 @@ def test_fenetre_dit_l_attente_et_l_erreur():
     js = (Path(api.__file__).parent / "static" / "app.js").read_text(encoding="utf-8")
     assert "v.erreur" in js and "arrive dans le Microsoft Store" in js
     for cle in (
-        "Le Microsoft Store ne répond pas ({x}) : sa page Bibliothèque installe aussi les mises à jour.",
+        "Le Microsoft Store ne répond pas ({x}) : réessaie plus tard.",
         "La {v} arrive dans le Microsoft Store après sa vérification par Microsoft (quelques heures à quelques jours).",
     ):
         assert cle in TEXTES

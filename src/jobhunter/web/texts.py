@@ -2121,10 +2121,10 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Installiert: {v}. JobHunter schließt sich während der Installation und öffnet sich dann von selbst wieder.",
         "Instalada: {v}. JobHunter se cierra durante la instalación y luego se vuelve a abrir solo.",
     ),
-    "Le Microsoft Store ne répond pas ({x}) : sa page Bibliothèque installe aussi les mises à jour.": (
-        "The Microsoft Store does not answer ({x}): its Library page installs updates too.",
-        "Der Microsoft Store antwortet nicht ({x}): Seine Bibliothek-Seite installiert Updates auch.",
-        "Microsoft Store no responde ({x}): su página Biblioteca también instala las actualizaciones.",
+    "Le Microsoft Store ne répond pas ({x}) : réessaie plus tard.": (
+        "The Microsoft Store does not answer ({x}): try again later.",
+        "Der Microsoft Store antwortet nicht ({x}): versuch es später noch einmal.",
+        "Microsoft Store no responde ({x}): vuelve a intentarlo más tarde.",
     ),
     "La {v} arrive dans le Microsoft Store après sa vérification par Microsoft (quelques heures à quelques jours).": (
         "{v} reaches the Microsoft Store once Microsoft has checked it (a few hours to a few days).",
