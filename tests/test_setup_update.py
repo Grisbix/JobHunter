@@ -80,6 +80,25 @@ def test_appliquer_attend_puis_installe_sans_fenetre(monkeypatch, tmp_path):
     assert vu["env"]["JH_RELANCER"] == ""
 
 
+def test_lanceur_sans_detached_process(monkeypatch):
+    vu = {}
+    monkeypatch.setattr(setup_update.subprocess, "Popen", lambda cmd, **k: vu.update(k))
+    setup_update.apres_fermeture("exit", {"JH_X": "1"})
+    assert vu["creationflags"] == getattr(setup_update.subprocess, "CREATE_NO_WINDOW", 0)
+    assert vu["env"]["JH_X"] == "1" and vu["cwd"] == setup_update.tempfile.gettempdir()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows PowerShell")
+def test_le_script_tourne_vraiment(tmp_path):
+    """3.84.1: with DETACHED_PROCESS, PowerShell 5.1 exited 0 and ran nothing."""
+    marque = tmp_path / "fait.txt"
+    p = setup_update.apres_fermeture(
+        "Set-Content -LiteralPath $env:JH_MARQUE -Value $env:JH_PID", {"JH_MARQUE": str(marque)}
+    )
+    assert p.wait(timeout=60) == 0
+    assert marque.read_text(encoding="utf-8-sig").strip() == str(__import__("os").getpid())
+
+
 def test_script_silencieux():
     s = setup_update.SCRIPT
     assert "Wait-Process" in s and "'/VERYSILENT'" in s and "'/SUPPRESSMSGBOXES'" in s

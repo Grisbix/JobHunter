@@ -77,21 +77,28 @@ def preparer(version: str) -> Path:
     return f
 
 
+def apres_fermeture(script: str, valeurs: dict[str, str]) -> subprocess.Popen[bytes]:
+    """Starts a hidden PowerShell `script` that outlives this process; values by environment.
+
+    CREATE_NO_WINDOW only. With DETACHED_PROCESS (3.82 to 3.84) Windows PowerShell 5.1
+    started, ran nothing and exited with code 0: « Désinstaller JobHunter », « Effacer mes
+    données » and the update at closing did nothing at all (the user, 2026-11-06). The CI
+    ran the scripts with subprocess.run, without those flags, and saw nothing.
+
+    From the temporary folder: started from JobHunter's, it kept that folder in use and the
+    uninstaller could not remove it.
+    """
+    return subprocess.Popen(  # nosec B603 B607 : fixed scripts, values by environment
+        ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
+        env=dict(os.environ, JH_PID=str(os.getpid()), **valeurs),
+        cwd=tempfile.gettempdir(),
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+    )
+
+
 def appliquer(setup: Path, version: str, relancer: bool) -> None:
     """Installs `setup` once this process has exited; JobHunter restarts if `relancer`."""
     from jobhunter.programs import update
 
     update.attendre_version(version, update.version_locale())
-    drapeaux = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(
-        subprocess, "DETACHED_PROCESS", 0
-    )
-    subprocess.Popen(  # nosec B603 B607 : fixed script, a file checked by preparer
-        ["powershell", "-NoProfile", "-NonInteractive", "-Command", SCRIPT],
-        env=dict(
-            os.environ,
-            JH_PID=str(os.getpid()),
-            JH_SETUP=str(setup),
-            JH_RELANCER="1" if relancer else "",
-        ),
-        creationflags=drapeaux,
-    )
+    apres_fermeture(SCRIPT, {"JH_SETUP": str(setup), "JH_RELANCER": "1" if relancer else ""})
