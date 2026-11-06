@@ -103,6 +103,10 @@ COMMANDES = {
         "jobhunter.programs.shortcut",
         "raccourci JobHunter dans le menu Demarrer (--bureau : aussi sur le bureau)",
     ),
+    "sandbox": (
+        "jobhunter.programs.sandbox",
+        "ouvre l'application sur des donnees fictives, coupee du web (--neuf, --reseau)",
+    ),
     "migrate": (
         "jobhunter.programs.migrate",
         "passe les dossiers de donnees aux noms anglais de la 3.0 (avec sauvegarde)",
@@ -129,6 +133,7 @@ ALIAS = {
     "voir-profil": "show-profile",
     "maj": "update",
     "profils": "profiles",
+    "bac-a-sable": "sandbox",
 }
 
 

@@ -132,6 +132,10 @@ def assurer() -> None:
     shortcut made with another icon is remade, and the desktop one with it — never added
     to a desktop it is not on. Silent on failure: cosmetic only.
     """
+    from jobhunter.programs import sandbox
+
+    if sandbox.actif():
+        return  # the shortcut would be remade for the sandbox's folder (3.85)
     if sys.platform != "win32":
         return
     from jobhunter import frozen

@@ -160,3 +160,40 @@ def test_non_ne_redemande_plus(outil, github, monkeypatch):
     monkeypatch.setattr(outil, "signer", lambda v, publier: pytest.fail("signée"))
     assert outil.approuver(lambda *a: False) == 0
     assert outil.approuver(lambda *a: pytest.fail("redemandée")) == 0
+
+
+def _test(r):
+    return {**r, "prerelease": True}
+
+
+def test_version_de_test_demandee_et_dite(outil, github):
+    # 3.85: a test release is signed by the author too, and the window says what it is.
+    github["rels"] = [_test(rel("3.85.0", *SETUP_OK)), rel("3.84.1", *SETUP_OK, "signature.json")]
+    att = outil.en_attente()
+    assert [(r["version"], r["test"]) for r in att] == [("3.85.0", "oui")]
+    vu = {}
+    outil.signer = lambda v, publier: vu.setdefault("signee", v) and 0
+    outil.approuver(demander=lambda titre, q: vu.setdefault("q", q) and True)
+    assert "Version de test" in vu["q"] and vu["signee"] == "3.85.0"
+
+
+def test_une_version_de_test_signee_n_arrete_pas_la_recherche(outil, github):
+    github["rels"] = [
+        _test(rel("3.86.0", *SETUP_OK, "signature.json")),
+        _test(rel("3.85.0", *SETUP_OK)),  # older test release: replaced by 3.86.0
+        rel("3.84.2", *SETUP_OK),  # a release still waiting
+        rel("3.84.1", *SETUP_OK, "signature.json"),
+    ]
+    assert [r["version"] for r in outil.en_attente()] == ["3.84.2"]
+
+
+def test_une_version_de_test_ne_remplace_pas_une_version(outil, github):
+    github["rels"] = [
+        _test(rel("3.85.0", *SETUP_OK)),
+        rel("3.84.2", *SETUP_OK),
+        rel("3.84.1", *SETUP_OK, "signature.json"),
+    ]
+    vu = {}
+    outil.signer = lambda v, publier: 0
+    outil.approuver(demander=lambda titre, q: vu.setdefault("q", q) and True)
+    assert "3.84.2" not in vu["q"]  # asked for at the next run, not called « replaced »

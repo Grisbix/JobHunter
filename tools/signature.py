@@ -151,11 +151,17 @@ def en_attente() -> list[dict[str, str]]:
     rels = json.loads(_gh("api", f"repos/{maj.DEPOT}/releases?per_page=10").stdout)
     refusees = set(REFUSEES.read_text(encoding="utf-8").split()) if REFUSEES.exists() else set()
     attente = []
+    test_signee = False
     for r in rels:
-        if r.get("draft") or r.get("prerelease"):
-            continue
+        test = bool(r.get("prerelease"))
+        if r.get("draft") or (test and test_signee):
+            continue  # a test release older than a signed one is replaced by it
         noms = {a["name"] for a in r.get("assets", [])}
         if sig.FICHIER in noms:
+            if test:
+                # 3.85: a signed test release says nothing of the releases before it.
+                test_signee = True
+                continue
             break
         version = str(r["tag_name"]).lstrip("v")
         if maj.SETUP + ".sha256" not in noms or version in refusees:
@@ -166,6 +172,7 @@ def en_attente() -> list[dict[str, str]]:
                 "version": version,
                 "date": str(r.get("published_at", ""))[:16].replace("T", " "),
                 "commit": str(c["commit"]["message"]).splitlines()[0],
+                "test": "oui" if test else "",
             }
         )
     return attente
@@ -192,8 +199,12 @@ def approuver(demander: object = None) -> int:
         def demander(titre: str, question: str) -> bool:
             return bool(messagebox.askyesno(titre, question, parent=racine))
 
-    r, remplacees = attente[0], [x["version"] for x in attente[1:]]
-    question = f"JobHunter {r['version']} a été publiée le {r['date']} (UTC).\n\n"
+    r = attente[0]
+    # A test release replaces only older test releases; a release, only older releases.
+    remplacees = [x["version"] for x in attente[1:] if x.get("test") == r.get("test")]
+    genre = "Version de test : seules les copies qui l'ont demandée la reçoivent.\n\n"
+    question = genre if r.get("test") else ""
+    question += f"JobHunter {r['version']} a été publiée le {r['date']} (UTC).\n\n"
     question += f"Commit : {r['commit']}\n\n"
     if remplacees:
         question += (
