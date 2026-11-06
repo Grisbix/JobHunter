@@ -303,3 +303,12 @@ anywhere — « 2 années d'expérience minimum (stages et alternance compris) �
 reads the title; the requirement is read in the text, ranges by their lower bound, and
 « years of » alone is no longer a context (« 15 years of working together ») (3.16, 22/10).
 
+
+**`DETACHED_PROCESS` makes Windows PowerShell run nothing.** « Désinstaller JobHunter »,
+« Effacer mes données » and the installer copy's silent update started a hidden
+`powershell -Command <script>` with `CREATE_NO_WINDOW | DETACHED_PROCESS`: PowerShell 5.1
+started, exited with code 0 and ran nothing — the window closed and nothing happened, from
+3.82 to 3.84 (the user, 2026-11-06). `CREATE_NO_WINDOW` alone is enough: the child still
+outlives the app. The CI ran the scripts with `subprocess.run`, without those flags, and
+saw nothing: test a launcher by launching through it (`setup_update.apres_fermeture`, a
+marker file written by a real script) (3.84.1).
