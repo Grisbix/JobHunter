@@ -4,6 +4,13 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.85.0 — 2026-11-06
+
+Try everything before it is real: a sandbox, and test versions.
+
+- **Sandbox: `jobhunter sandbox`.** Opens the real window on an invented profile (« Camille Exemple ») with eight invented offers. Your own data is neither read nor changed, the web is cut off (`--reseau` turns it back on), and uninstalling, the scheduled collection and the shortcut can't be reached from there. A green « Bac à sable » badge shows at the top. `--neuf` starts again from the invented data.
+- **Test versions.** Réglages → Moteur: « Recevoir les versions de test ». Ticked, JobHunter also offers the test versions, signed like the others, before everyone gets them. Not in the Microsoft Store version.
+
 ## 3.84.1 — 2026-11-06
 
 Uninstall, erase and the background update work again.
