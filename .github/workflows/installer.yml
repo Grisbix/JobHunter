@@ -185,6 +185,54 @@ jobs:
           if (Test-Path "$dest\unins000.exe") { Write-Error "le désinstalleur est resté"; exit 1 }
           if (Test-Path $donnees) { Write-Error "les données ne sont pas parties à la Corbeille"; exit 1 }
           Write-Output "désinstallée, données à la Corbeille"
+      - name: Store - désinstaller le paquet depuis l'application
+        # The Store's copy removes its own package (Remove-AppxPackage, from a child of
+        # the package): never tested before. The Store signs the real package; here a
+        # copy of the same JobHunter.msix is signed with a throwaway certificate of the
+        # same publisher, trusted on this runner only, then installed as the Store
+        # would. Run through its execution alias, the code runs inside the package
+        # (frozen.famille_msix), like the button.
+        shell: pwsh
+        run: |
+          if (-not (Test-Path dist\JobHunter.msix)) { Write-Output "::warning::pas de JobHunter.msix construit : test du Store sauté"; exit 0 }
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [IO.Compression.ZipFile]::OpenRead((Resolve-Path dist\JobHunter.msix).Path)
+          $lecteur = New-Object IO.StreamReader($zip.GetEntry('AppxManifest.xml').Open())
+          $manifeste = [xml]$lecteur.ReadToEnd(); $lecteur.Close(); $zip.Dispose()
+          $nom = $manifeste.Package.Identity.Name
+          $paquet = "$env:RUNNER_TEMP\JobHunterTest.msix"
+          Copy-Item dist\JobHunter.msix $paquet
+          # Code signing (EKU 1.3.6.1.5.5.7.3.3), subject = the manifest's publisher.
+          $cert = New-SelfSignedCertificate -Type Custom -Subject $manifeste.Package.Identity.Publisher `
+            -KeyUsage DigitalSignature -FriendlyName "JobHunter CI" -CertStoreLocation Cert:\CurrentUser\My `
+            -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
+          Export-Certificate -Cert $cert -FilePath "$env:RUNNER_TEMP\ci.cer" | Out-Null
+          Import-Certificate -FilePath "$env:RUNNER_TEMP\ci.cer" -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
+          $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object FullName -Descending | Select-Object -First 1
+          & $signtool.FullName sign /fd SHA256 /sha1 $cert.Thumbprint $paquet
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Add-AppxPackage -Path $paquet
+          if (-not (Get-AppxPackage -Name $nom)) { Write-Error "paquet non installé"; exit 1 }
+          Remove-Item Env:JOBHUNTER_RACINE -ErrorAction SilentlyContinue
+          $donnees = Join-Path ([Environment]::GetFolderPath('MyDocuments')) "JobHunter"
+          New-Item -ItemType Directory -Force "$donnees\data", "$donnees\profile" | Out-Null
+          Copy-Item "$env:RUNNER_TEMP\JobHunterEssai\profile\profile.json" "$donnees\profile\profile.json"
+          Set-Content "$donnees\data\temoin.txt" "à retirer"
+          $env:PYTHONIOENCODING = "utf-8"
+          $alias = "$env:LOCALAPPDATA\Microsoft\WindowsApps\jobhunter-cli.exe"
+          $r = & $alias -c "import json; from jobhunter import frozen; from jobhunter.web.api import Api; print(json.dumps({'famille': frozen.famille_msix(), **Api().desinstaller()}))"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Write-Output "desinstaller() dans le paquet : $r"
+          $etat = $r | ConvertFrom-Json
+          if (-not $etat.famille) { Write-Error "le code n'a pas tourné dans le paquet"; exit 1 }
+          if (-not $etat.ok) { Write-Error "refusé : $($etat.message)"; exit 1 }
+          for ($i = 0; $i -lt 90; $i++) {
+            if (-not (Get-AppxPackage -Name $nom) -and -not (Test-Path $donnees)) { break }
+            Start-Sleep -Seconds 2
+          }
+          if (Get-AppxPackage -Name $nom) { Write-Error "le paquet est toujours installé"; exit 1 }
+          if (Test-Path $donnees) { Write-Error "les données ne sont pas parties à la Corbeille"; exit 1 }
+          Write-Output "paquet retiré, données à la Corbeille"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: JobHunterSetup
