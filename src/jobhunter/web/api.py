@@ -2282,15 +2282,9 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
             return {"ok": False, "message": "Une tâche tourne : réessaie quand elle est finie."}
         if scheduling.disponible() and scheduling.planifiee():
             scheduling.supprimer()
-        env = dict(os.environ, JH_PID=str(os.getpid()), **valeurs)
-        drapeaux = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(
-            subprocess, "DETACHED_PROCESS", 0
-        )
-        subprocess.Popen(  # nosec B603 B607 : fixed script, values by environment
-            ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
-            env=env,
-            creationflags=drapeaux,
-        )
+        from jobhunter import setup_update
+
+        setup_update.apres_fermeture(script, valeurs)
         if self._fenetre is not None:
             self._fenetre.destroy()
         return None
