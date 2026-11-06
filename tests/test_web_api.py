@@ -557,6 +557,6 @@ def test_gmail_pas_relie_dit_quoi_faire(monkeypatch, tmp_path):
 def test_session_dit_si_la_fenetre_passe_par_le_bureau_a_distance(monkeypatch):
     vraie = web_api.bureau_a_distance
     monkeypatch.setattr(web_api, "bureau_a_distance", lambda: True)
-    assert Api().session() == {"distance": True}
+    assert Api().session() == {"distance": True, "bac_a_sable": False}
     monkeypatch.setattr(web_api.sys, "platform", "linux")
     assert vraie() is False

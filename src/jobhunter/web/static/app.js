@@ -2528,7 +2528,14 @@ async function cartesMaintenance() {
       h("div", { class: "sombre" }, h("h2", {}, "Moteur"), h("div", { class: "chiffre", style: "margin-top:14px" }, m.version),
         h("div", { class: "sous", style: "color:#8f8783" }, "version installée"),
         h("div", { class: "actions-col" }, bouton("Chercher une mise à jour", "fleche", verifierMaj, "plein bouton-maj")),
-        h("div", { class: "sous etat-maj", style: "color:#8f8783;margin-top:8px" })),
+        h("div", { class: "sous etat-maj", style: "color:#8f8783;margin-top:8px" }),
+        m.beta == null ? null : h("label", { class: "case-beta", style: "display:flex;gap:8px;align-items:center;margin-top:12px;color:#c9c2bd" },
+          h("input", { type: "checkbox", checked: m.beta, onchange: async (e) => {
+            const r = await ecrire("regler_beta", e.target.checked);
+            if (!r) { e.target.checked = !e.target.checked; return; }
+            toast(r.beta ? "Versions de test activées : la prochaine recherche les propose." : "Versions de test désactivées.");
+          } }),
+          "Recevoir les versions de test")),
       carte("Sauvegardes", h("div", { class: "sous", style: "margin:0 0 10px" }, "une par jour, sept jours glissants"), puces(m.sauvegardes))),
     carte("Dernière collecte",
       h("div", { class: c.etat === "ok" ? "etat ok" : "etat" }, c.etat === "ok" ? "Réussie" : (c.etat ? lisible(c.etat) : "inconnue")),
@@ -3127,7 +3134,11 @@ function natif() {
   document.body.classList.add("natif");
   appel("reglages").then(appliquerReglages).catch(() => { /* defaults from style.css */ });
   // Remote Desktop: no blur, no motion (style.css, body.leger).
-  appel("session").then((s) => document.body.classList.toggle("leger", !!(s && s.distance))).catch(() => {});
+  appel("session").then((s) => {
+    document.body.classList.toggle("leger", !!(s && s.distance));
+    // `jobhunter sandbox` (3.85): always say that this window is not the real one.
+    if (s && s.bac_a_sable) $("barre").prepend(h("span", { class: "bac-a-sable", title: "Données fictives, web coupé : rien de réel n'est lu ni modifié." }, "Bac à sable"));
+  }).catch(() => {});
   suivreTache();  // a task started before a reload keeps being followed
   for (const b of document.querySelectorAll(".feux button")) {
     b.addEventListener("click", () => window.pywebview.api.fenetre(b.dataset.action).then(iconePlein));

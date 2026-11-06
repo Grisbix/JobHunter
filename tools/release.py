@@ -4,6 +4,13 @@
   (write the « ## 3.27.0 — date » section of CHANGELOG.md, commit, push, open the PR)
   python tools/release.py publier 106         # CI green → main, GitHub release, local main
 
+  python tools/release.py beta 106            # before publier: a test release (3.85)
+
+`beta` publishes the PR's branch as a GitHub pre-release, without merging it: the
+installer CI builds and attaches it, the author signs it, and only the copies that ticked
+« Recevoir les versions de test » receive it. `publier` then turns that same tag into the
+release (refused if the branch moved since: a new version is a new test).
+
 `publier` refuses while a check of the PR is not green, or when CHANGELOG.md has no
 section for the version. It never signs: the signature stays the author's act
 (tools/signature.py). `--installer <dossier>` then upgrades the package installed for
@@ -19,7 +26,9 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
+from typing import Any
 
 RACINE = Path(__file__).resolve().parent.parent
 DEPOT = "https://github.com/Grisbix/JobHunter"
@@ -77,7 +86,8 @@ def python_hors_venv() -> str:
     return shutil.which("python", path=os.pathsep.join(dossiers)) or ""
 
 
-def publier(pr: int, installer: str = "", python: str = "") -> int:
+def _pr_prete(pr: int) -> tuple[str, str, str]:
+    """(branch, version, release notes) of an open release PR whose CI is green."""
     info = json.loads(
         _run("gh", "pr", "view", str(pr), "--json", "headRefName,state", capture=True)
     )
@@ -92,23 +102,102 @@ def publier(pr: int, installer: str = "", python: str = "") -> int:
     notes = _notes(version)
     if not notes:
         sys.exit(f"CHANGELOG.md n'a pas de section {version}")
-    _run("git", "fetch", "-q", "origin")
-    _run("git", "push", "origin", f"origin/{branche}:refs/heads/main")
-    fichier = RACINE / ".git" / "notes_release.md"
+    return branche, version, notes
+
+
+def _release_existante(version: str) -> dict[str, Any] | None:
+    """{"prerelease", "commit"} of the release `v<version>`, None when there is none."""
+    r = subprocess.run(
+        ["gh", "release", "view", f"v{version}", "--json", "isPrerelease"],
+        cwd=RACINE,
+        text=True,
+        capture_output=True,
+        encoding="utf-8",
+    )
+    if r.returncode:
+        return None
+    commit = _run("git", "rev-list", "-n", "1", f"v{version}", capture=True)
+    return {"prerelease": bool(json.loads(r.stdout)["isPrerelease"]), "commit": commit}
+
+
+def _notes_fichier(notes: str) -> Path:
+    """The release notes in a temporary file, for `gh release create --notes-file`.
+
+    Not in .git/: in a worktree .git is a file, and 3.84.1's `publier` stopped there
+    after pushing main, before creating the release.
+    """
+    fd, nom = tempfile.mkstemp(prefix="notes_release_", suffix=".md")
+    os.close(fd)
+    fichier = Path(nom)
     fichier.write_text(notes + "\n", encoding="utf-8")
+    return fichier
+
+
+def beta(pr: int) -> int:
+    """The PR's branch as a GitHub pre-release: built, signed, offered to testers only."""
+    branche, version, notes = _pr_prete(pr)
+    _run("git", "fetch", "-q", "--tags", "origin")
+    if _release_existante(version):
+        sys.exit(f"v{version} existe déjà : une nouvelle version de test demande un nouveau numéro")
+    fichier = _notes_fichier(notes)
     _run(
         "gh",
         "release",
         "create",
         f"v{version}",
         "--target",
-        "main",
+        branche,
+        "--prerelease",
         "--title",
-        f"JobHunter {version}",
+        f"JobHunter {version} (test)",
         "--notes-file",
         str(fichier),
     )
     fichier.unlink()
+    print(f"v{version} publiée en version de test : {DEPOT}/releases/tag/v{version}")
+    print("La signature reste à faire par son auteur (tools/signature.py) ; puis publier.")
+    return 0
+
+
+def publier(pr: int, installer: str = "", python: str = "") -> int:
+    branche, version, notes = _pr_prete(pr)
+    _run("git", "fetch", "-q", "--tags", "origin")
+    test = _release_existante(version)
+    if test and not test["prerelease"]:
+        sys.exit(f"v{version} est déjà publiée")
+    if test and test["commit"] != _run("git", "rev-parse", f"origin/{branche}", capture=True):
+        sys.exit(
+            f"la branche {branche} a changé depuis la version de test v{version} : "
+            "ce qui a été testé n'est plus ce qui serait publié. Nouveau numéro."
+        )
+    _run("git", "push", "origin", f"origin/{branche}:refs/heads/main")
+    if test:
+        # The tested tag becomes the release: same commit, installer and signature.
+        _run(
+            "gh",
+            "release",
+            "edit",
+            f"v{version}",
+            "--prerelease=false",
+            "--latest",
+            "--title",
+            f"JobHunter {version}",
+        )
+    else:
+        fichier = _notes_fichier(notes)
+        _run(
+            "gh",
+            "release",
+            "create",
+            f"v{version}",
+            "--target",
+            "main",
+            "--title",
+            f"JobHunter {version}",
+            "--notes-file",
+            str(fichier),
+        )
+        fichier.unlink()
     _run("git", "checkout", "-q", "main")
     _run("git", "merge", "-q", "--ff-only", "origin/main")
     subprocess.run(["git", "branch", "-d", branche], cwd=RACINE, capture_output=True)
@@ -124,7 +213,8 @@ def publier(pr: int, installer: str = "", python: str = "") -> int:
             check=True,
         )
         print(f"installée pour {installer} ({exe})")
-    print("La signature reste à faire par son auteur (tools/signature.py).")
+    if not test:
+        print("La signature reste à faire par son auteur (tools/signature.py).")
     return 0
 
 
@@ -132,6 +222,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sous = ap.add_subparsers(dest="action", required=True)
     sous.add_parser("preparer").add_argument("version")
+    sous.add_parser("beta").add_argument("pr", type=int)
     p = sous.add_parser("publier")
     p.add_argument("pr", type=int)
     p.add_argument(
@@ -141,6 +232,8 @@ def main() -> int:
     a = ap.parse_args()
     if a.action == "preparer":
         return preparer(a.version)
+    if a.action == "beta":
+        return beta(a.pr)
     return publier(a.pr, a.installer, a.python)
 
 

@@ -1,0 +1,65 @@
+name: store
+
+# Sends a release's MSIX to the Microsoft Store as a new submission (ADR 0015).
+# Off until the author sets the repository variable MSSTORE_PRODUCT_ID (the Store
+# ID, 9N…) and the four secrets of the Partner Center Entra application: the
+# first submission is made by hand, Microsoft's API only updates a live app.
+# The Store still certifies each update before users get it.
+#
+# Two ways in (3.85, test releases):
+# - called by installer.yml once a release's MSIX is attached (a release published
+#   directly);
+# - `released`: a test release (pre-release) becomes the release (tools/release.py
+#   publier). Its MSIX was attached when the test release was built. For a release
+#   published directly, this event comes before the MSIX exists: nothing to send,
+#   installer.yml sends it.
+# A test release never goes to the Store: it is for the copies that asked for it.
+
+on:
+  release:
+    types: [released]
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  store:
+    if: vars.MSSTORE_PRODUCT_ID != ''
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: MSIX de la release
+        id: msix
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Never a ${{ }} expression in the script: the name comes from the environment.
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
+        run: |
+          gh release download $env:TAG --pattern JobHunter.msix --repo $env:GITHUB_REPOSITORY
+          if (Test-Path JobHunter.msix) { "envoyer=1" >> $env:GITHUB_OUTPUT }
+          else { Write-Output "pas encore de MSIX pour $env:TAG : installer.yml l'enverra" }
+      - uses: microsoft/microsoft-store-apppublisher@cc9910a8d59f2eb55cbb83df0a3800cf3b5300e0  # v1.4
+        if: steps.msix.outputs.envoyer == '1'
+        with:
+          version: v0.4.3
+      - name: Envoi au Store
+        if: steps.msix.outputs.envoyer == '1'
+        shell: pwsh
+        env:
+          # Never a ${{ }} expression in the script: the values come from the environment.
+          TENANT: ${{ secrets.AZURE_AD_TENANT_ID }}
+          SELLER: ${{ secrets.SELLER_ID }}
+          CLIENT: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+          SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+          PRODUIT: ${{ vars.MSSTORE_PRODUCT_ID }}
+        run: |
+          msstore reconfigure --tenantId $env:TENANT --sellerId $env:SELLER --clientId $env:CLIENT --clientSecret $env:SECRET
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          msstore publish (Resolve-Path JobHunter.msix).Path -id $env:PRODUIT
+          if ($LASTEXITCODE -ne 0) { exit 1 }

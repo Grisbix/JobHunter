@@ -574,6 +574,12 @@ body.natif .barre {
 body.natif .fenetre { inset: 0; border: 0; border-radius: 0; padding-top: 48px; background: rgba(var(--blanc-rgb), calc(.28 - .28 * var(--t))); backdrop-filter: none; }
 body.natif .tiroir { top: 52px; }
 .feux { display: flex; gap: 8px; }
+/* `jobhunter sandbox` (3.85): the window on fictitious data says so. */
+.barre .bac-a-sable {
+  position: absolute; left: 16px; height: 26px; padding: 0 12px; border-radius: 13px;
+  display: inline-flex; align-items: center; font-size: var(--t-s); font-weight: 600;
+  color: #fff; background: #4f7f6f; letter-spacing: .02em;
+}
 /* A newer signed version: one click updates (annonceMaj). */
 .barre .maj { position: absolute; left: 50%; transform: translateX(-50%); height: 30px; padding: 0 16px; font-size: var(--t-m); }
 .barre .maj[hidden] { display: none; }

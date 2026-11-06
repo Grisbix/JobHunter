@@ -31,8 +31,14 @@ _RX_HEURE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
 def disponible() -> bool:
-    """Vrai sous Windows, où `schtasks` existe."""
-    return sys.platform == "win32"
+    """Vrai sous Windows, où `schtasks` existe — hors du bac à sable (3.85).
+
+    The task has one name per account: made from the sandbox, it would replace the
+    user's real morning collection with one on the fictitious folder.
+    """
+    from jobhunter.programs import sandbox
+
+    return sys.platform == "win32" and not sandbox.actif()
 
 
 def commande() -> str:

@@ -255,8 +255,10 @@ def main() -> int:
     from jobhunter.programs import shortcut
 
     threading.Thread(target=shortcut.assurer, daemon=True).start()
+    from jobhunter.programs import sandbox
+
     fenetre = webview.create_window(
-        "JobHunter",
+        "JobHunter — bac à sable" if sandbox.actif() else "JobHunter",
         (STATIC / "index.html").as_uri(),
         js_api=api,
         width=1280,

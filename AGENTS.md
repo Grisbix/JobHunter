@@ -108,6 +108,14 @@ branch was pushed 25 times with the CI red at each push. Locally,
 once the CI is green, `python tools/release.py publier <PR>`. The signature stays the
 author's (`tools/signature.py`).
 
+**Testing before it is live (3.85).** `jobhunter sandbox` opens the real window on
+fictitious data with the web cut off (`--neuf` starts again, `--reseau` lets it out); the
+uninstall, the scheduled task and the shortcut are out of reach there. For a release:
+`python tools/release.py beta <PR>` publishes the branch as a GitHub pre-release, built and
+signed like a release; only the copies that ticked « Recevoir les versions de test »
+(Réglages → Moteur) receive it, never the Store. `publier <PR>` then turns that same tag into
+the release, and refuses if the branch moved since the test.
+
 **The non-regression bench** (`tools/bench.py`) records what the engine decides on
 384 fictitious offers — title filter, fit, fit_fin, domain, triage, zone, country, contract,
 language, message, and the text of letters. It must stay at **0 differences** on every

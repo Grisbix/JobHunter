@@ -2131,6 +2131,28 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "¿Desinstalar JobHunter?",
     ),
     "Désinstaller": ("Uninstall", "Deinstallieren", "Desinstalar"),
+    # --- Sandbox and test releases (3.85) ---
+    "Bac à sable": ("Sandbox", "Sandkasten", "Entorno de prueba"),
+    "Données fictives, web coupé : rien de réel n'est lu ni modifié.": (
+        "Fictitious data, web cut off: nothing real is read or changed.",
+        "Fiktive Daten, Web getrennt: nichts Echtes wird gelesen oder geändert.",
+        "Datos ficticios, web cortada: no se lee ni se cambia nada real.",
+    ),
+    "Recevoir les versions de test": (
+        "Receive test versions",
+        "Testversionen erhalten",
+        "Recibir las versiones de prueba",
+    ),
+    "Versions de test activées : la prochaine recherche les propose.": (
+        "Test versions on: the next check offers them.",
+        "Testversionen an: die nächste Suche bietet sie an.",
+        "Versiones de prueba activadas: la próxima búsqueda las propone.",
+    ),
+    "Versions de test désactivées.": (
+        "Test versions off.",
+        "Testversionen aus.",
+        "Versiones de prueba desactivadas.",
+    ),
     "JobHunter est retiré de cet ordinateur. Le profil, les CV, les lettres, les {n} offres et les {c} candidatures suivies partent à la Corbeille, d'où on peut les restaurer tant qu'elle n'est pas vidée.": (
         "JobHunter is removed from this computer. The profile, the CVs, the letters, the {n} offers and the {c} tracked applications go to the Recycle Bin, where they can be restored until it is emptied.",
         "JobHunter wird von diesem Computer entfernt. Das Profil, die Lebensläufe, die Anschreiben, die {n} Angebote und die {c} verfolgten Bewerbungen kommen in den Papierkorb, aus dem sie sich wiederherstellen lassen, solange er nicht geleert ist.",

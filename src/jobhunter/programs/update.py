@@ -84,6 +84,8 @@ JOURNAL = "_journal.json"
 # The version the next start must run (confirmer_demarrage). In the data folder:
 # the installed application's installer replaces the program, not the data.
 ATTENDUE = RACINE / ".maj_attendue.json"
+# Present: this copy also receives the test releases (GitHub pre-releases, 3.85).
+BETA = RACINE / ".maj_beta"
 # The version before the last update of the pip package (--annuler).
 PAQUET_AVANT = RACINE / ".maj_paquet_avant"
 # Exit code of a program that finds the queue busy (project convention).
@@ -240,7 +242,27 @@ def prete(version, timeout=5):
         return False
 
 
-def derniere_signee(timeout=10):
+def beta():
+    """Does this copy receive the test releases too (the « Versions de test » box)?"""
+    return BETA.exists()
+
+
+def regler_beta(oui):
+    """Turns the test releases on or off; the next check asks GitHub again.
+
+    The user, 2026-11-06: « une version test pour pouvoir tester réellement toute l'app
+    sans qu'elle soit live ». A pre-release reaches only the copies that ticked the box;
+    the others see it once `tools/release.py publier` turns it into the release.
+    """
+    if oui:
+        BETA.write_text("1\n", encoding="utf-8")
+    else:
+        BETA.unlink(missing_ok=True)
+    DERNIERE_VERIF.unlink(missing_ok=True)
+    return beta()
+
+
+def derniere_signee(timeout=10, avec_beta=False):
     """The most recent release that can be installed (its signature published), "" if none.
 
     A release waits for its author's signature for up to an hour after it is published;
@@ -252,7 +274,7 @@ def derniere_signee(timeout=10):
     nom = _sig.FICHIER if _sig.CLE_PUBLIQUE else SETUP + ".sha256"
     meilleure = ""
     for r in json.loads(_get(RELEASES_URL, timeout)):
-        if r.get("draft") or r.get("prerelease"):
+        if r.get("draft") or (r.get("prerelease") and not avec_beta):
             continue
         v = str(r.get("tag_name") or "").lstrip("v")
         if not re.fullmatch(r"\d+(\.\d+){1,3}", v):
@@ -266,7 +288,12 @@ def derniere_signee(timeout=10):
 def version_proposee(timeout=10):
     """The version an update installs: main's VERSION once signed, else the latest signed."""
     distante = _get(VERSION_URL, timeout)[:64].decode("utf-8").strip()
-    return distante if prete(distante, timeout) else derniere_signee(timeout)
+    v = distante if prete(distante, timeout) else derniere_signee(timeout)
+    if beta():
+        test = derniere_signee(timeout, avec_beta=True)
+        if _cle_version(test or "0") > _cle_version(v or "0"):
+            return test
+    return v
 
 
 def nouvelle_version(timeout=5, intervalle_h=24):
@@ -291,6 +318,14 @@ def nouvelle_version(timeout=5, intervalle_h=24):
             # "date|version": the line of an earlier check (before 3.28, the date alone)
             vue = DERNIERE_VERIF.read_text(encoding="utf-8").partition("|")[2].strip()
             return vue if vue and _cle_version(vue) > locale else None
+        if beta():
+            # A signed test release newer than the installed one comes first.
+            test = derniere_signee(timeout, avec_beta=True)
+            if test and _cle_version(test) > locale:
+                DERNIERE_VERIF.write_text(
+                    f"{time.strftime('%Y-%m-%d %H:%M')}|{test}", encoding="utf-8"
+                )
+                return test
         distante = _get(VERSION_URL, timeout)[:64].decode("utf-8").strip()
         if _cle_version(distante) <= locale:
             distante = ""

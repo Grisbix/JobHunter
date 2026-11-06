@@ -903,9 +903,10 @@ def _desinstalleur() -> dict[str, str] | None:
     beside JobHunter.exe. A source or pip installation has neither: pip uninstalls it.
     """
     from jobhunter import frozen
+    from jobhunter.programs import sandbox
 
-    if not frozen.est_gele():
-        return None
+    if not frozen.est_gele() or sandbox.actif():
+        return None  # the sandbox (3.85) never removes the real installation
     famille = frozen.famille_msix()
     if famille:
         from jobhunter.programs import shortcut
@@ -949,6 +950,13 @@ def _derniere_version(timeout: float = 6) -> str:
             return str(json.loads(r.read()).get("tag_name") or "").removeprefix("v")
     except (OSError, ValueError):
         return ""
+
+
+def _beta() -> bool:
+    """Has this copy asked for the test releases too (programs.update.beta)?"""
+    from jobhunter.programs import update
+
+    return update.beta()
 
 
 def _signee(version: str, timeout: float = 6) -> bool:
@@ -1415,7 +1423,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         """Engine version, last collection, backups and data sizes."""
         import json
 
-        from jobhunter import root
+        from jobhunter import frozen, root
 
         donnees = root.scripts()
         v = _version_installee()
@@ -1454,15 +1462,28 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
             # and the home 15 (2026-11-03). Sent = left the user's hands.
             "envoyees": sum(1 for e in self._suivi().values() if e.get("s") in ENVOYEES),
             "archivables": self.archivables(),
+            # The Store installs its own updates: no test releases there.
+            "beta": None if frozen.paquet_msix() else _beta(),
         }
+
+    def regler_beta(self, oui: bool) -> dict[str, Any]:
+        """« Recevoir les versions de test » (3.85): GitHub pre-releases, signed too."""
+        from jobhunter import frozen
+        from jobhunter.programs import update
+
+        if frozen.paquet_msix():
+            return {"ok": False, "erreur": "Le Store installe ses propres mises à jour."}
+        return {"ok": True, "beta": update.regler_beta(bool(oui))}
 
     def reglages(self) -> dict[str, Any]:
         """The display settings: window backdrop and glass strength."""
         return lire_reglages()
 
     def session(self) -> dict[str, Any]:
-        """Is the window seen through Remote Desktop? Then the page drops its blurs."""
-        return {"distance": bureau_a_distance()}
+        """Is the window seen through Remote Desktop (no blurs)? In the sandbox (a badge)?"""
+        from jobhunter.programs import sandbox
+
+        return {"distance": bureau_a_distance(), "bac_a_sable": sandbox.actif()}
 
     def textes(self) -> dict[str, Any]:
         """The interface language and its catalogue, for app.js (jobhunter.web.i18n)."""
@@ -2112,8 +2133,17 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
 
         installee = _version_installee()
         derniere = _derniere_version()
-        nouvelle = installee != "?" and _plus_recente(derniere, installee)
         store = frozen.paquet_msix() and frozen.msix_du_store()
+        if not store and _beta():
+            from jobhunter.programs import update
+
+            try:
+                test = update.derniere_signee(6, avec_beta=True)
+            except Exception:  # noqa: BLE001 — offline, rate limit: the release only
+                test = ""
+            if _plus_recente(test, derniere):
+                derniere = test
+        nouvelle = installee != "?" and _plus_recente(derniere, installee)
         signee = nouvelle and not store and _signee(derniere)
         attente = erreur = ""
         if store:

@@ -114,7 +114,7 @@ _PONT = screenshots._PONT
 
 def dossier_fictif(racine: Path, candidatures: bool = True) -> None:
     """The README screenshots' folder; without applications, Candidatures' empty state."""
-    screenshots.preparer(racine)
+    screenshots.sandbox.preparer(racine)
     if not candidatures:
         (racine / "data" / "applications.json").write_text("{}", encoding="utf-8")
 
