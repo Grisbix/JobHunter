@@ -4,6 +4,14 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.84.1 — 2026-11-06
+
+Uninstall, erase and the background update work again.
+
+- **« Désinstaller JobHunter » and « Effacer mes données » did nothing.** The window closed and nothing was removed. Fixed: the cleanup now runs after the window closes.
+- **The installer version's background update did not install** (« Redémarrer pour mettre à jour », or at closing). Fixed by the same change. **If you installed 3.83 or 3.84 with the installer, download `JobHunterSetup.exe` once from the release page:** those versions cannot install this fix by themselves.
+- **The open window checks for a new version every 6 hours**, not only at start-up.
+
 ## 3.84.0 — 2026-11-05
 
 A home screen that shows your pace and your answers, no empty areas, and a quicker window.
