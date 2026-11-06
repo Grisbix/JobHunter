@@ -2130,6 +2130,48 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "JobHunter deinstallieren?",
         "¿Desinstalar JobHunter?",
     ),
+    # --- The progress window once the application is closed (api._FENETRE, 3.86) ---
+    "Désinstallation de JobHunter": (
+        "Uninstalling JobHunter",
+        "JobHunter wird deinstalliert",
+        "Desinstalando JobHunter",
+    ),
+    "Effacement des données": ("Erasing the data", "Daten werden gelöscht", "Borrando los datos"),
+    "Fermeture de JobHunter…": (
+        "Closing JobHunter…",
+        "JobHunter wird geschlossen…",
+        "Cerrando JobHunter…",
+    ),
+    "Données envoyées à la Corbeille…": (
+        "Sending the data to the Recycle Bin…",
+        "Daten werden in den Papierkorb verschoben…",
+        "Enviando los datos a la Papelera…",
+    ),
+    "Retrait de l'application…": (
+        "Removing the application…",
+        "Anwendung wird entfernt…",
+        "Quitando la aplicación…",
+    ),
+    "JobHunter est désinstallé.": (
+        "JobHunter is uninstalled.",
+        "JobHunter ist deinstalliert.",
+        "JobHunter está desinstalado.",
+    ),
+    "Données à la Corbeille : restaurables tant qu'elle n'est pas vidée.": (
+        "Data in the Recycle Bin: it can be restored until the bin is emptied.",
+        "Daten im Papierkorb: wiederherstellbar, bis er geleert wird.",
+        "Datos en la Papelera: se pueden restaurar mientras no se vacíe.",
+    ),
+    "La désinstallation a échoué :": (
+        "The uninstall failed:",
+        "Die Deinstallation ist fehlgeschlagen:",
+        "La desinstalación ha fallado:",
+    ),
+    "L'effacement a échoué :": (
+        "The erasing failed:",
+        "Das Löschen ist fehlgeschlagen:",
+        "El borrado ha fallado:",
+    ),
     "Désinstaller": ("Uninstall", "Deinstallieren", "Desinstalar"),
     # --- Sandbox and test releases (3.85) ---
     "Bac à sable": ("Sandbox", "Sandkasten", "Entorno de prueba"),
