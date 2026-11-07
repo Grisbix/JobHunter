@@ -882,10 +882,16 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Ort, Region, Land…",
         "Ciudad, región, país…",
     ),
-    "Intitulés à garder (un mot du titre suffit ; * = début de mot ; re: = motif)": (
-        "Titles to keep (one word of the title is enough; * = word start; re: = pattern)",
-        "Zu behaltende Titel (ein Wort des Titels genügt; * = Wortanfang; re: = Muster)",
-        "Títulos que conservar (basta una palabra del título; * = inicio de palabra; re: = patrón)",
+    "Intitulés à garder (un mot du titre suffit)": (
+        "Titles to keep (one word of the title is enough)",
+        "Zu behaltende Titel (ein Wort des Titels genügt)",
+        "Títulos que conservar (basta una palabra del título)",
+    ),
+    "Motif : {m}": ("Pattern: {m}", "Muster: {m}", "Patrón: {m}"),
+    "« {m} », même au milieu d'un mot": (
+        "« {m} », even inside a word",
+        "« {m} », auch mitten im Wort",
+        "« {m} », incluso dentro de una palabra",
     ),
     "mot d'intitulé…": ("title word…", "Titelwort…", "palabra del título…"),
     "Intitulés à écarter": (
