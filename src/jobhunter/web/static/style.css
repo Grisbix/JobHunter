@@ -830,8 +830,17 @@ body[data-teinte="noir"] {
 
 /* Outils: the desktop's menu, by group. */
 .entete-panneau { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
-.outils { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px 24px; margin-top: 16px; }
+.outils { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px 24px; margin-top: 16px;
+  container-type: inline-size; }
 .groupe-outils { display: grid; gap: 8px; align-content: start; }
+/* One-tool groups share a column, and a big group takes two when there are four: a
+   five-tool group beside one-tool groups left a hole under them and an empty last
+   column (the user, 2026-11-07: « trop d'espace vide »). carteOutils sorts them. */
+.pile-outils { display: grid; gap: 20px; align-content: start; }
+@container (min-width: 980px) {
+  .groupe-outils.large { grid-column: span 2; grid-template-columns: 1fr 1fr; column-gap: 24px; }
+  .groupe-outils.large h3 { grid-column: 1 / -1; }
+}
 .groupe-outils h3 { font-size: var(--t-m); font-weight: 500; color: var(--gris); margin: 0 0 4px; }
 /* A tool: its name and what it is for (3.75: no name left unexplained). */
 .outil-ligne { display: flex; gap: 8px; align-items: flex-start; text-align: left; padding: 8px 12px; border: 0; border-radius: 10px;

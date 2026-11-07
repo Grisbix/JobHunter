@@ -337,16 +337,27 @@ function carteOutils(groupes) {
   const outil = (o) => h("button", { class: "outil-ligne", onclick: () => lancerOutil(o.libelle) },
     svg(o.genre === "console" ? "clavier" : o.genre === "action" ? "fenetre" : "lancer"),
     h("span", {}, h("span", { class: "t" }, o.nom), h("span", { class: "sous" }, o.aide)));
-  const groupe = (g) => h("div", { class: "groupe-outils" }, h("h3", {}, g.groupe), g.outils.map(outil));
-  const simples = (groupes || []).filter((g) => !g.avance);
-  const avances = (groupes || []).filter((g) => g.avance);
+  const groupe = (g) => h("div", { class: `groupe-outils${g.outils.length >= 4 ? " large" : ""}` },
+    h("h3", {}, g.groupe), g.outils.map(outil));
+  // One-tool groups stack in one cell, where the first of them stands (style.css .pile-outils).
+  const cellules = (liste) => {
+    const pile = h("div", { class: "pile-outils" });
+    const out = [];
+    for (const g of liste) {
+      if (g.outils.length > 1) out.push(groupe(g));
+      else { if (!pile.childElementCount) out.push(pile); pile.append(groupe(g)); }
+    }
+    return out;
+  };
+  const simples = cellules((groupes || []).filter((g) => !g.avance));
+  const avances = cellules((groupes || []).filter((g) => g.avance));
   return h("div", { class: "verre panneau large" },
     h("div", { class: "entete-panneau" }, h("h2", {}, "Outils"),
       h("span", { style: "flex:1" }),
       bouton("Ouvrir le dossier", "dossier", () => window.pywebview ? window.pywebview.api.ouvrir_dossier() : toast(HORS_APPLI, true))),
-    h("div", { class: "outils" }, simples.map(groupe)),
+    h("div", { class: "outils" }, simples),
     avances.length ? h("details", { class: "outils-avances" }, h("summary", {}, "Diagnostic (avancé)"),
-      h("div", { class: "outils" }, avances.map(groupe))) : null);
+      h("div", { class: "outils" }, avances)) : null);
 }
 
 function duree(s) {
@@ -1623,7 +1634,7 @@ function editeurPuces(liste, sale, placeholder = "Ajouter…") {
     const vus = liste.map((x, i) => [x, i]).filter(([x]) => !f || x.toLowerCase().includes(f) || motLisible(x).toLowerCase().includes(f));
     const montres = f || tout ? vus : vus.slice(0, PUCES_MAX);
     const reste = vus.length - montres.length;
-    boite.replaceChildren(...montres.map(([x, i]) => h("span", { class: "puce modifiable", title: x }, motLisible(x),
+    boite.replaceChildren(...montres.map(([x, i]) => h("span", { class: "puce modifiable", title: titreMot(x) }, motLisible(x),
       h("button", { title: "Retirer", onclick: () => { liste.splice(i, 1); sale(); dessiner(); } }, "×"))),
       reste ? h("button", { class: "lien", onclick: () => { tout = true; dessiner(); } }, `+ ${reste} autres`)
         : tout && !f && liste.length > PUCES_MAX ? h("button", { class: "lien", onclick: () => { tout = false; dessiner(); } }, "Replier") : "",
@@ -1740,7 +1751,7 @@ ECRANS.profil = {
           Object.assign(sousTitre("Zones prioritaires"), { id: "zones-profil" }), editeurLieux(r.prioritaires, bR.sale),
           sousTitre("Zones secondaires"), editeurLieux(r.secondaires, bR.sale)),
         h("div", {},
-          sousTitre("Intitulés à garder (un mot du titre suffit ; * = début de mot ; re: = motif)", "0 0 8px"), editeurPuces(r.garder, bR.sale, "mot d'intitulé…"),
+          sousTitre("Intitulés à garder (un mot du titre suffit)", "0 0 8px"), editeurPuces(r.garder, bR.sale, "mot d'intitulé…"),
           sousTitre("Intitulés à écarter"), editeurPuces(r.ecarter, bR.sale, "mot à écarter…"))),
       bR.el);
 
@@ -2283,12 +2294,69 @@ async function choixFichier(nom, ...args) {
 
 // A title word as the user reads it: « re:\b(isr|(?<![a-z])csrd(?![a-z]))\b » shows as
 // « isr · csrd » (the user, 2026-11-04: the raw patterns ran over the card). The chip's
-// tooltip keeps the pattern itself.
+// tooltip keeps the pattern itself. The user, 2026-11-07: « pas l'affichage en code mais
+// compréhensible pour tout le monde » — no leading « * » (search_settings.eclater: the
+// word may also start inside a word), and a group spelled out: « account
+// (executive|manager) » reads « account executive · account manager », « design(er)? »
+// « design · designer ».
+// The chip's tooltip: a pattern keeps its text, a « * » word says what it finds.
+function titreMot(mot) {
+  if (mot.startsWith("re:")) return `Motif : ${mot.slice(3)}`;
+  return mot.startsWith("*") ? `« ${mot.slice(1)} », même au milieu d'un mot` : mot;
+}
+
 function motLisible(mot) {
-  if (!mot.startsWith("re:")) return mot;
-  const s = mot.slice(3).replace(/\(\?<?[!=][^)]*\)/g, "").replace(/\\b/g, "").replace(/\(\?:/g, "(")
-    .replace(/\\(.)/g, "$1").replace(/[()^$?+*]/g, "");
-  return s.split("|").map((x) => x.trim()).filter(Boolean).join(" · ");
+  if (!mot.startsWith("re:")) return mot.replace(/^\*/, "");
+  const s = mot.slice(3).replace(/\(\?<?[!=][^)]*\)/g, "").replace(/\\b|\^|\$/g, "").replace(/\(\?:/g, "(");
+  // Every text the pattern means, null past 8 or on a sign it cannot spell (. + * \w…).
+  let i = 0;
+  const alternatives = () => {
+    const tout = [];
+    for (;;) {
+      const v = suite();
+      if (!v) return null;
+      tout.push(...v);
+      if (s[i] !== "|") return tout.length <= 8 ? tout : null;
+      i++;
+    }
+  };
+  const suite = () => {
+    let v = [""];
+    while (i < s.length && s[i] !== "|" && s[i] !== ")") {
+      let morceau;
+      const c = s[i];
+      if (c === "(") {
+        i++;
+        morceau = alternatives();
+        if (!morceau || s[i] !== ")") return null;
+        i++;
+      } else if (c === "[") {
+        const fin = s.indexOf("]", i);
+        if (fin < 0) return null;
+        morceau = [...s.slice(i + 1, fin)];
+        if (morceau.some((x) => !/[\p{L}\d ' -]/u.test(x))) return null;
+        i = fin + 1;
+      } else if (c === "\\") {
+        const n = s[i + 1];
+        if (!n || /[wdWDSB]/.test(n)) return null;
+        morceau = [n === "s" ? " " : n];
+        i += 2;
+      } else if (/[.*+{}]/.test(c)) {
+        return null;
+      } else {
+        morceau = [c];
+        i++;
+      }
+      if (s[i] === "?") { morceau = ["", ...morceau]; i++; }
+      v = v.flatMap((a) => morceau.map((b) => a + b));
+      if (v.length > 8) return null;
+    }
+    return v;
+  };
+  const vus = alternatives();
+  const mots = vus && i === s.length ? vus
+    : s.replace(/\.[*+]?/g, " … ").replace(/\\(.)/g, "$1").replace(/[()?+*[\]]/g, "").split("|");
+  return [...new Set(mots.map((x) => x.replace(/\s+/g, " ").trim()).filter(Boolean))].join(" · ");
 }
 
 async function carteMetiers() {

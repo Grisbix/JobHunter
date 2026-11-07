@@ -49,9 +49,25 @@ def test_mot_lisible():
         r"motLisible('re:\\b(isr|(?<![a-z])csrd(?![a-z])|sri)\\b'),"
         r"motLisible('re:(?:data|data\\ scientist)'),"
         "motLisible('climat'),"
+        "motLisible('*brand'),"
+        "motLisible('re:account (executive|manager)'),"
+        r"motLisible('re:design(er)?\\b'),"
+        "motLisible('re:d[ée]veloppeur'),"
         "]));"
     )
     sortie = subprocess.run(  # noqa: S603, S607
         ["node", "-e", script], capture_output=True, text=True, encoding="utf-8", check=True
     ).stdout
-    assert sortie.strip() == '["isr · csrd · sri","data · data scientist","climat"]'
+    # 2026-11-07: no « * », a group spelled out in full words
+    assert sortie.strip() == (
+        '["isr · csrd · sri","data · data scientist","climat","brand",'
+        '"account executive · account manager","design · designer",'
+        '"développeur · developpeur"]'
+    )
+
+
+def test_outils_sans_trou():
+    """One-tool groups share a cell; a big group spans two columns (2026-11-07)."""
+    assert 'class: "pile-outils"' in JS and 'g.outils.length >= 4 ? " large" : ""' in JS
+    css = (STATIQUE / "style.css").read_text(encoding="utf-8")
+    assert ".groupe-outils.large { grid-column: span 2;" in css
