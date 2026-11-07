@@ -857,36 +857,128 @@ def _version_installee() -> str:
         return "?"
 
 
-# Waits for the application to close, then sends its data folder to the Recycle Bin.
-# Values come by environment variables, never pasted into the script.
-_CORBEILLE = r"""
+# A small Windows window with the step and a percentage bar, for the scripts that run
+# once the application is closed (the user, 2026-11-06: uninstalling showed nothing,
+# the window just vanished). Texts come translated by environment variables (JH_T_*,
+# _textes_progres); without a desktop (no WinForms) the steps run all the same.
+_FENETRE = r"""
+$F = $null
+try {
+  if ($env:JH_SANS_FENETRE) { throw 'no window' }  # the tests
+  Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+  [System.Windows.Forms.Application]::EnableVisualStyles()
+  $F = New-Object System.Windows.Forms.Form
+  $F.Text = $env:JH_T_TITRE
+  $F.ClientSize = New-Object System.Drawing.Size(500, 128)
+  $F.FormBorderStyle = 'FixedDialog'; $F.MaximizeBox = $false; $F.MinimizeBox = $false
+  $F.StartPosition = 'CenterScreen'; $F.TopMost = $true; $F.ShowInTaskbar = $true
+  $F.Font = New-Object System.Drawing.Font('Segoe UI', 10)
+  if ($env:JH_ICONE -and (Test-Path -LiteralPath $env:JH_ICONE)) {
+    try { $F.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($env:JH_ICONE) } catch {}
+  }
+  $L = New-Object System.Windows.Forms.Label
+  $L.SetBounds(20, 16, 460, 24); $L.AutoEllipsis = $true
+  $B = New-Object System.Windows.Forms.ProgressBar
+  $B.SetBounds(20, 46, 400, 20); $B.Style = 'Continuous'
+  $P = New-Object System.Windows.Forms.Label
+  $P.SetBounds(426, 46, 54, 20); $P.TextAlign = 'MiddleRight'
+  $K = New-Object System.Windows.Forms.Button
+  $K.SetBounds(380, 84, 100, 30); $K.Text = $env:JH_T_FERMER; $K.Visible = $false
+  $K.Add_Click({ $F.Close() })
+  $F.Controls.AddRange(@($L, $B, $P, $K))
+  $F.Show()
+} catch { $F = $null }
+function Etape([int]$pct, [string]$texte) {
+  if ($null -eq $F -or $F.IsDisposed) { return }
+  if ($texte) { $L.Text = $texte }
+  $B.Value = [Math]::Max(0, [Math]::Min(100, $pct)); $P.Text = "$($B.Value) %"
+  [System.Windows.Forms.Application]::DoEvents()
+}
+function Fin([string]$texte, [bool]$echec) {
+  if ($null -eq $F -or $F.IsDisposed) { return }
+  $L.Text = $texte
+  if (-not $echec) { $B.Value = 100; $P.Text = '100 %' }
+  $K.Visible = $true; $F.AcceptButton = $K
+  $limite = (Get-Date).AddSeconds($(if ($echec) { 120 } else { 6 }))
+  while (-not $F.IsDisposed -and $F.Visible -and (Get-Date) -lt $limite) {
+    [System.Windows.Forms.Application]::DoEvents(); Start-Sleep -Milliseconds 100
+  }
+  if (-not $F.IsDisposed) { $F.Close() }
+}
+function Attendre([System.Diagnostics.Process]$proc, [string]$fichier, [int]$de, [int]$a) {
+  # The bar creeps from $de toward $a while the process (and its copy) works: the
+  # installer's uninstaller restarts from a temporary copy and deletes itself last.
+  $pct = [double]$de; $limite = (Get-Date).AddMinutes(5)
+  while ((Get-Date) -lt $limite) {
+    $vivant = $proc -and -not $proc.HasExited
+    if (-not $vivant -and -not ($fichier -and (Test-Path -LiteralPath $fichier))) { break }
+    $pct += ($a - $pct) * 0.04; Etape ([int]$pct) ''
+    Start-Sleep -Milliseconds 150
+  }
+}
+Etape 5 $env:JH_T_FERMETURE
 try { Wait-Process -Id ([int]$env:JH_PID) -Timeout 120 -ErrorAction Stop } catch {}
 Add-Type -AssemblyName Microsoft.VisualBasic
-[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory(
-  $env:JH_DOSSIER, 'OnlyErrorDialogs', 'SendToRecycleBin')
 """
+
+
+# Waits for the application to close, then sends its data folder to the Recycle Bin.
+# Values come by environment variables, never pasted into the script.
+_CORBEILLE = (
+    _FENETRE
+    + r"""
+try {
+  Etape 30 $env:JH_T_DONNEES
+  [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory(
+    $env:JH_DOSSIER, 'OnlyErrorDialogs', 'SendToRecycleBin')
+  Fin $env:JH_T_FINI $false
+} catch { Fin "$($env:JH_T_ECHEC) $($_.Exception.Message)" $true }
+"""
+)
 
 
 # Waits for the application to close, sends its data to the Recycle Bin (when it may),
 # then removes the application: the Store package, or the installer's uninstaller run
 # silently (its own question about the data is not asked then: it was asked here).
-_DESINSTALLER = r"""
-try { Wait-Process -Id ([int]$env:JH_PID) -Timeout 120 -ErrorAction Stop } catch {}
-Add-Type -AssemblyName Microsoft.VisualBasic
-if ($env:JH_DOSSIER -and (Test-Path -LiteralPath $env:JH_DOSSIER)) {
-  [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory(
-    $env:JH_DOSSIER, 'OnlyErrorDialogs', 'SendToRecycleBin')
-}
-if ($env:JH_LIEN -and (Test-Path -LiteralPath $env:JH_LIEN)) {
-  Remove-Item -LiteralPath $env:JH_LIEN -Force
-}
-if ($env:JH_FAMILLE) {
-  Get-AppxPackage | Where-Object PackageFamilyName -eq $env:JH_FAMILLE | Remove-AppxPackage
-} else {
-  Start-Process -FilePath $env:JH_DESINSTALLEUR -Wait `
-    -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
-}
+_DESINSTALLER = (
+    _FENETRE
+    + r"""
+try {
+  if ($env:JH_DOSSIER -and (Test-Path -LiteralPath $env:JH_DOSSIER)) {
+    Etape 20 $env:JH_T_DONNEES
+    [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory(
+      $env:JH_DOSSIER, 'OnlyErrorDialogs', 'SendToRecycleBin')
+  }
+  if ($env:JH_LIEN -and (Test-Path -LiteralPath $env:JH_LIEN)) {
+    Remove-Item -LiteralPath $env:JH_LIEN -Force
+  }
+  Etape 45 $env:JH_T_RETRAIT
+  if ($env:JH_FAMILLE) {
+    Get-AppxPackage | Where-Object PackageFamilyName -eq $env:JH_FAMILLE | Remove-AppxPackage
+  } else {
+    $u = Start-Process -FilePath $env:JH_DESINSTALLEUR -PassThru `
+      -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
+    Attendre $u $env:JH_DESINSTALLEUR 45 95
+  }
+  Fin $env:JH_T_FINI $false
+} catch { Fin "$($env:JH_T_ECHEC) $($_.Exception.Message)" $true }
 """
+)
+
+
+def _textes_progres(**cles: str) -> dict[str, str]:
+    """The progress window's texts (_FENETRE) in the interface language, as JH_T_*."""
+    from jobhunter.web import i18n
+
+    try:
+        textes = i18n.catalogue(i18n.langue())["textes"]
+    except Exception:  # noqa: BLE001 : French rather than no window at all
+        textes = {}
+    cles = {"FERMER": "Fermer", "FERMETURE": "Fermeture de JobHunter…", **cles}
+    from jobhunter import frozen
+
+    icone = sys.executable if frozen.est_gele() else ""
+    return {"JH_ICONE": icone} | {f"JH_T_{k}": str(textes.get(v, v)) for k, v in cles.items()}
 
 
 def _setup_silencieux() -> bool:
@@ -2282,7 +2374,13 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         dossier = _dossier_effacable()
         if dossier is None:
             return {"ok": False, "message": "Réservé à l'application installée."}
-        refus = self._partir(_CORBEILLE, {"JH_DOSSIER": str(dossier)})
+        textes = _textes_progres(
+            TITRE="Effacement des données",
+            DONNEES="Données envoyées à la Corbeille…",
+            FINI="Données à la Corbeille : restaurables tant qu'elle n'est pas vidée.",
+            ECHEC="L'effacement a échoué :",
+        )
+        refus = self._partir(_CORBEILLE, {"JH_DOSSIER": str(dossier), **textes})
         return refus or {"ok": True, "dossier": str(dossier)}
 
     def desinstaller(self) -> dict[str, Any]:
@@ -2297,7 +2395,15 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         if moyen is None:
             return {"ok": False, "message": "Réservé à l'application installée."}
         dossier = _dossier_effacable()
-        refus = self._partir(_DESINSTALLER, {"JH_DOSSIER": str(dossier or ""), **moyen})
+        textes = _textes_progres(
+            TITRE="Désinstallation de JobHunter",
+            DONNEES="Données envoyées à la Corbeille…",
+            RETRAIT="Retrait de l'application…",
+            FINI="JobHunter est désinstallé.",
+            ECHEC="La désinstallation a échoué :",
+        )
+        valeurs = {"JH_DOSSIER": str(dossier or ""), **moyen, **textes}
+        refus = self._partir(_DESINSTALLER, valeurs)
         return refus or {"ok": True, "dossier": str(dossier or "")}
 
     def _partir(self, script: str, valeurs: dict[str, str]) -> dict[str, Any] | None:
