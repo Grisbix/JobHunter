@@ -4,6 +4,14 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.86.0 — 2026-11-07
+
+You see the uninstall happen, and the profile reads in plain words.
+
+- **Uninstall and erase show their progress.** Once JobHunter closes, a small window shows each step (closing, data to the Recycle Bin, removing the application) with a percentage bar, then « JobHunter est désinstallé. ». If something fails, it says what.
+- **Titles to keep and to set aside read in plain words** (Profil → Ma recherche): no more « * » or patterns. « account (executive|manager) » shows as « account executive · account manager ». Your rules don't change.
+- **Réglages → Outils without empty space**: one-tool groups share a column, and Documents spreads over two when the window is wide.
+
 ## 3.85.0 — 2026-11-06
 
 Try everything before it is real: a sandbox, and test versions.
