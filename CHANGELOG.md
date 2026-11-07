@@ -4,6 +4,10 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.86.1 — 2026-11-07
+
+- **Microsoft Store version: « Chercher une mise à jour » no longer says « Le Microsoft Store ne répond pas (erreur 0x803F6101) ».** That code means the Store doesn't list JobHunter yet (a new version still being checked by Microsoft). Trying again changed nothing. You now see that the new version is on its way; the Store installs it by itself.
+
 ## 3.86.0 — 2026-11-07
 
 You see the uninstall happen, and the profile reads in plain words.
