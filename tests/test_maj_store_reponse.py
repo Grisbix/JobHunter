@@ -81,8 +81,15 @@ def test_la_version_du_store_pas_celle_de_github(store):
 
 
 def test_store_muet_rien_propose(store):
-    v = store(None, "erreur 0x803F6101 x")
-    assert not v["nouvelle"] and v["erreur"] == "erreur 0x803F6101 x"
+    v = store(None, "erreur 0x80072EE7 x")
+    assert not v["nouvelle"] and v["erreur"] == "erreur 0x80072EE7 x"
+    assert api.Api.annonce_maj(type("A", (), {"mise_a_jour": lambda s: v})()) is None
+
+
+def test_app_introuvable_dans_le_store_pas_d_erreur(store):
+    """2026-11-07: 0x803F6101 (« app not found ») is no outage: retrying changes nothing."""
+    v = store(None, "erreur 0x803F6101 Exception de HRESULT : 0x803F6101")
+    assert not v["erreur"] and not v["nouvelle"] and v["attente"] == "3.82.0"
     assert api.Api.annonce_maj(type("A", (), {"mise_a_jour": lambda s: v})()) is None
 
 

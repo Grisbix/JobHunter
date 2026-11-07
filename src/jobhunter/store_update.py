@@ -92,6 +92,16 @@ def _erreur(sortie: str) -> str:
     return ""
 
 
+# The Store's « app not found » (Error codes for Store operations, learn.microsoft.com):
+# the app is not in its catalogue — not public yet, pulled, or a wrong Store ID.
+INTROUVABLE = "0x803F6101"
+
+
+def introuvable(erreur: str) -> bool:
+    """True when the Store said it does not know this app (INTROUVABLE), not « no answer »."""
+    return INTROUVABLE.lower() in (erreur or "").lower()
+
+
 def mises_a_jour(delai: int = 60) -> int | None:
     """The number of updates the Store has for this package; None if it did not say."""
     return verifier(delai)[0]

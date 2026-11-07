@@ -2244,6 +2244,13 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
             # Shown only when the Store has it, with the Store's number (the user,
             # 2026-11-05: « affiché que quand c'est disponible sur le store »).
             n, erreur, version_store = store_update.verifier()
+            if store_update.introuvable(erreur):
+                # 0x803F6101: the Store's catalogue does not find JobHunter (not public
+                # yet, or a new submission in certification). Asking again changes
+                # nothing, and the Store still delivers the updates to this copy: no
+                # error shown, the published version said to be on its way (the user,
+                # 2026-11-07: « le Microsoft Store ne répond pas (erreur 0x803F6101) »).
+                n, erreur = 0, ""
             attente = derniere if nouvelle and n == 0 else ""
             nouvelle = bool(n)
             derniere = version_store or derniere
