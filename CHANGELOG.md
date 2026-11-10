@@ -4,6 +4,15 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.86.2 — 2026-11-10
+
+A faster sorting, and an offer sheet that opens at once.
+
+- **The sorting is about nine times faster.** Measured on a queue of 19 528 offers: 63 s before, 7 s now, with the same offers kept and removed. The search for duplicates read each offer again at every comparison, and two checks (hidden internship, « still a student ») scanned every posting letter by letter. The other programs wait for the queue that much less.
+- **An offer's sheet opens without reading every posting.** It read the text of all the offers to show one (0.9 s and 165 MB for 19 469 postings, again after each change). It now reads one.
+- **Playwright stays below 1.65.** Version 1.65, released on 2026-11-10, moved a part JobHunter relies on: an application built with it would not start its browser. Nothing to do on your side.
+- **Security: `oauthlib` 4.0.1** in the locked dependencies (Gmail reading only), after an alert on 4.0.0.
+
 ## 3.86.1 — 2026-11-07
 
 - **Microsoft Store version: « Chercher une mise à jour » no longer says « Le Microsoft Store ne répond pas (erreur 0x803F6101) ».** That code means the Store doesn't list JobHunter yet (a new version still being checked by Microsoft). Trying again changed nothing. You now see that the new version is on its way; the Store installs it by itself.
