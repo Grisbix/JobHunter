@@ -1173,6 +1173,20 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         f = queue.fichier() if queue.base().is_file() else queue.DESCRIPTIONS
         return self._lire("desc", f, queue._lire_descriptions)
 
+    def _description(self, ident: str) -> str:
+        """The text of one posting: one row of the database, not all of them.
+
+        Reading every text to show one sheet took 0.9 s and held 165 MB for 19 469
+        postings, again after each write to the queue (measured 2026-11-10). The
+        statistics panel still needs them all (`_descriptions`).
+        """
+        from jobhunter.storage import queue
+
+        if queue.base().is_file():
+            return queue.description(ident)
+        # The 2.x layout keeps them in one JSON file: read once per change, as before.
+        return self._descriptions().get(ident, "")
+
     # Screens.
     def tableau(self) -> dict[str, Any]:
         """The home screen data, from the real queue and applications."""
@@ -1263,7 +1277,7 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         for o in self._file():
             if _oid(o) == ident:
                 opened.noter(ident)
-                return fiche(o, self._suivi(), self._descriptions().get(ident, ""))
+                return fiche(o, self._suivi(), self._description(ident))
         return None
 
     def a_trier(self) -> dict[str, Any]:

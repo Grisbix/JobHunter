@@ -462,10 +462,34 @@ _RX_OFFRE_STAGE = re.compile(
 # 7 of 17 matches were these.
 _RX_STAGE_RENVERSE = re.compile(r"\b(?:pas|not|ni|nor|[\u00e9e]galement|aussi|also)\b", re.I)
 
+# A WORD EVERY BRANCH NEEDS, looked for first. Neither pattern starts with a fixed word,
+# so the engine tries each branch at each character of each posting: 27 s of the sorting
+# for 19 528 offers, for 4 postings found. With the word test first: 5 s, same 4
+# (2026-11-10). A branch added to a pattern needs its word here: test_perf_tri checks it.
+_MOTS_OFFRE_STAGE = ("stag", "alternan", "apprenti", "internship")
+_MOTS_ETUDIANT = (
+    "tudiant",
+    "c\u00e9sure",
+    "cesure",
+    "student",
+    "undergraduate",
+    "enrolled",
+    "studying",
+    "pursuing",
+)
+
+
+def _un_mot(texte: str, mots: tuple[str, ...]) -> bool:
+    bas = texte.lower()
+    return any(m in bas for m in mots)
+
 
 def offre_de_stage(desc: str | None) -> bool:
     """True if the posting offers an internship or a work-study (see _RX_OFFRE_STAGE)."""
-    t = re.sub(r"\s+", " ", str(desc or ""))
+    t = str(desc or "")
+    if not _un_mot(t, _MOTS_OFFRE_STAGE):
+        return False
+    t = re.sub(r"\s+", " ", t)
     for m in _RX_OFFRE_STAGE.finditer(t):
         if not _RX_STAGE_RENVERSE.search(t[max(0, m.start() - 45) : m.start()]):
             return True
@@ -478,6 +502,8 @@ def demande_etudiant(desc: str | None) -> bool:
     Such a job is an internship, whatever its title.
     """
     t = str(desc or "")
+    if not _un_mot(t, _MOTS_ETUDIANT):
+        return False
     for m in _RX_ETUDIANT.finditer(t):
         # The sentence that carries the request: from the previous full stop to the next one.
         deb = max(t.rfind(".", 0, m.start()), t.rfind("\n", 0, m.start())) + 1

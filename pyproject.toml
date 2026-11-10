@@ -9,7 +9,9 @@ requires-python = ">=3.12"
 # Same bounds as requirements.txt, which install.bat / install.sh keep.
 dependencies = [
     "pywebview>=6.2,<7",
-    "playwright>=1.60,<2",
+    # 1.65 moved playwright._impl._transport, which playwright_node wraps, and its frozen
+    # build no longer finds Node (CI of 2026-11-10): capped until the hook is adapted.
+    "playwright>=1.60,<1.65",
     "python-docx>=1.2,<2",
     "PyMuPDF>=1.27,<3",
     "httpx>=0.28.1,<0.29",

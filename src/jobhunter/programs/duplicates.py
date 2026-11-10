@@ -184,6 +184,24 @@ def doublons(file, proteges=frozenset(), rang_source=None, oid=None):
             for b in lot[1:]:
                 unir(lot[0], b)
 
+        # ONCE PER OFFER. The pair loop below asked again for the city, the title words,
+        # the language and the tokens of an offer at every comparison, and `langue` strips
+        # the accents of 3 000 characters: 74 s for 19 528 offers, 6.5 s computed once
+        # (2026-11-10; a company of 392 offers is 76 000 pairs).
+        def une_fois(f):
+            vu = {}
+
+            def g(o):
+                k = id(o)
+                if k not in vu:
+                    vu[k] = f(o)
+                return vu[k]
+
+            return g
+
+        ville_de, langue_de, jetons_de = une_fois(ville), une_fois(langue), une_fois(jetons)
+        titre_de = une_fois(lambda o: mots_titre(o.get("poste")))
+
         par_ent = {}
         for o in file:
             if (o.get("url_type") or "") == "RECHERCHE":
@@ -196,19 +214,19 @@ def doublons(file, proteges=frozenset(), rang_source=None, oid=None):
                 continue
             for i in range(len(lot)):
                 a = lot[i]
-                va, ta = ville(a), mots_titre(a.get("poste"))
+                va, ta = ville_de(a), titre_de(a)
                 for b in lot[i + 1 :]:
-                    vb = ville(b)
+                    vb = ville_de(b)
                     if not va or va != vb:
                         continue
                     # 1. same title apart from stop words, gender and order
-                    if ta and ta == mots_titre(b.get("poste")):
+                    if ta and ta == titre_de(b):
                         unir(a, b)
                         continue
                     # 2. translation: different languages, common acronyms and numbers
-                    la, lb = langue(a), langue(b)
+                    la, lb = langue_de(a), langue_de(b)
                     if la and lb and la != lb:
-                        ja, jb = jetons(a), jetons(b)
+                        ja, jb = jetons_de(a), jetons_de(b)
                         if len(ja) >= JETONS_MIN and len(jb) >= JETONS_MIN:
                             if len(ja & jb) / len(ja | jb) >= JACCARD_MIN:
                                 unir(a, b)
