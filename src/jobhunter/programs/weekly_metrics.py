@@ -33,8 +33,8 @@ LOGS = _racine.scripts() / "_logs"
 EN_ATTENTE = ("postulé", "relancé")
 REPONSES = ("entretien", "refus")
 ENVOYEES = EN_ATTENTE + REPONSES
-# Same threshold as relances.a_relancer() by default.
-RELANCE_JOURS = 10
+# The app's and `relances`' threshold (storage.applications.JOURS_RELANCE).
+RELANCE_JOURS = suivi_io.JOURS_RELANCE
 
 _MERGE = re.compile(r"Merge[^:\n]*: \+(\d+) nouvelles")
 _LOG_DATE = re.compile(r"pipeline_(\d{4}-\d{2}-\d{2})_\d{4}\.log$")

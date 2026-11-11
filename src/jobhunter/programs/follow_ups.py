@@ -83,7 +83,7 @@ SUIVI = _racine.dans(_racine.scripts(), "suivi.json")
 RELANCE_STATUTS = ("postulé", "relancé")
 
 
-def a_relancer(days=10):
+def a_relancer(days=suivi_io.JOURS_RELANCE):
     """ "postulé/relancé" applications for ≥ days days (suivi.json).
     Returns [(offer, status, date, age_days)] from oldest to most recent."""
     from datetime import date, datetime
@@ -209,7 +209,12 @@ def mark(key):
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--days", type=int, default=10, help="seuil jours sans réponse (défaut 10)")
+    ap.add_argument(
+        "--days",
+        type=int,
+        default=suivi_io.JOURS_RELANCE,
+        help=f"seuil jours sans réponse (défaut {suivi_io.JOURS_RELANCE})",
+    )
     ap.add_argument("--jours", type=int, default=7, choices=[7, 10], help="template J+7 ou J+10")
     ap.add_argument("--draft", help='"Entreprise|Poste" → brouillon .txt + mailto (TU envoies)')
     ap.add_argument("--mark", help='"Entreprise|Poste" → statut relancé (date du jour)')
