@@ -9,6 +9,7 @@ les versions de test » receive.
 import json
 from pathlib import Path
 
+import js_app
 import pytest
 
 from jobhunter import scheduling
@@ -157,7 +158,7 @@ def test_le_store_n_a_pas_de_versions_de_test(monkeypatch):
 
 
 def test_la_case_dans_maintenance():
-    js = (RACINE / "src" / "jobhunter" / "web" / "static" / "app.js").read_text(encoding="utf-8")
+    js = js_app.source()
     assert '"regler_beta"' in js and "Recevoir les versions de test" in js
 
 

@@ -3,13 +3,15 @@ and the installed application can send its own data to the Recycle Bin."""
 
 from pathlib import Path
 
+import js_app
+
 from jobhunter import frozen, profiles, scheduling
 from jobhunter.programs import update
 from jobhunter.web import api
 
 RACINE = Path(__file__).resolve().parent.parent
 ISS = (RACINE / "tools" / "installer" / "JobHunter.iss").read_text(encoding="utf-8-sig")
-JS = (RACINE / "src" / "jobhunter" / "web" / "static" / "app.js").read_text(encoding="utf-8")
+JS = js_app.source()
 
 
 def _installee(monkeypatch, tmp_path):

@@ -10,13 +10,15 @@ import json
 from datetime import date
 from pathlib import Path
 
+import js_app
+
 from jobhunter.programs import scrape_desc
 from jobhunter.web import api
 from jobhunter.web.api import tableau
 
 RACINE = Path(__file__).resolve().parent.parent
 STATIQUE = RACINE / "src" / "jobhunter" / "web" / "static"
-JS = (STATIQUE / "app.js").read_text(encoding="utf-8")
+JS = js_app.source()
 HTML = (STATIQUE / "index.html").read_text(encoding="utf-8")
 CSS = (STATIQUE / "style.css").read_text(encoding="utf-8")
 

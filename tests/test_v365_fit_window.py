@@ -4,9 +4,11 @@ Candidatures in 3.64 (the user, 2026-10-28). Measured on the demo data: Relances
 
 from pathlib import Path
 
+import js_app
+
 STATIC = Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "web" / "static"
 CSS = (STATIC / "style.css").read_text(encoding="utf-8")
-JS = (STATIC / "app.js").read_text(encoding="utf-8")
+JS = js_app.source()
 
 
 def test_relances_tient_dans_la_fenetre():

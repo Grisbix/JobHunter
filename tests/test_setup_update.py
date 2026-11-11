@@ -5,6 +5,7 @@ silently once the window closes, then JobHunter opens again."""
 import sys
 from pathlib import Path
 
+import js_app
 import pytest
 
 from jobhunter import frozen, setup_update, signature
@@ -13,7 +14,7 @@ from jobhunter.web import api
 
 RACINE = Path(__file__).resolve().parent.parent
 ISS = (RACINE / "tools" / "installer" / "JobHunter.iss").read_text(encoding="utf-8-sig")
-JS = (RACINE / "src" / "jobhunter" / "web" / "static" / "app.js").read_text(encoding="utf-8")
+JS = js_app.source()
 
 
 def test_seulement_la_copie_de_l_installateur(monkeypatch, tmp_path):

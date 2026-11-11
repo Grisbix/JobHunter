@@ -6,9 +6,11 @@ and over the note below it ("text in the background")."""
 import re
 from pathlib import Path
 
+import js_app
+
 STATIC = Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "web" / "static"
 CSS = (STATIC / "style.css").read_text(encoding="utf-8")
-JS = (STATIC / "app.js").read_text(encoding="utf-8")
+JS = js_app.source()
 
 
 def test_six_colonnes_sur_une_ligne_a_1280():

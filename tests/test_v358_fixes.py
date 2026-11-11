@@ -9,6 +9,7 @@ import io
 import re
 from pathlib import Path
 
+import js_app
 from tests.test_documents_editing import _docx
 
 from jobhunter.documents import common, rendering
@@ -18,7 +19,7 @@ from jobhunter.web.api import Api
 
 STATIQUE = Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "web" / "static"
 CSS = (STATIQUE / "style.css").read_text(encoding="utf-8")
-JS = (STATIQUE / "app.js").read_text(encoding="utf-8")
+JS = js_app.source()
 
 
 # --- The update ---------------------------------------------------------------------

@@ -1,14 +1,12 @@
 """Statistiques without percentages unless asked for in Réglages (the user, 2026-11-04:
 « de base ils ne doivent pas y être, ça fait trop chargé »)."""
 
-from pathlib import Path
+import js_app
 
 from jobhunter.web import api
 from jobhunter.web.texts import TEXTES
 
-JS = (
-    Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "web" / "static" / "app.js"
-).read_text(encoding="utf-8")
+JS = js_app.source()
 
 
 def test_masques_par_defaut():

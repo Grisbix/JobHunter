@@ -10,6 +10,8 @@ the fixed behaviour.
 
 # --- 05: react_submit sent the page's first form ----------------------------------------
 
+import js_app
+
 
 def test_react_submit_ne_touche_que_le_bon_formulaire():
     import pytest
@@ -133,11 +135,8 @@ def test_linkedin_closed_suivi_illisible(tmp_path, monkeypatch):
 
 def test_annuler_est_branche():
     import re
-    from pathlib import Path
 
-    js = (
-        Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "web" / "static" / "app.js"
-    ).read_text(encoding="utf-8")
+    js = js_app.source()
     appels = [m.start() for m in re.finditer(r"annulerGeste\b", js)]
     definition = js.index("async function annulerGeste")
     assert [a for a in appels if a != definition + len("async function ")], "jamais appelé"
