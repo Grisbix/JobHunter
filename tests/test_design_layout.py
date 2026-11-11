@@ -85,6 +85,44 @@ def test_candidatures_vides_sur_toute_la_fenetre(outil, fenetre):
     assert k["haut"] > 0.5 * k["vue"], k  # and the height
 
 
+def test_une_colonne_du_tableau_n_est_pas_plus_haute_que_ses_cartes(outil, fenetre):
+    """Entretien with one card stood the whole window high (captures, 2026-11-11)."""
+    page = fenetre(1440)
+    outil.aller(page, "candidatures")
+    cols = page.evaluate("""() => [...document.querySelectorAll('.colonne-k')].map((c) => {
+      const cartes = [...c.querySelectorAll('.fiche-k')].filter((f) => !f.hidden);
+      if (!cartes.length) return null;
+      const bas = Math.max(...cartes.map((f) => f.getBoundingClientRect().bottom));
+      const r = c.getBoundingClientRect();
+      return { statut: c.dataset.statut, vide: r.bottom - bas, haut: r.height };
+    }).filter(Boolean)""")
+    assert cols, "le dossier fictif a au moins une candidature"
+    for c in cols:
+        # the padding and a « Voir les autres » button, or the column's min-height (200 px)
+        assert c["vide"] < 48 or c["haut"] <= 201, c
+
+
+def test_une_colonne_pleine_tient_dans_le_tableau_et_replie_le_reste(outil, fenetre):
+    """A column sized by its cards still stops at the board's height (ajusterKanban)."""
+    page = fenetre(1440)
+    outil.aller(page, "candidatures")
+    k = page.evaluate("""() => {
+      const col = document.querySelector('.colonne-k[data-statut="entretien"]');
+      const carte = col.querySelector('.fiche-k');
+      let bouton = col.querySelector('.deplier-k');
+      if (!bouton) { bouton = document.createElement('button'); bouton.className = 'bouton deplier-k'; col.append(bouton); }
+      for (let i = 0; i < 30; i++) col.insertBefore(carte.cloneNode(true), bouton);
+      ajusterKanban(document.getElementById('vue'));
+      const t = document.querySelector('.tableau-kanban').getBoundingClientRect();
+      const c = col.getBoundingClientRect();
+      return { bas: c.bottom, basTableau: t.bottom, cachees: col.querySelectorAll('.fiche-k[hidden]').length,
+               bouton: !bouton.hidden && bouton.textContent };
+    }""")
+    assert k["bas"] <= k["basTableau"] + 1, k
+    assert k["cachees"] > 0, k
+    assert k["bouton"] and "autres" in k["bouton"], k
+
+
 def test_l_aide_d_un_bouton_vient_au_survol_apres_un_moment(outil, fenetre):
     """`data-aide`: the user, 2026-11-05, « au bout de quelques secondes », not under the buttons."""
     page = fenetre(1000)

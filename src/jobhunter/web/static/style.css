@@ -229,7 +229,10 @@ h3 { font-size: var(--t-xl); font-weight: 500; }
 @media (min-width: 1100px) { .vue.plein .tableau-kanban { flex-wrap: nowrap; } }
 .vue.plein .colonne-k { overflow-y: auto; scrollbar-width: thin; }
 .vue.plein .colonne-k > * { flex: none; }
-.vue.plein .colonne-k.vide-k { align-self: flex-start; }
+/* A column is as tall as its cards, up to the board's height: Entretien with one card
+   stood the whole window high, an empty glass column under it (2026-11-11). The empty
+   board (.debut) keeps its columns over the whole window. */
+.vue.plein .tableau-kanban:not(.debut) .colonne-k { align-self: flex-start; max-height: 100%; }
 .barre-outils { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
 /* In a column the column's gap already separates it: 18px more made 38px. */
 .colonne > .barre-outils { margin-bottom: 0; }
@@ -913,11 +916,14 @@ td.actions-ligne > * { margin: 4px 0 4px 8px; vertical-align: middle; }
 .etat-source.ok { color: #2f7a4f; }
 .etat-source.ko { color: #b2432f; }
 .etat-source.ancien { color: #a8701d; }
-.cartes-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+/* auto-fit: six figures share the row (auto-fill left a seventh, empty track); 120 px keeps
+   the six on one line at 1000 px, where 150 sent the last one alone below (2026-11-11). */
+.cartes-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px; }
 .carte-stat { padding: 16px 20px; border-radius: 18px; }
 .carte-stat .chiffre { font-size: var(--t-4xl); font-weight: 400; }
 .ligne-barre { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr auto; gap: 12px; align-items: center; font-size: var(--t-m); padding: 4px 0; }
-.ligne-barre .nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Two lines before the ellipsis: « dossiers pr… », « sans CV ou … » said nothing (2026-11-11). */
+.ligne-barre .nom { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; overflow-wrap: anywhere; }
 .ligne-barre .piste { height: 8px; border-radius: 4px; background: var(--piste); overflow: hidden; }
 .ligne-barre .rempli { display: block; height: 100%; background: var(--degrade-h); border-radius: 4px; }
 .ligne-barre .num { color: var(--gris); font-variant-numeric: tabular-nums; min-width: 70px; text-align: right; }

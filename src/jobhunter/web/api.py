@@ -68,8 +68,15 @@ def _python() -> str:
 
 
 def _date(texte: Any) -> date | None:
+    return _date_texte(str(texte or ""))
+
+
+@cache
+def _date_texte(texte: str) -> date | None:
+    # Cached: a few hundred distinct dates for 19 500 offers, and strptime cost 0.29 s
+    # per sort by date on the offers screen (2026-11-11).
     try:
-        return datetime.strptime(str(texte or ""), "%Y-%m-%d").date()
+        return datetime.strptime(texte, "%Y-%m-%d").date()
     except ValueError:
         return None
 
@@ -1151,8 +1158,12 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         2026-11-05: « regarde le temps d'ouverture de l'app »).
         """
         try:
-            self._file()
+            file = self._file()
             self._suivi()
+            # Then each place's country and region, cached: the offers screen's first
+            # page spent 0.86 s on them (6 685 places, 2026-11-11).
+            for lieu in {str(o.get("localisation") or "") for o in file}:
+                _region(lieu)
         except Exception:  # noqa: BLE001 — the page reads them again and says what failed
             pass
 
@@ -1193,10 +1204,11 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         from jobhunter.links import existe
 
         d = tableau(self._file(), self._suivi())
-        bonnes = [o for o in self._file() if (o.get("fit") or 0) >= seuil_bon()]
+        seuil = seuil_bon()  # once: it reads the profile, and was called per offer
+        bonnes = [o for o in self._file() if (o.get("fit") or 0) >= seuil]
         prets = sum(1 for o in bonnes if existe(o.get("cv")) and existe(o.get("lettre")))
         d["documents"] = {
-            "seuil": seuil_bon(),
+            "seuil": seuil,
             "bonnes": len(bonnes),
             "prets": prets,
             "a_preparer": len(bonnes) - prets,
