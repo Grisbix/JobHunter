@@ -4,6 +4,19 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.87.0 — 2026-11-11
+
+Tidier screens, a home page that counts right, and one follow-up date everywhere.
+
+- **The home page no longer counts as « to process » the offers you already applied to.** On a real queue, 27 offers were counted twice.
+- **One follow-up date everywhere: 7 days.** The application suggested a follow-up after 7 days, `jobhunter relances` and the weekly figures after 10. All three now say 7, the date of the first follow-up letter.
+- **Candidatures: each column is as tall as its cards.** A column with two cards no longer stretches down to the bottom of the window; a full one scrolls inside the board.
+- **Statistics read better.** The figure cards share the width whatever the window size, long names wrap over two lines instead of being cut, and « 1 candidature envoyée » takes no « s ».
+- **The offers list opens faster**: dates and regions are read once, not at every sort.
+- **The sandbox (`jobhunter sandbox`) now has four applications** (applied, followed up, refused) to try the Candidatures and Statistics screens.
+- **`jobhunter collect --fusion-seule` on a folder never scanned** says « Aucun scan à fusionner » instead of stopping with an error.
+- The README and Store screenshots show today's screens. For contributors: the page's script is split into nine files by area, and a test keeps their load order.
+
 ## 3.86.2 — 2026-11-10
 
 A faster sorting, and an offer sheet that opens at once.
