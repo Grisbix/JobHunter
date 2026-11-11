@@ -1088,7 +1088,7 @@ function carteRetours(r) {
   const part = (n) => Math.round(100 * n / r.envoyees);
   const delai = r.delai_median == null ? "" : ` · réponse en ${nombre(Math.round(r.delai_median))} j (médiane)`;
   return h("div", { class: "zones retours" }, ...titre,
-    h("div", { class: "sous", style: "margin-bottom:16px" }, `${nombre(r.envoyees)} candidatures envoyées${delai}`),
+    h("div", { class: "sous", style: "margin-bottom:16px" }, `${nombre(r.envoyees)} candidature${r.envoyees > 1 ? "s" : ""} envoyée${r.envoyees > 1 ? "s" : ""}${delai}`),
     [["Réponses", r.reponses, "Entretien ou refus"], ["Entretiens", r.entretiens, "Les réponses qui ont mené à un entretien"],
      ["Sans réponse", r.silence, "Envoyées il y a 30 jours et plus, sans réponse"]].map(([lab, n, explication]) =>
       aide(h("div", { class: "zone" },

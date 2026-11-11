@@ -113,8 +113,13 @@ _PONT = screenshots._PONT
 
 
 def dossier_fictif(racine: Path, candidatures: bool = True) -> None:
-    """The README screenshots' folder; without applications, Candidatures' empty state."""
+    """The README screenshots' folder; without applications, Candidatures' empty state.
+
+    Scored like the README's (tools/screenshots.py): without it every offer showed 0 and
+    the captures looked at an empty application (2026-11-11).
+    """
     screenshots.sandbox.preparer(racine)
+    screenshots.python(racine, "-c", screenshots._SCORER)
     if not candidatures:
         (racine / "data" / "applications.json").write_text("{}", encoding="utf-8")
 

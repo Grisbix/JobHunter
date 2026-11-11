@@ -623,15 +623,15 @@ TEXTES: dict[str, tuple[str, str, str]] = {
         "Noch keine Bewerbung gesendet.",
         "Ninguna candidatura enviada por ahora.",
     ),
-    "{n} candidatures envoyées": (
-        "{n} applications sent",
-        "{n} Bewerbungen gesendet",
-        "{n} candidaturas enviadas",
+    "{n} candidature{s} envoyée{s}": (
+        "{n} application{s} sent",
+        "{n} Bewerbung(en) gesendet",
+        "{n} candidatura{s} enviada{s}",
     ),
-    "{n} candidatures envoyées · réponse en {j} j (médiane)": (
-        "{n} applications sent · answer in {j} d (median)",
-        "{n} Bewerbungen gesendet · Antwort in {j} T. (Median)",
-        "{n} candidaturas enviadas · respuesta en {j} d (mediana)",
+    "{n} candidature{s} envoyée{s} · réponse en {j} j (médiane)": (
+        "{n} application{s} sent · answer in {j} d (median)",
+        "{n} Bewerbung(en) gesendet · Antwort in {j} T. (Median)",
+        "{n} candidatura{s} enviada{s} · respuesta en {j} d (mediana)",
     ),
     "Sans réponse": ("No answer", "Ohne Antwort", "Sin respuesta"),
     "Entretien ou refus": (
