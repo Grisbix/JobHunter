@@ -49,6 +49,20 @@ def test_meilleures_seulement_a_traiter_par_fit_puis_fit_fin():
     assert d["stats"]["neuf"] == 2
 
 
+def test_l_accueil_ne_compte_pas_les_offres_deja_suivies_comme_a_traiter():
+    # As the offers screen's « À traiter »: an offer applied to or dismissed is no longer
+    # among the best offers nor in « notées 8+ à traiter » (2026-11-11).
+    file = [_offre("A", "a", 10), _offre("B", "b", 9), _offre("C", "c", 9)]
+    suivi = {
+        "A|a": {"s": "relancé", "d": "2026-10-20"},
+        "C|c": {"s": "mauvaise", "d": "2026-10-24"},
+    }
+    d = tableau(file, suivi, JOUR)
+    assert [o["entreprise"] for o in d["meilleures"]] == ["B"]
+    assert d["stats"]["neuf"] == 1
+    assert offres(file, suivi)["total"] == 1  # the same count as the offers screen
+
+
 def test_relances_apres_sept_jours_et_candidatures_sans_les_ecartees():
     suivi = {
         "A|a": {"s": "postulé", "d": "2026-10-10"},

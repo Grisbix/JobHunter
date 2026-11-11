@@ -52,6 +52,11 @@ from jobhunter.types import Candidature, Chemin, Preuve, Suivi
 
 CHEMIN = racine.dans(racine.scripts(), "suivi.json")
 
+# Days without an answer before an application is due a follow-up: the first draft is
+# the J+7 template. One threshold for the app, `jobhunter relances` and the weekly
+# metrics: the app said 7 days, the two programs 10 (2026-11-11).
+JOURS_RELANCE = 7
+
 
 class VerrouIndisponible(RuntimeError):
     """Another program is modifying the tracker and did not release it in time."""

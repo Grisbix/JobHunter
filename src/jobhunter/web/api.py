@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from jobhunter.storage import atomic as _atomique
+from jobhunter.storage.applications import JOURS_RELANCE as _JOURS_RELANCE
 from jobhunter.storage.applications import SuiviIllisible as _SuiviIllisible
 from jobhunter.storage.queue import oid as _oid  # one key definition (audit 2026-11-03)
 from jobhunter.web.background import FondApi
@@ -38,7 +39,7 @@ ENVOYEES = ("postulé", "relancé", "entretien", "refus")
 # Entries of the follow-up file that are not applications (offer set aside).
 ECARTEES = ("mauvaise", "pas intéressé", "expiré")
 # A follow-up is due after this many days (the J+7 template).
-JOURS_RELANCE = 7
+JOURS_RELANCE = _JOURS_RELANCE  # storage.applications: one threshold everywhere
 _RX_SCAN = re.compile(r"^Scan (\d{4}-\d{2}-\d{2})$")
 # A profile switch: seconds the old window stays once the new one says it is drawn.
 RELAIS_MARGE = 0.25
@@ -111,7 +112,12 @@ def tableau(
     derniers = sorted(scans)[-7:]
     collecte = [{"jour": j, "n": scans[j]} for j in derniers]
 
-    a_traiter = [o for o in offres if _RX_SCAN.match(str(o.get("statut") or ""))]
+    # To process, as on the offers screen: from a scan, and not followed yet. An offer one
+    # had applied to (or dismissed) still counted among « notées 8+ à traiter » and
+    # showed among the best offers (2026-11-11).
+    a_traiter = [
+        o for o in offres if _RX_SCAN.match(str(o.get("statut") or "")) and _oid(o) not in suivi
+    ]
     # Six at most: the page shows as many as the chart beside them is tall (ajusterAccueil).
     meilleures = sorted(a_traiter, key=lambda o: (-_fit(o), -_fit(o, "fit_fin")))[:6]
 

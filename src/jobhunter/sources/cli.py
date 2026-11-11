@@ -254,6 +254,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 3
 
     if a.fusion_seule:
+        # A folder that never collected has no scan to merge: say so, do not crash
+        # (FileNotFoundError in a new sandbox, 2026-11-11).
+        if not FRESH.is_file():
+            print(f"Aucun scan à fusionner : {FRESH.name} absent.")  # noqa: T201
+            return 0
         return _fusionner(json.loads(FRESH.read_text(encoding="utf-8")), a.dry)
     # `monde` in the profile (first launch since 3.53): false = the home country only,
     # a list = the home country and those countries; absent = the whole world.
