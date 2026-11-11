@@ -103,6 +103,13 @@ with queue_io.transaction() as q:
 """
 
 
+def _il_y_a(jours: int) -> str:
+    """The date `jours` days ago, as the applications write it (YYYY-MM-DD)."""
+    import datetime
+
+    return (datetime.date.today() - datetime.timedelta(days=jours)).isoformat()
+
+
 def preparer(racine: Path) -> None:
     """The fictitious data folder, in the 3.0 layout."""
     jour = time.strftime("%Y-%m-%d")
@@ -157,7 +164,24 @@ def preparer(racine: Path) -> None:
             "s": "entretien",
             "d": jour,
             "h": [["2026-10-01", "postulé"], [jour, "entretien"]],
-        }
+        },
+        # 3.87: one application per column, so the board, the follow-ups and the
+        # statistics show something (one card alone looked like an empty application)
+        "Groupe Orion|Responsible Investment Associate": {
+            "s": "postulé",
+            "d": _il_y_a(12),
+            "h": [[_il_y_a(12), "postulé"]],
+        },
+        "Maison Verte|CSRD Reporting Officer": {
+            "s": "relancé",
+            "d": _il_y_a(6),
+            "h": [[_il_y_a(27), "postulé"], [_il_y_a(6), "relancé"]],
+        },
+        "Kanaal Partners|ESG Data Analyst": {
+            "s": "refus",
+            "d": _il_y_a(4),
+            "h": [[_il_y_a(18), "postulé"], [_il_y_a(4), "refus"]],
+        },
     }
     (racine / "data" / "applications.json").write_text(
         json.dumps(suivi, ensure_ascii=False, indent=1), encoding="utf-8"

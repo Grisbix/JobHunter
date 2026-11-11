@@ -111,7 +111,12 @@ def tableau(
     derniers = sorted(scans)[-7:]
     collecte = [{"jour": j, "n": scans[j]} for j in derniers]
 
-    a_traiter = [o for o in offres if _RX_SCAN.match(str(o.get("statut") or ""))]
+    # To process, as on the offers screen: from a scan, and not followed yet. An offer one
+    # had applied to (or dismissed) still counted among « notées 8+ à traiter » and
+    # showed among the best offers (2026-11-11).
+    a_traiter = [
+        o for o in offres if _RX_SCAN.match(str(o.get("statut") or "")) and _oid(o) not in suivi
+    ]
     # Six at most: the page shows as many as the chart beside them is tall (ajusterAccueil).
     meilleures = sorted(a_traiter, key=lambda o: (-_fit(o), -_fit(o, "fit_fin")))[:6]
 
