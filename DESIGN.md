@@ -56,6 +56,12 @@ the data on opaque cards (`carte`). Light by default, with a dark mode
 (`:root.mode-sombre`). The reference is `src/jobhunter/web/static/style.css`: this file
 follows it, never the reverse.
 
+The page's code is `app.js` (shared helpers, icons, language, data access) then one
+`app_*.js` per area, in `index.html`'s order: classic scripts sharing one global scope,
+since the window opens the page from `file://`, where ES modules do not load. A line
+that runs while a script loads may only use what earlier scripts declared
+(`tests/test_js_ordre.py`); tests read the whole code through `tests/js_app.py`.
+
 ## Colors
 
 - The accent family (`c1`, `c1b`, `c2`, `c3`, `terre`, `brun`, `moyen1`, `moyen2`,

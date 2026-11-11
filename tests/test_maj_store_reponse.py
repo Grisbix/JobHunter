@@ -3,6 +3,7 @@
 
 import subprocess
 
+import js_app
 import pytest
 
 from jobhunter import frozen, store_update
@@ -94,11 +95,10 @@ def test_app_introuvable_dans_le_store_pas_d_erreur(store):
 
 
 def test_fenetre_dit_l_attente_et_l_erreur():
-    from pathlib import Path
 
     from jobhunter.web.texts import TEXTES
 
-    js = (Path(api.__file__).parent / "static" / "app.js").read_text(encoding="utf-8")
+    js = js_app.source()
     assert "v.erreur" in js and "arrive dans le Microsoft Store" in js
     for cle in (
         "Le Microsoft Store ne répond pas ({x}) : réessaie plus tard.",
@@ -171,7 +171,6 @@ def test_store_rien_de_pret_rien_a_la_fermeture(appli_store):
 
 
 def test_store_bouton_passe_par_le_store():
-    from pathlib import Path
 
-    js = (Path(api.__file__).parent / "static" / "app.js").read_text(encoding="utf-8")
+    js = js_app.source()
     assert "v.pret && !v.store ? (() => installerMaj()) : clicMaj" in js

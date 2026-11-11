@@ -6,6 +6,7 @@ Synthetic profile and documents only (public repository).
 import json
 from pathlib import Path
 
+import js_app
 import pytest
 from docx import Document
 
@@ -14,7 +15,7 @@ from jobhunter.web import api, trades
 
 RACINE = Path(__file__).resolve().parent.parent
 STATIQUE = RACINE / "src" / "jobhunter" / "web" / "static"
-JS = (STATIQUE / "app.js").read_text(encoding="utf-8")
+JS = js_app.source()
 CSS = (STATIQUE / "style.css").read_text(encoding="utf-8")
 
 PROFIL = {

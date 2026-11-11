@@ -3,12 +3,14 @@
 import subprocess
 from pathlib import Path
 
+import js_app
+
 from jobhunter import store_update
 from jobhunter.programs import update
 from jobhunter.web import api
 
 RACINE = Path(__file__).resolve().parent.parent
-JS = (RACINE / "src" / "jobhunter" / "web" / "static" / "app.js").read_text(encoding="utf-8")
+JS = js_app.source()
 
 
 def _sortie(monkeypatch, texte, code=0):

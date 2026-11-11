@@ -10,6 +10,7 @@ import threading
 import time
 from pathlib import Path
 
+import js_app
 import pytest
 
 from jobhunter.programs import daily_pipeline
@@ -18,7 +19,7 @@ from jobhunter.storage import queue as queue_io
 from jobhunter.web import api
 
 RACINE = Path(__file__).resolve().parent.parent
-JS = (RACINE / "src" / "jobhunter" / "web" / "static" / "app.js").read_text(encoding="utf-8")
+JS = js_app.source()
 
 
 # --- lock: one owner per thread ---------------------------------------------------------

@@ -9,12 +9,13 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import js_app
 import pytest
 
 from jobhunter.web.texts import TEXTES
 
 STATIQUE = Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "web" / "static"
-JS = (STATIQUE / "app.js").read_text(encoding="utf-8")
+JS = js_app.source()
 CSS = (STATIQUE / "style.css").read_text(encoding="utf-8")
 
 

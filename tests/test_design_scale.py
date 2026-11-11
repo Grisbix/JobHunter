@@ -7,12 +7,12 @@ screen at a time; the result read as unfinished. A new size goes through a token
 import re
 from pathlib import Path
 
+import js_app
+
 CSS = (
     Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "web" / "static" / "style.css"
 ).read_text(encoding="utf-8")
-JS = (
-    Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "web" / "static" / "app.js"
-).read_text(encoding="utf-8")
+JS = js_app.source()
 
 ESPACEMENTS = {0, 1, 2, 4, 8, 12, 16, 20, 24, 32, 40, 48}
 

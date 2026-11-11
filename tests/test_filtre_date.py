@@ -3,14 +3,13 @@ filtre sur la date de l'offre »). Publication date, else the day it was seen, e
 scan; an offer with no date is left out while the filter is on."""
 
 from datetime import date, timedelta
-from pathlib import Path
+
+import js_app
 
 from jobhunter.web import api
 from jobhunter.web.texts import TEXTES
 
-JS = (
-    Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "web" / "static" / "app.js"
-).read_text(encoding="utf-8")
+JS = js_app.source()
 
 
 def _jour(n):

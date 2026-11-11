@@ -6,6 +6,7 @@ CVs were still there (the installer asks with « No » by default, the Store can
 
 from pathlib import Path
 
+import js_app
 import pytest
 
 from jobhunter import frozen, profiles, scheduling
@@ -13,7 +14,7 @@ from jobhunter.programs import shortcut, update
 from jobhunter.web import api
 
 RACINE = Path(__file__).resolve().parent.parent
-JS = (RACINE / "src" / "jobhunter" / "web" / "static" / "app.js").read_text(encoding="utf-8")
+JS = js_app.source()
 
 
 class _Fenetre:

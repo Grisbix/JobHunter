@@ -7,6 +7,7 @@ import re
 import sys
 from pathlib import Path
 
+import js_app
 import pytest
 
 from jobhunter.programs import follow_ups
@@ -15,7 +16,7 @@ from jobhunter.web import api, i18n, messages
 from jobhunter.web.texts import TEXTES
 
 STATIQUE = Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "web" / "static"
-JS = (STATIQUE / "app.js").read_text(encoding="utf-8")
+JS = js_app.source()
 
 
 # --- No button asks for something that does not exist ----------------------------------------

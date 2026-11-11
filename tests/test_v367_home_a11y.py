@@ -4,11 +4,13 @@ signals of a ghost offer (republished, same text elsewhere, knock-out condition)
 
 from pathlib import Path
 
+import js_app
+
 from jobhunter.web import api
 
 STATIC = Path(__file__).resolve().parent.parent / "src" / "jobhunter" / "web" / "static"
 CSS = (STATIC / "style.css").read_text(encoding="utf-8")
-JS = (STATIC / "app.js").read_text(encoding="utf-8")
+JS = js_app.source()
 HTML = (STATIC / "index.html").read_text(encoding="utf-8")
 
 

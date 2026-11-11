@@ -6,6 +6,7 @@ Synthetic documents only (public repository).
 import json
 from pathlib import Path
 
+import js_app
 import pytest
 from docx import Document
 
@@ -15,7 +16,7 @@ from jobhunter.storage import applications
 from jobhunter.web import api
 
 RACINE = Path(__file__).resolve().parent.parent
-JS = (RACINE / "src" / "jobhunter" / "web" / "static" / "app.js").read_text(encoding="utf-8")
+JS = js_app.source()
 
 
 def _docx(tmp_path):
