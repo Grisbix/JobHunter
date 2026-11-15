@@ -25,6 +25,7 @@ def outil(tmp_path, monkeypatch):
     monkeypatch.setattr(m, "MODULE", module)
     monkeypatch.setattr(m, "RACINE", tmp_path)
     monkeypatch.setattr(m, "REFUSEES", tmp_path / "prive" / "versions_refusees.txt")
+    monkeypatch.setattr(m, "_msix", lambda version: None)  # a release without a Store package
     return m
 
 

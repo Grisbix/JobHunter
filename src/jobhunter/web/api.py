@@ -1425,32 +1425,39 @@ class Api(PanneauxApi, AtelierApi, MetiersApi, CandidatureApi, FondApi, Bienvenu
         for genre, dossier in _dossiers_documents().items():
             if not dossier.is_dir():
                 continue
-            for p in dossier.iterdir():
-                if p.suffix.lower() not in (".pdf", ".docx"):
+            # os.scandir, not Path.iterdir: Windows gives each file's date with the
+            # listing, where p.stat() asked the disk again for each of 11 000 documents
+            # (0.14 s of this screen's 0.42 s, 2026-11-15).
+            with os.scandir(dossier) as entrees:
+                documents = [(e.name, e.path, e.stat().st_mtime) for e in entrees]
+            for nom_fichier, chemin, modifie in documents:
+                stem, suffixe = os.path.splitext(nom_fichier)
+                suffixe = suffixe.lower()
+                if suffixe not in (".pdf", ".docx"):
                     continue
-                existants.setdefault(genre, set()).add(p.stem.lower())
+                cle = stem.lower()
+                existants.setdefault(genre, set()).add(cle)
                 if seul in ("CV", "Lettre") and genre != seul:
                     continue
-                if mots and not all(m in p.stem.lower() for m in mots):
+                if mots and not all(m in cle for m in mots):
                     continue
-                offre, statut = a_qui.get(p.stem.lower(), ("", ""))
+                offre, statut = a_qui.get(cle, ("", ""))
                 if en_cours and statut not in ENVOYEES:
                     continue
-                st = p.stat()
-                date = datetime.fromtimestamp(st.st_mtime).date().isoformat()
+                date = datetime.fromtimestamp(modifie).date().isoformat()
                 # Windows ignores case: « CV_X.pdf » and « cv_x.docx » are one document.
                 d = par_doc.setdefault(
-                    (genre, p.stem.lower()),
+                    (genre, cle),
                     {
                         "genre": genre,
-                        "nom": p.stem.replace("_", " "),
+                        "nom": stem.replace("_", " "),
                         "date": date,
                         "offre": offre,
                         "statut": statut,
                     },
                 )
                 d["date"] = max(d["date"], date)
-                d[p.suffix[1:].lower()] = str(p)
+                d[suffixe[1:]] = chemin
         fichiers = [
             {
                 **{k: v for k, v in d.items() if k not in ("docx", "pdf")},

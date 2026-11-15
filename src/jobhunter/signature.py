@@ -7,8 +7,9 @@ made **outside GitHub**, with a private key that never leaves the author's compu
 (`tools/signature.py`); the application only knows the public key, written here.
 
 What is signed: the **manifest** of a version — its number, the SHA-256 fingerprint of
-each file of the program (the ZIP of the `v<version>` tag) and that of
-`JobHunterSetup.exe`. It is published with the release, in `signature.json`.
+each file of the program (the ZIP of the `v<version>` tag), that of
+`JobHunterSetup.exe` and, since 3.88, that of `JobHunter.msix` (the Microsoft Store's
+package). It is published with the release, in `signature.json`.
 
 As long as `CLE_PUBLIQUE` is empty, no version is signed: the update happens as before
 and says so. As soon as it is set, a version without a valid signature is refused.
@@ -157,13 +158,23 @@ def octets(manifeste: dict[str, Any]) -> bytes:
     return json.dumps(manifeste, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
 
 
-def manifeste(version: str, fichiers: dict[str, bytes], setup: bytes | None) -> dict[str, Any]:
-    """What is signed for a version: its files and its installer, by fingerprint."""
-    return {
+def manifeste(
+    version: str, fichiers: dict[str, bytes], setup: bytes | None, msix: bytes | None = None
+) -> dict[str, Any]:
+    """What is signed for a version: its files, its installer and its Store package.
+
+    `msix` (3.88): the release's JobHunter.msix, the file the CI sends to the Microsoft
+    Store. The key is absent when the release has no package, so a manifest without one
+    is byte for byte what it was before.
+    """
+    m: dict[str, Any] = {
         "version": version,
         "fichiers": {rel: hashlib.sha256(b).hexdigest() for rel, b in sorted(fichiers.items())},
         "setup": hashlib.sha256(setup).hexdigest() if setup is not None else None,
     }
+    if msix is not None:
+        m["msix"] = hashlib.sha256(msix).hexdigest()
+    return m
 
 
 def emballer(secret: bytes, m: dict[str, Any]) -> bytes:
@@ -216,3 +227,19 @@ def controler_setup(m: dict[str, Any], setup: bytes) -> None:
     """
     if not m.get("setup") or m["setup"] != hashlib.sha256(setup).hexdigest():
         raise SignatureInvalide("JobHunterSetup.exe diffère de la version signée")
+
+
+def controler_msix(m: dict[str, Any], msix: bytes) -> bool:
+    """The Store package is the one the author signed; False when the manifest names none.
+
+    A manifest signed before 3.88 has no `msix` entry: nothing to compare with, which the
+    caller says (tools/installer/check_msix.py), instead of refusing every older release.
+
+    Raises:
+        SignatureInvalide: the manifest names a package, and this is not it.
+    """
+    if "msix" not in m:
+        return False
+    if m["msix"] != hashlib.sha256(msix).hexdigest():
+        raise SignatureInvalide("JobHunter.msix diffère de la version signée")
+    return True

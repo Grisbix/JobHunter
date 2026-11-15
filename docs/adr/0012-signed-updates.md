@@ -54,3 +54,9 @@ Options ruled out:
 - **Losing the private key** prevents any automatic update: every installation
   would have to take the installer by hand. The author backs it up off the computer.
 - A repository cloned with git (developer) is not concerned: `git pull` follows the repository.
+- **The Microsoft Store's package (3.88).** The manifest also carries the fingerprint of
+  `JobHunter.msix`, and the CI's `store` job sends a release's package only when it matches
+  (`tools/installer/check_msix.py`); an unsigned release is not sent, the signature starts
+  the sending. Until then the Store's users had Microsoft's certification only. Limit: the
+  check runs in the repository's own workflow, so it covers a replaced release file, not a
+  rewritten repository.

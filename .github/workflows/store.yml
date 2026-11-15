@@ -6,13 +6,17 @@ name: store
 # first submission is made by hand, Microsoft's API only updates a live app.
 # The Store still certifies each update before users get it.
 #
-# Two ways in (3.85, test releases):
-# - called by installer.yml once a release's MSIX is attached (a release published
-#   directly);
+# Only a package the author signed is sent (3.88): `signature.json` carries the
+# fingerprint of JobHunter.msix, checked here (tools/installer/check_msix.py). A release
+# without a signature yet is not sent: the signature sends it.
+#
+# Three ways in:
 # - `released`: a test release (pre-release) becomes the release (tools/release.py
-#   publier). Its MSIX was attached when the test release was built. For a release
-#   published directly, this event comes before the MSIX exists: nothing to send,
-#   installer.yml sends it.
+#   publier). Its MSIX and its signature were attached while it was a test release.
+# - called by installer.yml once a directly published release's MSIX is attached: the
+#   signature is not there yet, nothing is sent;
+# - by hand or by `tools/signature.py signer --publier`, with the tag: a directly
+#   published release, once signed.
 # A test release never goes to the Store: it is for the copies that asked for it.
 
 on:
@@ -21,6 +25,12 @@ on:
   workflow_call:
     inputs:
       tag:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Étiquette de la release à envoyer (v3.88.0)"
         required: true
         type: string
 
@@ -33,17 +43,33 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
-      - name: MSIX de la release
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: MSIX et signature de la release
         id: msix
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
           # Never a ${{ }} expression in the script: the name comes from the environment.
           TAG: ${{ inputs.tag || github.event.release.tag_name }}
+          PYTHONIOENCODING: utf-8
         run: |
-          gh release download $env:TAG --pattern JobHunter.msix --repo $env:GITHUB_REPOSITORY
-          if (Test-Path JobHunter.msix) { "envoyer=1" >> $env:GITHUB_OUTPUT }
-          else { Write-Output "pas encore de MSIX pour $env:TAG : installer.yml l'enverra" }
+          $test = gh release view $env:TAG --json isPrerelease --jq .isPrerelease --repo $env:GITHUB_REPOSITORY
+          if ($LASTEXITCODE -ne 0) { Write-Error "release $env:TAG introuvable"; exit 1 }
+          if ($test -eq 'true') { Write-Output "::notice::$env:TAG est une version de test : rien ne part au Store"; exit 0 }
+          # A missing file is not a failure here: gh's exit code must not end the step
+          # (3.85.0 finished red after saying that installer.yml would send it).
+          gh release download $env:TAG --pattern JobHunter.msix --pattern signature.json --dir envoi --repo $env:GITHUB_REPOSITORY
+          $global:LASTEXITCODE = 0
+          if (-not (Test-Path envoi\JobHunter.msix)) { Write-Output "::notice::pas encore de MSIX pour $env:TAG : installer.yml l'attache"; exit 0 }
+          if (-not (Test-Path envoi\signature.json)) { Write-Output "::notice::$env:TAG n'est pas encore signée : la signature lancera l'envoi"; exit 0 }
+          python tools/installer/check_msix.py $env:TAG envoi\JobHunter.msix envoi\signature.json
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          "envoyer=1" >> $env:GITHUB_OUTPUT
       - uses: microsoft/microsoft-store-apppublisher@cc9910a8d59f2eb55cbb83df0a3800cf3b5300e0  # v1.4
         if: steps.msix.outputs.envoyer == '1'
         with:
@@ -61,5 +87,5 @@ jobs:
         run: |
           msstore reconfigure --tenantId $env:TENANT --sellerId $env:SELLER --clientId $env:CLIENT --clientSecret $env:SECRET
           if ($LASTEXITCODE -ne 0) { exit 1 }
-          msstore publish (Resolve-Path JobHunter.msix).Path -id $env:PRODUIT
+          msstore publish (Resolve-Path envoi\JobHunter.msix).Path -id $env:PRODUIT
           if ($LASTEXITCODE -ne 0) { exit 1 }

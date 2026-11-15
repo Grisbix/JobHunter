@@ -115,7 +115,7 @@ def _procs_profil():
 
     ps = (
         "Get-CimInstance Win32_Process | Where-Object { "
-        "$_.Name -eq 'chrome.exe' -and $_.CommandLine -like '*apply_runner_chrome*' } | "
+        "$_.Name -in 'chrome.exe', 'msedge.exe' -and $_.CommandLine -like '*apply_runner_chrome*' } | "
         "ForEach-Object { [string]$_.ProcessId + ' ' + [string]$_.ParentProcessId }"
     )
     try:
@@ -215,6 +215,7 @@ def cmd_open(host):
     # dedicated profile, the one that apply_runner and --check use.
     try:
         from jobhunter.navigation import get_sync_playwright
+        from jobhunter.navigation.browser import contexte_persistant
 
         sp, _ = get_sync_playwright("auto")
     except Exception:  # noqa: BLE001
@@ -225,9 +226,9 @@ def cmd_open(host):
     print("  Connecte-toi dans la fenetre, puis FERME-LA : la session est conservee.")
     with sp() as p:
         try:
-            ctx = p.chromium.launch_persistent_context(
+            ctx = contexte_persistant(
+                p.chromium,
                 user_data_dir=str(PROFIL),
-                channel="chrome",
                 headless=False,
                 args=["--no-first-run", "--no-default-browser-check"],
                 no_viewport=True,
@@ -308,6 +309,7 @@ def cmd_check(limit_hosts=None):
     hosts = [h for h in SITES_CONNEXION if not limit_hosts or h in limit_hosts]
     try:
         from jobhunter.navigation import analyze, dismiss_cookies, get_sync_playwright
+        from jobhunter.navigation.browser import contexte_persistant
 
         sp, eng = get_sync_playwright("auto")
     except Exception as e:  # noqa: BLE001
@@ -321,9 +323,9 @@ def cmd_check(limit_hosts=None):
             # "Vous utilisez un indicateur de ligne de commande non pris en
             # charge". This script only READS a session state, it does not
             # aucun besoin de furtivite.
-            ctx = p.chromium.launch_persistent_context(
+            ctx = contexte_persistant(
+                p.chromium,
                 user_data_dir=str(PROFIL),
-                channel="chrome",
                 headless=False,
                 args=["--no-first-run", "--no-default-browser-check"],
                 no_viewport=True,
@@ -393,6 +395,7 @@ def cmd_open_all(only=None):
 
     try:
         from jobhunter.navigation import get_sync_playwright
+        from jobhunter.navigation.browser import contexte_persistant
 
         sp, _ = get_sync_playwright("auto")
     except Exception:  # noqa: BLE001
@@ -403,9 +406,9 @@ def cmd_open_all(only=None):
     print(f"{len(sites)} onglet(s) — connecte-toi dans chacun, puis FERME les onglets.")
     with sp() as p:
         try:
-            ctx = p.chromium.launch_persistent_context(
+            ctx = contexte_persistant(
+                p.chromium,
                 user_data_dir=str(PROFIL),
-                channel="chrome",
                 headless=False,
                 args=["--no-first-run", "--no-default-browser-check"],
                 no_viewport=True,

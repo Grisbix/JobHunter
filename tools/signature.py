@@ -21,8 +21,8 @@ signing whatever appears on GitHub automatically would also sign what an attacke
 took the GitHub account published, which is exactly what the signature is for (ADR 0012).
 
 `signer` downloads what the installations will download — the ZIP of the
-`v<version>` tag and the `JobHunterSetup.exe` attached by the CI —, builds the manifest,
-signs it and writes `signature.json`. `--publier` attaches it to the release
+`v<version>` tag, the `JobHunterSetup.exe` and the `JobHunter.msix` attached by the CI —,
+builds the manifest, signs it and writes `signature.json`. `--publier` attaches it to the release
 (`gh release upload`). Run it **after** the release's "installer" workflow has
 finished: without the installer, the installed application would refuse the update.
 """
@@ -79,6 +79,30 @@ def _get(url: str) -> bytes:
         return bytes(r.read())
 
 
+MSIX = "JobHunter.msix"
+
+
+def _msix(version: str) -> bytes | None:
+    """The release's Store package; None when the CI attached none (its step may fail)."""
+    import urllib.error
+
+    try:
+        return _get(maj.ASSET_URL.format(version, MSIX))
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return None
+        raise
+
+
+def _version_de_test(version: str) -> bool:
+    """True for a test release (pre-release), which never goes to the Store."""
+    vue = ("release", "view", f"v{version}", "--json", "isPrerelease", "-R", maj.DEPOT)
+    try:
+        return bool(json.loads(_gh(*vue, check=False).stdout)["isPrerelease"])
+    except (ValueError, KeyError, TypeError):
+        return True  # unknown: nothing sent; the `store` workflow can be run by hand
+
+
 def creer_cle() -> int:
     if CLE_PRIVEE.exists():
         print(f"Une clé existe déjà ({CLE_PRIVEE}) : rien n'est remplacé.")
@@ -121,17 +145,30 @@ def signer(version: str, publier: bool) -> int:
     if (fichiers.get("VERSION") or b"").decode().strip() != version:
         print("! Le VERSION de l'étiquette n'est pas cette version : rien n'est signé.")
         return 1
-    contenu = sig.emballer(secret, sig.manifeste(version, fichiers, setup))
+    msix = _msix(version)
+    contenu = sig.emballer(secret, sig.manifeste(version, fichiers, setup, msix))
     m = sig.ouvrir(contenu, version)  # read back as each installation will
     sig.controler_fichiers(m, fichiers)
     sig.controler_setup(m, setup)
+    if msix is not None:
+        sig.controler_msix(m, msix)
     sortie = RACINE / "dist" / sig.FICHIER
     sortie.parent.mkdir(exist_ok=True)
     sortie.write_bytes(contenu)
-    print(f"{sig.FICHIER} écrit : {len(fichiers)} fichiers et l'installateur ({sortie}).")
+    quoi = "l'installateur et le paquet du Store" if msix is not None else "l'installateur"
+    print(f"{sig.FICHIER} écrit : {len(fichiers)} fichiers, {quoi} ({sortie}).")
+    if msix is None:
+        print("(pas de JobHunter.msix sur cette release : rien ne part au Store)")
     if publier:
         _gh("release", "upload", f"v{version}", str(sortie), "--clobber", "-R", maj.DEPOT)
         print(f"Attaché à la release v{version}.")
+        if msix is not None and not _version_de_test(version):
+            # The Store's job refuses an unsigned package (store.yml): a release
+            # published directly was waiting for this signature. A test release goes
+            # to the Store when it is promoted (`released`), not here.
+            envoi = ("workflow", "run", "store.yml", "-f", f"tag=v{version}", "-R", maj.DEPOT)
+            if _gh(*envoi, check=False).returncode == 0:
+                print("Envoi au Microsoft Store lancé (workflow store).")
         # The real-update test waited for this signature (installations that carry the
         # key refuse an unsigned version): run it now.
         r = _gh("workflow", "run", "update-transition.yml", "-R", maj.DEPOT, check=False)

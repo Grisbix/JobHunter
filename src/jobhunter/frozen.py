@@ -71,17 +71,33 @@ def famille_msix() -> str:
     return famille if code == 0 and re.fullmatch(r"[A-Za-z0-9._-]+", famille) else ""
 
 
+_DU_STORE: dict[str, bool] = {}  # family name → the Store installed it (asked once)
+
+
 def msix_du_store() -> bool:
     """In the MSIX package: True when the Store installed it (SignatureKind « Store »).
 
     A package installed from the release's JobHunter.msix is not the Store's: its
     updates come from the release, and the Store's page shows nothing for it.
-    """
-    import subprocess
 
+    Asked once per process: who installed the package does not change while it runs,
+    and each update check started a PowerShell for it (0.5 s, audit 2026-11-15).
+    """
     famille = famille_msix()
     if not famille:
         return False
+    if famille not in _DU_STORE:
+        reponse = _signature_du_paquet(famille)
+        if reponse is None:
+            return False  # PowerShell did not answer: asked again next time
+        _DU_STORE[famille] = reponse == "Store"
+    return _DU_STORE[famille]
+
+
+def _signature_du_paquet(famille: str) -> str | None:
+    """The package's SignatureKind (« Store », « Developer »…), None without an answer."""
+    import subprocess
+
     try:
         r = subprocess.run(  # nosec B603 B607 : fixed command, the family name checked above
             [
@@ -98,8 +114,8 @@ def msix_du_store() -> bool:
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
     except (OSError, subprocess.SubprocessError):
-        return False
-    return r.stdout.strip() == "Store"
+        return None
+    return r.stdout.strip()
 
 
 def interpreteur() -> str:
