@@ -4,6 +4,17 @@ The update (`mettre_a_jour.bat`, `./mettre_a_jour.sh` or the application's butto
 shows the sections newer than your version. Format: `## x.y.z — date`, the most
 recent at the top.
 
+## 3.88.0 — 2026-11-15
+
+The Microsoft Store only receives a package the author signed, and Edge does the job when Chrome is missing.
+
+- **The Store package is now part of the signed release.** The author's signature covered the ZIP and the installer, not `JobHunter.msix`: a file replaced on the release page would have gone to the Store. The signature now names the package, and the sending checks it first; a package that differs is refused. A release signed by an older tool is still sent, with a warning.
+- **No Chrome? Edge is used.** Access to the sites, the assisted application and the site test asked for Chrome and stopped without it. They now fall back on Microsoft Edge, which every Windows 11 has.
+- **Sharper icons for the Store version.** The package had three logo sizes; Windows stretched them in the taskbar and the Start menu. It now carries twenty.
+- **The Documents screen opens three times faster**: 0.22 s before, 0.07 s now, measured on 11 000 documents, with the same list.
+- **The application asks Windows once, not at every check, whether it comes from the Store.**
+- For contributors: sending to the Store no longer fails on a release without a package, and can be started by hand for a given version.
+
 ## 3.87.0 — 2026-11-11
 
 Tidier screens, a home page that counts right, and one follow-up date everywhere.
