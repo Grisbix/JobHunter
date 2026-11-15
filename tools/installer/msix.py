@@ -48,6 +48,13 @@ DIST = RACINE / "dist"
 ICONE = RACINE / "src" / "jobhunter" / "assets" / "jobhunter.png"
 # File name → side in pixels (scale 100 %).
 LOGOS = {"StoreLogo.png": 50, "Square44x44Logo.png": 44, "Square150x150Logo.png": 150}
+# The other sizes Windows picks from (3.88). With the three files above only, a screen at
+# 150 or 200 % stretched a 44-pixel icon, and the taskbar drew it on a coloured plate
+# (audit 2026-11-15). `scale-N`: the same logo for a denser screen. `targetsize-N` with
+# `altform-unplated`: the exact icon of the taskbar, the Start list and Alt+Tab, without
+# a plate. Windows finds them through resources.pri (makepri), not by their names alone.
+ECHELLES = (100, 125, 150, 200, 400)
+CIBLES = (16, 24, 32, 48, 256)
 
 MANIFESTE = """<?xml version="1.0" encoding="utf-8"?>
 <Package
@@ -127,6 +134,80 @@ def logos(dossier: Path) -> None:
             img.convert("RGBA").resize((cote, cote), Image.LANCZOS).save(dossier / nom)
 
 
+def noms_des_variantes() -> dict[str, int]:
+    """File name → side in pixels, for every scale and target size of the logos."""
+    noms: dict[str, int] = {}
+    for nom, cote in LOGOS.items():
+        base = nom.removesuffix(".png")
+        for echelle in ECHELLES:
+            noms[f"{base}.scale-{echelle}.png"] = round(cote * echelle / 100)
+    for cible in CIBLES:
+        noms[f"Square44x44Logo.targetsize-{cible}_altform-unplated.png"] = cible
+    return noms
+
+
+def makepri() -> str | None:
+    """makepri.exe, beside makeappx.exe in the Windows SDK; None when it is not there."""
+    trouve = shutil.which("makepri")
+    if trouve:
+        return trouve
+    voisin = Path(makeappx()).with_name("makepri.exe")
+    return str(voisin) if voisin.is_file() else None
+
+
+def variantes(disposition: Path) -> bool:
+    """The logos at every size, and the resources.pri that names them; True when made.
+
+    Built in a folder of their own, then copied: makepri indexes every file under the
+    folder it is given, and the application's thousands of files are not resources.
+    Anything missing or failing (Pillow, makepri) leaves the package with its three
+    plain logos, as before: a package that installs matters more than a sharper icon.
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        return False
+    outil = makepri()
+    if outil is None:
+        print("(makepri.exe absent : logos à une seule taille)")
+        return False
+    projet = DIST / "msix_pri"
+    shutil.rmtree(projet, ignore_errors=True)
+    (projet / "Assets").mkdir(parents=True)
+    with Image.open(ICONE) as img:
+        source = img.convert("RGBA")
+        for nom, cote in noms_des_variantes().items():
+            source.resize((cote, cote), Image.LANCZOS).save(projet / "Assets" / nom)
+    config, pri = DIST / "msix_priconfig.xml", DIST / "msix_resources.pri"
+    for f in (config, pri):
+        f.unlink(missing_ok=True)
+    try:
+        for commande in (
+            [outil, "createconfig", "/cf", str(config), "/dq", "fr-FR", "/pv", "10.0.0", "/o"],
+            [outil, "new", "/pr", str(projet), "/cf", str(config), "/of", str(pri), "/o"],
+        ):
+            subprocess.run(commande, check=True, capture_output=True)  # nosec B603 : SDK tool
+            if commande[1] == "createconfig":
+                # One package, no resource packs: the <packaging> section would split
+                # the scales into files of their own, which nothing here ships.
+                import re
+
+                texte = config.read_text(encoding="utf-8")
+                config.write_text(
+                    re.sub(r"<packaging>.*?</packaging>", "", texte, flags=re.S), encoding="utf-8"
+                )
+    except (OSError, subprocess.CalledProcessError) as e:
+        print(f"(makepri a échoué : logos à une seule taille — {e})")
+        return False
+    if not pri.is_file():
+        return False
+    for nom in LOGOS:  # the unqualified file and its scale-100 twin would be one resource
+        (disposition / "Assets" / nom).unlink(missing_ok=True)
+    shutil.copytree(projet / "Assets", disposition / "Assets", dirs_exist_ok=True)
+    shutil.copyfile(pri, disposition / "resources.pri")
+    return True
+
+
 def makeappx() -> str:
     """makeappx.exe: on the PATH, else the newest Windows SDK's x64 one."""
     trouve = shutil.which("makeappx")
@@ -200,6 +281,8 @@ def main() -> int:
     if remettre_node(disposition, DIST / "playwright-node-win64.zip"):
         print("node.exe remis dans le paquet (règle 10.2.2 du Store)")
     logos(disposition / "Assets")
+    if variantes(disposition):
+        print(f"logos : {len(noms_des_variantes())} tailles, resources.pri")
     (disposition / "AppxManifest.xml").write_text(manifeste(), encoding="utf-8")
     sortie = Path(a.sortie)
     sortie.unlink(missing_ok=True)

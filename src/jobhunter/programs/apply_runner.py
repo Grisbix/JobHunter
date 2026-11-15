@@ -601,11 +601,13 @@ def main(argv=None):
     print(f"Profil persistant dédié: {udir} (connecte-toi 1 fois, à la main, ça reste)")
     from playwright.sync_api import sync_playwright
 
+    from jobhunter.navigation.browser import contexte_persistant
+
     with sync_playwright() as p:
         try:
-            ctx = p.chromium.launch_persistent_context(
+            ctx = contexte_persistant(
+                p.chromium,
                 user_data_dir=udir,
-                channel="chrome",
                 headless=False,
                 args=launch_args,
                 no_viewport=True,

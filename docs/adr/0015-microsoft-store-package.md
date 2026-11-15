@@ -59,3 +59,13 @@ from a file of the repository. Without them the package carries placeholders.
      `AZURE_AD_APPLICATION_CLIENT_ID`, `AZURE_AD_APPLICATION_SECRET`, and the
      variable `MSSTORE_PRODUCT_ID` (the Store ID, 9N…), which turns the job on.
   Guide: https://learn.microsoft.com/windows/apps/publish/msstore-dev-cli/github-actions
+  The Entra client secret expires (two years at most): past its date the job fails and
+  the Store keeps the previous version; note the date when creating it.
+- **Only a signed package is sent (3.88)**: see ADR 0012. A release published directly is
+  sent by `tools/signature.py signer --publier`, or by hand (Actions → store → Run
+  workflow, with the tag).
+- **Logos (3.88)**: every scale and the unplated target sizes, named by a `resources.pri`
+  (`makepri`, from the Windows SDK). Without it the package keeps three plain logos.
+- **Removed from Windows' settings**, the package leaves the daily collection's task and
+  the desktop icon behind: MSIX runs nothing at uninstall. « Désinstaller JobHunter », in
+  the application, removes both.

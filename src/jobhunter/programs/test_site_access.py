@@ -98,6 +98,7 @@ def main(argv=None):
         return 1
 
     from jobhunter.navigation import analyze, dismiss_cookies, get_sync_playwright
+    from jobhunter.navigation.browser import contexte_persistant
 
     sp, eng = get_sync_playwright("auto")
     print(f"moteur={eng} · mode={mode} · {len(lots)} domaine(s)\n")
@@ -108,9 +109,9 @@ def main(argv=None):
     with sp() as p:
 
         def lance():
-            c = p.chromium.launch_persistent_context(
+            c = contexte_persistant(
+                p.chromium,
                 user_data_dir=str(PROFIL),
-                channel="chrome",
                 headless=True,
                 args=["--no-first-run", "--no-default-browser-check"],
                 no_viewport=True,

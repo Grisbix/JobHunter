@@ -45,6 +45,34 @@ def lancer(chromium: Any, **options: Any) -> Any:
         raise
 
 
+def contexte_persistant(chromium: Any, **options: Any) -> Any:
+    """`launch_persistent_context` on the system's Chrome, then on Edge if Chrome is missing.
+
+    The dedicated profile (access, apply_runner) asked for Chrome by name: on a computer
+    with Edge only — every Windows has it, not every one has Chrome — the guided
+    application stopped at « Échec lancement Chrome » (audit 2026-11-15). Edge reads the
+    same profile folder; the session is then Edge's.
+
+    Args:
+        chromium: `playwright.chromium`.
+        **options: the `launch_persistent_context` options, without `channel`.
+
+    Returns:
+        The browser context.
+
+    Raises:
+        Exception: the first browser's error when it is not a missing browser, else the
+            last one's.
+    """
+    for i, canal in enumerate(CANAUX_SYSTEME):
+        try:
+            return chromium.launch_persistent_context(channel=canal, **options)
+        except Exception as e:
+            if not _manque_navigateur(e) or i == len(CANAUX_SYSTEME) - 1:
+                raise
+    raise RuntimeError("aucun navigateur système")  # CANAUX_SYSTEME is never empty
+
+
 def human_pause(page: Any, lo: int = 350, hi: int = 1100) -> None:
     """Fixed pause (average of lo and hi), so as not to hammer the site."""
     try:
